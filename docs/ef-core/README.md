@@ -99,6 +99,36 @@ app.MapPost("/orders", async (Order order, OrdersContext db) =>
 Use `AsNoTracking` for read-only results. Keep a context inside one request or
 unit of work; it is not thread-safe.
 
+### Save several changes together
+
+Add or change the entities first, then call `SaveChangesAsync` once:
+
+```csharp
+db.Orders.AddRange(newOrders);
+await db.SaveChangesAsync(cancellationToken);
+```
+
+In the 1.2 candidate, BlueTusk automatically groups writes into bounded batches
+instead of sending each entity in a separate database round trip. The default
+is up to 42 modification commands per batch. Generated IDs and computed values
+still flow back to the correct entities. Normal EF logging, interceptors,
+optimistic-concurrency checks and transaction handling remain in use.
+
+This does not turn a `DbContext` into a parallel writer. Do not run overlapping
+operations on the same context. For large imports that do not need change
+tracking, consider [binary COPY](../ado-net/copy.md).
+
+You can retain one-command batches when diagnosing an application-specific
+issue:
+
+```csharp
+options.UseBlueTusk(dataSource, provider => provider.MaxBatchSize(1));
+```
+
+Leave the default in place until your own measurements justify another limit.
+See [batching, transactions and recovery](reference.md#savechanges-batching)
+for the bounds and failure behavior.
+
 ## 5. Create and apply migrations
 
 ```powershell

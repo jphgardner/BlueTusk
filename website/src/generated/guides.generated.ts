@@ -771,11 +771,16 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "id": "batches",
         "text": "Batches",
         "level": 1
+      },
+      {
+        "id": "several-statements-in-one-command",
+        "text": "Several statements in one command",
+        "level": 2
       }
     ],
-    "wordCount": 239,
-    "readMinutes": 2,
-    "searchText": "Batches `BlueTuskBatch` implements the .NET `DbBatch` abstraction and sends every command through one PostgreSQL extended-query protocol cycle. Each command has its own text and parameter collection; positional and named placeholders use the same safe rewriting and encoding rules as `BlueTuskCommand`. `ExecuteReaderAsync` exposes one result in command order, including empty non-query results. `ExecuteNonQueryAsync` returns the sum of affected rows, while every `BlueTuskBatchCommand.RecordsAffected` reports its own command tag. `ExecuteScalarAsync` returns the first field of the first row. Set `Transaction` to enlist the complete protocol cycle in the connection's active transaction. `Timeout`, cancellation tokens, `Cancel()`, and `CancelAsync()` use PostgreSQL's cancellation channel and drain through `ReadyForQuery` before the connection can be reused. `PrepareAsync` creates one named server statement per batch command. Later executions bind all of those statements in one cycle, and changing command text or PostgreSQL parameter OIDs rebuilds the prepared set. Batches created by a data source own a temporary pooled connection for each execution and therefore cannot be explicitly prepared."
+    "wordCount": 521,
+    "readMinutes": 3,
+    "searchText": "Batches `BlueTuskBatch` implements the .NET `DbBatch` abstraction and sends every command through one PostgreSQL extended-query protocol cycle. Each command has its own text and parameter collection; positional and named placeholders use the same safe rewriting and encoding rules as `BlueTuskCommand`. `ExecuteReaderAsync` exposes one result in command order, including empty non-query results. `ExecuteNonQueryAsync` returns the sum of affected rows, while every `BlueTuskBatchCommand.RecordsAffected` reports its own command tag. `ExecuteScalarAsync` returns the first field of the first row. Set `Transaction` to enlist the complete protocol cycle in the connection's active transaction. `Timeout`, cancellation tokens, `Cancel()`, and `CancelAsync()` use PostgreSQL's cancellation channel and drain through `ReadyForQuery` before the connection can be reused. `PrepareAsync` creates one named server statement per batch command. Later executions bind all of those statements in one cycle, and changing command text or PostgreSQL parameter OIDs rebuilds the prepared set. Batches created by a data source own a temporary pooled connection for each execution and therefore cannot be explicitly prepared. Several statements in one command The 1.2 candidate also supports ordinary parameterized, semicolon-separated statements in a buffered `BlueTuskCommand`. This is the path used by EF's automatic write batches: Named parameters are rebound separately for each statement. Positional `$1`, `$2`, etc. retain their ordinals in the parent command's parameter collection. Do not mix named and positional placeholders. Quoted strings, quoted identifiers, dollar-quoted bodies and SQL comments can contain semicolons without creating a new statement. Supply data through parameters, not string interpolation. The driver uses separate Parse/Bind/Execute messages and one final Sync, with results in statement order. Text-format results avoid replaying a write batch to retry an unsupported binary output"
   },
   {
     "category": "provider",
@@ -1509,6 +1514,11 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
+        "id": "save-several-changes-together",
+        "text": "Save several changes together",
+        "level": 3
+      },
+      {
         "id": "5-create-and-apply-migrations",
         "text": "5. Create and apply migrations",
         "level": 2
@@ -1529,9 +1539,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 493,
+    "wordCount": 639,
     "readMinutes": 3,
-    "searchText": "Use BlueTusk with Entity Framework Core Use this guide when an application already uses EF Core, or when you want LINQ, change tracking, and migrations on top of BlueTusk's PostgreSQL connection pool. If you only need SQL commands, start with the [ADO.NET guide](../ado-net/README.md). What you will build A normal ASP.NET Core application with: one application-owned `BlueTuskDataSource`; one scoped `DbContext` per unit of work; LINQ queries and `SaveChangesAsync`; and migrations run as a controlled deployment step. 1. Install the provider Keep all BlueTusk packages on the same exact version: See [installation](../getting-started/install.md) for stable and preview version selection. 2. Create the model and context 3. Register it once The data source is a singleton because it owns the physical connection pool. The context remains scoped: Do not create a new data source for every request. Doing so creates new pools instead of reusing healthy PostgreSQL sessions. 4. Read and write data Use `AsNoTracking` for read-only results. Keep a context inside one request or unit of work; it is not thread-safe. 5. Create and apply migrations Review the SQL and apply it through a deployment job using a migration role. Do not let every application replica race to migrate the database at startup. Verify the setup Run the repository's executable example when developing BlueTusk itself: The TLS-disabled connection is for an isolated local database only. Production defaults Supply the connection string from the deployment secret store. Enable TLS certificate and hostname validation. Set explicit command timeouts and a measured maximum pool size. Use a least-privilege application role and a separate migration role. Log query duration and failure metadata, not parameter values. Go deeper only when needed The [EF Core reference](reference.md) covers PostgreSQL mappings, translated operators and functions, arrays, migrations, scaffolding, extension packages, and SQL/PGQ. The [specification-te"
+    "searchText": "Use BlueTusk with Entity Framework Core Use this guide when an application already uses EF Core, or when you want LINQ, change tracking, and migrations on top of BlueTusk's PostgreSQL connection pool. If you only need SQL commands, start with the [ADO.NET guide](../ado-net/README.md). What you will build A normal ASP.NET Core application with: one application-owned `BlueTuskDataSource`; one scoped `DbContext` per unit of work; LINQ queries and `SaveChangesAsync`; and migrations run as a controlled deployment step. 1. Install the provider Keep all BlueTusk packages on the same exact version: See [installation](../getting-started/install.md) for stable and preview version selection. 2. Create the model and context 3. Register it once The data source is a singleton because it owns the physical connection pool. The context remains scoped: Do not create a new data source for every request. Doing so creates new pools instead of reusing healthy PostgreSQL sessions. 4. Read and write data Use `AsNoTracking` for read-only results. Keep a context inside one request or unit of work; it is not thread-safe. Save several changes together Add or change the entities first, then call `SaveChangesAsync` once: In the 1.2 candidate, BlueTusk automatically groups writes into bounded batches instead of sending each entity in a separate database round trip. The default is up to 42 modification commands per batch. Generated IDs and computed values still flow back to the correct entities. Normal EF logging, interceptors, optimistic-concurrency checks and transaction handling remain in use. This does not turn a `DbContext` into a parallel writer. Do not run overlapping operations on the same context. For large imports that do not need change tracking, consider [binary COPY](../ado-net/copy.md). You can retain one-command batches when diagnosing an application-specific issue: Leave the default in place until your own measurements justify another limit. See [batching, transactions and recovery"
   },
   {
     "category": "ef-core",
@@ -1580,6 +1590,21 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "id": "entity-framework-core",
         "text": "Entity Framework Core",
         "level": 1
+      },
+      {
+        "id": "savechanges-batching",
+        "text": "SaveChanges batching",
+        "level": 2
+      },
+      {
+        "id": "transactions-and-recovery",
+        "text": "Transactions and recovery",
+        "level": 3
+      },
+      {
+        "id": "measure-the-whole-unit-of-work",
+        "text": "Measure the whole unit of work",
+        "level": 3
       },
       {
         "id": "configure-a-context",
@@ -1737,9 +1762,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 14113,
-    "readMinutes": 65,
-    "searchText": "Entity Framework Core `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings. Microsoft's provider-facing relational test package is consumed by a dedicated test assembly. The exact adopted suites, commands, and completed 1.0 coverage gate are recorded in [EF Core relational specification tests](specification-tests.md). Configure a context The long-lived data source is the recommended application entry point: EF-created logical connections share its physical pool, configured codecs, and runtime type catalogue, while the dependency-injection container owns the data source lifetime. `UseBlueTusk` also accepts a connection string or an existing `BlueTuskConnection` for compatibility and dedicated-lifetime scenarios; directly constructed connections are unpooled. Internally, EF reaches Data only through a small assembly-private provider contract. That contract covers logical/data-source creation, ownership, type-registry snapshots, capability probing, dedicated administration connections, pool/catalogue lifecycle and diagnostics. It adds no public API and prevents query, graph and database-lifecycle services from casting or constructing concrete provider types. See [ADR 0017](../architecture/decisions/0017-internal-ef-data-provider-spi.md). Configure runtime user-defined types before registering the data source: Optional extensions keep their ADO.NET and EF registrations separate. For example, `citext` uses `BlueTusk.Extensions.Citext` for the data-source codec and `BlueTusk.Extensions.Citext.EntityFrameworkCore` for EF scalar/array mappings and migration helpers: Pgvector integration follows the same split. The EF package maps dense, half-precision, and sparse vectors, preserves dimension-qualified sto"
+    "wordCount": 14516,
+    "readMinutes": 66,
+    "searchText": "Entity Framework Core `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings. Microsoft's provider-facing relational test package is consumed by a dedicated test assembly. The exact adopted suites, commands, and completed 1.0 coverage gate are recorded in [EF Core relational specification tests](specification-tests.md). SaveChanges batching The 1.2 candidate batches tracked inserts, updates and deletes automatically. One batch normally carries up to **42 modification commands**, not necessarily 42 entities: an entity mapped to several tables can need several commands. EF still chooses command order from relationship and generated-value dependencies; batching never relaxes that ordering. Omit the option for the default, or set `MaxBatchSize(1)` for the former one-command behavior. A larger configured limit does not remove the aggregate bounds: a batch is split before exceeding 65,536 SQL characters or 32,767 parameters. These are aggregation limits, not a maximum entity size. EF permits one unusually wide command to run alone; PostgreSQL's own limits still apply. Each statement has locally bound parameters and a corresponding result in command order. Server-generated IDs, computed columns and concurrency-token checks remain associated with the correct tracked entries, including batches that mix client-generated and server-generated keys. Batches use the normal EF command execution path, including logging and `DbCommandInterceptor` callbacks. An interceptor now observes a batch rather than necessarily one callback per entity. Transactions and recovery With EF's default transaction settings, a failing `SaveChanges` does not leave successful earlier batches committed. Inside a caller-owned transaction, "
   },
   {
     "category": "real-time",
@@ -5196,9 +5221,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1718,
-    "readMinutes": 8,
-    "searchText": "BlueTusk V1 performance report: BlueTusk versus Npgsql **Report date:** 25 August 2026 **Candidate branch:** `codex/v1-owner-release` **Measured source commit:** `ac702d7c74d984faf375367016b77f9155695679` **Reference provider:** Npgsql 10.0.3 **Runtime:** .NET 10.0.11, SDK 10.0.303, Release, x64 **Database:** PostgreSQL 18, local Docker, loopback TCP Executive verdict The V1 provider-comparison gate passes for both latency and managed allocation. All **16/16 feature pairs** pass their paired mean, P95 and P99 latency budgets: **48/48 latency checks pass**. All **16/16 feature pairs allocate less managed memory than Npgsql** in the same final-source BenchmarkDotNet run. BlueTusk has the lower paired mean in 14 of 16 workloads. COPY import is 0.21% slower and EF update is 0.80% slower; both are inside the declared 5% parity band and both allocate less than Npgsql. Allocation savings range from 1.1% for COPY export to 95.4% for an empty begin/rollback transaction. The largest practical payload win is the 1 MiB sequential `bytea` read at 91.4% less allocation. The repository verifier independently recomputed all ratios from raw samples and reported: `Provider performance gate passed for 16 workloads`. The accurate V1 claim is: On the named PostgreSQL 18 loopback fixtures, BlueTusk passes the complete 16-workload latency gate and allocates less managed memory than Npgsql in every measured feature pair. This is not a claim that every BlueTusk operation is faster at every percentile on every machine. Three measured tail ratios are slightly above 1.0, with the highest being EF insert P99 at 1.0452. All remain inside the predeclared gate. Complete 16-feature result Lower is better. Latency ratios come from the median of five independently calculated trial ratios, each containing 501 alternating-provider blocks. Absolute means and allocation come from the final-source BenchmarkDotNet ShortRun. Absolute means are useful scale indicators; the paired ratios are the provider-comp"
+    "wordCount": 1764,
+    "readMinutes": 9,
+    "searchText": "BlueTusk V1 performance report: BlueTusk versus Npgsql **Report date:** 25 August 2026 This is retained **historical V1 baseline evidence**, not a verdict on the current 1.2 candidate. Later COPY, EF batching and request-level measurements must be evaluated at their own exact commits. The V1 parity allowances below do not replace the stricter workload-leadership contract. See [request-level performance captures](provider-request-capture.md). **Candidate branch:** `codex/v1-owner-release` **Measured source commit:** `ac702d7c74d984faf375367016b77f9155695679` **Reference provider:** Npgsql 10.0.3 **Runtime:** .NET 10.0.11, SDK 10.0.303, Release, x64 **Database:** PostgreSQL 18, local Docker, loopback TCP Executive verdict The V1 provider-comparison gate passes for both latency and managed allocation. All **16/16 feature pairs** pass their paired mean, P95 and P99 latency budgets: **48/48 latency checks pass**. All **16/16 feature pairs allocate less managed memory than Npgsql** in the same final-source BenchmarkDotNet run. BlueTusk has the lower paired mean in 14 of 16 workloads. COPY import is 0.21% slower and EF update is 0.80% slower; both are inside the declared 5% parity band and both allocate less than Npgsql. Allocation savings range from 1.1% for COPY export to 95.4% for an empty begin/rollback transaction. The largest practical payload win is the 1 MiB sequential `bytea` read at 91.4% less allocation. The repository verifier independently recomputed all ratios from raw samples and reported: `Provider performance gate passed for 16 workloads`. The accurate V1 claim is: On the named PostgreSQL 18 loopback fixtures, BlueTusk passes the complete 16-workload latency gate and allocates less managed memory than Npgsql in every measured feature pair. This is not a claim that every BlueTusk operation is faster at every percentile on every machine. Three measured tail ratios are slightly above 1.0, with the highest being EF insert P99 at 1.0452. All remain inside the p"
   },
   {
     "category": "operations",
@@ -6507,10 +6532,15 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "id": "derive-a-readable-comparison",
         "text": "Derive a readable comparison",
         "level": 2
+      },
+      {
+        "id": "supplementary-ef-batch-size-diagnostic",
+        "text": "Supplementary EF batch-size diagnostic",
+        "level": 2
       }
     ],
-    "wordCount": 1404,
-    "readMinutes": 7,
+    "wordCount": 1667,
+    "readMinutes": 8,
     "searchText": "Provider request-level performance capture This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3. It supports Windows x64 and Linux x64, configurable concurrency up to 256, and both plaintext and TLS PostgreSQL connections. It records every individual operation, rather than percentiles of averaged operation blocks. **Status:** implemented capture adapter, not a completed leadership gate. Short local smoke runs validate its operation but must not be presented as performance wins. Dedicated-runner captures, validated statistical assumptions and the remaining cross-product adapters are still required by the [performance programme](performance-leadership-1.1.md). Run a matrix Build the benchmark application from a clean, committed candidate. Point `BLUETUSK_BENCHMARK_CONNECTION_STRING` at a **dedicated benchmark database**. Do not point this harness at a production database: it creates temporary test schemas, writes data, creates large objects and opens many connections. The connection string is inherited by child processes, not placed in evidence files or command-line arguments. The default feature set is the full 16-feature list from [`performance-leadership-contract.json`](../../eng/performance-leadership-contract.json). For focused diagnosis, pass `-Features prepared-scalar,ef-update`. A subset does not satisfy full-matrix coverage. Use `-Diagnostic` for dirty working trees or shorter smoke-test windows; those captures are explicitly labelled diagnostic. The wrapper rejects mismatched candidate SHAs, existing output directories, duplicate cases, wrong reference versions, incomplete raw samples and failed child processes. Non-diagnostic captures also check assembly commit metadata. Each feature/concurrency/trial runs each provider in a **separate process**. Provider order alternates between trials. The wrapper does not overlap provider runs. Workers share one provider data source and pool, use independent active connections wher"
   },
   {

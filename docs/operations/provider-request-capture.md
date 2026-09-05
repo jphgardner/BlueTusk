@@ -187,3 +187,36 @@ It also tests raw statistic derivation, known confidence limits, ties, zero
 counters, insufficient trials, hash mismatches, source identity, incomplete
 pairs, path containment and mismatched capture methodology. Its synthetic
 fixtures test machinery, not measured BlueTusk/Npgsql performance.
+
+## Supplementary EF batch-size diagnostic
+
+`eng/capture-ef-batching.ps1` helps compare the cost of saving 100 or 1,000
+tracked updates together. It runs BlueTusk with batch limits 1, 42 and 1,000,
+plus Npgsql 10.0.3 with its default. Provider processes run separately and their
+order rotates between trials. This is supplementary engineering evidence; it
+does not add a seventeenth feature to, or replace, the release matrix.
+
+Start with a clean, committed checkout and a benchmark assembly built from that
+exact commit. Configure `BLUETUSK_BENCHMARK_CONNECTION_STRING` for an isolated,
+disposable PostgreSQL database, then supply:
+
+- `ExpectedCommit`: the full 40-character measured commit;
+- `PostgreSqlImage`: the actual digest-pinned image used by that database;
+- `BenchmarkAssemblyPath`: the isolated Release build's benchmark DLL; and
+- `OutputPath`: a new directory beneath `artifacts`.
+
+The script defaults to five trials per arm, one-second warmup and two-second
+observation windows. Every operation creates a context, loads and tracks the
+same rows, changes them, calls `SaveChangesAsync`, rolls back and disposes the
+context. It checks affected-row counts and verifies that the updates were not
+committed. Raw request ticks, allocation, CPU, RSS, GC counts, assembly versions
+and capture hashes are retained. The completed index is written only after all
+captures pass their identity and result checks.
+
+The fixture uses **unlogged tables and rollback**, not durable commits. These
+short, C1, local diagnostic runs cannot establish production capacity, sustained
+tail latency or workload leadership. Compare actual commit cost, logged tables,
+representative network conditions and realistic concurrent work separately.
+The retained `releaseGatePassed` value is always false. The request-capture
+self-test checks that this supplementary entry point rejects non-diagnostic
+mode and unsupported row, concurrency and batch-size options.

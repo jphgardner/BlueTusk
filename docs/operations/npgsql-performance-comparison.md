@@ -2,6 +2,12 @@
 
 **Report date:** 25 August 2026
 
+This is retained **historical V1 baseline evidence**, not a verdict on the
+current 1.2 candidate. Later COPY, EF batching and request-level measurements
+must be evaluated at their own exact commits. The V1 parity allowances below
+do not replace the stricter workload-leadership contract. See
+[request-level performance captures](provider-request-capture.md).
+
 **Candidate branch:** `codex/v1-owner-release`
 
 **Measured source commit:** `ac702d7c74d984faf375367016b77f9155695679`

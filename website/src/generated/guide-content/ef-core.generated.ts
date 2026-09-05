@@ -50,6 +50,11 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       },
       {
+        "id": "save-several-changes-together",
+        "text": "Save several changes together",
+        "level": 3
+      },
+      {
         "id": "5-create-and-apply-migrations",
         "text": "5. Create and apply migrations",
         "level": 2
@@ -70,9 +75,9 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 493,
+    "wordCount": 639,
     "readMinutes": 3,
-    "searchText": "Use BlueTusk with Entity Framework Core Use this guide when an application already uses EF Core, or when you want LINQ, change tracking, and migrations on top of BlueTusk's PostgreSQL connection pool. If you only need SQL commands, start with the [ADO.NET guide](../ado-net/README.md). What you will build A normal ASP.NET Core application with: one application-owned `BlueTuskDataSource`; one scoped `DbContext` per unit of work; LINQ queries and `SaveChangesAsync`; and migrations run as a controlled deployment step. 1. Install the provider Keep all BlueTusk packages on the same exact version: See [installation](../getting-started/install.md) for stable and preview version selection. 2. Create the model and context 3. Register it once The data source is a singleton because it owns the physical connection pool. The context remains scoped: Do not create a new data source for every request. Doing so creates new pools instead of reusing healthy PostgreSQL sessions. 4. Read and write data Use `AsNoTracking` for read-only results. Keep a context inside one request or unit of work; it is not thread-safe. 5. Create and apply migrations Review the SQL and apply it through a deployment job using a migration role. Do not let every application replica race to migrate the database at startup. Verify the setup Run the repository's executable example when developing BlueTusk itself: The TLS-disabled connection is for an isolated local database only. Production defaults Supply the connection string from the deployment secret store. Enable TLS certificate and hostname validation. Set explicit command timeouts and a measured maximum pool size. Use a least-privilege application role and a separate migration role. Log query duration and failure metadata, not parameter values. Go deeper only when needed The [EF Core reference](reference.md) covers PostgreSQL mappings, translated operators and functions, arrays, migrations, scaffolding, extension packages, and SQL/PGQ. The [specification-te",
+    "searchText": "Use BlueTusk with Entity Framework Core Use this guide when an application already uses EF Core, or when you want LINQ, change tracking, and migrations on top of BlueTusk's PostgreSQL connection pool. If you only need SQL commands, start with the [ADO.NET guide](../ado-net/README.md). What you will build A normal ASP.NET Core application with: one application-owned `BlueTuskDataSource`; one scoped `DbContext` per unit of work; LINQ queries and `SaveChangesAsync`; and migrations run as a controlled deployment step. 1. Install the provider Keep all BlueTusk packages on the same exact version: See [installation](../getting-started/install.md) for stable and preview version selection. 2. Create the model and context 3. Register it once The data source is a singleton because it owns the physical connection pool. The context remains scoped: Do not create a new data source for every request. Doing so creates new pools instead of reusing healthy PostgreSQL sessions. 4. Read and write data Use `AsNoTracking` for read-only results. Keep a context inside one request or unit of work; it is not thread-safe. Save several changes together Add or change the entities first, then call `SaveChangesAsync` once: In the 1.2 candidate, BlueTusk automatically groups writes into bounded batches instead of sending each entity in a separate database round trip. The default is up to 42 modification commands per batch. Generated IDs and computed values still flow back to the correct entities. Normal EF logging, interceptors, optimistic-concurrency checks and transaction handling remain in use. This does not turn a `DbContext` into a parallel writer. Do not run overlapping operations on the same context. For large imports that do not need change tracking, consider [binary COPY](../ado-net/copy.md). You can retain one-command batches when diagnosing an application-specific issue: Leave the default in place until your own measurements justify another limit. See [batching, transactions and recovery",
     "blocks": [
       {
         "kind": "html",
@@ -116,7 +121,27 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>Use <code>AsNoTracking</code> for read-only results. Keep a context inside one request or\nunit of work; it is not thread-safe.</p>\n<h2>5. Create and apply migrations</h2>\n"
+        "html": "<p>Use <code>AsNoTracking</code> for read-only results. Keep a context inside one request or\nunit of work; it is not thread-safe.</p>\n<h3>Save several changes together</h3>\n<p>Add or change the entities first, then call <code>SaveChangesAsync</code> once:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "db.Orders.AddRange(newOrders);\nawait db.SaveChangesAsync(cancellationToken);\n",
+        "highlighted": "db.Orders.AddRange(newOrders);\n<span class=\"hljs-keyword\">await</span> db.SaveChangesAsync(cancellationToken);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>In the 1.2 candidate, BlueTusk automatically groups writes into bounded batches\ninstead of sending each entity in a separate database round trip. The default\nis up to 42 modification commands per batch. Generated IDs and computed values\nstill flow back to the correct entities. Normal EF logging, interceptors,\noptimistic-concurrency checks and transaction handling remain in use.</p>\n<p>This does not turn a <code>DbContext</code> into a parallel writer. Do not run overlapping\noperations on the same context. For large imports that do not need change\ntracking, consider <a href=\"/documentation/provider/copy\">binary COPY</a>.</p>\n<p>You can retain one-command batches when diagnosing an application-specific\nissue:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "options.UseBlueTusk(dataSource, provider => provider.MaxBatchSize(1));\n",
+        "highlighted": "options.UseBlueTusk(dataSource, provider =&gt; provider.MaxBatchSize(<span class=\"hljs-number\">1</span>));\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Leave the default in place until your own measurements justify another limit.\nSee <a href=\"/documentation/ef-core/ef-core-reference#savechanges-batching\">batching, transactions and recovery</a>\nfor the bounds and failure behavior.</p>\n<h2>5. Create and apply migrations</h2>\n"
       },
       {
         "kind": "code",
@@ -213,6 +238,21 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "id": "entity-framework-core",
         "text": "Entity Framework Core",
         "level": 1
+      },
+      {
+        "id": "savechanges-batching",
+        "text": "SaveChanges batching",
+        "level": 2
+      },
+      {
+        "id": "transactions-and-recovery",
+        "text": "Transactions and recovery",
+        "level": 3
+      },
+      {
+        "id": "measure-the-whole-unit-of-work",
+        "text": "Measure the whole unit of work",
+        "level": 3
       },
       {
         "id": "configure-a-context",
@@ -370,13 +410,23 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 14113,
-    "readMinutes": 65,
-    "searchText": "Entity Framework Core `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings. Microsoft's provider-facing relational test package is consumed by a dedicated test assembly. The exact adopted suites, commands, and completed 1.0 coverage gate are recorded in [EF Core relational specification tests](specification-tests.md). Configure a context The long-lived data source is the recommended application entry point: EF-created logical connections share its physical pool, configured codecs, and runtime type catalogue, while the dependency-injection container owns the data source lifetime. `UseBlueTusk` also accepts a connection string or an existing `BlueTuskConnection` for compatibility and dedicated-lifetime scenarios; directly constructed connections are unpooled. Internally, EF reaches Data only through a small assembly-private provider contract. That contract covers logical/data-source creation, ownership, type-registry snapshots, capability probing, dedicated administration connections, pool/catalogue lifecycle and diagnostics. It adds no public API and prevents query, graph and database-lifecycle services from casting or constructing concrete provider types. See [ADR 0017](../architecture/decisions/0017-internal-ef-data-provider-spi.md). Configure runtime user-defined types before registering the data source: Optional extensions keep their ADO.NET and EF registrations separate. For example, `citext` uses `BlueTusk.Extensions.Citext` for the data-source codec and `BlueTusk.Extensions.Citext.EntityFrameworkCore` for EF scalar/array mappings and migration helpers: Pgvector integration follows the same split. The EF package maps dense, half-precision, and sparse vectors, preserves dimension-qualified sto",
+    "wordCount": 14516,
+    "readMinutes": 66,
+    "searchText": "Entity Framework Core `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings. Microsoft's provider-facing relational test package is consumed by a dedicated test assembly. The exact adopted suites, commands, and completed 1.0 coverage gate are recorded in [EF Core relational specification tests](specification-tests.md). SaveChanges batching The 1.2 candidate batches tracked inserts, updates and deletes automatically. One batch normally carries up to **42 modification commands**, not necessarily 42 entities: an entity mapped to several tables can need several commands. EF still chooses command order from relationship and generated-value dependencies; batching never relaxes that ordering. Omit the option for the default, or set `MaxBatchSize(1)` for the former one-command behavior. A larger configured limit does not remove the aggregate bounds: a batch is split before exceeding 65,536 SQL characters or 32,767 parameters. These are aggregation limits, not a maximum entity size. EF permits one unusually wide command to run alone; PostgreSQL's own limits still apply. Each statement has locally bound parameters and a corresponding result in command order. Server-generated IDs, computed columns and concurrency-token checks remain associated with the correct tracked entries, including batches that mix client-generated and server-generated keys. Batches use the normal EF command execution path, including logging and `DbCommandInterceptor` callbacks. An interceptor now observes a batch rather than necessarily one callback per entity. Transactions and recovery With EF's default transaction settings, a failing `SaveChanges` does not leave successful earlier batches committed. Inside a caller-owned transaction, ",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Entity Framework Core</h1>\n<p><code>BlueTusk.EntityFrameworkCore</code> is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings.</p>\n<p>Microsoft’s provider-facing relational test package is consumed by a dedicated\ntest assembly. The exact adopted suites, commands, and completed 1.0 coverage\ngate are recorded in <a href=\"/documentation/ef-core/specification-tests\">EF Core relational specification tests</a>.</p>\n<h2>Configure a context</h2>\n"
+        "html": "<h1>Entity Framework Core</h1>\n<p><code>BlueTusk.EntityFrameworkCore</code> is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings.</p>\n<p>Microsoft’s provider-facing relational test package is consumed by a dedicated\ntest assembly. The exact adopted suites, commands, and completed 1.0 coverage\ngate are recorded in <a href=\"/documentation/ef-core/specification-tests\">EF Core relational specification tests</a>.</p>\n<h2>SaveChanges batching</h2>\n<p>The 1.2 candidate batches tracked inserts, updates and deletes automatically.\nOne batch normally carries up to <strong>42 modification commands</strong>, not necessarily\n42 entities: an entity mapped to several tables can need several commands.\nEF still chooses command order from relationship and generated-value\ndependencies; batching never relaxes that ordering.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "options.UseBlueTusk(dataSource, provider => provider.MaxBatchSize(42));\n",
+        "highlighted": "options.UseBlueTusk(dataSource, provider =&gt; provider.MaxBatchSize(<span class=\"hljs-number\">42</span>));\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Omit the option for the default, or set <code>MaxBatchSize(1)</code> for the former\none-command behavior. A larger configured limit does not remove the aggregate\nbounds: a batch is split before exceeding 65,536 SQL characters or 32,767\nparameters. These are aggregation limits, not a maximum entity size. EF permits\none unusually wide command to run alone; PostgreSQL’s own limits still apply.</p>\n<p>Each statement has locally bound parameters and a corresponding result in\ncommand order. Server-generated IDs, computed columns and concurrency-token\nchecks remain associated with the correct tracked entries, including batches\nthat mix client-generated and server-generated keys. Batches use the normal EF\ncommand execution path, including logging and <code>DbCommandInterceptor</code> callbacks.\nAn interceptor now observes a batch rather than necessarily one callback per\nentity.</p>\n<h3>Transactions and recovery</h3>\n<p>With EF’s default transaction settings, a failing <code>SaveChanges</code> does not leave\nsuccessful earlier batches committed. Inside a caller-owned transaction, EF’s\nautomatic savepoint allows it to roll back that save attempt while preserving\nearlier work in the transaction. These protections depend on leaving EF’s\nautomatic transactions/savepoints enabled; deliberately disabling them changes\nthe guarantee.</p>\n<p>Catch <code>DbUpdateConcurrencyException</code> to resolve stale tracked values, or\n<code>DbUpdateException</code> to inspect the underlying <code>BlueTuskException.SqlState</code>.\nClear, reload or repair failed tracked entries before trying again. A\ncaller-owned transaction is committed only when the caller commits it.</p>\n<p>Use asynchronous save and disposal in asynchronous applications. The existing\nsynchronous rollback-by-disposal path can discard the physical session; session\nstate such as temporary tables then disappears. Do not assume an open session\nor an unchanged connection after any failure. If the network fails around a\ncommit, reconcile the operation using an application idempotency key before\nretrying; batching cannot prove whether an unacknowledged commit succeeded.</p>\n<h3>Measure the whole unit of work</h3>\n<p>Batching reduces command round trips; it does not remove tracking, database\nconstraints, lock waits, WAL writes or commit cost. Measure the same tracked\nload, write and durability boundary on both providers. The supplementary\n<code>eng/capture-ef-batching.ps1</code> diagnostic compares limits of 1, 42 and 1,000\nagainst Npgsql’s default for 100/1,000-row updates. Its unlogged fixture and\nrollback boundary are deliberately <strong>not</strong> durable-write release evidence.\nSee <a href=\"/documentation/operations/operations-provider-request-capture\">request-level performance captures</a>.</p>\n<h2>Configure a context</h2>\n"
       },
       {
         "kind": "code",

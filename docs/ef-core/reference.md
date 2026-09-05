@@ -6,6 +6,63 @@ Microsoft's provider-facing relational test package is consumed by a dedicated
 test assembly. The exact adopted suites, commands, and completed 1.0 coverage
 gate are recorded in [EF Core relational specification tests](specification-tests.md).
 
+## SaveChanges batching
+
+The 1.2 candidate batches tracked inserts, updates and deletes automatically.
+One batch normally carries up to **42 modification commands**, not necessarily
+42 entities: an entity mapped to several tables can need several commands.
+EF still chooses command order from relationship and generated-value
+dependencies; batching never relaxes that ordering.
+
+```csharp
+options.UseBlueTusk(dataSource, provider => provider.MaxBatchSize(42));
+```
+
+Omit the option for the default, or set `MaxBatchSize(1)` for the former
+one-command behavior. A larger configured limit does not remove the aggregate
+bounds: a batch is split before exceeding 65,536 SQL characters or 32,767
+parameters. These are aggregation limits, not a maximum entity size. EF permits
+one unusually wide command to run alone; PostgreSQL's own limits still apply.
+
+Each statement has locally bound parameters and a corresponding result in
+command order. Server-generated IDs, computed columns and concurrency-token
+checks remain associated with the correct tracked entries, including batches
+that mix client-generated and server-generated keys. Batches use the normal EF
+command execution path, including logging and `DbCommandInterceptor` callbacks.
+An interceptor now observes a batch rather than necessarily one callback per
+entity.
+
+### Transactions and recovery
+
+With EF's default transaction settings, a failing `SaveChanges` does not leave
+successful earlier batches committed. Inside a caller-owned transaction, EF's
+automatic savepoint allows it to roll back that save attempt while preserving
+earlier work in the transaction. These protections depend on leaving EF's
+automatic transactions/savepoints enabled; deliberately disabling them changes
+the guarantee.
+
+Catch `DbUpdateConcurrencyException` to resolve stale tracked values, or
+`DbUpdateException` to inspect the underlying `BlueTuskException.SqlState`.
+Clear, reload or repair failed tracked entries before trying again. A
+caller-owned transaction is committed only when the caller commits it.
+
+Use asynchronous save and disposal in asynchronous applications. The existing
+synchronous rollback-by-disposal path can discard the physical session; session
+state such as temporary tables then disappears. Do not assume an open session
+or an unchanged connection after any failure. If the network fails around a
+commit, reconcile the operation using an application idempotency key before
+retrying; batching cannot prove whether an unacknowledged commit succeeded.
+
+### Measure the whole unit of work
+
+Batching reduces command round trips; it does not remove tracking, database
+constraints, lock waits, WAL writes or commit cost. Measure the same tracked
+load, write and durability boundary on both providers. The supplementary
+`eng/capture-ef-batching.ps1` diagnostic compares limits of 1, 42 and 1,000
+against Npgsql's default for 100/1,000-row updates. Its unlogged fixture and
+rollback boundary are deliberately **not** durable-write release evidence.
+See [request-level performance captures](../operations/provider-request-capture.md).
+
 ## Configure a context
 
 ```csharp
