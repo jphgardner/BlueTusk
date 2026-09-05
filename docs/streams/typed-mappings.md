@@ -19,6 +19,13 @@ Change mapped = mapping.Map(dynamicChange);
 
 Property setters and default decoders are compiled once while the mapping is built. The default decoder handles the common pgoutput text forms and fixed-width binary scalar forms without reflection per row. A custom decoder can be supplied for application types. The EF adapter will build the same core mapping contract from EF metadata; it does not create a second mapping system.
 
+Rows sharing already-validated, immutable relation metadata reuse that validation.
+Each mapping retains at most one additional validated relation instance, so
+reconnects cannot grow an unbounded cache. A new instance is still checked against
+the schema fingerprint; a matching relation ID alone is never enough to accept a
+schema change. Failed validation is not cached and still follows your schema-change
+policy. Common scalar setters remain strongly typed to avoid boxing each value.
+
 Convention mapping preserves the model's public-property metadata for trimming.
 It caches a setter and decoder without constructing new generic types at runtime;
 NativeAOT uses expression interpretation when dynamic code is unavailable.

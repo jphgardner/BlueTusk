@@ -342,6 +342,7 @@ public sealed class ChangeEntityMapping<T>
     private readonly ReadOnlyCollection<ChangePropertyMapping> _properties;
     private readonly ReadOnlyCollection<string> _keyColumns;
     private readonly ChangeMappingPolicy _policy;
+    private ChangeTable _validatedTable;
 
     internal ChangeEntityMapping(
         ChangeTable table,
@@ -350,6 +351,7 @@ public sealed class ChangeEntityMapping<T>
         ChangeMappingPolicy policy)
     {
         Table = table;
+        _validatedTable = table;
         SchemaFingerprint = ChangeSchemaFingerprint.Create(table);
         _bindings = Array.AsReadOnly(bindings);
         _properties = Array.AsReadOnly(bindings.Select(binding => binding.Metadata).ToArray());
@@ -458,6 +460,14 @@ public sealed class ChangeEntityMapping<T>
 
     private void EnsureTable(ChangeTable actual)
     {
+        // ChangeTable owns immutable relation metadata. Rows normally share one
+        // relation instance, so validate each new instance once, not every row.
+        // Keep only one extra reference: reconnect/schema churn cannot grow a cache.
+        if (ReferenceEquals(actual, Table) || ReferenceEquals(actual, Volatile.Read(ref _validatedTable)))
+        {
+            return;
+        }
+
         if (!IsMappedTable(actual))
         {
             throw new ArgumentException(
@@ -468,6 +478,7 @@ public sealed class ChangeEntityMapping<T>
         var fingerprint = ChangeSchemaFingerprint.Create(actual);
         if (string.Equals(SchemaFingerprint, fingerprint, StringComparison.Ordinal))
         {
+            Volatile.Write(ref _validatedTable, actual);
             return;
         }
 

@@ -53,6 +53,7 @@ public sealed class TypedChangeMappingTests
 
         // Allow one-off bookkeeping, but not a box for each numeric/bool column.
         Assert.InRange(conventionBytes, 0, explicitBytes + 1_024);
+        Assert.InRange(conventionBytes, 0, 256_000);
 
         static long Measure(ChangeEntityMapping<Order> mapping, ChangeRow row)
         {
@@ -118,6 +119,32 @@ public sealed class TypedChangeMappingTests
                 Assert.Throws<TypedChangeDecodingException>(() => explicitMapping.MapRow(nullRow));
             }
         }
+    }
+
+    [Fact]
+    public void Validated_relation_cache_accepts_equal_metadata_but_never_caches_schema_drift()
+    {
+        var expected = OrdersTable();
+        var callbacks = 0;
+        var mapping = new ChangeEntityMappingBuilder<Order>().Build(expected, new ChangeMappingPolicy
+        {
+            SchemaChangeMode = SchemaChangeMode.ApplicationCallback,
+            SchemaChangeCallback = _ => { callbacks++; return ChangeMappingResolution.ContinueDynamically; },
+        });
+        var equivalent = OrdersTable(relationId: 999);
+        var valid = new ChangeRow(equivalent, [Text("42"), Text("Ada"), Text("t")]);
+        Assert.Equal(42, mapping.MapRow(valid).Value!.Id);
+        Assert.Equal(42, mapping.MapRow(valid).Value!.Id);
+        var changedColumns = equivalent.Columns.ToArray();
+        changedColumns[0] = changedColumns[0] with { TypeOid = 20 };
+        // Same relation ID and names, different type: identity is never an OID cache.
+        var drifted = new ChangeTable(equivalent.RelationId, equivalent.Schema, equivalent.Name, 'd', changedColumns);
+        var change = new InsertChange(ChangeIdentity(), new ChangeRow(drifted, [Text("42"), Text("Ada"), Text("t")]));
+        Assert.Same(change, mapping.Map(change));
+        Assert.Same(change, mapping.Map(change));
+        Assert.Equal(2, callbacks);
+        Assert.Equal(42, mapping.MapRow(valid).Value!.Id);
+        Assert.Equal(42, mapping.MapRow(new ChangeRow(expected, [Text("42"), Text("Ada"), Text("t")])).Value!.Id);
     }
 
     [Fact]
