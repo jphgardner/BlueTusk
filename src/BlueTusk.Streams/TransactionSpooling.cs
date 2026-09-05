@@ -339,10 +339,10 @@ public sealed class FileTransactionSpool : ITransactionSpool
             {
                 await stream.WriteAsync(_recordHeader, cancellationToken).ConfigureAwait(false);
                 cancellationToken.ThrowIfCancellationRequested();
-                stream.Flush(flushToDisk: true);
-                await stream.DisposeAsync().ConfigureAwait(false);
+                FlushToDisk(stream);
+                await CloseCompletedStreamAsync(stream).ConfigureAwait(false);
                 _stream = null;
-                File.Move(_partialPath, _readyPath);
+                RenameCompletedStream();
                 _completed = true;
                 return new FileTransactionSpoolReader(
                     _owner,
@@ -355,6 +355,51 @@ public sealed class FileTransactionSpool : ITransactionSpool
             {
                 Release(_recordHeader.Length);
                 throw;
+            }
+        }
+
+        private static void FlushToDisk(FileStream stream)
+        {
+            var started = BlueTuskStreamsDiagnostics.StartSpoolOperation();
+            var succeeded = false;
+            try
+            {
+                stream.Flush(flushToDisk: true);
+                succeeded = true;
+            }
+            finally
+            {
+                BlueTuskStreamsDiagnostics.RecordSpoolOperation("flush", started, succeeded);
+            }
+        }
+
+        private static async ValueTask CloseCompletedStreamAsync(FileStream stream)
+        {
+            var started = BlueTuskStreamsDiagnostics.StartSpoolOperation();
+            var succeeded = false;
+            try
+            {
+                await stream.DisposeAsync().ConfigureAwait(false);
+                succeeded = true;
+            }
+            finally
+            {
+                BlueTuskStreamsDiagnostics.RecordSpoolOperation("close", started, succeeded);
+            }
+        }
+
+        private void RenameCompletedStream()
+        {
+            var started = BlueTuskStreamsDiagnostics.StartSpoolOperation();
+            var succeeded = false;
+            try
+            {
+                File.Move(_partialPath, _readyPath);
+                succeeded = true;
+            }
+            finally
+            {
+                BlueTuskStreamsDiagnostics.RecordSpoolOperation("rename", started, succeeded);
             }
         }
 

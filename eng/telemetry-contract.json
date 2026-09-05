@@ -52,7 +52,8 @@
         { "name": "bluetusk.streams.deliveries.active", "type": "UpDownCounter", "unit": "{delivery}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled"] },
         { "name": "bluetusk.streams.deliveries.settled", "type": "Counter", "unit": "{delivery}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.outcome"] },
         { "name": "bluetusk.streams.delivery.settlement.failures", "type": "Counter", "unit": "{failure}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.operation"] },
-        { "name": "bluetusk.streams.delivery.duration", "type": "Histogram", "unit": "s", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.outcome"] }
+        { "name": "bluetusk.streams.delivery.duration", "type": "Histogram", "unit": "s", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.outcome"] },
+        { "name": "bluetusk.streams.spool.operation.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["bluetusk.streams.spool.operation", "bluetusk.streams.spool.outcome"] }
       ]
     },
     {
