@@ -6495,7 +6495,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "categoryLabel": "Operations",
     "listed": false,
     "slug": "operations-provider-request-capture",
-    "summary": "This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3. It supports Windows x64 and Linux x64, configurable concurrency up to 256, and both plaintext and TLS PostgreSQL connection…",
+    "summary": "This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3, plus four optional pool-contention probes. It supports Windows x64 and Linux x64, configurable concurrency",
     "keywords": [
       "docs",
       "operations",
@@ -6524,6 +6524,11 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
+        "id": "measure-pool-saturation-and-multiplexing",
+        "text": "Measure pool saturation and multiplexing",
+        "level": 2
+      },
+      {
         "id": "tls",
         "text": "TLS",
         "level": 2
@@ -6544,9 +6549,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1667,
-    "readMinutes": 8,
-    "searchText": "Provider request-level performance capture This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3. It supports Windows x64 and Linux x64, configurable concurrency up to 256, and both plaintext and TLS PostgreSQL connections. It records every individual operation, rather than percentiles of averaged operation blocks. **Status:** implemented capture adapter, not a completed leadership gate. Short local smoke runs validate its operation but must not be presented as performance wins. Dedicated-runner captures, validated statistical assumptions and the remaining cross-product adapters are still required by the [performance programme](performance-leadership-1.1.md). Run a matrix Build the benchmark application from a clean, committed candidate. Point `BLUETUSK_BENCHMARK_CONNECTION_STRING` at a **dedicated benchmark database**. Do not point this harness at a production database: it creates temporary test schemas, writes data, creates large objects and opens many connections. The connection string is inherited by child processes, not placed in evidence files or command-line arguments. The default feature set is the full 16-feature list from [`performance-leadership-contract.json`](../../eng/performance-leadership-contract.json). For focused diagnosis, pass `-Features prepared-scalar,ef-update`. A subset does not satisfy full-matrix coverage. Use `-Diagnostic` for dirty working trees or shorter smoke-test windows; those captures are explicitly labelled diagnostic. The wrapper rejects mismatched candidate SHAs, existing output directories, duplicate cases, wrong reference versions, incomplete raw samples and failed child processes. Non-diagnostic captures also check assembly commit metadata. Each feature/concurrency/trial runs each provider in a **separate process**. Provider order alternates between trials. The wrapper does not overlap provider runs. Workers share one provider data source and pool, use independent active connections wher"
+    "wordCount": 2017,
+    "readMinutes": 10,
+    "searchText": "Provider request-level performance capture This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3, plus four optional pool-contention probes. It supports Windows x64 and Linux x64, configurable concurrency up to 256, and both plaintext and TLS PostgreSQL connections. It records every individual operation, rather than percentiles of averaged operation blocks. **Status:** implemented capture adapter, not a completed leadership gate. Short local smoke runs validate its operation but must not be presented as performance wins. Dedicated-runner captures, validated statistical assumptions and the remaining cross-product adapters are still required by the [performance programme](performance-leadership-1.1.md). Run a matrix Build the benchmark application from a clean, committed candidate. Point `BLUETUSK_BENCHMARK_CONNECTION_STRING` at a **dedicated benchmark database**. Do not point this harness at a production database: it creates temporary test schemas, writes data, creates large objects and opens many connections. The connection string is inherited by child processes, not placed in evidence files or command-line arguments. The default feature set is the full 16-feature list from [`performance-leadership-contract.json`](../../eng/performance-leadership-contract.json). For focused diagnosis, pass `-Features prepared-scalar,ef-update`. A subset does not satisfy full-matrix coverage. Use `-Diagnostic` for dirty working trees or shorter smoke-test windows; those captures are explicitly labelled diagnostic. The wrapper rejects mismatched candidate SHAs, existing output directories, duplicate cases, wrong reference versions, incomplete raw samples and failed child processes. Non-diagnostic captures also check assembly commit metadata. Each feature/concurrency/trial runs each provider in a **separate process**. Provider order alternates between trials. The wrapper does not overlap provider runs. Workers share one provider data source and po"
   },
   {
     "category": "operations",
