@@ -32,6 +32,19 @@ command execution path, including logging and `DbCommandInterceptor` callbacks.
 An interceptor now observes a batch rather than necessarily one callback per
 entity.
 
+When no command-reader interceptor or custom update SQL generator is registered,
+writes without server-generated values use PostgreSQL's command-completion count
+instead of allocating a `RETURNING 1` row. The count belongs to the current
+statement, never the whole batch; zero affected rows still cause EF's normal
+optimistic-concurrency handling. Streaming single-command readers are consumed
+through completion before the count is read.
+
+Command interceptors can wrap or replace readers. Registering one automatically
+retains the former `RETURNING 1` result shape for compatibility; custom update
+SQL generators also keep the normal row-count protocol. Standard EF logging and
+SaveChanges concurrency interceptors do not require this fallback. Measure the
+configuration your application actually uses, including its interceptors.
+
 ### Transactions and recovery
 
 With EF's default transaction settings, a failing `SaveChanges` does not leave

@@ -21,7 +21,7 @@ namespace BlueTusk.Data;
     "Usage",
     "CA2201:Do not raise reserved exception types",
     Justification = "ADO.NET readers conventionally use IndexOutOfRangeException for missing columns.")]
-public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
+public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator, Internal.IProviderUpdateResult
 {
     private static readonly Encoding StrictUtf8 = new UTF8Encoding(false, true);
     private static readonly long PostgreSqlEpochTicks =
@@ -99,6 +99,25 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
     public override bool IsClosed => Volatile.Read(ref _closed) != 0;
 
     public override int RecordsAffected => GetRecordsAffected();
+
+    int Internal.IProviderUpdateResult.CurrentStatementRowsAffected
+    {
+        get
+        {
+            EnsureOpen();
+            var tag = _portal?.CommandTag ?? CurrentResultSet?.CommandTag;
+            if (tag is not null &&
+                (tag.StartsWith("INSERT ", StringComparison.Ordinal) ||
+                 tag.StartsWith("UPDATE ", StringComparison.Ordinal) ||
+                 tag.StartsWith("DELETE ", StringComparison.Ordinal) ||
+                 tag.StartsWith("MERGE ", StringComparison.Ordinal)) &&
+                BlueTuskCommandTagParser.TryGetRecordsAffected(tag, out var count))
+            {
+                return count;
+            }
+            throw new InvalidOperationException("The current result has no completed DML command count.");
+        }
+    }
 
     public override int Depth => 0;
 

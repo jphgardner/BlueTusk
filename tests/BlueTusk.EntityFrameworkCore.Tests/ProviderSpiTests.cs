@@ -21,6 +21,7 @@ public sealed class ProviderSpiTests
         Assert.False(typeof(IProviderServices).IsVisible);
         Assert.False(typeof(IProviderConnection).IsVisible);
         Assert.False(typeof(IProviderDataSource).IsVisible);
+        Assert.False(typeof(IProviderUpdateResult).IsVisible);
         Assert.False(typeof(DatabaseLifecycleSettings).IsVisible);
         Assert.False(typeof(ProviderCapabilities).IsVisible);
         Assert.False(typeof(ProviderServices).IsVisible);

@@ -9,6 +9,108 @@ namespace BlueTusk.EntityFrameworkCore.Tests;
 public sealed class BatchingIntegrationTests
 {
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Command_interceptors_retain_the_legacy_rows_affected_result_shape(bool synchronous)
+    {
+        await using var connection = await OpenAsync();
+        var observer = new BatchObserver();
+        await using var context = CreateContext(connection, observer, extra: observer);
+        context.Plain.AddRange(Enumerable.Range(1, 50).Select(i => new PlainRow { Id = i, Name = $"row-{i}" }));
+        Assert.Equal(50, await SaveAsync(context, synchronous));
+        foreach (var row in context.Plain.Local) { row.Name += "-updated"; }
+        Assert.Equal(50, await SaveAsync(context, synchronous));
+        Assert.NotEmpty(observer.Texts);
+        Assert.All(observer.Texts, sql => Assert.Contains("RETURNING 1", sql, StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Explicit_concurrency_interceptor_policy_is_still_observed(bool synchronous)
+    {
+        await using var connection = await OpenAsync();
+        var policy = new SuppressConcurrency();
+        await using var context = CreateContext(connection, new BatchObserver(), extra: policy);
+        var row = new PlainRow { Id = 1, Name = "original" };
+        context.Plain.Add(row);
+        await context.SaveChangesAsync();
+        await context.Database.ExecuteSqlRawAsync("DELETE FROM bt_batch_plain WHERE \"Id\" = 1");
+        row.Name = "missing row";
+        // The caller explicitly suppresses this conflict; the provider must
+        // still invoke the ordinary EF logger/interceptor policy exactly once.
+        Assert.Equal(1, await SaveAsync(context, synchronous));
+        Assert.Equal(1, policy.Calls);
+        Assert.Equal(0, await context.Plain.CountAsync());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Writes_without_generated_values_use_command_counts_not_returning_rows(bool synchronous)
+    {
+        await using var connection = await OpenAsync();
+        var observer = new BatchObserver();
+        await using var context = CreateContext(connection, observer);
+        var rows = Enumerable.Range(1, 100).Select(i => new PlainRow { Id = i, Name = $"row-{i}" }).ToArray();
+        context.Plain.AddRange(rows);
+        Assert.Equal(100, await SaveAsync(context, synchronous));
+        foreach (var row in rows) { row.Name += "-updated"; }
+        Assert.Equal(100, await SaveAsync(context, synchronous));
+        context.Plain.RemoveRange(rows);
+        Assert.Equal(100, await SaveAsync(context, synchronous));
+        Assert.Equal(0, await context.Plain.CountAsync());
+        Assert.All(observer.Texts, sql => Assert.DoesNotContain("RETURNING", sql, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Stale_updates_and_deletes_use_the_current_statement_count(bool synchronous, bool delete)
+    {
+        await using var connection = await OpenAsync();
+        await using var context = CreateContext(connection, new BatchObserver());
+        var rows = Enumerable.Range(1, 100).Select(i => new PlainRow { Id = i, Name = $"row-{i}" }).ToArray();
+        context.Plain.AddRange(rows);
+        await context.SaveChangesAsync();
+        await context.Database.ExecuteSqlRawAsync("DELETE FROM bt_batch_plain WHERE \"Id\" = 46");
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        if (delete) { context.Plain.RemoveRange(rows); }
+        else { foreach (var row in rows) { row.Name = "must roll back"; } }
+        var failure = await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => SaveAsync(context, synchronous));
+        Assert.Same(rows[45], Assert.Single(failure.Entries).Entity);
+        context.ChangeTracker.Clear();
+        Assert.Equal(99, await context.Plain.CountAsync());
+        Assert.Equal(0, await context.Plain.CountAsync(row => row.Name == "must roll back"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Trigger_suppressed_inserts_are_not_reported_as_successful_writes(bool synchronous)
+    {
+        await using var connection = await OpenAsync();
+        await using var context = CreateContext(connection, new BatchObserver());
+        await context.Database.ExecuteSqlRawAsync("""
+            CREATE FUNCTION pg_temp.bt_skip_insert() RETURNS trigger LANGUAGE plpgsql AS $$
+            BEGIN IF NEW."Name" = 'skip' THEN RETURN NULL; END IF; RETURN NEW; END $$;
+            CREATE TRIGGER bt_skip BEFORE INSERT ON bt_batch_plain FOR EACH ROW EXECUTE FUNCTION pg_temp.bt_skip_insert();
+            """);
+        var rows = Enumerable.Range(1, 100).Select(i => new PlainRow { Id = i, Name = i == 46 ? "skip" : $"row-{i}" }).ToArray();
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        context.Plain.AddRange(rows);
+        var failure = await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => SaveAsync(context, synchronous));
+        Assert.Same(rows[45], Assert.Single(failure.Entries).Entity);
+        Assert.Equal(0, await context.Plain.CountAsync());
+        context.ChangeTracker.Clear();
+        context.Plain.Add(new PlainRow { Id = 101, Name = "recovered" });
+        Assert.Equal(1, await SaveAsync(context, synchronous));
+        await transaction.CommitAsync();
+    }
+
+    [Theory]
     [InlineData(false, false)]
     [InlineData(false, true)]
     [InlineData(true, false)]
@@ -155,13 +257,18 @@ public sealed class BatchingIntegrationTests
         }
     }
 
-    private static BatchContext CreateContext(BlueTuskConnection connection, BatchObserver observer, int? maxBatchSize = null)
+    private static BatchContext CreateContext(BlueTuskConnection connection, BatchObserver observer, int? maxBatchSize = null,
+        IInterceptor? extra = null)
     {
-        var options = new DbContextOptionsBuilder<BatchContext>().UseBlueTusk(connection.ConnectionString, configure =>
+        var builder = new DbContextOptionsBuilder<BatchContext>().UseBlueTusk(connection.ConnectionString, configure =>
         {
             if (maxBatchSize.HasValue) { configure.MaxBatchSize(maxBatchSize.Value); }
-        }).AddInterceptors(observer).Options;
-        var context = new BatchContext(options);
+        }).LogTo((eventId, _) => eventId == RelationalEventId.CommandExecuting, eventData =>
+        {
+            if (eventData is CommandEventData command) { observer.Observe(command.Command, command); }
+        });
+        if (extra is not null) { builder.AddInterceptors(extra); }
+        var context = new BatchContext(builder.Options);
         context.Database.SetDbConnection(connection);
         return context;
     }
@@ -194,12 +301,14 @@ public sealed class BatchingIntegrationTests
     {
         public List<int> Sizes { get; } = [];
         public List<int> TextLengths { get; } = [];
-        private void Observe(DbCommand command, CommandEventData eventData)
+        public List<string> Texts { get; } = [];
+        internal void Observe(DbCommand command, CommandEventData eventData)
         {
             if (eventData.CommandSource == CommandSource.SaveChanges)
             {
                 Sizes.Add(command.CommandText.Count(c => c == ';'));
                 TextLengths.Add(command.CommandText.Length);
+                Texts.Add(command.CommandText);
             }
         }
         public override InterceptionResult<DbDataReader> ReaderExecuting(DbCommand command, CommandEventData eventData,
@@ -209,6 +318,23 @@ public sealed class BatchingIntegrationTests
         {
             Observe(command, eventData);
             return ValueTask.FromResult(result);
+        }
+    }
+
+    private sealed class SuppressConcurrency : SaveChangesInterceptor
+    {
+        public int Calls { get; private set; }
+        public override InterceptionResult ThrowingConcurrencyException(ConcurrencyExceptionEventData eventData,
+            InterceptionResult result)
+        {
+            Calls++;
+            return InterceptionResult.Suppress();
+        }
+        public override ValueTask<InterceptionResult> ThrowingConcurrencyExceptionAsync(
+            ConcurrencyExceptionEventData eventData, InterceptionResult result, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            return ValueTask.FromResult(InterceptionResult.Suppress());
         }
     }
 
