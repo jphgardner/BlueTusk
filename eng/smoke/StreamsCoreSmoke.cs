@@ -22,6 +22,16 @@ try
     {
         throw new InvalidOperationException("Convention mapping differs after publishing.");
     }
+    var populatedRow = new ChangeRow(table, [
+        ChangeColumnValue.FromValue("17"u8, ChangeValueEncoding.Text),
+        ChangeColumnValue.FromValue("42"u8, ChangeValueEncoding.Text),
+        ChangeColumnValue.FromValue("mapped"u8, ChangeValueEncoding.Text),
+        ChangeColumnValue.FromValue("Ready"u8, ChangeValueEncoding.Text),
+    ]);
+    if (mapping.MapRow(populatedRow).Value?.Optional != 42)
+    {
+        throw new InvalidOperationException("Non-null nullable convention mapping differs after publishing.");
+    }
     var explicitMapping = new ChangeEntityMappingBuilder<SmokeRow>().UseConventions(false)
         .Property(value => value.Id).Build(table);
     if (explicitMapping.MapRow(row).Value?.Id != 17) { throw new InvalidOperationException("Explicit mapping differs."); }

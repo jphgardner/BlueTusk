@@ -574,8 +574,41 @@ internal abstract class PropertyBinding<T>
         ChangeColumnDecoder<TProperty>? decoder) =>
         new PropertyBinding<T, TProperty>(property, columnName, expectedTypeOid, decoder);
 
-    public static PropertyBinding<T> CreateDefault(PropertyInfo property, string columnName) =>
-        new DefaultPropertyBinding<T>(property, columnName);
+    public static PropertyBinding<T> CreateDefault(PropertyInfo property, string columnName)
+    {
+        // Keep the known default scalar bindings statically reachable for AOT.
+        // A typed decoder/setter also lets the JIT eliminate transient value-type
+        // boxing; routing every value through object adds an allocation per column.
+        var type = property.PropertyType;
+        if (type == typeof(string)) { return Bind<string>(); }
+        if (type == typeof(byte[])) { return Bind<byte[]>(); }
+        if (type == typeof(bool)) { return Bind<bool>(); }
+        if (type == typeof(short)) { return Bind<short>(); }
+        if (type == typeof(int)) { return Bind<int>(); }
+        if (type == typeof(long)) { return Bind<long>(); }
+        if (type == typeof(float)) { return Bind<float>(); }
+        if (type == typeof(double)) { return Bind<double>(); }
+        if (type == typeof(decimal)) { return Bind<decimal>(); }
+        if (type == typeof(Guid)) { return Bind<Guid>(); }
+        if (type == typeof(DateTime)) { return Bind<DateTime>(); }
+        if (type == typeof(DateTimeOffset)) { return Bind<DateTimeOffset>(); }
+        if (type == typeof(bool?)) { return Bind<bool?>(); }
+        if (type == typeof(short?)) { return Bind<short?>(); }
+        if (type == typeof(int?)) { return Bind<int?>(); }
+        if (type == typeof(long?)) { return Bind<long?>(); }
+        if (type == typeof(float?)) { return Bind<float?>(); }
+        if (type == typeof(double?)) { return Bind<double?>(); }
+        if (type == typeof(decimal?)) { return Bind<decimal?>(); }
+        if (type == typeof(Guid?)) { return Bind<Guid?>(); }
+        if (type == typeof(DateTime?)) { return Bind<DateTime?>(); }
+        if (type == typeof(DateTimeOffset?)) { return Bind<DateTimeOffset?>(); }
+        // Application enum types are not known ahead of time. Their default
+        // parser returns a boxed enum already, so retain the metadata-based path.
+        return new DefaultPropertyBinding<T>(property, columnName);
+
+        PropertyBinding<T> Bind<TValue>() =>
+            new PropertyBinding<T, TValue>(property, columnName, expectedTypeOid: null, decoder: null);
+    }
 }
 
 internal sealed class DefaultPropertyBinding<T> : PropertyBinding<T>
@@ -595,8 +628,8 @@ internal sealed class DefaultPropertyBinding<T> : PropertyBinding<T>
         _acceptsNull = !_propertyType.IsValueType || underlying is not null;
         var target = Expression.Parameter(typeof(T), "target");
         var value = Expression.Parameter(typeof(object), "value");
-        // Default decoding already returns boxed values. Cache the conversion
-        // and setter once without constructing unknown generic types at runtime.
+        // Cache the conversion and setter once without constructing unknown
+        // generic types at runtime. Common scalar types use typed bindings above.
         _setter = Expression.Lambda<Action<T, object?>>(
             Expression.Assign(Expression.Property(target, property), Expression.Convert(value, _propertyType)),
             target, value).Compile(preferInterpretation: !RuntimeFeature.IsDynamicCodeSupported);
@@ -624,7 +657,7 @@ internal sealed class PropertyBinding<T, TProperty> : PropertyBinding<T>
         _setter = Expression.Lambda<Action<T, TProperty>>(
             Expression.Assign(Expression.Property(target, property), value),
             target,
-            value).Compile();
+            value).Compile(preferInterpretation: !RuntimeFeature.IsDynamicCodeSupported);
         _decoder = decoder ?? ChangeValueDecoders.Decode<TProperty>;
     }
 
