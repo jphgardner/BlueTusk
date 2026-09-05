@@ -142,6 +142,60 @@ public sealed class BlueTuskPoolingIntegrationTests
         Assert.Equal(1, dataSource.GetPoolStatistics().Discarded);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Disposing_a_data_source_releases_both_checkout_apis(bool asynchronousDisposal)
+    {
+        await using var dataSource = CreateDataSource(maximumPoolSize: 1);
+        await using var held = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        var backend = await GetBackendProcessIdAsync(held);
+        var completed = new TaskCompletionSource<Exception?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var synchronousCaller = new Thread(() =>
+        {
+            completed.TrySetResult(Record.Exception(() =>
+            {
+                using var unexpectedConnection = dataSource.OpenConnection();
+            }));
+        }) { IsBackground = true };
+        var asynchronousCaller = dataSource.OpenConnectionAsync(CancellationToken.None).AsTask();
+        try
+        {
+            synchronousCaller.Start();
+            await WaitUntilAsync(() => dataSource.GetPoolStatistics().Waiting == 2 &&
+                (synchronousCaller.ThreadState & ThreadState.WaitSleepJoin) != 0);
+
+            if (asynchronousDisposal) { await dataSource.DisposeAsync(); }
+            else { dataSource.Dispose(); }
+
+            Assert.IsType<ObjectDisposedException>(
+                await completed.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+            await Assert.ThrowsAsync<ObjectDisposedException>(
+                () => asynchronousCaller.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Equal(0, dataSource.GetPoolStatistics().Waiting);
+            Assert.Equal(1, dataSource.GetPoolStatistics().Busy);
+            // Disposing the source rejects new leases but must not close a
+            // connection still owned by a caller; it is discarded on return.
+            Assert.Equal(backend, await GetBackendProcessIdAsync(held));
+        }
+        finally
+        {
+            if (synchronousCaller.IsAlive)
+            {
+                try { synchronousCaller.Interrupt(); }
+                catch (ThreadStateException) { }
+            }
+            if ((synchronousCaller.ThreadState & ThreadState.Unstarted) == 0)
+            {
+                Assert.True(synchronousCaller.Join(TimeSpan.FromSeconds(5)));
+            }
+            await held.CloseAsync();
+        }
+        Assert.Equal(0, dataSource.GetPoolStatistics().Total);
+        Assert.Equal(0, dataSource.GetPoolStatistics().Busy);
+        Assert.Equal(0, dataSource.GetPoolStatistics().Idle);
+    }
+
     [Fact]
     public async Task Warm_up_opens_the_minimum_number_of_physical_connections()
     {

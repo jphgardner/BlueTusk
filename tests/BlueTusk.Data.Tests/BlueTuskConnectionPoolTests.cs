@@ -342,6 +342,78 @@ public sealed class BlueTuskConnectionPoolTests
         Assert.Equal(0, pool.Statistics.Waiting);
     }
 
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(false, 8)]
+    [InlineData(true, 1)]
+    [InlineData(true, 8)]
+    public async Task Disposal_wakes_synchronous_and_asynchronous_waiters(
+        bool asynchronousDisposal, int synchronousWaiterCount)
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var lease = await pool.RentAsync(CancellationToken.None);
+        var session = Assert.IsType<FakePhysicalSession>(lease.Session);
+        var completions = Enumerable.Range(0, synchronousWaiterCount)
+            .Select(_ => new TaskCompletionSource<Exception?>(TaskCreationOptions.RunContinuationsAsynchronously))
+            .ToArray();
+        var threads = completions.Select(completion => new Thread(() =>
+        {
+            completion.TrySetResult(Record.Exception(() =>
+            {
+                var unexpectedLease = pool.Rent();
+                pool.Return(unexpectedLease);
+            }));
+        }) { IsBackground = true }).ToArray();
+        var asynchronousWaiters = Enumerable.Range(0, 8)
+            .Select(_ => pool.RentAsync(CancellationToken.None).AsTask()).ToArray();
+        try
+        {
+            foreach (var thread in threads) { thread.Start(); }
+            // The counter increments before Monitor.Wait. Also require each
+            // dedicated caller thread to have entered its blocking wait, so this
+            // covers wakeup rather than only disposal before a checkout starts.
+            await WaitUntilAsync(() =>
+                pool.Statistics.Waiting == synchronousWaiterCount + asynchronousWaiters.Length &&
+                threads.All(thread => (thread.ThreadState & ThreadState.WaitSleepJoin) != 0));
+
+            if (asynchronousDisposal) { await pool.DisposeAsync(); }
+            else { pool.Dispose(); }
+
+            var failures = await Task.WhenAll(completions.Select(completion => completion.Task))
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.All(failures, failure => Assert.IsType<ObjectDisposedException>(failure));
+            foreach (var waiter in asynchronousWaiters)
+            {
+                await Assert.ThrowsAsync<ObjectDisposedException>(
+                    () => waiter.WaitAsync(TimeSpan.FromSeconds(5)));
+            }
+            Assert.Equal(0, pool.Statistics.Waiting);
+            Assert.Equal(1, pool.Statistics.Busy);
+        }
+        finally
+        {
+            // A failing wakeup assertion must not strand test threads. Interrupt
+            // only these dedicated test callers; normal completion never needs it.
+            foreach (var thread in threads)
+            {
+                if (thread.IsAlive)
+                {
+                    try { thread.Interrupt(); }
+                    catch (ThreadStateException) { }
+                }
+                if ((thread.ThreadState & ThreadState.Unstarted) == 0)
+                {
+                    Assert.True(thread.Join(TimeSpan.FromSeconds(5)));
+                }
+            }
+            pool.Return(lease);
+        }
+        Assert.True(session.Disposed);
+        Assert.Equal(0, pool.Statistics.Total);
+        Assert.Equal(0, pool.Statistics.Busy);
+        Assert.Equal(0, pool.Statistics.Idle);
+    }
+
     [Fact]
     public async Task Repeated_waiter_completion_cancellation_and_clear_preserve_lease_ownership()
     {

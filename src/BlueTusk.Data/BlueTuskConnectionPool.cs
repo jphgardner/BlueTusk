@@ -531,10 +531,6 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
         var sessions = DrainIdleSessions(complete: true);
         _shutdown.Cancel();
-        lock (_stateSync)
-        {
-            Monitor.PulseAll(_stateSync);
-        }
         foreach (var session in sessions)
         {
             Discard(session);
@@ -1076,6 +1072,9 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             if (complete)
             {
                 _available.Writer.TryComplete();
+                // Synchronous checkouts wait on the monitor, not the channel.
+                // Wake both kinds of caller for Dispose and DisposeAsync.
+                Monitor.PulseAll(_stateSync);
             }
         }
 
