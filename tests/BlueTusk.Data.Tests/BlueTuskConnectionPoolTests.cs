@@ -275,6 +275,73 @@ public sealed class BlueTuskConnectionPoolTests
         Assert.Equal(0, pool.Statistics.Total);
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Disposal_completes_all_queued_checkouts_without_cancelling_their_callers(
+        bool asynchronousDisposal, bool cancellableCallers)
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var lease = await pool.RentAsync(CancellationToken.None);
+        var session = Assert.IsType<FakePhysicalSession>(lease.Session);
+        using var cancellation = new CancellationTokenSource();
+        var token = cancellableCallers ? cancellation.Token : CancellationToken.None;
+        var waiters = Enumerable.Range(0, 64)
+            .Select(_ => pool.RentAsync(token).AsTask()).ToArray();
+        await WaitUntilAsync(() => pool.Statistics.Waiting == waiters.Length);
+
+        if (asynchronousDisposal) { await pool.DisposeAsync(); }
+        else { pool.Dispose(); }
+
+        foreach (var waiter in waiters)
+        {
+            await Assert.ThrowsAsync<ObjectDisposedException>(
+                () => waiter.WaitAsync(TimeSpan.FromSeconds(5)));
+        }
+        Assert.False(cancellation.IsCancellationRequested);
+        Assert.Equal(0, pool.Statistics.Waiting);
+        Assert.Equal(1, pool.Statistics.Busy);
+        pool.Return(lease);
+        Assert.True(session.Disposed);
+        Assert.Equal(0, pool.Statistics.Total);
+        Assert.Equal(0, pool.Statistics.Busy);
+        Assert.Equal(0, pool.Statistics.Idle);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Disposal_still_cancels_in_flight_session_creation_and_warmup(bool warmup)
+    {
+        var started = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var pool = CreatePool(
+            minimumSize: warmup ? 1 : 0,
+            maximumSize: 1,
+            factory: async token =>
+            {
+                started.TrySetResult(token);
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+                return new FakePhysicalSession();
+            });
+        using var caller = new CancellationTokenSource();
+        Task pending = warmup
+            ? pool.WarmUpAsync(caller.Token).AsTask()
+            : pool.RentAsync(caller.Token).AsTask();
+        var creationToken = await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        await pool.DisposeAsync();
+
+        await Assert.ThrowsAsync<ObjectDisposedException>(
+            () => pending.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.True(creationToken.IsCancellationRequested);
+        Assert.False(caller.IsCancellationRequested);
+        Assert.Equal(0, pool.Statistics.Total);
+        Assert.Equal(0, pool.Statistics.Busy);
+        Assert.Equal(0, pool.Statistics.Waiting);
+    }
+
     [Fact]
     public async Task Repeated_waiter_completion_cancellation_and_clear_preserve_lease_ownership()
     {

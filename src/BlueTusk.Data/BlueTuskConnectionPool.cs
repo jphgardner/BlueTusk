@@ -755,10 +755,6 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskPoolSlot> ReadAvailableAsync(CancellationToken cancellationToken)
     {
-        using var linkedCancellation = cancellationToken.CanBeCanceled
-            ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdown.Token)
-            : null;
-        var waitCancellationToken = linkedCancellation?.Token ?? _shutdown.Token;
         Interlocked.Increment(ref _waiting);
         if (Volatile.Read(ref _fastSession) is not null)
         {
@@ -768,7 +764,10 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         BlueTuskDiagnostics.PoolWaiters.Add(1);
         try
         {
-            return await _available.Reader.ReadAsync(waitCancellationToken).ConfigureAwait(false);
+            // Disposal completes this channel after draining idle sessions, so its
+            // completion already wakes queued readers. Only the caller token is
+            // needed here; connection creation and warmup still link shutdown.
+            return await _available.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
