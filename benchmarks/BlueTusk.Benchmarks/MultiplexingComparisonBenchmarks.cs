@@ -95,14 +95,23 @@ public class MultiplexingComparisonBenchmarks : IAsyncDisposable
             _npgsqlPooledCommands[index] = npgsqlPooledCommand;
         }
 
-        _ = await BlueTuskConcurrentScalarBurstAsync();
-        _ = await BlueTuskPooledConcurrentScalarBurstAsync();
-        _ = await NpgsqlConcurrentScalarBurstAsync();
-        _ = await NpgsqlPooledConcurrentScalarBurstAsync();
-        _ = await BlueTuskReusedScalarBurstAsync();
-        _ = await BlueTuskPooledReusedScalarBurstAsync();
-        _ = await NpgsqlReusedScalarBurstAsync();
-        _ = await NpgsqlPooledReusedScalarBurstAsync();
+        VerifyBurstResult(await BlueTuskConcurrentScalarBurstAsync());
+        VerifyBurstResult(await BlueTuskPooledConcurrentScalarBurstAsync());
+        VerifyBurstResult(await NpgsqlConcurrentScalarBurstAsync());
+        VerifyBurstResult(await NpgsqlPooledConcurrentScalarBurstAsync());
+        VerifyBurstResult(await BlueTuskReusedScalarBurstAsync());
+        VerifyBurstResult(await BlueTuskPooledReusedScalarBurstAsync());
+        VerifyBurstResult(await NpgsqlReusedScalarBurstAsync());
+        VerifyBurstResult(await NpgsqlPooledReusedScalarBurstAsync());
+    }
+
+    private static void VerifyBurstResult(int actual)
+    {
+        const int expected = BurstSize * (BurstSize - 1) / 2;
+        if (actual != expected)
+        {
+            throw new InvalidOperationException($"Scalar burst returned {actual}; expected {expected}.");
+        }
     }
 
     [GlobalCleanup]

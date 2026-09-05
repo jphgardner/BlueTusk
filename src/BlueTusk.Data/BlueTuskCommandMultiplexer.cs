@@ -170,7 +170,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
     private async Task WorkerAsync(int workerIndex)
     {
         BlueTuskConnection? connection = null;
-        var buffers = new PipelineWorkerBuffers(_options.MaxPipelineCommands);
+        var buffers = new PipelineWorkerBuffers(this, _options.MaxPipelineCommands);
         var processedOnLease = 0;
         try
         {
@@ -453,6 +453,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                         0,
                         activeCount);
             Exception? cleanupException = null;
+            buffers.ActiveConnection = connection;
             try
             {
                 Interlocked.Increment(ref _pipelineFlushes);
@@ -461,60 +462,10 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 await connection.Session.ExecuteMultiplexedPipelineAsync(
                     commands,
                     groupCancellationTokens,
-                    index => activeRequests[index].Command
-                        .SetMultiplexedPipelineActiveConnection(connection),
-                    index => activeRequests[index].Command
-                        .CompleteMultiplexedPipelineExecution(),
-                    CompleteOutcome,
+                    buffers.GroupStarting,
+                    buffers.GroupCompleted,
+                    buffers.OutcomeCompleted,
                     _shutdown.Token).ConfigureAwait(false);
-
-                void CompleteOutcome(
-                    int index,
-                    BlueTuskMultiplexedPipelineOutcome outcome)
-                {
-                    var request = activeRequests[index];
-                    var scope = buffers.Scopes[index];
-                    if (outcome.Cancellation is not null)
-                    {
-                        Interlocked.Increment(ref _canceled);
-                        RecordOutcome("canceled");
-                        if (request.CancellationToken.IsCancellationRequested)
-                        {
-                            request.TrySetCanceled(request.CancellationToken);
-                        }
-                        else if (scope?.TimedOut == true)
-                        {
-                            request.TrySetException(
-                                new TimeoutException(
-                                    $"The command exceeded its {request.Command.CommandTimeout}-second timeout.",
-                                    outcome.Cancellation));
-                        }
-                        else
-                        {
-                            request.TrySetException(
-                                new ObjectDisposedException(nameof(BlueTuskDataSource)));
-                        }
-
-                        return;
-                    }
-
-                    if (outcome.Error is not null)
-                    {
-                        Interlocked.Increment(ref _faulted);
-                        RecordOutcome("faulted");
-                        request.TrySetException(
-                            request.Command.TranslateMultiplexedPipelineError(outcome.Error));
-                    }
-                    else
-                    {
-                        Interlocked.Increment(ref _completed);
-                        RecordOutcome("completed");
-                        request.TrySetResult(
-                            new MultiplexedCommandResult(
-                                outcome.Result,
-                                outcome.ScalarResult));
-                    }
-                }
             }
             catch (Exception exception)
             {
@@ -534,7 +485,9 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                     var request = activeRequests[index];
                     try
                     {
-                        request.Command.CompleteMultiplexedPipelineExecution();
+                        // The session clears the active connection before publishing
+                        // each outcome. Do not clear it again after the caller may
+                        // have reused this command on a different worker.
                         buffers.Scopes[index]?.Dispose();
                     }
                     catch (Exception exception)
@@ -556,6 +509,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         }
         finally
         {
+            buffers.ActiveConnection = null;
             for (var index = 0; index < requestCount; index++)
             {
                 buffers.Requests[index] = null!;
@@ -563,6 +517,49 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 buffers.Scopes[index] = null;
                 buffers.CancellationTokens[index] = default;
             }
+        }
+    }
+
+    private void CompletePipelineOutcome(
+        PipelineWorkerBuffers buffers,
+        int index,
+        BlueTuskMultiplexedPipelineOutcome outcome)
+    {
+        var request = buffers.Requests[index];
+        var scope = buffers.Scopes[index];
+        if (outcome.Cancellation is not null)
+        {
+            Interlocked.Increment(ref _canceled);
+            RecordOutcome("canceled");
+            if (request.CancellationToken.IsCancellationRequested)
+            {
+                request.TrySetCanceled(request.CancellationToken);
+            }
+            else if (scope?.TimedOut == true)
+            {
+                request.TrySetException(
+                    new TimeoutException(
+                        $"The command exceeded its {request.Command.CommandTimeout}-second timeout.",
+                        outcome.Cancellation));
+            }
+            else
+            {
+                request.TrySetException(new ObjectDisposedException(nameof(BlueTuskDataSource)));
+            }
+            return;
+        }
+
+        if (outcome.Error is not null)
+        {
+            Interlocked.Increment(ref _faulted);
+            RecordOutcome("faulted");
+            request.TrySetException(request.Command.TranslateMultiplexedPipelineError(outcome.Error));
+        }
+        else
+        {
+            Interlocked.Increment(ref _completed);
+            RecordOutcome("completed");
+            request.TrySetResult(new MultiplexedCommandResult(outcome.Result, outcome.ScalarResult));
         }
     }
 
@@ -931,13 +928,36 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
     private sealed class PipelineWorkerBuffers
     {
-        internal PipelineWorkerBuffers(int capacity)
+        private readonly BlueTuskCommandMultiplexer _owner;
+
+        internal PipelineWorkerBuffers(BlueTuskCommandMultiplexer owner, int capacity)
         {
+            _owner = owner;
             Requests = new IMultiplexedCommandRequest[capacity];
             Commands = new BlueTuskMultiplexedPipelineCommand[capacity];
             Scopes = new PipelineCancellationScope?[capacity];
             CancellationTokens = new CancellationToken[capacity];
+            GroupStarting = StartGroup;
+            GroupCompleted = CompleteGroup;
+            OutcomeCompleted = CompleteOutcome;
         }
+
+        internal BlueTuskConnection? ActiveConnection { get; set; }
+
+        internal Action<int> GroupStarting { get; }
+
+        internal Action<int> GroupCompleted { get; }
+
+        internal Action<int, BlueTuskMultiplexedPipelineOutcome> OutcomeCompleted { get; }
+
+        private void StartGroup(int index) =>
+            Requests[index].Command.SetMultiplexedPipelineActiveConnection(ActiveConnection!);
+
+        private void CompleteGroup(int index) =>
+            Requests[index].Command.CompleteMultiplexedPipelineExecution();
+
+        private void CompleteOutcome(int index, BlueTuskMultiplexedPipelineOutcome outcome) =>
+            _owner.CompletePipelineOutcome(this, index, outcome);
 
         internal IMultiplexedCommandRequest[] Requests { get; }
 

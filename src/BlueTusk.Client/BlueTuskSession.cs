@@ -1490,7 +1490,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             InvalidateUnnamedStatement();
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
             await _connection.WriteAsync(
-                output => WriteMultiplexedPipeline(output, commands),
+                commands,
+                static (output, state) => WriteMultiplexedPipeline(output, state),
                 dispatchCancellationToken).ConfigureAwait(false);
             messagesWritten = true;
 
