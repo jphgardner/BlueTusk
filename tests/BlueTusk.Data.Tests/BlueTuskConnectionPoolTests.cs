@@ -275,6 +275,36 @@ public sealed class BlueTuskConnectionPoolTests
         Assert.Equal(0, pool.Statistics.Total);
     }
 
+    [Fact]
+    public async Task Repeated_waiter_completion_cancellation_and_clear_preserve_lease_ownership()
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var lease = await pool.RentAsync(CancellationToken.None);
+        for (var iteration = 0; iteration < 64; iteration++)
+        {
+            var success = pool.RentAsync(CancellationToken.None).AsTask();
+            using var cancellation = new CancellationTokenSource();
+            var canceled = pool.RentAsync(cancellation.Token).AsTask();
+            await WaitUntilAsync(() => pool.Statistics.Waiting == 2);
+
+            // Exercise successful and exceptional async states repeatedly, including
+            // a discarded generation. AsTask consumes each pooled ValueTask once;
+            // the resulting Task must remain safe to await more than once.
+            if (iteration % 4 == 0) { await pool.ClearAsync(); }
+            cancellation.Cancel();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => canceled);
+            pool.Return(lease);
+            lease = await success;
+            Assert.Same(lease, await success);
+            Assert.Equal(1, pool.Statistics.Total);
+            Assert.Equal(1, pool.Statistics.Busy);
+            Assert.Equal(0, pool.Statistics.Waiting);
+        }
+        pool.Return(lease);
+        Assert.Equal(1, pool.Statistics.Idle);
+        Assert.Equal(0, pool.Statistics.Busy);
+    }
+
     private static BlueTuskConnectionPool CreatePool(
         int minimumSize = 0,
         int maximumSize = 10,

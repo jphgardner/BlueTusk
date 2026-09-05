@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
@@ -230,6 +231,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         return await RentAsync(allowPendingReset, cancellationToken).ConfigureAwait(false);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskPooledSession> RentAsyncSlow(
         long started,
         bool hasSlot,
@@ -750,6 +752,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskPoolSlot> ReadAvailableAsync(CancellationToken cancellationToken)
     {
         using var linkedCancellation = cancellationToken.CanBeCanceled
