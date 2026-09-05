@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ public sealed class EfChangeMappingValidationException : Exception
 
 public static class BlueTuskEfChangeMappingFactory
 {
-    public static ChangeEntityMapping<TEntity> Create<TEntity>(
+    public static ChangeEntityMapping<TEntity> Create<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TEntity>(
         IModel model,
         ChangeTable relation,
         ChangeMappingPolicy? policy = null)
@@ -137,7 +138,7 @@ public static class BlueTuskEfChangeMappingFactory
         return builder.Build(relation, policy);
     }
 
-    private static void AddProperty<TEntity>(
+    private static void AddProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TEntity>(
         ChangeEntityMappingBuilder<TEntity> builder,
         PropertyInfo property,
         string columnName)

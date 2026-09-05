@@ -19,6 +19,27 @@ Change mapped = mapping.Map(dynamicChange);
 
 Property setters and default decoders are compiled once while the mapping is built. The default decoder handles the common pgoutput text forms and fixed-width binary scalar forms without reflection per row. A custom decoder can be supplied for application types. The EF adapter will build the same core mapping contract from EF metadata; it does not create a second mapping system.
 
+Convention mapping preserves the model's public-property metadata for trimming.
+It caches a setter and decoder without constructing new generic types at runtime;
+NativeAOT uses expression interpretation when dynamic code is unavailable.
+Generic application wrappers around the builder must carry the same
+`DynamicallyAccessedMembers(PublicProperties)` requirement on their model type.
+Explicit custom decoders remain supported. This does not make EF model discovery
+or every optional connector NativeAOT-compatible; validate the packages and
+mapping configuration used by the application.
+
+The database-free core smoke application can be published and run directly:
+
+```powershell
+dotnet publish tests/BlueTusk.Streams.NativeAotSmoke -c Release -r win-x64 -o artifacts/streams-aot
+./artifacts/streams-aot/BlueTusk.Streams.NativeAotSmoke.exe
+```
+
+It checks convention and explicit mappings, nullable/enum values, and small and
+4 MiB spool replay. To exercise trimming separately, publish with
+`-p:PublishAot=false -p:PublishTrimmed=true -p:TrimMode=full`. Choose the runtime
+identifier for the target OS and run the produced executable on that OS.
+
 `BlueTusk.Streams.EntityFrameworkCore` derives the table/schema, primary-key order, CLR properties, and column overrides from an EF `IModel`:
 
 ```csharp

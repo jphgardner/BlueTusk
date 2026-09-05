@@ -11,6 +11,7 @@
   <Import Project="..\..\eng\versions\Streams.props" />
 
   <ItemGroup>
+    <PackageReference Include="System.IO.Hashing" />
     <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
     <ProjectReference Include="..\BlueTusk.Replication.PgOutput\BlueTusk.Replication.PgOutput.csproj" />
   </ItemGroup>

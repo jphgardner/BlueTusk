@@ -116,7 +116,7 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
                 GetRequiredText(row, 2, "tablename"),
                 columnsJson is null
                     ? null
-                    : JsonSerializer.Deserialize<string[]>(columnsJson) ??
+                    : JsonSerializer.Deserialize(columnsJson, BlueTuskReplicationJsonContext.Default.StringArray) ??
                         throw new BlueTuskReplicationProtocolException(
                             "Publication columns were not a JSON array."),
                 GetOptionalText(row, 4));

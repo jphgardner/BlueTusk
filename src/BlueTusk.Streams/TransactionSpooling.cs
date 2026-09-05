@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Buffers.Binary;
+using System.IO.Hashing;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -202,6 +203,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
         private int _recordCount;
         private bool _completed;
         private readonly byte[] _recordHeader = new byte[8];
+        private Crc32? _recordChecksum;
 
         public FileTransactionSpoolWriter(
             FileTransactionSpool owner,
@@ -277,7 +279,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
             BinaryPrimitives.WriteInt32LittleEndian(_recordHeader, protectedData.Length);
             BinaryPrimitives.WriteUInt32LittleEndian(
                 _recordHeader.AsSpan(4),
-                Crc32.Compute(protectedData.Span));
+                Crc32.HashToUInt32(protectedData.Span));
             Reserve(_recordHeader.Length + protectedData.Length);
             try
             {
@@ -307,7 +309,10 @@ public sealed class FileTransactionSpool : ITransactionSpool
             }
 
             var stream = RequireActive();
-            using var record = new PooledSegmentBufferWriter(_maxRecordBytes);
+            // One incremental hasher per writer, reused across its records.
+            // CRC-32/IEEE and the little-endian spool format stay unchanged.
+            using var record = new PooledSegmentBufferWriter(
+                _maxRecordBytes, _recordChecksum ??= new Crc32());
             serializer(record, state);
             record.WriteRecordHeader();
             Reserve(_recordHeader.Length + record.WrittenCount);
@@ -410,11 +415,13 @@ public sealed class FileTransactionSpool : ITransactionSpool
         private byte[]? _current;
         private int _currentWritten;
         private int _writtenCount;
-        private uint _checksumState = uint.MaxValue;
+        private readonly Crc32 _checksum;
 
-        internal PooledSegmentBufferWriter(int maximumLength)
+        internal PooledSegmentBufferWriter(int maximumLength, Crc32 checksum)
         {
             _maximumLength = maximumLength;
+            _checksum = checksum;
+            _checksum.Reset();
             _current = ArrayPool<byte>.Shared.Rent(SegmentSize);
             _currentWritten = 8;
             _segments.Add(new Segment(_current.AsMemory(0, _currentWritten), _current));
@@ -422,7 +429,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
 
         internal int WrittenCount => _writtenCount;
 
-        internal uint Checksum => ~_checksumState;
+        internal uint Checksum => _checksum.GetCurrentHashAsUInt32();
 
         internal void WriteRecordHeader()
         {
@@ -441,9 +448,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
                 throw new ArgumentOutOfRangeException(nameof(count));
             }
 
-            _checksumState = Crc32.Append(
-                _checksumState,
-                _current.AsSpan(_currentWritten, count));
+            _checksum.Append(_current.AsSpan(_currentWritten, count));
             _currentWritten += count;
             _writtenCount += count;
             _segments[^1] = new Segment(
@@ -476,7 +481,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
                     $"A spool record exceeds the {_maximumLength}-byte record limit.");
             }
 
-            _checksumState = Crc32.Append(_checksumState, source.Span);
+            _checksum.Append(source.Span);
             _writtenCount += source.Length;
             _current = null;
             _currentWritten = 0;
@@ -627,7 +632,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
                         recordLength,
                         cancellationToken).ConfigureAwait(false);
                 var expectedChecksum = BinaryPrimitives.ReadUInt32LittleEndian(recordHeader.AsSpan(4));
-                if (Crc32.Compute(protectedData.Span) != expectedChecksum)
+                if (Crc32.HashToUInt32(protectedData.Span) != expectedChecksum)
                 {
                     throw new TransactionSpoolIntegrityException("A transaction spool record failed its integrity check.");
                 }
@@ -845,43 +850,5 @@ public sealed class FileTransactionSpool : ITransactionSpool
         public byte[] Protect(ReadOnlySpan<byte> plaintext) => plaintext.ToArray();
 
         public byte[] Unprotect(ReadOnlySpan<byte> protectedData) => protectedData.ToArray();
-    }
-
-    private static class Crc32
-    {
-        private static readonly uint[] Table = CreateTable();
-
-        public static uint Compute(ReadOnlySpan<byte> data)
-        {
-            var value = Append(uint.MaxValue, data);
-            return ~value;
-        }
-
-        public static uint Append(uint value, ReadOnlySpan<byte> data)
-        {
-            foreach (var item in data)
-            {
-                value = (value >> 8) ^ Table[(value ^ item) & 0xFF];
-            }
-
-            return value;
-        }
-
-        private static uint[] CreateTable()
-        {
-            var table = new uint[256];
-            for (uint index = 0; index < table.Length; index++)
-            {
-                var value = index;
-                for (var bit = 0; bit < 8; bit++)
-                {
-                    value = (value >> 1) ^ (0xEDB88320U & (uint)-(int)(value & 1));
-                }
-
-                table[index] = value;
-            }
-
-            return table;
-        }
     }
 }

@@ -1,9 +1,11 @@
 using System.Buffers.Binary;
 using System.Buffers.Text;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -144,7 +146,7 @@ public sealed record ChangePropertyMapping(
     string ColumnName,
     uint? ExpectedTypeOid);
 
-public sealed class ChangeEntityMappingBuilder<T>
+public sealed class ChangeEntityMappingBuilder<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>
     where T : class, new()
 {
     private readonly Dictionary<string, PropertyBinding<T>> _bindings =
@@ -572,16 +574,36 @@ internal abstract class PropertyBinding<T>
         ChangeColumnDecoder<TProperty>? decoder) =>
         new PropertyBinding<T, TProperty>(property, columnName, expectedTypeOid, decoder);
 
-    public static PropertyBinding<T> CreateDefault(PropertyInfo property, string columnName)
+    public static PropertyBinding<T> CreateDefault(PropertyInfo property, string columnName) =>
+        new DefaultPropertyBinding<T>(property, columnName);
+}
+
+internal sealed class DefaultPropertyBinding<T> : PropertyBinding<T>
+    where T : class, new()
+{
+    private readonly Action<T, object?> _setter;
+    private readonly Type _propertyType;
+    private readonly Type _decodeType;
+    private readonly bool _acceptsNull;
+
+    public DefaultPropertyBinding(PropertyInfo property, string columnName)
+        : base(property, columnName, expectedTypeOid: null)
     {
-        var bindingType = typeof(PropertyBinding<,>).MakeGenericType(typeof(T), property.PropertyType);
-        return (PropertyBinding<T>)Activator.CreateInstance(
-            bindingType,
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-            binder: null,
-            [property, columnName, null, null],
-            culture: null)!;
+        _propertyType = property.PropertyType;
+        var underlying = Nullable.GetUnderlyingType(_propertyType);
+        _decodeType = underlying ?? _propertyType;
+        _acceptsNull = !_propertyType.IsValueType || underlying is not null;
+        var target = Expression.Parameter(typeof(T), "target");
+        var value = Expression.Parameter(typeof(object), "value");
+        // Default decoding already returns boxed values. Cache the conversion
+        // and setter once without constructing unknown generic types at runtime.
+        _setter = Expression.Lambda<Action<T, object?>>(
+            Expression.Assign(Expression.Property(target, property), Expression.Convert(value, _propertyType)),
+            target, value).Compile(preferInterpretation: !RuntimeFeature.IsDynamicCodeSupported);
     }
+
+    public override void Set(T target, ChangeColumn column, ChangeColumnValue value) =>
+        _setter(target, ChangeValueDecoders.DecodeDefault(_propertyType, _decodeType, _acceptsNull, column, value));
 }
 
 internal sealed class PropertyBinding<T, TProperty> : PropertyBinding<T>
@@ -612,6 +634,28 @@ internal sealed class PropertyBinding<T, TProperty> : PropertyBinding<T>
 
 public static class ChangeValueDecoders
 {
+    internal static object? DecodeDefault(Type propertyType, Type decodeType, bool acceptsNull,
+        ChangeColumn column, ChangeColumnValue value)
+    {
+        ArgumentNullException.ThrowIfNull(column);
+        ArgumentNullException.ThrowIfNull(value);
+        if (value.State == ChangeColumnState.DatabaseNull)
+        {
+            return acceptsNull ? null : throw new InvalidOperationException(
+                $"Database null cannot be assigned to non-nullable {propertyType.FullName}.");
+        }
+        if (value.State != ChangeColumnState.Value)
+        {
+            throw new InvalidOperationException($"Column state {value.State} does not contain a decodable value.");
+        }
+        return value.Encoding switch
+        {
+            ChangeValueEncoding.Text => DecodeText(decodeType, value.Data.Span),
+            ChangeValueEncoding.Binary => DecodeBinary(decodeType, value.Data.Span),
+            _ => throw new InvalidOperationException("A value must declare text or binary encoding."),
+        };
+    }
+
     public static T Decode<T>(ChangeColumn column, ChangeColumnValue value)
     {
         ArgumentNullException.ThrowIfNull(column);

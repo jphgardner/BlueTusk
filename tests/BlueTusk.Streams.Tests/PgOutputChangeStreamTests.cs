@@ -12,6 +12,7 @@ namespace BlueTusk.Streams.Tests;
 
 public sealed class PgOutputChangeStreamTests
 {
+    private static readonly int[] SpoolSegmentLengths = [131072, 0, 9, 4194304, 17, 65536];
     private static readonly DateTimeOffset Timestamp =
         new(2026, 8, 3, 12, 0, 0, TimeSpan.Zero);
 
@@ -195,6 +196,65 @@ public sealed class PgOutputChangeStreamTests
         {
             Directory.Delete(spoolDirectory, recursive: true);
         }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Alternating_spool_segments_reset_checksums_and_preserve_legacy_records(bool protectedRecords)
+    {
+        var directory = CreateTemporaryDirectory();
+        try
+        {
+            var protector = protectedRecords ? new TransactionSpoolCompatibilityTests.TestProtector() : null;
+            var spool = new FileTransactionSpool(new FileTransactionSpoolOptions
+            {
+                DirectoryPath = directory, MaxStorageBytes = 32 * 1024 * 1024,
+                MaxRecordBytes = 8 * 1024 * 1024, Protector = protector,
+            });
+            var payloads = SpoolSegmentLengths
+                .Select(TransactionSpoolCompatibilityTests.CreatePayload).ToArray();
+            var messages = new List<BlueTuskPgOutputEnvelope>
+            {
+                Envelope(Relation(
+                    new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1),
+                    new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "payload", 17, -1),
+                    new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "tail", 25, -1))),
+                Envelope(new BlueTuskPgOutputStreamStart(913, true)),
+            };
+            for (var i = 0; i < payloads.Length; i++)
+            {
+                messages.Add(Envelope(new BlueTuskPgOutputInsert(913, 7,
+                    Tuple(Binary(BitConverter.GetBytes(i)), Binary(payloads[i]), Text($"tail-{i}")))));
+            }
+            messages.Add(Envelope(new BlueTuskPgOutputStreamStop()));
+            messages.Add(Envelope(new BlueTuskPgOutputStreamCommit(913, Lsn(400), Lsn(420), Timestamp)));
+            var stream = new PgOutputChangeStream(Messages(messages.ToArray()), SourceIdentity(),
+                new TransactionAssemblyOptions
+                {
+                    MaxInMemoryTransactionBytes = 64, MaxTransactionBytes = 16 * 1024 * 1024,
+                    MaxSpoolBytes = 32 * 1024 * 1024, SpoolDirectory = directory,
+                }, spool);
+            await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+            Assert.True(await enumerator.MoveNextAsync());
+            var delivery = enumerator.Current;
+            Assert.True(delivery.Transaction.Changes.IsSpooled);
+            var file = await File.ReadAllBytesAsync(Assert.Single(Directory.GetFiles(directory, "*.ready")));
+            TransactionSpoolCompatibilityTests.AssertLegacyRecords(file, payloads.Length, protector?.Id ?? "none");
+            var changes = await delivery.Transaction.Changes.MaterializeAsync();
+            Assert.Equal(payloads.Length, changes.Count);
+            for (var i = 0; i < payloads.Length; i++)
+            {
+                var row = Assert.IsType<InsertChange>(changes[i]).NewRow;
+                Assert.True(payloads[i].AsSpan().SequenceEqual(row[1].Data.Span));
+                Assert.Equal($"tail-{i}", Encoding.UTF8.GetString(row[2].Data.Span));
+            }
+            await delivery.AcknowledgeAsync();
+            Assert.Equal(0, spool.ReservedBytes);
+            Assert.Empty(Directory.GetFiles(directory));
+            Assert.False(await enumerator.MoveNextAsync());
+        }
+        finally { Directory.Delete(directory, recursive: true); }
     }
 
     [Fact]

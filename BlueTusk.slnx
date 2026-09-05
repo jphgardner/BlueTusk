@@ -188,6 +188,7 @@
     <Project Path="tests/BlueTusk.Streams.Aspire.Tests/BlueTusk.Streams.Aspire.Tests.csproj" />
     <Project Path="tests/BlueTusk.Streams.DependencyInjection.Tests/BlueTusk.Streams.DependencyInjection.Tests.csproj" />
     <Project Path="tests/BlueTusk.Streams.EntityFrameworkCore.Tests/BlueTusk.Streams.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Streams.NativeAotSmoke/BlueTusk.Streams.NativeAotSmoke.csproj" />
     <Project Path="tests/BlueTusk.Streams.Tests/BlueTusk.Streams.Tests.csproj" />
   </Folder>
   <Folder Name="/Streams/Tooling/">
