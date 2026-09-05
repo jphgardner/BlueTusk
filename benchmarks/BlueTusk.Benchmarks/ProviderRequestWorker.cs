@@ -46,6 +46,16 @@ internal sealed class ProviderRequestWorker(ProviderRequestFixture fixture, int 
     {
         _lifetime = CancellationTokenSource.CreateLinkedTokenSource(token);
         var feature = fixture.Options.Feature;
+        if (fixture.IsContention)
+        {
+            // A worker owns a command, not a physical lease: opening one connection
+            // per worker here would deadlock initialization against the four-slot pool.
+            if (feature.Contains("-reused-", StringComparison.Ordinal))
+            {
+                _prepared = CreateSharedScalarCommand(); // Reused, not explicitly prepared.
+            }
+            return;
+        }
         if (feature == "warm-pool-checkout" || feature.StartsWith("ef-", StringComparison.Ordinal))
         {
             return;
@@ -116,6 +126,19 @@ internal sealed class ProviderRequestWorker(ProviderRequestFixture fixture, int 
         long expected;
         switch (fixture.Options.Feature)
         {
+            case "pooled-scalar":
+            case "multiplexed-scalar":
+                await using (var command = CreateSharedScalarCommand())
+                {
+                    result = await ScalarAsync(command, token);
+                }
+                expected = workerIndex;
+                break;
+            case "pooled-reused-scalar":
+            case "multiplexed-reused-scalar":
+                result = await ScalarAsync(_prepared!, token);
+                expected = workerIndex;
+                break;
             case "warm-pool-checkout":
                 await using (var connection = await fixture.Source.OpenConnectionAsync(token))
                 {
@@ -221,6 +244,21 @@ internal sealed class ProviderRequestWorker(ProviderRequestFixture fixture, int 
         {
             throw new InvalidOperationException($"{fixture.Options.Feature} returned {result}; expected {expected}.");
         }
+    }
+
+    private DbCommand CreateSharedScalarCommand()
+    {
+        var command = fixture.Source.CreateCommand("SELECT $1::int4");
+        command.CommandTimeout = 0;
+        if (command is BlueTuskCommand blue)
+        {
+            blue.Parameters.Add(new BlueTuskParameter<int>(workerIndex));
+        }
+        else
+        {
+            ((NpgsqlCommand)command).Parameters.Add(new NpgsqlParameter<int> { TypedValue = workerIndex });
+        }
+        return command;
     }
 
     private DbCommand CreateCommand(string sql)

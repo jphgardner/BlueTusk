@@ -37,8 +37,10 @@ if ([string]::IsNullOrWhiteSpace($env:BLUETUSK_BENCHMARK_CONNECTION_STRING))
 }
 $contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw | ConvertFrom-Json
 if ($Features.Count -eq 0) { $Features = @($contract.workloads.Provider.features) }
+$captureFeatures = @($contract.workloads.Provider.features) + @(
+    'pooled-scalar', 'pooled-reused-scalar', 'multiplexed-scalar', 'multiplexed-reused-scalar')
 if (@($Features | Select-Object -Unique).Count -ne $Features.Count -or
-    @($Features | Where-Object { $_ -cnotin $contract.workloads.Provider.features }).Count -ne 0 -or
+    @($Features | Where-Object { $_ -cnotin $captureFeatures }).Count -ne 0 -or
     @($Concurrency | Select-Object -Unique).Count -ne $Concurrency.Count)
 {
     throw 'Features and concurrency must contain unique, recognized cases.'

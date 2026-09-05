@@ -1,7 +1,7 @@
 # Provider request-level performance capture
 
 This adapter measures all 16 Provider comparison features through BlueTusk and
-Npgsql 10.0.3. It supports Windows x64 and Linux x64, configurable concurrency
+Npgsql 10.0.3, plus four optional pool-contention probes. It supports Windows x64 and Linux x64, configurable concurrency
 up to 256, and both plaintext and TLS PostgreSQL connections. It records every
 individual operation, rather than percentiles of averaged operation blocks.
 
@@ -83,8 +83,48 @@ discard overflow and treat the remaining samples as a complete run.
 Provide enough database capacity. Notification tests need two connections per
 worker; most other cases need one. Preflight requires `max_connections` of at
 least `2 * concurrency + 10` for notification delivery and `concurrency + 10`
-otherwise. This is not a guarantee of sufficient RAM, CPU or free connection
+for the other original features. The optional four-slot contention probes require
+`max_connections >= 14`, regardless of worker count. This is not a guarantee of sufficient RAM, CPU or free connection
 slots: provision and attest the dedicated runner/database before a full run.
+
+## Measure pool saturation and multiplexing
+
+The original 16-feature adapters provision enough connections for workers that
+hold their own leases. Sharing a pool in those cases does **not** mean that the
+pool is saturated. Use these additional features to measure many requests
+competing for only four physical connections:
+
+| Feature | Multiplexing | Command lifetime |
+|---|---|---|
+| `pooled-scalar` | Disabled | New command per request |
+| `pooled-reused-scalar` | Disabled | One reused command per worker |
+| `multiplexed-scalar` | Enabled | New command per request |
+| `multiplexed-reused-scalar` | Enabled | One reused command per worker |
+
+Select them explicitly with `-Features`. The default remains the original
+16-feature release matrix; these probes neither replace it nor certify its
+coverage. For example, use `-Features pooled-reused-scalar,multiplexed-reused-scalar`
+with `-Concurrency 1,64,256`. Keep the same trial counts, observation windows,
+transport and sample budgets for both providers.
+
+Every worker issues `SELECT $1::int4` with its own typed integer parameter and
+checks its own returned value. Commands belong to the shared data source;
+workers do not hold a physical connection between requests. A reused command is
+not explicitly prepared. Both providers use pool size four and command timeout
+zero, with explicit request cancellation tokens. BlueTusk's multiplexing probe
+uses four workers, a 256-request queue, up to 64 commands per pipeline and 65,536
+commands per lease, matching the existing burst benchmark. The options are
+recorded, not presented as automatically selected production defaults.
+
+These probes record **individual complete request latency**, including time
+waiting for a pool slot, verification and disposal. They remain closed-loop:
+they are not an open-loop arrival-rate test and do not report a latency at an
+offered load higher than the completed throughput. They also differ from the
+64-request burst benchmark in scheduling and enabled per-request cancellation;
+their latency and allocation numbers must not be substituted for that benchmark's
+absolute budgets. The analyzer rejects contention evidence that substitutes a
+larger pool or the wrong multiplexing mode, even if both providers agree on that
+incorrect metadata.
 
 ## TLS
 

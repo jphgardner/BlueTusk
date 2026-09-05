@@ -130,6 +130,48 @@ internal static class ProviderRequestAnalysisSelfTests
                 Method = JsonSerializer.SerializeToElement(new { frequency = 0, sampleBufferCapacityBytes = 1600 }),
             });
             await RejectIndexAsync(index with { Records = [entries[0], entries[1] with { Sha256 = badHash }] });
+
+            foreach (var feature in ProviderRequestFixture.ContentionFeatures)
+            {
+                var requestedMultiplexing = feature.StartsWith("multiplexed-", StringComparison.Ordinal);
+                async Task<ProviderRequestAnalysis.Index> SaveContentionPairAsync(int poolSize, bool multiplexing)
+                {
+                    var environment = JsonSerializer.SerializeToElement(new
+                    {
+                        os = "windows", architecture = "x64", postgreSqlImage = Image,
+                        tlsActive = false, referenceAssembly = "10.0.3",
+                        harnessAssembly = "1.2.0+" + Commit, candidateAssembly = "1.2.0+" + Commit,
+                        runtime = "synthetic-test-only", poolSize, multiplexingConfigured = multiplexing,
+                    });
+                    var method = JsonSerializer.SerializeToElement(new
+                    {
+                        frequency = 1_000_000, sampleBufferCapacityBytes = 1600, contentionProbe = true,
+                    });
+                    var blueHash = await SaveAsync(candidatePath, candidate with
+                    {
+                        Feature = feature, Environment = environment, Method = method,
+                    });
+                    var npgHash = await SaveAsync(referencePath, reference with
+                    {
+                        Feature = feature, Environment = environment, Method = method,
+                    });
+                    var key = $"windows|Provider|{feature}|c=2|variant=windows";
+                    var contentionIndex = index with
+                    {
+                        Records = [entries[0] with { WorkloadKey = key, Sha256 = blueHash },
+                            entries[1] with { WorkloadKey = key, Sha256 = npgHash }],
+                    };
+                    _ = await SaveAsync(indexPath, contentionIndex);
+                    return contentionIndex;
+                }
+                _ = await SaveContentionPairAsync(4, requestedMultiplexing);
+                var contentionAnalysis = await ProviderRequestAnalysis.AnalyzeAsync(indexPath, Commit);
+                Assert(contentionAnalysis.Comparisons.Length == 1, "Recognized contention pairs must be analyzable.");
+                // Both providers agree on this incorrect metadata: pairing equality
+                // alone must not allow an unsaturated/wrong-mode result to pass.
+                await RejectIndexAsync(await SaveContentionPairAsync(64, requestedMultiplexing));
+                await RejectIndexAsync(await SaveContentionPairAsync(4, !requestedMultiplexing));
+            }
         }
         finally
         {

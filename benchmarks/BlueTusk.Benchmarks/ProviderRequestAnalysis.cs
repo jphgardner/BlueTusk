@@ -119,7 +119,7 @@ internal static class ProviderRequestAnalysis
             var (capture, hash) = await ReadAsync<Capture>(path, 1024L * 1024 * 1024, entry.Sha256);
             if (capture.SchemaVersion != 1 || capture.EvidenceKind != "provider-individual-request-capture" ||
                 capture.SourceCommit != expectedCommit || capture.Diagnostic != index.Diagnostic || capture.Provider != entry.Provider ||
-                !ProviderRequestFixture.Features.Contains(capture.Feature, StringComparer.Ordinal) ||
+                !ProviderRequestFixture.CaptureFeatures.Contains(capture.Feature, StringComparer.Ordinal) ||
                 capture.Concurrency is < 1 or > 256 || capture.Measurement.Workers.Length != capture.Concurrency ||
                 capture.MaximumSamplesPerWorker is < 1 or > 16_000_000 ||
                 (long)capture.Concurrency * capture.MaximumSamplesPerWorker > 32_000_000 ||
@@ -131,6 +131,14 @@ internal static class ProviderRequestAnalysis
                 throw new InvalidDataException("Raw capture identity, options, or counters do not match its index.");
             }
             var environment = capture.Environment;
+            if (ProviderRequestFixture.IsContentionFeature(capture.Feature) &&
+                (!environment.TryGetProperty("poolSize", out var poolSize) || poolSize.GetInt32() != 4 ||
+                 !environment.TryGetProperty("multiplexingConfigured", out var multiplexing) ||
+                 multiplexing.GetBoolean() != capture.Feature.StartsWith("multiplexed-", StringComparison.Ordinal) ||
+                 !capture.Method.TryGetProperty("contentionProbe", out var contention) || !contention.GetBoolean()))
+            {
+                throw new InvalidDataException("Contention capture must preserve the four-slot pool and requested multiplexing mode.");
+            }
             if (environment.GetProperty("os").GetString() != index.Os ||
                 environment.GetProperty("architecture").GetString() != "x64" ||
                 environment.GetProperty("postgreSqlImage").GetString() != index.PostgreSqlImage ||

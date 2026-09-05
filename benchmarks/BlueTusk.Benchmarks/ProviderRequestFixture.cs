@@ -18,6 +18,19 @@ internal sealed class ProviderRequestFixture : IAsyncDisposable
         "ef-materialize-100", "ef-insert", "ef-update",
     ];
 
+    // Additional contention probes do not replace the frozen 16-feature matrix.
+    internal static readonly string[] ContentionFeatures =
+    [
+        "pooled-scalar", "pooled-reused-scalar", "multiplexed-scalar", "multiplexed-reused-scalar",
+    ];
+    internal static readonly string[] CaptureFeatures = [.. Features, .. ContentionFeatures];
+
+    internal static bool IsContentionFeature(string feature) =>
+        ContentionFeatures.Contains(feature, StringComparer.Ordinal);
+
+    internal static int GetPoolSize(ProviderRequestCapture.Options options) =>
+        IsContentionFeature(options.Feature) ? 4 : Math.Max(4, options.Concurrency * 2 + 2);
+
     private readonly bool _usesSchema;
     private readonly X509Certificate2? _customRoot;
 
@@ -36,6 +49,8 @@ internal sealed class ProviderRequestFixture : IAsyncDisposable
     public DbDataSource Source { get; }
     public bool IsBlueTusk => Options.Provider == "bluetusk";
     public int PoolSize { get; }
+    public bool IsContention => IsContentionFeature(Options.Feature);
+    public bool MultiplexingConfigured => Options.Feature.StartsWith("multiplexed-", StringComparison.Ordinal);
     public string Schema { get; } = $"bt_capture_{Guid.NewGuid():N}";
     public string ServerVersion { get; private set; } = string.Empty;
     public bool TlsActive { get; private set; }
@@ -55,10 +70,11 @@ internal sealed class ProviderRequestFixture : IAsyncDisposable
         ProviderRequestCapture.Options options, string connectionString, CancellationToken token)
     {
         // A shared pool is essential: per-worker pools would avoid the contention being measured.
-        var poolSize = Math.Max(4, options.Concurrency * 2 + 2);
+        var poolSize = GetPoolSize(options);
+        var multiplexing = options.Feature.StartsWith("multiplexed-", StringComparison.Ordinal);
         var builder = new DbConnectionStringBuilder { ConnectionString = connectionString };
         builder["Pooling"] = true;
-        builder["Multiplexing"] = false;
+        builder["Multiplexing"] = multiplexing;
         builder["Minimum Pool Size"] = 0;
         builder["Maximum Pool Size"] = poolSize;
         var referenceSettings = new NpgsqlConnectionStringBuilder(builder.ConnectionString);
@@ -66,24 +82,35 @@ internal sealed class ProviderRequestFixture : IAsyncDisposable
         DbDataSource source;
         try
         {
-            if (options.Provider == "bluetusk" && !string.IsNullOrWhiteSpace(referenceSettings.RootCertificate))
+            if (options.Provider == "bluetusk")
             {
-                // BlueTusk's documented private-CA API is the data-source callback. Translate
-                // the shared fixture setting explicitly; never silently ignore the root file.
-                customRoot = X509Certificate2.CreateFromPem(File.ReadAllText(referenceSettings.RootCertificate));
-                var trustedRoot = customRoot;
-                var revocation = referenceSettings.CheckCertificateRevocation
-                    ? X509RevocationMode.Online : X509RevocationMode.NoCheck;
                 var blue = new BlueTuskDataSourceBuilder(builder.ConnectionString);
-                blue.UseRemoteCertificateValidationCallback((_, certificate, chain, errors) =>
-                    ValidatePrivateCertificate(certificate, chain, errors, trustedRoot, revocation));
+                if (multiplexing)
+                {
+                    // Match the existing four-worker / 64-command burst benchmark.
+                    blue.EnableMultiplexing(settings =>
+                    {
+                        settings.WorkerCount = 4;
+                        settings.QueueCapacity = 256;
+                        settings.MaxPipelineCommands = 64;
+                        settings.MaxCommandsPerLease = 65_536;
+                    });
+                }
+                if (!string.IsNullOrWhiteSpace(referenceSettings.RootCertificate))
+                {
+                    // Translate the shared private-CA setting; never silently ignore it.
+                    customRoot = X509Certificate2.CreateFromPem(File.ReadAllText(referenceSettings.RootCertificate));
+                    var trustedRoot = customRoot;
+                    var revocation = referenceSettings.CheckCertificateRevocation
+                        ? X509RevocationMode.Online : X509RevocationMode.NoCheck;
+                    blue.UseRemoteCertificateValidationCallback((_, certificate, chain, errors) =>
+                        ValidatePrivateCertificate(certificate, chain, errors, trustedRoot, revocation));
+                }
                 source = blue.Build();
             }
             else
             {
-                source = options.Provider == "bluetusk"
-                    ? BlueTuskDataSource.Create(builder.ConnectionString)
-                    : NpgsqlDataSource.Create(builder.ConnectionString);
+                source = NpgsqlDataSource.Create(builder.ConnectionString);
             }
         }
         catch
@@ -116,7 +143,7 @@ internal sealed class ProviderRequestFixture : IAsyncDisposable
                 {
                     throw new InvalidOperationException("Actual PostgreSQL TLS state does not match the requested capture variant.");
                 }
-                var requiredConnections = options.Concurrency *
+                var requiredConnections = fixture.IsContention ? poolSize + 10 : options.Concurrency *
                     (options.Feature == "notification-delivery" ? 2 : 1) + 10;
                 if (reader.GetInt32(2) < requiredConnections)
                 {

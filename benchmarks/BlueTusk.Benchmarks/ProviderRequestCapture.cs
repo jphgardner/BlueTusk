@@ -34,7 +34,7 @@ internal static class ProviderRequestCapture
         public void Validate()
         {
             if (Provider is not ("bluetusk" or "npgsql") ||
-                !ProviderRequestFixture.Features.Contains(Feature, StringComparer.Ordinal) ||
+                !ProviderRequestFixture.CaptureFeatures.Contains(Feature, StringComparer.Ordinal) ||
                 Concurrency is < 1 or > 256 ||
                 !double.IsFinite(WarmupSeconds) || WarmupSeconds is < 0.1 or > 300 ||
                 !double.IsFinite(MeasurementSeconds) || MeasurementSeconds is < 0.1 or > 300 ||
@@ -123,6 +123,7 @@ internal static class ProviderRequestCapture
                     fixture.TlsActive,
                     fixture.CertificatePolicy,
                     fixture.PoolSize,
+                    fixture.MultiplexingConfigured,
                     CandidateAssembly = typeof(BlueTusk.Data.BlueTuskConnection).Assembly
                         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion,
                     ReferenceAssembly = typeof(Npgsql.NpgsqlConnection).Assembly
@@ -144,6 +145,16 @@ internal static class ProviderRequestCapture
                     Durability = fixture.Durability,
                     NetworkShaping = "not configured by this adapter",
                     EfUpdateKeys = "disjoint worker keys; hot-row contention is a separate workload",
+                    ContentionProbe = fixture.IsContention,
+                    CommandLifetime = fixture.IsContention
+                        ? options.Feature.Contains("-reused-", StringComparison.Ordinal)
+                            ? "one data-source command per worker; reused without explicit prepare"
+                            : "new data-source command per request; disposed before completion"
+                        : "original 16-feature adapter contract",
+                    RequestCancellation = "explicit cancellation token passed to both drivers; window includes draining in-flight requests",
+                    ContentionConfiguration = fixture.IsContention
+                        ? "pool=4; timeout=0; typed int4 parameter; BlueTusk multiplexing workers=4, queue=256, pipeline=64, commands-per-lease=65536"
+                        : "not a four-slot contention probe",
                 },
                 Measurement = measurement with
                 {

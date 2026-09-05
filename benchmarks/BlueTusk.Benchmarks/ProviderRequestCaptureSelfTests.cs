@@ -95,6 +95,21 @@ internal static class ProviderRequestCaptureSelfTests
             operations, 1, int.MaxValue, CancellationToken.None), typeof(ArgumentOutOfRangeException), null);
         Assert(ProviderRequestFixture.Features.Length == 16 &&
             ProviderRequestFixture.Features.Distinct(StringComparer.Ordinal).Count() == 16, "All 16 feature adapters must be named uniquely.");
+        Assert(ProviderRequestFixture.CaptureFeatures.Length == 20 &&
+            ProviderRequestFixture.CaptureFeatures.Distinct(StringComparer.Ordinal).Count() == 20,
+            "The original 16 adapters plus four contention probes must remain distinct.");
+        foreach (var feature in ProviderRequestFixture.ContentionFeatures)
+        {
+            foreach (var concurrency in new[] { 1, 64, 256 })
+            {
+                var options = efProbe with { Feature = feature, Concurrency = concurrency };
+                options.Validate();
+                Assert(ProviderRequestFixture.GetPoolSize(options) == 4,
+                    "Increasing worker count must not increase the contention probe's physical pool.");
+            }
+        }
+        Assert(ProviderRequestFixture.GetPoolSize(efProbe with { Concurrency = 64 }) == 130,
+            "The original feature adapters' pool contract must remain unchanged.");
         TestPrivateCertificateValidation();
         await ProviderRequestAnalysisSelfTests.RunAsync();
         Console.WriteLine("Provider request-capture self-tests passed: concurrency, raw samples, counters, warmup exclusion, bounded capacity, cancellation, worker failure, option bounds, and private-CA validation.");
