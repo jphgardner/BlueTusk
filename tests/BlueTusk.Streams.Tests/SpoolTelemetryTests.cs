@@ -10,9 +10,11 @@ public sealed class SpoolTelemetryIsolation;
 public sealed class SpoolTelemetryTests
 {
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task Completion_reports_each_attempted_operation_without_sensitive_tags(bool failRename)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task Completion_reports_each_attempted_operation_without_sensitive_tags(bool failRename, bool throwListener)
     {
         var measurements = new ConcurrentQueue<(double Duration, KeyValuePair<string, object?>[] Tags)>();
         using var listener = new MeterListener
@@ -27,7 +29,11 @@ public sealed class SpoolTelemetryTests
                 }
             },
         };
-        listener.SetMeasurementEventCallback<double>((_, value, tags, _) => measurements.Enqueue((value, tags.ToArray())));
+        listener.SetMeasurementEventCallback<double>((_, value, tags, _) =>
+        {
+            measurements.Enqueue((value, tags.ToArray()));
+            if (throwListener) { throw new InvalidOperationException("Injected listener failure."); }
+        });
         listener.Start();
         var directory = Directory.CreateTempSubdirectory("bluetusk-spool-metrics-").FullName;
         try

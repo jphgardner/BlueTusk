@@ -45,7 +45,16 @@ public static class BlueTuskStreamsDiagnostics
                 { "bluetusk.streams.spool.operation", operation },
                 { "bluetusk.streams.spool.outcome", succeeded ? "success" : "failure" },
             };
-            SpoolOperationDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds, tags);
+            try
+            {
+                SpoolOperationDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds, tags);
+            }
+            catch (Exception)
+            {
+                // A user-supplied metrics callback must not turn a completed
+                // durable flush/rename into a failed transaction or hide an I/O
+                // exception. Only observer dispatch is isolated here.
+            }
         }
     }
 

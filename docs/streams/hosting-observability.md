@@ -49,6 +49,8 @@ These are fixed values: no file paths, source IDs, transaction IDs or row data
 are included. Timers are inactive when no listener subscribes to the histogram.
 Only attempted steps are recorded; a flush failure does not produce a successful
 close or rename measurement.
+Exceptions raised while dispatching recorded measurements are isolated from
+transaction completion; genuine filesystem exceptions still propagate.
 
 This histogram is not total transaction latency: it excludes serialization,
 earlier writes, replay, downstream processing and acknowledgement. Compare it
