@@ -1,25 +1,29 @@
-# BlueTusk 1.1 performance leadership report
+# BlueTusk 1.2 performance leadership programme
 
-**Public RC basis:** `2e735ed46aec11d5009158a00ca7b862f9ec12af`
+**Historical 1.1 RC basis:** `2e735ed46aec11d5009158a00ca7b862f9ec12af`
 
-**Release:** 1.1.0 across Provider, Streams, Sync, Live, Control Plane, and
+**Target release:** 1.2.0 across Provider, Streams, Sync, Live, Control Plane, and
 Continuous Graph
 
-**Publication state:** `1.1.0-rc.1` is public; stable `1.1.0` remains disabled
-until every exact-stable-candidate gate passes, including digest-pinned
-PostgreSQL 19 GA
+**Stable publication:** disabled until every exact-candidate 1.2 gate passes,
+including digest-pinned PostgreSQL 19 GA. Earlier RC artifacts and measurements
+retain their original identities; they are not recertified as 1.2 evidence.
+
+This page keeps its original URL so existing links continue to work. The
+programme's thresholds and workload matrix carry forward unchanged into 1.2.
 
 ## Current verdict
 
-Provider's retained Npgsql 10.0.3 evidence passes all 16 latency/allocation
-pairs and four saturated-pool shapes. The public RC exposes those improvements
-for independent evaluation. The complete 1.1 leadership claim is **not yet
-earned**: final-stable-SHA Windows/Linux comparisons, confidence intervals, and
-endurance evidence remain mandatory. Missing evidence and ties fail.
+Earlier Provider evidence passed the legacy 16-pair and saturated-pool budgets.
+That does not establish the stricter programme target for the current 1.2
+candidate. The complete leadership claim is **not yet earned**:
+final-stable-SHA Windows/Linux comparisons, confidence intervals, and endurance
+evidence remain mandatory. Missing evidence and ties fail. Local diagnostic
+improvements are not a substitute for those release gates.
 
 ## Implemented hot paths
 
-| Family | 1.1 implementation |
+| Family | Implementation carried forward from 1.1 |
 |---|---|
 | Provider | Integrates the `ac702d7` command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix. |
 | Streams | Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay. |
@@ -112,7 +116,7 @@ counters, verifier self-tests, and this readable consolidation.
 5. Enable publication only after all evidence resolves to the same immutable
    commit and PostgreSQL 19 GA image digest.
 
-Until those items pass, 1.1 is a performance-engineered candidate—not a blanket
+Until those items pass, 1.2 is a performance-engineered candidate—not a blanket
 “faster everywhere” release claim.
 
 ## Evidence artifact validation

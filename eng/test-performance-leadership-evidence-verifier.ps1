@@ -241,6 +241,10 @@ try
         param($changed)
         $changed.schemaVersion = 1
     } 'identity, release, commit'
+    Test-RejectedEvidence 'previous-release' {
+        param($changed)
+        $changed.release = '1.1.0'
+    } 'identity, release, commit'
     Test-RejectedEvidence 'wrong-commit' {
         param($changed)
         $changed.sourceCommit = ('f' * 40)

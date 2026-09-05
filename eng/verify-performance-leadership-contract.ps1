@@ -7,9 +7,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
-if ($contract.schemaVersion -ne 1 -or $contract.release -ne '1.1.0')
+if ($contract.schemaVersion -ne 1 -or $contract.release -ne '1.2.0')
 {
-    throw 'The performance-leadership contract must be schema 1 for release 1.1.0.'
+    throw 'The performance-leadership contract must be schema 1 for release 1.2.0.'
 }
 
 $rules = $contract.comparisonRules
@@ -18,6 +18,9 @@ if ($rules.sameRuntimeMaximumRatio -ne 0.98 -or
     $rules.crossRuntimeMaximumCostRatio -ne 0.95 -or
     $rules.confidenceLevel -ne 0.95 -or
     $rules.statisticalTiesPass -ne $false -or
+    $rules.uniqueWorkloadMaximumRegressionRatio -ne 1.02 -or
+    $rules.primaryHotPathMaximumP95Ratio -ne 0.8 -or
+    $rules.primaryHotPathMaximumAllocationRatio -ne 0.8 -or
     $rules.trustedCdcMaximumFullRequeryRatio -ne 0.1 -or
     $rules.authoritativeDeltaMaximumFullRequeryRatio -ne 0.35)
 {
@@ -88,7 +91,7 @@ $workflowPath = Join-Path (
 $workflow = Get-Content -LiteralPath $workflowPath -Raw
 if ($workflow -notmatch '(?m)^\s*workflow_dispatch\s*:' -or
     $workflow -match '(?m)^\s*(push|pull_request|schedule)\s*:' -or
-    $workflow -notmatch 'CAPTURE-1\.1-PERFORMANCE-EVIDENCE' -or
+    $workflow -notmatch 'CAPTURE-1\.2-PERFORMANCE-EVIDENCE' -or
     $workflow -notmatch '\[\"self-hosted\",\"windows\",\"x64\",\"bluetusk-benchmark\"\]' -or
     $workflow -notmatch '\[\"self-hosted\",\"linux\",\"x64\",\"bluetusk-benchmark\"\]' -or
     $workflow -notmatch 'run-v1-performance-gate\.ps1' -or
@@ -98,4 +101,4 @@ if ($workflow -notmatch '(?m)^\s*workflow_dispatch\s*:' -or
     throw 'The manual exact-SHA Windows/Linux evidence capture workflow is incomplete.'
 }
 
-Write-Output 'Verified the complete BlueTusk 1.1 performance-leadership contract.'
+Write-Output 'Verified the complete BlueTusk 1.2 performance-leadership contract.'

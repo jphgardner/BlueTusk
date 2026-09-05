@@ -6329,7 +6329,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "categoryLabel": "Operations",
     "listed": false,
     "slug": "operations-performance-leadership-1-1",
-    "summary": "Public RC basis: 2e735ed46aec11d5009158a00ca7b862f9ec12af",
+    "summary": "Historical 1.1 RC basis: 2e735ed46aec11d5009158a00ca7b862f9ec12af",
     "keywords": [
       "docs",
       "operations",
@@ -6339,13 +6339,13 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "1"
     ],
     "order": 1083,
-    "title": "BlueTusk 1.1 performance leadership report",
+    "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
     "headings": [
       {
-        "id": "bluetusk-1-1-performance-leadership-report",
-        "text": "BlueTusk 1.1 performance leadership report",
+        "id": "bluetusk-1-2-performance-leadership-programme",
+        "text": "BlueTusk 1.2 performance leadership programme",
         "level": 1
       },
       {
@@ -6379,9 +6379,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1062,
-    "readMinutes": 5,
-    "searchText": "BlueTusk 1.1 performance leadership report **Public RC basis:** `2e735ed46aec11d5009158a00ca7b862f9ec12af` **Release:** 1.1.0 across Provider, Streams, Sync, Live, Control Plane, and Continuous Graph **Publication state:** `1.1.0-rc.1` is public; stable `1.1.0` remains disabled until every exact-stable-candidate gate passes, including digest-pinned PostgreSQL 19 GA Current verdict Provider's retained Npgsql 10.0.3 evidence passes all 16 latency/allocation pairs and four saturated-pool shapes. The public RC exposes those improvements for independent evaluation. The complete 1.1 leadership claim is **not yet earned**: final-stable-SHA Windows/Linux comparisons, confidence intervals, and endurance evidence remain mandatory. Missing evidence and ties fail. Implemented hot paths Family 1.1 implementation Provider Integrates the `ac702d7` command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix. Streams Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay. Sync Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering. Live Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications. Control Plane Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache, and source-generated API JSON metadata. Continuous Graph Uses immutable compiler impact plans, trusted CDC projection only behind a complete explicit trust contract, automatic key-scoped authoritative queries, ordered affected-candidate merges, and fail-closed full repair. Required measurement matrix The m"
+    "wordCount": 1111,
+    "readMinutes": 6,
+    "searchText": "BlueTusk 1.2 performance leadership programme **Historical 1.1 RC basis:** `2e735ed46aec11d5009158a00ca7b862f9ec12af` **Target release:** 1.2.0 across Provider, Streams, Sync, Live, Control Plane, and Continuous Graph **Stable publication:** disabled until every exact-candidate 1.2 gate passes, including digest-pinned PostgreSQL 19 GA. Earlier RC artifacts and measurements retain their original identities; they are not recertified as 1.2 evidence. This page keeps its original URL so existing links continue to work. The programme's thresholds and workload matrix carry forward unchanged into 1.2. Current verdict Earlier Provider evidence passed the legacy 16-pair and saturated-pool budgets. That does not establish the stricter programme target for the current 1.2 candidate. The complete leadership claim is **not yet earned**: final-stable-SHA Windows/Linux comparisons, confidence intervals, and endurance evidence remain mandatory. Missing evidence and ties fail. Local diagnostic improvements are not a substitute for those release gates. Implemented hot paths Family Implementation carried forward from 1.1 Provider Integrates the `ac702d7` command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix. Streams Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay. Sync Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering. Live Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications. Control Plane Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache"
   },
   {
     "category": "operations",

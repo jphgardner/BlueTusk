@@ -17,6 +17,12 @@ if ([int]$contract.schemaVersion -ne 1 -or
 {
     throw 'The 1.2 release contract has an invalid schema, version, or baseline commit.'
 }
+$performanceContract = Get-Content -LiteralPath (
+    Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw | ConvertFrom-Json
+if ($performanceContract.release -cne $contract.releaseVersion)
+{
+    throw 'The performance-leadership contract must identify the same 1.2 release.'
+}
 if (@($contract.coordinatedFamilies).Count -ne $families.Count -or
     @(Compare-Object $families @($contract.coordinatedFamilies) -SyncWindow 0).Count -ne 0)
 {
