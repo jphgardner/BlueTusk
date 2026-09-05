@@ -129,19 +129,28 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         Memory<byte> destination,
         CancellationToken cancellationToken)
     {
-        int read;
-        try
+        while (true)
         {
-            read = await ReadTransportAsync(destination, cancellationToken).ConfigureAwait(false);
-        }
-        catch
-        {
-            AbortReadMessage();
-            throw;
-        }
+            int read;
+            try
+            {
+                read = await ReadTransportAsync(destination, cancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                AbortReadMessage();
+                throw;
+            }
 
-        CompleteReadMessage(read);
-        return await ReadMessageAsync(cancellationToken).ConfigureAwait(false);
+            CompleteReadMessage(read);
+            if (TryBeginReadMessage(out var message, out destination))
+            {
+                return message;
+            }
+
+            // Keep one async state machine across transport fragments. A partial
+            // read does not need another nested ReadMessageAsync operation.
+        }
     }
 
     internal bool TryBeginReadMessage(
