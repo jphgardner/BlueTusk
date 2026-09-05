@@ -65,6 +65,7 @@ static void RunSmoke()
     }
 
     VerifyBuiltInArrayAndRange();
+    VerifyDomainArray();
     VerifyComposite(
         SmokeAddress.RegisterCodec(new BlueTuskTypeRegistryBuilder()).Build(),
         new SmokeAddress(42, "Main Street"));
@@ -155,6 +156,55 @@ static void VerifyBuiltInArrayAndRange()
         actualRange != expectedRange)
     {
         throw new InvalidOperationException("The statically rooted range codec failed.");
+    }
+}
+
+static void VerifyDomainArray()
+{
+    var domainId = new BlueTuskTypeId(91_420);
+    var nestedId = new BlueTuskTypeId(91_421);
+    var arrayId = new BlueTuskTypeId(91_422);
+    var registry = BlueTuskTypeCatalogue.BuildRegistry(
+    [
+        new BlueTuskCatalogueType
+        {
+            Id = domainId, Schema = "app", Name = "smoke_domain",
+            PostgreSqlKind = 'd', PostgreSqlCategory = 'N',
+            BaseType = BlueTuskBuiltInTypes.Int4.Id,
+        },
+        new BlueTuskCatalogueType
+        {
+            Id = nestedId, Schema = "app", Name = "smoke_nested_domain",
+            PostgreSqlKind = 'd', PostgreSqlCategory = 'N', BaseType = domainId, ArrayType = arrayId,
+        },
+        new BlueTuskCatalogueType
+        {
+            Id = arrayId, Schema = "app", Name = "_smoke_nested_domain",
+            PostgreSqlKind = 'b', PostgreSqlCategory = 'A', ElementType = nestedId,
+        },
+    ]);
+    if (!registry.TryGetType(arrayId, out var type) || type is null ||
+        !registry.TryGetCodec(arrayId, out var codec) || codec is null || codec.ClrType != typeof(int[]))
+    {
+        throw new InvalidOperationException("The nested domain array codec is unavailable.");
+    }
+    foreach (var format in new[] { BlueTuskDataFormat.Binary, BlueTuskDataFormat.Text })
+    {
+        int[] expected = [11, 22, 33];
+        var buffer = new byte[256];
+        var writer = new BlueTuskWriter(buffer);
+        codec.Write(ref writer, expected, format, type);
+        if (format == BlueTuskDataFormat.Binary &&
+            System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(buffer.AsSpan(8, 4)) != nestedId.Oid)
+        {
+            throw new InvalidOperationException("The domain array lost its PostgreSQL element identity.");
+        }
+        var reader = new BlueTuskReader(buffer.AsSpan(0, writer.WrittenCount));
+        if (codec.Read(ref reader, format, type) is not int[] actual ||
+            !expected.SequenceEqual(actual) || reader.Remaining != 0)
+        {
+            throw new InvalidOperationException("The statically rooted nested domain array codec failed.");
+        }
     }
 }
 

@@ -22,7 +22,9 @@ public sealed class BlueTuskArrayCodec :
     {
         _elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
         _elementCodec = elementCodec ?? throw new ArgumentNullException(nameof(elementCodec));
-        _arrayFactory = elementCodec as IBlueTuskArrayFactory;
+        _arrayFactory = elementCodec is BlueTuskDomainCodec domain
+            ? domain.ArrayFactory
+            : elementCodec as IBlueTuskArrayFactory;
         ClrType = ResolveArrayClrType(elementCodec, _arrayFactory);
     }
 

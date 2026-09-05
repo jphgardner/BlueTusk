@@ -17,6 +17,14 @@ public sealed class BlueTuskDomainCodec :
 
     public Type ClrType => _baseCodec.ClrType;
 
+    // Domains retain their own element OID and delegate wire conversion to the
+    // base codec. Array allocation must delegate too so NativeAOT can use the
+    // base codec's statically rooted CLR array without runtime type generation.
+    internal IBlueTuskArrayFactory? ArrayFactory =>
+        _baseCodec is BlueTuskDomainCodec domain
+            ? domain.ArrayFactory
+            : _baseCodec as IBlueTuskArrayFactory;
+
     public object? Read(
         ref BlueTuskReader reader,
         BlueTuskDataFormat format,
