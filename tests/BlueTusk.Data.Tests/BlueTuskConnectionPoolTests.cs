@@ -1,5 +1,7 @@
 using BlueTusk.Client;
 using BlueTusk.Protocol;
+using System.Collections;
+using System.Reflection;
 
 namespace BlueTusk.Data.Tests;
 
@@ -442,6 +444,153 @@ public sealed class BlueTuskConnectionPoolTests
         pool.Return(lease);
         Assert.Equal(1, pool.Statistics.Idle);
         Assert.Equal(0, pool.Statistics.Busy);
+    }
+
+    [Theory]
+    [InlineData("return")]
+    [InlineData("cancel")]
+    [InlineData("dispose")]
+    [InlineData("replace")]
+    public async Task Waiter_completion_runs_outside_the_pool_state_lock(string operation)
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var held = await pool.RentAsync(CancellationToken.None);
+        var stateLock = GetPrivatePoolField(pool, "_stateSync");
+        using var cancellation = new CancellationTokenSource();
+        var completed = ObserveAsync();
+        await WaitUntilAsync(() => pool.Statistics.Waiting == 1);
+        var returned = false;
+        try
+        {
+            switch (operation)
+            {
+                case "return":
+                    returned = true;
+                    pool.Return(held);
+                    break;
+                case "cancel":
+                    cancellation.Cancel();
+                    break;
+                case "dispose":
+                    await pool.DisposeAsync();
+                    break;
+                case "replace":
+                    await pool.ClearAsync();
+                    returned = true;
+                    pool.Return(held);
+                    break;
+            }
+            Assert.Equal(operation, await completed.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Equal(0, pool.Statistics.Waiting);
+        }
+        finally
+        {
+            if (!returned) { pool.Return(held); }
+        }
+        Assert.Equal(0, pool.Statistics.Busy);
+        Assert.Equal(operation == "dispose" ? 0 : 1, pool.Statistics.Total);
+
+        async Task<string> ObserveAsync()
+        {
+            try
+            {
+                var lease = await pool.RentAsync(cancellation.Token).ConfigureAwait(false);
+                Assert.False(Monitor.IsEntered(stateLock));
+                if (operation == "replace") { Assert.NotSame(held, lease); }
+                pool.Return(lease);
+                return operation == "replace" ? "replace" : "return";
+            }
+            catch (OperationCanceledException)
+            {
+                Assert.False(Monitor.IsEntered(stateLock));
+                return "cancel";
+            }
+            catch (ObjectDisposedException)
+            {
+                Assert.False(Monitor.IsEntered(stateLock));
+                return "dispose";
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Cancelling_a_middle_waiter_preserves_fifo_handoff_and_task_reuse()
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var held = await pool.RentAsync(CancellationToken.None);
+        using var cancellation = new CancellationTokenSource();
+        var first = pool.RentAsync(CancellationToken.None).AsTask();
+        var canceled = pool.RentAsync(cancellation.Token).AsTask();
+        var last = pool.RentAsync(CancellationToken.None).AsTask();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => canceled);
+
+        pool.Return(held);
+        var firstLease = await first.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Same(firstLease, await first);
+        Assert.False(last.IsCompleted);
+        Assert.Null(pool.TryRent());
+        pool.Return(firstLease);
+        var lastLease = await last.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Same(lastLease, await last);
+        pool.Return(lastLease);
+        Assert.Equal(0, pool.Statistics.Waiting);
+        Assert.Equal(0, pool.Statistics.Busy);
+        Assert.Equal(1, pool.Statistics.Total);
+    }
+
+    [Fact]
+    public async Task Cancellation_racing_handoff_cannot_complete_a_recycled_waiter()
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        for (var iteration = 0; iteration < 256; iteration++)
+        {
+            var held = await pool.RentAsync(CancellationToken.None);
+            using var cancellation = new CancellationTokenSource();
+            var waiting = pool.RentAsync(cancellation.Token).AsTask();
+            await Task.WhenAll(Task.Run(() => cancellation.Cancel()), Task.Run(() => pool.Return(held)))
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            try { pool.Return(await waiting.WaitAsync(TimeSpan.FromSeconds(5))); }
+            catch (OperationCanceledException) { }
+
+            var next = await pool.RentAsync(CancellationToken.None);
+            var nextWaiting = pool.RentAsync(CancellationToken.None).AsTask();
+            pool.Return(next);
+            var nextLease = await nextWaiting.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Same(nextLease, await nextWaiting);
+            pool.Return(nextLease);
+            Assert.Equal(0, pool.Statistics.Waiting);
+            Assert.Equal(0, pool.Statistics.Busy);
+            Assert.Equal(1, pool.Statistics.Total);
+        }
+    }
+
+    [Fact]
+    public async Task Waiter_cache_is_bounded_after_a_large_checkout_burst()
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var held = await pool.RentAsync(CancellationToken.None);
+        var waiting = Enumerable.Range(0, 512)
+            .Select(_ => pool.RentAsync(CancellationToken.None).AsTask()).ToArray();
+        foreach (var request in waiting)
+        {
+            pool.Return(held);
+            held = await request.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        pool.Return(held);
+        Assert.Equal(256, Assert.IsAssignableFrom<ICollection>(GetPrivatePoolField(pool, "_cachedWaiters")).Count);
+        Assert.Equal(0, pool.Statistics.Waiting);
+        Assert.Equal(0, pool.Statistics.Busy);
+        Assert.Equal(1, pool.Statistics.Idle);
+        await pool.DisposeAsync();
+        Assert.Empty(Assert.IsAssignableFrom<ICollection>(GetPrivatePoolField(pool, "_cachedWaiters")));
+    }
+
+    private static object GetPrivatePoolField(BlueTuskConnectionPool pool, string name)
+    {
+        var field = typeof(BlueTuskConnectionPool).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        return field.GetValue(pool) ?? throw new InvalidOperationException("The pool field is null.");
     }
 
     private static BlueTuskConnectionPool CreatePool(
