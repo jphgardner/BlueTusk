@@ -76,6 +76,17 @@ preserves 100,000 Live/Control Plane cycles, not a reduced minimum. The final
 remote aggregation, complete current performance evidence and actual endurance
 runs remain open, and all publication flags remain disabled.
 
+Real core package capture at `e19b58919b187fe5298fddf00fbf8eeaadd51b84`
+produced 65 NuGet packages, 62 symbol packages and five npm tarballs: 132
+artifacts, 20,123,936 bytes. Both SBOMs contain 371 components/packages. An
+end-to-end reader check exposed misuse of a prerelease-only version override;
+the reader now validates exact stable source versions before using the normal
+family package verifier. The real-package regression test accepts the stable
+set without arming a prerelease train and rejects eight altered identity,
+scope or integrity records. The failed initial reader log and the corrected
+verification are retained separately. This is package validation, not registry
+publication or final-candidate certification.
+
 The contributor client command builds all five clients and runs eight available
 tests across the core, Svelte and Vue packages. Angular/React-specific tests are
 still part of the browser work to expand; they are not counted as executed here.

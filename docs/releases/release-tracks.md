@@ -79,6 +79,8 @@ These contributor commands test the readers with synthetic evidence only:
     -OutputRoot artifacts/my-core-packages -Commit (git rev-parse HEAD)
 ./eng/verify-v1-package-evidence.ps1 -ReleaseTrack Core `
     -EvidenceRoot artifacts/my-core-packages -ExpectedCommit (git rev-parse HEAD)
+./eng/test-core-package-evidence.ps1 `
+    -EvidenceRoot artifacts/my-core-packages -ExpectedCommit (git rev-parse HEAD)
 ```
 
 Use a new output directory for each capture; existing evidence is not overwritten.

@@ -97,6 +97,16 @@ if ($ReleaseTrack -eq 'Core')
     {
         throw 'Core package evidence must identify the Core 1.2.0 release track.'
     }
+    foreach ($familyName in $expectedFamilies)
+    {
+        [xml]$version = Get-Content -LiteralPath (
+            Join-Path $repositoryRoot $productManifest.families.$familyName.versionFile) -Raw
+        if ([string]$version.Project.PropertyGroup.VersionPrefix -cne '1.2.0' -or
+            -not [string]::IsNullOrWhiteSpace([string]$version.Project.PropertyGroup.VersionSuffix))
+        {
+            throw "Core package verification requires exact unsuffixed 1.2.0 source versions; '$familyName' differs."
+        }
+    }
 }
 $familyEntries = @($manifest.families)
 $declaredFamilies = @($familyEntries | ForEach-Object { [string]$_.id } | Sort-Object)
@@ -270,8 +280,7 @@ try
         & (Join-Path $PSScriptRoot 'verify-product-family-packages.ps1') `
             -Family $family `
             -PackageDirectory $familyRoot `
-            -ExpectedCommit $ExpectedCommit `
-            -ExpectedVersion $(if ($ReleaseTrack -eq 'Core') { '1.2.0' } else { '' })
+            -ExpectedCommit $ExpectedCommit
     }
 }
 finally

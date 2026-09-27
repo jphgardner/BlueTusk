@@ -281,6 +281,13 @@ jobs:
           -OutputRoot artifacts/v1.2-core-packages
           -Commit ${{ github.sha }}
 
+      - name: Verify stable core package reader and integrity guards
+        shell: pwsh
+        run: >-
+          ./eng/test-core-package-evidence.ps1
+          -EvidenceRoot artifacts/v1.2-core-packages
+          -ExpectedCommit ${{ github.sha }}
+
       - name: Archive immutable core package evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
