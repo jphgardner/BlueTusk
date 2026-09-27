@@ -24,7 +24,12 @@ public sealed class BlueTuskSynchronousIntegrationTests
             Assert.Equal(capabilities.ServerVersion.Major >= 15, capabilities.SupportsMerge);
             Assert.Equal(capabilities.ServerVersion.Major >= 14, capabilities.SupportsMultiranges);
             Assert.Equal(capabilities.ServerVersion.Major >= 18, capabilities.SupportsVirtualGeneratedColumns);
-            Assert.Equal(capabilities.ServerVersion.Major >= 19, capabilities.SupportsSqlPgq);
+            using (var graphCapability = new BlueTuskCommand(
+                "SELECT to_regclass('information_schema.property_graphs') IS NOT NULL",
+                connection))
+            {
+                Assert.Equal(Assert.IsType<bool>(graphCapability.ExecuteScalar()), capabilities.SupportsSqlPgq);
+            }
             Assert.Equal(capabilities.ServerVersion.Major >= 19, capabilities.SupportsRepack);
             Assert.False(capabilities.SupportsOAuthBearer);
 

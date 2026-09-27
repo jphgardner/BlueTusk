@@ -13,7 +13,27 @@ namespace BlueTusk.Applications.ArchitectureTests;
 public sealed class PostgreSqlApplicationIntegrationTests
 {
     [Fact]
-    public async Task Migrations_tenant_isolation_idempotency_and_graph_models_work()
+    [Trait("ReleaseTrack", "Core")]
+    public async Task Order_migrations_tenant_isolation_and_idempotency_work()
+    {
+        await VerifyOrdersAsync(GetDedicatedConnectionString());
+    }
+
+    [Fact]
+    [Trait("ReleaseTrack", "ContinuousGraphPreview")]
+    public async Task Topology_migrations_tenant_isolation_and_graph_paths_work()
+    {
+        await VerifyTopologyAsync(GetDedicatedConnectionString());
+    }
+
+    [Fact]
+    [Trait("ReleaseTrack", "ContinuousGraphPreview")]
+    public async Task Fraud_migrations_tenant_isolation_and_graph_investigations_work()
+    {
+        await VerifyFraudAsync(GetDedicatedConnectionString());
+    }
+
+    private static string GetDedicatedConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable(
             "BLUETUSK_APPLICATION_TEST_CONNECTION");
@@ -25,9 +45,7 @@ public sealed class PostgreSqlApplicationIntegrationTests
                 "Set the dedicated application test connection and explicit reset marker to run PostgreSQL integration tests.");
         }
 
-        await VerifyOrdersAsync(connectionString);
-        await VerifyTopologyAsync(connectionString);
-        await VerifyFraudAsync(connectionString);
+        return connectionString;
     }
 
     private static async Task VerifyOrdersAsync(string connectionString)

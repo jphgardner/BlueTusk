@@ -40,6 +40,7 @@ jobs:
           ./eng/verify-applications.ps1
           ./eng/test-application-image-evidence-verifier.ps1
           ./eng/test-prerelease-release-verifier.ps1
+          ./eng/test-application-postgresql-tracks.ps1
 
       - name: Restore, format, build, and test applications
         shell: pwsh
@@ -52,11 +53,20 @@ jobs:
           ./eng/verify-application-candidate-restore.ps1
           dotnet format applications/BlueTusk.Applications.slnx --no-restore --verify-no-changes
           dotnet build applications/BlueTusk.Applications.slnx -c Release --no-restore
-          dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore
+          dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore --filter 'ReleaseTrack!=ContinuousGraphPreview'
 
-      - name: Test applications against digest-pinned PostgreSQL 19 Beta 3
+      - name: Test core applications against digest-pinned stable PostgreSQL
         shell: pwsh
-        run: ./eng/test-applications-postgresql.ps1
+        run: ./eng/test-applications-postgresql.ps1 -ReleaseTrack Core -OutputRoot artifacts/application-postgresql-core
+
+      - name: Retain core application integration results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-application-postgresql-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/application-postgresql-core
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Build all browser clients from local RC npm artifacts
         shell: pwsh
@@ -395,6 +405,44 @@ jobs:
       - name: Stop PostgreSQL
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  postgresql19-provider-compatibility:
+    # Keep the existing protected status context. This is real provider preview
+    # compatibility, not Graph runtime qualification or PostgreSQL 19 GA evidence.
+    name: PostgreSQL 19 live matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Verify the recorded historical preview fixture
+        shell: pwsh
+        run: ./eng/verify-postgresql19-programme.ps1
+      - name: Restore locked provider integration dependencies
+        run: dotnet restore tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj --locked-mode
+      - name: Start historical PostgreSQL 19 provider fixture
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+      - name: Test provider preview compatibility without Graph runtime tests
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release --no-restore --maxcpucount:1
+          --filter 'FullyQualifiedName!~BlueTuskSqlPgqIntegrationTests'
+          --logger trx --results-directory artifacts/test-results/postgres19-provider
+      - name: Retain provider preview results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: historical-postgres19-provider-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/test-results/postgres19-provider
+          if-no-files-found: error
+          retention-days: 90
+      - name: Stop only the historical provider fixture
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml stop postgres19
 
   redis-streams-integration:
     name: Redis Streams state-store conformance

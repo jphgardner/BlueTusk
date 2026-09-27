@@ -18,6 +18,14 @@ snapshot detects catalogue and grammar drift, and
 official milestone. The verifier reports the last tested milestone separately.
 The fixture remains Beta 3 until new image and test evidence have been recorded.
 
+The main build's existing `PostgreSQL 19 live matrix` protected status now runs
+provider preview compatibility, excluding native SQL/PGQ integration scenarios.
+It does not depend on Continuous Graph. The full historical preview matrix and
+both Graph application journeys run separately in `postgresql-preview.yml`.
+Core application integration uses the stable PostgreSQL 18 fixture instead.
+Capability tests compare `SupportsSqlPgq` with the actual server catalogue;
+major version 19 alone must not imply support.
+
 BlueTusk advanced from Beta 2 to Beta 3 on 2026-08-17 after the official
 documentation moved on 2026-08-13. The full serial solution suite and the
 application migration/integration suite passed against

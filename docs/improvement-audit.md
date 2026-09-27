@@ -22,7 +22,7 @@ Update current support claims without rewriting historical measurements.
 
 | Work | State | Evidence required to close it |
 | --- | --- | --- |
-| Separate Graph release readiness from the other families | Track policy, scoped performance, five-family packaging/approvals, stable core CI/endurance and isolated Graph database/config implemented; final candidate aggregation pending | Core helper self-tests and actual package/SBOM checks; exact 1.2 remote candidate aggregation still required |
+| Separate Graph release readiness from the other families | Policy, scoped evidence, stable core CI/endurance and isolated Graph application/database/config implemented; final candidate aggregation pending | Core helper self-tests, actual package/SBOM checks and separate local application captures; exact 1.2 remote candidate aggregation still required |
 | Live refresh/replay recovery | Implemented; Windows PostgreSQL validation passed | 78 tests pass with zero skips, including real PostgreSQL stores and SSE/SignalR/gRPC transports; final-candidate platform and endurance gates remain |
 | Contributor setup and focused validation | Implemented; local command validation passed | Doctor/project registration, missing-database refusal, hashed TRX summary, focused Check, five client builds/8 client tests, generated guides and production website build |
 | Pool candidate performance acceptance | Pending | Matched before/after captures for `dd1da1a`, then the complete reference comparisons with latency, allocation, CPU and RSS |
@@ -59,7 +59,7 @@ synthetic data, not new measured wins. The historical V1 candidate aggregator
 has not yet been migrated; [release tracks](releases/release-tracks.md) explains
 that remaining publication gate.
 
-The next slice separates actual evidence producers and readers. Core packaging
+The evidence-producer slice separates actual producers and readers. Core packaging
 and approval verification no longer require Graph packages or Graph pilot
 coverage. Core endurance uses digest-pinned PostgreSQL 18, retaining the exact
 72/24/24-hour sequence. The core Kubernetes database has separate storage and
@@ -86,6 +86,37 @@ set without arming a prerelease train and rejects eight altered identity,
 scope or integrity records. The failed initial reader log and the corrected
 verification are retained separately. This is package validation, not registry
 publication or final-candidate certification.
+
+An additional application-CI coupling has been removed. The old runner read the
+current PostgreSQL 19 milestone and required a Beta 3 image, so recording the
+untested Beta 4 milestone caused it to fail before running any test. Core plans
+now use the stable core fixture without reading that programme. Graph plans use
+the explicitly verified historical milestone and stay separate. Orders runs in
+core CI; Topology and Fraud run in manual historical preview CI. All three
+applications remain compiled and architecture-checked. The existing protected
+`PostgreSQL 19 live matrix` context is restored as provider-only preview
+compatibility; branch protections were not changed. The SQL/PGQ capability tests
+now check the actual server catalogue rather than assuming support by major.
+
+Application reader self-tests accept both track-specific synthetic TRX sets and
+reject 12 invalid plans and 26 invalid result sets. A malformed Graph programme
+does not change the core plan. Real local development captures pass the Orders
+journey on PostgreSQL 18 and both Graph journeys on historical Beta 3, with zero
+skips. They retain hashed TRX and source-cleanliness reports under
+`artifacts/audit-application-*-b126da6-20260927-first`. These runs use the retained
+application RC dependencies and a dirty development checkout, not newly built
+exact-candidate packages or remote release evidence. The final core aggregator,
+full current performance evidence, endurance and independent approval remain
+open.
+
+Five focused provider integration cases also pass with zero skips on both
+PostgreSQL 18 and historical Beta 3. They cover synchronous provider operations
+and capability-dependent property-graph behaviour: absence on the stable server
+and actual DDL/query/inspection on the historical preview server. Raw TRX are
+retained in `artifacts/audit-provider-capabilities-b126da6-20260927` and
+`artifacts/audit-provider-capabilities-beta3-b126da6-20260927`. These are focused
+development checks, not the full compatibility matrix. Existing-evidence and
+workspace-root output targets are refused before any container starts.
 
 The contributor client command builds all five clients and runs eight available
 tests across the core, Svelte and Vue packages. Angular/React-specific tests are

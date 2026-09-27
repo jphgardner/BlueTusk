@@ -15,6 +15,38 @@ same-version stale cache or registry package cannot substitute for the candidate
 RC deployments are staging evidence only; they are not V1 pilot or production
 evidence.
 
+## Core and Graph integration tests
+
+Order Operations is the core application journey. Service Topology and Fraud
+Investigation use SQL/PGQ and stay on the separate Graph preview track. They are
+still compiled, architecture-checked and retained; their server/runtime tests
+do not block the core CI run.
+
+After building the candidate feed and restoring the applications as described
+above, run:
+
+```powershell
+# Default: stable, digest-pinned PostgreSQL 18; Orders migrations,
+# tenant isolation and idempotency. Uses a disposable loopback-only database.
+./eng/test-applications-postgresql.ps1
+
+# Separate historical SQL/PGQ preview: both Topology and Fraud journeys.
+# This does not qualify Graph for production or establish Beta 4 support.
+./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPreview
+
+# Read-only plans: no containers or tests are started.
+./eng/test-applications-postgresql.ps1 -ValidateOnly
+./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPreview -ValidateOnly
+./eng/test-application-postgresql-tracks.ps1
+```
+
+Each integration capture has a new directory under `artifacts`, a hashed TRX
+and a report identifying its track, fixture, source commit and source cleanliness.
+The runner rejects skipped, missing, duplicate, failed or wrong-track tests,
+restores the caller's environment and removes only its own disposable container.
+Existing captures are never overwritten. These are local integration results;
+exact package provenance, CI and release qualification remain separate checks.
+
 `eng/verify-application-platform-health.ps1` is the fail-closed live preflight.
 It cross-checks API-assigned pods against each Ready kubelet, rejects node
 pressure, unhealthy Longhorn volumes, unhealthy CloudNativePG clusters,

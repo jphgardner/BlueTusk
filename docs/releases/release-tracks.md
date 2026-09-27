@@ -51,6 +51,29 @@ produces `v1.2-core-packages-<sha>` independently of optional historical
 six-family packaging. The separate `postgresql-preview.yml` workflow retains
 the historical PostgreSQL 19 Beta 3 matrix; it is not current Beta 4 support or
 stable qualification. Compile-time and shared API checks still cover Graph.
+The package-only application job runs Orders on the pinned stable database.
+Topology and Fraud integration tests are retained in that manual preview
+workflow. Their absence from core runtime validation is explicit, not a set of
+skipped Graph tests reported as successful Graph qualification.
+
+The existing protected `PostgreSQL 19 live matrix` status is preserved as a
+provider-only check on the last verified historical fixture; it does not run
+Continuous Graph or native SQL/PGQ scenarios. The separate preview matrix still
+tests those scenarios. No protected status or approval rule has been removed.
+This historical compatibility check is not a claim that Beta 4 or GA passed.
+
+```powershell
+./eng/test-applications-postgresql.ps1 -ReleaseTrack Core
+./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPreview
+./eng/test-application-postgresql-tracks.ps1
+```
+
+Application plans deliberately use `lastVerifiedMilestone`, not the latest
+announced milestone. Core plans never read the PostgreSQL 19 programme. The
+reader requires exactly the named test set for each track and rejects skips,
+failures, substitutions, mismatched counters and cross-track results. A new
+capture directory preserves the TRX and hash; local results do not replace the
+candidate's package-consumer or remote evidence gates.
 
 Core packaging and approval readers accept an explicit `-ReleaseTrack Core`.
 The core package manifest contains exactly five families, all five npm clients,
