@@ -184,6 +184,26 @@ allocation samples across the capture; that is a resolution safeguard, not a
 95% confidence test. Short-window CPU counters can report zero on this host,
 which is not zero CPU work. Earlier raw evidence is never overwritten.
 
+A second capture measures clean commit
+`308e05d08da19189b771a693043bf166980878bf` against the same exported reference.
+All 12 final-state comparisons pass and all 171 artifact sizes/hashes verify.
+For 100,000-row delta bursts, update/churn/rerank means are respectively
+397.014/8.115 ms, 406.790/11.610 ms and 421.242/16.464 ms before/after;
+sampled allocation ratios are 0.018. The full reset is 30.151/23.674 ms
+(0.661 sampled allocation ratio). Ten-row and 1,000-row single-reset timing
+ratios remain 1.265 and 1.025, not accepted wins. The ten-row reset allocation
+ratio is unresolved by the sampling safeguard. This confirms the large-burst
+improvement without closing the smaller-case or full qualification gaps.
+
+The clean report, raw samples, profiles and environment are retained in
+`artifacts/audit-browser-performance-308e05d-20260927-clean`; its manifest SHA-256
+is `8a77107c6d4a491e70103b426a96e749b5b9958bb2fb0d26371e22c0f5f53db3`.
+The clean 53-test/four-fixture log and production-build log are retained at
+`artifacts/audit-browser-clients-308e05d-20260927-clean.log` and
+`artifacts/audit-browser-website-308e05d-20260927-clean.log`. Both clean runs pass;
+the website prerenders all 150 routes and verifies assets, metadata and size
+budgets. No remote client CI, registry publication or site deployment occurred.
+
 A clean SDK artifacts build exposed a protobuf analyzer configuration tied to
 the default `obj` location. The generated-file exception now lives in the root
 editor configuration and covers the exact generated protobuf filenames in both
