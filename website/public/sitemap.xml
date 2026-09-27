@@ -126,8 +126,10 @@
   <url><loc>https://bluetusk.io/documentation/operations/versioning</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/api-naming</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/completion-audit</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/contributing-development</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/fuzzing</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/hardening-programme</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/improvement-audit</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/operations-application-platform-health</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/operations-approval-evidence</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/operations-endurance-disturbance-evidence</loc></url>
@@ -145,6 +147,7 @@
   <url><loc>https://bluetusk.io/documentation/operations/releases-1-0-0-publication-record</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/releases-1-1-0-candidate</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/releases-1-2-0-plan</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/releases-release-tracks</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/v1-applications</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/v1-release-readiness</loc></url>
 </urlset>

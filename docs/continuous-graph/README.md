@@ -4,6 +4,11 @@ BlueTusk Continuous Graph runs a bounded PostgreSQL SQL/PGQ query, keeps its
 result available to Live clients, and updates that result after relevant
 committed changes.
 
+This is a **preview product**. PostgreSQL 19 Beta 4 removed SQL/PGQ; the pinned
+Beta 3 fixture below is for historical preview development only. Graph will
+need a supported server with the actual SQL/PGQ capability and its own release
+evidence. It does not block the five core [release tracks](../releases/release-tracks.md).
+
 Use it for fraud paths, dependency maps, network reachability, and other views
 where relationships change over time. Start with [SQL/PGQ](../graph/README.md)
 if you have not yet defined and queried a PostgreSQL property graph.

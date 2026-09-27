@@ -124,8 +124,10 @@
 /documentation/operations/versioning
 /documentation/operations/api-naming
 /documentation/operations/completion-audit
+/documentation/operations/contributing-development
 /documentation/operations/fuzzing
 /documentation/operations/hardening-programme
+/documentation/operations/improvement-audit
 /documentation/operations/operations-application-platform-health
 /documentation/operations/operations-approval-evidence
 /documentation/operations/operations-endurance-disturbance-evidence
@@ -143,5 +145,6 @@
 /documentation/operations/releases-1-0-0-publication-record
 /documentation/operations/releases-1-1-0-candidate
 /documentation/operations/releases-1-2-0-plan
+/documentation/operations/releases-release-tracks
 /documentation/operations/v1-applications
 /documentation/operations/v1-release-readiness

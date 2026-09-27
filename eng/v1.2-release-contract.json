@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "releaseVersion": "1.2.0",
   "baselineCommit": "2e735ed46aec11d5009158a00ca7b862f9ec12af",
+  "releaseTracksFile": "eng/release-tracks.json",
   "coordinatedFamilies": [
     "Provider",
     "Streams",
@@ -15,8 +16,9 @@
     "binaryCompatibleWith": "1.0.0",
     "mixedBlueTuskVersionsSupported": false,
     "minimumDotNet": "10.0",
-    "generalPostgreSqlMajors": [15, 16, 17, 18, 19],
-    "continuousGraphRequiresPostgreSql19Ga": true
+    "generalPostgreSqlMajors": [15, 16, 17, 18],
+    "previewPostgreSqlMajors": [19],
+    "continuousGraphRequiresQualifiedSqlPgqServer": true
   },
   "newNuGetPackages": [
     "BlueTusk.Production.Templates",
@@ -55,7 +57,8 @@
     "backupRestoreRehearsal": true,
     "rollbackRehearsal": true,
     "independentPilots": 2,
-    "postgresql19GaDigestRequired": true
+    "postgresql19GaDigestRequiredForCore": false,
+    "graphEvidenceRequiredForCore": false
   },
   "enduranceExecution": {
     "namespace": "bluetusk-endurance",

@@ -1399,13 +1399,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 233,
+    "wordCount": 280,
     "readMinutes": 2,
-    "searchText": "Contributing to BlueTusk BlueTusk treats PostgreSQL documentation, protocol specifications, catalogues, and observed server behaviour as the source of truth. Compatibility with another provider is useful evidence, not a specification. Development workflow Create or reference an issue that states the PostgreSQL behaviour being implemented. Keep dependencies flowing in the direction documented in `docs/architecture/overview.md`. Keep every project in the product-oriented solution hierarchy documented in [repository and solution layout](docs/contributing/repository-layout.md). Add unit or protocol-conformance tests. Network fragmentation cases should include every meaningful frame boundary. Run the solution-layout, formatting, build, and test gates. Never include passwords, tokens, authentication payloads, or unredacted connection strings in tests, logs, or exceptions. EF provider changes must also preserve the official relational specification gate in `tests/BlueTusk.EntityFrameworkCore.SpecificationTests`. New inherited migration-generator cases require a BlueTusk override with an exact PostgreSQL SQL baseline; do not satisfy EF Core's override check without asserting the result. Live official fixtures require `BLUETUSK_TEST_CONNECTION_STRING` and a test role allowed to create and drop isolated databases. The current adopted suites and the broader coverage backlog are documented in [EF Core relational specification tests](docs/ef-core/specification-tests.md). Public API proposals should explain lifetime/ownership, synchronous and asynchronous behaviour, cancellation, and how unknown future PostgreSQL values degrade. The shipped ADO.NET, replication, and extension-authoring assemblies have `PublicAPI.Shipped.txt` contracts. Additive preview APIs belong in `PublicAPI.Unshipped.txt`; removing or changing a shipped signature requires an explicit compatibility/versioning decision and documentation update. See [API compatibility](docs/api-compatibility.md).",
+    "searchText": "Contributing to BlueTusk BlueTusk treats PostgreSQL documentation, protocol specifications, catalogues, and observed server behaviour as the source of truth. Compatibility with another provider is useful evidence, not a specification. Development workflow Start with [the contributor setup and focused commands](docs/contributing/development.md). Run `./eng/dev.ps1` to check your tools, then `./eng/dev.ps1 -Task Check -Family Live` (or the family you are changing) to validate the relevant code and repository contracts. Database checks are explicit through `-RequireDatabase`, and every run retains its test results. Create or reference an issue that states the PostgreSQL behaviour being implemented. Keep dependencies flowing in the direction documented in `docs/architecture/overview.md`. Keep every project in the product-oriented solution hierarchy documented in [repository and solution layout](docs/contributing/repository-layout.md). Add unit or protocol-conformance tests. Network fragmentation cases should include every meaningful frame boundary. Run the solution-layout, formatting, build, and test gates. Never include passwords, tokens, authentication payloads, or unredacted connection strings in tests, logs, or exceptions. EF provider changes must also preserve the official relational specification gate in `tests/BlueTusk.EntityFrameworkCore.SpecificationTests`. New inherited migration-generator cases require a BlueTusk override with an exact PostgreSQL SQL baseline; do not satisfy EF Core's override check without asserting the result. Live official fixtures require `BLUETUSK_TEST_CONNECTION_STRING` and a test role allowed to create and drop isolated databases. The current adopted suites and the broader coverage backlog are documented in [EF Core relational specification tests](docs/ef-core/specification-tests.md). Public API proposals should explain lifetime/ownership, synchronous and asynchronous behaviour, cancellation, and how unknown future PostgreSQL values de",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Contributing to BlueTusk</h1>\n<p>BlueTusk treats PostgreSQL documentation, protocol specifications, catalogues, and observed server behaviour as the source of truth. Compatibility with another provider is useful evidence, not a specification.</p>\n<h2>Development workflow</h2>\n<ol>\n<li>Create or reference an issue that states the PostgreSQL behaviour being implemented.</li>\n<li>Keep dependencies flowing in the direction documented in <code>docs/architecture/overview.md</code>.</li>\n<li>Keep every project in the product-oriented solution hierarchy documented in\n<a href=\"/documentation/operations/repository-layout\">repository and solution layout</a>.</li>\n<li>Add unit or protocol-conformance tests. Network fragmentation cases should include every meaningful frame boundary.</li>\n<li>Run the solution-layout, formatting, build, and test gates.</li>\n<li>Never include passwords, tokens, authentication payloads, or unredacted connection strings in tests, logs, or exceptions.</li>\n</ol>\n<p>EF provider changes must also preserve the official relational specification\ngate in <code>tests/BlueTusk.EntityFrameworkCore.SpecificationTests</code>. New inherited\nmigration-generator cases require a BlueTusk override with an exact PostgreSQL\nSQL baseline; do not satisfy EF Core’s override check without asserting the\nresult. Live official fixtures require <code>BLUETUSK_TEST_CONNECTION_STRING</code> and a\ntest role allowed to create and drop isolated databases. The current adopted\nsuites and the broader coverage backlog are documented in\n<a href=\"/documentation/ef-core/specification-tests\">EF Core relational specification tests</a>.</p>\n<p>Public API proposals should explain lifetime/ownership, synchronous and asynchronous behaviour, cancellation, and how unknown future PostgreSQL values degrade. The shipped ADO.NET, replication, and extension-authoring assemblies have <code>PublicAPI.Shipped.txt</code> contracts. Additive preview APIs belong in <code>PublicAPI.Unshipped.txt</code>; removing or changing a shipped signature requires an explicit compatibility/versioning decision and documentation update. See <a href=\"/documentation/operations/api-compatibility\">API compatibility</a>.</p>\n"
+        "html": "<h1>Contributing to BlueTusk</h1>\n<p>BlueTusk treats PostgreSQL documentation, protocol specifications, catalogues, and observed server behaviour as the source of truth. Compatibility with another provider is useful evidence, not a specification.</p>\n<h2>Development workflow</h2>\n<p>Start with <a href=\"/documentation/operations/contributing-development\">the contributor setup and focused commands</a>.\nRun <code>./eng/dev.ps1</code> to check your tools, then\n<code>./eng/dev.ps1 -Task Check -Family Live</code> (or the family you are changing) to\nvalidate the relevant code and repository contracts. Database checks are\nexplicit through <code>-RequireDatabase</code>, and every run retains its test results.</p>\n<ol>\n<li>Create or reference an issue that states the PostgreSQL behaviour being implemented.</li>\n<li>Keep dependencies flowing in the direction documented in <code>docs/architecture/overview.md</code>.</li>\n<li>Keep every project in the product-oriented solution hierarchy documented in\n<a href=\"/documentation/operations/repository-layout\">repository and solution layout</a>.</li>\n<li>Add unit or protocol-conformance tests. Network fragmentation cases should include every meaningful frame boundary.</li>\n<li>Run the solution-layout, formatting, build, and test gates.</li>\n<li>Never include passwords, tokens, authentication payloads, or unredacted connection strings in tests, logs, or exceptions.</li>\n</ol>\n<p>EF provider changes must also preserve the official relational specification\ngate in <code>tests/BlueTusk.EntityFrameworkCore.SpecificationTests</code>. New inherited\nmigration-generator cases require a BlueTusk override with an exact PostgreSQL\nSQL baseline; do not satisfy EF Core’s override check without asserting the\nresult. Live official fixtures require <code>BLUETUSK_TEST_CONNECTION_STRING</code> and a\ntest role allowed to create and drop isolated databases. The current adopted\nsuites and the broader coverage backlog are documented in\n<a href=\"/documentation/ef-core/specification-tests\">EF Core relational specification tests</a>.</p>\n<p>Public API proposals should explain lifetime/ownership, synchronous and asynchronous behaviour, cancellation, and how unknown future PostgreSQL values degrade. The shipped ADO.NET, replication, and extension-authoring assemblies have <code>PublicAPI.Shipped.txt</code> contracts. Additive preview APIs belong in <code>PublicAPI.Unshipped.txt</code>; removing or changing a shipped signature requires an explicit compatibility/versioning decision and documentation update. See <a href=\"/documentation/operations/api-compatibility\">API compatibility</a>.</p>\n"
       }
     ]
   },
@@ -1578,13 +1578,110 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "contributing-development",
+    "summary": "Start with the product you are changing. The contributor command checks your tools, runs a focused test set, and keeps each run's build and test results in its own directory under artifacts/dev.",
+    "keywords": [
+      "docs",
+      "contributing",
+      "development"
+    ],
+    "order": 1049,
+    "title": "Work on BlueTusk",
+    "sourcePath": "docs/contributing/development.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/contributing/development.md",
+    "headings": [
+      {
+        "id": "work-on-bluetusk",
+        "text": "Work on BlueTusk",
+        "level": 1
+      },
+      {
+        "id": "set-up-your-tools",
+        "text": "Set up your tools",
+        "level": 2
+      },
+      {
+        "id": "make-a-change-and-test-it",
+        "text": "Make a change and test it",
+        "level": 2
+      },
+      {
+        "id": "validate-against-postgresql",
+        "text": "Validate against PostgreSQL",
+        "level": 2
+      },
+      {
+        "id": "work-on-clients-and-documentation",
+        "text": "Work on clients and documentation",
+        "level": 2
+      },
+      {
+        "id": "review-and-hand-off",
+        "text": "Review and hand off",
+        "level": 2
+      }
+    ],
+    "wordCount": 498,
+    "readMinutes": 3,
+    "searchText": "Work on BlueTusk Start with the product you are changing. The contributor command checks your tools, runs a focused test set, and keeps each run's build and test results in its own directory under `artifacts/dev`. Set up your tools Install Git, PowerShell 7, the .NET SDK selected by `global.json`, and a Node.js version supported by the repository's Angular packages. Run this from the repository root: The doctor reports missing tools and whether database configuration exists. It does not print credentials, install software, or change infrastructure. Make a change and test it Choose `Provider`, `Streams`, `Sync`, `Live`, `ControlPlane`, or `ContinuousGraph`. These are focused contributor sets. The Provider set covers the wire stack and ADO.NET; it does not replace EF specifications, extensions, integration, stress, or release gates. Use the [testing guide](testing.md) for those broader checks. PostgreSQL Sync destination tests live in `BlueTusk.Sync.Tests`; dashboard tests live in `BlueTusk.ControlPlane.Tests`. The doctor verifies the registered project paths so a renamed or missing suite cannot disappear silently. A test run must produce a nonempty TRX result to count as successful. The final summary records passed and skipped cases, TRX hashes, the HEAD commit and whether the worktree is clean. Each run uses a fresh SDK artifacts directory so another build's outputs cannot silently substitute for it. Validate against PostgreSQL The [testing guide](testing.md) lists isolated Compose fixtures and the required server capabilities. Use a disposable test database: these tests create and remove their own schemas and some suites create databases. Set `BLUETUSK_TEST_CONNECTION_STRING` using your local secret mechanism, then run: This mode refuses missing database configuration and skipped tests. The usual mode allows database-dependent cases to skip and reports that fact explicitly. Do not interpret an offline run as database compatibility evidence. Work on clients and docu",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Work on BlueTusk</h1>\n<p>Start with the product you are changing. The contributor command checks your\ntools, runs a focused test set, and keeps each run’s build and test results in\nits own directory under <code>artifacts/dev</code>.</p>\n<h2>Set up your tools</h2>\n<p>Install Git, PowerShell 7, the .NET SDK selected by <code>global.json</code>, and a Node.js\nversion supported by the repository’s Angular packages. Run this from the\nrepository root:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "./eng/dev.ps1\ndotnet restore BlueTusk.slnx\nnpm ci\nnpm ci --prefix website\n",
+        "highlighted": "./eng/dev.ps1\ndotnet restore BlueTusk.slnx\nnpm ci\nnpm ci <span class=\"hljs-literal\">--prefix</span> website\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The doctor reports missing tools and whether database configuration exists. It\ndoes not print credentials, install software, or change infrastructure.</p>\n<h2>Make a change and test it</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "# Run the Live tests, including recovery and browser-transport contracts.\n./eng/dev.ps1 -Task Test -Family Live\n\n# Narrow a run while developing a change.\n./eng/dev.ps1 -Task Test -Family Live -Filter 'FullyQualifiedName~LiveQuerySessionTests'\n\n# Check documentation, repository layout, API budgets, and focused tests.\n./eng/dev.ps1 -Task Check -Family Live\n",
+        "highlighted": "<span class=\"hljs-comment\"># Run the Live tests, including recovery and browser-transport contracts.</span>\n./eng/dev.ps1 <span class=\"hljs-literal\">-Task</span> Test <span class=\"hljs-literal\">-Family</span> Live\n\n<span class=\"hljs-comment\"># Narrow a run while developing a change.</span>\n./eng/dev.ps1 <span class=\"hljs-literal\">-Task</span> Test <span class=\"hljs-literal\">-Family</span> Live <span class=\"hljs-literal\">-Filter</span> <span class=\"hljs-string\">&#x27;FullyQualifiedName~LiveQuerySessionTests&#x27;</span>\n\n<span class=\"hljs-comment\"># Check documentation, repository layout, API budgets, and focused tests.</span>\n./eng/dev.ps1 <span class=\"hljs-literal\">-Task</span> Check <span class=\"hljs-literal\">-Family</span> Live\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Choose <code>Provider</code>, <code>Streams</code>, <code>Sync</code>, <code>Live</code>, <code>ControlPlane</code>, or\n<code>ContinuousGraph</code>. These are focused contributor sets. The Provider set covers\nthe wire stack and ADO.NET; it does not replace EF specifications, extensions,\nintegration, stress, or release gates. Use the\n<a href=\"/documentation/operations/testing\">testing guide</a> for those broader checks.\nPostgreSQL Sync destination tests live in <code>BlueTusk.Sync.Tests</code>; dashboard tests\nlive in <code>BlueTusk.ControlPlane.Tests</code>. The doctor verifies the registered project\npaths so a renamed or missing suite cannot disappear silently.</p>\n<p>A test run must produce a nonempty TRX result to count as successful. The final\nsummary records passed and skipped cases, TRX hashes, the HEAD commit and whether\nthe worktree is clean. Each run uses a fresh SDK artifacts\ndirectory so another build’s outputs cannot silently substitute for it.</p>\n<h2>Validate against PostgreSQL</h2>\n<p>The <a href=\"/documentation/operations/testing\">testing guide</a> lists isolated Compose fixtures and the required\nserver capabilities. Use a disposable test database: these tests create and\nremove their own schemas and some suites create databases.</p>\n<p>Set <code>BLUETUSK_TEST_CONNECTION_STRING</code> using your local secret mechanism, then\nrun:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "./eng/dev.ps1 -Task Test -Family Live -RequireDatabase\n",
+        "highlighted": "./eng/dev.ps1 <span class=\"hljs-literal\">-Task</span> Test <span class=\"hljs-literal\">-Family</span> Live <span class=\"hljs-literal\">-RequireDatabase</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>This mode refuses missing database configuration and skipped tests. The usual\nmode allows database-dependent cases to skip and reports that fact explicitly.\nDo not interpret an offline run as database compatibility evidence.</p>\n<h2>Work on clients and documentation</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "# Build all five browser clients and run the available client tests.\n./eng/dev.ps1 -Task Clients\n\n# Validate links and regenerate/check the Angular documentation.\n./eng/dev.ps1 -Task Docs\n\n# Generate guides and create a verified production website build.\n./eng/dev.ps1 -Task Website\n\n# Start the Angular development server.\nnpm start --prefix website\n",
+        "highlighted": "<span class=\"hljs-comment\"># Build all five browser clients and run the available client tests.</span>\n./eng/dev.ps1 <span class=\"hljs-literal\">-Task</span> Clients\n\n<span class=\"hljs-comment\"># Validate links and regenerate/check the Angular documentation.</span>\n./eng/dev.ps1 <span class=\"hljs-literal\">-Task</span> Docs\n\n<span class=\"hljs-comment\"># Generate guides and create a verified production website build.</span>\n./eng/dev.ps1 <span class=\"hljs-literal\">-Task</span> Website\n\n<span class=\"hljs-comment\"># Start the Angular development server.</span>\nnpm <span class=\"hljs-built_in\">start</span> <span class=\"hljs-literal\">--prefix</span> website\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Edit guides under <code>docs</code>; the Angular website generates its guide content from\nthose sources. Check the generated changes into the same review as the source\nguide. A website build does not deploy it.</p>\n<h2>Review and hand off</h2>\n<p>Include the observed problem, the resulting behavior, and the relevant test\nresults in your review. Keep examples on one exact BlueTusk package version.\nExplain ownership, cancellation, durability, and security boundaries where the\nchange affects them. Consult the <a href=\"/documentation/operations/improvement-audit\">audit action record</a>\nfor outstanding product improvements and their acceptance evidence.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "fuzzing",
     "summary": "BlueTusk fuzzes every externally controlled parser boundary used by the V1 product chain:",
     "keywords": [
       "docs",
       "fuzzing"
     ],
-    "order": 1061,
+    "order": 1062,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -1676,7 +1773,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1067,
+    "order": 1068,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -1746,6 +1843,58 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "improvement-audit",
+    "summary": "Audited on 27 September 2026. This record covers the whole product and developer experience. A completed implementation needs its stated validation; older benchmarks and narrow test runs do not certify a later release…",
+    "keywords": [
+      "docs",
+      "improvement",
+      "audit"
+    ],
+    "order": 1069,
+    "title": "BlueTusk improvement audit and action record",
+    "sourcePath": "docs/improvement-audit.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
+    "headings": [
+      {
+        "id": "bluetusk-improvement-audit-and-action-record",
+        "text": "BlueTusk improvement audit and action record",
+        "level": 1
+      },
+      {
+        "id": "current-decisions",
+        "text": "Current decisions",
+        "level": 2
+      },
+      {
+        "id": "work-and-acceptance-evidence",
+        "text": "Work and acceptance evidence",
+        "level": 2
+      },
+      {
+        "id": "first-implementation-evidence",
+        "text": "First implementation evidence",
+        "level": 2
+      },
+      {
+        "id": "execution-order",
+        "text": "Execution order",
+        "level": 2
+      }
+    ],
+    "wordCount": 930,
+    "readMinutes": 5,
+    "searchText": "BlueTusk improvement audit and action record Audited on 27 September 2026. This record covers the whole product and developer experience. A completed implementation needs its stated validation; older benchmarks and narrow test runs do not certify a later release candidate. Current decisions Continuous Graph remains in the product. The owner has directed that its later availability must not block the other product lines. PostgreSQL 19 Beta 4 removed SQL/PGQ, including the engine used by BlueTusk's `GRAPH_TABLE` queries. Graph's Beta 3 fixtures remain preview evidence; a PostgreSQL 19 GA milestone alone will not establish Graph compatibility. Its release policy must depend on a supported server providing the required capability and its own evidence. The [official Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/) also records fixes for native `REPACK`. The [roadmap](https://www.postgresql.org/developer/roadmap/) now targets October 2026. Update current support claims without rewriting historical measurements. Work and acceptance evidence Work State Evidence required to close it Separate Graph release readiness from the other families Track policy and performance scopes implemented; candidate aggregator migration pending Five core tracks and Graph preview validated; Graph stable rejected; exact 1.2 candidate aggregation still required Live refresh/replay recovery Implemented; Windows PostgreSQL validation passed 78 tests pass with zero skips, including real PostgreSQL stores and SSE/SignalR/gRPC transports; final-candidate platform and endurance gates remain Contributor setup and focused validation Implemented; local command validation passed Doctor/project registration, missing-database refusal, hashed TRX summary, focused Check, five client builds/8 client tests, generated guides and production website build Pool candidate performance acceptance Pending Matched before/after captures for `dd1da1a`, then the complete referen",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>BlueTusk improvement audit and action record</h1>\n<p>Audited on 27 September 2026. This record covers the whole product and developer\nexperience. A completed implementation needs its stated validation; older\nbenchmarks and narrow test runs do not certify a later release candidate.</p>\n<h2>Current decisions</h2>\n<p>Continuous Graph remains in the product. The owner has directed that its later\navailability must not block the other product lines. PostgreSQL 19 Beta 4\nremoved SQL/PGQ, including the engine used by BlueTusk’s <code>GRAPH_TABLE</code> queries.\nGraph’s Beta 3 fixtures remain preview evidence; a PostgreSQL 19 GA milestone\nalone will not establish Graph compatibility. Its release policy must depend on\na supported server providing the required capability and its own evidence.</p>\n<p>The <a href=\"https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/\" target=\"_blank\" rel=\"noreferrer\">official Beta 4 announcement</a>\nalso records fixes for native <code>REPACK</code>. The\n<a href=\"https://www.postgresql.org/developer/roadmap/\" target=\"_blank\" rel=\"noreferrer\">roadmap</a> now targets October 2026.\nUpdate current support claims without rewriting historical measurements.</p>\n<h2>Work and acceptance evidence</h2>\n<table>\n<thead>\n<tr>\n<th>Work</th>\n<th>State</th>\n<th>Evidence required to close it</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Separate Graph release readiness from the other families</td>\n<td>Track policy and performance scopes implemented; candidate aggregator migration pending</td>\n<td>Five core tracks and Graph preview validated; Graph stable rejected; exact 1.2 candidate aggregation still required</td>\n</tr>\n<tr>\n<td>Live refresh/replay recovery</td>\n<td>Implemented; Windows PostgreSQL validation passed</td>\n<td>78 tests pass with zero skips, including real PostgreSQL stores and SSE/SignalR/gRPC transports; final-candidate platform and endurance gates remain</td>\n</tr>\n<tr>\n<td>Contributor setup and focused validation</td>\n<td>Implemented; local command validation passed</td>\n<td>Doctor/project registration, missing-database refusal, hashed TRX summary, focused Check, five client builds/8 client tests, generated guides and production website build</td>\n</tr>\n<tr>\n<td>Pool candidate performance acceptance</td>\n<td>Pending</td>\n<td>Matched before/after captures for <code>dd1da1a</code>, then the complete reference comparisons with latency, allocation, CPU and RSS</td>\n</tr>\n<tr>\n<td>Server incremental result costs</td>\n<td>Pending</td>\n<td>Small-change work scales with affected rows; immutable historical snapshots; ordered top-N and repair correctness; unchanged Graph tier cost targets</td>\n</tr>\n<tr>\n<td>Browser reducer costs</td>\n<td>Pending</td>\n<td>Bounded event batching before materialization; sequence/resume correctness; large-result/churn allocation and latency measurements</td>\n</tr>\n<tr>\n<td>Spool completion stalls</td>\n<td>Pending</td>\n<td>Unchanged end-to-end 4 MiB P95 budget passes on isolated storage; crash recovery retains flush, checksum and acknowledgement guarantees</td>\n</tr>\n<tr>\n<td>Multiplexing and EF performance</td>\n<td>Pending</td>\n<td>Existing absolute limits and confidence-qualified paired workload targets pass; no hidden allocation or memory regressions</td>\n</tr>\n<tr>\n<td>Connector coverage and overhead</td>\n<td>Seven destinations now required by the performance contract; measurements and optimisation pending</td>\n<td>Profile and measure Kafka, S3 and Webhooks alongside the four earlier destinations; retain transaction ordering, durability, retry and quarantine semantics</td>\n</tr>\n<tr>\n<td>Control Plane degraded fleet operation</td>\n<td>Pending</td>\n<td>Bounded per-instance deadlines, partial/stale status, 1/100/1,000-source scaling and failed-instance tests</td>\n</tr>\n<tr>\n<td>Dashboard scale and maintainability</td>\n<td>Pending</td>\n<td>Direct detail access, bounded server-side inventory queries, mobile/keyboard/large-inventory browser evidence, separated presentation assets</td>\n</tr>\n<tr>\n<td>Website availability</td>\n<td>External blocker identified</td>\n<td>DigitalOcean account unlocked; existing workers Ready; Traefik/site healthy; external HTTPS, CSS and documentation routes verified</td>\n</tr>\n<tr>\n<td>One current documentation truth</td>\n<td>Pending</td>\n<td>Stable/preview/candidate distinctions, generated support/version information, runnable package examples and guide journeys</td>\n</tr>\n<tr>\n<td>Final release evidence</td>\n<td>Pending</td>\n<td>One immutable candidate, required CI, consumers, supply chain, endurance, rehearsals, pilots and independent approval</td>\n</tr>\n</tbody>\n</table>\n<h2>First implementation evidence</h2>\n<p>Fourteen new Live failure cases failed against the preceding implementation.\nAfter the recovery change, all 24 original query-session/shared-subscription\ncases pass. Four additional tests cover serialization, post-append cancellation,\ndivergent replay and failing metrics observers. The complete Windows Live run\npasses 78 cases with zero skips against a disposable PostgreSQL 18 fixture\n(<code>postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873</code>).\nEarlier offline runs passed 67 and skipped seven database cases; they are kept\nseparate from the later database run. The API budget remains 13,571 signatures\nacross six families. These counts are development validation, not a release\nverdict. Raw results are retained under <code>artifacts/audit-live-*-20260927</code>,\n<code>artifacts/audit-live-*-results-20260927</code> and <code>artifacts/dev</code>.</p>\n<p>Release-track self-tests accept the five core families and Graph preview,\nreject Graph stable, and reject eight invalid policy mutations. Performance\nevidence schema 3 separately validates the complete Core and Graph preview\nmatrices, including 25 rejection fixtures. These are verifier self-tests with\nsynthetic data, not new measured wins. The historical V1 candidate aggregator\nhas not yet been migrated; <a href=\"/documentation/operations/releases-release-tracks\">release tracks</a> explains\nthat remaining publication gate.</p>\n<p>The contributor client command builds all five clients and runs eight available\ntests across the core, Svelte and Vue packages. Angular/React-specific tests are\nstill part of the browser work to expand; they are not counted as executed here.\nThe website command generates 140 guides and 150 crawlable/prerendered routes,\nthen passes production checks for hashed assets, metadata, source-map exclusion\nand size limits. It does not deploy the website or establish field mobile/CWV\nacceptance.</p>\n<p>A clean SDK artifacts build exposed a protobuf analyzer configuration tied to\nthe default <code>obj</code> location. The generated-file exception now lives in the root\neditor configuration and covers the exact generated protobuf filenames in both\ndefault and repository artifact directories. Handwritten APIs remain checked.</p>\n<p>The current hosting check found all three existing DigitalOcean workers\npowered off and all nodes <code>NotReady</code> with <code>NodeStatusUnknown</code>. The cluster API\nreports <code>error</code>. Power-on requests for the existing workers were rejected with\nHTTP 403 and an account-lock message. The account owner must resolve that lock\nthrough the DigitalOcean control panel/support before infrastructure recovery\ncan proceed. No replacement infrastructure was provisioned.</p>\n<h2>Execution order</h2>\n<p>Migrate the 1.2 exact-candidate aggregator to the independent Graph release\npolicy; accept or reject the pool candidate; remove server/browser\nfull-result work; close the spool, multiplexing, EF and connector gaps; improve\nfleet/dashboard operations and current documentation; assemble final release\nevidence. Infrastructure recovery can proceed as soon as the account is unlocked.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-application-platform-health",
     "summary": "BlueTusk's three Clean Architecture reference applications are production-shaped workloads, but Kubernetes desired state is not proof that a workload is actually running. A stale Pod object can continue to show Runnin…",
     "keywords": [
@@ -1755,7 +1904,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1075,
+    "order": 1077,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -1853,7 +2002,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1076,
+    "order": 1078,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -1962,7 +2111,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1078,
+    "order": 1080,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -2036,7 +2185,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1079,
+    "order": 1081,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -2093,7 +2242,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1081,
+    "order": 1083,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -2221,7 +2370,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1082,
+    "order": 1084,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -2306,7 +2455,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "1",
       "1"
     ],
-    "order": 1083,
+    "order": 1085,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -2379,7 +2528,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1086,
+    "order": 1088,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -2538,7 +2687,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1087,
+    "order": 1089,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -2626,7 +2775,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "website",
       "production"
     ],
-    "order": 1090,
+    "order": 1092,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -2687,13 +2836,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "categoryLabel": "Operations",
     "listed": false,
     "slug": "postgresql19-programme",
-    "summary": "PostgreSQL 19 is currently at Beta 3. BlueTusk treats it as pre-GA evidence, not a production dependency. The official project warns that beta features and behaviour may still change and does not recommend beta releas…",
+    "summary": "PostgreSQL 19 Beta 4 was released on 24 September 2026. BlueTusk's last verified milestone is Beta 3; Beta 4 is recorded as not yet tested, not silently promoted to supported status. The official roadmap now targets O…",
     "keywords": [
       "docs",
       "postgresql19",
       "programme"
     ],
-    "order": 1092,
+    "order": 1094,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -2704,13 +2853,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 371,
-    "readMinutes": 2,
-    "searchText": "PostgreSQL 19 compatibility programme PostgreSQL 19 is currently at Beta 3. BlueTusk treats it as pre-GA evidence, not a production dependency. The official project warns that beta features and behaviour may still change and does not recommend beta releases for production. General availability is currently planned for September 2026. `eng/postgresql19-programme.json` is the machine-readable cadence. The checked Beta 3 container is pinned by OCI digest, the scheduled official-branch snapshot detects catalogue and grammar drift, and `verify-postgresql19-programme.ps1 -VerifyOfficialCurrent` fails when the official documentation advances beyond the recorded milestone. BlueTusk advanced from Beta 2 to Beta 3 on 2026-08-17 after the official documentation moved on 2026-08-13. The full serial solution suite and the application migration/integration suite passed against `postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc` with zero failures. This is milestone-drift evidence only; it is neither the immutable GA matrix nor production approval. For every later beta and every release candidate: Pin the official image by digest and record its release date. Run the full PostgreSQL 15–19 solution matrix at the exact BlueTusk commit. Run the SQL/PGQ migration, discovery, typed-query, raw-SQL, native `REPACK` execution/progress, reverse-engineering, performance, replication and stress subsets. Review the PostgreSQL release notes for protocol, catalogue, type, grammar and migration changes. Archive test results, server version, image digest, source commit and package hashes; then update the programme record. The [typed SQL/PGQ boundary](graph/README.md#exact-v1-typed-subset-boundary) remains fixed: linear typed paths and direct scalar predicates are supported; the rest stays available through parameterised raw SQL. Unsupported typed forms fail without a string-concatenation fallback. BlueTusk 1.2 also has a first-class API for PostgreSQL ",
+    "wordCount": 475,
+    "readMinutes": 3,
+    "searchText": "PostgreSQL 19 compatibility programme PostgreSQL 19 Beta 4 was released on 24 September 2026. BlueTusk's last verified milestone is Beta 3; Beta 4 is recorded as **not yet tested**, not silently promoted to supported status. The official roadmap now targets October 2026. Beta images are for compatibility development, not production dependencies. The [Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/) removed SQL/PGQ, including `GRAPH_TABLE`, from PostgreSQL 19. A later PostgreSQL major may restore it; no version is promised here. Graph stays available as preview development on the historical Beta 3 fixture. The other five BlueTusk families have a separate [release track](releases/release-tracks.md). `eng/postgresql19-programme.json` is the machine-readable cadence. The checked Beta 3 container is pinned by OCI digest, the scheduled official-branch snapshot detects catalogue and grammar drift, and `verify-postgresql19-programme.ps1 -VerifyOfficialCurrent` checks the observed official milestone. The verifier reports the last tested milestone separately. The fixture remains Beta 3 until new image and test evidence have been recorded. BlueTusk advanced from Beta 2 to Beta 3 on 2026-08-17 after the official documentation moved on 2026-08-13. The full serial solution suite and the application migration/integration suite passed against `postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc` with zero failures. This is milestone-drift evidence only; it is neither the immutable GA matrix nor production approval. For every later beta and every release candidate: Pin the official image by digest and record its release date. Run the full PostgreSQL 15–19 solution matrix at the exact BlueTusk commit. Run protocol, replication, type, migration, reverse-engineering, native `REPACK` execution/progress, performance and stress subsets. Test capability absence explicitly. Run positive SQL/PGQ tests ",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>PostgreSQL 19 compatibility programme</h1>\n<p>PostgreSQL 19 is currently at Beta 3. BlueTusk treats it as pre-GA evidence,\nnot a production dependency. The official project warns that beta features and\nbehaviour may still change and does not recommend beta releases for production.\nGeneral availability is currently planned for September 2026.</p>\n<p><code>eng/postgresql19-programme.json</code> is the machine-readable cadence. The checked\nBeta 3 container is pinned by OCI digest, the scheduled official-branch\nsnapshot detects catalogue and grammar drift, and\n<code>verify-postgresql19-programme.ps1 -VerifyOfficialCurrent</code> fails when the\nofficial documentation advances beyond the recorded milestone.</p>\n<p>BlueTusk advanced from Beta 2 to Beta 3 on 2026-08-17 after the official\ndocumentation moved on 2026-08-13. The full serial solution suite and the\napplication migration/integration suite passed against\n<code>postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc</code>\nwith zero failures. This is milestone-drift evidence only; it is neither the\nimmutable GA matrix nor production approval.</p>\n<p>For every later beta and every release candidate:</p>\n<ol>\n<li>Pin the official image by digest and record its release date.</li>\n<li>Run the full PostgreSQL 15–19 solution matrix at the exact BlueTusk commit.</li>\n<li>Run the SQL/PGQ migration, discovery, typed-query, raw-SQL, native <code>REPACK</code>\nexecution/progress, reverse-engineering, performance, replication and\nstress subsets.</li>\n<li>Review the PostgreSQL release notes for protocol, catalogue, type, grammar\nand migration changes.</li>\n<li>Archive test results, server version, image digest, source commit and\npackage hashes; then update the programme record.</li>\n</ol>\n<p>The <a href=\"/documentation/graph/sql-pgq#exact-v1-typed-subset-boundary\">typed SQL/PGQ boundary</a> remains\nfixed: linear typed paths and direct scalar predicates are supported; the rest\nstays available through parameterised raw SQL. Unsupported typed forms fail\nwithout a string-concatenation fallback.</p>\n<p>BlueTusk 1.2 also has a first-class API for PostgreSQL 19’s native <code>REPACK</code>\nstatement, including synchronous and asynchronous execution, every documented\ntable/database, <code>USING INDEX</code>, <code>ANALYZE</code>, <code>VERBOSE</code>, and <code>CONCURRENTLY</code> shape,\nand <code>pg_stat_progress_repack</code> monitoring. The Beta 3 integration test reclaims\na table, refreshes selected statistics, executes the concurrent path, and\nverifies data preservation. This is pre-GA compatibility evidence and must be\nrepeated against every later milestone and the final digest-pinned GA image.</p>\n<p>Stable publication invokes\n<code>verify-postgresql19-programme.ps1 -RequireGeneralAvailability</code>. That gate\ncannot pass until PostgreSQL 19 GA has an official digest-pinned image and\nexact-commit evidence. BlueTusk <code>1.0.0</code> was published under the explicit owner\nexception recorded in the\n<a href=\"/documentation/operations/releases-1-0-0-publication-record\">V1 publication record</a>; the PostgreSQL\n19 GA evidence itself remains deferred, and the standard gate remains in force\nfor later releases.</p>\n"
+        "html": "<h1>PostgreSQL 19 compatibility programme</h1>\n<p>PostgreSQL 19 Beta 4 was released on 24 September 2026. BlueTusk’s last verified\nmilestone is Beta 3; Beta 4 is recorded as <strong>not yet tested</strong>, not silently\npromoted to supported status. The official roadmap now targets October 2026.\nBeta images are for compatibility development, not production dependencies.</p>\n<p>The <a href=\"https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/\" target=\"_blank\" rel=\"noreferrer\">Beta 4 announcement</a>\nremoved SQL/PGQ, including <code>GRAPH_TABLE</code>, from PostgreSQL 19. A later PostgreSQL\nmajor may restore it; no version is promised here. Graph stays available as\npreview development on the historical Beta 3 fixture. The other five BlueTusk\nfamilies have a separate <a href=\"/documentation/operations/releases-release-tracks\">release track</a>.</p>\n<p><code>eng/postgresql19-programme.json</code> is the machine-readable cadence. The checked\nBeta 3 container is pinned by OCI digest, the scheduled official-branch\nsnapshot detects catalogue and grammar drift, and\n<code>verify-postgresql19-programme.ps1 -VerifyOfficialCurrent</code> checks the observed\nofficial milestone. The verifier reports the last tested milestone separately.\nThe fixture remains Beta 3 until new image and test evidence have been recorded.</p>\n<p>BlueTusk advanced from Beta 2 to Beta 3 on 2026-08-17 after the official\ndocumentation moved on 2026-08-13. The full serial solution suite and the\napplication migration/integration suite passed against\n<code>postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc</code>\nwith zero failures. This is milestone-drift evidence only; it is neither the\nimmutable GA matrix nor production approval.</p>\n<p>For every later beta and every release candidate:</p>\n<ol>\n<li>Pin the official image by digest and record its release date.</li>\n<li>Run the full PostgreSQL 15–19 solution matrix at the exact BlueTusk commit.</li>\n<li>Run protocol, replication, type, migration, reverse-engineering, native\n<code>REPACK</code> execution/progress, performance and stress subsets. Test capability\nabsence explicitly. Run positive SQL/PGQ tests only on a server that actually\nprovides it; do not count skipped Graph tests as proof of Graph compatibility.</li>\n<li>Review the PostgreSQL release notes for protocol, catalogue, type, grammar\nand migration changes.</li>\n<li>Archive test results, server version, image digest, source commit and\npackage hashes; then update the programme record.</li>\n</ol>\n<p>The <a href=\"/documentation/graph/sql-pgq#exact-v1-typed-subset-boundary\">typed SQL/PGQ boundary</a> remains\nfixed: linear typed paths and direct scalar predicates are supported; the rest\nstays available through parameterised raw SQL. Unsupported typed forms fail\nwithout a string-concatenation fallback.</p>\n<p>BlueTusk 1.2 also has a first-class API for PostgreSQL 19’s native <code>REPACK</code>\nstatement, including synchronous and asynchronous execution, every documented\ntable/database, <code>USING INDEX</code>, <code>ANALYZE</code>, <code>VERBOSE</code>, and <code>CONCURRENTLY</code> shape,\nand <code>pg_stat_progress_repack</code> monitoring. The Beta 3 integration test reclaims\na table, refreshes selected statistics, executes the concurrent path, and\nverifies data preservation. This is pre-GA compatibility evidence and must be\nrepeated against every later milestone and the final digest-pinned GA image.</p>\n<p>Promoting PostgreSQL 19 from preview to stable compatibility still requires\n<code>verify-postgresql19-programme.ps1 -RequireGeneralAvailability</code>, a digest-pinned\nGA image, and exact-candidate compatibility evidence. Core 1.2 publication does\nnot require that optional compatibility promotion. Its supported stable matrix\nis PostgreSQL 15–18; its own performance, durability and release gates remain.\nGraph needs separate supported-server SQL/PGQ qualification, not a PostgreSQL 19\nGA version check. The <a href=\"/documentation/operations/releases-1-0-0-publication-record\">V1 publication record</a>\nis historical and does not qualify later releases.</p>\n"
       }
     ]
   },
@@ -2729,7 +2878,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1095,
+    "order": 1097,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -2761,7 +2910,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "process"
     ],
-    "order": 1100,
+    "order": 1102,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -2809,7 +2958,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1102,
+    "order": 1104,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -2860,7 +3009,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1103,
+    "order": 1105,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -2945,7 +3094,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1104,
+    "order": 1106,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -2990,7 +3139,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1106,
+    "order": 1108,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -3030,6 +3179,59 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "releases-release-tracks",
+    "summary": "BlueTusk 1.2 has two readiness tracks. Provider, Streams, Sync, Live and Control Plane can qualify for release without waiting for Graph. Continuous Graph is retained as preview work, including its compiler, increment…",
+    "keywords": [
+      "docs",
+      "releases",
+      "release",
+      "tracks"
+    ],
+    "order": 1109,
+    "title": "Core products and Graph preview",
+    "sourcePath": "docs/releases/release-tracks.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
+    "headings": [
+      {
+        "id": "core-products-and-graph-preview",
+        "text": "Core products and Graph preview",
+        "level": 1
+      },
+      {
+        "id": "verify-the-track-and-its-measurements",
+        "text": "Verify the track and its measurements",
+        "level": 2
+      },
+      {
+        "id": "remaining-release-wiring",
+        "text": "Remaining release wiring",
+        "level": 2
+      }
+    ],
+    "wordCount": 420,
+    "readMinutes": 2,
+    "searchText": "Core products and Graph preview BlueTusk 1.2 has two readiness tracks. Provider, Streams, Sync, Live and Control Plane can qualify for release without waiting for Graph. Continuous Graph is retained as preview work, including its compiler, incremental engine, dashboard and examples. Sharing a source version does not make every family production qualified. Track Server support Required evidence Five core families PostgreSQL 15–18 stable; PostgreSQL 19 preview Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval Continuous Graph preview Historical, digest-pinned PostgreSQL 19 Beta 3 fixture with SQL/PGQ Separate preview tests and performance results; not production evidence Future Graph stable A supported server release that actually provides SQL/PGQ Capability probe, differential/security/recovery tests, unchanged Graph cost limits, 24-hour endurance and independent release approval PostgreSQL 19 Beta 4 [removed SQL/PGQ](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/). PostgreSQL 19 GA alone will therefore not qualify Graph. A future server version has not been assigned here. Native PostgreSQL 19 `REPACK` remains preview compatibility work until the GA matrix passes. Verify the track and its measurements `eng/release-tracks.json` defines track membership. `verify-release-track.ps1` rejects stable Graph publication even if someone enables its package flag. Core families retain their other gates and dependency order; none depends on Continuous Graph. All stable package-publication flags remain disabled. Performance evidence schema 3 names `Core` or `ContinuousGraphPreview`. `Core` requires every declared core workload, including all seven Sync destinations, on both Windows and Linux. `ContinuousGraphPreview` requires its own complete matrix and cannot certify a core release. Preview results cannot substitute for missing core workloads. Confidence ",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Core products and Graph preview</h1>\n<p>BlueTusk 1.2 has two readiness tracks. Provider, Streams, Sync, Live and Control\nPlane can qualify for release without waiting for Graph. Continuous Graph is\nretained as preview work, including its compiler, incremental engine, dashboard\nand examples. Sharing a source version does not make every family production\nqualified.</p>\n<table>\n<thead>\n<tr>\n<th>Track</th>\n<th>Server support</th>\n<th>Required evidence</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Five core families</td>\n<td>PostgreSQL 15–18 stable; PostgreSQL 19 preview</td>\n<td>Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval</td>\n</tr>\n<tr>\n<td>Continuous Graph preview</td>\n<td>Historical, digest-pinned PostgreSQL 19 Beta 3 fixture with SQL/PGQ</td>\n<td>Separate preview tests and performance results; not production evidence</td>\n</tr>\n<tr>\n<td>Future Graph stable</td>\n<td>A supported server release that actually provides SQL/PGQ</td>\n<td>Capability probe, differential/security/recovery tests, unchanged Graph cost limits, 24-hour endurance and independent release approval</td>\n</tr>\n</tbody>\n</table>\n<p>PostgreSQL 19 Beta 4 <a href=\"https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/\" target=\"_blank\" rel=\"noreferrer\">removed SQL/PGQ</a>.\nPostgreSQL 19 GA alone will therefore not qualify Graph. A future server version\nhas not been assigned here. Native PostgreSQL 19 <code>REPACK</code> remains preview\ncompatibility work until the GA matrix passes.</p>\n<h2>Verify the track and its measurements</h2>\n<p><code>eng/release-tracks.json</code> defines track membership. <code>verify-release-track.ps1</code>\nrejects stable Graph publication even if someone enables its package flag.\nCore families retain their other gates and dependency order; none depends on\nContinuous Graph. All stable package-publication flags remain disabled.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "./eng/verify-release-track.ps1\n./eng/test-release-track-verifier.ps1\n./eng/verify-performance-leadership-contract.ps1\n./eng/test-performance-leadership-evidence-verifier.ps1\n\n# An evidence manifest must identify its exact scope and commit.\n./eng/verify-performance-leadership-evidence.ps1 `\n    -EvidencePath artifacts/my-core-evidence/evidence.json `\n    -ExpectedCommit <full-40-character-sha> -Scope Core\n",
+        "highlighted": "./eng/verify<span class=\"hljs-literal\">-release-track</span>.ps1\n./eng/<span class=\"hljs-built_in\">test-release</span><span class=\"hljs-literal\">-track-verifier</span>.ps1\n./eng/verify<span class=\"hljs-literal\">-performance-leadership-contract</span>.ps1\n./eng/<span class=\"hljs-built_in\">test-performance</span><span class=\"hljs-literal\">-leadership-evidence-verifier</span>.ps1\n\n<span class=\"hljs-comment\"># An evidence manifest must identify its exact scope and commit.</span>\n./eng/verify<span class=\"hljs-literal\">-performance-leadership-evidence</span>.ps1 `\n    <span class=\"hljs-literal\">-EvidencePath</span> artifacts/my<span class=\"hljs-literal\">-core-evidence</span>/evidence.json `\n    <span class=\"hljs-literal\">-ExpectedCommit</span> &lt;full<span class=\"hljs-literal\">-40-character-sha</span>&gt; <span class=\"hljs-literal\">-Scope</span> Core\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Performance evidence schema 3 names <code>Core</code> or <code>ContinuousGraphPreview</code>.\n<code>Core</code> requires every declared core workload, including all seven Sync\ndestinations, on both Windows and Linux. <code>ContinuousGraphPreview</code> requires its\nown complete matrix and cannot certify a core release. Preview results cannot\nsubstitute for missing core workloads. Confidence intervals, allocation,\nlatency, CPU and memory limits have not been reduced. Verifier self-tests use\nsynthetic fixtures only; their success is not a performance result.</p>\n<h2>Remaining release wiring</h2>\n<p>The historical <code>v1-candidate-readiness.yml</code> aggregator and its V1 evidence schema\nstill describe a six-family, PostgreSQL-19-GA-qualified 1.0 candidate. They are\nnot a valid 1.2 core release gate. The 1.2 candidate aggregator must be migrated\nto this track policy, exact 1.2 versions, the scoped performance manifest,\nLive/Control Plane endurance and current connector evidence before publication\ncan be enabled. Keep the existing protections and independent approvals;\ndo not bypass the old aggregator or reinterpret its historical artifacts.</p>\n<p>See the <a href=\"/documentation/operations/improvement-audit\">audit action record</a> for remaining work and\nacceptance criteria. This policy change is not a release approval.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "v1-applications",
     "summary": "BlueTusk V1 is exercised by three independently deployable applications in applications/BlueTusk.Applications.slnx:",
     "keywords": [
@@ -3037,7 +3239,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1135,
+    "order": 1138,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -3095,7 +3297,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1136,
+    "order": 1139,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",

@@ -20,13 +20,20 @@ if (@($manifest.requiredFutureCadence).Count -ne 3)
     throw 'PostgreSQL 19 must require later beta, release-candidate and GA cadence.'
 }
 
-$current = @($manifest.milestones | Where-Object {
+$official = @($manifest.milestones | Where-Object {
     $_.version -eq $manifest.currentOfficialMilestone
+})
+if ($official.Count -ne 1)
+{
+    throw 'The observed official PostgreSQL milestone must have exactly one record.'
+}
+$current = @($manifest.milestones | Where-Object {
+    $_.version -eq $manifest.lastVerifiedMilestone
 })
 if ($current.Count -ne 1 -or $current[0].status -ne 'verified')
 {
     throw (
-        "Current PostgreSQL milestone '$($manifest.currentOfficialMilestone)' " +
+        "Last verified PostgreSQL milestone '$($manifest.lastVerifiedMilestone)' " +
         'must have one verified record.')
 }
 if ([string]$current[0].image -notmatch
@@ -120,6 +127,7 @@ if ($RequireGeneralAvailability)
             [string]$manifest.currentOfficialMilestone,
             [string]$ga.version,
             [StringComparison]::Ordinal) -or
+        $manifest.lastVerifiedMilestone -cne $manifest.currentOfficialMilestone -or
         -not [string]::Equals(
             [string]$current[0].image,
             [string]$ga.image,
@@ -132,5 +140,6 @@ if ($RequireGeneralAvailability)
 }
 
 Write-Host (
-    "PostgreSQL 19 programme verified at $($manifest.currentOfficialMilestone); " +
+    "PostgreSQL 19 programme: official $($manifest.currentOfficialMilestone), " +
+    "last tested $($manifest.lastVerifiedMilestone); " +
     "GA status is $($manifest.generalAvailability.status).")

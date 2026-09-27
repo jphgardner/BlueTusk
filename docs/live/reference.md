@@ -28,6 +28,11 @@ The core package currently provides:
 
 Refreshes coalesce every invalidation since the last cursor into at most one authoritative query. Unrelated-table activity advances the cursor without querying. A backward cursor, an over-limit result, duplicate keys, or perpetual initial churn fails closed with a specific diagnostic.
 
+If a query, diff, or cancellation fails, the committed cursor and snapshot stay
+at their previous position. Retry the refresh even when no newer transaction
+has arrived. Resets reserve the cursor before reading the database, so a change
+that arrives during that query remains eligible for the next refresh.
+
 `BlueTusk.Live.DependencyInjection` supplies a PostgreSQL invalidation store in the relay control schema. It atomically deduplicates source transactions, records the distinct affected tables, and acknowledges the Streams delivery only after the invalidation commit succeeds. Typed and dynamic row changes use the same dependency extraction path. Failed writes are nacked for safe redelivery.
 
 ## EF query registration
@@ -110,6 +115,19 @@ A new client never depends on an initial event that may already have expired. Wh
 
 `LiveSharedSubscription<T, TKey>` owns one authoritative query session for one complete subscription identity. Matching clients share its query and replay append; different parameter, tenant, user, policy-version, database, plan, or limit fingerprints cannot enter the same registry entry.
 
+Initial results, refreshes, and resets follow the same sequence: prepare the
+result, append its serialized events to replay storage, commit the session's
+snapshot and cursor, then publish to subscribers. An unsuccessful append leaves
+one pending result. A retry sends the same serialized events and prior sequence;
+an idempotent store can confirm an append whose first response was lost. Newer
+invalidations are processed after that pending result is recovered. A divergent
+stored sequence remains an error rather than silently replacing history.
+
+Retry `StartAsync` after an initial append failure. Once started, either
+`RefreshAsync` or `ConnectAsync` recovers pending refresh/reset work before
+continuing. Do not use the underlying query session directly while the shared
+subscription has an unresolved append. Disposal releases the pending state.
+
 Reconnect is serialized with publication so replay and the newly attached bounded channel have no race. Subscriber counts, replay batch size, shared subscription count, and per-client pending messages are bounded. A slow client is either disconnected with a specific error or sent a `ResetRequired` control message after its buffer is drained, according to explicit policy. No path silently drops a diff while allowing the client to continue.
 
 Each shared subscription now exposes an allocation-free operational snapshot: open/connected counts, active subscribers, fan-out deliveries, resume attempts/rejections, replay rejections/events/bytes appended, quota rejections, and the last bounded-buffer disconnect code. The registry exposes sorted snapshots plus its own shared-query quota pressure without revealing result rows or parameter values.
@@ -168,15 +186,16 @@ B. Machine-checked budgets cap those paths at 235,000 B, 900 B, and 185,000 B
 respectively. These are local regression baselines, not network latency or
 universal throughput claims.
 
-The published stable `1.0.0` family has passed its implementation audit, and
-the coordinated `1.1.0-rc.1` NuGet/npm packages are public. The
-PostgreSQL 15–19 matrix persists initial and update replay in the production
-store and drives signed disconnect/resume delivery through real SSE,
-SignalR/WebSockets, and HTTP/2 gRPC endpoints. Stable `1.1.0` publication stays
-disabled until its dependencies and exact stable-candidate gates pass. See the
-[1.0.0 release record](release-notes-1.0.0.md) for exact scope and
-boundaries and the [1.1.0-rc.1 record](../releases/1.1.0-rc.1.md) for current
-package availability.
+Current improvement work targets `1.2.0`; its stable publication remains
+disabled. Live is on the core [release track](../releases/release-tracks.md),
+which does not wait for Graph. PostgreSQL 15–18 is the stable server matrix;
+PostgreSQL 19 remains preview compatibility work. Production-store tests persist
+initial/update replay and exercise signed disconnect/resume through real SSE,
+SignalR/WebSockets and HTTP/2 gRPC endpoints. Passing a local run does not
+replace the exact-candidate platform, performance or endurance gates.
+The [1.0.0 release record](release-notes-1.0.0.md) and
+[1.1.0-rc.1 record](../releases/1.1.0-rc.1.md) describe historical publication
+scope, not approval of the current development candidate.
 
 The [public API candidate freeze](api-compatibility.md) and
 [durable format registry](format-compatibility.md) prepare the Live 1.0 surface

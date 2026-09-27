@@ -70,7 +70,7 @@ jobs:
           dotnet restore BlueTusk.slnx
           dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-restore
 
-      - name: Start digest-pinned PostgreSQL 19 development milestone
+      - name: Start historical PostgreSQL 19 Beta 3 preview fixture
         shell: pwsh
         run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
 
@@ -84,11 +84,12 @@ jobs:
         run: |
           $programme = Get-Content -Raw eng/postgresql19-programme.json | ConvertFrom-Json
           $milestone = @($programme.milestones | Where-Object {
-            $_.version -eq $programme.currentOfficialMilestone
+            $_.version -eq $programme.lastVerifiedMilestone
           })
           if ($milestone.Count -ne 1) {
-            throw 'The current PostgreSQL 19 milestone is ambiguous.'
+            throw 'The last verified PostgreSQL 19 preview fixture is ambiguous.'
           }
+          Write-Output "Historical preview capture uses $($programme.lastVerifiedMilestone); official milestone is $($programme.currentOfficialMilestone). This is not core release qualification."
           ./eng/run-v1-performance-gate.ps1 `
             -OutputPath "artifacts/performance-leadership/$env:CAPTURE_ENVIRONMENT" `
             -ExpectedCommit $env:CANDIDATE_SHA `

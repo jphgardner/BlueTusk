@@ -78,17 +78,18 @@ function Test-RejectedEvidence
     param(
         [Parameter(Mandatory)][string] $Name,
         [Parameter(Mandatory)][scriptblock] $Mutate,
-        [Parameter(Mandatory)][string] $ExpectedMessage
+        [Parameter(Mandatory)][string] $ExpectedMessage,
+        [ValidateSet('Core', 'ContinuousGraphPreview')][string] $Scope = 'Core'
     )
 
-    $changed = $validJson | ConvertFrom-Json -AsHashtable
+    $changed = $(if ($Scope -eq 'Core') { $validJson } else { $graphJson }) | ConvertFrom-Json -AsHashtable
     & $Mutate $changed
     $path = Join-Path $temporaryRoot "$Name.json"
     $changed | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $path -Encoding utf8
     $failure = $null
     try
     {
-        & $verifierPath -EvidencePath $path -ContractPath $contractPath -ExpectedCommit $commit | Out-Null
+        & $verifierPath -EvidencePath $path -ContractPath $contractPath -ExpectedCommit $commit -Scope $Scope | Out-Null
     }
     catch
     {
@@ -206,9 +207,12 @@ try
             containerImageDigests = $images
         }
     })
+    $allComparisons = $comparisons.ToArray()
+    $graphComparisons = @($allComparisons | Where-Object { $_.workloadKey.Split('|')[1] -eq 'ContinuousGraph' })
     $evidence = [ordered]@{
-        schemaVersion = 2
+        schemaVersion = 3
         release = $contract.release
+        scope = 'Core'
         sourceCommit = $commit
         confidenceLevel = 0.95
         consolidatedReportPath = 'report.md'
@@ -216,14 +220,38 @@ try
         verifierSelfTestsPath = 'self-tests.log'
         verifierSelfTestsSha256 = (Get-FileHash (Join-Path $temporaryRoot 'self-tests.log') -Algorithm SHA256).Hash.ToLowerInvariant()
         environments = $environments
-        comparisons = $comparisons
+        comparisons = @($allComparisons | Where-Object { $_.workloadKey.Split('|')[1] -ne 'ContinuousGraph' })
     }
     $validPath = Join-Path $temporaryRoot 'valid.json'
     $validJson = $evidence | ConvertTo-Json -Depth 12
     $validJson | Set-Content -LiteralPath $validPath -Encoding utf8
     & $verifierPath -EvidencePath $validPath -ContractPath $contractPath -ExpectedCommit $commit | Out-Null
+    $graphEvidence = $validJson | ConvertFrom-Json -AsHashtable
+    $graphEvidence.scope = 'ContinuousGraphPreview'
+    $graphEvidence.comparisons = $graphComparisons
+    $graphPath = Join-Path $temporaryRoot 'graph-preview.json'
+    $graphJson = $graphEvidence | ConvertTo-Json -Depth 12
+    $graphJson | Set-Content -LiteralPath $graphPath -Encoding utf8
+    & $verifierPath -EvidencePath $graphPath -ContractPath $contractPath -ExpectedCommit $commit -Scope ContinuousGraphPreview | Out-Null
 
     $script:rejectionCount = 0
+    Test-RejectedEvidence 'wrong-scope' {
+        param($changed)
+        $changed.scope = 'ContinuousGraphPreview'
+    } 'scope, or confidence'
+    Test-RejectedEvidence 'graph-cannot-substitute-for-core' {
+        param($changed)
+        $changed.comparisons[0] = $graphComparisons[0]
+    } 'duplicate or outside'
+    Test-RejectedEvidence 'missing-graph-workload' {
+        param($changed)
+        $changed.comparisons = @($changed.comparisons | Select-Object -Skip 1)
+    } 'Expected exactly' -Scope ContinuousGraphPreview
+    Test-RejectedEvidence 'graph-trusted-cost-regression' {
+        param($changed)
+        $changed.comparisons[0].metrics.p95.candidate = 20.0
+        $changed.comparisons[0].metrics.p95.candidateCiUpper = 21.0
+    } "failed 'p95'" -Scope ContinuousGraphPreview
     Test-RejectedEvidence 'bad-ratio' {
         param($changed)
         $changed.comparisons[0].metrics.mean.candidate = 100.0
@@ -293,7 +321,7 @@ try
         $changed.comparisons[0].metrics.mean.candidateCiUpper = 99.0
     } "failed 'mean'"
 
-    Write-Output "Performance leadership evidence verifier self-test passed: valid synthetic fixture and $script:rejectionCount rejected fixtures."
+    Write-Output "Performance leadership evidence verifier self-test passed: independent Core and Graph preview synthetic fixtures and $script:rejectionCount rejected fixtures."
 }
 finally
 {

@@ -6,8 +6,11 @@ SQL, typed schema discovery, EF model/migrations, and a bounded typed EF query
 builder.
 
 This feature requires the server to report SQL/PGQ capability. Do not enable it
-from a PostgreSQL version string alone. Stable support follows the repository's
-documented PostgreSQL 19 release gate.
+from a PostgreSQL version string alone. SQL/PGQ was removed in PostgreSQL 19
+Beta 4. This is preview functionality on the pinned historical Beta 3 fixture,
+not a production PostgreSQL 19 feature. Keep it on the separate
+[Graph release track](../releases/release-tracks.md); other products do not wait
+for its future availability.
 
 ## Run the complete example
 

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "1.2.0",
+  "stableFamilies": ["Provider", "Streams", "Sync", "Live", "ControlPlane"],
+  "previewFamilies": ["ContinuousGraph"],
+  "stablePostgreSqlMajors": [15, 16, 17, 18],
+  "previewPostgreSqlMajors": [19],
+  "postgresql19RequiredForCorePublication": false,
+  "graphEvidenceRequiredForCorePublication": false,
+  "graph": {
+    "stablePublicationEligible": false,
+    "requiredServerCapability": "SQL/PGQ GRAPH_TABLE",
+    "versionNumberAloneEstablishesSupport": false,
+    "qualificationRequirements": [
+      "supported-server-release-and-image-digest",
+      "sql-pgq-capability-probe",
+      "exact-candidate-differential-security-and-recovery-tests",
+      "exact-candidate-performance-evidence",
+      "24-hour-endurance",
+      "independent-release-approval"
+    ],
+    "historicalPreviewMilestone": "19beta3",
+    "removalAnnouncement": "https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/"
+  }
+}

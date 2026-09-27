@@ -7,6 +7,9 @@ param(
     [ValidatePattern('^[0-9a-f]{40}$')]
     [string] $ExpectedCommit,
 
+    [ValidateSet('Core', 'ContinuousGraphPreview')]
+    [string] $Scope = 'Core',
+
     [string] $ContractPath = (Join-Path $PSScriptRoot 'performance-leadership-contract.json')
 )
 
@@ -158,13 +161,17 @@ function Add-Expected
 }
 
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
+& (Join-Path $PSScriptRoot 'verify-performance-leadership-contract.ps1') -ContractPath $ContractPath | Out-Null
+$tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
+$scopeFamilies = if ($Scope -eq 'Core') { @($tracks.stableFamilies) } else { @($tracks.previewFamilies) }
 $evidenceRoot = Split-Path -Parent (Resolve-Path -LiteralPath $EvidencePath).Path
 $evidence = Get-Content -LiteralPath $EvidencePath -Raw | ConvertFrom-Json
-if ($evidence.schemaVersion -ne 2 -or $evidence.release -ne $contract.release -or
+if ($evidence.schemaVersion -ne 3 -or $evidence.release -ne $contract.release -or
+    $evidence.scope -cne $Scope -or
     [string]$evidence.sourceCommit -cne $ExpectedCommit -or
     [double]$evidence.confidenceLevel -ne [double]$contract.comparisonRules.confidenceLevel)
 {
-    throw 'Performance evidence identity, release, commit, or confidence level is invalid.'
+    throw 'Performance evidence identity, release, commit, scope, or confidence level is invalid.'
 }
 
 $null = Assert-EvidenceArtifact $evidence.consolidatedReportPath `
@@ -280,6 +287,14 @@ foreach ($os in $environmentNames)
     }
 }
 
+# Keep each track exact and complete; preview results cannot fill missing core work.
+foreach ($key in @($expected.Keys))
+{
+    if ($key.Split('|')[1] -notin $scopeFamilies)
+    {
+        $null = $expected.Remove($key)
+    }
+}
 $comparisons = @($evidence.comparisons)
 if ($comparisons.Count -ne $expected.Count)
 {
@@ -360,5 +375,5 @@ foreach ($comparison in $comparisons)
 }
 
 Write-Output (
-    "Verified retained artifacts and $($comparisons.Count) declared BlueTusk $($contract.release) performance comparisons for " +
+    "Verified retained artifacts and $($comparisons.Count) declared BlueTusk $($contract.release) $Scope performance comparisons for " +
     "$($environmentNames -join ' and ') at commit $($evidence.sourceCommit).")

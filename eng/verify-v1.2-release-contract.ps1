@@ -10,6 +10,11 @@ $repositoryRoot = Split-Path $PSScriptRoot -Parent
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
 $families = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph')
 $rcVersion = '1.2.0-rc.1'
+if ($contract.releaseTracksFile -cne 'eng/release-tracks.json')
+{
+    throw 'The 1.2 release contract must use the canonical family release tracks.'
+}
+& (Join-Path $PSScriptRoot 'verify-release-track.ps1')
 
 if ([int]$contract.schemaVersion -ne 1 -or
     [string]$contract.releaseVersion -ne '1.2.0' -or
@@ -169,8 +174,7 @@ $gates = $contract.releaseGates
 foreach ($flag in @(
         'build', 'security', 'performance', 'publicApiCompatibility',
         'packageConsumerSmoke', 'nativeAotAndTrimming', 'windowsX64', 'linuxX64',
-        'backupRestoreRehearsal', 'rollbackRehearsal',
-        'postgresql19GaDigestRequired'))
+        'backupRestoreRehearsal', 'rollbackRehearsal'))
 {
     if ($gates.PSObject.Properties[$flag].Value -ne $true)
     {
@@ -268,7 +272,13 @@ foreach ($manifestPath in @(
     }
 }
 
-if ($contract.compatibility.continuousGraphRequiresPostgreSql19Ga -ne $true -or
+if ($contract.compatibility.continuousGraphRequiresQualifiedSqlPgqServer -ne $true -or
+    @($contract.compatibility.generalPostgreSqlMajors).Count -ne 4 -or
+    @(Compare-Object @(15, 16, 17, 18) @($contract.compatibility.generalPostgreSqlMajors) -SyncWindow 0).Count -ne 0 -or
+    @($contract.compatibility.previewPostgreSqlMajors).Count -ne 1 -or
+    $contract.compatibility.previewPostgreSqlMajors[0] -ne 19 -or
+    $gates.postgresql19GaDigestRequiredForCore -ne $false -or
+    $gates.graphEvidenceRequiredForCore -ne $false -or
     $contract.publication.stableEnabledBeforeAllGatesPass -ne $false -or
     $contract.publication.nugetTrustedPublishingRequired -ne $true -or
     $contract.publication.npmProvenanceRequired -ne $true -or
@@ -279,6 +289,6 @@ if ($contract.compatibility.continuousGraphRequiresPostgreSql19Ga -ne $true -or
 }
 
 Write-Output (
-    "Verified the coordinated BlueTusk 1.2 contract: six families, " +
+    "Verified the BlueTusk 1.2 source-version contract: five core release tracks and Graph preview, " +
     "$($nuGetProjects.Count) new NuGet packages, $($npmProjects.Count) new npm packages, " +
     'guarded Kubernetes endurance, and disabled stable publication.')

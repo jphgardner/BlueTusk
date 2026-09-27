@@ -7,10 +7,12 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
-if ($contract.schemaVersion -ne 1 -or $contract.release -ne '1.2.0')
+if ($contract.schemaVersion -ne 2 -or $contract.release -ne '1.2.0' -or
+    $contract.releaseTracksFile -cne 'eng/release-tracks.json')
 {
-    throw 'The performance-leadership contract must be schema 1 for release 1.2.0.'
+    throw 'The performance-leadership contract must be schema 2 for release 1.2.0 and bind the family release tracks.'
 }
+& (Join-Path $PSScriptRoot 'verify-release-track.ps1')
 
 $rules = $contract.comparisonRules
 if ($rules.sameRuntimeMaximumRatio -ne 0.98 -or
@@ -81,9 +83,15 @@ if ($contract.enduranceHours.Streams -ne 72 -or
     $contract.enduranceHours.Live -ne 24 -or
     $contract.enduranceHours.ControlPlane -ne 24 -or
     $contract.enduranceHours.ContinuousGraph -ne 24 -or
-    $contract.stablePublicationRequiresPostgreSql19Ga -ne $true)
+    $contract.graphStablePublicationRequiresQualifiedSqlPgqServer -ne $true)
 {
-    throw 'Endurance duration or the PostgreSQL 19 GA publication gate was weakened.'
+    throw 'Endurance duration or the qualified SQL/PGQ Graph publication gate was weakened.'
+}
+if (@($contract.workloads.Sync.destinations).Count -ne 7 -or
+    @(Compare-Object @('nats', 'redis', 'opensearch', 'postgresql', 'kafka', 's3', 'webhooks') `
+        @($contract.workloads.Sync.destinations) -SyncWindow 0).Count -ne 0)
+{
+    throw 'All seven 1.2 Sync destinations require performance coverage.'
 }
 
 $workflowPath = Join-Path (

@@ -182,6 +182,9 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     private readonly object _subscribersGate = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly BoundedChannelOptions _subscriberChannelOptions;
+    private LiveDiffBatch<T, TKey>? _pendingReplayBatch;
+    private LiveReplayEvent[]? _pendingReplayEvents;
+    private LiveReplayEvent[]? _readyReplayEvents;
     private long _persistedSequence;
     private long _publishedEvents;
     private long _fanOutDeliveries;
@@ -253,8 +256,8 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 throw new InvalidOperationException("A shared Live subscription can be started only once.");
             }
 
-            var initial = await _session.StartAsync(cancellationToken).ConfigureAwait(false);
-            await PersistAsync(initial.Events, cancellationToken).ConfigureAwait(false);
+            _ = await _session.StartPersistedAsync(PersistAsync, cancellationToken).ConfigureAwait(false);
+            _ = AcceptPersistedEvents();
             Volatile.Write(ref _started, 1);
         }
         finally
@@ -270,15 +273,16 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         try
         {
             EnsureStarted();
-            var batch = await _session.RefreshToCurrentAsync(cancellationToken).ConfigureAwait(false);
+            var recovered = await RecoverPendingAsync(cancellationToken).ConfigureAwait(false);
+            var batch = await _session.RefreshPersistedAsync(PersistAsync, cancellationToken).ConfigureAwait(false);
             if (batch is null || batch.Events.Count == 0)
             {
-                return 0;
+                return recovered;
             }
 
-            var replayEvents = await PersistAsync(batch.Events, cancellationToken).ConfigureAwait(false);
+            var replayEvents = AcceptPersistedEvents();
             Publish(replayEvents);
-            return replayEvents.Length;
+            return recovered + replayEvents.Length;
         }
         finally
         {
@@ -301,6 +305,8 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.NotStarted);
                 return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.NotStarted, null);
             }
+
+            _ = await RecoverPendingAsync(cancellationToken).ConfigureAwait(false);
 
             lock (_subscribersGate)
             {
@@ -326,10 +332,11 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                     return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayUnavailable, null);
                 }
 
-                var reset = await _session.ResetAsync(
+                _ = await _session.ResetPersistedAsync(
                     LiveResetReason.ReplayExpired,
+                    PersistAsync,
                     cancellationToken).ConfigureAwait(false);
-                var resetEvents = await PersistAsync(reset.Events, cancellationToken).ConfigureAwait(false);
+                var resetEvents = AcceptPersistedEvents();
                 Publish(resetEvents);
                 replay = LiveReplayReadResult.CreateOwned(
                     LiveReplayReadStatus.Available,
@@ -440,6 +447,9 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
             }
 
             await _session.DisposeAsync().ConfigureAwait(false);
+            _pendingReplayBatch = null;
+            _pendingReplayEvents = null;
+            _readyReplayEvents = null;
         }
         finally
         {
@@ -448,21 +458,41 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         }
     }
 
-    private async ValueTask<LiveReplayEvent[]> PersistAsync(
-        IReadOnlyList<LiveResultEvent<T, TKey>> events,
-        CancellationToken cancellationToken)
+    private async ValueTask<int> RecoverPendingAsync(CancellationToken cancellationToken)
     {
-        var replayEvents = new LiveReplayEvent[events.Count];
-        for (var index = 0; index < replayEvents.Length; index++)
+        var recovered = await _session.RetryPendingAsync(PersistAsync, cancellationToken).ConfigureAwait(false);
+        if (recovered is null)
         {
-            replayEvents[index] = LiveReplayJsonSerializer.Serialize(events[index]);
+            return 0;
         }
 
+        var events = AcceptPersistedEvents();
+        Publish(events);
+        return events.Length;
+    }
+
+    private async ValueTask PersistAsync(
+        LiveDiffBatch<T, TKey> batch,
+        CancellationToken cancellationToken)
+    {
+        if (!ReferenceEquals(_pendingReplayBatch, batch))
+        {
+            var serialized = new LiveReplayEvent[batch.Events.Count];
+            for (var index = 0; index < serialized.Length; index++)
+            {
+                serialized[index] = LiveReplayJsonSerializer.Serialize(batch.Events[index]);
+            }
+
+            _pendingReplayBatch = batch;
+            _pendingReplayEvents = serialized;
+        }
+
+        var replayEvents = _pendingReplayEvents!;
         var expected = Interlocked.Read(ref _persistedSequence);
         var result = await _replayStore.AppendAsync(
             LiveReplayAppendRequest.CreateOwned(Identity, expected, replayEvents),
             cancellationToken).ConfigureAwait(false);
-        if (result.Status is LiveReplayAppendStatus.SequenceConflict)
+        if (result.Status is not (LiveReplayAppendStatus.Stored or LiveReplayAppendStatus.AlreadyStored))
         {
             throw new LiveReplaySequenceException(
                 $"Live replay sequence for '{Identity.Fingerprint}' is {result.CurrentLastSequence}, expected {expected}.");
@@ -475,7 +505,17 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 $"Live replay append ended at {result.CurrentLastSequence}, not {finalSequence}.");
         }
 
-        Interlocked.Exchange(ref _persistedSequence, finalSequence);
+        _readyReplayEvents = replayEvents;
+        _pendingReplayBatch = null;
+        _pendingReplayEvents = null;
+    }
+
+    private LiveReplayEvent[] AcceptPersistedEvents()
+    {
+        var replayEvents = _readyReplayEvents ??
+            throw new InvalidOperationException("The Live session committed without its persisted replay events.");
+        _readyReplayEvents = null;
+        Interlocked.Exchange(ref _persistedSequence, replayEvents[^1].Sequence);
         Interlocked.Add(ref _publishedEvents, replayEvents.Length);
         var replayBytes = GetReplayBytes(replayEvents);
         Interlocked.Add(ref _replayBytesAppended, replayBytes);

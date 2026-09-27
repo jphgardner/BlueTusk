@@ -71,6 +71,7 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
     private readonly LiveQuerySessionOptions _options;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private LiveResultSnapshot<T, TKey>? _snapshot;
+    private PendingChange? _pendingChange;
     private LiveInvalidationCursor _cursor;
     private long _lastSequence;
     private long _authoritativeQueryCount;
@@ -110,13 +111,29 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         Volatile.Read(ref _snapshot)?.Rows.Count ?? 0,
         Volatile.Read(ref _started) != 0);
 
-    public async ValueTask<LiveDiffBatch<T, TKey>> StartAsync(
-        CancellationToken cancellationToken = default)
+    public ValueTask<LiveDiffBatch<T, TKey>> StartAsync(
+        CancellationToken cancellationToken = default) =>
+        StartCoreAsync(null, cancellationToken);
+
+    internal ValueTask<LiveDiffBatch<T, TKey>> StartPersistedAsync(
+        Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask> persist,
+        CancellationToken cancellationToken) =>
+        StartCoreAsync(persist, cancellationToken);
+
+    private async ValueTask<LiveDiffBatch<T, TKey>> StartCoreAsync(
+        Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask>? persist,
+        CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (_pendingChange is not null && persist is not null && _pendingChange.StartsSession)
+            {
+                return await CommitChangeAsync(_pendingChange, persist, cancellationToken).ConfigureAwait(false);
+            }
+
+            EnsureNoPendingChange();
             if (Volatile.Read(ref _started) != 0)
             {
                 throw new InvalidOperationException("A live query session can be started only once.");
@@ -146,16 +163,15 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
                         through,
                         cancellationToken).ConfigureAwait(false))
                 {
-                    _cursor = through;
                     var initial = LiveResultDiffer.Initial(
                         rows,
                         _plan.KeySelector,
                         _plan.KeyComparer,
                         sequence: 1);
-                    Volatile.Write(ref _snapshot, initial.Snapshot);
-                    Interlocked.Exchange(ref _lastSequence, 1);
-                    Volatile.Write(ref _started, 1);
-                    return initial;
+                    return await CommitChangeAsync(
+                        new PendingChange(initial, through, StartsSession: true),
+                        persist,
+                        cancellationToken).ConfigureAwait(false);
                 }
 
                 Interlocked.Increment(ref _coalescedInvalidationCount);
@@ -172,8 +188,18 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         }
     }
 
-    public async ValueTask<LiveDiffBatch<T, TKey>?> RefreshToCurrentAsync(
-        CancellationToken cancellationToken = default)
+    public ValueTask<LiveDiffBatch<T, TKey>?> RefreshToCurrentAsync(
+        CancellationToken cancellationToken = default) =>
+        RefreshCoreAsync(null, cancellationToken);
+
+    internal ValueTask<LiveDiffBatch<T, TKey>?> RefreshPersistedAsync(
+        Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask> persist,
+        CancellationToken cancellationToken) =>
+        RefreshCoreAsync(persist, cancellationToken);
+
+    private async ValueTask<LiveDiffBatch<T, TKey>?> RefreshCoreAsync(
+        Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask>? persist,
+        CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         var telemetryStarted = LiveDiagnostics.GetTimestamp();
@@ -183,6 +209,7 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         try
         {
             EnsureStarted();
+            EnsureNoPendingChange();
             var through = await _invalidationLog.GetCurrentCursorAsync(
                 _plan.DatabaseIdentity,
                 cancellationToken).ConfigureAwait(false);
@@ -203,9 +230,9 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
                 _cursor,
                 through,
                 cancellationToken).ConfigureAwait(false);
-            _cursor = through;
             if (!affected)
             {
+                _cursor = through;
                 return null;
             }
 
@@ -220,11 +247,10 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
                 _plan.KeyComparer,
                 _options.Diff,
                 nextSequence);
-            Volatile.Write(ref _snapshot, batch.Snapshot);
-            if (batch.Events.Count != 0)
-            {
-                Interlocked.Exchange(ref _lastSequence, batch.Events[^1].Sequence);
-            }
+            await CommitChangeAsync(
+                new PendingChange(batch, through),
+                persist,
+                cancellationToken).ConfigureAwait(false);
 
             telemetryEvents = batch.Events.Count;
             return batch;
@@ -241,18 +267,36 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         }
         finally
         {
-            LiveDiagnostics.RecordRefresh(
-                _plan.Name,
-                telemetryOutcome,
-                telemetryStarted,
-                telemetryEvents);
-            _gate.Release();
+            try
+            {
+                LiveDiagnostics.RecordRefresh(
+                    _plan.Name,
+                    telemetryOutcome,
+                    telemetryStarted,
+                    telemetryEvents);
+            }
+            finally
+            {
+                _gate.Release();
+            }
         }
     }
 
-    public async ValueTask<LiveDiffBatch<T, TKey>> ResetAsync(
+    public ValueTask<LiveDiffBatch<T, TKey>> ResetAsync(
         LiveResetReason reason,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        ResetCoreAsync(reason, null, cancellationToken);
+
+    internal ValueTask<LiveDiffBatch<T, TKey>> ResetPersistedAsync(
+        LiveResetReason reason,
+        Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask> persist,
+        CancellationToken cancellationToken) =>
+        ResetCoreAsync(reason, persist, cancellationToken);
+
+    private async ValueTask<LiveDiffBatch<T, TKey>> ResetCoreAsync(
+        LiveResetReason reason,
+        Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask>? persist,
+        CancellationToken cancellationToken)
     {
         if (!Enum.IsDefined(reason))
         {
@@ -264,6 +308,17 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         try
         {
             EnsureStarted();
+            EnsureNoPendingChange();
+            // Read the cursor first: changes committed during the query must remain pending.
+            var cursor = await _invalidationLog.GetCurrentCursorAsync(
+                _plan.DatabaseIdentity,
+                cancellationToken).ConfigureAwait(false);
+            if (cursor < _cursor)
+            {
+                throw new LiveInvalidationCursorException(
+                    $"The invalidation cursor moved backward from {_cursor.Value} to {cursor.Value}.");
+            }
+
             var rows = await ExecuteAuthoritativeQueryAsync(cancellationToken).ConfigureAwait(false);
             var nextSequence = checked(Interlocked.Read(ref _lastSequence) + 1);
             var initial = LiveResultDiffer.Initial(
@@ -282,12 +337,10 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
                 initial.Snapshot.Keys,
                 reason);
             var batch = new LiveDiffBatch<T, TKey>(initial.Snapshot, [reset]);
-            Volatile.Write(ref _snapshot, batch.Snapshot);
-            Interlocked.Exchange(ref _lastSequence, nextSequence);
-            _cursor = await _invalidationLog.GetCurrentCursorAsync(
-                _plan.DatabaseIdentity,
+            return await CommitChangeAsync(
+                new PendingChange(batch, cursor),
+                persist,
                 cancellationToken).ConfigureAwait(false);
-            return batch;
         }
         finally
         {
@@ -303,9 +356,73 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         }
 
         await _gate.WaitAsync().ConfigureAwait(false);
+        _pendingChange = null;
         _gate.Release();
         _gate.Dispose();
     }
+
+    internal async ValueTask<LiveDiffBatch<T, TKey>?> RetryPendingAsync(
+        Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask> persist,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return _pendingChange is null
+                ? null
+                : await CommitChangeAsync(_pendingChange, persist, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async ValueTask<LiveDiffBatch<T, TKey>> CommitChangeAsync(
+        PendingChange change,
+        Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask>? persist,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (persist is not null && change.Batch.Events.Count != 0)
+        {
+            // Retain the exact proposal on failure, including an ambiguous durable append.
+            // The gate is released by the caller; retries do not keep a lock across calls.
+            _pendingChange = change;
+            await persist(change.Batch, cancellationToken).ConfigureAwait(false);
+        }
+
+        // No cancellation boundary after successful persistence: commit the same proposal.
+        Volatile.Write(ref _snapshot, change.Batch.Snapshot);
+        _cursor = change.Cursor;
+        if (change.Batch.Events.Count != 0)
+        {
+            Interlocked.Exchange(ref _lastSequence, change.Batch.LastSequence);
+        }
+
+        if (change.StartsSession)
+        {
+            Volatile.Write(ref _started, 1);
+        }
+
+        _pendingChange = null;
+        return change.Batch;
+    }
+
+    private void EnsureNoPendingChange()
+    {
+        if (_pendingChange is not null)
+        {
+            throw new InvalidOperationException(
+                "This Live session has an unresolved replay append. Retry the operation through its shared subscription before using the session directly.");
+        }
+    }
+
+    private sealed record PendingChange(
+        LiveDiffBatch<T, TKey> Batch,
+        LiveInvalidationCursor Cursor,
+        bool StartsSession = false);
 
     private async ValueTask<IReadOnlyList<T>> ExecuteAuthoritativeQueryAsync(
         CancellationToken cancellationToken)
