@@ -1,0 +1,88 @@
+# Separate storage is deliberate: never downgrade the historical Graph PG19 PVC.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-core
+  namespace: bluetusk-endurance
+  labels:
+    app.kubernetes.io/name: postgresql-core
+    app.kubernetes.io/part-of: bluetusk-endurance
+spec:
+  selector:
+    app.kubernetes.io/name: postgresql-core
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql-core
+  namespace: bluetusk-endurance
+  labels:
+    app.kubernetes.io/name: postgresql-core
+    app.kubernetes.io/part-of: bluetusk-endurance
+spec:
+  serviceName: postgresql-core
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql-core
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgresql-core
+        app.kubernetes.io/part-of: bluetusk-endurance
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: postgresql-core
+          image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+          imagePullPolicy: IfNotPresent
+          args: [postgres, -c, wal_level=logical, -c, max_replication_slots=10, -c, max_wal_senders=10, -c, max_prepared_transactions=10]
+          env:
+            - {name: POSTGRES_DB, value: bluetusk_tests}
+            - {name: POSTGRES_USER, value: postgres}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: endurance-runtime, key: postgres-password}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          ports:
+            - {name: postgres, containerPort: 5432}
+          readinessProbe:
+            exec: {command: [pg_isready, -U, postgres, -d, bluetusk_tests]}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            exec: {command: [pg_isready, -U, postgres, -d, bluetusk_tests]}
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests: {cpu: 300m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1536Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: shared-memory, mountPath: /dev/shm}
+      volumes:
+        - name: shared-memory
+          emptyDir: {medium: Memory, sizeLimit: 256Mi}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: do-block-storage-retain
+        resources:
+          requests: {storage: 10Gi}

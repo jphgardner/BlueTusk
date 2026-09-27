@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: "17 3 * * 1"
   workflow_dispatch:
+    inputs:
+      include_legacy_all_family_packages:
+        description: Also retain historical six-family package evidence (not core release qualification)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -155,6 +160,10 @@ jobs:
           ./eng/test-live-control-plane-endurance-verifier.ps1
           ./eng/verify-v1.2-release-contract.ps1
           ./eng/test-release-track-verifier.ps1
+          ./eng/test-core-approval-evidence.ps1
+          ./eng/test-core-endurance-evidence.ps1
+          ./eng/test-core-workflow-evidence.ps1
+          ./eng/test-core-endurance-contract.ps1
 
       - name: Build
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore
@@ -165,9 +174,9 @@ jobs:
       - name: Test individual-request performance capture machinery
         run: dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --provider-request-self-test
 
-      - name: Verify V1 engineering production readiness
+      - name: Verify core release-track policy
         shell: pwsh
-        run: ./eng/verify-v1-production-readiness.ps1
+        run: ./eng/verify-release-track.ps1
 
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
@@ -212,8 +221,8 @@ jobs:
           include-hidden-files: true
 
   candidate-packages:
-    name: Immutable all-family V1 package evidence
-    if: github.event_name == 'workflow_dispatch'
+    name: Historical all-family package evidence
+    if: github.event_name == 'workflow_dispatch' && inputs.include_legacy_all_family_packages
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
@@ -244,6 +253,42 @@ jobs:
             artifacts/v1-candidate-packages/package-manifest.json
             artifacts/v1-candidate-packages/packages
             artifacts/v1-candidate-packages/sbom
+          if-no-files-found: error
+          retention-days: 90
+
+  core-candidate-packages:
+    name: Immutable five-family core package evidence
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Build and verify five-family core package evidence
+        shell: pwsh
+        run: >-
+          ./eng/build-v1-candidate-packages.ps1
+          -ReleaseTrack Core
+          -OutputRoot artifacts/v1.2-core-packages
+          -Commit ${{ github.sha }}
+
+      - name: Archive immutable core package evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v1.2-core-packages-${{ github.sha }}
+          path: |
+            artifacts/v1.2-core-packages/package-manifest.json
+            artifacts/v1.2-core-packages/packages
+            artifacts/v1.2-core-packages/sbom
           if-no-files-found: error
           retention-days: 90
 
@@ -317,7 +362,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        major: [15, 16, 17, 18, 19]
+        major: [15, 16, 17, 18]
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

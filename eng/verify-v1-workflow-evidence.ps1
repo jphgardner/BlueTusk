@@ -8,7 +8,11 @@ param(
     [string] $ExpectedCommit,
 
     [Parameter(Mandatory)]
-    [DateTimeOffset] $CandidateCommitUtc
+    [DateTimeOffset] $CandidateCommitUtc,
+
+    [string] $ConfigurationPath = (Join-Path $PSScriptRoot 'v1-production-readiness.json'),
+
+    [string] $ExpectedRepository
 )
 
 Set-StrictMode -Version Latest
@@ -63,13 +67,13 @@ function ConvertTo-VerifiedUtcDateTime
     return $parsed
 }
 
-$configuration = Get-Content -LiteralPath (
-    Join-Path $PSScriptRoot 'v1-production-readiness.json') -Raw |
+$configuration = Get-Content -LiteralPath $ConfigurationPath -Raw |
     ConvertFrom-Json
 $evidence = Get-Content -LiteralPath $EvidencePath -Raw | ConvertFrom-Json
-if ([int]$evidence.schemaVersion -ne 3)
+$expectedSchema = if ($null -eq $configuration.PSObject.Properties['candidateEvidenceSchemaVersion']) { 3 } else { [int]$configuration.candidateEvidenceSchemaVersion }
+if ([int]$evidence.schemaVersion -ne $expectedSchema)
 {
-    throw "Expected candidate-evidence schema 3; found '$($evidence.schemaVersion)'."
+    throw "Expected candidate-evidence schema $expectedSchema; found '$($evidence.schemaVersion)'."
 }
 if (-not [string]::Equals(
         [string]$evidence.candidateCommit,
@@ -168,6 +172,11 @@ foreach ($requiredWorkflow in $requiredWorkflows)
         throw (
             "Workflow '$requiredWorkflow' URL must be the matching absolute GitHub " +
             "Actions run URL for '$runId'.")
+    }
+    if (-not [string]::IsNullOrWhiteSpace($ExpectedRepository) -and
+        $runUri.AbsolutePath -cne "/$ExpectedRepository/actions/runs/$runId")
+    {
+        throw "Workflow '$requiredWorkflow' belongs to a different repository."
     }
 
     $completedUtc = ConvertTo-VerifiedUtcDateTime `

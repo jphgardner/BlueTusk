@@ -46,6 +46,48 @@ synthetic fixtures only; their success is not a performance result.
 
 ## Remaining release wiring
 
+The build workflow now measures stable PostgreSQL 15–18 compatibility and
+produces `v1.2-core-packages-<sha>` independently of optional historical
+six-family packaging. The separate `postgresql-preview.yml` workflow retains
+the historical PostgreSQL 19 Beta 3 matrix; it is not current Beta 4 support or
+stable qualification. Compile-time and shared API checks still cover Graph.
+
+Core packaging and approval readers accept an explicit `-ReleaseTrack Core`.
+The core package manifest contains exactly five families, all five npm clients,
+both SBOM formats and exact-commit provenance. Pilot approvals must collectively
+cover those five families, with exactly five 1.2 versions in maintainer signoff.
+All ten approval records, distinct pilot operators and independent review stay
+required. The owner cannot substitute self-approval for independent review.
+
+Streams and Sync release endurance now use the same digest-pinned PostgreSQL
+18 image. Kubernetes uses a new `postgresql-core` StatefulSet and PVC; it does
+not downgrade or replace the historical PostgreSQL 19 Graph volume. Preview
+has its own candidate ConfigMap. The durations remain 72 hours for Streams,
+24 for Sync and 24 for Live/Control Plane; the last requires at least 100,000
+cycles. Sync requires all nine named test projects covering seven destinations,
+not merely nine arbitrary project entries.
+
+These contributor commands test the readers with synthetic evidence only:
+
+```powershell
+./eng/test-core-approval-evidence.ps1
+./eng/test-core-workflow-evidence.ps1
+./eng/test-core-endurance-evidence.ps1
+
+# Build immutable local evidence from a clean, committed checkout. No publish.
+./eng/build-v1-candidate-packages.ps1 -ReleaseTrack Core `
+    -OutputRoot artifacts/my-core-packages -Commit (git rev-parse HEAD)
+./eng/verify-v1-package-evidence.ps1 -ReleaseTrack Core `
+    -EvidenceRoot artifacts/my-core-packages -ExpectedCommit (git rev-parse HEAD)
+```
+
+Use a new output directory for each capture; existing evidence is not overwritten.
+`eng/v1.2-candidate-readiness.json` is a draft aggregation contract, explicitly
+marked as migration in progress. It is not a release verdict or a runnable CI
+aggregator. Its proposed seven-run scope excludes Graph and adds combined
+Live/Control Plane endurance. Remote workflow identity and the complete retained
+evidence must still be joined in the final gate.
+
 The historical `v1-candidate-readiness.yml` aggregator and its V1 evidence schema
 still describe a six-family, PostgreSQL-19-GA-qualified 1.0 candidate. They are
 not a valid 1.2 core release gate. The 1.2 candidate aggregator must be migrated

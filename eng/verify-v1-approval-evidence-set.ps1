@@ -11,7 +11,10 @@ param(
     [ValidatePattern('^[0-9a-fA-F]{64}$')]
     [string] $ExpectedWebsiteProductionMetricsSha256,
 
-    [DateTimeOffset] $NotBeforeUtc = [DateTimeOffset]::MinValue
+    [DateTimeOffset] $NotBeforeUtc = [DateTimeOffset]::MinValue,
+
+    [ValidateSet('Legacy', 'Core')]
+    [string] $ReleaseTrack = 'Legacy'
 )
 
 Set-StrictMode -Version Latest
@@ -63,6 +66,7 @@ foreach ($gateId in $gateIds)
         -EvidencePath $path `
         -ExpectedGateId $gateId `
         -ExpectedCommit $ExpectedCommit `
+        -ReleaseTrack $ReleaseTrack `
         -NotBeforeUtc $NotBeforeUtc | Out-Null
     $approvals[$gateId] = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
 }
@@ -96,6 +100,21 @@ $requiredFamilies = @(
     'ControlPlane',
     'ContinuousGraph'
 )
+if ($ReleaseTrack -eq 'Core')
+{
+    & (Join-Path $PSScriptRoot 'verify-release-track.ps1') | Out-Null
+    $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
+    $requiredFamilies = @($tracks.stableFamilies)
+    $signoff = $approvals['maintainer-signoff'].details
+    $versions = @('Provider 1.2.0', 'Streams 1.2.0', 'Sync 1.2.0', 'Live 1.2.0', 'Control Plane 1.2.0')
+    if (@($signoff.versions).Count -ne 5 -or
+        @(Compare-Object $versions @($signoff.versions) -CaseSensitive).Count -ne 0 -or
+        @($signoff.publishedPrereleaseFamilies).Count -ne 5 -or
+        @(Compare-Object $requiredFamilies @($signoff.publishedPrereleaseFamilies) -CaseSensitive).Count -ne 0)
+    {
+        throw 'Core maintainer sign-off must identify exactly the five 1.2.0 stable versions and five core prerelease families.'
+    }
+}
 $pilotFamilies = @(
     @($pilotA.details.enabledProductFamilies) +
     @($pilotB.details.enabledProductFamilies) |
@@ -111,13 +130,14 @@ $missingPilotFamilies = @(
 if ($unknownPilotFamilies.Count -ne 0 -or $missingPilotFamilies.Count -ne 0)
 {
     throw (
-        'Application pilots must collectively cover exactly all six V1 product ' +
+        "Application pilots must collectively cover exactly the $ReleaseTrack product " +
         "families. Missing: " +
         "$(if ($missingPilotFamilies.Count) { $missingPilotFamilies -join ', ' } else { '<none>' }); " +
         "unknown: " +
         "$(if ($unknownPilotFamilies.Count) { $unknownPilotFamilies -join ', ' } else { '<none>' }).")
 }
-if ('ContinuousGraph' -notin @($pilotA.details.enabledProductFamilies) -and
+if ($ReleaseTrack -eq 'Legacy' -and
+    'ContinuousGraph' -notin @($pilotA.details.enabledProductFamilies) -and
     'ContinuousGraph' -notin @($pilotB.details.enabledProductFamilies))
 {
     throw 'At least one independent application pilot must exercise ContinuousGraph.'
@@ -173,6 +193,6 @@ if ($maintainerSignoffUtc -lt $latestPreSignoffApprovalUtc)
 
 Write-Output (
     "V1 approval-evidence set passed: $($gateIds.Count) gate-specific records, " +
-    'two independent pilots covering all six stable families, exact website ' +
+    "two independent pilots covering the $ReleaseTrack families, exact website " +
     'production-metrics binding, and ' +
     'ordered independent review and maintainer sign-off.')

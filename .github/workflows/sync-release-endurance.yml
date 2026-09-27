@@ -42,8 +42,8 @@ jobs:
             -Commit '${{ github.sha }}' `
             -NoRestore
 
-      - name: Start PostgreSQL 19
-        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+      - name: Start digest-pinned PostgreSQL 18
+        run: docker compose -f eng/compose/postgres.yml up -d --wait postgres18
 
       - name: Start Redis, NATS JetStream, Kafka, MinIO, and OpenSearch
         run: |
@@ -90,7 +90,7 @@ jobs:
       - name: Run 24-hour seven-destination endurance
         shell: pwsh
         env:
-          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
           BLUETUSK_NATS_URL: nats://localhost:4222
           BLUETUSK_KAFKA_BOOTSTRAP_SERVERS: localhost:9092
           BLUETUSK_S3_ENDPOINT: http://127.0.0.1:9000
@@ -104,7 +104,7 @@ jobs:
             -MinimumCycles 100 `
             -ReportPath 'artifacts/test-results/sync-endurance/report.json' `
             -CandidateProvenancePath 'artifacts/test-results/sync-endurance/candidate-sbom/build-provenance.json' `
-            -PostgreSqlImage 'postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc' `
+            -PostgreSqlImage 'postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873' `
             -DestinationImages @(
               'redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241',
               'nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66',
@@ -118,12 +118,13 @@ jobs:
         shell: pwsh
         run: |
           ./eng/verify-sync-endurance-report.ps1 `
+            -ReleaseTrack Core `
             -ReportPath 'artifacts/test-results/sync-endurance/report.json' `
             -RequiredDuration '1.00:00:00' `
             -MinimumCycles 100 `
             -ExpectedCommit '${{ github.sha }}' `
             -CandidateProvenancePath 'artifacts/test-results/sync-endurance/candidate-sbom/build-provenance.json' `
-            -ExpectedPostgreSqlImage 'postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc' `
+            -ExpectedPostgreSqlImage 'postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873' `
             -ExpectedDestinationImages @(
               'redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241',
               'nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66',
@@ -144,7 +145,7 @@ jobs:
       - name: Capture service logs on failure
         if: failure()
         run: |
-          docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+          docker compose -f eng/compose/postgres.yml logs postgres18
           docker logs bluetusk-sync-endurance-redis
           docker logs bluetusk-sync-endurance-nats
           docker logs bluetusk-sync-endurance-kafka
@@ -155,4 +156,4 @@ jobs:
         if: always()
         run: |
           docker rm --force bluetusk-sync-endurance-redis bluetusk-sync-endurance-nats bluetusk-sync-endurance-kafka bluetusk-sync-endurance-minio bluetusk-sync-endurance-opensearch || true
-          docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+          docker compose -f eng/compose/postgres.yml stop postgres18

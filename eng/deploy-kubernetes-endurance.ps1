@@ -106,11 +106,13 @@ function Assert-PreviewCandidate
 
 function Set-CandidateConfig
 {
+    param([string] $Name = 'endurance-candidate')
+
     $config = [ordered]@{
         apiVersion = 'v1'
         kind = 'ConfigMap'
         metadata = [ordered]@{
-            name = 'endurance-candidate'
+            name = $Name
             namespace = $namespace
             labels = [ordered]@{
                 'app.kubernetes.io/part-of' = 'bluetusk-endurance'
@@ -163,11 +165,11 @@ switch ($Action)
         }
 
         Invoke-Kubectl -Arguments @(
-            'apply', '-f', (Join-Path $manifestRoot 'postgresql.yaml'))
+            'apply', '-f', (Join-Path $manifestRoot 'postgresql-core.yaml'))
         Invoke-Kubectl -Arguments @(
-            'rollout', 'status', 'statefulset/postgresql', '-n', $namespace,
+            'rollout', 'status', 'statefulset/postgresql-core', '-n', $namespace,
             '--timeout=10m')
-        Write-Output 'Prepared the isolated Kubernetes endurance namespace and PostgreSQL 19 Beta 3 service.'
+        Write-Output 'Prepared core endurance with its separate stable PostgreSQL 18 service and storage. Historical Graph storage is unchanged.'
     }
     'StartStreams'
     {
@@ -236,7 +238,12 @@ switch ($Action)
     'StartContinuousGraphPreview'
     {
         Assert-PreviewCandidate
-        Set-CandidateConfig
+        Set-CandidateConfig -Name 'endurance-graph-preview-candidate'
+        Invoke-Kubectl -Arguments @(
+            'apply', '-f', (Join-Path $manifestRoot 'postgresql.yaml'))
+        Invoke-Kubectl -Arguments @(
+            'rollout', 'status', 'statefulset/postgresql', '-n', $namespace,
+            '--timeout=10m')
         & kubectl delete job continuous-graph-preview-1h -n $namespace `
             --ignore-not-found *> $null
         Invoke-Kubectl -Arguments @(

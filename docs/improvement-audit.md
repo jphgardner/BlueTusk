@@ -22,7 +22,7 @@ Update current support claims without rewriting historical measurements.
 
 | Work | State | Evidence required to close it |
 | --- | --- | --- |
-| Separate Graph release readiness from the other families | Track policy and performance scopes implemented; candidate aggregator migration pending | Five core tracks and Graph preview validated; Graph stable rejected; exact 1.2 candidate aggregation still required |
+| Separate Graph release readiness from the other families | Track policy, scoped performance, five-family packaging/approvals, stable core CI/endurance and isolated Graph database/config implemented; final candidate aggregation pending | Core helper self-tests and actual package/SBOM checks; exact 1.2 remote candidate aggregation still required |
 | Live refresh/replay recovery | Implemented; Windows PostgreSQL validation passed | 78 tests pass with zero skips, including real PostgreSQL stores and SSE/SignalR/gRPC transports; final-candidate platform and endurance gates remain |
 | Contributor setup and focused validation | Implemented; local command validation passed | Doctor/project registration, missing-database refusal, hashed TRX summary, focused Check, five client builds/8 client tests, generated guides and production website build |
 | Pool candidate performance acceptance | Pending | Matched before/after captures for `dd1da1a`, then the complete reference comparisons with latency, allocation, CPU and RSS |
@@ -58,6 +58,23 @@ matrices, including 25 rejection fixtures. These are verifier self-tests with
 synthetic data, not new measured wins. The historical V1 candidate aggregator
 has not yet been migrated; [release tracks](releases/release-tracks.md) explains
 that remaining publication gate.
+
+The next slice separates actual evidence producers and readers. Core packaging
+and approval verification no longer require Graph packages or Graph pilot
+coverage. Core endurance uses digest-pinned PostgreSQL 18, retaining the exact
+72/24/24-hour sequence. The core Kubernetes database has separate storage and
+Graph preview has a separate candidate ConfigMap: no historical database volume
+is downgraded. Sync validation rejects duplicated or substituted projects even
+when the list still has nine entries. Core build compatibility covers stable
+15–18; the historical Beta 3 matrix is a separate manual preview workflow.
+
+Synthetic core self-tests accept ten correctly scoped approvals and reject six
+bad sets; accept a seven-run workflow set and reject nine bad sets; accept two
+endurance reports and reject 26 altered reports. They do not represent operator
+approval, successful CI or elapsed endurance. The draft aggregation contract
+preserves 100,000 Live/Control Plane cycles, not a reduced minimum. The final
+remote aggregation, complete current performance evidence and actual endurance
+runs remain open, and all publication flags remain disabled.
 
 The contributor client command builds all five clients and runs eight available
 tests across the core, Svelte and Vue packages. Angular/React-specific tests are

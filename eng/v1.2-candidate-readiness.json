@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "status": "aggregation-migration-in-progress",
+  "candidateEvidenceSchemaVersion": 4,
+  "releaseVersion": "1.2.0",
+  "scope": "Core",
+  "requiredWorkflows": [
+    "build.yml",
+    "security.yml",
+    "fuzzing.yml",
+    "core-performance-evidence.yml",
+    "streams-release-endurance.yml",
+    "sync-release-endurance.yml",
+    "live-control-plane-release-endurance.yml"
+  ],
+  "coreFamilies": ["Provider", "Streams", "Sync", "Live", "ControlPlane"],
+  "minimums": {
+    "streamsEnduranceHours": 72,
+    "streamsMinimumTransactions": 100000,
+    "syncEnduranceHours": 24,
+    "syncMinimumCycles": 100,
+    "liveAndControlPlaneEnduranceHours": 24,
+    "liveAndControlPlaneMinimumCycles": 100000
+  },
+  "requiredArtifactRoles": [
+    "websiteMetrics", "packageManifest", "packageProvenance",
+    "performanceManifest", "regressionManifest", "compatibilityManifest",
+    "streamsReport", "streamsProvenance", "syncReport", "syncProvenance",
+    "liveControlPlaneReport", "liveControlPlaneProvenance", "syncConnectorReport",
+    "disturbanceReport"
+  ],
+  "previewFixturePrefixes": [
+    "BlueTusk.Benchmarks.SqlPgqBenchmarks.",
+    "BlueTusk.Benchmarks.ContinuousGraphBenchmarks."
+  ],
+  "endurancePostgreSqlImage": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "publicationEnabled": false
+}

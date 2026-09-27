@@ -66,30 +66,13 @@ if (-not $compose.Contains([string]$current[0].image, [StringComparison]::Ordina
     throw 'The PostgreSQL 19 compose service does not use the recorded image digest.'
 }
 
-foreach ($workflowPath in @(
-        '.github/workflows/streams-release-endurance.yml',
-        '.github/workflows/sync-release-endurance.yml'))
+# Core endurance uses a stable PostgreSQL image. The preview capture resolves
+# its separate historical fixture through this manifest, not core workflows.
+$previewWorkflow = Get-Content -LiteralPath (
+    Join-Path $RepositoryRoot '.github/workflows/performance-leadership.yml') -Raw
+if (-not $previewWorkflow.Contains('$programme.lastVerifiedMilestone', [StringComparison]::Ordinal))
 {
-    $workflow = Get-Content -LiteralPath (
-        Join-Path $RepositoryRoot $workflowPath) -Raw
-    $recordedImages = @(
-        [regex]::Matches(
-            $workflow,
-            'postgres:19[^''"\s]+@sha256:[0-9a-f]{64}') |
-            ForEach-Object { $_.Value }
-    )
-    if ($recordedImages.Count -ne 2 -or
-        @($recordedImages | Where-Object {
-            -not [string]::Equals(
-                $_,
-                [string]$current[0].image,
-                [StringComparison]::Ordinal)
-        }).Count -ne 0)
-    {
-        throw (
-            "PostgreSQL 19 release workflow '$workflowPath' must bind its " +
-            'endurance runner and evidence verifier to the current milestone image.')
-    }
+    throw 'The historical preview performance capture must resolve the last verified milestone explicitly.'
 }
 
 if ($VerifyOfficialCurrent)

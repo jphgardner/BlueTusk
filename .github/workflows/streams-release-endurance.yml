@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   relay-endurance:
-    name: PostgreSQL 19 relay endurance
+    name: Stable PostgreSQL core relay endurance
     if: inputs.confirmation == 'RUN-STREAMS-72-HOUR-ENDURANCE'
     runs-on: [self-hosted, linux, x64, bluetusk-endurance]
     timeout-minutes: 4500
@@ -42,13 +42,13 @@ jobs:
             -Commit '${{ github.sha }}' `
             -NoRestore
 
-      - name: Start PostgreSQL 19
-        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+      - name: Start digest-pinned PostgreSQL 18
+        run: docker compose -f eng/compose/postgres.yml up -d --wait postgres18
 
       - name: Run 72-hour fault-injected relay endurance
         shell: pwsh
         env:
-          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
         run: >-
           ./eng/run-streams-endurance.ps1
           -Duration '3.00:00:00'
@@ -56,19 +56,20 @@ jobs:
           -IntervalMilliseconds 250
           -ReportPath 'artifacts/test-results/streams-relay-endurance/report.json'
           -CandidateProvenancePath 'artifacts/test-results/streams-relay-endurance/candidate-sbom/build-provenance.json'
-          -PostgreSqlImage 'postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc'
+          -PostgreSqlImage 'postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873'
           -Configuration Release
 
       - name: Verify endurance evidence
         shell: pwsh
         run: >-
           ./eng/verify-streams-endurance-report.ps1
+          -ReleaseTrack Core
           -ReportPath 'artifacts/test-results/streams-relay-endurance/report.json'
           -RequiredDuration '3.00:00:00'
           -MinimumTransactions 100000
           -ExpectedCommit '${{ github.sha }}'
           -CandidateProvenancePath 'artifacts/test-results/streams-relay-endurance/candidate-sbom/build-provenance.json'
-          -ExpectedPostgreSqlImage 'postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc'
+          -ExpectedPostgreSqlImage 'postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873'
 
       - name: Upload endurance evidence
         if: always()
@@ -81,8 +82,8 @@ jobs:
 
       - name: Capture PostgreSQL logs on failure
         if: failure()
-        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+        run: docker compose -f eng/compose/postgres.yml logs postgres18
 
-      - name: Stop PostgreSQL 19
+      - name: Stop PostgreSQL 18
         if: always()
-        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+        run: docker compose -f eng/compose/postgres.yml stop postgres18

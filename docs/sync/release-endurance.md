@@ -42,6 +42,12 @@ counts, clean isolated source, identical artifact fingerprints, Release
 configuration, absence of failure metadata, and worktree cleanup. The release
 workflow runs this verifier before uploading evidence.
 
+The 1.2 core release workflow uses digest-pinned PostgreSQL 18 and an explicit
+`-ReleaseTrack Core` reader scope. All nine named projects are required;
+duplicates or replacement projects cannot satisfy coverage. PostgreSQL 19 and
+Graph preview remain independent. Kubernetes core runs use `postgresql-core`
+with separate storage and do not downgrade the historical Graph database.
+
 The native report does not by itself claim the complete production disturbance
 matrix. During the same 24-hour observation window, operators must also record
 process death, network interruption, controlled storage exhaustion, credential
@@ -52,11 +58,11 @@ content-addressed and verified with the Streams records by the
 
 ## Local smoke
 
-Start PostgreSQL 19, Redis 8, NATS JetStream, Kafka 4.1, MinIO, and OpenSearch 3.7 using the same
+Start PostgreSQL 18, Redis 8, NATS JetStream, Kafka 4.1, MinIO, and OpenSearch 3.7 using the same
 ports as normal CI, then run:
 
 ```powershell
-$env:BLUETUSK_TEST_CONNECTION_STRING = 'Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable'
+$env:BLUETUSK_TEST_CONNECTION_STRING = 'Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable'
 $env:BLUETUSK_NATS_URL = 'nats://localhost:4222'
 $env:BLUETUSK_KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'
 $env:BLUETUSK_S3_ENDPOINT = 'http://127.0.0.1:9000'
@@ -78,6 +84,7 @@ Validate its report with the same reader:
 
 ```powershell
 ./eng/verify-sync-endurance-report.ps1 `
+  -ReleaseTrack Core `
   -ReportPath 'artifacts/test-results/sync-endurance-smoke/report.json' `
   -RequiredDuration '00:00:01' `
   -MinimumCycles 1 `

@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = '/workspace'
 $reportRoot = 'artifacts/endurance/sync'
-$postgresImage = 'postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc'
+$postgresImage = 'postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873'
 $destinationImages = @(
     'redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241',
     'nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66',
@@ -51,7 +51,7 @@ if ($LASTEXITCODE -ne 0 -or (& git rev-parse HEAD).Trim() -ne $env:CANDIDATE_SHA
     -NoRestore
 
 $env:BLUETUSK_TEST_CONNECTION_STRING = (
-    'Host=postgresql;Port=5432;Username=postgres;' +
+    'Host=postgresql-core;Port=5432;Username=postgres;' +
     "Password=$env:POSTGRES_PASSWORD;Database=bluetusk_tests;" +
     'SSL Mode=Disable;Channel Binding=Disable')
 $env:BLUETUSK_NATS_URL = 'nats://nats:4222'
@@ -69,6 +69,7 @@ $env:BLUETUSK_OPENSEARCH_URL = 'http://opensearch:9200'
     -DestinationImages $destinationImages `
     -Configuration Release
 & ./eng/verify-sync-endurance-report.ps1 `
+    -ReleaseTrack Core `
     -ReportPath "$reportRoot/report.json" `
     -RequiredDuration '1.00:00:00' `
     -MinimumCycles 100 `

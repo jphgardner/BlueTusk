@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = '/workspace'
 $reportRoot = 'artifacts/endurance/streams'
-$postgresImage = 'postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc'
+$postgresImage = 'postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873'
 
 if ($env:CANDIDATE_SHA -notmatch '^[0-9a-f]{40}$' -or
     $env:CANDIDATE_VERSION -notmatch '^1\.2\.0-rc\.[1-9][0-9]*$')
@@ -45,7 +45,7 @@ if ($LASTEXITCODE -ne 0 -or (& git rev-parse HEAD).Trim() -ne $env:CANDIDATE_SHA
     -NoRestore
 
 $env:BLUETUSK_TEST_CONNECTION_STRING = (
-    'Host=postgresql;Port=5432;Username=postgres;' +
+    'Host=postgresql-core;Port=5432;Username=postgres;' +
     "Password=$env:POSTGRES_PASSWORD;Database=bluetusk_tests;" +
     'SSL Mode=Disable;Channel Binding=Disable')
 & ./eng/run-streams-endurance.ps1 `
@@ -57,6 +57,7 @@ $env:BLUETUSK_TEST_CONNECTION_STRING = (
     -PostgreSqlImage $postgresImage `
     -Configuration Release
 & ./eng/verify-streams-endurance-report.ps1 `
+    -ReleaseTrack Core `
     -ReportPath "$reportRoot/report.json" `
     -RequiredDuration '3.00:00:00' `
     -MinimumTransactions 100000 `

@@ -52,7 +52,7 @@ spec:
               & ./deploy/kubernetes/endurance/run-continuous-graph-preview.ps1
           envFrom:
             - configMapRef:
-                name: endurance-candidate
+                name: endurance-graph-preview-candidate
           env:
             - name: HOME
               value: /workspace/.home

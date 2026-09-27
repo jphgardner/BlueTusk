@@ -5,7 +5,10 @@ param(
 
     [Parameter(Mandatory)]
     [ValidatePattern('^[0-9a-fA-F]{40}$')]
-    [string] $ExpectedCommit
+    [string] $ExpectedCommit,
+
+    [ValidateSet('Legacy', 'Core')]
+    [string] $ReleaseTrack = 'Legacy'
 )
 
 Set-StrictMode -Version Latest
@@ -22,6 +25,19 @@ if (-not $resolvedEvidenceRoot.StartsWith(
 {
     throw "V1 package evidence '$resolvedEvidenceRoot' must be below '$repositoryRoot'."
 }
+$path = $resolvedEvidenceRoot
+while ($path -ne $repositoryRoot)
+{
+    $item = Get-Item -LiteralPath $path -Force
+    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
+    { throw 'Package evidence must not traverse a symbolic link or junction.' }
+    $path = Split-Path $path -Parent
+}
+foreach ($item in Get-ChildItem -LiteralPath $resolvedEvidenceRoot -Recurse -Force)
+{
+    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
+    { throw 'Package evidence must not contain a symbolic link or junction.' }
+}
 
 $ExpectedCommit = $ExpectedCommit.ToLowerInvariant()
 $manifestPath = Join-Path $resolvedEvidenceRoot 'package-manifest.json'
@@ -35,10 +51,10 @@ foreach ($path in @($manifestPath, $packageRoot, $sbomRoot))
     }
 }
 $rootFiles = @(
-    Get-ChildItem -LiteralPath $resolvedEvidenceRoot -File
+    Get-ChildItem -LiteralPath $resolvedEvidenceRoot -File -Force
 )
 $rootDirectories = @(
-    Get-ChildItem -LiteralPath $resolvedEvidenceRoot -Directory |
+    Get-ChildItem -LiteralPath $resolvedEvidenceRoot -Directory -Force |
         ForEach-Object { $_.Name } |
         Sort-Object
 )
@@ -72,6 +88,16 @@ $expectedFamilies = @(
         ForEach-Object { $_.Name } |
         Sort-Object
 )
+if ($ReleaseTrack -eq 'Core')
+{
+    & (Join-Path $PSScriptRoot 'verify-release-track.ps1') | Out-Null
+    $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
+    $expectedFamilies = @($tracks.stableFamilies | Sort-Object)
+    if ($manifest.releaseTrack -cne 'Core' -or $manifest.releaseVersion -cne '1.2.0')
+    {
+        throw 'Core package evidence must identify the Core 1.2.0 release track.'
+    }
+}
 $familyEntries = @($manifest.families)
 $declaredFamilies = @($familyEntries | ForEach-Object { [string]$_.id } | Sort-Object)
 if ([int]$manifest.familyCount -ne $expectedFamilies.Count -or
@@ -85,7 +111,7 @@ if ([int]$manifest.familyCount -ne $expectedFamilies.Count -or
 
 $artifactEntries = @($manifest.artifacts)
 $allPackageFiles = @(
-    Get-ChildItem -LiteralPath $packageRoot -Recurse -File
+    Get-ChildItem -LiteralPath $packageRoot -Recurse -File -Force
 )
 $actualArtifacts = @(
     $allPackageFiles |
@@ -192,7 +218,7 @@ foreach ($entry in @(
     }
 }
 $actualSbomFiles = @(
-    Get-ChildItem -LiteralPath $sbomRoot -Recurse -File
+    Get-ChildItem -LiteralPath $sbomRoot -Recurse -File -Force
 )
 $actualSbomNames = @(
     $actualSbomFiles |
@@ -244,7 +270,8 @@ try
         & (Join-Path $PSScriptRoot 'verify-product-family-packages.ps1') `
             -Family $family `
             -PackageDirectory $familyRoot `
-            -ExpectedCommit $ExpectedCommit
+            -ExpectedCommit $ExpectedCommit `
+            -ExpectedVersion $(if ($ReleaseTrack -eq 'Core') { '1.2.0' } else { '' })
     }
 }
 finally
@@ -256,6 +283,6 @@ finally
 }
 
 Write-Output (
-    "Verified immutable V1 package evidence for commit ${ExpectedCommit}: " +
+    "Verified immutable $ReleaseTrack package evidence for commit ${ExpectedCommit}: " +
     "$($expectedFamilies.Count) families, $($artifactEntries.Count) package artifacts, " +
     "$recordBytes bytes, CycloneDX 1.6, SPDX 2.3, and build provenance.")

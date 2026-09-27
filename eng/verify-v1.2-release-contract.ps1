@@ -256,7 +256,7 @@ foreach ($snippet in @(
     }
 }
 foreach ($manifestPath in @(
-        'postgresql.yaml', 'sync-services.yaml', 'streams-job.yaml', 'sync-job.yaml',
+        'postgresql.yaml', 'postgresql-core.yaml', 'sync-services.yaml', 'streams-job.yaml', 'sync-job.yaml',
         'live-control-plane-job.yaml', 'continuous-graph-preview-job.yaml'))
 {
     $manifestText = Get-Content -LiteralPath (

@@ -73,7 +73,7 @@ $marker = [ordered]@{
     postgreSqlChannel = '19beta3'
     sourceCommit = $env:CANDIDATE_SHA
     candidateVersion = $env:CANDIDATE_VERSION
-    reason = 'Preliminary evidence only; PostgreSQL 19 GA is required for release.'
+    reason = 'Historical SQL/PGQ fixture only. Stable Graph requires a supported server with the capability, not a PostgreSQL version number alone.'
 }
 [IO.File]::WriteAllText(
     (Join-Path $repositoryRoot "$reportRoot/PREVIEW.json"),
