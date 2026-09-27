@@ -146,6 +146,43 @@ streaming client for the versioned contract.
 
 `@bluetusk/live` is the framework-neutral fetch-streaming client. It parses chunked UTF-8 SSE frames, applies every keyed Live event to a local result, rejects invalid sequence/key transitions, persists signed resume tokens through an application callback, and reconnects with bounded jittered backoff. A `409` only discards a resume token when one was actually supplied; tokenless conflicts and malformed payloads fail closed.
 
+The current 1.2 development candidate reduces already available frames in
+bounded batches before materializing a rows array. `maximumBatchEvents` defaults
+to 64 and accepts integers from 1 to 1,024. It flushes at the limit or the end of
+the current network read, without waiting for a timer, animation frame, more
+traffic, or a full batch. Setting it to 1 preserves every core subscriber's
+intermediate snapshot. Framework microtask coalescing still applies separately.
+This bounds each reduction batch, not the size of a server response or result:
+keep server-side result, payload and subscriber-queue limits in place.
+
+Updates that retain their index do not search or splice the ordered key list.
+Moves/removals first validate a supplied previous-index hint and fall back to a
+key lookup if it is stale. A rows array is rebuilt once per published batch;
+rank changes still shift array entries, so this is not a constant-time ordered
+tree or a claim that all full-result work has disappeared. Resets build a new
+key map and replace it without copying all entries into a second map.
+
+The store does not mutate historical published arrays. Row objects remain
+shallow read-only, not deep-frozen. `apply()` keeps its per-event API;
+`applyEvent()` reduces without materializing, and `applyBatch()` materializes
+once after sequential reduction. If a later event is invalid, successful
+earlier events remain applied; the failed event must not mutate the result.
+
+Resume callbacks run after the batch's rows and sequence are in `query.state`.
+Only the last successfully committed token in that batch is persisted. A later
+bad frame flushes the valid prefix before faulting. An application callback
+failure is terminal and retains that committed state; it is not retried as a
+network failure. Store tokens per query identity. A token alone cannot restore
+the result of a newly created empty query; reconnect the existing query with
+its retained state or request an authoritative initial result.
+
+An explicit reset or expired-token `409` clears the token and requires a fresh
+authoritative result before accepting deltas, including a lower-sequence result
+after restart. In-batch duplicates are compared with the latest applied
+sequence, not the last published sequence. Stopping cancels pending SSE reads;
+an older fetch completion cannot overwrite a stopped/restarted query. Split
+UTF-8 and CRLF chunks are tested independently of network read boundaries.
+
 `@bluetusk/live-angular` exposes the same query state through Angular read-only
 signals. `@bluetusk/live-react` uses `useSyncExternalStore`, preserving React
 concurrent-render consistency. BlueTusk 1.2 adds `@bluetusk/live-vue` with
@@ -154,6 +191,13 @@ standard read-only stores and component destruction cleanup. Every adapter
 batches rapid server notifications into one microtask. They own only framework
 lifecycle integration; protocol validation, recovery, resume tokens, and keyed
 result semantics remain in `@bluetusk/live`.
+
+Angular destruction is idempotent and cancels queued signal publication; Angular,
+Vue and Svelte adapters cannot restart after destruction. React keeps its store
+callbacks stable for an unchanged query and cleans up old subscriptions on
+request replacement, unmount and StrictMode effect rehearsal. Server rendering
+does not start a connection. These behaviors have local framework tests; they
+do not substitute for real-browser, slow-client or large fan-out qualification.
 
 Vue and Svelte both provide two entry points. `useBlueTuskLiveQuery` starts the
 stream and binds its cleanup to the current component. The explicit

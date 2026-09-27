@@ -5,14 +5,17 @@
     "clients/*"
   ],
   "scripts": {
-    "build:clients": "npm run build --workspaces --if-present",
-    "test:clients": "npm run test --workspaces --if-present",
-    "check:clients": "npm run build:clients && npm run test:clients"
+    "build:clients": "npm run build --workspaces",
+    "test:clients": "npm run test --workspaces",
+    "test:client-diagnostic": "node eng/benchmark-live-browser.mjs --self-test",
+    "check:clients": "npm run build:clients && npm run test:clients && npm run test:client-diagnostic"
   },
   "devDependencies": {
     "@angular/core": "22.1.0",
     "@types/react": "19.2.18",
+    "jsdom": "28.1.0",
     "react": "19.2.8",
+    "react-dom": "19.2.8",
     "svelte": "5.57.0",
     "typescript": "7.0.2",
     "vue": "3.5.42"

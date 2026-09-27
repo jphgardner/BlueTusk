@@ -67,7 +67,7 @@ Do not interpret an offline run as database compatibility evidence.
 ## Work on clients and documentation
 
 ```powershell
-# Build all five browser clients and run the available client tests.
+# Build all five browser clients and require every package's test suite.
 ./eng/dev.ps1 -Task Clients
 
 # Validate links and regenerate/check the Angular documentation.
@@ -83,6 +83,26 @@ npm start --prefix website
 Edit guides under `docs`; the Angular website generates its guide content from
 those sources. Check the generated changes into the same review as the source
 guide. A website build does not deploy it.
+
+Client validation includes the core SSE reducer, real Angular signals/DI,
+React DOM lifecycle/StrictMode/server rendering, and the Vue/Svelte adapters.
+Missing `build` or `test` scripts fail the command; suites are not silently
+omitted. CI defines the same check on Windows and Linux with a locked Node 24
+dependency restore. Local success does not mean those remote jobs have run.
+
+For a local reducer-cost investigation after building clients:
+
+```powershell
+node eng/benchmark-live-browser.mjs --self-test
+```
+
+The diagnostic compares a compiled Git-exported reference with the current
+client, using identical bursts and an independent final-state model. Supply
+`--reference-module`, the full `--reference-commit`, and a new `--output`
+directory under `artifacts`; existing captures are never overwritten. It records
+source/module/lockfile hashes, raw paired samples, statistical V8 allocation
+profiles, CPU, GC and whole-process peak RSS. It is a Node/V8 development
+diagnostic, not a browser rendering or confidence-qualified release benchmark.
 
 ## Review and hand off
 

@@ -48,7 +48,9 @@ export class VueLiveQuery<
   }
 
   start(): void {
-    this.#query.start();
+    if (!this.#destroyed) {
+      this.#query.start();
+    }
   }
 
   stop(): void {

@@ -5,6 +5,7 @@ import { SvelteLiveQuery } from "../dist/index.js";
 test("Svelte adapter batches state and releases the query", async () => {
   const listeners = new Set();
   let stopped = 0;
+  let started = 0;
   const query = {
     state: { phase: "idle", rows: [], lastSequence: 0, error: null },
     subscribe(listener) {
@@ -12,10 +13,11 @@ test("Svelte adapter batches state and releases the query", async () => {
       listener(this.state);
       return () => listeners.delete(listener);
     },
-    start() {},
+    start() { started++; },
     stop() { stopped++; }
   };
   const adapter = new SvelteLiveQuery(query);
+  adapter.start();
   let observed;
   const unsubscribe = adapter.state.subscribe((state) => { observed = state; });
   for (const listener of listeners) {
@@ -29,6 +31,8 @@ test("Svelte adapter batches state and releases the query", async () => {
   unsubscribe();
   adapter.destroy();
   adapter.destroy();
+  adapter.start();
+  assert.equal(started, 1);
   assert.equal(stopped, 1);
   assert.equal(listeners.size, 0);
 });

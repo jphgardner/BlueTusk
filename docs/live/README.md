@@ -86,7 +86,7 @@ gRPC expose the same delivery contract when those transports are a better fit.
 ```typescript
 const query = new BlueTuskLiveClient({
   endpoint: "/bluetusk/live/sse",
-}).createQuery<Order, string>({
+}).createQuery<Order, string, { tenant: string }>({
   query: "recent-orders",
   parameters: { tenant: "acme" },
 });
@@ -103,6 +103,15 @@ Use `@bluetusk/live-angular`, `@bluetusk/live-react`,
 `@bluetusk/live-vue`, or `@bluetusk/live-svelte` for framework lifecycle and
 batched state updates. The framework-neutral client owns protocol validation,
 reconnect, replay, and resume tokens.
+
+In the current 1.2 development candidate, the client applies up to 64 already
+available events before building one rows array. Small bursts are published
+immediately after the current network read; it never waits for a full batch or
+a timer. Set `maximumBatchEvents: 1` if a core subscriber needs every intermediate
+snapshot. Previously delivered arrays stay unchanged, and resume tokens advance
+only after the matching rows and sequence are committed. See
+[browser behavior and tuning](reference.md#browser-clients) before persisting
+tokens or handling reconnects.
 
 ## Security checklist
 

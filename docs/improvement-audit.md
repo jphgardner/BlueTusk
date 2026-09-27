@@ -24,10 +24,10 @@ Update current support claims without rewriting historical measurements.
 | --- | --- | --- |
 | Separate Graph release readiness from the other families | Policy, scoped evidence, stable core CI/endurance and isolated Graph application/database/config implemented; final candidate aggregation pending | Core helper self-tests, actual package/SBOM checks and separate local application captures; exact 1.2 remote candidate aggregation still required |
 | Live refresh/replay recovery | Implemented; Windows PostgreSQL validation passed | 78 tests pass with zero skips, including real PostgreSQL stores and SSE/SignalR/gRPC transports; final-candidate platform and endurance gates remain |
-| Contributor setup and focused validation | Implemented; local command validation passed | Doctor/project registration, missing-database refusal, hashed TRX summary, focused Check, five client builds/8 client tests, generated guides and production website build |
+| Contributor setup and focused validation | Implemented; local command validation passed | Doctor/project registration, missing-database refusal, hashed TRX summary, focused Check, five client builds/53 client tests, diagnostic fixture self-tests, generated guides and production website build; remote Windows/Linux client jobs still require execution |
 | Pool candidate performance acceptance | Pending | Matched before/after captures for `dd1da1a`, then the complete reference comparisons with latency, allocation, CPU and RSS |
 | Server incremental result costs | Pending | Small-change work scales with affected rows; immutable historical snapshots; ordered top-N and repair correctness; unchanged Graph tier cost targets |
-| Browser reducer costs | Pending | Bounded event batching before materialization; sequence/resume correctness; large-result/churn allocation and latency measurements |
+| Browser reducer costs | Bounded batching and local correctness implemented; paired diagnostic retained; full performance acceptance pending | Every event remains validated; valid-prefix tokens and historical snapshots tested; large-result update/churn/rerank captures retained; tiny-reset costs, real browsers, Linux, slow clients, fan-out and confidence-qualified latency/allocation still open |
 | Spool completion stalls | Pending | Unchanged end-to-end 4 MiB P95 budget passes on isolated storage; crash recovery retains flush, checksum and acknowledgement guarantees |
 | Multiplexing and EF performance | Pending | Existing absolute limits and confidence-qualified paired workload targets pass; no hidden allocation or memory regressions |
 | Connector coverage and overhead | Seven destinations now required by the performance contract; measurements and optimisation pending | Profile and measure Kafka, S3 and Webhooks alongside the four earlier destinations; retain transaction ordering, durability, retry and quarantine semantics |
@@ -118,13 +118,71 @@ retained in `artifacts/audit-provider-capabilities-b126da6-20260927` and
 development checks, not the full compatibility matrix. Existing-evidence and
 workspace-root output targets are refused before any container starts.
 
-The contributor client command builds all five clients and runs eight available
-tests across the core, Svelte and Vue packages. Angular/React-specific tests are
-still part of the browser work to expand; they are not counted as executed here.
+The earlier contributor capture built all five clients and ran eight tests
+across core, Svelte and Vue. The later browser slice adds actual Angular signals
+and dependency-injection tests plus React DOM lifecycle, request replacement,
+StrictMode, server-rendering and SSE tests. The strict command now requires all
+five packages' build/test scripts rather than silently skipping missing suites.
+Local validation passes 53 tests with zero skips: 42 core, four Angular, five
+React, one Vue and one Svelte. The four diagnostic scenario self-tests are
+separate from that count. Locked dependencies audit with zero vulnerabilities;
+CI now defines the same checks on Windows/Linux, but those jobs have not run.
 The website command generates 140 guides and 150 crawlable/prerendered routes,
 then passes production checks for hashed assets, metadata, source-map exclusion
 and size limits. It does not deploy the website or establish field mobile/CWV
 acceptance.
+
+## Browser reduction evidence
+
+The core client now reduces bounded batches before constructing a result array,
+instead of reconstructing the full array on every event and batching only the
+framework notification afterward. Its default is 64 already available frames,
+with immediate partial-batch publication at the end of each read and no added
+timer. An unchanged-index update avoids key search and array shifts; reset swaps
+the validated replacement map instead of duplicating every entry. Published
+arrays remain unchanged by later events. Rank changes still shift array entries
+and each published snapshot still materializes the result; server incremental
+costs and all browser full-result work are not claimed closed.
+
+The tests cover 2,000 seeded changes against an independent ordered-array model,
+301-event bounded publication, per-event compatibility mode, in-batch duplicates,
+sequence gaps, valid-prefix persistence, reset/restart with lower sequences,
+stale fetch completion, pending-read cancellation, every UTF-8/CRLF byte split,
+token-callback failure, retry-listener cleanup and adapter teardown. The initial
+24-case regression run against the Git-exported `3e2b1aa` client passed five and
+failed 19 with no skips. The first attempt was stopped after exposing a callback
+error/reconnect loop; the bounded completed regression log is separate. Twelve
+later tests were added afterward and are not counted as 19 baseline failures.
+
+The first Windows x64/Node 24.15.0 diagnostic captures 12 cases with seven
+fresh-process pairs each, two warm-ups, alternating order, identical encoded
+bursts and matching independently computed final-state hashes. At 100,000 rows,
+128 indexed updates measured 490.029 ms before and 8.418 ms after; removals/adds
+434.782/11.720 ms; reranking 399.271/14.948 ms. Each delta burst publishes two
+snapshots rather than 128, with sampled allocation ratios around 0.018. A full
+100,000-row reset measured 29.336/23.590 ms and a 0.663 sampled allocation ratio.
+Ten-row single-reset timing regressed in this capture, while tiny allocation
+estimates are poorly resolved. These weaknesses remain open; this is not an
+across-the-board performance pass.
+
+Raw measurements, V8 sampling profiles, GC/CPU/whole-process RSS, source/module
+hashes, environment and a 171-entry hashed inventory are retained under
+`artifacts/audit-browser-performance-3e2b1aa-20260927`. The capture records a
+dirty development source hash, not final-candidate qualification. Statistical
+heap sampling is not exact allocated bytes, and seven empirical duration
+samples cannot certify tail confidence intervals. No SignalR, Linux, browser
+rendering, fan-out or endurance win is implied. The diagnostic deliberately uses
+a non-release evidence kind and leaves the full release-performance contract
+unchanged.
+
+The completed 48-test/four-fixture contributor log is retained at
+`artifacts/audit-browser-clients-3e2b1aa-20260927-first.log`. Five subsequent cases
+also verify that invalid reset/reorder arrays and keys fail with a protocol
+error without replacing or losing the valid prefix. The updated diagnostic
+reports allocation ratios as unresolved if either side has fewer than 32 V8
+allocation samples across the capture; that is a resolution safeguard, not a
+95% confidence test. Short-window CPU counters can report zero on this host,
+which is not zero CPU work. Earlier raw evidence is never overwritten.
 
 A clean SDK artifacts build exposed a protobuf analyzer configuration tied to
 the default `obj` location. The generated-file exception now lives in the root

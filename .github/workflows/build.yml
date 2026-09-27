@@ -191,6 +191,28 @@ jobs:
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
 
+  browser-clients:
+    name: Browser client contracts (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Restore locked client and framework test dependencies
+        run: npm ci --ignore-scripts
+      - name: Build and test all five clients (no missing-test allowance)
+        run: npm run check:clients
+      - name: Audit client dependency closure
+        run: npm audit --audit-level=moderate
+
   website:
     name: Angular website and complete documentation
     runs-on: ubuntu-latest

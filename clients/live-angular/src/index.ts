@@ -62,7 +62,9 @@ export class AngularLiveQuery<
   }
 
   start(): void {
-    this.#query.start();
+    if (!this.#destroyed) {
+      this.#query.start();
+    }
   }
 
   stop(): void {
@@ -70,6 +72,9 @@ export class AngularLiveQuery<
   }
 
   destroy(): void {
+    if (this.#destroyed) {
+      return;
+    }
     this.#destroyed = true;
     this.#pendingState = null;
     this.#unsubscribe();
