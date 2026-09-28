@@ -41,7 +41,8 @@ public static class ChangeDeliveryTestFactory
                 estimatedBytes: 0,
                 isSpooled: false,
                 cancellationToken => ReadChangesAsync(materialized, cancellationToken)));
-        return CreateDelivery(transaction, observer);
+        // Synthetic test deliveries model a replication start on the named publication.
+        return CreateDelivery(transaction, observer, [source.PublicationFingerprint]);
     }
 
     public static ChangeTransactionDelivery CreateTwoPhase(
@@ -83,19 +84,21 @@ public static class ChangeDeliveryTestFactory
                 estimatedBytes: 0,
                 isSpooled: false,
                 cancellationToken => ReadChangesAsync(materialized, cancellationToken)));
-        return CreateDelivery(transaction, observer);
+        return CreateDelivery(transaction, observer, null);
     }
 
     private static ChangeTransactionDelivery CreateDelivery(
         ChangeTransaction transaction,
-        IChangeDeliveryObserver? observer)
+        IChangeDeliveryObserver? observer,
+        IReadOnlyList<string>? replicationPublicationNames)
     {
         return new ChangeTransactionDelivery(
             transaction,
             cancellationToken => observer?.AcknowledgeAsync(transaction, cancellationToken) ??
-                                 ValueTask.CompletedTask,
+                                  ValueTask.CompletedTask,
             (failure, cancellationToken) => observer?.NackAsync(transaction, failure, cancellationToken) ??
-                                            ValueTask.CompletedTask);
+                                            ValueTask.CompletedTask,
+            replicationPublicationNames);
     }
 
     private static async IAsyncEnumerable<Change> ReadChangesAsync(

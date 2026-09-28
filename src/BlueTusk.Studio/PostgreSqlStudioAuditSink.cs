@@ -321,6 +321,14 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
         ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumRows, 10_000);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (var worker = connection.CreateCommand())
+        {
+            worker.Transaction = transaction;
+            worker.CommandTimeout = _timeout;
+            worker.CommandText = "SELECT pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(@name, 1))";
+            Add(worker, "name", "BlueTusk.Studio:" + _schema + ":prune");
+            _ = await worker.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
         long horizon;
         bool legacy;
         await using (var fence = connection.CreateCommand())
@@ -346,7 +354,7 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
                 WITH selected AS (
                     SELECT ctid FROM {_schema}.studio_audit
                     WHERE operation_time_ms IS NULL ORDER BY occurred_at, operation_id, outcome
-                    LIMIT @limit FOR UPDATE SKIP LOCKED)
+                    LIMIT @limit FOR UPDATE)
                 DELETE FROM {_schema}.studio_audit a USING selected s WHERE a.ctid=s.ctid
                 """;
             Add(command, "limit", maximumRows);
@@ -361,7 +369,7 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
                 WITH selected AS (
                     SELECT ctid FROM {_schema}.studio_audit
                     WHERE operation_time_ms <= @horizon ORDER BY operation_time_ms, operation_id, outcome
-                    LIMIT @limit FOR UPDATE SKIP LOCKED)
+                    LIMIT @limit FOR UPDATE)
                 DELETE FROM {_schema}.studio_audit a USING selected s WHERE a.ctid=s.ctid
                 """;
             Add(command, "horizon", horizon);

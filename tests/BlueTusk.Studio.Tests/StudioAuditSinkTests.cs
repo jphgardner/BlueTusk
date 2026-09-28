@@ -116,6 +116,65 @@ public sealed class StudioAuditSinkTests
     }
 
     [Fact]
+    public async Task Concurrent_pruners_wait_for_locked_rows_before_reporting_completion()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
+        var schema = "studio_audit_pruners_" + Guid.NewGuid().ToString("N");
+        try
+        {
+            var sink = new PostgreSqlStudioAuditSink(dataSource, schema);
+            await sink.InitializeAsync(TestContext.Current.CancellationToken);
+            var oldTime = DateTimeOffset.UtcNow.AddMinutes(-2);
+            var record = new StudioAuditRecord(Guid.CreateVersion7(oldTime), "principal-a", new string('a', 64), "attempt", 0)
+            { ScopeId = "tenant-a-database" };
+            await sink.RecordAsync(record, TestContext.Current.CancellationToken);
+            var horizon = DateTimeOffset.UtcNow.AddMinutes(-1);
+            await sink.SealRetentionHorizonAsync(horizon, TestContext.Current.CancellationToken);
+            await sink.ConfirmArchivedHorizonAsync(horizon, "verified-pruner-export", TestContext.Current.CancellationToken);
+
+            await using var locker = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
+            await using var locked = await locker.BeginTransactionAsync(TestContext.Current.CancellationToken);
+            await using (var hold = locker.CreateCommand())
+            {
+                hold.Transaction = locked;
+                hold.CommandText = $"SELECT operation_id FROM \"{schema}\".studio_audit WHERE operation_id=@operation FOR UPDATE";
+                hold.Parameters.Add(new BlueTuskParameter<Guid>(record.OperationId) { ParameterName = "operation" });
+                Assert.Equal(record.OperationId, await hold.ExecuteScalarAsync(TestContext.Current.CancellationToken));
+            }
+
+            var first = sink.PruneArchivedAsync(1, TestContext.Current.CancellationToken).AsTask();
+            var second = sink.PruneArchivedAsync(1, TestContext.Current.CancellationToken).AsTask();
+            await using var monitor = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
+            await using var waiting = monitor.CreateCommand();
+            waiting.CommandText = $"SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE pid<>pg_backend_pid() AND wait_event_type='Lock' AND query LIKE '%\"{schema}\".studio_audit%'";
+            var observedWait = false;
+            for (var attempt = 0; attempt < 100 && !first.IsCompleted && !second.IsCompleted; attempt++)
+            {
+                if ((long)(await waiting.ExecuteScalarAsync(TestContext.Current.CancellationToken))! > 0)
+                {
+                    observedWait = true;
+                    break;
+                }
+                await Task.Delay(25, TestContext.Current.CancellationToken);
+            }
+            var firstCompletedWhileLocked = first.IsCompleted;
+            var secondCompletedWhileLocked = second.IsCompleted;
+            await locked.CommitAsync(TestContext.Current.CancellationToken);
+            var results = await Task.WhenAll(first, second);
+            Assert.True(observedWait);
+            Assert.False(firstCompletedWhileLocked);
+            Assert.False(secondCompletedWhileLocked);
+            Assert.Equal(1, results.Sum());
+            Assert.Equal(0, await sink.PruneArchivedAsync(1, TestContext.Current.CancellationToken));
+        }
+        finally
+        {
+            await using var drop = dataSource.CreateCommand($"DROP SCHEMA IF EXISTS \"{schema}\" CASCADE");
+            _ = await drop.ExecuteNonQueryAsync();
+        }
+    }
+
+    [Fact]
     public async Task Durable_attempts_survive_reopen_retries_are_exact_and_future_versions_are_rejected()
     {
         await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());

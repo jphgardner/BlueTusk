@@ -210,7 +210,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
             Parameter(insert, "payload", outcome.ServerRecord?.Payload.ToArray(), DbType.Binary);
             Parameter(insert, "deleted", outcome.ServerRecord?.Deleted, DbType.Boolean);
             Parameter(insert, "receiptbytes", receiptBytes);
-            Parameter(insert, "orderedstream", ordered ? orderedStream : null);
+            Parameter(insert, "orderedstream", ordered ? orderedStream : null, DbType.String);
             Parameter(insert, "orderedsequence", ordered ? orderedSequence : null, DbType.Int64);
             _ = await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }

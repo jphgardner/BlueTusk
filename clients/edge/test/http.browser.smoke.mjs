@@ -38,7 +38,12 @@ try {
     const payload = '{ "unicode" : "🦣 café", "count" : 1 }';
     const mutation = { scope, id: crypto.randomUUID(), documentId: "1", expectedRevision: "0", kind: "upsert", payload };
     await store.enqueue(mutation);
-    let disconnected = false; try { await synchronizeEdge(store, remote, scope) } catch { disconnected = true }
+    let disconnected = false;
+    try { await synchronizeEdge(store, remote, scope) }
+    catch (error) {
+      if (!(error instanceof TypeError && error.message === "Failed to fetch")) throw error;
+      disconnected = true;
+    }
     if (!disconnected) throw new Error("The real committed response was not disconnected.");
     const cached = await store.get(scope, "1"); store.close();
     return { mutationId: mutation.id, payload: cached.payload, status: cached.pendingStatus };

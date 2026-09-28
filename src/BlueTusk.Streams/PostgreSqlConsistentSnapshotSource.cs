@@ -321,6 +321,7 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
     private readonly BlueTuskLogicalReplicationConnection _replication;
     private readonly BlueTuskReplicationSlotCreationResult _slot;
     private readonly PostgreSqlConsistentSnapshotOptions _options;
+    private readonly string[] _publicationNames;
     private readonly Func<BlueTuskLogicalReplicationConnection, IChangeDeliveryObserver?>? _observerFactory;
     private readonly IReadOnlyList<ChangeTable> _tables;
     private int _snapshotStarted;
@@ -341,6 +342,9 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
         _slot = slot;
         Epoch = epoch;
         _options = options;
+        // Use one immutable snapshot for both START_REPLICATION and delivery provenance.
+        // Mutating the caller's PublicationNames collection cannot change either side later.
+        _publicationNames = options.PublicationNames.ToArray();
         _observerFactory = observerFactory;
         _tables = Array.AsReadOnly(options.Tables.Select(table => table.Table).ToArray());
     }
@@ -428,7 +432,7 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
                     new BlueTuskPgOutputReplicationOptions
                     {
                         SlotName = _options.Source.SlotName,
-                        PublicationNames = _options.PublicationNames,
+                        PublicationNames = _publicationNames,
                         StartPosition = Epoch.ConsistentPosition,
                         ProtocolVersion = stagePreparedTransactions ? 3 : 2,
                         Messages = true,
@@ -443,7 +447,9 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
                         }),
                 _options.Source,
                 _options.TransactionAssembly,
-                observer: observer);
+                spool: null,
+                observer: observer,
+                replicationPublicationNames: _publicationNames);
         }
         catch
         {

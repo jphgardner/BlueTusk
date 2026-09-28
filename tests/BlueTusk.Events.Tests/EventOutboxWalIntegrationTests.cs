@@ -126,6 +126,93 @@ public sealed class EventOutboxWalIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task ControlOnlyPublicationCannotAcknowledgeAnotherPublicationsOutboxHistory()
+    {
+        await using var fixture = await EventDatabase.CreateAsync();
+        var protectedPublication = "events_pub_" + Guid.NewGuid().ToString("N");
+        var controlOnlyPublication = "events_control_" + Guid.NewGuid().ToString("N");
+        var slot = "events_slot_" + Guid.NewGuid().ToString("N");
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var token = timeout.Token;
+        await using var administration = await fixture.DataSource.OpenConnectionAsync(token);
+        await using (var command = administration.CreateCommand())
+        {
+            command.CommandText = $"""
+                CREATE PUBLICATION "{protectedPublication}" FOR TABLE
+                    "{fixture.Schema}".outbox, "{fixture.Schema}".published_retention_intents;
+                CREATE PUBLICATION "{controlOnlyPublication}" FOR TABLE
+                    "{fixture.Schema}".published_retention_intents
+                """;
+            await command.ExecuteNonQueryAsync(token);
+        }
+
+        var slotCreated = false;
+        try
+        {
+            ChangeSourceIdentity sourceIdentity;
+            EventPublishedSourceIdentity protectedSource;
+            await using (var identityConnection = await BlueTuskLogicalReplicationConnection.OpenAsync(
+                fixture.DataSource.CreateDedicatedSessionOptions(), token))
+            {
+                var system = await identityConnection.IdentifySystemAsync(token);
+                sourceIdentity = new ChangeSourceIdentity(system.SystemIdentifier, system.DatabaseName!,
+                    slot, protectedPublication);
+                protectedSource = new EventPublishedSourceIdentity(system.SystemIdentifier,
+                    system.DatabaseName!, system.Timeline, slot, protectedPublication);
+            }
+            var incarnation = Guid.NewGuid();
+            var processor = PostgreSqlEventDeliveryProcessor.CreateProtected(fixture.DataSource, fixture.Store,
+                new EventOutboxChangeDecoder(fixture.Schema), "wal-consumer", sourceIdentity, null,
+                new EventPublishedRetentionTargetOptions(incarnation, protectedSource));
+            var source = new PostgreSqlConsistentSnapshotSource(fixture.DataSource,
+                new PostgreSqlConsistentSnapshotOptions
+                {
+                    Source = sourceIdentity,
+                    PublicationNames = [controlOnlyPublication],
+                    Tables = [new PostgreSqlSnapshotTable(EventOutboxChangeDecoderTests.Table(fixture.Schema), [0, 1, 2])]
+                });
+            await using (var attempt = await source.BeginAttemptAsync(null, token))
+            {
+                slotCreated = true;
+                await foreach (var batch in attempt.ReadSnapshotAsync(token)) { Assert.Empty(batch.Rows); }
+                var stream = new EventStreamKey("tenant", "orders");
+                var registration = await fixture.Store.RegisterPublishedRetentionConsumerAsync(stream,
+                    "wal-consumer", incarnation, protectedSource, token);
+                await fixture.Store.RegisterPublishedRetentionTargetAsync(registration, token);
+                await fixture.AppendAsync(stream,
+                    [new EventWrite(Guid.NewGuid(), "order.placed", 1, DateTimeOffset.UtcNow, "{}"u8)]);
+                var archive = new Archive();
+                _ = await fixture.Store.ArchiveNextAsync(stream, archive, cancellationToken: token);
+                var intent = await fixture.Store.PublishRetentionIntentAsync(stream, archive, protectedSource,
+                    throughSequence: 1, cancellationToken: token);
+
+                await using var changes = attempt.CreateChangeStream().ReadTransactionsAsync(token).GetAsyncEnumerator(token);
+                Assert.True(await changes.MoveNextAsync());
+                await using var delivery = changes.Current;
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await processor.ProcessAsync(delivery, fixture.HandleAsync, token));
+                Assert.Equal(ChangeDeliveryState.Active, delivery.State);
+                Assert.Equal(0, await fixture.EffectCountAsync());
+                await using var check = fixture.DataSource.CreateCommand($"SELECT count(*) FROM \"{fixture.Schema}\".published_retention_acknowledgements WHERE retention_epoch=@epoch");
+                var epoch = check.CreateParameter(); epoch.ParameterName = "epoch"; epoch.Value = intent.Epoch; check.Parameters.Add(epoch);
+                Assert.Equal(0L, Convert.ToInt64(await check.ExecuteScalarAsync(token)));
+            }
+        }
+        finally
+        {
+            if (slotCreated)
+            {
+                await using var cleanup = await BlueTuskLogicalReplicationConnection.OpenAsync(
+                    fixture.DataSource.CreateDedicatedSessionOptions());
+                await cleanup.DropReplicationSlotAsync(slot, wait: true);
+            }
+            await using var command = administration.CreateCommand();
+            command.CommandText = $"DROP PUBLICATION IF EXISTS \"{controlOnlyPublication}\"; DROP PUBLICATION IF EXISTS \"{protectedPublication}\"";
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
     private sealed class Archive : IEventArchiveStore
     {
         private readonly Dictionary<string, IReadOnlyList<StoredEvent>> _objects = new(StringComparer.Ordinal);

@@ -84,7 +84,9 @@ seal, including all rows through the cutoff, and verify an independently
 recoverable archive plus its counts/checksums. Then call
 `ConfirmArchivedHorizonAsync(cutoff, archiveReference)` and repeat
 `PruneArchivedAsync(maximumRows)` until it returns zero. Each call deletes at
-most 10,000 rows, and only rows through a confirmed horizon. The confirmation
+most 10,000 rows, and only rows through a confirmed horizon. Prune workers
+serialize with a schema-scoped transaction advisory lock; a locked eligible
+row makes a worker wait or time out rather than return a false zero. The confirmation
 and external reference persist in `studio_audit_archives`; the repository
 does not verify the external archive. An erroneous confirmation can therefore
 cause real audit loss. For pre-v3 rows, export the complete legacy set after

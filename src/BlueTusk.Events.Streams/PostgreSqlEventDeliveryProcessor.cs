@@ -96,6 +96,11 @@ public sealed class PostgreSqlEventDeliveryProcessor
         {
             throw new ArgumentException("Event delivery requires an active raw committed transaction from the registered Streams source.", nameof(delivery));
         }
+        if (_protectedRetention is not null &&
+            !delivery.HasSingleReplicationPublication(_protectedRetention.Source.PublicationName))
+        {
+            throw new InvalidOperationException("Protected retention requires a verified single-publication replication delivery from the registered source publication.");
+        }
 
         if (transaction.Changes.Count > _options.MaximumSourceChanges)
         {

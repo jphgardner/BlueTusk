@@ -99,7 +99,7 @@ public sealed class EventStreamsDeliveryTests
     public async Task OrderedRetentionAckCommitsWithTargetCheckpointAndRejectsConflictingRedelivery()
     {
         await using var fixture = await EventDatabase.CreateAsync();
-        var source = new ChangeSourceIdentity("system", "database", "slot", "publication-fingerprint");
+        var source = new ChangeSourceIdentity("system", "database", "slot", "publication");
         var expected = new EventPublishedSourceIdentity("system", "database", 1, "slot", "publication");
         var incarnation = Guid.NewGuid();
         var epoch = Guid.NewGuid();
@@ -117,6 +117,14 @@ public sealed class EventStreamsDeliveryTests
         var protectedProcessor = PostgreSqlEventDeliveryProcessor.CreateProtected(fixture.DataSource, fixture.Store,
             new EventOutboxChangeDecoder(fixture.Schema), "consumer", source, null,
             new EventPublishedRetentionTargetOptions(incarnation, expected));
+        await using (var unbound = new ChangeTransactionDelivery(delivery.Transaction,
+            new FailingAcknowledgmentObserver()))
+        {
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await protectedProcessor.ProcessAsync(unbound, fixture.HandleAsync));
+            Assert.Equal(ChangeDeliveryState.Active, unbound.State);
+            Assert.Equal((0L, 0L), await RetentionCountsAsync(fixture));
+        }
         await using (var connection = await fixture.DataSource.OpenConnectionAsync())
         await using (var command = connection.CreateCommand())
         {
@@ -162,7 +170,7 @@ public sealed class EventStreamsDeliveryTests
     public async Task RetentionMarkerWithUnrelatedRawChangeCannotAdvanceTargetCheckpointOrAck()
     {
         await using var fixture = await EventDatabase.CreateAsync();
-        var source = new ChangeSourceIdentity("system", "database", "slot", "publication-fingerprint");
+        var source = new ChangeSourceIdentity("system", "database", "slot", "publication");
         var expected = new EventPublishedSourceIdentity("system", "database", 1, "slot", "publication");
         var incarnation = Guid.NewGuid();
         await fixture.Store.RegisterPublishedRetentionTargetAsync(new EventPublishedConsumerRegistration(

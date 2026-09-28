@@ -59,9 +59,11 @@ internal sealed class EdgeSmokeHost(WebApplication application, Uri endpoint) : 
         application.UseAuthentication(); application.UseAuthorization();
         application.Use(async (context, next) =>
         {
-            // Keep dropping marked replays: browsers may transparently retry a broken fresh connection.
+            // Drop only a successful committed mutation response. A server error must
+            // reach the browser so the smoke cannot mistake it for a lost commit.
+            // Keep dropping marked replays: browsers may retry a broken connection.
             if (context.Request.Path == "/edge/mutations" && context.Request.Headers["x-bluetusk-test-drop"] == "until-reconnect")
-            { context.Response.OnStarting(() => { context.Abort(); return Task.CompletedTask; }); }
+            { context.Response.OnStarting(() => { if (context.Response.StatusCode == 200) context.Abort(); return Task.CompletedTask; }); }
             await next(context);
         });
         application.MapBlueTuskEdge(store, static (context, scope, _) => ValueTask.FromResult(

@@ -105,6 +105,7 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
 {
     private readonly Func<CancellationToken, ValueTask> _acknowledge;
     private readonly Func<Exception?, CancellationToken, ValueTask> _nack;
+    private readonly string[]? _replicationPublicationNames;
     private readonly long _telemetryStarted;
     private int _state;
 
@@ -125,14 +126,30 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
         ChangeTransaction transaction,
         Func<CancellationToken, ValueTask> acknowledge,
         Func<Exception?, CancellationToken, ValueTask> nack)
+        : this(transaction, acknowledge, nack, null)
+    {
+    }
+
+    internal ChangeTransactionDelivery(
+        ChangeTransaction transaction,
+        Func<CancellationToken, ValueTask> acknowledge,
+        Func<Exception?, CancellationToken, ValueTask> nack,
+        IReadOnlyList<string>? replicationPublicationNames)
     {
         Transaction = transaction;
         _acknowledge = acknowledge;
         _nack = nack;
+        _replicationPublicationNames = replicationPublicationNames?.ToArray();
         _telemetryStarted = BlueTuskStreamsDiagnostics.StartDelivery(transaction);
     }
 
     public ChangeTransaction Transaction { get; }
+
+    // Only the built-in replication source can supply this evidence in production.
+    // A caller-created delivery or generic decoded envelope has no publication binding.
+    internal bool HasSingleReplicationPublication(string publicationName) =>
+        _replicationPublicationNames is { Length: 1 } names &&
+        string.Equals(names[0], publicationName, StringComparison.Ordinal);
 
     public ChangeDeliveryState State => Volatile.Read(ref _state) switch
     {
@@ -238,6 +255,7 @@ public sealed class PgOutputChangeStream : IChangeStream
     private readonly IAsyncEnumerable<BlueTuskPgOutputEnvelope> _source;
     private readonly PgOutputTransactionAssembler _assembler;
     private readonly IChangeDeliveryObserver _observer;
+    private readonly string[]? _replicationPublicationNames;
     private int _started;
 
     public PgOutputChangeStream(
@@ -246,6 +264,17 @@ public sealed class PgOutputChangeStream : IChangeStream
         TransactionAssemblyOptions? options = null,
         ITransactionSpool? spool = null,
         IChangeDeliveryObserver? observer = null)
+        : this(source, sourceIdentity, options, spool, observer, null)
+    {
+    }
+
+    internal PgOutputChangeStream(
+        IAsyncEnumerable<BlueTuskPgOutputEnvelope> source,
+        ChangeSourceIdentity sourceIdentity,
+        TransactionAssemblyOptions? options,
+        ITransactionSpool? spool,
+        IChangeDeliveryObserver? observer,
+        IReadOnlyList<string>? replicationPublicationNames)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(sourceIdentity);
@@ -253,6 +282,7 @@ public sealed class PgOutputChangeStream : IChangeStream
         effectiveOptions.Validate();
         _source = source;
         _observer = observer ?? NullChangeDeliveryObserver.Instance;
+        _replicationPublicationNames = replicationPublicationNames?.ToArray();
         _assembler = new PgOutputTransactionAssembler(
             sourceIdentity,
             effectiveOptions,
@@ -320,7 +350,8 @@ public sealed class PgOutputChangeStream : IChangeStream
             {
                 await _observer.NackAsync(assembled.Transaction, failure, cancellationToken).ConfigureAwait(false);
                 await assembled.ReleaseAsync().ConfigureAwait(false);
-            });
+            },
+            _replicationPublicationNames);
 
     private sealed class NullChangeDeliveryObserver : IChangeDeliveryObserver
     {
