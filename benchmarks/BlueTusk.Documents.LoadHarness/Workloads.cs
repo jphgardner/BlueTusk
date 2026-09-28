@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.ExceptionServices;
+using System.Text;
 using System.Text.Json;
 using BlueTusk.Data;
 
@@ -18,8 +19,9 @@ internal static partial class Program
     private static string Id(int writer, int row) => $"writer-{writer:D2}-row-{row:D2}";
 
     private static async Task<ScenarioReport> RunScenarioAsync(string raw, BlueTuskDataSource observer, int bytes, int tenants, int writers,
-        int seconds, bool sustained, StorageBudget budget, CancellationToken token)
+        int seconds, bool sustained, string storageMode, StorageBudget budget, CancellationToken token)
     {
+        var attached = sustained && storageMode == "AttachedContent";
         var schema = "docs_load_" + Guid.NewGuid().ToString("N");
         var pool = Math.Min(writers, 8); const int rows = 8;
         var app = Application + "-" + Guid.NewGuid().ToString("N");
@@ -46,6 +48,9 @@ internal static partial class Program
             : null;
         string PayloadFor(int tenant, int writer, int row) =>
             distinctPayloads is null ? payload : distinctPayloads[(tenant, writer, row)];
+        var detachedBytes = attached
+            ? distinctPayloads!.ToDictionary(entry => entry.Key, entry => Encoding.UTF8.GetBytes(entry.Value))
+            : null;
         var scenarioOperation = "initialize";
         Exception? primaryFailure = null;
         async Task<ScenarioReport> ExecuteScenarioAsync()
@@ -65,8 +70,21 @@ internal static partial class Program
                 {
                     using var seed = store.OpenSession(Tenant(tenant));
                     for (var row = 0; row < rows; row++)
-                    { seed.Insert(Collection, Id(state.Writer, row), new(Tenant(tenant), PayloadFor(tenant, state.Writer, row), 0)); }
-                    Check((await seed.SaveChangesAsync(token)).Count == rows, "seed atomic batch");
+                    {
+                        seed.Insert(Collection, Id(state.Writer, row),
+                            new(Tenant(tenant), attached ? string.Empty : PayloadFor(tenant, state.Writer, row), 0));
+                    }
+                    var seeded = await seed.SaveChangesAsync(token);
+                    Check(seeded.Count == rows, "seed atomic batch");
+                    if (attached)
+                    {
+                        for (var row = 0; row < rows; row++)
+                        {
+                            var seedRevision = seeded[row].Revision ?? throw new InvalidOperationException("Seed returned no revision.");
+                            _ = await store.AttachContentAsync(Tenant(tenant), Collection, Id(state.Writer, row),
+                                seedRevision, detachedBytes![(tenant, state.Writer, row)], token);
+                        }
+                    }
                     _ = await ObserveMaintenanceAsync(observer, schema, budget, token);
                 }
             for (var tenant = 0; tenant < tenants; tenant++)
@@ -171,7 +189,16 @@ internal static partial class Program
                             using var replacement = store.OpenSession(Tenant(tenant));
                             foreach (var document in current) { replacement.Insert(Collection, document.Id, document.Value with { Count = document.Value.Count + 1 }); }
                             var results = await replacement.SaveChangesAsync(cancellationToken);
-                            for (var row = 0; row < batchRows; row++) { Check(results[row].Revision > current[row].Revision, "delete/reinsert ABA fence"); }
+                            for (var row = 0; row < batchRows; row++)
+                            {
+                                Check(results[row].Revision > current[row].Revision, "delete/reinsert ABA fence");
+                                if (attached)
+                                {
+                                    var insertedRevision = results[row].Revision ?? throw new InvalidOperationException("Reinsert returned no revision.");
+                                    _ = await store.AttachContentAsync(Tenant(tenant), Collection, current[row].Id,
+                                        insertedRevision, detachedBytes![(tenant, state.Writer, firstRow + row)], cancellationToken);
+                                }
+                            }
                             Interlocked.Increment(ref deletes);
                         }
                         else if (iteration % 5 == 4) { Interlocked.Increment(ref patches); }
@@ -213,7 +240,20 @@ internal static partial class Program
                 }
             });
             scenarioOperation = "verify-retained-records";
-            await VerifyStateAsync(store, states, PayloadFor, tenants, hotExpected, token);
+            await VerifyStateAsync(store, states, PayloadFor, detachedBytes is not null, tenants, hotExpected, token);
+            if (attached)
+            {
+                await using var connection = await source.OpenConnectionAsync(token);
+                await using var counts = new BlueTuskCommand($"SELECT (SELECT count(*) FROM \"{schema}\".content), (SELECT count(*) FROM \"{schema}\".content_links)", connection);
+                await using var reader = await counts.ExecuteReaderAsync(token);
+                Check(await reader.ReadAsync(token), "attached content counts");
+                var expectedCount = states.Sum(state => state.Tenants.Length * rows);
+                Check(reader.GetInt64(0) == expectedCount && reader.GetInt64(1) == expectedCount,
+                    "one stable immutable content row and link per retained document");
+                var collectionPage = await store.CollectUnusedContentPageAsync(cancellationToken: token);
+                Check(collectionPage.ExaminedCount == expectedCount && collectionPage.DeletedCount == 0 && collectionPage.NextAfterCursor is null,
+                    "no unreferenced content after delete/reinsert cycles");
+            }
             var afterVerification = await ObserveMaintenanceAsync(observer, schema, budget, token);
             Check(tenantProgress.All(value => value > 0), "all configured tenants progress");
             var idleSamples = new List<MaintenanceSample>();
@@ -237,7 +277,8 @@ internal static partial class Program
                 hotExpected.Sum(), hotConflicts, rejected, load.Snapshot(), save.Snapshot(), operation.Snapshot(), hotLatency.Snapshot(), runtime, before, after, samples.ToArray(), true,
                 new(beforeMaintenance, afterMaintenance, afterVerification, afterIdle, maintenanceSamples.ToArray(), idleSamples.ToArray(),
                     new(databaseProbeTimeouts, maximumConsecutiveDatabaseProbeTimeouts, maximumMaintenanceGap)),
-                sustained ? "distinct-stable-per-document" : "shared-within-scenario");
+                sustained ? "distinct-stable-per-document" : "shared-within-scenario",
+                attached ? "AttachedContent" : "InlineJsonb");
             if (sustained)
             {
                 scenarioOperation = "persist-sustained-checkpoint";
@@ -274,7 +315,7 @@ internal static partial class Program
     }
 
     private static async Task VerifyStateAsync(DocumentStore store, WriterState[] states,
-        Func<int, int, int, string> payloadFor, int tenants, long[] hotExpected, CancellationToken token)
+        Func<int, int, int, string> payloadFor, bool attached, int tenants, long[] hotExpected, CancellationToken token)
     {
         for (var tenant = 0; tenant < tenants; tenant++)
         {
@@ -293,7 +334,15 @@ internal static partial class Program
                     else
                     {
                         Check(expected.TryGetValue(value.Id, out var item) && item.Count == value.Value.Count &&
-                        item.Payload == value.Value.Payload, "exact payload/version after bounded pages");
+                            (attached ? value.Value.Payload.Length == 0 : item.Payload == value.Value.Payload),
+                            "exact payload/version after bounded pages");
+                        if (attached)
+                        {
+                            var linked = await store.LoadContentAsync(Tenant(tenant), Collection, value.Id, token);
+                            Check(linked is not null && linked.Revision == value.Revision &&
+                                linked.Bytes.Span.SequenceEqual(Encoding.UTF8.GetBytes(item.Payload)),
+                                "exact detached payload and revision after bounded pages");
+                        }
                     }
                 }
                 Check(page.NextAfterId is null || page.Items.Count > 0, "bounded pagination progresses"); cursor = page.NextAfterId;

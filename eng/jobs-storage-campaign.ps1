@@ -3,6 +3,8 @@ param(
     [int] $Version = 15,
     [ValidateRange(5, 3600)]
     [int] $Seconds = 600,
+    [ValidateSet('Repeated', 'SeededHighEntropy')]
+    [string] $PayloadMode = 'SeededHighEntropy',
     [string] $Output = 'docs/jobs/performance-reports/local-storage-pg15-600s.json',
     [switch] $NoBuild
 )
@@ -45,6 +47,7 @@ SELECT json_build_object('server', version(), 'settings',
     if ($LASTEXITCODE -ne 0) { throw 'Owned fixture settings observation failed.' }
     @{ StartedAtUtc = [DateTimeOffset]::UtcNow.ToString('O'); Container = $taskContainer; ImageId = $taskFixture.Image;
        PostgreSql = ($taskServerJson | ConvertFrom-Json); PerProductDurationSeconds = $Seconds;
+       PayloadMode = $PayloadMode;
        FixtureCpuScope = 'Docker CPU percentage includes all processes in the dedicated owned fixture; block/network counters are container-scoped.' } |
         ConvertTo-Json -Depth 8 | Set-Content -LiteralPath ($taskOutputPath + '.environment.json')
     $taskStatsPath = $taskOutputPath + '.fixture.jsonl'
@@ -63,7 +66,7 @@ SELECT json_build_object('server', version(), 'settings',
             Start-Sleep -Seconds 2
         }
     }
-    & dotnet run --project $taskProject -c Release --no-build -- storage --seconds $Seconds --output $taskOutputPath
+    & dotnet run --project $taskProject -c Release --no-build -- storage --seconds $Seconds --output $taskOutputPath --payload-mode $PayloadMode
     if ($LASTEXITCODE -ne 0) { throw 'Storage or recovery verification failed.' }
     if ($taskObserver.State -eq 'Failed') { Receive-Job -Job $taskObserver -ErrorAction Stop; throw 'Fixture observer failed.' }
 }

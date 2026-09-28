@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "qualification": "manual-exact-candidate-local-capacity",
+  "repetitions": 2,
+  "referenceProcessor": "AMD Ryzen 7 5800X",
+  "postgreSql15Image": "postgres:15-alpine@sha256:f7d23353e1b15400d22ebe31189f4d314b87a4c129cc400c8c2d8d4ca127bf81",
+  "postgreSql18Image": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "jobsWorkflows": {
+    "secondsPerProduct": 1800,
+    "payloadMode": "SeededHighEntropy",
+    "minimumCompletionsPerSecond": { "Jobs": 20, "Workflows": 5 },
+    "maximumHotDurableP99Milliseconds": { "Jobs": 10000, "Workflows": 30000 },
+    "maximumColdDurableP99Milliseconds": { "Jobs": 3000, "Workflows": 12000 },
+    "maximumClusterWalBytesPerAccepted": { "Jobs": 65536, "Workflows": 262144 },
+    "maximumRuntimeRelationBytes": { "Jobs": 67108864, "Workflows": 134217728 },
+    "maximumLateGrowthBytesPerMinute": { "Jobs": 2097152, "Workflows": 4194304 }
+  },
+  "projections": {
+    "secondsPerRun": 1800,
+    "minimumTransactionsPerSecond": 5,
+    "maximumCommitP99Milliseconds": 5000,
+    "maximumProjectionP99Milliseconds": 10000,
+    "maximumInboxP99Milliseconds": 5000,
+    "maximumOwnedStorageBytes": 2147483648,
+    "maximumRetainedSlotBytes": 1073741824,
+    "maximumWalBytesPerTransaction": 8388608
+  },
+  "documents": {
+    "storageMode": "AttachedContent",
+    "cellSeconds": 10,
+    "sustainedSeconds": 1800,
+    "minimumTransitionsPerSecond": 500,
+    "maximumSaveP99Milliseconds": 500,
+    "maximumDocumentsRelationBytes": 1073741824,
+    "maximumLateGrowthBytesPerMinute": 16777216,
+    "maximumWholeDatabaseBytes": 8589934592,
+    "maximumWholeDatabaseLateGrowthBytesPerMinute": 67108864,
+    "maximumWalBytesPerTransition": 65536,
+    "maximumDatabaseBytes": 25769803776,
+    "minimumFilesystemAvailableBytes": 8589934592,
+    "idleDrainSeconds": 120
+  }
+}

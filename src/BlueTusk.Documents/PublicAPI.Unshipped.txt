@@ -1,4 +1,16 @@
 #nullable enable
+BlueTusk.Documents.DocumentContent
+BlueTusk.Documents.DocumentContent.Bytes.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Documents.DocumentContent.Revision.get -> long
+BlueTusk.Documents.DocumentContent.Sha256.get -> string!
+BlueTusk.Documents.DocumentContentCollectionPage
+BlueTusk.Documents.DocumentContentCollectionPage.DeletedCount.get -> int
+BlueTusk.Documents.DocumentContentCollectionPage.ExaminedCount.get -> int
+BlueTusk.Documents.DocumentContentCollectionPage.NextAfterCursor.get -> string?
+BlueTusk.Documents.DocumentStore.AttachContentAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, long expectedRevision, System.ReadOnlyMemory<byte> content, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
+BlueTusk.Documents.DocumentStore.CollectUnusedContentPageAsync(int maximumRows = 1000, string? afterCursor = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.DocumentContentCollectionPage!>
+BlueTusk.Documents.DocumentStore.LoadContentAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.DocumentContent?>
+BlueTusk.Documents.DocumentStore.RemoveContentAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, long expectedRevision, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
 BlueTusk.Documents.DocumentCollectionDefinition<T>
 BlueTusk.Documents.DocumentCollectionDefinition<T>.DocumentCollectionDefinition(string! name, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! jsonTypeInfo, int schemaVersion = 1) -> void
 BlueTusk.Documents.DocumentCollectionDefinition<T>.JsonTypeInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>!

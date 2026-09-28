@@ -51,11 +51,29 @@ $maintenance = $scenario.Maintenance
 if ($null -eq $maintenance) { throw 'The sustained scenario has no physical maintenance observations.' }
 $payloadDistribution = if ($scenario.PSObject.Properties.Match('PayloadDistribution').Count -eq 1)
 { [string]$scenario.PayloadDistribution } else { 'unrecorded' }
+$storageMode = if ($scenario.PSObject.Properties.Match('StorageMode').Count -eq 1)
+{ [string]$scenario.StorageMode } else { 'unrecorded' }
+function OwnedBytes($Database) {
+    $relations = @($Database.Relations)
+    $names = @($relations | ForEach-Object Name)
+    if ($relations.Count -lt 5 -or @($names | Sort-Object -Unique).Count -ne $relations.Count -or
+        @($relations | Where-Object { $_.TotalBytes -le 0 }).Count -ne 0 -or
+        @($names | Where-Object { $_ -eq 'documents' }).Count -ne 1 -or
+        @($names | Where-Object { $_ -eq 'content' }).Count -ne 1 -or
+        @($names | Where-Object { $_ -eq 'content_links' }).Count -ne 1)
+    {
+        throw 'Owned relation observation is incomplete or inconsistent.'
+    }
+    # pg_total_relation_size of each user table includes its own indexes and
+    # TOAST child. The child is not a separate user-table entry here.
+    return [long]($relations | Measure-Object -Property TotalBytes -Sum).Sum
+}
 
 if ($scenario.MeasuredSeconds -lt $MinimumSustainedSeconds -or
     $scenario.PayloadBytes -ne 65536 -or $scenario.Tenants -ne 8 -or
     $scenario.Writers -ne 32 -or $scenario.RowsPerWriterTenant -ne 8 -or
     $payloadDistribution -ne 'distinct-stable-per-document' -or
+    $storageMode -ne 'AttachedContent' -or
     $scenario.TenantProgress.Count -ne 8 -or
     @($scenario.TenantProgress | Where-Object { $_ -le 0 }).Count -ne 0 -or
     [long]($scenario.TenantProgress | Measure-Object -Sum).Sum -ne [long]$scenario.CommittedDocuments -or
@@ -111,29 +129,30 @@ if ($null -eq $maintenance.AfterIdleDrain -or
     $failures.Add('The pre-write, post-write, or idle-drain physical observation is missing.')
 }
 
-# pg_total_relation_size(documents) already includes TOAST. Never add the child again.
-$peakBytes = [math]::Max([long]$maintenance.BeforeWrites.Documents.TotalBytes,
-    [long]$maintenance.AfterWrites.Documents.TotalBytes)
-$peakBytes = [math]::Max($peakBytes,
-    [long]$maintenance.AfterHotKeyAndVerification.Documents.TotalBytes)
-foreach ($sample in $samples)
+$storage = @($scenario.StorageSamples)
+if ($storage.Count -lt $minimumSamples -or $storage[0].ElapsedSeconds -gt 15 -or
+    $storage[-1].ElapsedSeconds -lt $scenario.MeasuredSeconds - 15)
 {
-    $peakBytes = [math]::Max($peakBytes, [long]$sample.Observation.Documents.TotalBytes)
+    $failures.Add('Owned-relation storage samples are incomplete.')
 }
-foreach ($sample in @($maintenance.DuringIdleDrain))
+$peakBytes = [math]::Max((OwnedBytes $scenario.Before), (OwnedBytes $scenario.After))
+$previous = 0.0
+foreach ($sample in $storage)
 {
-    $peakBytes = [math]::Max($peakBytes, [long]$sample.Observation.Documents.TotalBytes)
-}
-if ($null -ne $maintenance.AfterIdleDrain)
-{
-    $peakBytes = [math]::Max($peakBytes, [long]$maintenance.AfterIdleDrain.Documents.TotalBytes)
+    if ($sample.ElapsedSeconds -le $previous -or $sample.ElapsedSeconds - $previous -gt 45)
+    {
+        $failures.Add('Owned-relation storage samples have a gap or invalid ordering.')
+        break
+    }
+    $peakBytes = [math]::Max($peakBytes, (OwnedBytes $sample.Database))
+    $previous = [double]$sample.ElapsedSeconds
 }
 if ($peakBytes -gt $MaximumDocumentsRelationBytes)
 {
-    $failures.Add("Documents relation peak $peakBytes bytes exceeds $MaximumDocumentsRelationBytes bytes.")
+    $failures.Add("Owned relation peak $peakBytes bytes exceeds $MaximumDocumentsRelationBytes bytes.")
 }
 
-$late = @($samples | Where-Object { $_.ElapsedSeconds -ge $scenario.MeasuredSeconds / 2 })
+$late = @($storage | Where-Object { $_.ElapsedSeconds -ge $scenario.MeasuredSeconds / 2 })
 if ($late.Count -lt [math]::Max(3, [math]::Floor($minimumSamples / 2)) -or
     $late[-1].ElapsedSeconds - $late[0].ElapsedSeconds -lt $MinimumSustainedSeconds / 3)
 {
@@ -141,8 +160,7 @@ if ($late.Count -lt [math]::Max(3, [math]::Floor($minimumSamples / 2)) -or
 }
 else
 {
-    $lateGrowth = [long]$maintenance.AfterWrites.Documents.TotalBytes -
-        [long]$late[0].Observation.Documents.TotalBytes
+    $lateGrowth = (OwnedBytes $scenario.After) - (OwnedBytes $late[0].Database)
     $lateMinutes = ($scenario.MeasuredSeconds - $late[0].ElapsedSeconds) / 60.0
     $growthPerMinute = $lateGrowth / $lateMinutes
     if ($growthPerMinute -gt $MaximumLateGrowthBytesPerMinute)

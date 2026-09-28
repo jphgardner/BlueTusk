@@ -10,7 +10,7 @@ production qualified.
 | --- | --- | --- |
 | Events | Transactional outbox/inbox, typed routing, replay and Streams adapter; 44 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign | Longer retention, large producer/consumer fleets, upgrades and disaster recovery |
 | Jobs | Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion | Representative multi-day retention/capacity and operations under repeated failure |
-| Documents | Typed JSONB, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 30 live tests per version, 16-cell load and killed-writer recovery | Physical TOAST/WAL growth, tail latency, sustained hot keys and operational limits |
+| Documents | Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery | Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits |
 | Projections | Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; 34 live tests per version, 100,000-effect exact-state campaign, 600-second overload and physical promotion | Longer independent-host load, retention/format upgrades and wider failure distributions |
 | Search | Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution | Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets |
 | Schema | Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests per version and native execution | Destructive/partition-parent migrations, invalid-index repair automation and broad upgrade operations |
@@ -24,15 +24,17 @@ production qualified.
 - The full 195-project Release solution builds with zero warnings and errors.
   Layout verification finds 73 ordered solution folders; two embedded template
   projects are intentionally excluded. The source supply-chain gate finds pinned
-  actions and CI images across 14 workflows. All 16 API family budgets pass,
-  covering 16,962 public signatures.
-- The combined database gate passes **419 tests in 15 projects** with zero
+  actions and CI images across 15 workflows. All 16 API family budgets pass,
+  covering 16,974 public signatures.
+- An earlier candidate's combined database gate passed **419 tests in 15 projects** with zero
   failures or skips on each PostgreSQL **15, 16, 17 and 18**. All four runs used
   the same unchanged candidate source. PostgreSQL 18 additionally passed five
   real Windows x64 NativeAOT executables. An actual Linux x64 container ran
   the same 419 tests and five separate Linux NativeAOT executables against the
-  exact source archive. These are local source-stable runs of a dirty working
-  tree, not an immutable release or CI result.
+  exact source archive. These are local source-stable runs of an earlier dirty
+  working tree, not an immutable release or CI result. The latest Documents
+  sidecar adds three tests; its 38-test suite passes on all four PostgreSQL
+  versions, while the complete combined gate awaits the committed candidate.
 - Edge's locked npm install, TypeScript build, 14 contract tests, real browser
   IndexedDB restart smoke and real browser/PostgreSQL HTTP recovery smoke pass.
   The fresh installed Schema/SQL tools and a separate package-only SQL consumer
@@ -50,6 +52,14 @@ production qualified.
   ownership. Jobs/Workflows have storage/fault and physical-promotion campaigns.
   Their evidence lives under ignored `artifacts/` in this worktree; the
   corresponding product documents explain measured scope and limitations.
+- Jobs/Workflows now offer distinct seeded 1 KiB payloads in the physical
+  storage profile. A 600-second PostgreSQL 15 shared-host development campaign
+  passed exact effects, terminal pruning and all five recovery faults: Jobs
+  completed 36,168 effects at 60.2/s with an 8.9 MB relation peak and 6.8 KiB
+  cluster WAL per accepted item; Workflows completed 10,710 at 17.8/s with a
+  16.1 MB peak and 58.2 KiB WAL per accepted item. Both final-half relation
+  endpoints fell. The source was stable but dirty, and the run is not an
+  immutable-candidate or multi-day capacity qualification.
 - The [Documents fixed-cardinality comparison](../documents/evidence/2026-09-28-maintenance-pair.md)
   completed two source-frozen 600-second profiles with exact logical checks,
   120-second idle drains and hard-killed writer recovery. The default profile
@@ -66,6 +76,13 @@ production qualified.
   killed-writer recovery, source/binary binding and label-checked cleanup after
   these harness changes. That short run is a correctness check, not capacity
   evidence; no remedy for full-body JSONB rewrites has passed a long gate.
+- The opt-in Documents content sidecar and bounded paged GC passed eight new
+  PostgreSQL integration tests on 17 and 18, with 38 total Documents tests on
+  each version. A source-stable 60-second
+  attached-content fixture passed its explicit local budget with 118,132
+  transitions, 18.6 MB peak owned relation bytes, 37.3 MB WAL and 144 ms save
+  p99. It has not yet passed repeated multi-hour capacity and failover gates;
+  existing inline-body users still have the measured growth problem.
 
 ## Production qualification still required
 

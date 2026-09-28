@@ -48,9 +48,12 @@ connections under 32 potential concurrent handlers. Workflows vary 256 B and
 ten-second admission loop. The soak profile runs the admission loop for 30
 seconds by default; `-Seconds` accepts 1–3,600 seconds.
 
-Padding is repeated `x` characters, so it is compressible PostgreSQL bytea/TOAST
-data. The payload sweep exercises transferred/materialized bytes and allocation,
-but its WAL/storage figures do not represent incompressible business payloads.
+The quick, matrix and earlier storage campaigns use repeated `x` padding, so
+their PostgreSQL bytea/TOAST figures do not represent incompressible business
+payloads. The storage profile now also accepts `--payload-mode SeededHighEntropy`
+and produces a distinct deterministic 1 KiB base64 payload for each offered
+item. This synthetic mode probes physical storage and WAL without claiming to
+model every real application payload.
 
 Each tenant has its own scoped worker and explicit concurrency allocation.
 Tenant completion counts and latency distributions expose the observed
@@ -331,10 +334,16 @@ pressure remain separate untested boundaries.
 ## Sustained physical storage campaign
 
 Run `eng/jobs-storage-campaign.ps1 -Version 15 -Seconds 600` after reserving the
-owned fixture from other qualification tasks. The `storage` harness profile
-performs excluded Jobs/Workflows path warmups, then ten minutes of admitted load
-per product. It retains the four-tenant overload allocation, 1 KiB compressible
-padding, two-second terminal pruning and exact durable-effect assertions. Its
+owned fixture from other qualification tasks. The wrapper now defaults to
+`-PayloadMode SeededHighEntropy`; use `-PayloadMode Repeated` only when comparing
+with the earlier compressible baseline. The root report, both product results,
+and environment sidecar attest the selected mode. A five-second high-entropy
+smoke passed both products and all five recovery faults on PostgreSQL 15;
+it provides functional validation, not a physical capacity bound.
+The `storage` harness profile performs excluded Jobs/Workflows path warmups,
+then ten minutes of admitted load per product. It retains the four-tenant
+overload allocation, 1 KiB compressible or high-entropy padding, two-second
+terminal pruning and exact durable-effect assertions. Its
 finite measurement/audit cap is 200,000 accepted items per product, and it fails
 if that cap is reached before the duration completes. Definitions, audit and
 effect tables are finite fixtures rather than an unlimited background producer.
@@ -384,8 +393,23 @@ phase, maintenance settling, and the final half after at least two initial
 observation periods. It also reports net/range growth and per-table heap/index
 reuse, rather than using a fitted slope alone. Live/dead estimates and statistics
 can lag; WAL/checkpoint counters remain cluster scoped. A stable finite window
-establishes measured page reuse for this allocation, not an indefinite disk
-bound or qualification of large/incompressible payloads and long retention.
+from the historical repeated-payload run establishes measured page reuse for
+that allocation, not an indefinite disk bound. A second full window with seeded
+high-entropy payloads is summarized below; neither run qualifies long retention
+or a production deployment.
+
+The seeded high-entropy PostgreSQL 15 run offered 600 seconds per product on
+28 September 2026. Its combined report and raw samples are retained locally at
+`artifacts/jobs/seeded-storage-pg15-600s-20260928.json*`. The fixture was
+dedicated but the development host was shared, and the source tree was dirty
+though unchanged. Exact durable effects and final pruning passed, as did all
+five recovery faults. The measured Jobs and Workflows results respectively were
+36,168 and 10,710 accepted effects; 60.19 and 17.83 completions/s including
+drain; 8.94 and 16.13 MB runtime-relation peaks; and 6.8 and 58.2 KiB of
+cluster WAL per accepted item. Final-half relation endpoints fell by 0.74 and
+1.09 MB. Hot-tenant durable P99s were 1.61 and 4.26 seconds; the worst cold
+P99s were 0.67 and 0.55 seconds. These are workload observations, not
+cross-host comparisons or immutable-candidate capacity results.
 
 ## Durable-format rehearsal boundary
 

@@ -5,6 +5,7 @@ param(
     [string]$OutputDirectory,
     [string]$ReferenceHost = 'local-Windows-DotNet10-Docker-PG18-cpu4-mem2GiB',
     [ValidateSet('PackageDefaults','ToastVacuumFast')][string]$MaintenanceProfile = 'PackageDefaults',
+    [ValidateSet('InlineJsonb','AttachedContent')][string]$StorageMode = 'InlineJsonb',
     [ValidateSet('None','Once','Three')][string]$ObserverTimeoutFault = 'None',
     [ValidateSet('None','Timeout')][string]$PostWriteFault = 'None',
     [ValidateSet('None','Once','Three')][string]$CleanupFault = 'None',
@@ -23,7 +24,7 @@ $owner = 'bluetusk.documents.load'
 $image = 'postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873'
 $dockerCommand = (Get-Command docker -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $output = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { Join-Path $root "artifacts/documents-load/$fixture" } else { [IO.Path]::GetFullPath($OutputDirectory) }
-$envNames = @('BLUETUSK_DOCUMENTS_LOAD_CONNECTION_STRING','BLUETUSK_DOCUMENTS_LOAD_CELL_SECONDS','BLUETUSK_DOCUMENTS_LOAD_SECONDS','BLUETUSK_DOCUMENTS_LOAD_REPORT','BLUETUSK_DOCUMENTS_LOAD_HOST','BLUETUSK_DOCUMENTS_LOAD_IMAGE','BLUETUSK_DOCUMENTS_LOAD_SOURCE_FINGERPRINT',
+$envNames = @('BLUETUSK_DOCUMENTS_LOAD_CONNECTION_STRING','BLUETUSK_DOCUMENTS_LOAD_CELL_SECONDS','BLUETUSK_DOCUMENTS_LOAD_SECONDS','BLUETUSK_DOCUMENTS_LOAD_STORAGE_MODE','BLUETUSK_DOCUMENTS_LOAD_REPORT','BLUETUSK_DOCUMENTS_LOAD_HOST','BLUETUSK_DOCUMENTS_LOAD_IMAGE','BLUETUSK_DOCUMENTS_LOAD_SOURCE_FINGERPRINT',
     'BLUETUSK_DOCUMENTS_LOAD_MAINTENANCE_PROFILE','BLUETUSK_DOCUMENTS_LOAD_MAX_DATABASE_BYTES','BLUETUSK_DOCUMENTS_LOAD_MIN_FILESYSTEM_BYTES','BLUETUSK_DOCUMENTS_LOAD_FILESYSTEM_SAMPLE','BLUETUSK_DOCUMENTS_LOAD_IDLE_DRAIN_SECONDS','BLUETUSK_DOCUMENTS_LOAD_OBSERVER_FAULT','BLUETUSK_DOCUMENTS_LOAD_POST_WRITE_FAULT','BLUETUSK_DOCUMENTS_LOAD_CLEANUP_FAULT')
 $previous = @{}
 foreach ($name in $envNames) { $previous[$name] = [Environment]::GetEnvironmentVariable($name,'Process') }
@@ -104,6 +105,7 @@ try {
     $env:BLUETUSK_DOCUMENTS_LOAD_CONNECTION_STRING = "Host=127.0.0.1;Port=$Port;Username=postgres;Password=postgres;Database=documents_load;SSL Mode=Disable;Channel Binding=Disable" # ggignore
     $env:BLUETUSK_DOCUMENTS_LOAD_CELL_SECONDS = $CellSeconds.ToString([Globalization.CultureInfo]::InvariantCulture)
     $env:BLUETUSK_DOCUMENTS_LOAD_SECONDS = $SustainedSeconds.ToString([Globalization.CultureInfo]::InvariantCulture)
+    $env:BLUETUSK_DOCUMENTS_LOAD_STORAGE_MODE = $StorageMode
     $env:BLUETUSK_DOCUMENTS_LOAD_REPORT = Join-Path $output 'documents-load.json'
     $env:BLUETUSK_DOCUMENTS_LOAD_HOST = $ReferenceHost
     $env:BLUETUSK_DOCUMENTS_LOAD_IMAGE = $image

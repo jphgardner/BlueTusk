@@ -13,7 +13,8 @@ internal static partial class Program
     private const int OverloadAdmissionPerTenant = 32;
     private const int OverloadMaximumAccepted = 20000;
 
-    private static async Task<OverloadResult> RunOverloadAsync(string connectionString, int seconds, bool workflow, bool physicalStorage = false, string? sampleOutputPrefix = null)
+    private static async Task<OverloadResult> RunOverloadAsync(string connectionString, int seconds, bool workflow,
+        bool physicalStorage = false, string? sampleOutputPrefix = null, string payloadMode = "Repeated")
     {
         int maximumAccepted = physicalStorage ? 200000 : OverloadMaximumAccepted;
         int automaticVacuumObservationSeconds = Math.Min(120, Math.Max(1, seconds / 3));
@@ -211,7 +212,8 @@ internal static partial class Program
             return new(product, seconds, maximumAccepted, OverloadAdmissionPerTenant, 4, 100,
                 accepted, rejections, effects, maximumOutstanding, prunedPrimary, prunedJobs, elapsed.Elapsed.TotalSeconds,
                 accepted / elapsed.Elapsed.TotalSeconds, runtime, before, after, tenants, storageSamples, true,
-                physicalStorage ? automaticVacuumObservationSeconds : 0, physicalStorage ? manualVacuumIntervalSeconds : 0, vacuums);
+                physicalStorage ? automaticVacuumObservationSeconds : 0, physicalStorage ? manualVacuumIntervalSeconds : 0,
+                vacuums, payloadMode);
         }
         finally
         {
@@ -228,7 +230,7 @@ internal static partial class Program
         {
             using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(tenant == 0 ? 1 : workflow ? 500 : 100));
             int sequence = 0;
-            string padding = new('x', 1024);
+            string repeatedPadding = new('x', 1024);
             try
             {
                 while (await timer.WaitForNextTickAsync(producersStop.Token))
@@ -247,7 +249,10 @@ internal static partial class Program
                     int peak;
                     do { peak = Volatile.Read(ref maximumOutstanding); }
                     while (current > peak && Interlocked.CompareExchange(ref maximumOutstanding, current, peak) != peak);
-                    var payload = new LoadPayload(tenant, sequence++, Stopwatch.GetTimestamp(), padding);
+                    int currentSequence = sequence++;
+                    string padding = payloadMode == "SeededHighEntropy"
+                        ? SeededPadding(1024, tenant, currentSequence) : repeatedPadding;
+                    var payload = new LoadPayload(tenant, currentSequence, Stopwatch.GetTimestamp(), padding);
                     Guid id;
                     if (workflow)
                     {
@@ -381,5 +386,14 @@ internal static partial class Program
                 vacuums.Add(new(elapsed.Elapsed.TotalSeconds, relation.Schema, relation.Table, duration.Elapsed.TotalMilliseconds));
             }
         }
+    }
+
+    private static string SeededPadding(int length, int tenant, int sequence)
+    {
+        // Distinct deterministic bytes per offered item, then base64 so JSON escaping
+        // cannot turn the intended low-compressibility content into an artifact.
+        byte[] bytes = new byte[(length * 3 + 3) / 4];
+        new Random(unchecked(17041 + tenant * 1_000_003 + sequence)).NextBytes(bytes);
+        return Convert.ToBase64String(bytes)[..length];
     }
 }

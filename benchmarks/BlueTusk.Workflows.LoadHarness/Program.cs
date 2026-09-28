@@ -36,6 +36,7 @@ internal static partial class Program
             Check(profile is "quick" or "matrix" or "soak" or "faults" or "qualification" or "storage", "unknown profile");
             int seconds = profile == "storage" ? 600 : profile == "qualification" ? 120 : profile == "soak" ? 30 : profile == "matrix" ? 10 : 3;
             string? output = null;
+            string payloadMode = "Repeated";
             for (int index = 1; index < args.Length; index++)
             {
                 if (args[index] == "--seconds" && ++index < args.Length)
@@ -46,6 +47,12 @@ internal static partial class Program
                 else if (args[index] == "--output" && ++index < args.Length)
                 {
                     output = Path.GetFullPath(args[index]);
+                }
+                else if (args[index] == "--payload-mode" && ++index < args.Length)
+                {
+                    payloadMode = args[index];
+                    Check(payloadMode is "Repeated" or "SeededHighEntropy", "unknown payload mode");
+                    Check(profile == "storage" || payloadMode == "Repeated", "high-entropy mode requires storage profile");
                 }
                 else
                 {
@@ -66,8 +73,8 @@ internal static partial class Program
             var overload = new List<OverloadResult>();
             if (profile is "qualification" or "storage")
             {
-                overload.Add(await RunOverloadAsync(connection, seconds, workflow: false, physicalStorage: profile == "storage", sampleOutputPrefix: output));
-                overload.Add(await RunOverloadAsync(connection, seconds, workflow: true, physicalStorage: profile == "storage", sampleOutputPrefix: output));
+                overload.Add(await RunOverloadAsync(connection, seconds, workflow: false, physicalStorage: profile == "storage", sampleOutputPrefix: output, payloadMode: payloadMode));
+                overload.Add(await RunOverloadAsync(connection, seconds, workflow: true, physicalStorage: profile == "storage", sampleOutputPrefix: output, payloadMode: payloadMode));
             }
             foreach (var scenario in Cases(profile, seconds))
             {
@@ -93,7 +100,7 @@ internal static partial class Program
             var report = new HarnessReport(started, profile, RuntimeInformation.OSDescription, RuntimeInformation.FrameworkDescription,
                 RuntimeInformation.ProcessArchitecture.ToString(), Environment.ProcessorCount, server, fingerprint,
                 "Local bounded harness with instrumentation/collector overhead. WAL and pg_stat_database counters are cluster/database scoped and may include concurrent work; snapshots may lag. RSS and waits are sampled every 100 ms. Durable latency includes backlog enqueue time. No production qualification or comparative performance leadership is established.",
-                results, faults, overload);
+                results, faults, overload, payloadMode);
             output ??= Path.GetFullPath(Path.Combine("benchmarks", "BlueTusk.Workflows.LoadHarness", "reports", "local-" + started.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture) + ".json"));
             Directory.CreateDirectory(Path.GetDirectoryName(output)!);
             await File.WriteAllTextAsync(output, JsonSerializer.Serialize(report, HarnessJsonContext.Default.HarnessReport));

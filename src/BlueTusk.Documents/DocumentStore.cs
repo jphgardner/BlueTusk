@@ -33,6 +33,8 @@ public sealed partial class DocumentStore : IAsyncDisposable
     public DocumentStoreOptions Options { get; }
     internal string QuotedSchema { get; }
     internal string DocumentsTable { get; }
+    internal string ContentTable => QuotedSchema + ".content";
+    internal string ContentLinksTable => QuotedSchema + ".content_links";
     internal string RevisionExpression { get; }
 
     /// <summary>Idempotently provisions versioned storage. Call during deployment, outside request processing.</summary>
@@ -81,11 +83,26 @@ public sealed partial class DocumentStore : IAsyncDisposable
                 updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
                 PRIMARY KEY (tenant, collection, id));
             CREATE TABLE IF NOT EXISTS {QuotedSchema}.index_definitions (name text PRIMARY KEY, definition text NOT NULL, catalog_definition text NOT NULL);
+            CREATE TABLE IF NOT EXISTS {ContentTable} (
+                tenant text COLLATE "C" NOT NULL CHECK (octet_length(tenant) BETWEEN 1 AND 256),
+                digest bytea NOT NULL CHECK (octet_length(digest) = 32),
+                data bytea NOT NULL CHECK (octet_length(data) <= {Options.MaxDocumentBytes.ToString(CultureInfo.InvariantCulture)}),
+                PRIMARY KEY (tenant, digest));
+            CREATE TABLE IF NOT EXISTS {ContentLinksTable} (
+                tenant text COLLATE "C" NOT NULL,
+                collection text COLLATE "C" NOT NULL,
+                id text COLLATE "C" NOT NULL,
+                digest bytea NOT NULL,
+                PRIMARY KEY (tenant, collection, id),
+                CONSTRAINT content_links_document_fk FOREIGN KEY (tenant, collection, id) REFERENCES {DocumentsTable} (tenant, collection, id) ON DELETE CASCADE,
+                CONSTRAINT content_links_content_fk FOREIGN KEY (tenant, digest) REFERENCES {ContentTable} (tenant, digest));
+            CREATE INDEX IF NOT EXISTS content_links_digest_idx ON {ContentLinksTable} (tenant, digest);
             """))
         {
             _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        await ValidateContentSchemaAsync(connection, transaction, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 

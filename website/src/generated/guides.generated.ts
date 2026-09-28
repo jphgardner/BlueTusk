@@ -1282,7 +1282,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1116,
+    "order": 1117,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1314,7 +1314,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1117,
+    "order": 1118,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1350,7 +1350,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1132,
+    "order": 1133,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1411,7 +1411,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1163,
+    "order": 1164,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
@@ -1581,7 +1581,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "core",
       "reference"
     ],
-    "order": 1067,
+    "order": 1068,
     "title": "Entity Framework Core",
     "sourcePath": "docs/ef-core/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/reference.md",
@@ -2680,7 +2680,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1087,
+    "order": 1088,
     "title": "Live public API compatibility",
     "sourcePath": "docs/live/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/api-compatibility.md",
@@ -2707,7 +2707,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1088,
+    "order": 1089,
     "title": "Live format compatibility",
     "sourcePath": "docs/live/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/format-compatibility.md",
@@ -2733,7 +2733,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "live",
       "reference"
     ],
-    "order": 1089,
+    "order": 1090,
     "title": "BlueTusk Live",
     "sourcePath": "docs/live/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/reference.md",
@@ -2825,7 +2825,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1090,
+    "order": 1091,
     "title": "BlueTusk Live 0.1.0-preview.1",
     "sourcePath": "docs/live/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-0.1.0-preview.1.md",
@@ -2875,7 +2875,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1091,
+    "order": 1092,
     "title": "BlueTusk Live 1.0.0 release record",
     "sourcePath": "docs/live/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-1.0.0.md",
@@ -2903,7 +2903,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1121,
+    "order": 1122,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -2935,7 +2935,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1140,
+    "order": 1141,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -2961,7 +2961,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1141,
+    "order": 1142,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -2987,7 +2987,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1142,
+    "order": 1143,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -3013,7 +3013,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1143,
+    "order": 1144,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -3040,7 +3040,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1145,
+    "order": 1146,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -3067,7 +3067,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1147,
+    "order": 1148,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -3109,7 +3109,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1149,
+    "order": 1150,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -3154,7 +3154,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1150,
+    "order": 1151,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -3180,7 +3180,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1151,
+    "order": 1152,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -3207,7 +3207,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1154,
+    "order": 1155,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -3254,7 +3254,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1157,
+    "order": 1158,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -3281,7 +3281,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1158,
+    "order": 1159,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -3307,7 +3307,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1159,
+    "order": 1160,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -3412,7 +3412,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1161,
+    "order": 1162,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
@@ -3490,7 +3490,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "extensions",
       "reference"
     ],
-    "order": 1071,
+    "order": 1072,
     "title": "Extension SDK",
     "sourcePath": "docs/extensions/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/reference.md",
@@ -3801,7 +3801,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1077,
+    "order": 1078,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
@@ -5917,6 +5917,11 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
+        "id": "explicit-large-content",
+        "text": "Explicit large content",
+        "level": 2
+      },
+      {
         "id": "reads-patches-and-evolution",
         "text": "Reads, patches and evolution",
         "level": 2
@@ -5942,8 +5947,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1933,
-    "readMinutes": 9,
+    "wordCount": 2359,
+    "readMinutes": 11,
     "searchText": "BlueTusk.Documents BlueTusk.Documents `0.1.0-preview.1` provides typed PostgreSQL JSONB documents and optimistic atomic write sessions. The core accepts `DbDataSource`, depends on neither Npgsql nor EF Core, and requires explicit `JsonTypeInfo<T>` metadata for serialization and deserialization. BlueTusk's native data source works directly. The application supplies its `OrderJsonContext` using System.Text.Json source generation. Every document must serialize to a JSON object. Schemas, collection names, identifiers and tenant identifiers are separate from type names; no reflection-based serializer fallback is available. Storage and concurrency The primary key is `(tenant, collection, id)`, using PostgreSQL `C` collation for stable key ordering. Every read and write includes all required tenant and collection predicates. This is an application isolation contract, not a database privilege boundary: configure PostgreSQL privileges or RLS separately when untrusted callers can execute SQL. A store borrows its data source by default. Pass `DocumentDataSourceOwnership.Owned` to transfer disposal responsibility. Store disposal invalidates its sessions. Sessions exclusively own the connection and transaction for each save. An application cannot attach an externally owned transaction to a session. Inserts use `ON CONFLICT DO NOTHING`, replacements and deletes use revision compare-and-swap, and every failed precondition raises `DocumentConcurrencyException`. The exception contains tenant, collection, ID, expected revision and the observed current revision (or null when missing). All staged operations roll back when any operation conflicts, including writes completed in an earlier batch. Failed sessions retain their pending writes so the application can inspect and clear them; success clears them. Revisions come from a non-cycling database sequence. Updates advance revisions and delete/reinsert cannot reuse a revision. Gaps caused by failed transactions are expected. Sequence val"
   },
   {
@@ -6116,8 +6121,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 1022,
-    "readMinutes": 5,
+    "wordCount": 1305,
+    "readMinutes": 6,
     "searchText": "Documents workload and process recovery `eng/run-documents-load.ps1` provisions a dedicated labelled PostgreSQL 18 fixture on loopback port 55818 with four Docker CPUs, a 2 GiB memory limit, `track_io_timing=on` and 40 server connections. Its container/volume names are unique. Cleanup checks both ownership labels before removing either resource. It does not inject failures into the ordinary shared test databases. The runner restores its process environment and retains reports under ignored `artifacts/documents-load` by default. The [27 September PostgreSQL 18 baseline](2026-09-27-pg18-baseline/README.md) retains a 600-second completed campaign, actual hard-killed writer recovery, and its unresolved physical TOAST growth. Shared-host contention and invalid baseline database activity fields are disclosed; the raw baseline is not production qualification. The [separate corrected-activity diagnostic](2026-09-27-activity-diagnostic/run-notes.json) verified nonzero server client peaks equal to the provider's one/eight connection pool caps in all sixteen scenarios, plus hard-killed writer recovery and owned fixture cleanup. It is an instrumentation check; its short, shared-host timings are not an optimization comparison. The [retained-binary allocation pair](2026-09-27-allocation-pair/README.md) measures six BenchmarkDotNet staging and source-generated serialization cases on the original and optimized Documents executables. It supports a lower staging allocation claim, not a database throughput or latency improvement. The [TOAST maintenance profiler diagnostics](2026-09-27-maintenance-diagnostics/README.md) verify direct parent/TOAST observations, actual fixture-only vacuum settings, Docker filesystem headroom sampling, intentional resource-stop evidence and cleanup. They are too short and contended to establish whether tuning controls the sustained physical growth. The [28 September source-frozen 600-second comparison](2026-09-28-maintenance-pair.md) records successful de"
   },
   {
@@ -6171,6 +6176,32 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "ecosystem-performance",
+    "summary": "ecosystem-performance.yml is a manually dispatched, exact-commit local capacity gate for Jobs, Workflows, Projections and Documents. Dispatch it with a full 40-character candidatesha that already contains this workflo…",
+    "keywords": [
+      "docs",
+      "ecosystem",
+      "performance"
+    ],
+    "order": 1064,
+    "title": "Ecosystem performance qualification",
+    "sourcePath": "docs/ecosystem/performance.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/performance.md",
+    "headings": [
+      {
+        "id": "ecosystem-performance-qualification",
+        "text": "Ecosystem performance qualification",
+        "level": 1
+      }
+    ],
+    "wordCount": 638,
+    "readMinutes": 3,
+    "searchText": "Ecosystem performance qualification `ecosystem-performance.yml` is a manually dispatched, exact-commit local capacity gate for Jobs, Workflows, Projections and Documents. Dispatch it with a full 40-character `candidate_sha` that already contains this workflow, the budget contract and verifier, and type `RUN-ECOSYSTEM-PERFORMANCE`. It requires a clean checkout on the dedicated Windows Ryzen 7 5800X benchmark runner, Docker in Linux-container mode, Python and .NET from `global.json`. The workflow has read-only repository permissions and performs no packaging, release or publication step. The gate runs **two independent campaigns** of each workload. Each Jobs/Workflows storage campaign offers 30 minutes per product with seeded high-entropy payloads; each Projections soak and Documents fixed-cardinality churn runs for 30 minutes. The wall time is several hours because campaigns are sequential and include setup, drain, recovery and verification. Each harness uses a dedicated disposable PostgreSQL fixture. The gate rejects missing runs, wrong payload mode, failed logical/recovery checks, insufficient measurement time or sparse storage/service observations. A successful pass means only that this workload and runner met the explicit local thresholds below. It does not establish production capacity, indefinite storage bounds or performance leadership. Workload Minimum throughput Maximum p99 Storage ceiling Jobs 20 durable completions/s 10 s hot, 3 s cold 64 MiB runtime relations; 2 MiB/min late net growth; 64 KiB cluster WAL/accepted Workflows 5 durable completions/s 30 s hot, 12 s cold 128 MiB runtime relations; 4 MiB/min late net growth; 256 KiB cluster WAL/accepted Projections 5 transactions/s 5 s commit, 10 s projection, 5 s inbox 2 GiB owned storage, 1 GiB retained slot, 8 MiB WAL/transaction Documents 500 committed transitions/s 500 ms save 1 GiB peak owned relations, 16 MiB/min late owned growth, 8 GiB whole database, 64 MiB/min late whole-database growth, 64 KiB WAL/"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "ecosystem-progress",
     "summary": "Working branch: codex/ecosystem-products. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent 0.1.0-preview.1 packages. Publication is disabled for all ten families.",
     "keywords": [
@@ -6178,7 +6209,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "ecosystem",
       "progress"
     ],
-    "order": 1064,
+    "order": 1065,
     "title": "Ecosystem expansion evidence ledger",
     "sourcePath": "docs/ecosystem/progress.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/progress.md",
@@ -6199,9 +6230,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 888,
-    "readMinutes": 5,
-    "searchText": "Ecosystem expansion evidence ledger Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent `0.1.0-preview.1` packages. Publication is disabled for all ten families. Implemented paths and passing local gates are substantial, but no family is production qualified. Family Implemented and directly exercised Material work still open Events Transactional outbox/inbox, typed routing, replay and Streams adapter; 44 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign Longer retention, large producer/consumer fleets, upgrades and disaster recovery Jobs Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion Representative multi-day retention/capacity and operations under repeated failure Documents Typed JSONB, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 30 live tests per version, 16-cell load and killed-writer recovery Physical TOAST/WAL growth, tail latency, sustained hot keys and operational limits Projections Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; 34 live tests per version, 100,000-effect exact-state campaign, 600-second overload and physical promotion Longer independent-host load, retention/format upgrades and wider failure distributions Search Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets Schema Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests per version and native execution Destructive/partition-parent migrations, invalid-index repair automation and broad upgrade operations Sql Runtime contracts, incremental generator and instal"
+    "wordCount": 1185,
+    "readMinutes": 6,
+    "searchText": "Ecosystem expansion evidence ledger Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent `0.1.0-preview.1` packages. Publication is disabled for all ten families. Implemented paths and passing local gates are substantial, but no family is production qualified. Family Implemented and directly exercised Material work still open Events Transactional outbox/inbox, typed routing, replay and Streams adapter; 44 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign Longer retention, large producer/consumer fleets, upgrades and disaster recovery Jobs Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion Representative multi-day retention/capacity and operations under repeated failure Documents Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits Projections Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; 34 live tests per version, 100,000-effect exact-state campaign, 600-second overload and physical promotion Longer independent-host load, retention/format upgrades and wider failure distributions Search Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets Schema Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests per version and native execution Destructive/partition-parent migrations, invalid-index repair automation and broad upgrade"
   },
   {
     "category": "operations",
@@ -6214,7 +6245,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "edge",
       "README"
     ],
-    "order": 1065,
+    "order": 1066,
     "title": "BlueTusk.Edge",
     "sourcePath": "docs/edge/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/README.md",
@@ -6270,7 +6301,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "events",
       "README"
     ],
-    "order": 1069,
+    "order": 1070,
     "title": "BlueTusk.Events",
     "sourcePath": "docs/events/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
@@ -6320,7 +6351,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "docs",
       "fuzzing"
     ],
-    "order": 1072,
+    "order": 1073,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -6356,7 +6387,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1078,
+    "order": 1079,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -6397,7 +6428,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "improvement",
       "audit"
     ],
-    "order": 1079,
+    "order": 1080,
     "title": "BlueTusk improvement audit and action record",
     "sourcePath": "docs/improvement-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
@@ -6443,7 +6474,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "README"
     ],
-    "order": 1080,
+    "order": 1081,
     "title": "BlueTusk.Jobs",
     "sourcePath": "docs/jobs/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
@@ -6495,7 +6526,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "durable",
       "format"
     ],
-    "order": 1081,
+    "order": 1082,
     "title": "Durable-format support and rehearsal",
     "sourcePath": "docs/jobs/durable-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
@@ -6521,7 +6552,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "failover"
     ],
-    "order": 1082,
+    "order": 1083,
     "title": "Jobs and Workflows physical promotion rehearsal",
     "sourcePath": "docs/jobs/failover.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
@@ -6567,7 +6598,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "hosting"
     ],
-    "order": 1083,
+    "order": 1084,
     "title": "Scoped Jobs and Workflows host readiness",
     "sourcePath": "docs/jobs/hosting.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
@@ -6603,7 +6634,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "maintenance"
     ],
-    "order": 1084,
+    "order": 1085,
     "title": "Durable storage maintenance contract",
     "sourcePath": "docs/jobs/maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
@@ -6629,7 +6660,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "performance"
     ],
-    "order": 1085,
+    "order": 1086,
     "title": "Jobs and Workflows capacity and recovery harness",
     "sourcePath": "docs/jobs/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
@@ -6695,8 +6726,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 4385,
-    "readMinutes": 20,
+    "wordCount": 4618,
+    "readMinutes": 21,
     "searchText": "Jobs and Workflows capacity and recovery harness `benchmarks/BlueTusk.Workflows.LoadHarness` is a repeatable executable that measures the durable Jobs runtime and six-node Workflows DAG on a disposable PostgreSQL database. It verifies every admitted item reaches durable success, every tenant is delivered its own payload, there is one ledger effect per item, all workflow histories replay to the persisted state, both health inspections report a drained scope, and bounded pruning removes all expected terminal rows. Measurement failure exits nonzero. This is local engineering evidence; the production qualification gates remain open. Run Use a disposable database. The connection environment variable is inherited by the child process and is never included in command arguments or reports. Each scenario creates unique schemas and drops them in a `finally` block. The process-kill test kills only the child process created by this harness. The wire-fault proxy binds an ephemeral loopback port, accepts one faulted connection and one healthy pool replacement, forwards at most one MiB per protocol frame, and expires after 30 seconds. It requires `SSL Mode=Disable;Channel Binding=Disable` for this local fault test. Run from the repository root when invoking the executable directly. Build with `dotnet build ... -c Release -nr:false`, then use `dotnet run --project ... -c Release --no-build -- matrix`. `-nr:false` is a build option. The wrapper uses the appropriate build and application argument boundaries. Workloads and bounds The quick profile drains 512 Jobs with 1 KiB of padding beside 4,000 terminal rows, 64 Workflows with two parallel activities, join, buffered signal, 10 ms timer and transactional effect, then a three-second Jobs admission loop. The matrix varies Jobs padding through 64 B, 4 KiB and 64 KiB and per-tenant concurrency through two and eight; it uses four tenants and 10,000 retained terminal rows. It also runs a ten-to-one hot-tenant allocation and a pool of 12 c"
   },
   {
@@ -6712,7 +6743,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1093,
+    "order": 1094,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -6784,7 +6815,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1094,
+    "order": 1095,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -6867,7 +6898,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1096,
+    "order": 1097,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -6915,7 +6946,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1097,
+    "order": 1098,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -6966,7 +6997,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1099,
+    "order": 1100,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -7078,7 +7109,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1100,
+    "order": 1101,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -7127,7 +7158,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "1",
       "1"
     ],
-    "order": 1101,
+    "order": 1102,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -7184,7 +7215,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1104,
+    "order": 1105,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -7287,7 +7318,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1105,
+    "order": 1106,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -7349,7 +7380,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "website",
       "production"
     ],
-    "order": 1108,
+    "order": 1109,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -7390,7 +7421,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1110,
+    "order": 1111,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -7416,7 +7447,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "LIVE"
     ],
-    "order": 1111,
+    "order": 1112,
     "title": "Published projections in Live",
     "sourcePath": "docs/projections/LIVE.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
@@ -7462,7 +7493,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "LOAD"
     ],
-    "order": 1112,
+    "order": 1113,
     "title": "Workload and recovery qualification",
     "sourcePath": "docs/projections/LOAD.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
@@ -7503,7 +7534,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "README"
     ],
-    "order": 1113,
+    "order": 1114,
     "title": "BlueTusk.Projections",
     "sourcePath": "docs/projections/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
@@ -7554,7 +7585,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "RECOVERY"
     ],
-    "order": 1114,
+    "order": 1115,
     "title": "Explicit source recovery and controlled DDL",
     "sourcePath": "docs/projections/RECOVERY.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
@@ -7586,7 +7617,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "evidence",
       "README"
     ],
-    "order": 1115,
+    "order": 1116,
     "title": "Local bounded workload evidence",
     "sourcePath": "docs/projections/evidence/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
@@ -7616,7 +7647,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1118,
+    "order": 1119,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -7642,7 +7673,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "process"
     ],
-    "order": 1123,
+    "order": 1124,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -7684,7 +7715,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1125,
+    "order": 1126,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -7729,7 +7760,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1126,
+    "order": 1127,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -7808,7 +7839,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1127,
+    "order": 1128,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -7847,7 +7878,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1129,
+    "order": 1130,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -7889,7 +7920,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1130,
+    "order": 1131,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -7925,7 +7956,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "schema",
       "README"
     ],
-    "order": 1134,
+    "order": 1135,
     "title": "BlueTusk Schema",
     "sourcePath": "docs/schema/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
@@ -7972,7 +8003,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "catalogue",
       "attestation"
     ],
-    "order": 1135,
+    "order": 1136,
     "title": "Catalogue consistency attestation",
     "sourcePath": "docs/schema/catalogue-attestation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
@@ -8008,7 +8039,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "search",
       "README"
     ],
-    "order": 1136,
+    "order": 1137,
     "title": "BlueTusk.Search",
     "sourcePath": "docs/search/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
@@ -8064,7 +8095,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "sql",
       "README"
     ],
-    "order": 1138,
+    "order": 1139,
     "title": "BlueTusk Sql",
     "sourcePath": "docs/sql/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
@@ -8090,7 +8121,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "studio",
       "README"
     ],
-    "order": 1155,
+    "order": 1156,
     "title": "BlueTusk Studio",
     "sourcePath": "docs/studio/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
@@ -8126,7 +8157,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1164,
+    "order": 1165,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -8168,7 +8199,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1165,
+    "order": 1166,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -8209,7 +8240,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "workflows",
       "README"
     ],
-    "order": 1166,
+    "order": 1167,
     "title": "BlueTusk.Workflows",
     "sourcePath": "docs/workflows/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",

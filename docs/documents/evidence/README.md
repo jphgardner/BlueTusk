@@ -114,13 +114,20 @@ Repeat runs, Linux/other native architectures, representative application distri
 explicit latency/throughput budgets, longer endurance and recovery campaigns remain required.
 
 `eng/verify-documents-capacity-report.ps1` is an offline qualification check. It requires
-explicit limits for peak parent-relation bytes (which already include TOAST), late-window
-physical growth, WAL per committed transition, throughput, and save p99. It also rejects missing
-maintenance samples, a shared-payload sustained fixture, incomplete logical checks, and failed
-hard-kill recovery. The old 600-second default report exceeds an illustrative 512 MiB relation
-ceiling and 16 MiB/minute late-growth ceiling; that failure is expected. Limits must be chosen
+explicit limits for peak bytes across all owned relations (each parent total already includes
+its TOAST), late-window physical growth, WAL per committed transition, throughput, and save
+p99. It also rejects missing maintenance samples, a shared-payload or inline-only sustained
+fixture, incomplete logical checks, and failed hard-kill recovery. The old 600-second default
+report exceeds an illustrative 512 MiB relation ceiling and 16 MiB/minute late-growth ceiling
+and lacks the attached-content contract; that failure is expected. Limits must be chosen
 for the intended reference hardware and workload, then met on a new, source-frozen, multi-hour
 campaign before qualifying Documents capacity.
+Pass `-StorageMode AttachedContent` to the guarded runner to keep only hot metadata in JSONB
+for the sustained scenario. Its 15 sweep cells still exercise the legacy inline-body contract.
+The attached-content run verifies one distinct blob and link per retained document, exact
+content and revision on read, and no orphaned blob after delete/reinsert churn. The report
+labels the storage mode and the verifier sums every owned relation, including content and
+links, so detached bytes cannot disappear from the physical budget.
 The guarded runner can request up to six hours of sustained writes. Its filesystem observer
 publishes atomic samples once per second and retains the latest 64 files plus lifetime minimum
 headroom and maximum use; the workload report retains five-second database and maintenance

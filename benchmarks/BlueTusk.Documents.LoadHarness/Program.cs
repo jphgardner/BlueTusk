@@ -24,6 +24,8 @@ internal static partial class Program
         var budget = StorageBudget.Read();
         var cellSeconds = ReadSeconds("BLUETUSK_DOCUMENTS_LOAD_CELL_SECONDS", 3, 30);
         var sustainedSeconds = ReadSeconds("BLUETUSK_DOCUMENTS_LOAD_SECONDS", 60, 21600);
+        var storageMode = Environment.GetEnvironmentVariable("BLUETUSK_DOCUMENTS_LOAD_STORAGE_MODE") ?? "InlineJsonb";
+        Check(storageMode is "InlineJsonb" or "AttachedContent", "known Documents storage mode");
         var output = Path.GetFullPath(Environment.GetEnvironmentVariable("BLUETUSK_DOCUMENTS_LOAD_REPORT") ?? "artifacts/documents-load/report.json");
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15 * (cellSeconds + 3) + sustainedSeconds + budget.IdleDrainSeconds + 360));
         await using var observer = CreateSource(raw, Application + "Observer", 2);
@@ -37,12 +39,14 @@ internal static partial class Program
                 foreach (var dimension in new (int Tenants, int Writers)[] { (1, 1), (8, 1), (8, 8), (32, 8), (32, 32) })
                 {
                     stage = $"matrix-{bytes}-{dimension.Tenants}-{dimension.Writers}";
-                    var result = await RunScenarioAsync(raw, observer, bytes, dimension.Tenants, dimension.Writers, cellSeconds, false, budget, deadline.Token);
+                    var result = await RunScenarioAsync(raw, observer, bytes, dimension.Tenants, dimension.Writers, cellSeconds,
+                        false, "InlineJsonb", budget, deadline.Token);
                     scenarios.Add(result);
                     Console.WriteLine($"Documents {bytes}B/{dimension.Tenants} tenants/{dimension.Writers} writers: {result.CommittedDocumentsPerSecond:F1} docs/s, save p99 {result.SaveLatency.P99:F2} ms; verified.");
                 }
             stage = "sustained";
-            scenarios.Add(await RunScenarioAsync(raw, observer, 64 * 1024, 8, 32, sustainedSeconds, true, budget, deadline.Token));
+            scenarios.Add(await RunScenarioAsync(raw, observer, 64 * 1024, 8, 32, sustainedSeconds, true,
+                storageMode, budget, deadline.Token));
             _ = await budget.ReadFilesystemAsync(deadline.Token);
             stage = "process-kill-recovery";
             var recovery = await RunRecoveryAsync(raw, observer, deadline.Token);

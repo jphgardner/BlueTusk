@@ -33,6 +33,51 @@ Sessions stage one mutation per document key. Explicitly combine patches or cons
 
 Providers that support `DbBatch` execute bounded command chunks in one protocol cycle. Other providers use sequential commands under the same transaction. Defaults are 256 commands per batch, 4096 writes and 32 MiB staged payload per session, 4 MiB per document, and a 30-second command timeout. Counts and byte budgets are configurable within hard count limits. Serialized writes are admitted through a bounded stream; database constraints additionally enforce the normalized JSONB text size.
 
+## Explicit large content
+
+Collections that update small metadata frequently can keep that metadata in
+the typed JSONB body and attach stable bytes separately:
+
+```csharp
+var current = await store.LoadAsync("customer-a", orders, "order-42");
+long revision = await store.AttachContentAsync(
+    "customer-a", orders, "order-42", current!.Revision, fileBytes);
+DocumentContent? attachment = await store.LoadContentAsync("customer-a", orders, "order-42");
+```
+
+This opt-in path stores one copy of equal bytes per tenant, addressed by SHA-256.
+Attachment changes the document revision and link in one compare-and-swap
+transaction, verifies byte equality on a digest match, and verifies the digest
+again on read. Replacing or patching small JSONB metadata leaves the attached
+bytes unchanged. Deleting a document removes its link by foreign key; replacing
+or deleting the link advances the same revision fence. The application invokes
+bounded collection pages when it is ready to reclaim unreferenced bytes:
+
+```csharp
+string? cursor = null;
+do
+{
+    var page = await store.CollectUnusedContentPageAsync(maximumRows: 500, afterCursor: cursor);
+    cursor = page.NextAfterCursor;
+} while (cursor is not null);
+```
+
+Each call examines at most 500 content keys in this example, including linked
+keys, and reports `ExaminedCount` and `DeletedCount`. A null cursor ends one
+sweep. Start the next maintenance sweep with a null cursor to revisit keys
+skipped because another transaction held a lock or changed the keyspace.
+Deletion is safe against a concurrent attachment; ordinary PostgreSQL vacuum
+may reuse freed space without shrinking a relation.
+
+The attachment is **not** part of the JSONB body: containment indexes, typed
+pages, Streams and Live continue to describe that body alone. Applications must
+read and authorize attached bytes explicitly. Initial document insertion and
+attachment are separate transactions, so applications requiring an atomic
+create-with-content contract need another application protocol. This API does
+not make frequently changing large content cheap; each changed value still
+incurs proportional storage and WAL work. Set admission, retention and disk/WAL
+headroom policy for that workload.
+
 ## Reads, patches and evolution
 
 `ReadPageAsync` uses an ID keyset cursor, limits row count, and uses a SQL cumulative byte budget before payloads leave PostgreSQL. Defaults are 1000 maximum rows and 16 MiB of JSON text. A page that stops on its byte budget returns the last emitted ID; resume using that cursor with the same tenant, collection and filter. Pages do not provide a snapshot across separate transactions: concurrent inserts before a cursor are not emitted later. An optional JSON containment filter uses `body @> @contains::jsonb`.
@@ -88,7 +133,7 @@ Run the unit and live PostgreSQL suite with `BLUETUSK_TEST_CONNECTION_STRING` se
 dotnet test tests/BlueTusk.Documents.Tests/BlueTusk.Documents.Tests.csproj -c Release -nr:false
 ```
 
-The suite passes 30 tests with no skips. Tests cover source-generated JSON round trips, competing inserts and updates, cross-batch atomic rollback, missing-document conflicts, tenant and collection separation, keyset/byte-bounded pagination, ordered patches, deletion/recreation revision fencing, migration and downgrade protection, declarative index/catalog drift, cancellation, source ownership, initialization and bounded admission. The serialization cases include exact UTF8 byte-limit and invalid-root rejection plus large/small owned JSON round trips. Five operator cases additionally check SELECT-only roles with denied payload access, fixed scope/role-protected actual HTTP readiness (401/403), storage/byte-contract drift, metadata-lock deadlines/cancellation/recovery, retained admission for late driver work and status-only metrics. A bounded concurrent workload checks committed row counts and no lost successful increments; it is functional workload evidence, not a throughput or endurance certification.
+The suite passes 38 tests with no skips. Tests cover source-generated JSON round trips, competing inserts and updates, cross-batch atomic rollback, missing-document conflicts, tenant and collection separation, keyset/byte-bounded pagination, ordered patches, deletion/recreation revision fencing, migration and downgrade protection, declarative index/catalog drift, cancellation, source ownership, initialization and bounded admission. Eight content-sidecar tests add tenant/digest isolation, CAS rollback, delete/reinsert, a GC/attachment race, schema drift, bounded cursor sweeps and repeated 64 KiB attachment without rewriting its content row, link row or JSONB body. The serialization cases include exact UTF8 byte-limit and invalid-root rejection plus large/small owned JSON round trips. Five operator cases additionally check SELECT-only roles with denied payload access, fixed scope/role-protected actual HTTP readiness (401/403), storage/byte-contract drift, metadata-lock deadlines/cancellation/recovery, retained admission for late driver work and status-only metrics. A bounded concurrent workload checks committed row counts and no lost successful increments; it is functional workload evidence, not a throughput or endurance certification.
 
 The core and optional ASP.NET adapter enable NativeAOT/trimming analyzers. The combined `tests/BlueTusk.Edge.NativeAotSmoke` executable was published as win-x64 NativeAOT without warnings and run against disposable PostgreSQL/pgvector databases and a real SQLite file. It verifies Documents source-generated JSON, CAS and complete session rollback, plus authenticated readiness, incompatible storage detection and recovery through the ASP.NET adapter. Search and Edge paths pass in the same executable. Set both `BLUETUSK_TEST_CONNECTION_STRING` and `BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING` when running it. This qualifies the exercised paths on this architecture; the optional Streams/Live adapters are not included in that native smoke.
 
@@ -97,6 +142,15 @@ adds real process-kill recovery and measured PostgreSQL/TOAST/WAL resource profi
 fixed-cardinality write workload still grew the Documents relation to 16.20 GB with package
 defaults and 9.06 GB with aggressive fixture-only TOAST vacuum. Neither profile established a
 physical storage bound, and the aggressive profile had lower throughput and worse tail latency.
+The opt-in attached-content fixture passed a source-stable, 60-second PostgreSQL 18
+run with distinct stable 64 KiB content per retained document: 118,132
+transitions, 18.6 MB peak across all owned relations, 37.3 MB WAL and 144 ms
+save p99. Its capacity verifier passed the configured local limits, and the
+run verified exact content/revision, recovery and cleanup. This shared-host,
+short, dirty-tree measurement is not a sustained capacity bound or a qualified
+comparison with the earlier 600-second inline JSONB evidence. A source-frozen
+longer run with independent load, repeated maintenance cycles and failure
+operation remains necessary.
 Architecture-specific qualification beyond the exercised Windows x64 paths, ambiguous COMMIT
 and connection-loss injection, longer endurance, sustained hot-key performance, online index
 deployment, RLS guidance, session/query/write telemetry, two-phase document consumers,

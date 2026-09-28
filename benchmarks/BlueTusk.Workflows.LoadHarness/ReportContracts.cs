@@ -27,7 +27,7 @@ internal sealed record FaultResult(string Name, bool Passed, double RecoveryMill
 internal sealed record HarnessReport(DateTimeOffset StartedAt, string Profile, string OperatingSystem, string Framework,
     string ProcessArchitecture, int LogicalProcessors, string PostgreSqlVersion, string SourceSha256,
     string MeasurementLimitations, IReadOnlyList<CaseResult> Cases, IReadOnlyList<FaultResult> Faults,
-    IReadOnlyList<OverloadResult> Overload);
+    IReadOnlyList<OverloadResult> Overload, string PayloadMode = "Repeated");
 internal sealed record OverloadTenantResult(string Tenant, int Accepted, long Rejected,
     Percentiles DurableLatencyMilliseconds, double MaximumCompletionGapMilliseconds);
 internal sealed record StorageSample(double ElapsedSeconds, int RetainedPrimaryRows, int ActivePrimaryRows,
@@ -47,7 +47,8 @@ internal sealed record OverloadResult(string Product, int OfferedDurationSeconds
     double AdmissionAndDrainSeconds, double CompletionsPerSecond, RuntimeMetrics Runtime,
     DatabaseCounters Before, DatabaseCounters After, IReadOnlyList<OverloadTenantResult> Tenants,
     IReadOnlyList<StorageSample> StorageSamples, bool Verified, int AutomaticVacuumObservationSeconds = 0,
-    int ManualVacuumIntervalSeconds = 0, IReadOnlyList<VacuumObservation>? Vacuums = null);
+    int ManualVacuumIntervalSeconds = 0, IReadOnlyList<VacuumObservation>? Vacuums = null,
+    string PayloadMode = "Repeated");
 
 [JsonSourceGenerationOptions(WriteIndented = true)]
 [JsonSerializable(typeof(LoadPayload))]
