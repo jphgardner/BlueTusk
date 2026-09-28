@@ -647,6 +647,7 @@
       "releaseDependencies": [
         "ControlPlane",
         "Events",
+        "Provider",
         "Schema",
         "Sql"
       ],

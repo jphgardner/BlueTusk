@@ -179,7 +179,9 @@ jobs:
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test BlueTusk.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
+        # The original provider/core matrix has only the fixtures provisioned by this job.
+        # New ecosystem families run their fixture-specific matrix in ecosystem-build.yml.
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
 
       - name: Test individual-request performance capture machinery
         run: dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --provider-request-self-test
@@ -396,7 +398,7 @@ jobs:
       - name: Run live provider matrix
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
-        run: dotnet test BlueTusk.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
 
       - name: Capture PostgreSQL logs on failure
         if: failure()
@@ -817,7 +819,7 @@ jobs:
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5899;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
         run: >-
-          dotnet test BlueTusk.slnx
+          dotnet test BlueTusk.Core.slnx
           --configuration Release
           --no-restore
           --maxcpucount:1
