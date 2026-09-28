@@ -13,7 +13,7 @@
       ]
     },
     "Streams": {
-      "maximumSignatures": 1622,
+      "maximumSignatures": 1623,
       "baselineProjects": 9,
       "apiExemptProjects": [
         "tooling/BlueTusk.Streams.Tool/BlueTusk.Streams.Tool.csproj"

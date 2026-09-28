@@ -151,8 +151,8 @@ public sealed class EventStreamsDeliveryTests
             await protectedProcessor.ProcessAsync(delivery, fixture.HandleAsync));
         Assert.Equal(ChangeDeliveryState.Acknowledged, delivery.State);
         Assert.Equal((1L, 1L), await RetentionCountsAsync(fixture));
-        await using (var later = ChangeDeliveryTestFactory.CreateCommitted(source, 43,
-            new BlueTuskLogSequenceNumber(300), Array.Empty<Change>()))
+        await using (var later = ChangeDeliveryTestFactory.CreateCommittedWithTimeline(source, 43,
+            new BlueTuskLogSequenceNumber(300), 1, Array.Empty<Change>()))
         {
             _ = await protectedProcessor.ProcessAsync(later, fixture.HandleAsync);
         }
@@ -187,8 +187,29 @@ public sealed class EventStreamsDeliveryTests
         Assert.Equal((0L, 0L), await RetentionCountsAsync(fixture));
     }
 
+    [Fact]
+    public async Task RetentionMarkerFromDifferentReplicationTimelineCannotAdvanceTargetCheckpointOrAck()
+    {
+        await using var fixture = await EventDatabase.CreateAsync();
+        var source = new ChangeSourceIdentity("system", "database", "slot", "publication");
+        var expected = new EventPublishedSourceIdentity("system", "database", 1, "slot", "publication");
+        var incarnation = Guid.NewGuid();
+        await fixture.Store.RegisterPublishedRetentionTargetAsync(new EventPublishedConsumerRegistration(
+            new EventStreamKey("tenant", "orders"), "consumer", incarnation, 1, expected, 123, 456));
+        var processor = PostgreSqlEventDeliveryProcessor.CreateProtected(fixture.DataSource, fixture.Store,
+            new EventOutboxChangeDecoder(fixture.Schema), "consumer", source, null,
+            new EventPublishedRetentionTargetOptions(incarnation, expected));
+        await using var delivery = MarkerDelivery(source, fixture.Schema, Guid.NewGuid(), through: 2,
+            replicationTimeline: 2);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await processor.ProcessAsync(delivery, fixture.HandleAsync));
+        Assert.Equal(ChangeDeliveryState.Active, delivery.State);
+        Assert.Equal((0L, 0L), await RetentionCountsAsync(fixture));
+    }
+
     private static ChangeTransactionDelivery MarkerDelivery(ChangeSourceIdentity source, string schema, Guid epoch,
-        long through, bool unrelatedChange = false)
+        long through, bool unrelatedChange = false, uint replicationTimeline = 1)
     {
         var position = new BlueTuskLogSequenceNumber(200);
         var names = new[]
@@ -215,7 +236,8 @@ public sealed class EventStreamsDeliveryTests
                 [ChangeColumnValue.FromValue(Encoding.UTF8.GetBytes("unrelated"), ChangeValueEncoding.Text)]);
             changes.Add(new InsertChange(new ChangeId(source, position, 42, 1), unrelated));
         }
-        return ChangeDeliveryTestFactory.CreateCommitted(source, 42, position, changes);
+        return ChangeDeliveryTestFactory.CreateCommittedWithTimeline(source, 42, position,
+            replicationTimeline, changes);
     }
 
     private static async Task<(long Checkpoints, long Acknowledgements)> RetentionCountsAsync(EventDatabase fixture)

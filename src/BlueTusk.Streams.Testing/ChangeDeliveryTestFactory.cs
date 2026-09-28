@@ -12,6 +12,32 @@ public static class ChangeDeliveryTestFactory
         IEnumerable<Change>? changes = null,
         IChangeDeliveryObserver? observer = null,
         DateTimeOffset? commitTimestamp = null)
+        => CreateCommittedCore(source, transactionId, commitEndPosition, null,
+            changes, observer, commitTimestamp);
+
+    /// <summary>Model the replication connection's actual timeline as well as its publication for protected consumers.</summary>
+    public static ChangeTransactionDelivery CreateCommittedWithTimeline(
+        ChangeSourceIdentity source,
+        uint transactionId,
+        BlueTuskLogSequenceNumber commitEndPosition,
+        uint replicationTimeline,
+        IEnumerable<Change>? changes = null,
+        IChangeDeliveryObserver? observer = null,
+        DateTimeOffset? commitTimestamp = null)
+    {
+        ArgumentOutOfRangeException.ThrowIfZero(replicationTimeline);
+        return CreateCommittedCore(source, transactionId, commitEndPosition, replicationTimeline,
+            changes, observer, commitTimestamp);
+    }
+
+    private static ChangeTransactionDelivery CreateCommittedCore(
+        ChangeSourceIdentity source,
+        uint transactionId,
+        BlueTuskLogSequenceNumber commitEndPosition,
+        uint? replicationTimeline,
+        IEnumerable<Change>? changes,
+        IChangeDeliveryObserver? observer,
+        DateTimeOffset? commitTimestamp)
     {
         ArgumentNullException.ThrowIfNull(source);
         var materialized = changes?.ToArray() ?? [];
@@ -42,7 +68,7 @@ public static class ChangeDeliveryTestFactory
                 isSpooled: false,
                 cancellationToken => ReadChangesAsync(materialized, cancellationToken)));
         // Synthetic test deliveries model a replication start on the named publication.
-        return CreateDelivery(transaction, observer, [source.PublicationFingerprint]);
+        return CreateDelivery(transaction, observer, [source.PublicationFingerprint], replicationTimeline);
     }
 
     public static ChangeTransactionDelivery CreateTwoPhase(
@@ -90,7 +116,8 @@ public static class ChangeDeliveryTestFactory
     private static ChangeTransactionDelivery CreateDelivery(
         ChangeTransaction transaction,
         IChangeDeliveryObserver? observer,
-        IReadOnlyList<string>? replicationPublicationNames)
+        IReadOnlyList<string>? replicationPublicationNames,
+        uint? replicationTimeline = null)
     {
         return new ChangeTransactionDelivery(
             transaction,
@@ -98,7 +125,8 @@ public static class ChangeDeliveryTestFactory
                                   ValueTask.CompletedTask,
             (failure, cancellationToken) => observer?.NackAsync(transaction, failure, cancellationToken) ??
                                             ValueTask.CompletedTask,
-            replicationPublicationNames);
+            replicationPublicationNames,
+            replicationTimeline);
     }
 
     private static async IAsyncEnumerable<Change> ReadChangesAsync(

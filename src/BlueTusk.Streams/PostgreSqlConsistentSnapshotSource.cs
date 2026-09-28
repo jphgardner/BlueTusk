@@ -202,7 +202,8 @@ public sealed class PostgreSqlConsistentSnapshotSource : IConsistentSnapshotSour
                 slot,
                 SnapshotEpoch.Create(_options.Source, slot.ConsistentPoint, _timeProvider),
                 _options,
-                _observerFactory);
+                _observerFactory,
+                system.Timeline);
             replication = null;
             return attempt;
         }
@@ -322,6 +323,7 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
     private readonly BlueTuskReplicationSlotCreationResult _slot;
     private readonly PostgreSqlConsistentSnapshotOptions _options;
     private readonly string[] _publicationNames;
+    private readonly uint _replicationTimeline;
     private readonly Func<BlueTuskLogicalReplicationConnection, IChangeDeliveryObserver?>? _observerFactory;
     private readonly IReadOnlyList<ChangeTable> _tables;
     private int _snapshotStarted;
@@ -335,7 +337,8 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
         BlueTuskReplicationSlotCreationResult slot,
         SnapshotEpoch epoch,
         PostgreSqlConsistentSnapshotOptions options,
-        Func<BlueTuskLogicalReplicationConnection, IChangeDeliveryObserver?>? observerFactory)
+        Func<BlueTuskLogicalReplicationConnection, IChangeDeliveryObserver?>? observerFactory,
+        uint replicationTimeline)
     {
         _dataSource = dataSource;
         _replication = replication;
@@ -345,6 +348,7 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
         // Use one immutable snapshot for both START_REPLICATION and delivery provenance.
         // Mutating the caller's PublicationNames collection cannot change either side later.
         _publicationNames = options.PublicationNames.ToArray();
+        _replicationTimeline = replicationTimeline;
         _observerFactory = observerFactory;
         _tables = Array.AsReadOnly(options.Tables.Select(table => table.Table).ToArray());
     }
@@ -449,7 +453,8 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
                 _options.TransactionAssembly,
                 spool: null,
                 observer: observer,
-                replicationPublicationNames: _publicationNames);
+                replicationPublicationNames: _publicationNames,
+                replicationTimeline: _replicationTimeline);
         }
         catch
         {

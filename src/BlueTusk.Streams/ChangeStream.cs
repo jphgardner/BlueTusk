@@ -106,6 +106,7 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
     private readonly Func<CancellationToken, ValueTask> _acknowledge;
     private readonly Func<Exception?, CancellationToken, ValueTask> _nack;
     private readonly string[]? _replicationPublicationNames;
+    private readonly uint? _replicationTimeline;
     private readonly long _telemetryStarted;
     private int _state;
 
@@ -135,11 +136,22 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
         Func<CancellationToken, ValueTask> acknowledge,
         Func<Exception?, CancellationToken, ValueTask> nack,
         IReadOnlyList<string>? replicationPublicationNames)
+        : this(transaction, acknowledge, nack, replicationPublicationNames, null)
+    {
+    }
+
+    internal ChangeTransactionDelivery(
+        ChangeTransaction transaction,
+        Func<CancellationToken, ValueTask> acknowledge,
+        Func<Exception?, CancellationToken, ValueTask> nack,
+        IReadOnlyList<string>? replicationPublicationNames,
+        uint? replicationTimeline)
     {
         Transaction = transaction;
         _acknowledge = acknowledge;
         _nack = nack;
         _replicationPublicationNames = replicationPublicationNames?.ToArray();
+        _replicationTimeline = replicationTimeline;
         _telemetryStarted = BlueTuskStreamsDiagnostics.StartDelivery(transaction);
     }
 
@@ -150,6 +162,11 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
     internal bool HasSingleReplicationPublication(string publicationName) =>
         _replicationPublicationNames is { Length: 1 } names &&
         string.Equals(names[0], publicationName, StringComparison.Ordinal);
+
+    internal bool HasSingleReplicationPublicationOnTimeline(string publicationName, long timeline) =>
+        HasSingleReplicationPublication(publicationName) &&
+        _replicationTimeline.HasValue && _replicationTimeline.Value > 0 &&
+        _replicationTimeline.Value == timeline;
 
     public ChangeDeliveryState State => Volatile.Read(ref _state) switch
     {
@@ -256,6 +273,7 @@ public sealed class PgOutputChangeStream : IChangeStream
     private readonly PgOutputTransactionAssembler _assembler;
     private readonly IChangeDeliveryObserver _observer;
     private readonly string[]? _replicationPublicationNames;
+    private readonly uint? _replicationTimeline;
     private int _started;
 
     public PgOutputChangeStream(
@@ -274,7 +292,8 @@ public sealed class PgOutputChangeStream : IChangeStream
         TransactionAssemblyOptions? options,
         ITransactionSpool? spool,
         IChangeDeliveryObserver? observer,
-        IReadOnlyList<string>? replicationPublicationNames)
+        IReadOnlyList<string>? replicationPublicationNames,
+        uint? replicationTimeline = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(sourceIdentity);
@@ -283,6 +302,7 @@ public sealed class PgOutputChangeStream : IChangeStream
         _source = source;
         _observer = observer ?? NullChangeDeliveryObserver.Instance;
         _replicationPublicationNames = replicationPublicationNames?.ToArray();
+        _replicationTimeline = replicationTimeline;
         _assembler = new PgOutputTransactionAssembler(
             sourceIdentity,
             effectiveOptions,
@@ -351,7 +371,8 @@ public sealed class PgOutputChangeStream : IChangeStream
                 await _observer.NackAsync(assembled.Transaction, failure, cancellationToken).ConfigureAwait(false);
                 await assembled.ReleaseAsync().ConfigureAwait(false);
             },
-            _replicationPublicationNames);
+            _replicationPublicationNames,
+            _replicationTimeline);
 
     private sealed class NullChangeDeliveryObserver : IChangeDeliveryObserver
     {

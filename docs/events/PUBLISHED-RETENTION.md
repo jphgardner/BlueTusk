@@ -46,7 +46,8 @@ validates every proof field, and commits an exact epoch/range/digest/lineage/tar
 its target source checkpoint and inbox effects in one target transaction. It then acknowledges the
 Streams delivery. Protected delivery also requires evidence from the built-in consistent-snapshot
 source that the actual `START_REPLICATION` publication set contained exactly the source registration's
-publication. Generic or relayed deliveries without this binding cannot produce a retention ACK.
+publication and the replication connection's `IDENTIFY_SYSTEM` timeline matches the marker. Generic
+or relayed deliveries without this binding cannot produce a retention ACK.
 Redelivery verifies the existing ACK byte-for-byte; a conflicting epoch fails.
 The protected processor rejects an older or conflicting source transaction position, and an
 unconfigured new processor refuses a control row. Target DB timeline, database and system drift
