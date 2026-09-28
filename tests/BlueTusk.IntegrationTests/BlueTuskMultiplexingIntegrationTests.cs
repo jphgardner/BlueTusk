@@ -7,6 +7,7 @@ using Xunit.Sdk;
 
 namespace BlueTusk.IntegrationTests;
 
+[Collection("Global multiplexing metrics")]
 public sealed class BlueTuskMultiplexingIntegrationTests
 {
     [Fact]
