@@ -103,7 +103,7 @@ public sealed class DocumentInlineContentMigrationTests
             var first = await store.MigrateInlineContentPageAsync("tenant", TargetCollection, counted, pageSize: 100);
             Assert.Equal(1, first.MigratedCount);
             Assert.Equal("a", first.NextAfterId);
-            Assert.Equal(new[] { "a" }, transformed);
+            Assert.Collection(transformed, value => Assert.Equal("a", value));
             Assert.Equal(1, (await store.LoadAsync("tenant", SourceCollection, "b"))!.SchemaVersion);
             Assert.Null(await store.LoadContentAsync("tenant", SourceCollection, "b"));
 
@@ -111,7 +111,8 @@ public sealed class DocumentInlineContentMigrationTests
                 pageSize: 100, afterId: first.NextAfterId);
             Assert.Equal(1, second.MigratedCount);
             Assert.Null(second.NextAfterId);
-            Assert.Equal(new[] { "a", "b" }, transformed);
+            Assert.Collection(transformed, firstValue => Assert.Equal("a", firstValue),
+                secondValue => Assert.Equal("b", secondValue));
             Assert.Equal(bytes, (await store.LoadContentAsync("tenant", TargetCollection, "b"))!.Bytes.ToArray());
         });
 

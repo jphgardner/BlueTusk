@@ -14,5 +14,5 @@ export function orderedMutationId(streamId: string, sequence: string): string {
 export function parseOrderedMutationId(id: string): { streamId: string; sequence: string } | null {
   const match = /^([0-9a-f]{8})-([0-9a-f]{4})-8([0-9a-f]{3})-a([0-9a-f]{3})-([0-9a-f]{12})$/i.exec(id);
   if (!match) return null;
-  return { streamId: (match[1] + match[2] + match[3]).toLowerCase(), sequence: BigInt(`0x${match[4]}${match[5]}`).toString() };
+  return { streamId: (match[1]! + match[2]! + match[3]!).toLowerCase(), sequence: BigInt(`0x${match[4]!}${match[5]!}`).toString() };
 }

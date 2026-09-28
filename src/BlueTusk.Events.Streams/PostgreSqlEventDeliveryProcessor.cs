@@ -38,7 +38,17 @@ public sealed class PostgreSqlEventDeliveryProcessor
     {
     }
 
-    public PostgreSqlEventDeliveryProcessor(DbDataSource targetDataSource, PostgreSqlEventStore inbox,
+    public static PostgreSqlEventDeliveryProcessor CreateProtected(DbDataSource targetDataSource,
+        PostgreSqlEventStore inbox, EventOutboxChangeDecoder decoder, string consumerId,
+        ChangeSourceIdentity source, EventStreamsDeliveryOptions? options,
+        EventPublishedRetentionTargetOptions protectedRetention)
+    {
+        ArgumentNullException.ThrowIfNull(protectedRetention);
+        return new PostgreSqlEventDeliveryProcessor(targetDataSource, inbox, decoder, consumerId,
+            source, options, protectedRetention);
+    }
+
+    private PostgreSqlEventDeliveryProcessor(DbDataSource targetDataSource, PostgreSqlEventStore inbox,
         EventOutboxChangeDecoder decoder, string consumerId, ChangeSourceIdentity source,
         EventStreamsDeliveryOptions? options, EventPublishedRetentionTargetOptions? protectedRetention)
     {

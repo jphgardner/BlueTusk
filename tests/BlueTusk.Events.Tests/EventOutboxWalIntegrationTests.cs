@@ -36,7 +36,7 @@ public sealed class EventOutboxWalIntegrationTests
 
             var decoder = new EventOutboxChangeDecoder(fixture.Schema);
             var incarnation = Guid.NewGuid();
-            var processor = new PostgreSqlEventDeliveryProcessor(fixture.DataSource, fixture.Store, decoder,
+            var processor = PostgreSqlEventDeliveryProcessor.CreateProtected(fixture.DataSource, fixture.Store, decoder,
                 "wal-consumer", sourceIdentity, null,
                 new EventPublishedRetentionTargetOptions(incarnation, publishedSource));
             var source = new PostgreSqlConsistentSnapshotSource(fixture.DataSource, new PostgreSqlConsistentSnapshotOptions

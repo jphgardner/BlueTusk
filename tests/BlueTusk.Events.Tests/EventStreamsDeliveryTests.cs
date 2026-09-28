@@ -114,7 +114,7 @@ public sealed class EventStreamsDeliveryTests
             await unprotected.ProcessAsync(delivery, fixture.HandleAsync));
         Assert.Equal(ChangeDeliveryState.Active, delivery.State);
 
-        var protectedProcessor = new PostgreSqlEventDeliveryProcessor(fixture.DataSource, fixture.Store,
+        var protectedProcessor = PostgreSqlEventDeliveryProcessor.CreateProtected(fixture.DataSource, fixture.Store,
             new EventOutboxChangeDecoder(fixture.Schema), "consumer", source, null,
             new EventPublishedRetentionTargetOptions(incarnation, expected));
         await using (var connection = await fixture.DataSource.OpenConnectionAsync())
@@ -167,7 +167,7 @@ public sealed class EventStreamsDeliveryTests
         var incarnation = Guid.NewGuid();
         await fixture.Store.RegisterPublishedRetentionTargetAsync(new EventPublishedConsumerRegistration(
             new EventStreamKey("tenant", "orders"), "consumer", incarnation, 1, expected, 123, 456));
-        var processor = new PostgreSqlEventDeliveryProcessor(fixture.DataSource, fixture.Store,
+        var processor = PostgreSqlEventDeliveryProcessor.CreateProtected(fixture.DataSource, fixture.Store,
             new EventOutboxChangeDecoder(fixture.Schema), "consumer", source, null,
             new EventPublishedRetentionTargetOptions(incarnation, expected));
         await using var delivery = MarkerDelivery(source, fixture.Schema, Guid.NewGuid(), through: 2,

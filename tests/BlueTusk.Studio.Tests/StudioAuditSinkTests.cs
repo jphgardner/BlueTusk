@@ -65,7 +65,7 @@ public sealed class StudioAuditSinkTests
             await sink.InitializeAsync(TestContext.Current.CancellationToken);
             var oldTime = DateTimeOffset.UtcNow.AddMinutes(-2);
             var old = new StudioAuditRecord(Guid.CreateVersion7(oldTime), "principal-a", new string('a', 64), "attempt", 0)
-                { ScopeId = "tenant-a-database" };
+            { ScopeId = "tenant-a-database" };
             var newer = old with { OperationId = Guid.CreateVersion7(), Outcome = "completed", ReturnedRows = 1 };
             await sink.RecordAsync(old, TestContext.Current.CancellationToken);
             await sink.RecordAsync(newer, TestContext.Current.CancellationToken);
