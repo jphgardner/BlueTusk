@@ -100,8 +100,12 @@ internal static partial class Program
                 int tenant = index;
                 var options = new JobWorkerOptions
                 {
-                    Concurrency = 4, ClaimBatchSize = 4, PollInterval = TimeSpan.FromMilliseconds(10),
-                    DispatchRecurringSchedules = false, LeaseDuration = TimeSpan.FromSeconds(30), HeartbeatInterval = TimeSpan.FromSeconds(2),
+                    Concurrency = 4,
+                    ClaimBatchSize = 4,
+                    PollInterval = TimeSpan.FromMilliseconds(10),
+                    DispatchRecurringSchedules = false,
+                    LeaseDuration = TimeSpan.FromSeconds(30),
+                    HeartbeatInterval = TimeSpan.FromSeconds(2),
                 };
                 if (workflow)
                 {
@@ -249,7 +253,9 @@ internal static partial class Program
                     {
                         var key = await workflows.StartAsync(new WorkflowStartRequest
                         {
-                            Scope = scopes[tenant], Definition = "load", Version = 1,
+                            Scope = scopes[tenant],
+                            Definition = "load",
+                            Version = 1,
                             Input = JsonSerializer.SerializeToUtf8Bytes(payload, HarnessJsonContext.Default.LoadPayload),
                         });
                         id = key.Id;

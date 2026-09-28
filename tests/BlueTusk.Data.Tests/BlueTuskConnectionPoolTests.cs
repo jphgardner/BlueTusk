@@ -1,7 +1,7 @@
-using BlueTusk.Client;
-using BlueTusk.Protocol;
 using System.Collections;
 using System.Reflection;
+using BlueTusk.Client;
+using BlueTusk.Protocol;
 
 namespace BlueTusk.Data.Tests;
 
@@ -429,7 +429,8 @@ public sealed class BlueTuskConnectionPoolTests
                 var unexpectedLease = pool.Rent();
                 pool.Return(unexpectedLease);
             }));
-        }) { IsBackground = true }).ToArray();
+        })
+        { IsBackground = true }).ToArray();
         var asynchronousWaiters = Enumerable.Range(0, 8)
             .Select(_ => pool.RentAsync(CancellationToken.None).AsTask()).ToArray();
         try

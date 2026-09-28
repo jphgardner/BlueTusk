@@ -3,9 +3,9 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using BlueTusk.Sql;
 using BlueTusk.Data;
 using BlueTusk.Schema;
+using BlueTusk.Sql;
 
 namespace BlueTusk.Studio;
 
@@ -79,7 +79,8 @@ public sealed class StudioQueryService : IDisposable
             deadline.CancelAfter(TimeSpan.FromSeconds(_options.QueryTimeoutSeconds));
             var capture = new PostgreSqlSchemaCapture(scope.DataSource, new()
             {
-                Schemas = scope.Schemas, MaximumMetadataBytes = _options.MaximumReplyBytes,
+                Schemas = scope.Schemas,
+                MaximumMetadataBytes = _options.MaximumReplyBytes,
                 CommandTimeoutSeconds = _options.QueryTimeoutSeconds,
             });
             return SchemaSnapshotSerializer.Serialize(await capture.CaptureAsync(deadline.Token).ConfigureAwait(false), _options.MaximumReplyBytes);

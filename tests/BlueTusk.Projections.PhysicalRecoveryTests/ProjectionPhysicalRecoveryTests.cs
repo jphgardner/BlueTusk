@@ -66,7 +66,9 @@ public sealed class ProjectionPhysicalRecoveryTests(ITestOutputHelper output)
         var eventSource = new ChangeSourceIdentity(beforeSystem.SystemIdentifier, beforeSystem.DatabaseName!, eventSlot, eventPublication);
         var eventSnapshotSource = new PostgreSqlConsistentSnapshotSource(primary, new()
         {
-            Source = eventSource, PublicationNames = [eventPublication], MaximumBatchRows = 17,
+            Source = eventSource,
+            PublicationNames = [eventPublication],
+            MaximumBatchRows = 17,
             Tables = [new(OutboxTable(eventSchema), [0, 1, 2])]
         });
         var eventAttempt = await eventSnapshotSource.BeginAttemptAsync(null, token);
@@ -256,15 +258,29 @@ public sealed class ProjectionPhysicalRecoveryTests(ITestOutputHelper output)
         Assert.Equal(8L, await ScalarAsync(promoted, $"SELECT count(*) FROM \"{eventSchema}\".effects WHERE consumer='replay'", token));
         var evidence = new
         {
-            Scenario = "synchronous-physical-standby-promotion-and-controlled-ddl-rebuild", PostgreSqlMajor = 18,
+            Scenario = "synchronous-physical-standby-promotion-and-controlled-ddl-rebuild",
+            PostgreSqlMajor = 18,
             PostgreSqlImage = Environment.GetEnvironmentVariable("BLUETUSK_RECOVERY_IMAGE"),
-            BeforeTimeline = beforeSystem.Timeline, AfterTimeline = afterSystem.Timeline, SameSystemIdentifier = true,
+            BeforeTimeline = beforeSystem.Timeline,
+            AfterTimeline = afterSystem.Timeline,
+            SameSystemIdentifier = true,
             SourceCommitDurability = "remote_apply with verified synchronous physical standby; primary killed before promotion",
-            AcknowledgedBusinessCommits = 8, PreservedOutboxEvents = 16, ExactlyOnceWalInboxEffects = 16, RecoveredReplayEffects = 8,
-            OldLiveFence = oldOwner.Lease.FencingToken, NewLiveFence = newOwner.Lease.FencingToken,
-            OldCheckpointPreserved = true, StaleLiveAppendRejected = true, StaleProjectionReacquisitionRejected = true,
-            ChangedTimelineBindingRejected = true, RecoveryCutovers = 2, TenantFirstTotal = 10, TenantAnotherTotal = 999,
-            LogicalSlotsCopied = false, RecoveryTransparent = false, ControlledDdlBeforeFreshSnapshot = true,
+            AcknowledgedBusinessCommits = 8,
+            PreservedOutboxEvents = 16,
+            ExactlyOnceWalInboxEffects = 16,
+            RecoveredReplayEffects = 8,
+            OldLiveFence = oldOwner.Lease.FencingToken,
+            NewLiveFence = newOwner.Lease.FencingToken,
+            OldCheckpointPreserved = true,
+            StaleLiveAppendRejected = true,
+            StaleProjectionReacquisitionRejected = true,
+            ChangedTimelineBindingRejected = true,
+            RecoveryCutovers = 2,
+            TenantFirstTotal = 10,
+            TenantAnotherTotal = 999,
+            LogicalSlotsCopied = false,
+            RecoveryTransparent = false,
+            ControlledDdlBeforeFreshSnapshot = true,
             PromotionAndRecoveryElapsedMilliseconds = Stopwatch.GetElapsedTime(promotionStarted).TotalMilliseconds,
             TotalElapsedMilliseconds = Stopwatch.GetElapsedTime(started).TotalMilliseconds
         };
@@ -285,7 +301,10 @@ public sealed class ProjectionPhysicalRecoveryTests(ITestOutputHelper output)
     }
     private static PostgreSqlConsistentSnapshotSource Snapshot(BlueTuskDataSource dataSource, ProjectionSourceLineage lineage, string publication) => new(dataSource, new()
     {
-        Source = lineage.Source, PublicationNames = [publication], MaximumBatchRows = 17, MaximumParallelTables = 2,
+        Source = lineage.Source,
+        PublicationNames = [publication],
+        MaximumBatchRows = 17,
+        MaximumParallelTables = 2,
         Tables = lineage.Tables.Select(static table => new PostgreSqlSnapshotTable(table, table.Columns.Where(static column => column.IsKey).Select(static column => column.Ordinal))).ToArray()
     });
     private static async Task BuildAsync(IConsistentSnapshotAttempt snapshot, StreamsProjectionConsumer consumer, CancellationToken token)
@@ -323,7 +342,7 @@ public sealed class ProjectionPhysicalRecoveryTests(ITestOutputHelper output)
     { var parameter = command.CreateParameter(); parameter.ParameterName = name; parameter.Value = value; command.Parameters.Add(parameter); }
     private static JsonElement Initial(LiveReplayEvent value)
     { using var document = JsonDocument.Parse(value.Payload); return document.RootElement.Clone(); }
-    private static ChangeTable OutboxTable(string schema) => new(0, schema, "outbox", 'd', [new(0,"tenant_id",25,-1,true),new(1,"stream_id",25,-1,true),new(2,"sequence",20,-1,true),new(3,"event_id",2950,-1,false),new(4,"event_type",25,-1,false),new(5,"version",23,-1,false),new(6,"occurred_at",1184,-1,false),new(7,"payload",17,-1,false)]);
+    private static ChangeTable OutboxTable(string schema) => new(0, schema, "outbox", 'd', [new(0, "tenant_id", 25, -1, true), new(1, "stream_id", 25, -1, true), new(2, "sequence", 20, -1, true), new(3, "event_id", 2950, -1, false), new(4, "event_type", 25, -1, false), new(5, "version", 23, -1, false), new(6, "occurred_at", 1184, -1, false), new(7, "payload", 17, -1, false)]);
     private static async Task FixtureDockerAsync(string containerVariable, IReadOnlyList<string> beforeContainer, CancellationToken token, IReadOnlyList<string>? afterContainer = null)
     {
         var name = Environment.GetEnvironmentVariable(containerVariable) ?? throw new InvalidOperationException("Owned recovery fixture container is absent.");

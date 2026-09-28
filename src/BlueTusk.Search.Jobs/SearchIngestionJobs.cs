@@ -137,8 +137,10 @@ public sealed class SearchIngestionJobs
         // One source identity/version admits either an identical upsert or an identical deletion, never incompatible operations.
         return new JobRequest
         {
-            Scope = new JobScope(payload.Tenant, Options.Queue), JobType = Options.JobType,
-            Payload = stream.ToArray(), MaximumAttempts = Options.MaximumAttempts,
+            Scope = new JobScope(payload.Tenant, Options.Queue),
+            JobType = Options.JobType,
+            Payload = stream.ToArray(),
+            MaximumAttempts = Options.MaximumAttempts,
             DeduplicationKey = "search:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity))),
         };
     }

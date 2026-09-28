@@ -83,11 +83,11 @@ public sealed class SchemaConcurrentIndexPlan
     {
         var result = new Dictionary<(string Schema, string IndexName), (SchemaRelation, SchemaIndex)>();
         foreach (var relation in snapshot.Relations)
-        foreach (var index in relation.Indexes)
-        {
-            if (!result.TryAdd((relation.Identity.Schema, index.Name), (relation, index)))
-            { throw new ArgumentException("Index names must be unique within a PostgreSQL schema.", nameof(snapshot)); }
-        }
+            foreach (var index in relation.Indexes)
+            {
+                if (!result.TryAdd((relation.Identity.Schema, index.Name), (relation, index)))
+                { throw new ArgumentException("Index names must be unique within a PostgreSQL schema.", nameof(snapshot)); }
+            }
         return result;
     }
 

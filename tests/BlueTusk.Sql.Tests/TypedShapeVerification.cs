@@ -1,6 +1,5 @@
 using System.Data.Common;
 using System.Text.Json;
-using BlueTusk.Sql.Verification.Generated;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Sql.Verification;
@@ -9,7 +8,7 @@ internal static class TypedShapeVerification
 {
     internal static async Task RunAsync(DbDataSource source, CancellationToken token)
     {
-        var arguments = new TypeShapes.Arguments([true, false], [short.MinValue, null, short.MaxValue],
+        var arguments = new global::BlueTusk.Sql.Verification.Generated.TypeShapes.Arguments([true, false], [short.MinValue, null, short.MaxValue],
             [long.MinValue, null, long.MaxValue], [Guid.Empty, Guid.NewGuid()], [float.MinValue, float.NaN, float.PositiveInfinity],
             [double.MinValue, double.NaN, double.NegativeInfinity], [decimal.MinValue, decimal.MaxValue, -0.00001m],
             [BlueTuskNumeric.Parse("1234567890123456789012345678901234567890.000000000001"), BlueTuskNumeric.Parse("-0.000000000001")],
@@ -17,10 +16,10 @@ internal static class TypedShapeVerification
             [new DateTimeOffset(2026, 9, 27, 12, 0, 0, TimeSpan.FromHours(1))], [DateOnly.MinValue, new DateOnly(2026, 9, 27)],
             ["{\"answer\":42}", null], ["{\"answer\":42}", null], ["x,y", null, "NULL", "🐘"],
             new DateOnly(2026, 9, 27), new TimeOnly(12, 34, 56, 123), new BlueTuskInterval(13, -2, 1_234_567));
-        await TypeShapes.Definition.ValidateAsync(source, arguments, token);
+        await global::BlueTusk.Sql.Verification.Generated.TypeShapes.Definition.ValidateAsync(source, arguments, token);
         await using var connection = await source.OpenConnectionAsync(token);
         var count = 0;
-        await foreach (var row in TypeShapes.Definition.ReadAsync(connection, arguments, cancellationToken: token))
+        await foreach (var row in global::BlueTusk.Sql.Verification.Generated.TypeShapes.Definition.ReadAsync(connection, arguments, cancellationToken: token))
         {
             if (!row.Flags.SequenceEqual(arguments.flags) || !row.Shorts.SequenceEqual(arguments.shorts) || !row.Longs.SequenceEqual(arguments.longs) ||
                 !row.Keys.SequenceEqual(arguments.keys) || !row.Singles.SequenceEqual(arguments.singles) || !row.Doubles.SequenceEqual(arguments.doubles) ||

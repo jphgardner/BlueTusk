@@ -4,7 +4,6 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using BlueTusk.ControlPlane;
-using BlueTusk.Data;
 using BlueTusk.Studio.ControlPlane;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;

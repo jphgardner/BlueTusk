@@ -48,9 +48,12 @@ public sealed class PostgreSqlSchemaCatalogCapture
         };
         _relations = new PostgreSqlSchemaCapture(dataSource, relationOptions, options.Limits.Relations with
         {
-            MaximumRelations = relationOptions.MaximumRelations, MaximumColumns = relationOptions.MaximumColumns,
-            MaximumConstraints = relationOptions.MaximumConstraints, MaximumIndexes = relationOptions.MaximumIndexes,
-            MaximumPolicies = relationOptions.MaximumPolicies, MaximumMetadataBytes = checked((int)relationOptions.MaximumMetadataBytes),
+            MaximumRelations = relationOptions.MaximumRelations,
+            MaximumColumns = relationOptions.MaximumColumns,
+            MaximumConstraints = relationOptions.MaximumConstraints,
+            MaximumIndexes = relationOptions.MaximumIndexes,
+            MaximumPolicies = relationOptions.MaximumPolicies,
+            MaximumMetadataBytes = checked((int)relationOptions.MaximumMetadataBytes),
         });
         _options = options with { Relations = relationOptions };
         _dataSource = dataSource; _limits = options.Limits; _timeout = options.Relations.CommandTimeoutSeconds;

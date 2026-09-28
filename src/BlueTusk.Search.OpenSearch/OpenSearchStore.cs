@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -72,9 +71,15 @@ public sealed partial class OpenSearchStore : IAsyncDisposable
         {
             var properties = new JsonObject
             {
-                ["tenant"] = Field("keyword"), ["index_name"] = Field("keyword"), ["document_id"] = Field("keyword"),
-                ["source_version"] = Field("long"), ["fingerprint"] = Field("keyword"), ["deleted"] = Field("boolean"),
-                ["public"] = Field("boolean"), ["principals"] = Field("keyword"), ["title"] = Field("text"),
+                ["tenant"] = Field("keyword"),
+                ["index_name"] = Field("keyword"),
+                ["document_id"] = Field("keyword"),
+                ["source_version"] = Field("long"),
+                ["fingerprint"] = Field("keyword"),
+                ["deleted"] = Field("boolean"),
+                ["public"] = Field("boolean"),
+                ["principals"] = Field("keyword"),
+                ["title"] = Field("text"),
                 ["metadata"] = new JsonObject { ["type"] = "object", ["enabled"] = false },
             };
             var chunkProperties = new JsonObject { ["ordinal"] = Field("integer"), ["content"] = new JsonObject { ["type"] = "text", ["index"] = false }, ["text"] = Field("text") };
@@ -82,7 +87,8 @@ public sealed partial class OpenSearchStore : IAsyncDisposable
             {
                 chunkProperties["embedding"] = new JsonObject
                 {
-                    ["type"] = "knn_vector", ["dimension"] = Options.VectorDimensions,
+                    ["type"] = "knn_vector",
+                    ["dimension"] = Options.VectorDimensions,
                     ["method"] = new JsonObject { ["name"] = "hnsw", ["engine"] = "lucene", ["space_type"] = "cosinesimil", ["parameters"] = new JsonObject { ["ef_construction"] = 128, ["m"] = 16 } },
                 };
             }
@@ -283,9 +289,16 @@ public sealed partial class OpenSearchStore : IAsyncDisposable
 
     private static JsonObject DocumentSource(SearchScope scope, string id, long version, string fingerprint, bool deleted, string title, JsonElement metadata, bool isPublic, IReadOnlyList<string> principals) => new()
     {
-        ["tenant"] = scope.Tenant, ["index_name"] = scope.Index, ["document_id"] = id, ["source_version"] = version,
-        ["fingerprint"] = fingerprint, ["deleted"] = deleted, ["public"] = isPublic, ["principals"] = Strings(principals),
-        ["title"] = title, ["metadata"] = JsonNode.Parse(metadata.GetRawText()),
+        ["tenant"] = scope.Tenant,
+        ["index_name"] = scope.Index,
+        ["document_id"] = id,
+        ["source_version"] = version,
+        ["fingerprint"] = fingerprint,
+        ["deleted"] = deleted,
+        ["public"] = isPublic,
+        ["principals"] = Strings(principals),
+        ["title"] = title,
+        ["metadata"] = JsonNode.Parse(metadata.GetRawText()),
     };
     private static JsonArray Strings(IEnumerable<string> values) => new(values.Select(static value => (JsonNode?)JsonValue.Create(value)).ToArray());
     private static JsonArray VectorJson(ReadOnlySpan<float> vector)

@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace BlueTusk.Search.OpenSearch;
 
 public enum SearchHttpClientOwnership { Borrowed, Owned }

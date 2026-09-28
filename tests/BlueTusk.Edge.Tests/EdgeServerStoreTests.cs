@@ -136,8 +136,11 @@ public sealed class EdgeServerStoreTests
         await fixture.Store.ActivateScopeAsync(scope);
         await using var bounded = new PostgreSqlEdgeServerStore(fixture.Source, fixture.Store.Options with
         {
-            MaxRecordsPerScope = 2, MaxReceiptsPerScope = 2, MaxSnapshotsPerScope = 1,
-            MaxBatchBytes = 40, MaxBatchRecords = 10,
+            MaxRecordsPerScope = 2,
+            MaxReceiptsPerScope = 2,
+            MaxSnapshotsPerScope = 1,
+            MaxBatchBytes = 40,
+            MaxBatchRecords = 10,
         });
         _ = await bounded.ApplyMutationAsync(Upsert(scope, "a", 0, "{\"text\":\"12345678901234567890\"}"u8.ToArray()));
         _ = await bounded.ApplyMutationAsync(Upsert(scope, "b", 0, "{\"text\":\"12345678901234567890\"}"u8.ToArray()));

@@ -1,19 +1,18 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Net.Http.Headers;
 using System.Data.Common;
+using System.Net.Http.Headers;
+using System.Text.Json.Serialization;
 using BlueTusk.Data;
 using BlueTusk.Documents;
 using BlueTusk.Documents.AspNetCore;
 using BlueTusk.Edge;
-using BlueTusk.Edge.Sqlite;
 using BlueTusk.Edge.Http;
+using BlueTusk.Edge.NativeAotSmoke;
 using BlueTusk.Edge.Server;
 using BlueTusk.Edge.SmokeHosting;
+using BlueTusk.Edge.Sqlite;
 using BlueTusk.Search;
 using BlueTusk.Search.AspNetCore;
 using BlueTusk.Search.PgVector;
-using BlueTusk.Edge.NativeAotSmoke;
 
 var mainConnection = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING")
     ?? throw new InvalidOperationException("Set BLUETUSK_TEST_CONNECTION_STRING to a disposable PostgreSQL database.");

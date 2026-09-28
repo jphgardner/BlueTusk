@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using System.Data.Common;
+using System.Diagnostics;
 using BlueTusk.Data;
 using BlueTusk.Edge;
 using BlueTusk.Edge.Server;

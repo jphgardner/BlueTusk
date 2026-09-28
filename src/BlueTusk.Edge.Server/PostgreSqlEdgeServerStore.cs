@@ -1,7 +1,6 @@
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
-using System.Text;
 
 namespace BlueTusk.Edge.Server;
 
@@ -204,7 +203,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
         await using var command = Scoped(connection, transaction, $"SELECT epoch,head,floor,record_count,record_bytes,receipt_count,change_count,change_bytes FROM {_schema}.scopes WHERE tenant=@tenant AND scope=@scope " + (write ? "FOR UPDATE" : "FOR SHARE"), scope);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt64(0) != scope.Epoch) { throw new EdgeScopeMismatchException(); }
-        return new(reader.GetInt64(1), reader.GetInt64(2),reader.GetInt64(3),reader.GetInt64(4),reader.GetInt64(5),reader.GetInt64(6),reader.GetInt64(7));
+        return new(reader.GetInt64(1), reader.GetInt64(2), reader.GetInt64(3), reader.GetInt64(4), reader.GetInt64(5), reader.GetInt64(6), reader.GetInt64(7));
     }
     private async ValueTask<EdgeRecord?> RecordAsync(DbConnection connection, DbTransaction transaction, EdgeScope scope, string id, CancellationToken cancellationToken)
     {
@@ -213,7 +212,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? ReadRecord(reader) : null;
     }
-    private sealed record ScopeState(long Head,long Floor,long RecordCount,long RecordBytes,long ReceiptCount,long ChangeCount,long ChangeBytes);
+    private sealed record ScopeState(long Head, long Floor, long RecordCount, long RecordBytes, long ReceiptCount, long ChangeCount, long ChangeBytes);
     private DbCommand Command(DbConnection connection, DbTransaction? transaction, string sql)
     {
         var command = connection.CreateCommand();

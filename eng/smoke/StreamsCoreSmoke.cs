@@ -1,5 +1,5 @@
-using BlueTusk.Streams;
 using BlueTusk.Spools.Smoke;
+using BlueTusk.Streams;
 
 var directory = Directory.CreateTempSubdirectory("bluetusk-spool-publish-").FullName;
 try
@@ -39,7 +39,8 @@ try
     for (var i = 0; i < payload.Length; i++) { payload[i] = unchecked((byte)i); }
     var spool = new FileTransactionSpool(new FileTransactionSpoolOptions
     {
-        DirectoryPath = directory, MaxRecordBytes = payload.Length,
+        DirectoryPath = directory,
+        MaxRecordBytes = payload.Length,
         MaxStorageBytes = payload.Length * 3L,
     });
     await using var writer = await spool.CreateAsync(new TransactionSpoolKey("publish-smoke", 1));

@@ -1,5 +1,4 @@
 using BlueTusk.Client;
-using BlueTusk.Data;
 using BlueTusk.Protocol;
 using BlueTusk.Security;
 

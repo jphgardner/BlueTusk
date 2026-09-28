@@ -1,6 +1,4 @@
-using System.Data.Common;
 using BlueTusk.Data;
-using BlueTusk.Sql.Tests.Generated;
 using Xunit.Sdk;
 
 namespace BlueTusk.Sql.Tests;
@@ -18,12 +16,12 @@ public sealed class SqlQueryTests
     {
         await using var source = BlueTuskDataSource.Create(ConnectionString());
         var precise = BlueTusk.TypeSystem.BlueTuskNumeric.Parse("12345678901234567890123456789012345678901234567890.000000000001");
-        var arguments = new TypedCollections.Arguments([int.MinValue, 0, int.MaxValue], ["a,b", null, "NULL", "🐘"],
+        var arguments = new global::BlueTusk.Sql.Tests.Generated.TypedCollections.Arguments([int.MinValue, 0, int.MaxValue], ["a,b", null, "NULL", "🐘"],
             [1, null, -1], precise, null, new int[,] { { 1, 2 }, { 3, 4 } });
-        await TypedCollections.Definition.ValidateAsync(source, arguments, TestContext.Current.CancellationToken);
+        await global::BlueTusk.Sql.Tests.Generated.TypedCollections.Definition.ValidateAsync(source, arguments, TestContext.Current.CancellationToken);
         await using var connection = await source.OpenConnectionAsync(TestContext.Current.CancellationToken);
         var count = 0;
-        await foreach (var row in TypedCollections.Definition.ReadAsync(connection, arguments, cancellationToken: TestContext.Current.CancellationToken))
+        await foreach (var row in global::BlueTusk.Sql.Tests.Generated.TypedCollections.Definition.ReadAsync(connection, arguments, cancellationToken: TestContext.Current.CancellationToken))
         {
             Assert.Equal(arguments.numbers, row.Numbers);
             Assert.Equal(arguments.texts, row.Texts);
@@ -38,7 +36,7 @@ public sealed class SqlQueryTests
         Assert.Equal(1, count);
         await Assert.ThrowsAsync<ArgumentException>(async () =>
         {
-            await foreach (var _ in TypedCollections.Definition.ReadAsync(connection, arguments with { numbers = null! }, cancellationToken: TestContext.Current.CancellationToken)) { }
+            await foreach (var _ in global::BlueTusk.Sql.Tests.Generated.TypedCollections.Definition.ReadAsync(connection, arguments with { numbers = null! }, cancellationToken: TestContext.Current.CancellationToken)) { }
         });
     }
 
@@ -46,10 +44,10 @@ public sealed class SqlQueryTests
     public async Task Generated_query_binds_nullable_values_and_streams_typed_rows()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
-        await TypedRows.Definition.ValidateAsync(dataSource, new(3, null), TestContext.Current.CancellationToken);
+        await global::BlueTusk.Sql.Tests.Generated.TypedRows.Definition.ValidateAsync(dataSource, new(3, null), TestContext.Current.CancellationToken);
         await using var connection = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
-        var rows = new List<TypedRows.Row>();
-        await foreach (var row in TypedRows.Definition.ReadAsync(connection, new(3, null), cancellationToken: TestContext.Current.CancellationToken))
+        var rows = new List<global::BlueTusk.Sql.Tests.Generated.TypedRows.Row>();
+        await foreach (var row in global::BlueTusk.Sql.Tests.Generated.TypedRows.Definition.ReadAsync(connection, new(3, null), cancellationToken: TestContext.Current.CancellationToken))
         {
             rows.Add(row);
         }
@@ -67,7 +65,7 @@ public sealed class SqlQueryTests
         await using var connection = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
         await Assert.ThrowsAsync<SqlResultLimitException>(async () =>
         {
-            await foreach (var row in TypedRows.Definition.ReadAsync(connection, new(4, "label"), cancellationToken: TestContext.Current.CancellationToken))
+            await foreach (var row in global::BlueTusk.Sql.Tests.Generated.TypedRows.Definition.ReadAsync(connection, new(4, "label"), cancellationToken: TestContext.Current.CancellationToken))
             {
                 Assert.Equal("label", row.Label);
             }
@@ -100,7 +98,7 @@ public sealed class SqlQueryTests
         {
             await foreach (var _ in query.ReadAsync(connection, 0, cancellationToken: TestContext.Current.CancellationToken)) { }
         });
-        await foreach (var row in TypedRows.Definition.ReadAsync(connection, new(3, "early"), cancellationToken: TestContext.Current.CancellationToken))
+        await foreach (var row in global::BlueTusk.Sql.Tests.Generated.TypedRows.Definition.ReadAsync(connection, new(3, "early"), cancellationToken: TestContext.Current.CancellationToken))
         {
             Assert.Equal(1, row.Id);
             break;
@@ -116,7 +114,7 @@ public sealed class SqlQueryTests
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
         await using var connection = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
-        await foreach (var row in TypedRows.Definition.ReadAsync(connection, new(1, "tx"), transaction, TestContext.Current.CancellationToken))
+        await foreach (var row in global::BlueTusk.Sql.Tests.Generated.TypedRows.Definition.ReadAsync(connection, new(1, "tx"), transaction, TestContext.Current.CancellationToken))
         {
             Assert.Equal("tx", row.Label);
         }
@@ -144,7 +142,7 @@ public sealed class SqlQueryTests
         source.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
         {
-            await foreach (var _ in TypedRows.Definition.ReadAsync(connection, new(1, "cancel"), cancellationToken: source.Token)) { }
+            await foreach (var _ in global::BlueTusk.Sql.Tests.Generated.TypedRows.Definition.ReadAsync(connection, new(1, "cancel"), cancellationToken: source.Token)) { }
         });
         Assert.Equal(System.Data.ConnectionState.Open, connection.State);
     }

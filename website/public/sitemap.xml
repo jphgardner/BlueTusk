@@ -127,9 +127,25 @@
   <url><loc>https://bluetusk.io/documentation/operations/api-naming</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/completion-audit</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/contributing-development</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/documents</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/documents-evidence-2026-09-27-allocation-pair</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/documents-evidence-2026-09-27-maintenance-diagnostics</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/documents-evidence-2026-09-27-pg18-baseline</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/documents-evidence-2026-09-28-maintenance-pair</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/documents-evidence</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/ecosystem-implementation-programme</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/ecosystem-progress</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/edge</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/events</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/fuzzing</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/hardening-programme</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/improvement-audit</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/jobs</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/jobs-durable-format</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/jobs-failover</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/jobs-hosting</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/jobs-maintenance</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/jobs-performance</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/operations-application-platform-health</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/operations-approval-evidence</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/operations-endurance-disturbance-evidence</loc></url>
@@ -141,6 +157,11 @@
   <url><loc>https://bluetusk.io/documentation/operations/operations-provider-request-capture</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/operations-website-production</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/postgresql19-programme</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/projections-live</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/projections-load</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/projections</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/projections-recovery</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/projections-evidence</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/provider-release-notes-1-0-0</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/release-process</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/release-review-handoff</loc></url>
@@ -148,6 +169,12 @@
   <url><loc>https://bluetusk.io/documentation/operations/releases-1-1-0-candidate</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/releases-1-2-0-plan</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/releases-release-tracks</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/schema</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/schema-catalogue-attestation</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/search</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/sql</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/studio</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/v1-applications</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/v1-release-readiness</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/workflows</loc></url>
 </urlset>

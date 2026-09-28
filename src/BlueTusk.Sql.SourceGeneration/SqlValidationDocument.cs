@@ -1,7 +1,9 @@
+#if NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+#endif
 using System.Xml;
 using System.Xml.Linq;
 using static BlueTusk.Sql.SourceGeneration.SqlContractModel;
@@ -32,8 +34,10 @@ internal static class SqlValidationDocument
             using var text = new StringReader(source.Text);
             using var reader = XmlReader.Create(text, new XmlReaderSettings
             {
-                DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null,
-                MaxCharactersInDocument = MaximumCharacters, IgnoreComments = true,
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersInDocument = MaximumCharacters,
+                IgnoreComments = true,
             });
             // Check depth and width before constructing an object graph.
             var nodes = 0;
@@ -44,7 +48,9 @@ internal static class SqlValidationDocument
             using var graphText = new StringReader(source.Text);
             using var graphReader = XmlReader.Create(graphText, new XmlReaderSettings
             {
-                DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null, MaxCharactersInDocument = MaximumCharacters,
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersInDocument = MaximumCharacters,
             });
             var root = XDocument.Load(graphReader).Root ?? throw new FormatException("Validation document is empty.");
             if (root.Name != "BlueTuskSqlValidation" || root.Attributes().Count() != 3 ||

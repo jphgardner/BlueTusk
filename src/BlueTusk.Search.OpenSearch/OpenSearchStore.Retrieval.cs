@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -126,11 +125,18 @@ public sealed partial class OpenSearchStore
         else if (approximate)
         {
             // Lucene nested HNSW accepts top-level field filters inside kNN; authorization participates in candidate admission.
-            clause = new JsonObject { ["knn"] = new JsonObject { ["chunks.embedding"] = new JsonObject
+            clause = new JsonObject
             {
-                ["vector"] = VectorJson(vector.Span), ["k"] = maximum,
-                ["filter"] = new JsonObject { ["bool"] = new JsonObject { ["filter"] = AuthorizationFilter(scope) } },
-            } } };
+                ["knn"] = new JsonObject
+                {
+                    ["chunks.embedding"] = new JsonObject
+                    {
+                        ["vector"] = VectorJson(vector.Span),
+                        ["k"] = maximum,
+                        ["filter"] = new JsonObject { ["bool"] = new JsonObject { ["filter"] = AuthorizationFilter(scope) } },
+                    }
+                }
+            };
         }
         else
         {
@@ -139,8 +145,13 @@ public sealed partial class OpenSearchStore
                 ["script_score"] = new JsonObject
                 {
                     ["query"] = new JsonObject { ["match_all"] = new JsonObject() },
-                    ["script"] = new JsonObject { ["lang"] = "knn", ["source"] = "knn_score", ["params"] = new JsonObject
-                        { ["field"] = "chunks.embedding", ["query_value"] = VectorJson(vector.Span), ["space_type"] = "cosinesimil" } },
+                    ["script"] = new JsonObject
+                    {
+                        ["lang"] = "knn",
+                        ["source"] = "knn_score",
+                        ["params"] = new JsonObject
+                        { ["field"] = "chunks.embedding", ["query_value"] = VectorJson(vector.Span), ["space_type"] = "cosinesimil" }
+                    },
                 },
             };
         }
@@ -148,13 +159,16 @@ public sealed partial class OpenSearchStore
         {
             ["nested"] = new JsonObject
             {
-                ["path"] = "chunks", ["score_mode"] = "max", ["query"] = clause,
+                ["path"] = "chunks",
+                ["score_mode"] = "max",
+                ["query"] = clause,
                 ["inner_hits"] = new JsonObject { ["size"] = 1, ["_source"] = Strings(["chunks.ordinal", "chunks.content"]) },
             },
         };
         var query = new JsonObject
         {
-            ["size"] = maximum, ["track_total_hits"] = false,
+            ["size"] = maximum,
+            ["track_total_hits"] = false,
             ["pit"] = new JsonObject { ["id"] = pit, ["keep_alive"] = "1m" },
             ["_source"] = Strings(["tenant", "index_name", "document_id", "source_version", "deleted", "public", "principals", "title", "metadata"]),
             ["query"] = new JsonObject { ["bool"] = new JsonObject { ["filter"] = AuthorizationFilter(scope), ["must"] = new JsonArray(nested) } },

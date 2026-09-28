@@ -157,7 +157,8 @@ public sealed class BlueTuskPoolingIntegrationTests
             {
                 using var unexpectedConnection = dataSource.OpenConnection();
             }));
-        }) { IsBackground = true };
+        })
+        { IsBackground = true };
         var asynchronousCaller = dataSource.OpenConnectionAsync(CancellationToken.None).AsTask();
         try
         {

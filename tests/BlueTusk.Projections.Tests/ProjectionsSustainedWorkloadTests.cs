@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using BlueTusk.Events;
-using BlueTusk.Live;
 using BlueTusk.Projections.Live;
 using BlueTusk.Replication;
 using BlueTusk.Streams;
@@ -49,7 +48,9 @@ public sealed class ProjectionsSustainedWorkloadTests(ITestOutputHelper output)
             var consumer = new StreamsProjectionConsumer(db.Store, lease, definition);
             var snapshotSource = new PostgreSqlConsistentSnapshotSource(db.DataSource, new()
             {
-                Source = source, PublicationNames = [publication], MaximumBatchRows = 17,
+                Source = source,
+                PublicationNames = [publication],
+                MaximumBatchRows = 17,
                 Tables = lineage.Tables.Select(static table => new PostgreSqlSnapshotTable(table, table.Columns.Where(static column => column.IsKey).Select(static column => column.Ordinal))).ToArray()
             });
             await using var snapshot = await snapshotSource.BeginAttemptAsync(null, token);
@@ -215,6 +216,6 @@ public sealed class ProjectionsSustainedWorkloadTests(ITestOutputHelper output)
         writer.WriteNumber("p50Milliseconds", values[(int)Math.Ceiling(values.Count * .5) - 1]); writer.WriteNumber("p95Milliseconds", values[(int)Math.Ceiling(values.Count * .95) - 1]); writer.WriteNumber("p99Milliseconds", values[(int)Math.Ceiling(values.Count * .99) - 1]);
         writer.WriteNumber("maximumMilliseconds", values[^1]); writer.WriteEndObject();
     }
-    private static async Task SqlAsync(ProjectionDatabase db,string sql,CancellationToken token)
-    { await using var connection=await db.DataSource.OpenConnectionAsync(token); await using var command=connection.CreateCommand(); command.CommandText=sql; await command.ExecuteNonQueryAsync(token); }
+    private static async Task SqlAsync(ProjectionDatabase db, string sql, CancellationToken token)
+    { await using var connection = await db.DataSource.OpenConnectionAsync(token); await using var command = connection.CreateCommand(); command.CommandText = sql; await command.ExecuteNonQueryAsync(token); }
 }

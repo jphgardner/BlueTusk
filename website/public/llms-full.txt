@@ -1411,6 +1411,25 @@ BlueTusk probes `pg_is_in_recovery()` and `transaction_read_only` after authenti
 
 `BlueTuskDataSource` partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work to another acceptable endpoint. Targeted checkouts refresh the server role before acceptance, and each returned lease routes back to its owning endpoint pool.
 
+Pooled sources defer an endpoint after a network or server-availability failure
+for a ten-second monotonic recheck interval. Healthy endpoints retain their
+configured relative order (or the selected random order). A healthy preferred
+target fallback can be used during that interval; saturation waits for healthy
+pool capacity instead of repeatedly connecting to a recently failed endpoint.
+If the other endpoints fail or do not provide an acceptable session, the source
+can retry the deferred endpoint immediately. At most one recheck of a previously
+failed endpoint runs concurrently. Authentication rejection and caller
+cancellation stop routing, and role mismatch does not mark a host unavailable.
+Targeted checkouts still refresh the server role before returning a lease.
+
+The interval is local to one data source and is not configurable in the current
+API. `ClearPool`/`ClearPoolAsync` clears its failure observations and restores
+the configured preference on the next checkout. Unpooled connections continue
+trying their configured host sequence independently. This routing policy does
+not establish cluster fencing, replication durability or an availability budget;
+applications must budget connection attempts, pool waiting and command latency
+when choosing worker leases and heartbeat intervals.
+
 `GetPoolStatistics()` aggregates all endpoint pools. `GetHostPoolStatistics()` returns the same counters keyed by `BlueTuskHostEndpoint`. Pool-size settings apply per endpoint, so a three-host data source with `Maximum Pool Size=20` has an aggregate maximum of 60 physical sessions.
 
 ---

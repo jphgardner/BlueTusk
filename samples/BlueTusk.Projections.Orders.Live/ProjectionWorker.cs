@@ -63,9 +63,11 @@ internal sealed class ProjectionWorker(SampleState state) : BackgroundService
                 var tables = lineage.Tables;
                 var snapshot = new PostgreSqlConsistentSnapshotSource(state.DataSource, new PostgreSqlConsistentSnapshotOptions
                 {
-                    Source = source, PublicationNames = [state.Options.Publication],
+                    Source = source,
+                    PublicationNames = [state.Options.Publication],
                     Tables = tables.Select(static table => new PostgreSqlSnapshotTable(table, table.Columns.Where(static column => column.IsKey).Select(static column => column.Ordinal))).ToArray(),
-                    MaximumParallelTables = 2, MaximumBatchRows = 512,
+                    MaximumParallelTables = 2,
+                    MaximumBatchRows = 512,
                     ExistingSlotMode = checkpoint.Phase is ProjectionBuildPhase.Snapshot or ProjectionBuildPhase.Resetting ? PostgreSqlExistingSnapshotSlotMode.RestartSnapshot : PostgreSqlExistingSnapshotSlotMode.Fail
                 }, connection => new LogicalFeedbackObserver(connection));
                 await using var attempt = await snapshot.BeginAttemptAsync(checkpoint.SnapshotEpoch, run.Token);
@@ -88,8 +90,12 @@ internal sealed class ProjectionWorker(SampleState state) : BackgroundService
                 await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(state.DataSource.CreateDedicatedSessionOptions(), run.Token);
                 var stream = new PgOutputChangeStream(replication.StartReplicationAsync(new BlueTuskPgOutputReplicationOptions
                 {
-                    SlotName = source.SlotName, PublicationNames = [state.Options.Publication], StartPosition = checkpoint.Checkpoint,
-                    ProtocolVersion = 2, StreamingMode = BlueTuskLogicalStreamingMode.On, Messages = true
+                    SlotName = source.SlotName,
+                    PublicationNames = [state.Options.Publication],
+                    StartPosition = checkpoint.Checkpoint,
+                    ProtocolVersion = 2,
+                    StreamingMode = BlueTuskLogicalStreamingMode.On,
+                    Messages = true
                 }, run.Token).DecodePgOutputAsync(new BlueTuskPgOutputDecoderOptions { ProtocolVersion = 2, StreamingMode = BlueTuskPgOutputStreamingMode.On }, run.Token),
                     source, observer: new LogicalFeedbackObserver(replication));
                 await ConsumeAsync(stream, consumer, run.Token);

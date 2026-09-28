@@ -131,10 +131,10 @@ public sealed partial class BlueTuskArrayCodec :
         for (var dimension = 0; dimension < rank; dimension++)
         {
             var length = reader.ReadInt32BigEndian();
-            if (length < 0)
+            if (length <= 0)
             {
                 throw new InvalidOperationException(
-                    $"The {type.QualifiedName} binary array has a negative dimension length.");
+                    $"The {type.QualifiedName} binary array has a nonpositive dimension length. Empty PostgreSQL arrays use rank zero.");
             }
 
             lengths[dimension] = length;

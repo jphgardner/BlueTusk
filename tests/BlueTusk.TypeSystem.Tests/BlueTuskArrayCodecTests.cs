@@ -71,6 +71,24 @@ public sealed class BlueTuskArrayCodecTests
     }
 
     [Fact]
+    public void Binary_array_with_zero_dimension_cannot_hide_an_unbounded_later_dimension()
+    {
+        var codec = new BlueTuskArrayCodec(BlueTuskBuiltInTypes.Int4, new BlueTuskInt32Codec());
+        var bytes = Convert.FromHexString(
+            "00000002" + // rank
+            "00000000" + // flags
+            "00000017" + // int4 OID
+            "0000000000000001" + // empty first dimension
+            "7FFFFFFF00000001"); // enormous later dimension
+
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            var reader = new BlueTuskReader(bytes);
+            _ = codec.Read(ref reader, BlueTuskDataFormat.Binary, Int4Array);
+        });
+    }
+
+    [Fact]
     public void Multidimensional_arrays_preserve_shape_and_row_major_values()
     {
         var codec = new BlueTuskArrayCodec(BlueTuskBuiltInTypes.Int4, new BlueTuskInt32Codec());

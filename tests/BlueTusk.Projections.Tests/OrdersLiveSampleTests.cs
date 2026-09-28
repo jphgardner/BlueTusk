@@ -1,9 +1,9 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using BlueTusk.Replication;
 
 namespace BlueTusk.Projections.Tests;
 
@@ -37,6 +37,7 @@ public sealed class OrdersLiveSampleTests
         http.DefaultRequestHeaders.Add("X-API-Key", apiKey);
         Process? process = null;
         Process? rebuildProcess = null;
+        var candidateOutput = new ConcurrentQueue<string>();
         try
         {
             process = Start(db, publication, slot, port, apiKey);
@@ -110,11 +111,18 @@ public sealed class OrdersLiveSampleTests
             listener.Stop();
             using var candidateHttp = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:" + rebuildPort), Timeout = Timeout.InfiniteTimeSpan };
             candidateHttp.DefaultRequestHeaders.Add("X-API-Key", apiKey);
-            rebuildProcess = Start(db, publication, rebuildSlot, rebuildPort, apiKey, 2);
+            rebuildProcess = Start(db, publication, rebuildSlot, rebuildPort, apiKey, 2,
+                log: line =>
+                {
+                    candidateOutput.Enqueue(line);
+                    while (candidateOutput.Count > 100) { candidateOutput.TryDequeue(out _); }
+                });
             await ReadyAsync(candidateHttp, rebuildProcess, token);
             using var promote = await candidateHttp.PostAsync("/sample/promote", new StringContent(
                 "{\"requiredPosition\":0,\"expectedActiveVersion\":1,\"allowEquivalentSourceLineage\":true}", Encoding.UTF8, "application/json"), token);
-            Assert.Equal(HttpStatusCode.NoContent, promote.StatusCode);
+            Assert.True(promote.StatusCode == HttpStatusCode.NoContent,
+                $"Candidate promotion returned {(int)promote.StatusCode}: {await promote.Content.ReadAsStringAsync(token)}\n" +
+                string.Join('\n', candidateOutput));
             JsonElement cutover;
             do { cutover = await restarted.NextAsync(token); }
             while (cutover.GetProperty("event").GetProperty("kind").GetString() != "ResultReset");
@@ -141,7 +149,7 @@ public sealed class OrdersLiveSampleTests
             var ddlResume = afterTakeover.GetProperty("resumeToken").GetString()!;
             var maintenanceId = Guid.NewGuid();
             using (var maintenance = await candidateHttp.PostAsync("/sample/maintenance", new StringContent(JsonSerializer.Serialize(new
-                { expectedActiveVersion = 2, maintenanceId, reason = "Deploy source note column" }), Encoding.UTF8, "application/json"), token))
+            { expectedActiveVersion = 2, maintenanceId, reason = "Deploy source note column" }), Encoding.UTF8, "application/json"), token))
             { Assert.Equal(HttpStatusCode.NoContent, maintenance.StatusCode); }
             rebuildProcess.Kill(entireProcessTree: true); await rebuildProcess.WaitForExitAsync(token); rebuildProcess.Dispose(); rebuildProcess = null;
             await SqlAsync(db, $"UPDATE \"{db.Schema}\".projection_live_replay SET expires_at=clock_timestamp()-interval '1 second'; ALTER TABLE \"{db.Schema}\".orders ADD COLUMN note text NOT NULL DEFAULT 'migration'", token);
@@ -180,7 +188,7 @@ public sealed class OrdersLiveSampleTests
         }
     }
 
-    private static Process Start(ProjectionDatabase db, string publication, string slot, int port, string apiKey, int version = 1, Guid? recoveryId = null)
+    private static Process Start(ProjectionDatabase db, string publication, string slot, int port, string apiKey, int version = 1, Guid? recoveryId = null, Action<string>? log = null)
     {
         var projectRoot = FindRoot();
         var executable = Path.Combine(projectRoot, "samples", "BlueTusk.Projections.Orders.Live", "bin", "Release", "net10.0", "BlueTusk.Projections.Orders.Live.dll");
@@ -202,6 +210,11 @@ public sealed class OrdersLiveSampleTests
         }
         start.Environment["ASPNETCORE_URLS"] = "http://127.0.0.1:" + port;
         var process = Process.Start(start) ?? throw new InvalidOperationException("The sample process did not start.");
+        if (log is not null)
+        {
+            process.OutputDataReceived += (_, e) => { if (e.Data is not null) { log(e.Data); } };
+            process.ErrorDataReceived += (_, e) => { if (e.Data is not null) { log(e.Data); } };
+        }
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         return process;

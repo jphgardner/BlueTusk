@@ -209,8 +209,10 @@ public sealed class PgOutputChangeStreamTests
             var protector = protectedRecords ? new TransactionSpoolCompatibilityTests.TestProtector() : null;
             var spool = new FileTransactionSpool(new FileTransactionSpoolOptions
             {
-                DirectoryPath = directory, MaxStorageBytes = 32 * 1024 * 1024,
-                MaxRecordBytes = 8 * 1024 * 1024, Protector = protector,
+                DirectoryPath = directory,
+                MaxStorageBytes = 32 * 1024 * 1024,
+                MaxRecordBytes = 8 * 1024 * 1024,
+                Protector = protector,
             });
             var payloads = SpoolSegmentLengths
                 .Select(TransactionSpoolCompatibilityTests.CreatePayload).ToArray();
@@ -232,8 +234,10 @@ public sealed class PgOutputChangeStreamTests
             var stream = new PgOutputChangeStream(Messages(messages.ToArray()), SourceIdentity(),
                 new TransactionAssemblyOptions
                 {
-                    MaxInMemoryTransactionBytes = 64, MaxTransactionBytes = 16 * 1024 * 1024,
-                    MaxSpoolBytes = 32 * 1024 * 1024, SpoolDirectory = directory,
+                    MaxInMemoryTransactionBytes = 64,
+                    MaxTransactionBytes = 16 * 1024 * 1024,
+                    MaxSpoolBytes = 32 * 1024 * 1024,
+                    SpoolDirectory = directory,
                 }, spool);
             await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
             Assert.True(await enumerator.MoveNextAsync());

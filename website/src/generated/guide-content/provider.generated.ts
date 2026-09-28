@@ -400,8 +400,8 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 295,
-    "readMinutes": 2,
+    "wordCount": 478,
+    "readMinutes": 3,
     "searchText": "Multi-host connections BlueTusk accepts PostgreSQL's keyword/value multi-host form. `Host` is a comma-separated ordered list; `Port` can contain one shared port or a positionally matching list. Hosts are attempted in configuration order by default. Set `Load Balance Hosts=random` to shuffle the host order for each new physical connection. Within one host, the transport resolves the name once, preserves the platform resolver's address order, and attempts every returned address under one shared connect deadline. This respects the operating system's IPv4/IPv6 routing preference while retaining deterministic fallback and ordered per-address socket diagnostics in the failed host's inner `BlueTuskTransportException`. `Target Session Attributes` accepts: `any` `primary` `standby` `prefer-primary` `prefer-standby` `read-write` `read-only` BlueTusk probes `pg_is_in_recovery()` and `transaction_read_only` after authentication when role selection is required. A strict target rejects incompatible servers; a preferred target retains the first healthy fallback while it searches the remaining hosts. Network and server-availability failures advance to the next host, while authentication rejection stops the sequence. This follows PostgreSQL's [multiple-host and target-session connection behavior](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS). `BlueTuskConnection.ConnectedEndpoint` reports the selected host and port. Failure messages identify attempted endpoints but never include passwords or authentication payloads. `BlueTuskDataSource` partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work to another acceptable endpoint. Targeted checkouts refresh the server role before acceptance, and each returned lease routes back t",
     "blocks": [
       {
@@ -416,7 +416,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>Hosts are attempted in configuration order by default. Set <code>Load Balance Hosts=random</code> to shuffle the host order for each new physical connection. Within one host, the transport resolves the name once, preserves the platform resolver’s address order, and attempts every returned address under one shared connect deadline. This respects the operating system’s IPv4/IPv6 routing preference while retaining deterministic fallback and ordered per-address socket diagnostics in the failed host’s inner <code>BlueTuskTransportException</code>.</p>\n<p><code>Target Session Attributes</code> accepts:</p>\n<ul>\n<li><code>any</code></li>\n<li><code>primary</code></li>\n<li><code>standby</code></li>\n<li><code>prefer-primary</code></li>\n<li><code>prefer-standby</code></li>\n<li><code>read-write</code></li>\n<li><code>read-only</code></li>\n</ul>\n<p>BlueTusk probes <code>pg_is_in_recovery()</code> and <code>transaction_read_only</code> after authentication when role selection is required. A strict target rejects incompatible servers; a preferred target retains the first healthy fallback while it searches the remaining hosts. Network and server-availability failures advance to the next host, while authentication rejection stops the sequence. This follows PostgreSQL’s <a href=\"https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS\" target=\"_blank\" rel=\"noreferrer\">multiple-host and target-session connection behavior</a>.</p>\n<p><code>BlueTuskConnection.ConnectedEndpoint</code> reports the selected host and port. Failure messages identify attempted endpoints but never include passwords or authentication payloads.</p>\n<p><code>BlueTuskDataSource</code> partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work to another acceptable endpoint. Targeted checkouts refresh the server role before acceptance, and each returned lease routes back to its owning endpoint pool.</p>\n<p><code>GetPoolStatistics()</code> aggregates all endpoint pools. <code>GetHostPoolStatistics()</code> returns the same counters keyed by <code>BlueTuskHostEndpoint</code>. Pool-size settings apply per endpoint, so a three-host data source with <code>Maximum Pool Size=20</code> has an aggregate maximum of 60 physical sessions.</p>\n"
+        "html": "<p>Hosts are attempted in configuration order by default. Set <code>Load Balance Hosts=random</code> to shuffle the host order for each new physical connection. Within one host, the transport resolves the name once, preserves the platform resolver’s address order, and attempts every returned address under one shared connect deadline. This respects the operating system’s IPv4/IPv6 routing preference while retaining deterministic fallback and ordered per-address socket diagnostics in the failed host’s inner <code>BlueTuskTransportException</code>.</p>\n<p><code>Target Session Attributes</code> accepts:</p>\n<ul>\n<li><code>any</code></li>\n<li><code>primary</code></li>\n<li><code>standby</code></li>\n<li><code>prefer-primary</code></li>\n<li><code>prefer-standby</code></li>\n<li><code>read-write</code></li>\n<li><code>read-only</code></li>\n</ul>\n<p>BlueTusk probes <code>pg_is_in_recovery()</code> and <code>transaction_read_only</code> after authentication when role selection is required. A strict target rejects incompatible servers; a preferred target retains the first healthy fallback while it searches the remaining hosts. Network and server-availability failures advance to the next host, while authentication rejection stops the sequence. This follows PostgreSQL’s <a href=\"https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS\" target=\"_blank\" rel=\"noreferrer\">multiple-host and target-session connection behavior</a>.</p>\n<p><code>BlueTuskConnection.ConnectedEndpoint</code> reports the selected host and port. Failure messages identify attempted endpoints but never include passwords or authentication payloads.</p>\n<p><code>BlueTuskDataSource</code> partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work to another acceptable endpoint. Targeted checkouts refresh the server role before acceptance, and each returned lease routes back to its owning endpoint pool.</p>\n<p>Pooled sources defer an endpoint after a network or server-availability failure\nfor a ten-second monotonic recheck interval. Healthy endpoints retain their\nconfigured relative order (or the selected random order). A healthy preferred\ntarget fallback can be used during that interval; saturation waits for healthy\npool capacity instead of repeatedly connecting to a recently failed endpoint.\nIf the other endpoints fail or do not provide an acceptable session, the source\ncan retry the deferred endpoint immediately. At most one recheck of a previously\nfailed endpoint runs concurrently. Authentication rejection and caller\ncancellation stop routing, and role mismatch does not mark a host unavailable.\nTargeted checkouts still refresh the server role before returning a lease.</p>\n<p>The interval is local to one data source and is not configurable in the current\nAPI. <code>ClearPool</code>/<code>ClearPoolAsync</code> clears its failure observations and restores\nthe configured preference on the next checkout. Unpooled connections continue\ntrying their configured host sequence independently. This routing policy does\nnot establish cluster fencing, replication durability or an availability budget;\napplications must budget connection attempts, pool waiting and command latency\nwhen choosing worker leases and heartbeat intervals.</p>\n<p><code>GetPoolStatistics()</code> aggregates all endpoint pools. <code>GetHostPoolStatistics()</code> returns the same counters keyed by <code>BlueTuskHostEndpoint</code>. Pool-size settings apply per endpoint, so a three-host data source with <code>Maximum Pool Size=20</code> has an aggregate maximum of 60 physical sessions.</p>\n"
       }
     ]
   },
@@ -1364,7 +1364,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1095,
+    "order": 1116,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1402,7 +1402,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1096,
+    "order": 1117,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1450,7 +1450,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1111,
+    "order": 1132,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1627,7 +1627,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1137,
+    "order": 1163,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",

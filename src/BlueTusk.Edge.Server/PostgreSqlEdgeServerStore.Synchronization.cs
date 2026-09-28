@@ -1,5 +1,3 @@
-using System.Data.Common;
-
 namespace BlueTusk.Edge.Server;
 
 public sealed partial class PostgreSqlEdgeServerStore

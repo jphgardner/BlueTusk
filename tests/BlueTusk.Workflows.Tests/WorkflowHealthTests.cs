@@ -10,7 +10,9 @@ public sealed class WorkflowHealthTests
         await using var database = await WorkflowDatabase.CreateAsync();
         await database.Store.RegisterDefinitionAsync(database.Scope, new WorkflowDefinition
         {
-            Name = "test", Version = 1, Nodes = [new() { Id = "wait", Kind = WorkflowNodeKind.Signal, Signal = "resume" }],
+            Name = "test",
+            Version = 1,
+            Nodes = [new() { Id = "wait", Kind = WorkflowNodeKind.Signal, Signal = "resume" }],
         });
         for (int index = 0; index < 4; index++)
         {

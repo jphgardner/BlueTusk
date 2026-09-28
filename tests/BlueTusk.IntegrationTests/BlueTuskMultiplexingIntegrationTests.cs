@@ -72,7 +72,7 @@ public sealed class BlueTuskMultiplexingIntegrationTests
         // completed first group and the executing reused command. No timing sleep
         // or private-field mutation is needed to observe the late-cleanup boundary.
         await WaitUntilAsync(() => dataSource.GetMultiplexingStatistics() is
-            { Queued: 0, Completed: 3, Executing: 2 });
+        { Queued: 0, Completed: 3, Executing: 2 });
 
         reused.Cancel();
 

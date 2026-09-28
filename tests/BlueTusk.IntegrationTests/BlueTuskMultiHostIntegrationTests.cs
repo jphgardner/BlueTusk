@@ -1,7 +1,7 @@
-using BlueTusk.Client;
-using BlueTusk.Data;
 using System.Net;
 using System.Net.Sockets;
+using BlueTusk.Client;
+using BlueTusk.Data;
 using Xunit.Sdk;
 
 namespace BlueTusk.IntegrationTests;

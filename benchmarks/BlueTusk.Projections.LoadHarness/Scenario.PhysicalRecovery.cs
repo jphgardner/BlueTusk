@@ -1,11 +1,9 @@
 using System.Data.Common;
 using System.Diagnostics;
-using System.Text.Json;
 using BlueTusk.Data;
 using BlueTusk.Events;
 using BlueTusk.Projections.Live;
 using BlueTusk.Replication;
-using BlueTusk.Streams;
 
 namespace BlueTusk.Projections.LoadHarness;
 

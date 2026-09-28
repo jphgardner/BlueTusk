@@ -1,7 +1,6 @@
 using System.Data.Common;
 using BlueTusk.Data;
 using BlueTusk.Schema;
-using BlueTusk.Sql.NativeAotSmoke.Generated;
 
 var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
 if (string.IsNullOrWhiteSpace(connectionString)) { throw new InvalidOperationException("Native SQL/Schema verification requires a live PostgreSQL fixture."); }
@@ -9,13 +8,13 @@ using var deadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
 var token = deadline.Token;
 await using var dataSource = BlueTuskDataSource.Create(connectionString);
 await BlueTusk.Sql.Verification.TypedShapeVerification.RunAsync(dataSource, token);
-var arguments = new TypedSmoke.Arguments(long.MaxValue, null, Guid.NewGuid(), "{\"answer\":42}",
+var arguments = new global::BlueTusk.Sql.NativeAotSmoke.Generated.TypedSmoke.Arguments(long.MaxValue, null, Guid.NewGuid(), "{\"answer\":42}",
     [0, 1, 128, 255], new DateTimeOffset(2026, 9, 27, 12, 0, 0, TimeSpan.Zero), 1234567890.123456789m);
-await TypedSmoke.Definition.ValidateAsync(dataSource, arguments, token);
+await global::BlueTusk.Sql.NativeAotSmoke.Generated.TypedSmoke.Definition.ValidateAsync(dataSource, arguments, token);
 await using (var connection = await dataSource.OpenConnectionAsync(token))
 {
     var count = 0;
-    await foreach (var row in TypedSmoke.Definition.ReadAsync(connection, arguments, cancellationToken: token))
+    await foreach (var row in global::BlueTusk.Sql.NativeAotSmoke.Generated.TypedSmoke.Definition.ReadAsync(connection, arguments, cancellationToken: token))
     {
         if (row.Id != arguments.identifier || row.Label is not null || row.Key != arguments.key ||
             !row.Data.Contains("42", StringComparison.Ordinal) || !row.Blob.AsSpan().SequenceEqual(arguments.blob) ||
@@ -29,13 +28,13 @@ await using (var connection = await dataSource.OpenConnectionAsync(token))
 }
 
 var preciseValue = BlueTusk.TypeSystem.BlueTuskNumeric.Parse("1234567890123456789012345678901234567890.000000000001");
-var collectionArguments = new TypedCollections.Arguments([int.MinValue, 0, int.MaxValue], ["a,b", null, "🐘"],
+var collectionArguments = new global::BlueTusk.Sql.NativeAotSmoke.Generated.TypedCollections.Arguments([int.MinValue, 0, int.MaxValue], ["a,b", null, "🐘"],
     [1, null, -1], preciseValue, null, new int[,] { { 1, 2 }, { 3, 4 } });
-await TypedCollections.Definition.ValidateAsync(dataSource, collectionArguments, token);
+await global::BlueTusk.Sql.NativeAotSmoke.Generated.TypedCollections.Definition.ValidateAsync(dataSource, collectionArguments, token);
 await using (var collectionConnection = await dataSource.OpenConnectionAsync(token))
 {
     var collectionRows = 0;
-    await foreach (var row in TypedCollections.Definition.ReadAsync(collectionConnection, collectionArguments, cancellationToken: token))
+    await foreach (var row in global::BlueTusk.Sql.NativeAotSmoke.Generated.TypedCollections.Definition.ReadAsync(collectionConnection, collectionArguments, cancellationToken: token))
     {
         if (!row.Numbers.SequenceEqual(collectionArguments.numbers) || !row.Texts.SequenceEqual(collectionArguments.texts) ||
             !row.NullableNumbers.SequenceEqual(collectionArguments.nullableNumbers) || row.Precise != preciseValue || row.WholeNullable is not null ||

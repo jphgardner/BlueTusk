@@ -13,7 +13,8 @@ public sealed class WorkflowValidationTests
         var scope = new JobScope("tenant", "queue");
         var cyclic = new WorkflowDefinition
         {
-            Name = "cycle", Version = 1,
+            Name = "cycle",
+            Version = 1,
             Nodes =
             [
                 new() { Id = "a", Kind = WorkflowNodeKind.Activity, Activity = "a", DependsOn = ["b"] },
@@ -33,7 +34,8 @@ public sealed class WorkflowValidationTests
         await using var database = await WorkflowDatabase.CreateAsync();
         var definition = new WorkflowDefinition
         {
-            Name = "test", Version = 1,
+            Name = "test",
+            Version = 1,
             Nodes =
             [
                 new() { Id = "a", Kind = WorkflowNodeKind.Activity, Activity = "a" },
@@ -59,7 +61,10 @@ public sealed class WorkflowValidationTests
     {
         await using var database = await WorkflowDatabase.CreateAsync(new WorkflowOptions
         {
-            MaximumInputBytes = 1, MaximumResultBytes = 4, MaximumSignalBytes = 4, MaximumActivityInputBytes = 5,
+            MaximumInputBytes = 1,
+            MaximumResultBytes = 4,
+            MaximumSignalBytes = 4,
+            MaximumActivityInputBytes = 5,
         });
         var key = await database.StartAsync(
         [

@@ -10,7 +10,9 @@ public sealed class WorkflowControlTests
         await using var database = await WorkflowDatabase.CreateAsync();
         await database.Store.RegisterDefinitionAsync(database.Scope, new WorkflowDefinition
         {
-            Name = "test", Version = 1, Nodes = [new() { Id = "a", Kind = WorkflowNodeKind.Activity, Activity = "a" }],
+            Name = "test",
+            Version = 1,
+            Nodes = [new() { Id = "a", Kind = WorkflowNodeKind.Activity, Activity = "a" }],
         });
         WorkflowKey rolledBack;
         await using (var connection = await database.Source.OpenConnectionAsync())
@@ -114,7 +116,9 @@ public sealed class WorkflowControlTests
             Assert.Equal(key, await database.Store.StartAsync(database.Request("migration-start")));
             await database.Store.RegisterDefinitionAsync(database.Scope, new WorkflowDefinition
             {
-                Name = "test", Version = 3, Nodes = [original[0] with { Activity = "changed" }, original[1]],
+                Name = "test",
+                Version = 3,
+                Nodes = [original[0] with { Activity = "changed" }, original[1]],
             });
             long migratedRevision = (await database.Store.ReadAsync(key))!.Revision;
             await Assert.ThrowsAsync<InvalidOperationException>(() => database.Store.MigrateAsync(key, 3, migratedRevision).AsTask());

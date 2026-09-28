@@ -47,6 +47,11 @@ try
     {
         $env:BLUETUSK_TEST_CONNECTION_STRING = Get-OwnedFixtureConnection $PostgreSqlService
         $env:BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING = Get-OwnedFixtureConnection 'pgvector18'
+        # The pgvector image provides the extension binaries but a fresh database does
+        # not install the extension. Keep fixture initialization explicit and idempotent.
+        & docker compose -f (Join-Path $repositoryRoot 'eng/compose/postgres.yml') exec -T pgvector18 `
+            psql -U postgres -d bluetusk_tests -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public'
+        if ($LASTEXITCODE -ne 0) { throw 'Could not initialize pgvector in the owned Compose fixture.' }
         $openSearchId = & docker compose -f (Join-Path $repositoryRoot 'eng/compose/opensearch.yml') ps -q opensearch
         if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($openSearchId)) { throw 'The OpenSearch Compose fixture is not running.' }
         $openSearchFixture = (& docker inspect $openSearchId | ConvertFrom-Json)[0]

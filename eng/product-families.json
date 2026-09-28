@@ -740,7 +740,8 @@
         ]
       },
       "releaseDependencies": [
-        "Jobs"
+        "Jobs",
+        "Provider"
       ],
       "packages": [
         "src/BlueTusk.Workflows.DependencyInjection/BlueTusk.Workflows.DependencyInjection.csproj",

@@ -100,7 +100,9 @@ public sealed class SearchIngestionJobTests
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         var worker = new JobWorker(fixture.Jobs, scope, "worker", fixture.Adapter.RegisterHandlers(new JobHandlerRegistry()), new JobWorkerOptions
         {
-            Concurrency = 1, ClaimBatchSize = 1, PollInterval = TimeSpan.FromMilliseconds(10),
+            Concurrency = 1,
+            ClaimBatchSize = 1,
+            PollInterval = TimeSpan.FromMilliseconds(10),
             RetryPolicy = new JobRetryPolicy { InitialDelay = TimeSpan.FromMilliseconds(10), MaximumDelay = TimeSpan.FromMilliseconds(20), JitterFraction = 0 },
             DispatchRecurringSchedules = false,
         });

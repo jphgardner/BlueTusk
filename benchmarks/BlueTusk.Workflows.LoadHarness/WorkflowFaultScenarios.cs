@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Reflection;
-using BlueTusk.Data;
 using BlueTusk.Jobs;
 
 namespace BlueTusk.Workflows.LoadHarness;
@@ -9,14 +8,18 @@ internal static partial class Program
 {
     private static JobWorkerOptions FaultWorkerOptions() => new()
     {
-        Concurrency = 1, ClaimBatchSize = 1, LeaseDuration = TimeSpan.FromSeconds(1),
-        HeartbeatInterval = TimeSpan.FromMilliseconds(100), PollInterval = TimeSpan.FromMilliseconds(10),
+        Concurrency = 1,
+        ClaimBatchSize = 1,
+        LeaseDuration = TimeSpan.FromSeconds(1),
+        HeartbeatInterval = TimeSpan.FromMilliseconds(100),
+        PollInterval = TimeSpan.FromMilliseconds(10),
         DispatchRecurringSchedules = false,
     };
 
     private static WorkflowDefinition FaultWorkflowDefinition() => new()
     {
-        Name = "fault", Version = 1,
+        Name = "fault",
+        Version = 1,
         Nodes =
         [
             new() { Id = "effect", Kind = WorkflowNodeKind.Activity, Activity = "fault-effect.v1" },
@@ -68,14 +71,19 @@ internal static partial class Program
             await store.RegisterDefinitionAsync(FaultScope, FaultWorkflowDefinition());
             var key = await store.StartAsync(new WorkflowStartRequest
             {
-                Scope = FaultScope, Definition = "fault", Version = 1,
+                Scope = FaultScope,
+                Definition = "fault",
+                Version = 1,
                 Input = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new LoadPayload(0, 3, 0, ""), HarnessJsonContext.Default.LoadPayload),
             });
             string executable = Environment.ProcessPath ?? throw new InvalidOperationException("No process executable.");
             var start = new ProcessStartInfo(executable)
             {
-                UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden,
-                RedirectStandardOutput = true, RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
             };
             if (Path.GetFileNameWithoutExtension(executable).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
             {

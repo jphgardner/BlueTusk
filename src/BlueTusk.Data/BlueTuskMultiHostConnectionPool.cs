@@ -1,8 +1,8 @@
+using System.Net.Sockets;
+using BlueTusk.Client;
 using BlueTusk.Diagnostics;
 using BlueTusk.Security;
-using BlueTusk.Client;
 using BlueTusk.Transport;
-using System.Net.Sockets;
 
 namespace BlueTusk.Data;
 

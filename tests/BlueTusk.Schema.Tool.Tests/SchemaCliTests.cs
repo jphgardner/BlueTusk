@@ -1,6 +1,5 @@
 using System.Text.Json;
 using BlueTusk.Data;
-using BlueTusk.Schema;
 using Xunit.Sdk;
 
 namespace BlueTusk.Schema.Tool.Tests;

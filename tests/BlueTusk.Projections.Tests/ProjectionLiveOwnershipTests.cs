@@ -66,79 +66,79 @@ public sealed class ProjectionLiveOwnershipTests
     public async Task OwnedAppendRetriesAreExactBoundedReadsRejectReplayOverflowAndPruningKeepsSequenceAndFenceTombstone()
     {
         using var listener = new System.Diagnostics.Metrics.MeterListener
-        { InstrumentPublished = static (instrument,l) => { if(instrument.Meter.Name=="BlueTusk.Projections.Live") { l.EnableMeasurementEvents(instrument); } } };
-        listener.SetMeasurementEventCallback<long>(static (_,_,_,_)=>throw new InvalidOperationException("Faulty owned Live observer."));
+        { InstrumentPublished = static (instrument, l) => { if (instrument.Meter.Name == "BlueTusk.Projections.Live") { l.EnableMeasurementEvents(instrument); } } };
+        listener.SetMeasurementEventCallback<long>(static (_, _, _, _) => throw new InvalidOperationException("Faulty owned Live observer."));
         listener.Start();
         await using var db = await ProjectionDatabase.CreateAsync();
-        var identity = new LiveSubscriptionIdentity("db", new string('a',64), new string('b',64), "tenant:first", "v1", 10);
+        var identity = new LiveSubscriptionIdentity("db", new string('a', 64), new string('b', 64), "tenant:first", "v1", 10);
         var store = new PostgreSqlProjectionLiveReplayStore(db.DataSource, new()
         { Schema = db.Schema, MaximumAppendEvents = 8, MaximumEventBytes = 128, MaximumBatchBytes = 512, MaximumReadEvents = 16, PruneBatchRows = 3 });
         await store.InitializeAsync();
         await using var owner = Assert.IsType<ProjectionLivePublisher>(await store.AcquireAsync(identity, "writer", TimeSpan.FromMinutes(1)));
-        LiveReplayEvent[] Events(int first, int count) => Enumerable.Range(first,count).Select(sequence => new LiveReplayEvent(sequence, LiveEventKind.RowAdded, "json", new byte[128])).ToArray();
-        await Assert.ThrowsAsync<ProjectionBoundExceededException>(async () => await owner.AppendAsync(new(identity,0,Events(1,8))));
-        var batch = new LiveReplayAppendRequest(identity,0,Events(1,4));
-        Assert.Equal(LiveReplayAppendStatus.Stored,(await owner.AppendAsync(batch)).Status);
-        Assert.Equal(LiveReplayAppendStatus.AlreadyStored,(await owner.AppendAsync(batch)).Status);
-        Assert.Equal(LiveReplayAppendStatus.SequenceConflict,(await owner.AppendAsync(new(identity,0,[new(1,LiveEventKind.RowAdded,"json","changed"u8)]))).Status);
-        await owner.AppendAsync(new(identity,4,Events(5,1)));
-        var first = await store.ReadAsync(identity,0,16);
-        Assert.Equal([1L,2L,3L,4L], first.Events.Select(static item => item.Sequence));
-        Assert.Equal(5,first.LastSequence);
-        Assert.Equal(5,Assert.Single((await store.ReadAsync(identity,4,16)).Events).Sequence);
-        await SqlAsync(db,$"UPDATE \"{db.Schema}\".projection_live_events SET recorded_at=clock_timestamp()-interval '2 hours'",CancellationToken.None);
-        Assert.Equal(3,await store.PruneAsync());
-        Assert.Equal(LiveReplayReadStatus.Expired,(await store.ReadAsync(identity,0,16)).Status);
-        Assert.Equal([4L,5L],(await store.ReadAsync(identity,3,16)).Events.Select(static item=>item.Sequence));
-        Assert.Equal(2,await store.PruneAsync());
-        Assert.Equal(0,await store.PruneAsync());
+        LiveReplayEvent[] Events(int first, int count) => Enumerable.Range(first, count).Select(sequence => new LiveReplayEvent(sequence, LiveEventKind.RowAdded, "json", new byte[128])).ToArray();
+        await Assert.ThrowsAsync<ProjectionBoundExceededException>(async () => await owner.AppendAsync(new(identity, 0, Events(1, 8))));
+        var batch = new LiveReplayAppendRequest(identity, 0, Events(1, 4));
+        Assert.Equal(LiveReplayAppendStatus.Stored, (await owner.AppendAsync(batch)).Status);
+        Assert.Equal(LiveReplayAppendStatus.AlreadyStored, (await owner.AppendAsync(batch)).Status);
+        Assert.Equal(LiveReplayAppendStatus.SequenceConflict, (await owner.AppendAsync(new(identity, 0, [new(1, LiveEventKind.RowAdded, "json", "changed"u8)]))).Status);
+        await owner.AppendAsync(new(identity, 4, Events(5, 1)));
+        var first = await store.ReadAsync(identity, 0, 16);
+        Assert.Equal([1L, 2L, 3L, 4L], first.Events.Select(static item => item.Sequence));
+        Assert.Equal(5, first.LastSequence);
+        Assert.Equal(5, Assert.Single((await store.ReadAsync(identity, 4, 16)).Events).Sequence);
+        await SqlAsync(db, $"UPDATE \"{db.Schema}\".projection_live_events SET recorded_at=clock_timestamp()-interval '2 hours'", CancellationToken.None);
+        Assert.Equal(3, await store.PruneAsync());
+        Assert.Equal(LiveReplayReadStatus.Expired, (await store.ReadAsync(identity, 0, 16)).Status);
+        Assert.Equal([4L, 5L], (await store.ReadAsync(identity, 3, 16)).Events.Select(static item => item.Sequence));
+        Assert.Equal(2, await store.PruneAsync());
+        Assert.Equal(0, await store.PruneAsync());
         await owner.DisposeAsync();
-        await using var resumed = Assert.IsType<ProjectionLivePublisher>(await store.AcquireAsync(identity,"replacement",TimeSpan.FromMinutes(1)));
-        Assert.True(resumed.Lease.FencingToken>owner.Lease.FencingToken);
-        Assert.Equal(5,(await store.ReadAsync(identity,5,16)).LastSequence);
-        Assert.Equal(LiveReplayAppendStatus.Stored,(await resumed.AppendAsync(new(identity,5,Events(6,1)))).Status);
-        Assert.Equal(6,Assert.Single((await store.ReadAsync(identity,5,16)).Events).Sequence);
+        await using var resumed = Assert.IsType<ProjectionLivePublisher>(await store.AcquireAsync(identity, "replacement", TimeSpan.FromMinutes(1)));
+        Assert.True(resumed.Lease.FencingToken > owner.Lease.FencingToken);
+        Assert.Equal(5, (await store.ReadAsync(identity, 5, 16)).LastSequence);
+        Assert.Equal(LiveReplayAppendStatus.Stored, (await resumed.AppendAsync(new(identity, 5, Events(6, 1)))).Status);
+        Assert.Equal(6, Assert.Single((await store.ReadAsync(identity, 5, 16)).Events).Sequence);
     }
 
     [Fact]
     public async Task ExpiryInsideAppendRollsBackReplayAndAllowsReplacementAtUnchangedHead()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
-        var identity = new LiveSubscriptionIdentity("db",new string('a',64),new string('b',64),"tenant:first","v1",10);
-        var store = new PostgreSqlProjectionLiveReplayStore(db.DataSource,new(){Schema=db.Schema});
+        var identity = new LiveSubscriptionIdentity("db", new string('a', 64), new string('b', 64), "tenant:first", "v1", 10);
+        var store = new PostgreSqlProjectionLiveReplayStore(db.DataSource, new() { Schema = db.Schema });
         await store.InitializeAsync();
-        await SqlAsync(db,$"""
+        await SqlAsync(db, $"""
             CREATE FUNCTION "{db.Schema}".delay_append() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_sleep(0.25); RETURN NEW; END $$;
             CREATE TRIGGER delay_append BEFORE INSERT ON "{db.Schema}".projection_live_events FOR EACH ROW EXECUTE FUNCTION "{db.Schema}".delay_append()
-            """,CancellationToken.None);
-        await using var owner=Assert.IsType<ProjectionLivePublisher>(await store.AcquireAsync(identity,"slow",TimeSpan.FromMilliseconds(150)));
-        await Assert.ThrowsAsync<ProjectionLivePublisherFencedException>(async()=>await owner.AppendAsync(new(identity,0,[new(1,LiveEventKind.InitialResult,"json","data"u8)])));
-        Assert.Equal(0,(await store.ReadAsync(identity,0,10)).LastSequence);
-        await using var replacement=Assert.IsType<ProjectionLivePublisher>(await store.AcquireAsync(identity,"replacement",TimeSpan.FromMinutes(1)));
-        Assert.Equal(LiveReplayAppendStatus.Stored,(await replacement.AppendAsync(new(identity,0,[new(1,LiveEventKind.InitialResult,"json","data"u8)]))).Status);
-        Assert.Equal(1,(await store.ReadAsync(identity,0,10)).LastSequence);
+            """, CancellationToken.None);
+        await using var owner = Assert.IsType<ProjectionLivePublisher>(await store.AcquireAsync(identity, "slow", TimeSpan.FromMilliseconds(150)));
+        await Assert.ThrowsAsync<ProjectionLivePublisherFencedException>(async () => await owner.AppendAsync(new(identity, 0, [new(1, LiveEventKind.InitialResult, "json", "data"u8)])));
+        Assert.Equal(0, (await store.ReadAsync(identity, 0, 10)).LastSequence);
+        await using var replacement = Assert.IsType<ProjectionLivePublisher>(await store.AcquireAsync(identity, "replacement", TimeSpan.FromMinutes(1)));
+        Assert.Equal(LiveReplayAppendStatus.Stored, (await replacement.AppendAsync(new(identity, 0, [new(1, LiveEventKind.InitialResult, "json", "data"u8)]))).Status);
+        Assert.Equal(1, (await store.ReadAsync(identity, 0, 10)).LastSequence);
     }
 
     [Fact]
     public async Task RetentionOnlyPrunesExpiredPrefixAndChangedReaderBoundsCannotSilentlySkipNextEvent()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
-        var identity = new LiveSubscriptionIdentity("db",new string('a',64),new string('b',64),"tenant:first","v1",10);
-        var store = new PostgreSqlProjectionLiveReplayStore(db.DataSource,new(){Schema=db.Schema,MaximumEventBytes=512,MaximumBatchBytes=512});
+        var identity = new LiveSubscriptionIdentity("db", new string('a', 64), new string('b', 64), "tenant:first", "v1", 10);
+        var store = new PostgreSqlProjectionLiveReplayStore(db.DataSource, new() { Schema = db.Schema, MaximumEventBytes = 512, MaximumBatchBytes = 512 });
         await store.InitializeAsync();
-        await using var owner=Assert.IsType<ProjectionLivePublisher>(await store.AcquireAsync(identity,"owner",TimeSpan.FromMinutes(1)));
-        await owner.AppendAsync(new(identity,0,[new(1,LiveEventKind.InitialResult,"json",new byte[256]),new(2,LiveEventKind.RowUpdated,"json",new byte[128])]));
-        await SqlAsync(db,$"UPDATE \"{db.Schema}\".projection_live_events SET recorded_at=clock_timestamp()-interval '2 hours' WHERE sequence=2",CancellationToken.None);
-        Assert.Equal(0,await store.PruneAsync());
-        Assert.Equal([1L,2L],(await store.ReadAsync(identity,0,10)).Events.Select(static item=>item.Sequence));
-        var wrongBounds=new PostgreSqlProjectionLiveReplayStore(db.DataSource,new(){Schema=db.Schema,MaximumEventBytes=128,MaximumBatchBytes=128});
-        await Assert.ThrowsAsync<ProjectionBoundExceededException>(async()=>await wrongBounds.ReadAsync(identity,0,10));
-        await SqlAsync(db,$"UPDATE \"{db.Schema}\".projection_live_events SET recorded_at=clock_timestamp()-interval '2 hours' WHERE sequence=1",CancellationToken.None);
-        Assert.Equal(2,await store.PruneAsync());
-        Assert.Equal(LiveReplayReadStatus.Expired,(await store.ReadAsync(identity,0,10)).Status);
-        Assert.Equal(LiveReplayReadStatus.Current,(await store.ReadAsync(identity,2,10)).Status);
+        await using var owner = Assert.IsType<ProjectionLivePublisher>(await store.AcquireAsync(identity, "owner", TimeSpan.FromMinutes(1)));
+        await owner.AppendAsync(new(identity, 0, [new(1, LiveEventKind.InitialResult, "json", new byte[256]), new(2, LiveEventKind.RowUpdated, "json", new byte[128])]));
+        await SqlAsync(db, $"UPDATE \"{db.Schema}\".projection_live_events SET recorded_at=clock_timestamp()-interval '2 hours' WHERE sequence=2", CancellationToken.None);
+        Assert.Equal(0, await store.PruneAsync());
+        Assert.Equal([1L, 2L], (await store.ReadAsync(identity, 0, 10)).Events.Select(static item => item.Sequence));
+        var wrongBounds = new PostgreSqlProjectionLiveReplayStore(db.DataSource, new() { Schema = db.Schema, MaximumEventBytes = 128, MaximumBatchBytes = 128 });
+        await Assert.ThrowsAsync<ProjectionBoundExceededException>(async () => await wrongBounds.ReadAsync(identity, 0, 10));
+        await SqlAsync(db, $"UPDATE \"{db.Schema}\".projection_live_events SET recorded_at=clock_timestamp()-interval '2 hours' WHERE sequence=1", CancellationToken.None);
+        Assert.Equal(2, await store.PruneAsync());
+        Assert.Equal(LiveReplayReadStatus.Expired, (await store.ReadAsync(identity, 0, 10)).Status);
+        Assert.Equal(LiveReplayReadStatus.Current, (await store.ReadAsync(identity, 2, 10)).Status);
     }
 
-    private static async Task SqlAsync(ProjectionDatabase db,string sql,CancellationToken token)
-    { await using var connection=await db.DataSource.OpenConnectionAsync(token); await using var command=connection.CreateCommand(); command.CommandText=sql; await command.ExecuteNonQueryAsync(token); }
+    private static async Task SqlAsync(ProjectionDatabase db, string sql, CancellationToken token)
+    { await using var connection = await db.DataSource.OpenConnectionAsync(token); await using var command = connection.CreateCommand(); command.CommandText = sql; await command.ExecuteNonQueryAsync(token); }
 }

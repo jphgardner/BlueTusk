@@ -1,4 +1,3 @@
-using BlueTusk.Data;
 using BlueTusk.Jobs;
 
 namespace BlueTusk.Workflows;

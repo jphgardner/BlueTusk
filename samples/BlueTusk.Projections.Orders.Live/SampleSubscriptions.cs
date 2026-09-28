@@ -16,7 +16,8 @@ internal sealed class SampleSubscriptions(SampleState state) : ILiveTransportSub
     private readonly PostgreSqlProjectionLiveReplayStore _replay = new(state.DataSource, new PostgreSqlProjectionLiveReplayOptions
     {
         Schema = state.Options.ProjectionSchema,
-        RetentionWindow = TimeSpan.FromHours(1), MaximumEventBytes = 1_048_576
+        RetentionWindow = TimeSpan.FromHours(1),
+        MaximumEventBytes = 1_048_576
     });
 
     public async ValueTask<ILiveSharedSubscription> ResolveAsync(string query, JsonElement parameters, ClaimsPrincipal principal,
@@ -52,7 +53,9 @@ internal sealed class SampleSubscriptions(SampleState state) : ILiveTransportSub
                 ?? throw new ProjectionLivePublisherFencedException();
             var created = new ProjectionLiveSubscription<OrderView>(plan, publisher, metadata, subscriptionOptions: new LiveSharedSubscriptionOptions
             {
-                MaximumSubscribers = 1000, SubscriberBufferCapacity = 64, MaximumReplayEventsPerConnect = 1024
+                MaximumSubscribers = 1000,
+                SubscriberBufferCapacity = 64,
+                MaximumReplayEventsPerConnect = 1024
             });
             try { await created.StartAsync(cancellationToken); }
             catch { await created.DisposeAsync(); throw; }

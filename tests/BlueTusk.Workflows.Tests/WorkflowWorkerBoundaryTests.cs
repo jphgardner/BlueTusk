@@ -110,7 +110,9 @@ public sealed class WorkflowWorkerBoundaryTests
     {
         await using var database = await WorkflowDatabase.CreateAsync(new WorkflowOptions
         {
-            MaximumResultBytes = 4, MaximumSignalBytes = 4, MaximumNodeReadBytes = 4,
+            MaximumResultBytes = 4,
+            MaximumSignalBytes = 4,
+            MaximumNodeReadBytes = 4,
         });
         var key = await database.StartAsync(
         [

@@ -123,7 +123,10 @@ public sealed class ProjectionBoundedWorkloadTests
     private static PostgreSqlConsistentSnapshotSource Snapshot(ProjectionDatabase db, ProjectionSourceLineage lineage, string publication) =>
         new(db.DataSource, new PostgreSqlConsistentSnapshotOptions
         {
-            Source = lineage.Source, PublicationNames = [publication], MaximumBatchRows = 17, MaximumParallelTables = 2,
+            Source = lineage.Source,
+            PublicationNames = [publication],
+            MaximumBatchRows = 17,
+            MaximumParallelTables = 2,
             Tables = lineage.Tables.Select(static table => new PostgreSqlSnapshotTable(table, table.Columns.Where(static column => column.IsKey).Select(static column => column.Ordinal))).ToArray()
         });
 

@@ -108,7 +108,8 @@ public sealed partial class PostgreSqlEmbeddingCheckpointProvider : IScopedSearc
             var value = vector.Span[i]; if (!float.IsFinite(value)) { throw new ArgumentException("Embedding vectors must contain finite values.", nameof(vector)); }
             norm += (double)value * value; BinaryPrimitives.WriteSingleLittleEndian(payload.AsSpan(i * 4, 4), value);
         }
-        if (norm == 0) { throw new ArgumentException("Cosine embeddings require a nonzero norm.", nameof(vector)); } return payload;
+        if (norm == 0) { throw new ArgumentException("Cosine embeddings require a nonzero norm.", nameof(vector)); }
+        return payload;
     }
     private ReadOnlyMemory<float> Decode(byte[] payload)
     {

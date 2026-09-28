@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using BlueTusk.Search.OpenSearch;
 using BlueTusk.Data;
+using BlueTusk.Search.OpenSearch;
 
 namespace BlueTusk.Search.Tests;
 
@@ -241,7 +241,10 @@ public sealed class OpenSearchStoreTests
         var embeddings = new Embeddings();
         await using var store = new OpenSearchStore(http, new OpenSearchStoreOptions
         {
-            Endpoint = new Uri(endpoint), IndexName = index, Replicas = 0, VectorDimensions = 3,
+            Endpoint = new Uri(endpoint),
+            IndexName = index,
+            Replicas = 0,
+            VectorDimensions = 3,
             Limits = new SearchStoreOptions { MaxChunkCharacters = 128, ChunkOverlapCharacters = 8 },
         }, embeddings);
         try

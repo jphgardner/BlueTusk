@@ -1,9 +1,11 @@
+#if NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
+#endif
+using System.Globalization;
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace BlueTusk.Sql.SourceGeneration;

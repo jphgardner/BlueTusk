@@ -1,10 +1,8 @@
-using BlueTusk.Data;
-using BlueTusk.Replication;
-using BlueTusk.Streams;
-using BlueTusk.TypeSystem;
 using BlueTusk.Live;
 using BlueTusk.Live.Testing;
 using BlueTusk.Projections.Live;
+using BlueTusk.Replication;
+using BlueTusk.Streams;
 
 namespace BlueTusk.Projections.Tests;
 

@@ -24,8 +24,11 @@ internal sealed class WorkflowDatabase : IAsyncDisposable
     {
         Jobs = new JobWorkerOptions
         {
-            Concurrency = 4, PollInterval = TimeSpan.FromMilliseconds(10), LeaseDuration = TimeSpan.FromSeconds(10),
-            HeartbeatInterval = TimeSpan.FromMilliseconds(100), DispatchRecurringSchedules = false,
+            Concurrency = 4,
+            PollInterval = TimeSpan.FromMilliseconds(10),
+            LeaseDuration = TimeSpan.FromSeconds(10),
+            HeartbeatInterval = TimeSpan.FromMilliseconds(100),
+            DispatchRecurringSchedules = false,
             RetryPolicy = new JobRetryPolicy { InitialDelay = TimeSpan.FromMilliseconds(10), MaximumDelay = TimeSpan.FromMilliseconds(10), JitterFraction = 0 },
         },
         RecoveryInterval = TimeSpan.FromMilliseconds(20),
@@ -63,7 +66,11 @@ internal sealed class WorkflowDatabase : IAsyncDisposable
 
     internal WorkflowStartRequest Request(string? dedup = null) => new()
     {
-        Scope = Scope, Definition = "test", Version = 1, Input = new byte[] { 42 }, DeduplicationKey = dedup,
+        Scope = Scope,
+        Definition = "test",
+        Version = 1,
+        Input = new byte[] { 42 },
+        DeduplicationKey = dedup,
     };
 
     internal async Task ExecuteAsync(string sql)

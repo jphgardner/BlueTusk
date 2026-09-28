@@ -5,7 +5,6 @@ using BlueTusk.Live.DependencyInjection;
 using BlueTusk.Live.Testing;
 using BlueTusk.Projections.Live;
 using BlueTusk.Streams;
-using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Projections.Tests;
 

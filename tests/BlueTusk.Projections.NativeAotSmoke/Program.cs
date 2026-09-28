@@ -1,14 +1,14 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using BlueTusk.Data;
+using BlueTusk.Live;
 using BlueTusk.Projections;
+using BlueTusk.Projections.Live;
 using BlueTusk.Projections.Tests;
+using BlueTusk.Replication;
 using BlueTusk.Streams;
 using BlueTusk.TypeSystem;
-using BlueTusk.Live;
-using BlueTusk.Projections.Live;
-using System.Text.Json.Serialization;
-using BlueTusk.Replication;
 
 var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING") ??
     throw new InvalidOperationException("BLUETUSK_TEST_CONNECTION_STRING is required for the native projection smoke.");
@@ -113,7 +113,9 @@ try
     var recoveryConsumer = new StreamsProjectionConsumer(store, recoveryLease, new OrdersProjection(recoveryIdentity));
     var recoverySnapshots = new PostgreSqlConsistentSnapshotSource(dataSource, new()
     {
-        Source = recoverySource, PublicationNames = [publication], MaximumBatchRows = 17,
+        Source = recoverySource,
+        PublicationNames = [publication],
+        MaximumBatchRows = 17,
         Tables = recoveryEvidence.Lineage.Tables.Select(static table => new PostgreSqlSnapshotTable(table, table.Columns.Where(static column => column.IsKey).Select(static column => column.Ordinal))).ToArray()
     });
     await using var recoveryAttempt = await recoverySnapshots.BeginAttemptAsync(null);

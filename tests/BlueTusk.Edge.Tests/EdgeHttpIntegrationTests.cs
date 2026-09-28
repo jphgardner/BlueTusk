@@ -1,8 +1,6 @@
-using System.Net;
 using System.Data.Common;
 using System.Net.Http.Headers;
 using System.Security.Claims;
-using System.Text;
 using System.Text.Encodings.Web;
 using BlueTusk.Data;
 using BlueTusk.Edge.AspNetCore;
@@ -12,7 +10,6 @@ using BlueTusk.Edge.Sqlite;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

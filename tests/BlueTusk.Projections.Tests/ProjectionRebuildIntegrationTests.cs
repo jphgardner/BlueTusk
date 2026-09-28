@@ -106,7 +106,10 @@ public sealed class ProjectionRebuildIntegrationTests
     private static PostgreSqlConsistentSnapshotSource Snapshot(ProjectionDatabase db, ProjectionSourceLineage evidence, string publication) =>
         new(db.DataSource, new PostgreSqlConsistentSnapshotOptions
         {
-            Source = evidence.Source, PublicationNames = [publication], MaximumBatchRows = 1, MaximumParallelTables = 2,
+            Source = evidence.Source,
+            PublicationNames = [publication],
+            MaximumBatchRows = 1,
+            MaximumParallelTables = 2,
             Tables = evidence.Tables.Select(static table => new PostgreSqlSnapshotTable(table, table.Columns.Where(static column => column.IsKey).Select(static column => column.Ordinal))).ToArray()
         });
 

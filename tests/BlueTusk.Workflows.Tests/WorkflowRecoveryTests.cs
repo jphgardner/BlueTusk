@@ -1,5 +1,3 @@
-using BlueTusk.Jobs;
-
 namespace BlueTusk.Workflows.Tests;
 
 public sealed class WorkflowRecoveryTests
@@ -49,7 +47,9 @@ public sealed class WorkflowRecoveryTests
         await using var database = await WorkflowDatabase.CreateAsync();
         await database.Store.RegisterDefinitionAsync(database.Scope, new WorkflowDefinition
         {
-            Name = "test", Version = 1, Nodes = [new() { Id = "a", Kind = WorkflowNodeKind.Activity, Activity = "a" }],
+            Name = "test",
+            Version = 1,
+            Nodes = [new() { Id = "a", Kind = WorkflowNodeKind.Activity, Activity = "a" }],
         });
         var keys = new List<WorkflowKey>();
         for (int index = 0; index < 8; index++)

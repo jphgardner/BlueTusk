@@ -53,10 +53,14 @@ public sealed class EdgeServerHealthCheck : IHealthCheck
             var state = await operation.WaitAsync(deadline.Token).ConfigureAwait(false);
             var data = new Dictionary<string, object>(StringComparer.Ordinal)
             {
-                ["head_position"] = state.HeadPosition, ["replay_floor"] = state.ReplayFloor,
-                ["record_count"] = state.RecordCount, ["record_bytes"] = state.RecordBytes,
-                ["receipt_count"] = state.ReceiptCount, ["change_count"] = state.ChangeCount,
-                ["change_bytes"] = state.ChangeBytes, ["active_snapshots"] = state.ActiveSnapshots,
+                ["head_position"] = state.HeadPosition,
+                ["replay_floor"] = state.ReplayFloor,
+                ["record_count"] = state.RecordCount,
+                ["record_bytes"] = state.RecordBytes,
+                ["receipt_count"] = state.ReceiptCount,
+                ["change_count"] = state.ChangeCount,
+                ["change_bytes"] = state.ChangeBytes,
+                ["active_snapshots"] = state.ActiveSnapshots,
             };
             return Observe(state.MutationCapacityReached ? HealthCheckResult.Degraded("edge_mutation_capacity_reached", data: data)
                 : state.SnapshotCapacityReached ? HealthCheckResult.Degraded("edge_snapshot_capacity_reached", data: data)

@@ -176,40 +176,40 @@ public sealed partial class PostgreSqlWorkflowStore
     private async ValueTask<bool> FinishCoreAsync(BlueTuskConnection connection, BlueTuskTransaction transaction,
         WorkflowKey key, JobLease lease, WorkflowDispatch dispatch, byte[] ownedResult, CancellationToken token)
     {
-            var snapshot = await SnapshotAsync(connection, transaction, key, locked: true, token).ConfigureAwait(false);
-            if (snapshot is null || snapshot.Status is WorkflowStatus.Succeeded or WorkflowStatus.Failed or WorkflowStatus.Canceled ||
-                !await ReserveHistoryAsync(connection, transaction, key, token).ConfigureAwait(false))
-            {
-                return false;
-            }
+        var snapshot = await SnapshotAsync(connection, transaction, key, locked: true, token).ConfigureAwait(false);
+        if (snapshot is null || snapshot.Status is WorkflowStatus.Succeeded or WorkflowStatus.Failed or WorkflowStatus.Canceled ||
+            !await ReserveHistoryAsync(connection, transaction, key, token).ConfigureAwait(false))
+        {
+            return false;
+        }
 
-            var state = await NodeAsync(connection, transaction, key, dispatch.NodeId, token).ConfigureAwait(false);
-            if (!Matches(state, lease, dispatch.Compensation))
-            {
-                return false;
-            }
+        var state = await NodeAsync(connection, transaction, key, dispatch.NodeId, token).ConfigureAwait(false);
+        if (!Matches(state, lease, dispatch.Compensation))
+        {
+            return false;
+        }
 
-            var definition = await DefinitionAsync(connection, transaction, key.Scope, snapshot.Definition, snapshot.Version, token).ConfigureAwait(false);
-            if (dispatch.Compensation)
+        var definition = await DefinitionAsync(connection, transaction, key.Scope, snapshot.Definition, snapshot.Version, token).ConfigureAwait(false);
+        if (dispatch.Compensation)
+        {
+            await UpdateNodeStateAsync(connection, transaction, key, dispatch.NodeId, WorkflowNodeStatus.Compensated, token).ConfigureAwait(false);
+            _ = await AppendAsync(connection, transaction, key, "compensation_completed", dispatch.NodeId, code: null, token).ConfigureAwait(false);
+            await ScheduleCompensationAsync(connection, transaction, key, definition, token).ConfigureAwait(false);
+        }
+        else
+        {
+            await CompleteNodeAsync(connection, transaction, key, dispatch.NodeId, ownedResult, "activity_completed", token).ConfigureAwait(false);
+            if (snapshot.Status == WorkflowStatus.Compensating)
             {
-                await UpdateNodeStateAsync(connection, transaction, key, dispatch.NodeId, WorkflowNodeStatus.Compensated, token).ConfigureAwait(false);
-                _ = await AppendAsync(connection, transaction, key, "compensation_completed", dispatch.NodeId, code: null, token).ConfigureAwait(false);
                 await ScheduleCompensationAsync(connection, transaction, key, definition, token).ConfigureAwait(false);
             }
             else
             {
-                await CompleteNodeAsync(connection, transaction, key, dispatch.NodeId, ownedResult, "activity_completed", token).ConfigureAwait(false);
-                if (snapshot.Status == WorkflowStatus.Compensating)
-                {
-                    await ScheduleCompensationAsync(connection, transaction, key, definition, token).ConfigureAwait(false);
-                }
-                else
-                {
-                    await AdvanceAsync(connection, transaction, key, definition, token).ConfigureAwait(false);
-                }
+                await AdvanceAsync(connection, transaction, key, definition, token).ConfigureAwait(false);
             }
+        }
 
-            return true;
+        return true;
     }
 
     internal async ValueTask RecordFailureAsync(JobLease lease, WorkflowDispatch dispatch, string failureCode, bool retryable, CancellationToken cancellationToken)

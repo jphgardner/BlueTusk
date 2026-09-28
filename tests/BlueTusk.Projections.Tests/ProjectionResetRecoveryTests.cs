@@ -1,6 +1,5 @@
 using System.Globalization;
 using BlueTusk.Streams;
-using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Projections.Tests;
 
