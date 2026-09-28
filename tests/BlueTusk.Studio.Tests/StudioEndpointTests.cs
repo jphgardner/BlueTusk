@@ -130,7 +130,7 @@ public sealed class StudioEndpointTests
         client.DefaultRequestHeaders.Add(session.RootElement.GetProperty("header").GetString()!, session.RootElement.GetProperty("token").GetString());
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("query", new { Sql = "SELECT 1" }, TestContext.Current.CancellationToken)).StatusCode);
         Assert.Empty(audit.Records);
-        var operation = Guid.NewGuid();
+        var operation = Guid.CreateVersion7();
         var query = await client.PostAsJsonAsync("query", new { Sql = "SELECT '<script>unsafe</script>'::text AS value", OperationId = operation }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, query.StatusCode);
         Assert.Equal(operation.ToString("D"), query.Headers.GetValues("X-BlueTusk-Studio-Operation-Id").Single());
@@ -141,7 +141,7 @@ public sealed class StudioEndpointTests
         Assert.Equal("completed", audit.Records[1].Outcome);
         Assert.All(audit.Records, record => Assert.Equal(64, record.QueryFingerprint.Length));
         Assert.All(audit.Records, record => Assert.Equal("fixture-database", record.ScopeId));
-        var invalid = await client.PostAsJsonAsync("query", new { Sql = "SELECT 1; COMMIT; DELETE FROM forbidden", OperationId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
+        var invalid = await client.PostAsJsonAsync("query", new { Sql = "SELECT 1; COMMIT; DELETE FROM forbidden", OperationId = Guid.CreateVersion7() }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
         Assert.DoesNotContain("forbidden", await invalid.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
         await app.StopAsync(TestContext.Current.CancellationToken);
@@ -179,11 +179,11 @@ public sealed class StudioEndpointTests
         client.DefaultRequestHeaders.Add("X-Fixture-User", "operator");
         using var session = JsonDocument.Parse(await client.GetStringAsync("session", TestContext.Current.CancellationToken));
         client.DefaultRequestHeaders.Add(session.RootElement.GetProperty("header").GetString()!, session.RootElement.GetProperty("token").GetString());
-        var first = client.PostAsJsonAsync("query", new { Sql = "SELECT 1", OperationId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
+        var first = client.PostAsJsonAsync("query", new { Sql = "SELECT 1", OperationId = Guid.CreateVersion7() }, TestContext.Current.CancellationToken);
         try
         {
             await audit.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-            var rejected = await client.PostAsJsonAsync("query", new { Sql = "SELECT 2", OperationId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
+            var rejected = await client.PostAsJsonAsync("query", new { Sql = "SELECT 2", OperationId = Guid.CreateVersion7() }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
             Assert.Equal(HttpStatusCode.TooManyRequests, (await client.GetAsync("schema", TestContext.Current.CancellationToken)).StatusCode);
             Assert.Equal(1, audit.Attempts);
@@ -224,7 +224,7 @@ public sealed class StudioEndpointTests
         client.DefaultRequestHeaders.Add("X-Fixture-User", "operator");
         using var session = JsonDocument.Parse(await client.GetStringAsync("session", TestContext.Current.CancellationToken));
         client.DefaultRequestHeaders.Add(session.RootElement.GetProperty("header").GetString()!, session.RootElement.GetProperty("token").GetString());
-        Assert.Equal(expected, (await client.PostAsJsonAsync("query", new { Sql = "SELECT 1", OperationId = Guid.NewGuid() },
+        Assert.Equal(expected, (await client.PostAsJsonAsync("query", new { Sql = "SELECT 1", OperationId = Guid.CreateVersion7() },
             TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(expected, (await client.GetAsync("schema", TestContext.Current.CancellationToken)).StatusCode);
         Assert.Empty(audit.Records);

@@ -5,13 +5,19 @@ BlueTusk.Studio.IStudioDistributedAdmission
 BlueTusk.Studio.IStudioDistributedAdmission.TryAcquireAsync(string! scopeId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.IAsyncDisposable?>
 BlueTusk.Studio.IStudioScopeResolver
 BlueTusk.Studio.IStudioScopeResolver.ResolveAsync(System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Studio.StudioDatabaseScope!>
+BlueTusk.Studio.PostgreSqlStudioAuditSink.ConfirmArchivedHorizonAsync(System.DateTimeOffset through, string! archiveReference, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Studio.PostgreSqlStudioAuditSink.ConfirmLegacyArchiveAsync(string! archiveReference, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Studio.PostgreSqlStudioAuditSink
 BlueTusk.Studio.PostgreSqlStudioAuditSink.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Studio.PostgreSqlStudioAuditSink.PostgreSqlStudioAuditSink(System.Data.Common.DbDataSource! dataSource, string! schema = "bluetusk_studio", int commandTimeoutSeconds = 10) -> void
+BlueTusk.Studio.PostgreSqlStudioAuditSink.PruneArchivedAsync(int maximumRows = 1000, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
 BlueTusk.Studio.PostgreSqlStudioAuditSink.RecordAsync(BlueTusk.Studio.StudioAuditRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Studio.PostgreSqlStudioAuditSink.SealRetentionHorizonAsync(System.DateTimeOffset through, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Studio.PostgreSqlStudioAdmission
 BlueTusk.Studio.PostgreSqlStudioAdmission.PostgreSqlStudioAdmission(System.Data.Common.DbDataSource! dataSource, string! admissionNamespace, int maximumConcurrentOperations, int maximumConcurrentPerScope, int commandTimeoutSeconds = 10) -> void
 BlueTusk.Studio.PostgreSqlStudioAdmission.TryAcquireAsync(string! scopeId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.IAsyncDisposable?>
+BlueTusk.Studio.StudioAuditHorizonException
+BlueTusk.Studio.StudioAuditHorizonException.StudioAuditHorizonException() -> void
 BlueTusk.Studio.StudioAuditRecord
 BlueTusk.Studio.StudioAuditRecord.<Clone>$() -> BlueTusk.Studio.StudioAuditRecord!
 BlueTusk.Studio.StudioAuditRecord.ActorId.get -> string!

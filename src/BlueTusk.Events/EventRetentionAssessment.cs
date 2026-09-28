@@ -67,7 +67,7 @@ public sealed partial class PostgreSqlEventStore
             $"SELECT version FROM {_schema}.schema_version WHERE singleton"))
         {
             var version = await versionCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-            if (version is null or DBNull || Convert.ToInt32(version, CultureInfo.InvariantCulture) != 2)
+            if (version is null or DBNull || Convert.ToInt32(version, CultureInfo.InvariantCulture) != 4)
             {
                 throw new InvalidOperationException("The Events retention schema version is not supported.");
             }

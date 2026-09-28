@@ -207,6 +207,28 @@ public sealed class EdgeHttpIntegrationTests
         Assert.Equal(0, (await fixture.Store.ReadHealthAsync(fixture.Scope)).ReceiptBytes);
     });
 
+    [Fact]
+    public Task HTTP_ordered_horizon_reclaims_a_confirmed_receipt_without_reapplying_it() => WithFixtureAsync(async fixture =>
+    {
+        var stream = EdgeOrderedMutationId.NewStreamId();
+        var id = EdgeOrderedMutationId.Create(stream, 1);
+        var mutation = new EdgeMutation(fixture.Scope, id, "ordered", 0, EdgeMutationKind.Upsert, "{}"u8.ToArray());
+        var gap = new EdgeMutation(fixture.Scope, EdgeOrderedMutationId.Create(stream, 2), "gap", 0, EdgeMutationKind.Upsert, "{}"u8.ToArray());
+        await using var host = await Host.StartAsync(fixture.Store);
+        using var client = Client(); using var remote = new HttpEdgeRemoteTransport(client, host.Endpoint);
+        var missingPrefix = await Assert.ThrowsAsync<EdgeHttpTransportException>(async () => await remote.ApplyMutationAsync(gap));
+        Assert.Equal(409, missingPrefix.StatusCode);
+        _ = await remote.ApplyMutationAsync(mutation);
+        var early = await Assert.ThrowsAsync<EdgeHttpTransportException>(async () => await remote.AdvanceOrderedReceiptHorizonAsync(fixture.Scope, id));
+        Assert.Equal(409, early.StatusCode);
+        await remote.FinalizeMutationReceiptAsync(mutation);
+        await remote.AdvanceOrderedReceiptHorizonAsync(fixture.Scope, id);
+        await remote.AdvanceOrderedReceiptHorizonAsync(fixture.Scope, id);
+        Assert.Equal(0, (await fixture.Store.ReadHealthAsync(fixture.Scope)).ReceiptCount);
+        var late = await Assert.ThrowsAsync<EdgeHttpTransportException>(async () => await remote.ApplyMutationAsync(mutation));
+        Assert.Equal(410, late.StatusCode);
+    });
+
     private static HttpClient Client()
     {
         var client = new HttpClient(); client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "tenant-reader"); return client;

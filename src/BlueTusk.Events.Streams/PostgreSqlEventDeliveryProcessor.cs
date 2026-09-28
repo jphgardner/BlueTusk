@@ -13,6 +13,9 @@ public sealed class EventStreamsDeliveryOptions
 
 public sealed record EventStreamsDeliveryResult(int OutboxEvents, int HandledEvents);
 
+/// <summary>Explicit target incarnation and source lineage for durable published-retention ACKs.</summary>
+public sealed record EventPublishedRetentionTargetOptions(Guid TargetIncarnation, EventPublishedSourceIdentity Source);
+
 /// <summary>
 /// Commit a complete source transaction's business events and target inbox effects, then acknowledge
 /// its Streams delivery. Streams owns source checkpointing; the target inbox makes redelivery idempotent.
@@ -25,10 +28,19 @@ public sealed class PostgreSqlEventDeliveryProcessor
     private readonly string _consumerId;
     private readonly EventStreamsDeliveryOptions _options;
     private readonly ChangeSourceIdentity _source;
+    private readonly EventPublishedRetentionTargetOptions? _protectedRetention;
+    private readonly EventPublishedRetentionChangeDecoder _retentionDecoder;
 
     public PostgreSqlEventDeliveryProcessor(DbDataSource targetDataSource, PostgreSqlEventStore inbox,
         EventOutboxChangeDecoder decoder, string consumerId, ChangeSourceIdentity source,
         EventStreamsDeliveryOptions? options = null)
+        : this(targetDataSource, inbox, decoder, consumerId, source, options, null)
+    {
+    }
+
+    public PostgreSqlEventDeliveryProcessor(DbDataSource targetDataSource, PostgreSqlEventStore inbox,
+        EventOutboxChangeDecoder decoder, string consumerId, ChangeSourceIdentity source,
+        EventStreamsDeliveryOptions? options, EventPublishedRetentionTargetOptions? protectedRetention)
     {
         ArgumentNullException.ThrowIfNull(targetDataSource);
         ArgumentNullException.ThrowIfNull(inbox);
@@ -51,6 +63,16 @@ public sealed class PostgreSqlEventDeliveryProcessor
         _decoder = decoder;
         _consumerId = consumerId;
         _source = source;
+        if (protectedRetention is not null &&
+            (protectedRetention.TargetIncarnation == Guid.Empty || protectedRetention.Source is null ||
+             protectedRetention.Source.SystemIdentifier != source.SystemIdentifier ||
+             protectedRetention.Source.DatabaseName != source.DatabaseName ||
+             protectedRetention.Source.SlotName != source.SlotName))
+        {
+            throw new ArgumentException("Protected retention must bind this ordered source and a target incarnation.", nameof(protectedRetention));
+        }
+        _protectedRetention = protectedRetention;
+        _retentionDecoder = new EventPublishedRetentionChangeDecoder(decoder.Schema);
     }
 
     public async ValueTask<EventStreamsDeliveryResult> ProcessAsync(ChangeTransactionDelivery delivery,
@@ -73,6 +95,7 @@ public sealed class PostgreSqlEventDeliveryProcessor
         var events = new List<StoredEvent>();
         var positions = new Dictionary<EventStreamKey, long>();
         var identities = new HashSet<(string Tenant, Guid Identity)>();
+        PublishedRetentionControl? control = null;
         long bytes = 0;
         var ordinal = 0;
         await foreach (var change in transaction.Changes.WithCancellation(cancellationToken).ConfigureAwait(false))
@@ -87,6 +110,16 @@ public sealed class PostgreSqlEventDeliveryProcessor
                 ordinal > _options.MaximumSourceChanges)
             {
                 throw new InvalidOperationException("Event source changes did not retain their ordered transaction identity.");
+            }
+
+            if (_retentionDecoder.TryDecode(change, out var decodedControl))
+            {
+                if (_protectedRetention is null || control is not null || decodedControl.Source != _protectedRetention.Source)
+                {
+                    throw new InvalidOperationException("The ordered retention control has no matching protected target or is duplicated.");
+                }
+                control = decodedControl;
+                continue;
             }
 
             if (!_decoder.TryDecode(change, out var value))
@@ -114,18 +147,36 @@ public sealed class PostgreSqlEventDeliveryProcessor
         {
             throw new InvalidOperationException("Event source changes did not match the declared change count.");
         }
+        if (control is not null && ordinal != 1)
+        {
+            throw new InvalidOperationException("A retention intent must be the only raw change in its ordered source transaction.");
+        }
 
         var handled = 0;
-        if (events.Count > 0)
+        if (events.Count > 0 || _protectedRetention is not null)
         {
             await using var connection = await _targetDataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
             await using var targetTransaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken).ConfigureAwait(false);
+            if (_protectedRetention is not null)
+            {
+                await _inbox.LockPublishedRetentionDeliveryAsync(connection, targetTransaction, _consumerId,
+                    _protectedRetention.TargetIncarnation, _protectedRetention.Source,
+                    transaction.CommitEndPosition.Value, transaction.TransactionId, control,
+                    cancellationToken).ConfigureAwait(false);
+            }
             foreach (var value in events)
             {
                 if (await _inbox.ProcessInboxAsync(connection, targetTransaction, _consumerId, value, handler, cancellationToken).ConfigureAwait(false))
                 {
                     handled++;
                 }
+            }
+
+            if (control is not null)
+            {
+                await _inbox.AcknowledgePublishedRetentionControlAsync(connection, targetTransaction, _consumerId,
+                    _protectedRetention!.TargetIncarnation, _protectedRetention.Source,
+                    transaction.CommitEndPosition.Value, control, cancellationToken).ConfigureAwait(false);
             }
 
             await targetTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);

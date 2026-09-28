@@ -149,7 +149,7 @@ public static class StudioControlPlaneEndpoints
             deadline.CancelAfter(TimeSpan.FromSeconds(options.TimeoutSeconds));
             var bytes = await ReadAsync(context.Request, Math.Min(studio.MaximumRequestBytes, 16 * 1024), deadline.Token).ConfigureAwait(false);
             var request = JsonSerializer.Deserialize(bytes, StudioControlPlaneJsonContext.Default.StudioReplayRequest) ?? throw new JsonException();
-            if (request.OperationId == Guid.Empty || !Alias(request.Target) || string.IsNullOrWhiteSpace(request.Reason) ||
+            if (request.OperationId.Version != 7 || !Alias(request.Target) || string.IsNullOrWhiteSpace(request.Reason) ||
                 request.Reason.Length > 2048 || request.Confirmation != "ReplayQuarantine:" + request.Target)
             {
                 throw new ArgumentException("Invalid replay request.");
@@ -212,6 +212,7 @@ public static class StudioControlPlaneEndpoints
     private static void Failure(HttpContext context, Exception exception) => context.Response.StatusCode = exception switch
     {
         ControlPlaneAuthorizationException or UnauthorizedAccessException => StatusCodes.Status403Forbidden,
+        StudioAuditHorizonException => StatusCodes.Status409Conflict,
         ArgumentException or JsonException or ControlPlaneConfirmationException => StatusCodes.Status400BadRequest,
         StudioReplyLimitException => StatusCodes.Status413PayloadTooLarge,
         OperationCanceledException => StatusCodes.Status408RequestTimeout,

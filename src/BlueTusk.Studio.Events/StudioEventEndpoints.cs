@@ -120,7 +120,7 @@ public static class StudioEventEndpoints
                 var limit = options.MaximumEvents;
                 if (context.Request.Query.TryGetValue("limit", out var requested) && (!int.TryParse(requested, NumberStyles.None, CultureInfo.InvariantCulture, out limit) ||
                     limit < 1 || limit > options.MaximumEvents)) { throw new ArgumentException("Invalid event count."); }
-                var operation = Guid.NewGuid();
+                var operation = Guid.CreateVersion7();
                 var actor = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");
                 if (string.IsNullOrWhiteSpace(actor)) { throw new UnauthorizedAccessException("A stable Studio audit actor is required."); }
                 var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("events:" + alias + ":" + after.ToString(CultureInfo.InvariantCulture))));
@@ -159,6 +159,7 @@ public static class StudioEventEndpoints
             context.Response.StatusCode = exception switch
             {
                 UnauthorizedAccessException => StatusCodes.Status403Forbidden,
+                StudioAuditHorizonException => StatusCodes.Status409Conflict,
                 ArgumentException => StatusCodes.Status400BadRequest,
                 StudioReplyLimitException => StatusCodes.Status413PayloadTooLarge,
                 OperationCanceledException => StatusCodes.Status408RequestTimeout,

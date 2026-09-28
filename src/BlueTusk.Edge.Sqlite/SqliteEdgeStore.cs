@@ -8,7 +8,7 @@ namespace BlueTusk.Edge.Sqlite;
 /// <summary>File-backed SQLite cache and durable write queue. Every state transition uses one immediate transaction.</summary>
 public sealed partial class SqliteEdgeStore : IEdgeLocalStore
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
     private readonly string _connectionString;
 
     public SqliteEdgeStore(SqliteEdgeOptions options)
@@ -45,7 +45,7 @@ public sealed partial class SqliteEdgeStore : IEdgeLocalStore
         }
 
         using var transaction = connection.BeginTransaction(deferred: false);
-        await using (var metadata = Command(connection, transaction, "CREATE TABLE IF NOT EXISTS schema_metadata(singleton INTEGER PRIMARY KEY CHECK(singleton=1),version INTEGER NOT NULL); INSERT OR IGNORE INTO schema_metadata VALUES(1,2)"))
+        await using (var metadata = Command(connection, transaction, "CREATE TABLE IF NOT EXISTS schema_metadata(singleton INTEGER PRIMARY KEY CHECK(singleton=1),version INTEGER NOT NULL); INSERT OR IGNORE INTO schema_metadata VALUES(1,3)"))
         {
             _ = await metadata.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -86,7 +86,18 @@ public sealed partial class SqliteEdgeStore : IEdgeLocalStore
                 fingerprint TEXT NOT NULL,outcome INTEGER NOT NULL,outcome_fingerprint TEXT NOT NULL,
                 recorded_at INTEGER NOT NULL,resolved_by TEXT,PRIMARY KEY(tenant,scope_id,epoch,mutation_id));
             CREATE INDEX IF NOT EXISTS receipts_age ON receipts(recorded_at);
-            UPDATE schema_metadata SET version=2 WHERE singleton=1;
+            CREATE TABLE IF NOT EXISTS ordered_streams (
+                tenant TEXT NOT NULL,scope_id TEXT NOT NULL,epoch INTEGER NOT NULL,stream_id TEXT NOT NULL,
+                next_sequence INTEGER NOT NULL CHECK(next_sequence>0),horizon INTEGER NOT NULL DEFAULT 0 CHECK(horizon>=0),
+                PRIMARY KEY(tenant,scope_id,epoch));
+            CREATE TABLE IF NOT EXISTS ordered_confirmations (
+                tenant TEXT NOT NULL,scope_id TEXT NOT NULL,epoch INTEGER NOT NULL,stream_id TEXT NOT NULL,
+                sequence INTEGER NOT NULL,mutation_id TEXT NOT NULL,document_id TEXT NOT NULL,
+                expected_revision INTEGER NOT NULL,kind INTEGER NOT NULL,payload BLOB NOT NULL,
+                fingerprint TEXT NOT NULL,confirmed INTEGER NOT NULL DEFAULT 0 CHECK(confirmed IN(0,1)),
+                PRIMARY KEY(tenant,scope_id,epoch,stream_id,sequence),UNIQUE(tenant,scope_id,epoch,mutation_id));
+            CREATE INDEX IF NOT EXISTS ordered_confirmations_next ON ordered_confirmations(tenant,scope_id,epoch,stream_id,confirmed,sequence);
+            UPDATE schema_metadata SET version=3 WHERE singleton=1;
             """))
         {
             _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -147,7 +158,7 @@ public sealed partial class SqliteEdgeStore : IEdgeLocalStore
                 }
             }
 
-            foreach (var table in new[] { "records", "snapshot_records", "mutations", "receipts" })
+            foreach (var table in new[] { "records", "snapshot_records", "mutations", "receipts", "ordered_confirmations", "ordered_streams" })
             {
                 await using var command = Command(connection, transaction, $"DELETE FROM {table} WHERE tenant=@tenant AND scope_id=@scope");
                 ScopeParameters(command, scope, includeEpoch: false);

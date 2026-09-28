@@ -69,6 +69,68 @@ skipped because another transaction held a lock or changed the keyspace.
 Deletion is safe against a concurrent attachment; ordinary PostgreSQL vacuum
 may reuse freed space without shrinking a relation.
 
+Existing collections with large bytes encoded inside JSONB can move them in
+explicit, bounded pages. Give the smaller typed body a **new schema version**
+and supply a deterministic extraction callback:
+
+```csharp
+var compactOrders = new DocumentCollectionDefinition<Order>(
+    "orders", OrderJsonContext.Default.Order, schemaVersion: 2);
+var move = new DocumentInlineContentMigration<Order>(1, 2, oldJson =>
+    new DocumentInlineContentResult<Order>(
+        ExtractSmallOrder(oldJson),
+        Convert.FromBase64String(oldJson.GetProperty("payloadBase64").GetString()!)));
+string? afterId = null;
+do
+{
+    var page = await store.MigrateInlineContentPageAsync(
+        "customer-a", compactOrders, move, pageSize: 100, afterId: afterId);
+    afterId = page.NextAfterId;
+} while (afterId is not null);
+```
+
+`ExtractSmallOrder` is application code that preserves the fields needed by
+the new typed schema and removes the inline bytes. There is no automatic
+extraction and no schema-version guess. The callback must have no external
+side effects: it can run again after a conflict or restart, receives a JSON
+element valid only during the callback, and the store copies the returned
+content bytes before awaiting. Each page reads source-version rows in ID
+keyset order, materializing at most one source JSONB body per query. The stored
+`MaxDocumentBytes` constraint bounds that one server-side conversion; a row
+that exceeds the remaining input budget is not sent to the client or passed
+to the callback. Input JSON is capped by `MaxPageBytes`; the sum of staged
+output body and content bytes is capped by `min(MaxPageBytes, MaxSessionBytes)`.
+An oversized first row fails explicitly. A full page uses a key-only probe to
+determine whether another source-version row exists. This deliberately uses
+one database round trip per candidate row, trading scan throughput for a hard
+per-query body-work bound even when `pageSize` is large.
+
+The store checks that no attachment link already exists, then updates the
+typed JSONB body, schema version and revision with a compare-and-swap and
+inserts the verified content digest/link in **one page transaction**. A
+competing write, digest mismatch or preexisting link rolls back the whole
+page. Retry the same `afterId` after inspecting a conflict. If commit succeeds
+but the caller loses the response, replaying that cursor skips committed rows
+because they no longer have the source version. A null cursor ends one sweep;
+start a new sweep at null to find rows inserted or changed to the source
+version behind an earlier cursor. Gate old-version writers and repeat full
+sweeps from null before declaring the migration complete. The cursor is not a snapshot or durable
+checkpoint and must be stored by the operator only after a confirmed page
+response. An uncertain commit can also be reconciled by reading document
+versions and attachments before resuming. Existing linked source-version
+rows require manual reconciliation and are deliberately rejected rather than
+having their attachment overwritten.
+
+This moves future small metadata updates off the large JSONB value; it does
+not immediately reduce PostgreSQL relation files or historical WAL. Plan
+vacuum/repack and backup retention separately after verification. The
+document-table update remains visible to typed Streams/Live consumers as a
+new revision and schema version. Attached bytes are outside the JSONB change
+image, so downstream consumers must explicitly load or replicate content
+and handle the version transition; publishing the documents table alone does
+not transport the attachment. Migration is operator-invoked and never runs
+automatically in request handling.
+
 The attachment is **not** part of the JSONB body: containment indexes, typed
 pages, Streams and Live continue to describe that body alone. Applications must
 read and authorize attached bytes explicitly. Initial document insertion and

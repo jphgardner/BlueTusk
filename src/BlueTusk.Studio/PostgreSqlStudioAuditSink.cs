@@ -70,7 +70,7 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
                     throw new InvalidOperationException("The durable Studio audit version changed during its upgrade.");
                 }
             }
-            else if (version != 2)
+            else if (version is not 2 and not 3)
             {
                 throw new InvalidOperationException("Unsupported durable Studio audit version.");
             }
@@ -88,6 +88,72 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
             {
                 throw new InvalidOperationException("The durable Studio audit scope column differs from storage version 2.");
             }
+            command.Parameters.Clear();
+            if (version == 2 || version == 1)
+            {
+                // An exclusive table lock drains old v2 INSERT statements before the
+                // version changes. Later v2 writers see version 3 and fail closed.
+                command.CommandText = $"LOCK TABLE {_schema}.studio_audit IN ACCESS EXCLUSIVE MODE";
+                _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                command.CommandText = $"ALTER TABLE {_schema}.studio_audit ADD COLUMN operation_time_ms bigint";
+                _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                command.CommandText = $"ALTER TABLE {_schema}.studio_audit_version ADD COLUMN sealed_through_ms bigint NOT NULL DEFAULT -1, ADD COLUMN archived_through_ms bigint NOT NULL DEFAULT -1, ADD COLUMN legacy_archived boolean NOT NULL DEFAULT false";
+                _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                command.CommandText = $"CREATE INDEX studio_audit_operation_time ON {_schema}.studio_audit(operation_time_ms, operation_id, outcome) WHERE operation_time_ms IS NOT NULL";
+                _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                command.CommandText = $"UPDATE {_schema}.studio_audit_version SET version=3 WHERE singleton AND version=2";
+                if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+                {
+                    throw new InvalidOperationException("The durable Studio audit version changed during its upgrade.");
+                }
+            }
+            command.CommandText = $"SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute WHERE attrelid=pg_catalog.to_regclass(@table) AND attname='operation_time_ms' AND atttypid=pg_catalog.to_regtype('pg_catalog.int8') AND attnum>0 AND NOT attisdropped)";
+            command.Parameters.Clear();
+            Add(command, "table", _schema + ".studio_audit");
+            if (await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is not true)
+            {
+                throw new InvalidOperationException("The durable Studio audit operation time differs from storage version 3.");
+            }
+            command.CommandText = $"""
+                CREATE TABLE IF NOT EXISTS {_schema}.studio_audit_archives (
+                    archive_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                    kind text NOT NULL CHECK(kind IN ('horizon', 'legacy')),
+                    through_ms bigint,
+                    archive_reference text NOT NULL CHECK(length(archive_reference) BETWEEN 1 AND 512),
+                    confirmed_at timestamptz NOT NULL DEFAULT pg_catalog.clock_timestamp())
+                """;
+            command.Parameters.Clear();
+            _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            // The database fence also covers a caller issuing INSERT directly with the
+            // runtime role. Its row lock serializes every insert with a horizon seal.
+            command.CommandText = $"""
+                CREATE OR REPLACE FUNCTION {_schema}.studio_audit_insert_fence()
+                RETURNS trigger LANGUAGE plpgsql AS $studio$
+                DECLARE storage_version integer; sealed bigint; encoded_time bigint;
+                BEGIN
+                    SELECT version, sealed_through_ms INTO storage_version, sealed
+                    FROM {_schema}.studio_audit_version WHERE singleton FOR SHARE;
+                    IF storage_version IS DISTINCT FROM 3 THEN
+                        RAISE EXCEPTION 'Unsupported durable Studio audit version';
+                    END IF;
+                    IF substring(NEW.operation_id::text FROM 15 FOR 1) <> '7'
+                        OR substring(NEW.operation_id::text FROM 20 FOR 1) NOT IN ('8','9','a','b') THEN
+                        RAISE EXCEPTION 'Studio audit operation ID must be UUIDv7';
+                    END IF;
+                    encoded_time := ('x' || left(replace(NEW.operation_id::text, '-', ''), 12))::bit(48)::bigint;
+                    IF NEW.operation_time_ms IS DISTINCT FROM encoded_time
+                        OR encoded_time <= sealed
+                        OR encoded_time > (extract(epoch FROM pg_catalog.clock_timestamp()) * 1000)::bigint + 300000 THEN
+                        RAISE EXCEPTION 'Studio audit operation ID is outside its writable horizon';
+                    END IF;
+                    RETURN NEW;
+                END;
+                $studio$;
+                CREATE OR REPLACE TRIGGER studio_audit_insert_fence
+                    BEFORE INSERT ON {_schema}.studio_audit FOR EACH ROW
+                    EXECUTE FUNCTION {_schema}.studio_audit_insert_fence()
+                """;
+            _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -106,40 +172,204 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
         {
             throw new ArgumentException("Invalid immutable Studio audit record.", nameof(record));
         }
+        if (!TryOperationTime(record.OperationId, out var operationTime))
+        {
+            throw new ArgumentException("Durable Studio audit operation IDs must be UUIDv7.", nameof(record));
+        }
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (var fence = connection.CreateCommand())
+        {
+            fence.Transaction = transaction;
+            fence.CommandTimeout = _timeout;
+            fence.CommandText = $"SELECT version, sealed_through_ms, (extract(epoch FROM pg_catalog.clock_timestamp()) * 1000)::bigint FROM {_schema}.studio_audit_version WHERE singleton FOR SHARE";
+            await using var reader = await fence.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt32(0) != 3)
+            {
+                throw new InvalidOperationException("Unsupported durable Studio audit version.");
+            }
+            if (operationTime <= reader.GetInt64(1))
+            {
+                throw new StudioAuditHorizonException();
+            }
+            if (operationTime > reader.GetInt64(2) + 300_000)
+            {
+                throw new ArgumentException("The Studio audit operation ID is more than five minutes in the future.", nameof(record));
+            }
+        }
+        await using (var command = connection.CreateCommand())
+        {
+            command.Transaction = transaction;
+            command.CommandTimeout = _timeout;
+            command.CommandText = $"""
+                INSERT INTO {_schema}.studio_audit(operation_id, outcome, actor_id, scope_id, query_fingerprint, returned_rows, operation_time_ms)
+                VALUES(@operation, @outcome, @actor, @scope, @fingerprint, @rows, @operationTime)
+                ON CONFLICT(operation_id, outcome) DO NOTHING
+                RETURNING operation_id
+                """;
+            Add(command, "operation", record.OperationId);
+            Add(command, "outcome", record.Outcome);
+            Add(command, "actor", record.ActorId);
+            Add(command, "scope", record.ScopeId);
+            Add(command, "fingerprint", record.QueryFingerprint);
+            Add(command, "rows", record.ReturnedRows);
+            Add(command, "operationTime", operationTime);
+            if (await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is Guid)
+            {
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return;
+            }
+        }
+        // A new statement sees a concurrent ON CONFLICT winner after it commits.
+        await using (var existing = connection.CreateCommand())
+        {
+            existing.Transaction = transaction;
+            existing.CommandTimeout = _timeout;
+            existing.CommandText = $"SELECT actor_id, scope_id, query_fingerprint, returned_rows, operation_time_ms FROM {_schema}.studio_audit WHERE operation_id=@operation AND outcome=@outcome";
+            Add(existing, "operation", record.OperationId);
+            Add(existing, "outcome", record.Outcome);
+            await using var reader = await existing.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ||
+                reader.GetString(0) != record.ActorId || reader.GetString(1) != record.ScopeId ||
+                reader.GetString(2) != record.QueryFingerprint || reader.GetInt32(3) != record.ReturnedRows ||
+                reader.IsDBNull(4) || reader.GetInt64(4) != operationTime)
+            {
+                throw new InvalidOperationException("A Studio audit operation/outcome identity was reused with different immutable fields.");
+            }
+        }
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static bool TryOperationTime(Guid operationId, out long milliseconds)
+    {
+        var bytes = operationId.ToByteArray(bigEndian: true);
+        if ((bytes[6] >> 4) != 7 || (bytes[8] >> 6) != 2)
+        {
+            milliseconds = 0;
+            return false;
+        }
+        milliseconds = 0;
+        for (var index = 0; index < 6; index++) { milliseconds = (milliseconds << 8) | bytes[index]; }
+        return true;
+    }
+
+    /// <summary>Seal UUIDv7 identities through an operator-chosen UTC instant before exporting the stable audit set.</summary>
+    public async ValueTask SealRetentionHorizonAsync(DateTimeOffset through, CancellationToken cancellationToken = default)
+    {
+        var milliseconds = through.ToUnixTimeMilliseconds();
+        if (milliseconds < 0) { throw new ArgumentOutOfRangeException(nameof(through)); }
         await using var command = _dataSource.CreateCommand($"""
-            INSERT INTO {_schema}.studio_audit(operation_id, outcome, actor_id, scope_id, query_fingerprint, returned_rows)
-            SELECT @operation, @outcome, @actor, @scope, @fingerprint, @rows
-            FROM {_schema}.studio_audit_version WHERE singleton AND version = 2
-            ON CONFLICT(operation_id, outcome) DO NOTHING
-            RETURNING operation_id
+            UPDATE {_schema}.studio_audit_version
+            SET sealed_through_ms=@through
+            WHERE singleton AND version=3 AND @through > sealed_through_ms
+              AND @through <= (extract(epoch FROM pg_catalog.clock_timestamp()) * 1000)::bigint
             """);
         command.CommandTimeout = _timeout;
-        Add(command, "operation", record.OperationId);
-        Add(command, "outcome", record.Outcome);
-        Add(command, "actor", record.ActorId);
-        Add(command, "scope", record.ScopeId);
-        Add(command, "fingerprint", record.QueryFingerprint);
-        Add(command, "rows", record.ReturnedRows);
-        if (await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is Guid) { return; }
-
-        // A separate statement sees a concurrently committed winner of ON CONFLICT,
-        // whereas a same-statement read can still use the earlier snapshot.
-        await using var existing = _dataSource.CreateCommand($"""
-            SELECT a.actor_id, a.scope_id, a.query_fingerprint, a.returned_rows
-            FROM {_schema}.studio_audit_version v
-            JOIN {_schema}.studio_audit a ON a.operation_id = @operation AND a.outcome = @outcome
-            WHERE v.singleton AND v.version = 2
-            """);
-        existing.CommandTimeout = _timeout;
-        Add(existing, "operation", record.OperationId);
-        Add(existing, "outcome", record.Outcome);
-        await using var reader = await existing.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ||
-            reader.GetString(0) != record.ActorId || reader.GetString(1) != record.ScopeId ||
-            reader.GetString(2) != record.QueryFingerprint || reader.GetInt32(3) != record.ReturnedRows)
+        Add(command, "through", milliseconds);
+        if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
         {
-            throw new InvalidOperationException("A Studio audit operation/outcome identity was reused with different immutable fields.");
+            throw new InvalidOperationException("The Studio audit horizon must advance within the current database time and storage version.");
         }
+    }
+
+    /// <summary>Attest that all sealed UUIDv7 audit rows through this horizon are in an independently verified archive.</summary>
+    public ValueTask ConfirmArchivedHorizonAsync(DateTimeOffset through, string archiveReference, CancellationToken cancellationToken = default) =>
+        ConfirmArchiveAsync("horizon", through.ToUnixTimeMilliseconds(), archiveReference, cancellationToken);
+
+    /// <summary>Attest that all pre-v3 audit rows have been exported after the v3 cutover.</summary>
+    public ValueTask ConfirmLegacyArchiveAsync(string archiveReference, CancellationToken cancellationToken = default) =>
+        ConfirmArchiveAsync("legacy", null, archiveReference, cancellationToken);
+
+    private async ValueTask ConfirmArchiveAsync(string kind, long? through, string archiveReference, CancellationToken cancellationToken)
+    {
+        if (through < 0 || string.IsNullOrWhiteSpace(archiveReference) || archiveReference.Length > 512 || archiveReference.Contains('\0', StringComparison.Ordinal))
+        {
+            throw new ArgumentException("A valid archive horizon and external archive reference are required.", nameof(archiveReference));
+        }
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (var update = connection.CreateCommand())
+        {
+            update.Transaction = transaction;
+            update.CommandTimeout = _timeout;
+            update.CommandText = kind == "legacy"
+                ? $"UPDATE {_schema}.studio_audit_version SET legacy_archived=true WHERE singleton AND version=3 AND NOT legacy_archived"
+                : $"UPDATE {_schema}.studio_audit_version SET archived_through_ms=@through WHERE singleton AND version=3 AND @through > archived_through_ms AND @through <= sealed_through_ms";
+            if (through.HasValue) { Add(update, "through", through.Value); }
+            if (await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+            {
+                throw new InvalidOperationException("The Studio audit archive confirmation must advance within its sealed horizon.");
+            }
+        }
+        await using (var insert = connection.CreateCommand())
+        {
+            insert.Transaction = transaction;
+            insert.CommandTimeout = _timeout;
+            insert.CommandText = $"INSERT INTO {_schema}.studio_audit_archives(kind, through_ms, archive_reference) VALUES(@kind, @through, @reference)";
+            Add(insert, "kind", kind);
+            Add(insert, "through", through is { } value ? value : DBNull.Value);
+            Add(insert, "reference", archiveReference);
+            _ = await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Delete at most maximumRows confirmed archived records; repeat until zero is returned.</summary>
+    public async ValueTask<int> PruneArchivedAsync(int maximumRows = 1000, CancellationToken cancellationToken = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumRows, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumRows, 10_000);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        long horizon;
+        bool legacy;
+        await using (var fence = connection.CreateCommand())
+        {
+            fence.Transaction = transaction;
+            fence.CommandTimeout = _timeout;
+            fence.CommandText = $"SELECT version, archived_through_ms, legacy_archived FROM {_schema}.studio_audit_version WHERE singleton FOR SHARE";
+            await using var reader = await fence.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt32(0) != 3)
+            {
+                throw new InvalidOperationException("Unsupported durable Studio audit version.");
+            }
+            horizon = reader.GetInt64(1);
+            legacy = reader.GetBoolean(2);
+        }
+        var deleted = 0;
+        if (legacy)
+        {
+            await using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandTimeout = _timeout;
+            command.CommandText = $"""
+                WITH selected AS (
+                    SELECT ctid FROM {_schema}.studio_audit
+                    WHERE operation_time_ms IS NULL ORDER BY occurred_at, operation_id, outcome
+                    LIMIT @limit FOR UPDATE SKIP LOCKED)
+                DELETE FROM {_schema}.studio_audit a USING selected s WHERE a.ctid=s.ctid
+                """;
+            Add(command, "limit", maximumRows);
+            deleted += await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+        if (deleted < maximumRows && horizon >= 0)
+        {
+            await using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandTimeout = _timeout;
+            command.CommandText = $"""
+                WITH selected AS (
+                    SELECT ctid FROM {_schema}.studio_audit
+                    WHERE operation_time_ms <= @horizon ORDER BY operation_time_ms, operation_id, outcome
+                    LIMIT @limit FOR UPDATE SKIP LOCKED)
+                DELETE FROM {_schema}.studio_audit a USING selected s WHERE a.ctid=s.ctid
+                """;
+            Add(command, "horizon", horizon);
+            Add(command, "limit", maximumRows - deleted);
+            deleted += await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return deleted;
     }
 
     private static void Add(DbCommand command, string name, object value)

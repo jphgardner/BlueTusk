@@ -9,6 +9,15 @@ public sealed record EdgeHttpSnapshotPage(IReadOnlyList<EdgeRecord> Records, str
 /// <summary>All Int64 values are decimal strings, UUIDs are stable strings, and payload bytes are base64 without JSON normalization.</summary>
 public static class EdgeWireCodec
 {
+    public static byte[] SerializeOrderedReceiptHorizon(Guid throughMutationId, int maxReceipts) =>
+        JsonSerializer.SerializeToUtf8Bytes(new WireOrderedReceiptHorizon(throughMutationId.ToString("D"), maxReceipts), EdgeWireJsonContext.Default.WireOrderedReceiptHorizon);
+
+    public static (Guid ThroughMutationId, int MaxReceipts) DeserializeOrderedReceiptHorizon(ReadOnlySpan<byte> bytes)
+    {
+        var value = JsonSerializer.Deserialize(bytes, EdgeWireJsonContext.Default.WireOrderedReceiptHorizon) ?? throw new JsonException("Ordered receipt horizon is missing.");
+        if (value.MaxReceipts is < 1 or > 10_000) { throw new JsonException("Ordered receipt horizon exceeds the bounded row limit."); }
+        return (Guid.ParseExact(value.ThroughId, "D"), value.MaxReceipts);
+    }
     public static byte[] SerializeMutation(EdgeMutation mutation)
     {
         ArgumentNullException.ThrowIfNull(mutation);
@@ -80,10 +89,12 @@ internal sealed record WireOutcome(string Kind, WireRecord? Record);
 internal sealed record WireSnapshot(string Id, string Position);
 internal sealed record WireSnapshotPage(WireRecord[] Records, string? NextAfterId);
 internal sealed record WireChanges(string FromPosition, string ToPosition, WireRecord[] Records);
+internal sealed record WireOrderedReceiptHorizon(string ThroughId, int MaxReceipts);
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(WireMutation))]
 [JsonSerializable(typeof(WireOutcome))]
 [JsonSerializable(typeof(WireSnapshot))]
 [JsonSerializable(typeof(WireSnapshotPage))]
 [JsonSerializable(typeof(WireChanges))]
+[JsonSerializable(typeof(WireOrderedReceiptHorizon))]
 internal sealed partial class EdgeWireJsonContext : JsonSerializerContext;

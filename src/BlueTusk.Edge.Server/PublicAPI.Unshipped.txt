@@ -33,6 +33,8 @@ BlueTusk.Edge.Server.EdgeServerOptions.MaxReceiptBytesPerScope.get -> long
 BlueTusk.Edge.Server.EdgeServerOptions.MaxReceiptBytesPerScope.init -> void
 BlueTusk.Edge.Server.EdgeServerOptions.MaxReceiptsPerScope.get -> int
 BlueTusk.Edge.Server.EdgeServerOptions.MaxReceiptsPerScope.init -> void
+BlueTusk.Edge.Server.EdgeServerOptions.MaxOrderedStreamsPerScope.get -> int
+BlueTusk.Edge.Server.EdgeServerOptions.MaxOrderedStreamsPerScope.init -> void
 BlueTusk.Edge.Server.EdgeServerOptions.MaxRecordBytes.get -> int
 BlueTusk.Edge.Server.EdgeServerOptions.MaxRecordBytes.init -> void
 BlueTusk.Edge.Server.EdgeServerOptions.MaxRecordBytesPerScope.get -> long
@@ -66,6 +68,7 @@ BlueTusk.Edge.Server.EdgeServerSnapshotPage.Records.get -> System.Collections.Ge
 BlueTusk.Edge.Server.EdgeServerSnapshotPage.Records.init -> void
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.ActivateScopeAsync(BlueTusk.Edge.EdgeScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.AdvanceOrderedReceiptHorizonAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid throughMutationId, int maxReceipts = 1000, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.ApplyMutationAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutationOutcome!>
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.ApplyMutationWithBusinessAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Func<System.Data.Common.DbConnection!, System.Data.Common.DbTransaction!, BlueTusk.Edge.EdgeMutation!, BlueTusk.Edge.EdgeRecord!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! writeBusiness, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutationOutcome!>
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.BeginSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeSnapshot!>

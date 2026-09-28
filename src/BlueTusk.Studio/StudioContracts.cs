@@ -59,6 +59,12 @@ public interface IStudioAuditSink
     ValueTask RecordAsync(StudioAuditRecord record, CancellationToken cancellationToken = default);
 }
 
+/// <summary>An operation identity falls at or before the sealed audit retention horizon.</summary>
+public sealed class StudioAuditHorizonException : InvalidOperationException
+{
+    public StudioAuditHorizonException() : base("The Studio audit operation ID is sealed by the retention horizon.") { }
+}
+
 public sealed record StudioQueryRequest(string Sql, bool Explain = false, int? MaximumRows = null)
 {
     /// <summary>Client-issued identity retained for audit reconciliation after an uncertain response.</summary>

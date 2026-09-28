@@ -44,9 +44,13 @@ public sealed partial class SqliteEdgeStore
         long fence = 0;
         await using (var command = Command(connection, transaction, """
             SELECT mutation_id,document_id,expected_revision,kind,payload,fence
-            FROM mutations WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch
-                AND (status=0 OR (status=1 AND lease_until<=@now))
-            ORDER BY sequence LIMIT 1
+            FROM mutations m WHERE m.tenant=@tenant AND m.scope_id=@scope AND m.epoch=@epoch
+                AND (m.status=0 OR (m.status=1 AND m.lease_until<=@now))
+                AND (substr(m.mutation_id,13,1)!='8' OR substr(m.mutation_id,17,1)!='a' OR NOT EXISTS (
+                    SELECT 1 FROM mutations prior WHERE prior.tenant=m.tenant AND prior.scope_id=m.scope_id AND prior.epoch=m.epoch
+                        AND substr(prior.mutation_id,1,17)=substr(m.mutation_id,1,17)
+                        AND prior.mutation_id<m.mutation_id AND prior.status IN(0,1)))
+            ORDER BY m.sequence LIMIT 1
             """))
         {
             ScopeParameters(command, scope);
@@ -172,6 +176,8 @@ public sealed partial class SqliteEdgeStore
             _ = await receipt.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        await StageOrderedConfirmationAsync(connection, transaction, lease.Mutation, cancellationToken).ConfigureAwait(false);
+
         await CheckCacheBudgetAsync(connection, transaction, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -243,7 +249,7 @@ public sealed partial class SqliteEdgeStore
         return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask EnqueueInTransactionAsync(SqliteConnection connection, SqliteTransaction transaction, EdgeMutation mutation, CancellationToken cancellationToken)
+    private async ValueTask EnqueueInTransactionAsync(SqliteConnection connection, SqliteTransaction transaction, EdgeMutation mutation, CancellationToken cancellationToken, bool orderedAllocation = false)
     {
         await using (var existing = Command(connection, transaction, "SELECT fingerprint FROM mutations WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch AND mutation_id=@mutation UNION ALL SELECT fingerprint FROM receipts WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch AND mutation_id=@mutation LIMIT 1"))
         {
@@ -258,6 +264,13 @@ public sealed partial class SqliteEdgeStore
 
                 return;
             }
+        }
+
+        if (!orderedAllocation && EdgeOrderedMutationId.TryParse(mutation.Id, out var stream, out _))
+        {
+            await using var owner = Command(connection, transaction, "SELECT 1 FROM ordered_streams WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch AND stream_id=@stream");
+            ScopeParameters(owner, mutation.Scope); owner.Parameters.AddWithValue("stream", stream);
+            if (await owner.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is not null) { throw new EdgeMutationIdentityException(); }
         }
 
         await using (var revision = Command(connection, transaction, "SELECT revision FROM records WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch AND document_id=@id"))

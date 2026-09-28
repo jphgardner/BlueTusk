@@ -1,5 +1,7 @@
+import { newOrderedStreamId, orderedMutationId, parseOrderedMutationId } from "./ordered.js";
 export interface EdgeScope { readonly tenant: string; readonly id: string; readonly epoch: string }
 export * from "./http.js";
+export * from "./ordered.js";
 export interface EdgeRecord { readonly id: string; readonly revision: string; readonly payload: string; readonly deleted: boolean }
 export interface EdgeMutation { readonly scope: EdgeScope; readonly id: string; readonly documentId: string; readonly expectedRevision: string; readonly kind: "upsert" | "delete"; readonly payload: string }
 export interface EdgeLease { readonly mutation: EdgeMutation; readonly fence: number; readonly expiresAt: number }
@@ -37,8 +39,10 @@ interface StoredRecord extends EdgeRecord { scope: EdgeScope; fingerprint: strin
 interface StagedRecord extends StoredRecord { snapshotId: string }
 interface Pending extends EdgeMutation { status: Status; sequence: number; fingerprint: string; fence: number; leaseUntil: number }
 interface Receipt { scope: EdgeScope; id: string; fingerprint: string; outcomeFingerprint: string; time: number; resolvedBy: string | null }
-interface Totals { key: "totals"; cacheRows: number; cacheBytes: number; stagedRows: number; stagedBytes: number; pendingRows: number; pendingBytes: number; receiptRows: number; scopes: number; sequence: number }
-const stores = ["scopes", "records", "staging", "mutations", "receipts", "metadata"] as const;
+interface OrderedStream { scope: EdgeScope; streamId: string; nextSequence: string; horizon: string }
+interface OrderedOutbox extends EdgeMutation { ordinal: string; sequence: string; fingerprint: string; status: "pending" | "confirmed" }
+interface Totals { key: "totals"; cacheRows: number; cacheBytes: number; stagedRows: number; stagedBytes: number; pendingRows: number; pendingBytes: number; orderedOutboxRows: number; orderedOutboxBytes: number; receiptRows: number; scopes: number; sequence: number }
+const stores = ["scopes", "records", "staging", "mutations", "receipts", "orderedStreams", "orderedOutbox", "metadata"] as const;
 const encoder = new TextEncoder();
 const maxInt64 = 9223372036854775807n;
 function integer(value: string, positive = false): bigint {
@@ -67,6 +71,7 @@ function jsonObject(value: string): void {
 }
 function scopeKey(scope: EdgeScope): IDBValidKey[] { return [scope.tenant, scope.id, scope.epoch] }
 function identity(scope: EdgeScope, id: string): IDBValidKey[] { return [...scopeKey(scope), id] }
+function ordinal(sequence: string): string { return sequence.padStart(19, "0") }
 function request<T>(operation: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => { operation.onsuccess = () => resolve(operation.result); operation.onerror = () => reject(operation.error) });
 }
@@ -75,7 +80,7 @@ async function hash(value: string): Promise<string> {
   return Array.from(new Uint8Array(bytes), value => value.toString(16).padStart(2, "0")).join("");
 }
 function charge(record: EdgeRecord): number { return encoder.encode(record.payload).byteLength + encoder.encode(record.id).byteLength }
-function blankTotals(): Totals { return { key: "totals", cacheRows: 0, cacheBytes: 0, stagedRows: 0, stagedBytes: 0, pendingRows: 0, pendingBytes: 0, receiptRows: 0, scopes: 0, sequence: 0 } }
+function blankTotals(): Totals { return { key: "totals", cacheRows: 0, cacheBytes: 0, stagedRows: 0, stagedBytes: 0, pendingRows: 0, pendingBytes: 0, orderedOutboxRows: 0, orderedOutboxBytes: 0, receiptRows: 0, scopes: 0, sequence: 0 } }
 
 /** Browser persistence adapter. Int64 revisions, epochs and checkpoints use decimal strings without precision loss. */
 export class IndexedDbEdgeStore {
@@ -97,7 +102,7 @@ export class IndexedDbEdgeStore {
     key(options.databaseName, 512);
     const factory = options.factory ?? globalThis.indexedDB;
     if (!factory) throw new Error("IndexedDB is unavailable.");
-    const opening = factory.open(options.databaseName, 2);
+    const opening = factory.open(options.databaseName, 3);
     opening.onupgradeneeded = () => {
       const db = opening.result;
       if (!db.objectStoreNames.contains("scopes")) db.createObjectStore("scopes", { keyPath: ["tenant", "id"] });
@@ -121,6 +126,16 @@ export class IndexedDbEdgeStore {
         const store = db.createObjectStore("receipts", { keyPath: ["scope.tenant", "scope.id", "scope.epoch", "id"] });
         store.createIndex("base", ["scope.tenant", "scope.id"]);
         store.createIndex("time", "time");
+      }
+      if (!db.objectStoreNames.contains("orderedStreams")) {
+        const store = db.createObjectStore("orderedStreams", { keyPath: ["scope.tenant", "scope.id", "scope.epoch"] });
+        store.createIndex("base", ["scope.tenant", "scope.id"]);
+      }
+      if (!db.objectStoreNames.contains("orderedOutbox")) {
+        const store = db.createObjectStore("orderedOutbox", { keyPath: ["scope.tenant", "scope.id", "scope.epoch", "ordinal"] });
+        store.createIndex("base", ["scope.tenant", "scope.id"]);
+        store.createIndex("scope", ["scope.tenant", "scope.id", "scope.epoch"]);
+        store.createIndex("status", ["scope.tenant", "scope.id", "scope.epoch", "status", "ordinal"]);
       }
       if (!db.objectStoreNames.contains("metadata")) db.createObjectStore("metadata", { keyPath: "key" }).put(blankTotals());
     };
@@ -146,20 +161,25 @@ export class IndexedDbEdgeStore {
   private async migrateTotals(): Promise<void> {
     await this.transact("readwrite", async tx => {
       const totals = await this.totals(tx);
-      if (Number.isSafeInteger(totals.stagedRows) && Number.isSafeInteger(totals.stagedBytes)) return;
-      totals.stagedRows = 0; totals.stagedBytes = 0;
-      const cursorRequest = tx.objectStore("staging").openCursor();
-      for (let cursor = await request(cursorRequest); cursor; ) {
-        totals.stagedRows++; totals.stagedBytes += charge(cursor.value as StagedRecord);
-        const next = request(cursorRequest); cursor.continue(); cursor = await next;
+      let changed = false;
+      if (!Number.isSafeInteger(totals.stagedRows) || !Number.isSafeInteger(totals.stagedBytes)) {
+        totals.stagedRows = 0; totals.stagedBytes = 0;
+        const cursorRequest = tx.objectStore("staging").openCursor();
+        for (let cursor = await request(cursorRequest); cursor; ) {
+          totals.stagedRows++; totals.stagedBytes += charge(cursor.value as StagedRecord);
+          const next = request(cursorRequest); cursor.continue(); cursor = await next;
+        }
+        changed = true;
       }
-      tx.objectStore("metadata").put(totals);
+      if (!Number.isSafeInteger(totals.orderedOutboxBytes)) { totals.orderedOutboxBytes = 0; changed = true }
+      if (!Number.isSafeInteger(totals.orderedOutboxRows)) { totals.orderedOutboxRows = 0; changed = true }
+      if (changed) tx.objectStore("metadata").put(totals);
     });
   }
   private budget(totals: Totals): void {
     if (totals.cacheRows - totals.stagedRows > this.limits.maxCacheRecords || totals.cacheBytes - totals.stagedBytes > this.limits.maxCacheBytes ||
       totals.stagedRows > this.limits.maxStagedRecords || totals.stagedBytes > this.limits.maxStagedBytes || totals.pendingRows > this.limits.maxPendingRecords ||
-      totals.pendingBytes > this.limits.maxPendingBytes || totals.receiptRows > this.limits.maxReceipts || totals.scopes > this.limits.maxScopes) throw new EdgeCapacityError();
+      totals.pendingBytes > this.limits.maxPendingBytes || totals.orderedOutboxBytes > this.limits.maxPendingBytes || totals.orderedOutboxRows > this.limits.maxReceipts || totals.receiptRows > this.limits.maxReceipts || totals.scopes > this.limits.maxScopes) throw new EdgeCapacityError();
   }
   async activate(scopeInput: EdgeScope, policy: "reject" | "discard" = "reject"): Promise<void> {
     const scope = scopeCopy(scopeInput);
@@ -186,6 +206,11 @@ export class IndexedDbEdgeStore {
             tx.objectStore(name).delete(id);
           }
         }
+        for (const row of await request<OrderedOutbox[]>(tx.objectStore("orderedOutbox").index("base").getAll(range))) {
+          totals.orderedOutboxRows--; totals.orderedOutboxBytes -= encoder.encode(row.payload).byteLength;
+          tx.objectStore("orderedOutbox").delete([...scopeKey(row.scope), row.ordinal]);
+        }
+        tx.objectStore("orderedStreams").delete(scopeKey(previous));
       } else totals.scopes++;
       this.budget(totals);
       tx.objectStore("scopes").put({ ...scope, position: "0", ready: false, snapshotId: null, snapshotPosition: null } satisfies ScopeState);
@@ -331,10 +356,32 @@ export class IndexedDbEdgeStore {
       const totals = await this.totals(tx); await this.enqueuePrepared(tx, mutation, totals); tx.objectStore("metadata").put(totals);
     });
   }
-  private async enqueuePrepared(tx: IDBTransaction, mutation: EdgeMutation & { fingerprint: string }, totals: Totals): Promise<void> {
+  /** Allocates an ordered UUID and queues it atomically. Reopen uses the persisted stream and next sequence. */
+  async enqueueOrdered(input: Omit<EdgeMutation, "id">): Promise<EdgeMutation> {
+    const prepared = await this.prepared({ ...input, id: "ordered-allocation" });
+    return await this.transact("readwrite", async tx => {
+      if (!(await this.active(tx, prepared.scope)).ready) throw new EdgeScopeError();
+      const streams = tx.objectStore("orderedStreams");
+      const state = await request<OrderedStream | undefined>(streams.get(scopeKey(prepared.scope))) ??
+        { scope: prepared.scope, streamId: newOrderedStreamId(), nextSequence: "1", horizon: "0" };
+      if (BigInt(state.nextSequence) >= (1n << 60n)) throw new EdgeCapacityError();
+      const mutation = { ...prepared, id: orderedMutationId(state.streamId, state.nextSequence) };
+      const totals = await this.totals(tx);
+      await this.enqueuePrepared(tx, mutation, totals, true);
+      state.nextSequence = (BigInt(state.nextSequence) + 1n).toString();
+      streams.put(state); tx.objectStore("metadata").put(totals);
+      return { scope: mutation.scope, id: mutation.id, documentId: mutation.documentId, expectedRevision: mutation.expectedRevision, kind: mutation.kind, payload: mutation.payload };
+    });
+  }
+  private async enqueuePrepared(tx: IDBTransaction, mutation: EdgeMutation & { fingerprint: string }, totals: Totals, orderedAllocation = false): Promise<void> {
     const id = identity(mutation.scope, mutation.id);
     const existing = await request<Pending | undefined>(tx.objectStore("mutations").get(id)) ?? await request<Receipt | undefined>(tx.objectStore("receipts").get(id));
     if (existing) { if (existing.fingerprint !== mutation.fingerprint) throw new EdgeIdentityError(); return }
+    const ordered = parseOrderedMutationId(mutation.id);
+    if (ordered && !orderedAllocation) {
+      const owner = await request<OrderedStream | undefined>(tx.objectStore("orderedStreams").get(scopeKey(mutation.scope)));
+      if (owner?.streamId === ordered.streamId) throw new EdgeIdentityError();
+    }
     const record = await request<StoredRecord | undefined>(tx.objectStore("records").get(identity(mutation.scope, mutation.documentId)));
     if ((record?.revision ?? "0") !== mutation.expectedRevision || await request(tx.objectStore("mutations").index("document").get(identity(mutation.scope, mutation.documentId)))) throw new EdgeRevisionError();
     totals.pendingRows++; totals.pendingBytes += encoder.encode(mutation.payload).byteLength;
@@ -348,9 +395,19 @@ export class IndexedDbEdgeStore {
     return await this.transact("readwrite", async tx => {
       if ((await this.active(tx, scope)).snapshotId !== null) throw new EdgeScopeError();
       const store = tx.objectStore("mutations"); const now = this.now();
-      const pending = await request<Pending[]>(store.index("claim").getAll(IDBKeyRange.bound([...scopeKey(scope), "pending", 0], [...scopeKey(scope), "pending", Number.MAX_SAFE_INTEGER]), 1));
-      const expired = await request<Pending[]>(store.index("expiry").getAll(IDBKeyRange.bound([...scopeKey(scope), "leased", 0], [...scopeKey(scope), "leased", now]), 1));
-      const candidate = [...pending, ...expired].sort((a, b) => a.sequence - b.sequence)[0];
+      const rows = await request<Pending[]>(store.index("scope").getAll(IDBKeyRange.only(scopeKey(scope))));
+      const first = new Map<string, bigint>();
+      for (const row of rows) {
+        if (row.status === "conflict") continue;
+        const ordered = parseOrderedMutationId(row.id); if (!ordered) continue;
+        const sequence = BigInt(ordered.sequence); const prior = first.get(ordered.streamId);
+        if (prior === undefined || sequence < prior) first.set(ordered.streamId, sequence);
+      }
+      const candidate = rows.filter(row => row.status === "pending" || row.status === "leased" && row.leaseUntil <= now)
+        .sort((a, b) => a.sequence - b.sequence).find(row => {
+          const ordered = parseOrderedMutationId(row.id);
+          return !ordered || BigInt(ordered.sequence) === first.get(ordered.streamId);
+        });
       if (!candidate) return null;
       candidate.status = "leased"; candidate.leaseUntil = now + leaseMilliseconds;
       if (!Number.isSafeInteger(++candidate.fence)) throw new EdgeCapacityError();
@@ -381,6 +438,15 @@ export class IndexedDbEdgeStore {
       else { pending.status = "conflict"; pending.leaseUntil = 0; tx.objectStore("mutations").put(pending) }
       totals.receiptRows++; this.budget(totals);
       receipts.put({ scope: mutation.scope, id: mutation.id, fingerprint: mutation.fingerprint, outcomeFingerprint, time: this.now(), resolvedBy: null } satisfies Receipt);
+      const ordered = parseOrderedMutationId(mutation.id);
+      if (ordered) {
+        const state = await request<OrderedStream | undefined>(tx.objectStore("orderedStreams").get(scopeKey(mutation.scope)));
+        if (state?.streamId === ordered.streamId) {
+          if (BigInt(ordered.sequence) >= BigInt(state.nextSequence)) throw new EdgeIdentityError();
+          totals.orderedOutboxRows++; totals.orderedOutboxBytes += encoder.encode(mutation.payload).byteLength; this.budget(totals);
+          tx.objectStore("orderedOutbox").put({ ...mutation, sequence: ordered.sequence, ordinal: ordinal(ordered.sequence), status: "pending" } satisfies OrderedOutbox);
+        }
+      }
       tx.objectStore("metadata").put(totals);
     });
   }
@@ -397,6 +463,72 @@ export class IndexedDbEdgeStore {
       tx.objectStore("mutations").delete(oldId); totals.pendingRows--; totals.pendingBytes -= encoder.encode(pending.payload).byteLength;
       await this.enqueuePrepared(tx, replacement, totals);
       receipt.resolvedBy = replacement.id; tx.objectStore("receipts").put(receipt); tx.objectStore("metadata").put(totals);
+    });
+  }
+  async nextUnconfirmedOrderedReceipt(scopeInput: EdgeScope): Promise<EdgeMutation | null> {
+    const scope = scopeCopy(scopeInput);
+    return await this.transact("readonly", async tx => {
+      await this.active(tx, scope);
+      const rows = await request<OrderedOutbox[]>(tx.objectStore("orderedOutbox").index("status").getAll(
+        IDBKeyRange.bound([...scopeKey(scope), "pending", ""], [...scopeKey(scope), "pending", "\uffff"]), 1));
+      const row = rows[0];
+      return row ? { scope: row.scope, id: row.id, documentId: row.documentId, expectedRevision: row.expectedRevision, kind: row.kind, payload: row.payload } : null;
+    });
+  }
+  async markOrderedReceiptConfirmed(input: EdgeMutation): Promise<void> {
+    const mutation = await this.prepared(input); const ordered = parseOrderedMutationId(mutation.id);
+    if (!ordered) throw new EdgeIdentityError();
+    await this.transact("readwrite", async tx => {
+      await this.active(tx, mutation.scope);
+      const outbox = tx.objectStore("orderedOutbox");
+      const row = await request<OrderedOutbox | undefined>(outbox.get([...scopeKey(mutation.scope), ordinal(ordered.sequence)]));
+      if (!row || row.id !== mutation.id || row.fingerprint !== mutation.fingerprint) throw new EdgeIdentityError();
+      if (row.status === "pending") {
+        const totals = await this.totals(tx);
+        totals.orderedOutboxBytes -= encoder.encode(row.payload).byteLength;
+        outbox.put({ ...row, status: "confirmed", payload: "" } satisfies OrderedOutbox); tx.objectStore("metadata").put(totals);
+      }
+    });
+  }
+  async confirmedOrderedHorizon(scopeInput: EdgeScope, maxReceipts = 1000): Promise<string | null> {
+    const scope = scopeCopy(scopeInput);
+    if (!Number.isSafeInteger(maxReceipts) || maxReceipts < 1 || maxReceipts > 10_000) throw new TypeError("Invalid bounded ordered horizon request.");
+    return await this.transact("readonly", async tx => {
+      await this.active(tx, scope);
+      const state = await request<OrderedStream | undefined>(tx.objectStore("orderedStreams").get(scopeKey(scope)));
+      if (!state) return null;
+      const rows = await request<OrderedOutbox[]>(tx.objectStore("orderedOutbox").index("scope").getAll(IDBKeyRange.only(scopeKey(scope)), maxReceipts));
+      let expected = BigInt(state.horizon) + 1n; let through: string | null = null;
+      for (const row of rows) {
+        const parsed = parseOrderedMutationId(row.id);
+        if (!parsed || parsed.streamId !== state.streamId || BigInt(row.sequence) !== expected || row.status !== "confirmed") break;
+        through = row.id; expected++;
+      }
+      return through;
+    });
+  }
+  async markOrderedHorizon(scopeInput: EdgeScope, throughId: string): Promise<void> {
+    const scope = scopeCopy(scopeInput); const parsed = parseOrderedMutationId(throughId);
+    if (!parsed || parsed.sequence === "0") throw new EdgeIdentityError();
+    await this.transact("readwrite", async tx => {
+      await this.active(tx, scope);
+      const streams = tx.objectStore("orderedStreams"); const state = await request<OrderedStream | undefined>(streams.get(scopeKey(scope)));
+      if (!state || state.streamId !== parsed.streamId) throw new EdgeIdentityError();
+      const target = BigInt(parsed.sequence); const floor = BigInt(state.horizon);
+      if (target <= floor) return;
+      if (target - floor > 10_000n) throw new EdgeCapacityError();
+      const outbox = tx.objectStore("orderedOutbox");
+      const rows = await request<OrderedOutbox[]>(outbox.getAll(IDBKeyRange.bound(
+        [...scopeKey(scope), ordinal((floor + 1n).toString())], [...scopeKey(scope), ordinal(parsed.sequence)])));
+      if (BigInt(rows.length) !== target - floor || rows.some((row, index) => row.status !== "confirmed" || BigInt(row.sequence) !== floor + BigInt(index + 1))) throw new EdgeRevisionError();
+      const receipts = tx.objectStore("receipts"); const mutations = tx.objectStore("mutations"); const totals = await this.totals(tx);
+      for (const row of rows) {
+        const id = identity(scope, row.id);
+        if (!await request(mutations.get(id)) && await request(receipts.get(id))) { receipts.delete(id); totals.receiptRows-- }
+        outbox.delete([...scopeKey(scope), row.ordinal]);
+        totals.orderedOutboxRows--;
+      }
+      state.horizon = parsed.sequence; streams.put(state); tx.objectStore("metadata").put(totals);
     });
   }
   async pruneReceipts(recordedBefore: number, maxRecords = 100): Promise<number> {

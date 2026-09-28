@@ -84,7 +84,55 @@ public sealed class EdgeServerStoreTests
     }, new EdgeServerOptions { MaxRecordBytes = 40 });
 
     [Fact]
-    public Task Version_two_receipts_upgrade_to_unconfirmed_version_three() => WithFixtureAsync(async fixture =>
+    public Task Ordered_confirmed_prefix_reclaims_receipts_and_persistently_fences_late_retries() => WithFixtureAsync(async fixture =>
+    {
+        var scope = new EdgeScope("tenant", "orders", 1);
+        await fixture.Store.ActivateScopeAsync(scope);
+        await using var bounded = new PostgreSqlEdgeServerStore(fixture.Source, fixture.Store.Options with { MaxReceiptsPerScope = 2 });
+        var stream = EdgeOrderedMutationId.NewStreamId();
+        EdgeMutation Write(long sequence) => new(scope, EdgeOrderedMutationId.Create(stream, sequence), sequence.ToString(), 0, EdgeMutationKind.Upsert, "{}"u8.ToArray());
+        var first = Write(1); var second = Write(2); var third = Write(3);
+        Assert.Equal((stream, 2L), Parse(second.Id));
+        await Assert.ThrowsAsync<EdgeMutationIdentityException>(async () => await bounded.ApplyMutationAsync(second));
+        _ = await bounded.ApplyMutationAsync(first);
+        _ = await bounded.ApplyMutationAsync(second);
+        await Assert.ThrowsAsync<EdgeMutationIdentityException>(async () => await bounded.ApplyMutationAsync(Write(4)));
+        await Assert.ThrowsAsync<EdgeCapacityException>(async () => await bounded.ApplyMutationAsync(third));
+        await bounded.FinalizeMutationReceiptAsync(first);
+        await Assert.ThrowsAsync<EdgeRevisionConflictException>(async () => await bounded.AdvanceOrderedReceiptHorizonAsync(scope, second.Id));
+        var reclaim = bounded.AdvanceOrderedReceiptHorizonAsync(scope, first.Id).AsTask();
+        var concurrentRetries = Enumerable.Range(0, 8).Select(async _ =>
+        { await Assert.ThrowsAsync<EdgeServerReceiptFinalizedException>(async () => await bounded.ApplyMutationAsync(first)); }).ToArray();
+        await Task.WhenAll(concurrentRetries.Append(reclaim));
+        Assert.Equal(1, await reclaim);
+        Assert.Equal(1, (await bounded.ReadHealthAsync(scope)).ReceiptCount);
+        await Assert.ThrowsAsync<EdgeServerReceiptFinalizedException>(async () => await bounded.FinalizeMutationReceiptAsync(first));
+        await Assert.ThrowsAsync<EdgeServerReceiptFinalizedException>(async () => await bounded.FinalizeMutationReceiptAsync(new EdgeMutation(scope, first.Id, "other", 0, EdgeMutationKind.Upsert, "{}"u8.ToArray())));
+        await Assert.ThrowsAsync<EdgeServerReceiptFinalizedException>(async () => await bounded.ApplyMutationAsync(first));
+        await bounded.FinalizeMutationReceiptAsync(second);
+        Assert.Equal(1, await bounded.AdvanceOrderedReceiptHorizonAsync(scope, second.Id));
+        Assert.Equal(0, await bounded.AdvanceOrderedReceiptHorizonAsync(scope, second.Id));
+        Assert.Equal(0, (await bounded.ReadHealthAsync(scope)).ReceiptCount);
+        var reopened = new PostgreSqlEdgeServerStore(fixture.Source, bounded.Options);
+        await Assert.ThrowsAsync<EdgeServerReceiptFinalizedException>(async () => await reopened.ApplyMutationAsync(first));
+        await Assert.ThrowsAsync<EdgeServerReceiptFinalizedException>(async () => await reopened.ApplyMutationAsync(new EdgeMutation(scope, first.Id, "other", 0, EdgeMutationKind.Upsert, "{}"u8.ToArray())));
+        Assert.Equal(EdgeMutationOutcomeKind.Applied, (await reopened.ApplyMutationAsync(third)).Kind);
+        Assert.Equal(1, (await reopened.ReadHealthAsync(scope)).ReceiptCount);
+        var rotated = new EdgeScope(scope.Tenant, scope.Id, 2);
+        await reopened.ActivateScopeAsync(rotated);
+        await Assert.ThrowsAsync<EdgeScopeMismatchException>(async () => await reopened.ApplyMutationAsync(first));
+        Assert.Equal(EdgeMutationOutcomeKind.Applied, (await reopened.ApplyMutationAsync(new EdgeMutation(rotated,
+            EdgeOrderedMutationId.Create(stream, 1), "fresh", 0, EdgeMutationKind.Upsert, "{}"u8.ToArray()))).Kind);
+    });
+
+    private static (string Stream, long Sequence) Parse(Guid id)
+    {
+        Assert.True(EdgeOrderedMutationId.TryParse(id, out var stream, out var sequence));
+        return (stream, sequence);
+    }
+
+    [Fact]
+    public Task Version_two_receipts_upgrade_to_unconfirmed_version_four() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
         await fixture.Store.ActivateScopeAsync(scope);

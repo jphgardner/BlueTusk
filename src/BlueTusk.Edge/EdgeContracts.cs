@@ -127,6 +127,23 @@ public interface IEdgeRemoteTransport
     ValueTask<EdgeMutationOutcome> ApplyMutationAsync(EdgeMutation mutation, CancellationToken cancellationToken = default);
 }
 
+/// <summary>Optional durable ordered-receipt work queue implemented by local stores that allocate identities atomically with enqueue.</summary>
+public interface IEdgeOrderedLocalStore : IEdgeLocalStore
+{
+    ValueTask<EdgeMutation> EnqueueOrderedAsync(EdgeScope scope, string documentId, long expectedRevision, EdgeMutationKind kind, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken = default);
+    ValueTask<EdgeMutation?> ReadNextUnconfirmedOrderedReceiptAsync(EdgeScope scope, CancellationToken cancellationToken = default);
+    ValueTask MarkOrderedReceiptConfirmedAsync(EdgeMutation mutation, CancellationToken cancellationToken = default);
+    ValueTask<Guid?> ReadConfirmedOrderedHorizonAsync(EdgeScope scope, int maxReceipts = 1000, CancellationToken cancellationToken = default);
+    ValueTask MarkOrderedReceiptHorizonAsync(EdgeScope scope, Guid throughMutationId, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Optional remote confirmation and horizon contract. Confirm only after a durable local outcome acknowledgement.</summary>
+public interface IEdgeOrderedReceiptTransport
+{
+    ValueTask FinalizeMutationReceiptAsync(EdgeMutation mutation, CancellationToken cancellationToken = default);
+    ValueTask AdvanceOrderedReceiptHorizonAsync(EdgeScope scope, Guid throughMutationId, int maxReceipts = 1000, CancellationToken cancellationToken = default);
+}
+
 public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeRemoteTransport transport)
 {
     public async ValueTask SynchronizeAsync(EdgeScope scope, int maxPushes = 32, int maxChangeBatches = 32, CancellationToken cancellationToken = default)
@@ -155,6 +172,9 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
             await store.CommitSnapshotAsync(scope, snapshot.Id, cancellationToken).ConfigureAwait(false);
         }
 
+        if (store is IEdgeOrderedLocalStore orderedLocal && transport is IEdgeOrderedReceiptTransport orderedRemote)
+        { await FlushOrderedReceiptsAsync(orderedLocal, orderedRemote, scope, maxPushes, cancellationToken).ConfigureAwait(false); }
+
         for (var i = 0; i < maxPushes; i++)
         {
             var lease = await store.ClaimAsync(scope, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
@@ -167,6 +187,9 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
             await store.AcknowledgeAsync(lease, outcome, cancellationToken).ConfigureAwait(false);
         }
 
+        if (store is IEdgeOrderedLocalStore orderedAfterPush && transport is IEdgeOrderedReceiptTransport remoteAfterPush)
+        { await FlushOrderedReceiptsAsync(orderedAfterPush, remoteAfterPush, scope, maxPushes, cancellationToken).ConfigureAwait(false); }
+
         for (var i = 0; i < maxChangeBatches; i++)
         {
             checkpoint = await store.GetCheckpointAsync(scope, cancellationToken).ConfigureAwait(false);
@@ -177,6 +200,24 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
             }
 
             await store.ApplyChangesAsync(scope, batch, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static async ValueTask FlushOrderedReceiptsAsync(IEdgeOrderedLocalStore store, IEdgeOrderedReceiptTransport transport,
+        EdgeScope scope, int maximum, CancellationToken cancellationToken)
+    {
+        for (var i = 0; i < maximum; i++)
+        {
+            var mutation = await store.ReadNextUnconfirmedOrderedReceiptAsync(scope, cancellationToken).ConfigureAwait(false);
+            if (mutation is null) { break; }
+            await transport.FinalizeMutationReceiptAsync(mutation, cancellationToken).ConfigureAwait(false);
+            await store.MarkOrderedReceiptConfirmedAsync(mutation, cancellationToken).ConfigureAwait(false);
+        }
+        var through = await store.ReadConfirmedOrderedHorizonAsync(scope, maximum, cancellationToken).ConfigureAwait(false);
+        if (through is Guid id)
+        {
+            await transport.AdvanceOrderedReceiptHorizonAsync(scope, id, maximum, cancellationToken).ConfigureAwait(false);
+            await store.MarkOrderedReceiptHorizonAsync(scope, id, cancellationToken).ConfigureAwait(false);
         }
     }
 }

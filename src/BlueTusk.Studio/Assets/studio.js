@@ -1,6 +1,15 @@
 "use strict";
 const byId = id => document.getElementById(id);
 let session;
+function operationIdV7() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  let milliseconds = BigInt(Date.now());
+  for (let index = 5; index >= 0; index--) { bytes[index] = Number(milliseconds & 255n); milliseconds >>= 8n; }
+  bytes[6] = (bytes[6] & 15) | 112;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
 async function responseJson(url, options) {
   const response = await fetch(url, {credentials:"same-origin", ...options});
   if (!response.ok) throw new Error(`Request failed (${response.status}). Check your permissions, query, and configured limits.`);
@@ -28,7 +37,7 @@ async function refreshSchema() {
 async function query(explain) {
   byId("run").disabled = byId("explain").disabled = true;
   byId("status").textContent = explain ? "Requesting query plan…" : "Running bounded read query…";
-  const operationId = crypto.randomUUID();
+  const operationId = operationIdV7();
   try {
     session ??= await responseJson("session");
     const result = await responseJson("query", {method:"POST",headers:{"Content-Type":"application/json",[session.header ?? session.Header]:session.token ?? session.Token},body:JSON.stringify({Sql:byId("sql").value,Explain:explain,OperationId:operationId})});
@@ -72,7 +81,7 @@ byId("replay-form").addEventListener("submit", async event => {
   try {
     session ??= await responseJson("session");
     const input = JSON.stringify({Target:byId("replay-target").value,Confirmation:byId("replay-confirmation").value,Reason:byId("replay-reason").value});
-    if (pendingReplay?.input !== input) pendingReplay = {input, operationId:crypto.randomUUID()};
+    if (pendingReplay?.input !== input) pendingReplay = {input, operationId:operationIdV7()};
     const response = await fetch("operations/replay", {method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json",[session.header ?? session.Header]:session.token ?? session.Token},body:JSON.stringify({OperationId:pendingReplay.operationId,...JSON.parse(input)})});
     if (!response.ok) throw new Error(`Replay failed (${response.status}). Check the target, confirmation, permissions, and audit service.`);
     byId("operations-status").textContent = `Quarantine replay completed. Audit operation ${pendingReplay.operationId}.`;

@@ -45,28 +45,57 @@ builder.Services.AddSingleton(audit);
 builder.Services.AddBlueTuskStudio<MyDatabaseScopeResolver, PostgreSqlStudioAuditSink>(options);
 ```
 
-The runtime audit role needs SELECT/INSERT only on that dedicated audit
-repository; the database scope resolver must use a separate least-privilege role
-for user queries. Retries of an operation/outcome identity require identical
-actor, scope, fingerprint and row count; exact duplicates leave the stored tuple
-unchanged. Unknown durable versions reject initialization
-and append. Initialization upgrades known v1 audit storage to v2 in one
-deployment transaction, marking older rows `legacy-unknown` because their
-database/tenant scope cannot be recovered. Run this migration in a maintenance
-window: the added column requires a table lock, and old runtimes stop appending
-after the version changes. The v1 upgrade adds its length constraint as
-`NOT VALID` to avoid scanning the audit table under that lock; separately run
+The runtime audit role needs SELECT on `studio_audit_version` and SELECT/INSERT
+on `studio_audit`; the database scope resolver must use a separate least-privilege
+role for user queries. The runtime role must not own the audit table or have
+permission to disable its insert trigger. Retries of an operation/outcome
+identity require identical actor, scope, fingerprint and row count; exact
+duplicates leave the stored tuple unchanged. Unknown durable versions reject
+initialization and append. Initialization upgrades known v1/v2 audit storage
+to v3 in one deployment transaction, marking v1 rows `legacy-unknown` because
+their database/tenant scope cannot be recovered. Run this migration in a
+maintenance window: its columns and retention index require a table lock, and
+old runtimes stop appending after the version changes. The v1 upgrade adds its
+length constraint as `NOT VALID` to avoid scanning the audit table under that
+lock; separately run
 `ALTER TABLE developer_audit.studio_audit VALIDATE CONSTRAINT studio_audit_scope_length`
 after cutover. New writes obey the constraint before validation. Completion
-audit failure leaves an uncertain response outcome: inspect
-the operation's audit rather than assuming the handler did not run. Retention,
-archive/restore, access controls on actor identity and storage alerting are host
-operations; the initial sink does not silently delete audits. Do not prune the
-table solely by `occurred_at`: operation UUIDs are currently random and have no
-trusted creation time, so a retry after deletion could recreate an older
-operation/outcome as a fresh row with different fields. Bounded retention needs
-an explicit durable retry fence, an archive/reconciliation policy, and a
-versioned migration before deletion can preserve immutable audit semantics.
+audit failure leaves an uncertain response outcome: inspect the operation's
+audit rather than assuming the handler did not run.
+
+V3 requires UUIDv7 operation IDs, including callers of `/query` and quarantine
+replay; the Events adapter generates UUIDv7 IDs itself. Older random UUID
+callers receive HTTP 400 on those mutation routes. Existing v1/v2 rows remain
+marked as legacy and are never assigned a guessed operation time. The sink and
+database insert trigger check the UUIDv7 timestamp against database time (at
+most five minutes ahead) and the durable retention horizon. A late retry at or
+before the sealed horizon throws `StudioAuditHorizonException` (HTTP 409 on an
+initial query/replay attempt), even if its row still exists, so it cannot be
+mistaken for an exact duplicate. A caller must
+reconcile that operation in the external archive. A new UUID is a new operation;
+this fence does not make query or replay execution idempotent.
+
+Retention is an explicit, ordered operator action using a separately privileged
+sink instance connected to the same repository. Quiesce operations that may
+still emit completion audits for old IDs, select a past UTC cutoff, and call
+`SealRetentionHorizonAsync(cutoff)`. The durable seal blocks new writes for
+those IDs and waits for earlier audit writes to finish. Export **after** the
+seal, including all rows through the cutoff, and verify an independently
+recoverable archive plus its counts/checksums. Then call
+`ConfirmArchivedHorizonAsync(cutoff, archiveReference)` and repeat
+`PruneArchivedAsync(maximumRows)` until it returns zero. Each call deletes at
+most 10,000 rows, and only rows through a confirmed horizon. The confirmation
+and external reference persist in `studio_audit_archives`; the repository
+does not verify the external archive. An erroneous confirmation can therefore
+cause real audit loss. For pre-v3 rows, export the complete legacy set after
+the v3 cutover, call `ConfirmLegacyArchiveAsync(archiveReference)`, then prune.
+Old UUIDs are rejected by v3 even before their rows are removed. Keep the
+archive and confirmation log under separate retention and restore controls.
+The operator role needs UPDATE on `studio_audit_version`, INSERT on
+`studio_audit_archives`, and DELETE on `studio_audit` in addition to runtime
+rights; do not give these grants to the runtime role. Database backups,
+archive/restore testing, actor-identity access controls and storage alerting
+remain host operations. No automatic pruning runs in Studio.
 
 For multi-replica SQL and schema admission, register an optional shared gate
 before `AddBlueTuskStudio`:
@@ -102,7 +131,7 @@ audit records contain operation identity, actor, query fingerprint, outcome and
 row count, never SQL or result values. The fingerprint binds SQL text, explain
 mode and effective row limit, so reuse of an operation ID with different
 execution parameters fails its immutable attempt audit. Clients must supply a nonempty
-`OperationId` UUID with each `/query` request and retain it after an uncertain
+`OperationId` UUIDv7 with each `/query` request and retain it after an uncertain
 response; the UI generates and displays one. The response also exposes
 `X-BlueTusk-Studio-Operation-Id`. The host must provide a stable actor subject
 claim, unique across identity providers. This is a preview HTTP contract change:

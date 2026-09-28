@@ -119,7 +119,7 @@ public static class StudioEndpoints
             context.Response.StatusCode = StatusCodes.Status408RequestTimeout;
             return;
         }
-        if (request.OperationId == Guid.Empty) { context.Response.StatusCode = StatusCodes.Status400BadRequest; return; }
+        if (request.OperationId.Version != 7) { context.Response.StatusCode = StatusCodes.Status400BadRequest; return; }
         var operation = request.OperationId;
         context.Response.Headers["X-BlueTusk-Studio-Operation-Id"] = operation.ToString("D");
         var actor = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");
@@ -148,6 +148,7 @@ public static class StudioEndpoints
         if (distributedAdmission is null) { context.Response.StatusCode = StatusCodes.Status429TooManyRequests; return; }
         try { await audit.RecordAsync(new(operation, actor, fingerprint, "attempt", 0) { ScopeId = scope.AuditScopeId }, deadline.Token).ConfigureAwait(false); }
         catch (OperationCanceledException) { context.Response.StatusCode = StatusCodes.Status408RequestTimeout; return; }
+        catch (StudioAuditHorizonException) { context.Response.StatusCode = StatusCodes.Status409Conflict; return; }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
             context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;

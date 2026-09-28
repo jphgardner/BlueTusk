@@ -16,7 +16,7 @@ public sealed class EdgeHttpTransportException(int statusCode) : Exception($"The
     public int StatusCode { get; } = statusCode;
 }
 
-public sealed class HttpEdgeRemoteTransport : IEdgeRemoteTransport, IDisposable
+public sealed class HttpEdgeRemoteTransport : IEdgeRemoteTransport, IEdgeOrderedReceiptTransport, IDisposable
 {
     private readonly HttpClient _client;
     private readonly string _endpoint;
@@ -76,6 +76,14 @@ public sealed class HttpEdgeRemoteTransport : IEdgeRemoteTransport, IDisposable
         ArgumentNullException.ThrowIfNull(mutation);
         if (mutation.Payload.Length > Options.MaxRecordBytes) { throw new EdgeCapacityException("Mutation payload exceeds the transport byte limit."); }
         _ = await RequestAsync(HttpMethod.Post, "mutations/confirm" + Query(mutation.Scope), EdgeWireCodec.SerializeMutation(mutation), cancellationToken).ConfigureAwait(false);
+    }
+    /// <summary>Advance only after every ordered outcome in the prefix was durably acknowledged and confirmed. A lost response can be retried.</summary>
+    public async ValueTask AdvanceOrderedReceiptHorizonAsync(EdgeScope scope, Guid throughMutationId, int maxReceipts = 1000, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        if (!EdgeOrderedMutationId.TryParse(throughMutationId, out _, out var sequence) || sequence == 0) { throw new ArgumentException("An ordered mutation identity is required.", nameof(throughMutationId)); }
+        if (maxReceipts is < 1 or > 10_000) { throw new ArgumentOutOfRangeException(nameof(maxReceipts)); }
+        _ = await RequestAsync(HttpMethod.Post, "mutations/horizon" + Query(scope), EdgeWireCodec.SerializeOrderedReceiptHorizon(throughMutationId, maxReceipts), cancellationToken).ConfigureAwait(false);
     }
     public void Dispose()
     {

@@ -84,6 +84,38 @@ public sealed class DocumentMigration<T>
     public Func<JsonElement, T> Transform { get; }
 }
 
+/// <summary>The transformed typed body and detached bytes produced from one inline JSON document.</summary>
+public sealed class DocumentInlineContentResult<T>
+{
+    public DocumentInlineContentResult(T value, ReadOnlyMemory<byte> content)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        Value = value;
+        Content = content;
+    }
+
+    public T Value { get; }
+    public ReadOnlyMemory<byte> Content { get; }
+}
+
+/// <summary>A deterministic inline-content extraction for one explicit schema-version upgrade.</summary>
+public sealed class DocumentInlineContentMigration<T>
+{
+    public DocumentInlineContentMigration(int fromVersion, int toVersion, Func<JsonElement, DocumentInlineContentResult<T>> transform)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(fromVersion);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(toVersion, fromVersion);
+        ArgumentNullException.ThrowIfNull(transform);
+        FromVersion = fromVersion;
+        ToVersion = toVersion;
+        Transform = transform;
+    }
+
+    public int FromVersion { get; }
+    public int ToVersion { get; }
+    public Func<JsonElement, DocumentInlineContentResult<T>> Transform { get; }
+}
+
 public sealed class DocumentSchemaVersionException : Exception
 {
     public DocumentSchemaVersionException(string collection, string id, int requestedVersion, int actualVersion)

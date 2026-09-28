@@ -120,7 +120,7 @@ public sealed partial class PostgreSqlEventStore
         await using (var command = Command(connection, transaction, $"SELECT version FROM {_schema}.schema_version WHERE singleton"))
         {
             version = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
-            if (version is not 1 and not 2)
+            if (version is not 1 and not 2 and not 3 and not 4)
             {
                 throw new InvalidOperationException($"Unsupported BlueTusk.Events schema version {version}.");
             }
@@ -146,6 +146,125 @@ public sealed partial class PostgreSqlEventStore
                 UPDATE {_schema}.schema_version SET version = 2 WHERE singleton
                 """, cancellationToken).ConfigureAwait(false);
         }
+
+        // The control relation is deliberately separate from the outbox. Deployment must add it to
+        // every outbox publication before the first intent is emitted; no published delete is enabled.
+        await ExecuteAsync(connection, transaction, $"""
+            CREATE TABLE IF NOT EXISTS {_schema}.published_retention_intents (
+                retention_epoch uuid PRIMARY KEY,
+                tenant_id text NOT NULL CHECK (length(tenant_id) BETWEEN 1 AND 200),
+                stream_id text NOT NULL CHECK (length(stream_id) BETWEEN 1 AND 200),
+                first_sequence bigint NOT NULL CHECK (first_sequence > 0),
+                through_sequence bigint NOT NULL CHECK (through_sequence >= first_sequence),
+                archive_manifest_sha256 bytea NOT NULL CHECK (octet_length(archive_manifest_sha256) = 32),
+                source_system_identifier text NOT NULL,
+                source_database text NOT NULL,
+                source_database_oid oid NOT NULL,
+                source_timeline bigint NOT NULL CHECK (source_timeline > 0),
+                source_slot text NOT NULL,
+                source_publication text NOT NULL,
+                source_publication_oid oid NOT NULL,
+                recorded_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+                UNIQUE (tenant_id, stream_id, through_sequence),
+                FOREIGN KEY (tenant_id, stream_id) REFERENCES {_schema}.streams (tenant_id, stream_id)
+            );
+            CREATE OR REPLACE FUNCTION {_schema}.reject_retention_intent_mutation() RETURNS trigger LANGUAGE plpgsql AS $trigger$
+            BEGIN
+                RAISE EXCEPTION 'Published retention intents are append-only';
+            END $trigger$;
+            DO $migration$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_trigger
+                    WHERE tgname='retention_intent_immutable' AND tgrelid='{_schema}.published_retention_intents'::regclass)
+                THEN
+                    CREATE TRIGGER retention_intent_immutable BEFORE UPDATE OR DELETE OR TRUNCATE
+                        ON {_schema}.published_retention_intents FOR EACH STATEMENT
+                        EXECUTE FUNCTION {_schema}.reject_retention_intent_mutation();
+                END IF;
+            END $migration$;
+            UPDATE {_schema}.schema_version SET version = 3 WHERE singleton AND version = 2
+            """, cancellationToken).ConfigureAwait(false);
+
+        await ExecuteAsync(connection, transaction, $"""
+            ALTER TABLE {_schema}.streams ADD COLUMN IF NOT EXISTS published_membership_revision
+                bigint NOT NULL DEFAULT 0 CHECK (published_membership_revision >= 0);
+            ALTER TABLE {_schema}.published_retention_intents ADD COLUMN IF NOT EXISTS membership_revision
+                bigint NOT NULL DEFAULT 0 CHECK (membership_revision >= 0);
+            CREATE TABLE IF NOT EXISTS {_schema}.published_retention_members (
+                tenant_id text NOT NULL, stream_id text NOT NULL,
+                consumer_group text NOT NULL CHECK (length(consumer_group) BETWEEN 1 AND 200),
+                target_incarnation uuid NOT NULL CHECK (target_incarnation <> '00000000-0000-0000-0000-000000000000'::uuid),
+                membership_revision bigint NOT NULL CHECK (membership_revision > 0),
+                source_system_identifier text NOT NULL, source_database text NOT NULL,
+                source_database_oid oid NOT NULL, source_timeline bigint NOT NULL,
+                source_slot text NOT NULL, source_publication text NOT NULL, source_publication_oid oid NOT NULL,
+                registered_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+                PRIMARY KEY (tenant_id,stream_id,consumer_group,target_incarnation),
+                UNIQUE (tenant_id,stream_id,membership_revision),
+                FOREIGN KEY (tenant_id,stream_id) REFERENCES {_schema}.streams (tenant_id,stream_id)
+            );
+            CREATE TABLE IF NOT EXISTS {_schema}.published_retention_targets (
+                tenant_id text NOT NULL, stream_id text NOT NULL, consumer_group text NOT NULL,
+                target_incarnation uuid NOT NULL, membership_revision bigint NOT NULL CHECK (membership_revision > 0),
+                source_system_identifier text NOT NULL, source_database text NOT NULL,
+                source_database_oid oid NOT NULL, source_timeline bigint NOT NULL,
+                source_slot text NOT NULL, source_publication text NOT NULL, source_publication_oid oid NOT NULL,
+                target_system_identifier text NOT NULL, target_database text NOT NULL,
+                target_database_oid oid NOT NULL, target_timeline bigint NOT NULL,
+                registered_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+                PRIMARY KEY (tenant_id,stream_id,consumer_group,target_incarnation)
+            );
+            CREATE TABLE IF NOT EXISTS {_schema}.published_retention_target_checkpoints (
+                consumer_group text NOT NULL, target_incarnation uuid NOT NULL,
+                source_system_identifier text NOT NULL, source_database text NOT NULL,
+                source_slot text NOT NULL, source_publication text NOT NULL, source_timeline bigint NOT NULL,
+                commit_end_position numeric(20,0) NOT NULL CHECK (commit_end_position >= 0),
+                source_transaction_id bigint NOT NULL CHECK (source_transaction_id >= 0),
+                updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+                PRIMARY KEY (consumer_group,target_incarnation,source_system_identifier,source_database,
+                    source_slot,source_publication,source_timeline)
+            );
+            CREATE TABLE IF NOT EXISTS {_schema}.published_retention_acknowledgements (
+                retention_epoch uuid NOT NULL, tenant_id text NOT NULL, stream_id text NOT NULL,
+                consumer_group text NOT NULL, target_incarnation uuid NOT NULL,
+                first_sequence bigint NOT NULL, through_sequence bigint NOT NULL,
+                archive_manifest_sha256 bytea NOT NULL CHECK (octet_length(archive_manifest_sha256)=32),
+                membership_revision bigint NOT NULL,
+                source_system_identifier text NOT NULL, source_database text NOT NULL,
+                source_database_oid oid NOT NULL, source_timeline bigint NOT NULL,
+                source_slot text NOT NULL, source_publication text NOT NULL, source_publication_oid oid NOT NULL,
+                target_system_identifier text NOT NULL, target_database text NOT NULL,
+                target_database_oid oid NOT NULL, target_timeline bigint NOT NULL,
+                commit_end_position numeric(20,0) NOT NULL CHECK (commit_end_position > 0),
+                acknowledged_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+                PRIMARY KEY (retention_epoch,consumer_group,target_incarnation),
+                FOREIGN KEY (tenant_id,stream_id,consumer_group,target_incarnation)
+                    REFERENCES {_schema}.published_retention_targets (tenant_id,stream_id,consumer_group,target_incarnation)
+            );
+            DO $migration$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_trigger
+                    WHERE tgname='retention_members_immutable' AND tgrelid='{_schema}.published_retention_members'::regclass)
+                THEN
+                    CREATE TRIGGER retention_members_immutable BEFORE UPDATE OR DELETE OR TRUNCATE
+                        ON {_schema}.published_retention_members FOR EACH STATEMENT
+                        EXECUTE FUNCTION {_schema}.reject_retention_intent_mutation();
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_trigger
+                    WHERE tgname='retention_targets_immutable' AND tgrelid='{_schema}.published_retention_targets'::regclass)
+                THEN
+                    CREATE TRIGGER retention_targets_immutable BEFORE UPDATE OR DELETE OR TRUNCATE
+                        ON {_schema}.published_retention_targets FOR EACH STATEMENT
+                        EXECUTE FUNCTION {_schema}.reject_retention_intent_mutation();
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_trigger
+                    WHERE tgname='retention_acks_immutable' AND tgrelid='{_schema}.published_retention_acknowledgements'::regclass)
+                THEN
+                    CREATE TRIGGER retention_acks_immutable BEFORE UPDATE OR DELETE OR TRUNCATE
+                        ON {_schema}.published_retention_acknowledgements FOR EACH STATEMENT
+                        EXECUTE FUNCTION {_schema}.reject_retention_intent_mutation();
+                END IF;
+            END $migration$;
+            UPDATE {_schema}.schema_version SET version = 4 WHERE singleton AND version = 3
+            """, cancellationToken).ConfigureAwait(false);
 
         // The database-owned insert fence also covers an older application binary that still writes
         // outbox rows during a rolling deployment. It cannot reuse an ID whose payload was pruned.

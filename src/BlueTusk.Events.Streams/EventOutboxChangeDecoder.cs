@@ -19,6 +19,8 @@ public sealed class EventOutboxChangeDecoder
     private readonly string _schema;
     private readonly int _maximumEventBytes;
 
+    internal string Schema => _schema;
+
     public EventOutboxChangeDecoder(string schema = "bluetusk_events", int maximumEventBytes = 1_048_576)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(schema);
@@ -102,7 +104,7 @@ public sealed class EventOutboxChangeDecoder
     private bool Matches(ChangeTable table) => string.Equals(table.Schema, _schema, StringComparison.Ordinal) &&
         string.Equals(table.Name, "outbox", StringComparison.Ordinal);
 
-    private static ChangeColumnValue Column(ChangeRow row, string name)
+    internal static ChangeColumnValue Column(ChangeRow row, string name)
     {
         var value = row[name];
         if (value.State != ChangeColumnState.Value || value.Encoding is not ChangeValueEncoding.Text and not ChangeValueEncoding.Binary)
@@ -113,7 +115,7 @@ public sealed class EventOutboxChangeDecoder
         return value;
     }
 
-    private static string Text(ChangeRow row, string name)
+    internal static string Text(ChangeRow row, string name)
     {
         var bytes = Column(row, name).Data;
         if (bytes.Length > 800)
@@ -131,7 +133,7 @@ public sealed class EventOutboxChangeDecoder
         }
     }
 
-    private static long Integer(ChangeRow row, string name, int binarySize)
+    internal static long Integer(ChangeRow row, string name, int binarySize)
     {
         var column = Column(row, name);
         if (column.Encoding == ChangeValueEncoding.Binary)
@@ -152,17 +154,31 @@ public sealed class EventOutboxChangeDecoder
         return value;
     }
 
-    private static Guid Identity(ChangeRow row)
+    private static Guid Identity(ChangeRow row) => Uuid(row, "event_id");
+
+    internal static Guid Uuid(ChangeRow row, string name)
     {
-        var column = Column(row, "event_id");
+        var column = Column(row, name);
         if (column.Encoding == ChangeValueEncoding.Binary)
         {
             return column.Data.Length == 16 ? new Guid(column.Data.Span, bigEndian: true) :
-                throw new EventOutboxDecodingException("event_id");
+                throw new EventOutboxDecodingException(name);
         }
 
         return column.Data.Length == 36 && Utf8Parser.TryParse(column.Data.Span, out Guid identity, out var consumed) && consumed == 36
-            ? identity : throw new EventOutboxDecodingException("event_id");
+            ? identity : throw new EventOutboxDecodingException(name);
+    }
+
+    internal static uint UnsignedInteger(ChangeRow row, string name)
+    {
+        var column = Column(row, name);
+        if (column.Encoding == ChangeValueEncoding.Binary)
+        {
+            return column.Data.Length == 4 ? BinaryPrimitives.ReadUInt32BigEndian(column.Data.Span) :
+                throw new EventOutboxDecodingException(name);
+        }
+        return column.Data.Length <= 10 && Utf8Parser.TryParse(column.Data.Span, out uint value, out var consumed) &&
+            consumed == column.Data.Length ? value : throw new EventOutboxDecodingException(name);
     }
 
     private static DateTimeOffset Timestamp(ChangeRow row)
@@ -195,9 +211,9 @@ public sealed class EventOutboxChangeDecoder
         return occurred;
     }
 
-    private byte[] Payload(ChangeRow row)
+    internal byte[] Payload(ChangeRow row, string name = "payload")
     {
-        var column = Column(row, "payload");
+        var column = Column(row, name);
         if (column.Encoding == ChangeValueEncoding.Binary)
         {
             if (column.Data.Length > _maximumEventBytes)

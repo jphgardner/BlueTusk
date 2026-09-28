@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Globalization;
 using System.Text;
+using BlueTusk.Replication;
 
 namespace BlueTusk.Events.Tests;
 
@@ -67,7 +68,7 @@ public sealed class EventRetentionTests
         await using (var connection = await db.DataSource.OpenConnectionAsync())
         await using (var command = connection.CreateCommand())
         {
-            command.CommandText = $"UPDATE \"{db.Schema}\".schema_version SET version=3";
+            command.CommandText = $"UPDATE \"{db.Schema}\".schema_version SET version=5";
             await command.ExecuteNonQueryAsync();
         }
 
@@ -286,6 +287,101 @@ public sealed class EventRetentionTests
     }
 
     [Fact]
+    public async Task PublishedIntentRequiresCompletePublicationCoverageAndNeverEnablesDeletion()
+    {
+        await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
+        var stream = new EventStreamKey("tenant", "orders");
+        var archive = new TestArchive();
+        await db.AppendAsync(stream, [Write(1)]);
+        _ = await db.Store.ArchiveNextAsync(stream, archive);
+        var publication = "events_intent_" + Guid.NewGuid().ToString("N");
+        var secondPublication = "events_extra_" + Guid.NewGuid().ToString("N");
+        var slot = "events_intent_" + Guid.NewGuid().ToString("N");
+        var slotCreated = false;
+        try
+        {
+            await PublicationAsync(db, publication, true);
+            await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(
+                db.DataSource.CreateDedicatedSessionOptions());
+            var system = await replication.IdentifySystemAsync();
+            var source = new EventPublishedSourceIdentity(system.SystemIdentifier, system.DatabaseName!,
+                system.Timeline, slot, publication);
+            await replication.CreateReplicationSlotAsync(slot);
+            slotCreated = true;
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.PublishRetentionIntentAsync(stream, archive, source, 1));
+            await using (var connection = await db.DataSource.OpenConnectionAsync())
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = $"ALTER PUBLICATION \"{publication}\" ADD TABLE \"{db.Schema}\".published_retention_intents";
+                await command.ExecuteNonQueryAsync();
+            }
+            var incarnation = Guid.NewGuid();
+            var registration = await db.Store.RegisterPublishedRetentionConsumerAsync(stream,
+                "retention-consumer", incarnation, source);
+            Assert.Equal(1, registration.MembershipRevision);
+            Assert.Equal(registration, await db.Store.RegisterPublishedRetentionConsumerAsync(stream,
+                "retention-consumer", incarnation, source));
+            await db.Store.RegisterPublishedRetentionTargetAsync(registration);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.RegisterPublishedRetentionTargetAsync(registration with
+                { SourcePublicationOid = registration.SourcePublicationOid + 1 }));
+
+            await PublicationAsync(db, secondPublication, true);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.PublishRetentionIntentAsync(stream, archive, source, 1));
+            await PublicationAsync(db, secondPublication, false);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.PublishRetentionIntentAsync(stream, archive, source with { Timeline = source.Timeline + 1 }, 1));
+            var intent = await db.Store.PublishRetentionIntentAsync(stream, archive, source, 1);
+            Assert.Equal(1, intent.ThroughSequence);
+            Assert.Equal(registration.MembershipRevision, intent.MembershipRevision);
+            Assert.Equal(64, intent.ArchiveManifestSha256.Length);
+            await using (var connection = await db.DataSource.OpenConnectionAsync())
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = $"UPDATE \"{db.Schema}\".published_retention_intents SET through_sequence=2 WHERE retention_epoch=@epoch";
+                Add(command, "epoch", intent.Epoch);
+                await Assert.ThrowsAnyAsync<DbException>(() => command.ExecuteNonQueryAsync());
+            }
+            Assert.Equal(0, (await db.Store.ReadRetentionStatusAsync(stream)).RetainedThrough);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.AdvanceLocalRetentionAsync(stream, 1, 0, Certificate(stream)));
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await db.Store.PruneRetainedAsync(stream));
+            Assert.Equal(1L, await CountOutboxRowsAsync(db, stream));
+
+            var replacement = await db.Store.RegisterPublishedRetentionConsumerAsync(stream,
+                "retention-consumer", Guid.NewGuid(), source);
+            Assert.Equal(2, replacement.MembershipRevision);
+            await db.Store.RegisterPublishedRetentionTargetAsync(replacement);
+            await db.AppendAsync(stream, [Write(2)]);
+            _ = await db.Store.ArchiveNextAsync(stream, archive);
+            archive.CorruptReadback = true;
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.PublishRetentionIntentAsync(stream, archive, source, 2, expectedPreviousThrough: 1));
+            Assert.Equal(1L, await CountRetentionIntentsAsync(db, stream));
+            archive.CorruptReadback = false;
+            var nextIntent = await db.Store.PublishRetentionIntentAsync(stream, archive, source, 2,
+                expectedPreviousThrough: 1);
+            Assert.Equal(replacement.MembershipRevision, nextIntent.MembershipRevision);
+            Assert.Equal(2L, await CountRetentionIntentsAsync(db, stream));
+        }
+        finally
+        {
+            if (slotCreated)
+            {
+                await using var cleanup = await BlueTuskLogicalReplicationConnection.OpenAsync(
+                    db.DataSource.CreateDedicatedSessionOptions());
+                await cleanup.DropReplicationSlotAsync(slot, wait: true);
+            }
+            await PublicationAsync(db, secondPublication, false);
+            await PublicationAsync(db, publication, false);
+        }
+    }
+
+    [Fact]
     public async Task DeploymentMigrationArchivesLegacyIdentityInBoundedBatchBeforePruning()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -372,6 +468,16 @@ public sealed class EventRetentionTests
         await using var connection = await db.DataSource.OpenConnectionAsync();
         await using var command = connection.CreateCommand();
         command.CommandText = $"SELECT count(*) FROM \"{db.Schema}\".outbox WHERE tenant_id=@tenant AND stream_id=@stream";
+        Add(command, "tenant", stream.TenantId);
+        Add(command, "stream", stream.StreamId);
+        return Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<long> CountRetentionIntentsAsync(EventDatabase db, EventStreamKey stream)
+    {
+        await using var connection = await db.DataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT count(*) FROM \"{db.Schema}\".published_retention_intents WHERE tenant_id=@tenant AND stream_id=@stream";
         Add(command, "tenant", stream.TenantId);
         Add(command, "stream", stream.StreamId);
         return Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture);

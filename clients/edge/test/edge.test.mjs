@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { IndexedDbEdgeStore, EdgeHttpRemoteTransport, EdgeHttpError, EdgeScopeError, EdgeCapacityError, EdgeRevisionError, EdgeIdentityError, EdgeLeaseError } from "../dist/index.js";
+import { IndexedDbEdgeStore, EdgeHttpRemoteTransport, EdgeHttpError, EdgeScopeError, EdgeCapacityError, EdgeRevisionError, EdgeIdentityError, EdgeLeaseError, newOrderedStreamId, orderedMutationId, parseOrderedMutationId, flushOrderedReceipts } from "../dist/index.js";
 
 const scope = { tenant: "tenant", id: "readers", epoch: "1" };
 const record = (id, revision, value) => ({ id, revision, payload: JSON.stringify({ value }), deleted: false });
@@ -86,6 +86,93 @@ test("HTTP receipt confirmation sends the original mutation and accepts idempote
   const gone = new EdgeHttpRemoteTransport({ endpoint: "https://example.test/edge", bearerToken: () => "token",
     fetch: async () => new Response(null, { status: 410 }) });
   await assert.rejects(() => gone.applyMutation(write), error => error instanceof EdgeHttpError && error.status === 410);
+});
+
+test("ordered identity and HTTP horizon use a bounded, retryable stream prefix", async () => {
+  const streamId = newOrderedStreamId();
+  const first = orderedMutationId(streamId, "1");
+  assert.deepEqual(parseOrderedMutationId(first), { streamId, sequence: "1" });
+  assert.equal(parseOrderedMutationId(orderedMutationId(streamId, "1152921504606846975")).sequence, "1152921504606846975");
+  assert.throws(() => orderedMutationId(streamId, "1152921504606846976"), RangeError);
+  const requests = [];
+  const remote = new EdgeHttpRemoteTransport({ endpoint: "https://example.test/edge", bearerToken: () => "token",
+    fetch: async (url, options) => { requests.push({ url, options }); return new Response(null, { status: 204 }) } });
+  await remote.advanceOrderedReceiptHorizon(scope, first, 1);
+  assert.equal(requests[0].url, "https://example.test/edge/mutations/horizon?tenant=tenant&scope=readers&epoch=1");
+  assert.deepEqual(JSON.parse(requests[0].options.body), { throughId: first, maxReceipts: 1 });
+  await assert.rejects(remote.advanceOrderedReceiptHorizon(scope, crypto.randomUUID()), TypeError);
+});
+
+test("ordered allocation, claim order and confirmation outbox survive IndexedDB reopen", async () => {
+  await fixture(async (store, options) => {
+    await ready(store);
+    const other = await IndexedDbEdgeStore.open(options);
+    const writes = await Promise.all(Array.from({ length: 8 }, (_, index) => (index % 2 ? store : other).enqueueOrdered({
+      scope, documentId: String(index).padStart(3, "0"), expectedRevision: "0", kind: "upsert", payload: JSON.stringify({ index })
+    })));
+    const parsed = writes.map(write => parseOrderedMutationId(write.id));
+    assert.equal(new Set(parsed.map(value => value.streamId)).size, 1);
+    assert.deepEqual(parsed.map(value => value.sequence).sort((a, b) => Number(a) - Number(b)), Array.from({ length: 8 }, (_, index) => String(index + 1)));
+    const lease = await store.claim(scope);
+    assert.equal(parseOrderedMutationId(lease.mutation.id).sequence, "1");
+    assert.equal(await other.claim(scope), null);
+    await store.acknowledge(lease, { kind: "applied", record: record(lease.mutation.documentId, "1", "server") });
+    store.close(); other.close();
+    const reopened = await IndexedDbEdgeStore.open(options);
+    try {
+      const confirmation = await reopened.nextUnconfirmedOrderedReceipt(scope);
+      assert.equal(confirmation.id, lease.mutation.id);
+      await reopened.markOrderedReceiptConfirmed(confirmation);
+      assert.equal(await reopened.nextUnconfirmedOrderedReceipt(scope), null);
+      assert.equal(await reopened.confirmedOrderedHorizon(scope), lease.mutation.id);
+      reopened.close();
+      const again = await IndexedDbEdgeStore.open(options);
+      try {
+        await again.markOrderedHorizon(scope, lease.mutation.id);
+        await again.markOrderedHorizon(scope, lease.mutation.id);
+        assert.equal(await again.confirmedOrderedHorizon(scope), null);
+        assert.equal(parseOrderedMutationId((await again.claim(scope)).mutation.id).sequence, "2");
+      } finally { again.close() }
+    } finally { reopened.close() }
+  });
+});
+
+test("ordered confirmation retry resumes at the horizon after a lost response and restart", async () => {
+  await fixture(async (store, options) => {
+    await ready(store);
+    const write = await store.enqueueOrdered({ scope, documentId: "resume", expectedRevision: "0", kind: "upsert", payload: "{}" });
+    await store.acknowledge(await store.claim(scope), { kind: "applied", record: record("resume", "1", "server") });
+    let confirms = 0; let horizons = 0;
+    const remote = new EdgeHttpRemoteTransport({ endpoint: "https://example.test/edge", bearerToken: () => "token", fetch: async url => {
+      if (url.includes("/confirm")) { confirms++; return new Response(null, { status: 204 }) }
+      if (url.includes("/horizon")) { horizons++; if (horizons === 1) throw new Error("Lost horizon response."); return new Response(null, { status: 204 }) }
+      throw new Error("Unexpected request.");
+    } });
+    await assert.rejects(flushOrderedReceipts(store, remote, scope), /Lost horizon response/);
+    assert.equal(await store.nextUnconfirmedOrderedReceipt(scope), null);
+    assert.equal(await store.confirmedOrderedHorizon(scope), write.id);
+    store.close(); const reopened = await IndexedDbEdgeStore.open(options);
+    try {
+      await flushOrderedReceipts(reopened, remote, scope);
+      assert.equal(await reopened.confirmedOrderedHorizon(scope), null);
+      assert.equal(confirms, 1); assert.equal(horizons, 2);
+    } finally { reopened.close() }
+  });
+});
+
+test("ordered horizon reclaims IndexedDB receipt capacity without reusing a sequence", async () => {
+  await fixture(async store => {
+    await ready(store);
+    const first = await store.enqueueOrdered({ scope, documentId: "first", expectedRevision: "0", kind: "upsert", payload: "{}" });
+    await store.acknowledge(await store.claim(scope), { kind: "applied", record: record("first", "1", "server") });
+    await store.enqueueOrdered({ scope, documentId: "second", expectedRevision: "0", kind: "upsert", payload: "{}" });
+    const second = await store.claim(scope);
+    await assert.rejects(store.acknowledge(second, { kind: "applied", record: record("second", "1", "server") }), EdgeCapacityError);
+    await store.markOrderedReceiptConfirmed(first);
+    await store.markOrderedHorizon(scope, first.id);
+    await store.acknowledge(second, { kind: "applied", record: record("second", "1", "server") });
+    assert.equal(parseOrderedMutationId(second.mutation.id).sequence, "2");
+  }, { maxReceipts: 1 });
 });
 
 test("checkpoint and revision conflicts roll back whole batches and tombstones fence resurrection", async () => {

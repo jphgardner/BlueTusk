@@ -9,6 +9,66 @@ No source-only API can safely infer those remote obligations from the present co
 
 Published pruning needs a distinct, opt-in protocol, with the following durable order:
 
+The Events schema v3 adds `published_retention_intents` and
+`PostgreSqlEventStore.PublishRetentionIntentAsync` as a **preparation stage only**. The method
+re-reads at most 256 archive segments (64 by default) and 64 MiB of total event payload while
+holding the stream and relation locks, verifies their contiguous sequence ranges,
+counts and immutable event digests, and hashes their manifest identities into a chained digest. It
+then inserts an append-only row into the same PostgreSQL transaction log as the outbox. The row
+records a unique epoch, source system identifier, database and OID, timeline, logical slot,
+publication and OID, and exact tenant/stream range. A prior intent must end at the caller's expected
+sequence and have the same lineage. The method checks the connected PostgreSQL control identity and
+logical slot, and refuses to emit a marker unless **every** publication currently containing the
+outbox also publishes complete, unfiltered inserts from the control relation. Deployment must add
+that relation to explicit outbox publications before using the API and **freeze publication DDL**
+throughout the protocol; a schema-wide or all-tables publication covers it automatically. Archive
+read latency extends the lock hold, so operators should use small ranges and keep the archive read
+service responsive. The SQL role needs
+access to `pg_control_system()` and `pg_control_checkpoint()`; missing privilege fails closed.
+
+Schema v4 adds append-only `published_retention_members` and
+`RegisterPublishedRetentionConsumerAsync`. Register each protected consumer group and exact target
+incarnation against a tenant/stream and fresh source system, database OID, timeline, logical slot,
+publication OID. Registration and intent emission serialize on the stream row. Every new member
+increments an irreversible membership revision; the intent records the revision it observed and
+requires at least one registered member. Re-registering the same incarnation with different lineage
+fails. A later member makes an older marker's revision stale for any future source coordinator. The
+API has no member-removal or incarnation-replacement operation. A restored target must use a new
+incarnation and register it at the source; previous acknowledgements cannot be reused.
+The current stage accepts only one registered source/slot/publication lineage per stream; a second
+lineage is rejected until a multi-lineage marker and acknowledgement contract exists.
+
+`RegisterPublishedRetentionTargetAsync` binds that source registration to the target database's
+current system identifier, database OID and timeline. An explicitly configured upgraded
+`PostgreSqlEventDeliveryProcessor` reads the control insert from its ordered Streams transaction,
+requires it to be the transaction's only raw change (including otherwise ignored published tables),
+validates every proof field, and commits an exact epoch/range/digest/lineage/target-incarnation ACK with
+its target source checkpoint and inbox effects in one target transaction. It then acknowledges the
+Streams delivery. Redelivery verifies the existing ACK byte-for-byte; a conflicting epoch fails.
+The protected processor rejects an older or conflicting source transaction position, and an
+unconfigured new processor refuses a control row. Target DB timeline, database and system drift
+block subsequent marker ACKs. Projections, independent subscriptions and recovery candidates do
+not yet produce these ACKs and remain blocking obligations. A same-lineage target rewind is not
+provably detectable from the current target tables; deployments must rotate incarnation on every
+restore, and a future deletion coordinator must verify that operational fence independently.
+
+This marker proves that the archived prefix was readable and matched committed manifests when the
+marker was emitted. It does **not** prove continuing archive availability, delivery to a subscriber,
+target transaction commit, target incarnation, projection candidate, or transport checkpoint. Nor
+does PostgreSQL bind a logical slot to the publication named in an intent, and one slot/publication
+lineage cannot represent all protected readers. No source coordinator consumes these target ACKs
+as retention authorization, advances a published floor or authorizes a DELETE. Existing
+`AssessLocalRetentionAsync`, `AdvanceLocalRetentionAsync`, and `PruneRetainedAsync` still block a
+published outbox, and the existing Streams decoder still rejects outbox deletes, updates and
+truncates. Old binaries may ignore the new control row, which is safe only while deletion stays
+disabled. Mixed-binary rollout must not enable published deletion until every protected consumer
+recognizes, persists and validates the control record. A source restore onto a different timeline
+or a slot/publication replacement requires fresh proof; a prior intent is never a transferable
+acknowledgement.
+The current contracts cannot detect a logical slot dropped and recreated under the same name.
+That missing slot-incarnation fence is a separate proof gap before published source deletion can
+be considered, even when source and target ACK rows otherwise agree.
+
 1. Register every protected consumer group, target incarnation, projection version/candidate and
    recovery source against an immutable source identity and publication/slot lineage. Registration
    must be fenced against concurrent retention, and unregistered readers must be explicitly outside

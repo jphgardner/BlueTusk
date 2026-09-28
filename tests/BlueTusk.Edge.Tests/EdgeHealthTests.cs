@@ -119,7 +119,7 @@ public sealed class EdgeHealthTests
         await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=999");
         var drift = await check.CheckHealthAsync(new HealthCheckContext());
         Assert.Equal("edge_store_unavailable", drift.Description); Assert.Null(drift.Exception); Assert.Empty(drift.Data);
-        await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=3");
+        await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=4");
         Assert.Equal(HealthStatus.Healthy, (await check.CheckHealthAsync(new HealthCheckContext())).Status);
         await fixture.Store.DisposeAsync();
         var disposed = await check.CheckHealthAsync(new HealthCheckContext());
@@ -171,7 +171,7 @@ public sealed class EdgeHealthTests
         using (var capacity = await http.GetAsync("/ops/edge")) { Assert.Equal(HttpStatusCode.ServiceUnavailable, capacity.StatusCode); Assert.Equal("Degraded", await capacity.Content.ReadAsStringAsync()); }
         await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=999");
         using (var drift = await http.GetAsync("/ops/edge")) { Assert.Equal(HttpStatusCode.ServiceUnavailable, drift.StatusCode); Assert.Equal("Unhealthy", await drift.Content.ReadAsStringAsync()); }
-        await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=3");
+        await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=4");
         var next = new EdgeScope("tenant", "orders", 2);
         await bounded.ActivateScopeAsync(next);
         var service = app.Services.GetRequiredService<HealthCheckService>();

@@ -43,7 +43,7 @@ public sealed class StudioControlPlaneEndpointTests
     public async Task Replay_requires_policy_CSRF_authorized_alias_confirmation_and_durable_audits()
     {
         await using var host = await Host.StartAsync();
-        var request = new StudioReplayRequest(Guid.NewGuid(), "orders", "ReplayQuarantine:orders", "Investigate a corrected handler.");
+        var request = new StudioReplayRequest(Guid.CreateVersion7(), "orders", "ReplayQuarantine:orders", "Investigate a corrected handler.");
         host.User("reader");
         Assert.Equal(HttpStatusCode.Forbidden, (await host.Client.PostAsJsonAsync("operations/replay", request, TestContext.Current.CancellationToken)).StatusCode);
         host.User("operator");
@@ -61,11 +61,11 @@ public sealed class StudioControlPlaneEndpointTests
         Assert.Equal(CompletedAudits, host.State.ControlAudit.Select(record => record.Status));
         Assert.Equal(CompletedStudioAudits, host.State.StudioAudit.Select(record => record.Outcome));
         host.State.DenyRole = true;
-        Assert.Equal(HttpStatusCode.Forbidden, (await host.Client.PostAsJsonAsync("operations/replay", request with { OperationId = Guid.NewGuid() }, TestContext.Current.CancellationToken)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await host.Client.PostAsJsonAsync("operations/replay", request with { OperationId = Guid.CreateVersion7() }, TestContext.Current.CancellationToken)).StatusCode);
         Assert.Single(host.State.Handled);
         host.State.DenyRole = false;
         host.State.FailAudit = true;
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await host.Client.PostAsJsonAsync("operations/replay", request with { OperationId = Guid.NewGuid() }, TestContext.Current.CancellationToken)).StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await host.Client.PostAsJsonAsync("operations/replay", request with { OperationId = Guid.CreateVersion7() }, TestContext.Current.CancellationToken)).StatusCode);
         Assert.Single(host.State.Handled);
     }
 

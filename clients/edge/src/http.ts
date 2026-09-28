@@ -1,4 +1,5 @@
 import type { EdgeScope, EdgeRecord, EdgeMutation, EdgeOutcome, IndexedDbEdgeStore } from "./index.js";
+import { parseOrderedMutationId } from "./ordered.js";
 
 export interface EdgeHttpOptions {
   readonly endpoint: string;
@@ -89,6 +90,13 @@ export class EdgeHttpRemoteTransport {
     }, signal);
     if (result !== null) throw new TypeError("Mutation confirmation must return no content.");
   }
+  /** Advance only after every outcome in the prefix was durably acknowledged and confirmed. */
+  async advanceOrderedReceiptHorizon(scope: EdgeScope, throughId: string, maxReceipts = 1000, signal?: AbortSignal): Promise<void> {
+    const parsed = parseOrderedMutationId(throughId);
+    if (!parsed || parsed.sequence === "0" || !Number.isSafeInteger(maxReceipts) || maxReceipts < 1 || maxReceipts > 10_000) throw new TypeError("An ordered identity and bounded receipt count are required.");
+    const result = await this.request("POST", "mutations/horizon" + this.query(scope), { throughId, maxReceipts }, signal);
+    if (result !== null) throw new TypeError("Ordered receipt horizon must return no content.");
+  }
   private record(value: unknown): EdgeRecord {
     const row = object(value); if (typeof row.deleted !== "boolean") throw new TypeError("Invalid deletion state.");
     return { id: text(row.id), revision: integer(row.revision), payload: decodePayload(row.payload, this.limits.record), deleted: row.deleted };
@@ -136,6 +144,25 @@ export async function synchronizeEdge(store: IndexedDbEdgeStore, remote: EdgeHtt
     for await (const records of remote.readSnapshot(scope, snapshot, options.signal)) await store.applySnapshot(scope, snapshot.id, records);
     await store.commitSnapshot(scope, snapshot.id);
   }
+  await flushOrderedReceipts(store, remote, scope, pushes, options.signal);
   for (let i = 0; i < pushes; i++) { options.signal?.throwIfAborted(); const lease = await store.claim(scope); if (!lease) break; await store.acknowledge(lease, await remote.applyMutation(lease.mutation, options.signal)) }
+  await flushOrderedReceipts(store, remote, scope, pushes, options.signal);
   for (let i = 0; i < batches; i++) { options.signal?.throwIfAborted(); const checkpoint = await store.checkpoint(scope); const changes = await remote.readChanges(scope, checkpoint.position, undefined, options.signal); if (!changes) break; await store.applyChanges(scope, changes.fromPosition, changes.toPosition, changes.records) }
+}
+
+/** Drain a bounded durable confirmation outbox. Retrying after a lost response reuses the original mutation and horizon. */
+export async function flushOrderedReceipts(store: IndexedDbEdgeStore, remote: EdgeHttpRemoteTransport, scope: EdgeScope,
+  maximum = 32, signal?: AbortSignal): Promise<void> {
+  if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > 1000) throw new RangeError("Ordered receipt flush limit exceeded.");
+  for (let i = 0; i < maximum; i++) {
+    signal?.throwIfAborted(); const mutation = await store.nextUnconfirmedOrderedReceipt(scope);
+    if (!mutation) break;
+    await remote.finalizeMutationReceipt(mutation, signal);
+    await store.markOrderedReceiptConfirmed(mutation);
+  }
+  const through = await store.confirmedOrderedHorizon(scope, maximum);
+  if (through !== null) {
+    await remote.advanceOrderedReceiptHorizon(scope, through, maximum, signal);
+    await store.markOrderedHorizon(scope, through);
+  }
 }

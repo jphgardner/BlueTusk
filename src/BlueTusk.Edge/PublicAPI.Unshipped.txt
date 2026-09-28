@@ -1,4 +1,5 @@
 #nullable enable
+const BlueTusk.Edge.EdgeOrderedMutationId.MaxSequence = 1152921504606846975 -> long
 BlueTusk.Edge.EdgeCachedDocument
 BlueTusk.Edge.EdgeCachedDocument.<Clone>$() -> BlueTusk.Edge.EdgeCachedDocument!
 BlueTusk.Edge.EdgeCachedDocument.Deconstruct(out string! Id, out long ServerRevision, out System.ReadOnlyMemory<byte> Payload, out bool Deleted, out System.Guid? PendingMutationId, out BlueTusk.Edge.EdgeMutationStatus? PendingStatus) -> void
@@ -68,6 +69,7 @@ BlueTusk.Edge.EdgeMutationIdentityException.EdgeMutationIdentityException() -> v
 BlueTusk.Edge.EdgeMutationKind
 BlueTusk.Edge.EdgeMutationKind.Delete = 1 -> BlueTusk.Edge.EdgeMutationKind
 BlueTusk.Edge.EdgeMutationKind.Upsert = 0 -> BlueTusk.Edge.EdgeMutationKind
+BlueTusk.Edge.EdgeOrderedMutationId
 BlueTusk.Edge.EdgeMutationLease
 BlueTusk.Edge.EdgeMutationLease.<Clone>$() -> BlueTusk.Edge.EdgeMutationLease!
 BlueTusk.Edge.EdgeMutationLease.Deconstruct(out BlueTusk.Edge.EdgeMutation! Mutation, out long Fence, out System.DateTimeOffset ExpiresAt) -> void
@@ -126,6 +128,15 @@ BlueTusk.Edge.EdgeSynchronizationCoordinator.EdgeSynchronizationCoordinator(Blue
 BlueTusk.Edge.EdgeSynchronizationCoordinator.SynchronizeAsync(BlueTusk.Edge.EdgeScope! scope, int maxPushes = 32, int maxChangeBatches = 32, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Edge.EdgeValidation
 BlueTusk.Edge.IEdgeLocalStore
+BlueTusk.Edge.IEdgeOrderedLocalStore
+BlueTusk.Edge.IEdgeOrderedLocalStore.EnqueueOrderedAsync(BlueTusk.Edge.EdgeScope! scope, string! documentId, long expectedRevision, BlueTusk.Edge.EdgeMutationKind kind, System.ReadOnlyMemory<byte> payload, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutation!>
+BlueTusk.Edge.IEdgeOrderedLocalStore.MarkOrderedReceiptConfirmedAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeOrderedLocalStore.MarkOrderedReceiptHorizonAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid throughMutationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeOrderedLocalStore.ReadConfirmedOrderedHorizonAsync(BlueTusk.Edge.EdgeScope! scope, int maxReceipts = 1000, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Guid?>
+BlueTusk.Edge.IEdgeOrderedLocalStore.ReadNextUnconfirmedOrderedReceiptAsync(BlueTusk.Edge.EdgeScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutation?>
+BlueTusk.Edge.IEdgeOrderedReceiptTransport
+BlueTusk.Edge.IEdgeOrderedReceiptTransport.AdvanceOrderedReceiptHorizonAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid throughMutationId, int maxReceipts = 1000, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeOrderedReceiptTransport.FinalizeMutationReceiptAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Edge.IEdgeLocalStore.AcknowledgeAsync(BlueTusk.Edge.EdgeMutationLease! lease, BlueTusk.Edge.EdgeMutationOutcome! outcome, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Edge.IEdgeLocalStore.ActivateScopeAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeEpochChangePolicy policy = BlueTusk.Edge.EdgeEpochChangePolicy.RejectIfPending, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Edge.IEdgeLocalStore.ApplyChangesAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeChangeBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
@@ -182,5 +193,8 @@ static BlueTusk.Edge.EdgeScope.operator !=(BlueTusk.Edge.EdgeScope? left, BlueTu
 static BlueTusk.Edge.EdgeScope.operator ==(BlueTusk.Edge.EdgeScope? left, BlueTusk.Edge.EdgeScope? right) -> bool
 static BlueTusk.Edge.EdgeSnapshot.operator !=(BlueTusk.Edge.EdgeSnapshot? left, BlueTusk.Edge.EdgeSnapshot? right) -> bool
 static BlueTusk.Edge.EdgeSnapshot.operator ==(BlueTusk.Edge.EdgeSnapshot? left, BlueTusk.Edge.EdgeSnapshot? right) -> bool
+static BlueTusk.Edge.EdgeOrderedMutationId.Create(string! streamId, long sequence) -> System.Guid
+static BlueTusk.Edge.EdgeOrderedMutationId.NewStreamId() -> string!
+static BlueTusk.Edge.EdgeOrderedMutationId.TryParse(System.Guid id, out string! streamId, out long sequence) -> bool
 static BlueTusk.Edge.EdgeValidation.JsonObject(System.ReadOnlyMemory<byte> payload) -> void
 static BlueTusk.Edge.EdgeValidation.Key(string! value, string! parameterName, int maxBytes) -> void

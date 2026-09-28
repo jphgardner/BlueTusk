@@ -33,23 +33,25 @@ public sealed partial class PostgreSqlEdgeServerStore
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var state = await LockScopeAsync(connection, transaction, scope, cancellationToken, write: false).ConfigureAwait(false);
-        DateTimeOffset databaseTime; int snapshots;
+        DateTimeOffset databaseTime; int snapshots, orderedStreams;
         await using (var command = Scoped(connection, transaction, $"""
             SELECT clock_timestamp(),version,max_record_bytes,
-              (SELECT count(*) FROM(SELECT snapshot_id FROM {_schema}.snapshots WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch AND expires_at>clock_timestamp() LIMIT @maximum) AS bounded)
+              (SELECT count(*) FROM(SELECT snapshot_id FROM {_schema}.snapshots WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch AND expires_at>clock_timestamp() LIMIT @maximum) AS bounded),
+              (SELECT count(*) FROM(SELECT stream_id FROM {_schema}.ordered_streams WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch LIMIT @maxstreams) AS bounded_streams)
             FROM {_schema}.metadata WHERE singleton
             """, scope))
         {
             Parameter(command, "maximum", Options.MaxSnapshotsPerScope + 1);
+            Parameter(command, "maxstreams", Options.MaxOrderedStreamsPerScope + 1);
             await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt32(1) != 3 || reader.GetInt32(2) != Options.MaxRecordBytes)
+            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt32(1) != 4 || reader.GetInt32(2) != Options.MaxRecordBytes)
             { throw new InvalidOperationException("The Edge server storage version or installed record byte contract differs."); }
-            databaseTime = reader.GetFieldValue<DateTimeOffset>(0); snapshots = checked((int)reader.GetInt64(3));
+            databaseTime = reader.GetFieldValue<DateTimeOffset>(0); snapshots = checked((int)reader.GetInt64(3)); orderedStreams = checked((int)reader.GetInt64(4));
         }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return new(databaseTime, state.Head, state.Floor, state.RecordCount, state.RecordBytes, state.ReceiptCount, state.ReceiptBytes, state.ChangeCount, state.ChangeBytes, snapshots,
             state.RecordCount >= Options.MaxRecordsPerScope || state.RecordBytes >= Options.MaxRecordBytesPerScope ||
-            state.ReceiptCount >= Options.MaxReceiptsPerScope || state.ReceiptBytes >= Options.MaxReceiptBytesPerScope || state.ChangeCount >= Options.MaxChangesPerScope || state.ChangeBytes >= Options.MaxChangeBytesPerScope,
+            state.ReceiptCount >= Options.MaxReceiptsPerScope || state.ReceiptBytes >= Options.MaxReceiptBytesPerScope || orderedStreams >= Options.MaxOrderedStreamsPerScope || state.ChangeCount >= Options.MaxChangesPerScope || state.ChangeBytes >= Options.MaxChangeBytesPerScope,
             snapshots >= Options.MaxSnapshotsPerScope);
     }
 }

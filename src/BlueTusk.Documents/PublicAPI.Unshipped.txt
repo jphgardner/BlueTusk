@@ -7,9 +7,19 @@ BlueTusk.Documents.DocumentContentCollectionPage
 BlueTusk.Documents.DocumentContentCollectionPage.DeletedCount.get -> int
 BlueTusk.Documents.DocumentContentCollectionPage.ExaminedCount.get -> int
 BlueTusk.Documents.DocumentContentCollectionPage.NextAfterCursor.get -> string?
+BlueTusk.Documents.DocumentInlineContentMigration<T>
+BlueTusk.Documents.DocumentInlineContentMigration<T>.DocumentInlineContentMigration(int fromVersion, int toVersion, System.Func<System.Text.Json.JsonElement, BlueTusk.Documents.DocumentInlineContentResult<T>!>! transform) -> void
+BlueTusk.Documents.DocumentInlineContentMigration<T>.FromVersion.get -> int
+BlueTusk.Documents.DocumentInlineContentMigration<T>.ToVersion.get -> int
+BlueTusk.Documents.DocumentInlineContentMigration<T>.Transform.get -> System.Func<System.Text.Json.JsonElement, BlueTusk.Documents.DocumentInlineContentResult<T>!>!
+BlueTusk.Documents.DocumentInlineContentResult<T>
+BlueTusk.Documents.DocumentInlineContentResult<T>.Content.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Documents.DocumentInlineContentResult<T>.DocumentInlineContentResult(T value, System.ReadOnlyMemory<byte> content) -> void
+BlueTusk.Documents.DocumentInlineContentResult<T>.Value.get -> T
 BlueTusk.Documents.DocumentStore.AttachContentAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, long expectedRevision, System.ReadOnlyMemory<byte> content, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
 BlueTusk.Documents.DocumentStore.CollectUnusedContentPageAsync(int maximumRows = 1000, string? afterCursor = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.DocumentContentCollectionPage!>
 BlueTusk.Documents.DocumentStore.LoadContentAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.DocumentContent?>
+BlueTusk.Documents.DocumentStore.MigrateInlineContentPageAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! targetCollection, BlueTusk.Documents.DocumentInlineContentMigration<T>! migration, int pageSize = 100, string? afterId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.DocumentMigrationPage!>
 BlueTusk.Documents.DocumentStore.RemoveContentAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, long expectedRevision, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
 BlueTusk.Documents.DocumentCollectionDefinition<T>
 BlueTusk.Documents.DocumentCollectionDefinition<T>.DocumentCollectionDefinition(string! name, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! jsonTypeInfo, int schemaVersion = 1) -> void
