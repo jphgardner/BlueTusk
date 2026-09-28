@@ -42,7 +42,7 @@
     "prettier": "^3.8.1",
     "tailwindcss": "^4.1.12",
     "typescript": "~6.0.2",
-    "vitest": "^4.0.8"
+    "vitest": "^4.1.11"
   },
   "overrides": {
     "@hono/node-server": "2.1.0"
