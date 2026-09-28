@@ -1,0 +1,110 @@
+#nullable enable
+BlueTusk.Studio.IStudioAuditSink
+BlueTusk.Studio.IStudioAuditSink.RecordAsync(BlueTusk.Studio.StudioAuditRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Studio.IStudioScopeResolver
+BlueTusk.Studio.IStudioScopeResolver.ResolveAsync(System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Studio.StudioDatabaseScope!>
+BlueTusk.Studio.PostgreSqlStudioAuditSink
+BlueTusk.Studio.PostgreSqlStudioAuditSink.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Studio.PostgreSqlStudioAuditSink.PostgreSqlStudioAuditSink(System.Data.Common.DbDataSource! dataSource, string! schema = "bluetusk_studio", int commandTimeoutSeconds = 10) -> void
+BlueTusk.Studio.PostgreSqlStudioAuditSink.RecordAsync(BlueTusk.Studio.StudioAuditRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Studio.StudioAuditRecord
+BlueTusk.Studio.StudioAuditRecord.<Clone>$() -> BlueTusk.Studio.StudioAuditRecord!
+BlueTusk.Studio.StudioAuditRecord.ActorId.get -> string!
+BlueTusk.Studio.StudioAuditRecord.ActorId.init -> void
+BlueTusk.Studio.StudioAuditRecord.Deconstruct(out System.Guid OperationId, out string! ActorId, out string! QueryFingerprint, out string! Outcome, out int ReturnedRows) -> void
+BlueTusk.Studio.StudioAuditRecord.Equals(BlueTusk.Studio.StudioAuditRecord? other) -> bool
+BlueTusk.Studio.StudioAuditRecord.OperationId.get -> System.Guid
+BlueTusk.Studio.StudioAuditRecord.OperationId.init -> void
+BlueTusk.Studio.StudioAuditRecord.Outcome.get -> string!
+BlueTusk.Studio.StudioAuditRecord.Outcome.init -> void
+BlueTusk.Studio.StudioAuditRecord.QueryFingerprint.get -> string!
+BlueTusk.Studio.StudioAuditRecord.QueryFingerprint.init -> void
+BlueTusk.Studio.StudioAuditRecord.ReturnedRows.get -> int
+BlueTusk.Studio.StudioAuditRecord.ReturnedRows.init -> void
+BlueTusk.Studio.StudioAuditRecord.StudioAuditRecord(System.Guid OperationId, string! ActorId, string! QueryFingerprint, string! Outcome, int ReturnedRows) -> void
+BlueTusk.Studio.StudioCapacityException
+BlueTusk.Studio.StudioCapacityException.StudioCapacityException() -> void
+BlueTusk.Studio.StudioDatabaseScope
+BlueTusk.Studio.StudioDatabaseScope.<Clone>$() -> BlueTusk.Studio.StudioDatabaseScope!
+BlueTusk.Studio.StudioDatabaseScope.DataSource.get -> System.Data.Common.DbDataSource!
+BlueTusk.Studio.StudioDatabaseScope.DataSource.init -> void
+BlueTusk.Studio.StudioDatabaseScope.Deconstruct(out System.Data.Common.DbDataSource! DataSource, out System.Collections.Generic.IReadOnlyList<string!>! Schemas) -> void
+BlueTusk.Studio.StudioDatabaseScope.Equals(BlueTusk.Studio.StudioDatabaseScope? other) -> bool
+BlueTusk.Studio.StudioDatabaseScope.Schemas.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Studio.StudioDatabaseScope.Schemas.init -> void
+BlueTusk.Studio.StudioDatabaseScope.StudioDatabaseScope(System.Data.Common.DbDataSource! DataSource, System.Collections.Generic.IReadOnlyList<string!>! Schemas) -> void
+BlueTusk.Studio.StudioEndpoints
+BlueTusk.Studio.StudioOptions
+BlueTusk.Studio.StudioOptions.<Clone>$() -> BlueTusk.Studio.StudioOptions!
+BlueTusk.Studio.StudioOptions.Equals(BlueTusk.Studio.StudioOptions? other) -> bool
+BlueTusk.Studio.StudioOptions.MaximumConcurrentQueries.get -> int
+BlueTusk.Studio.StudioOptions.MaximumConcurrentQueries.init -> void
+BlueTusk.Studio.StudioOptions.MaximumReplyBytes.get -> int
+BlueTusk.Studio.StudioOptions.MaximumReplyBytes.init -> void
+BlueTusk.Studio.StudioOptions.MaximumRequestBytes.get -> int
+BlueTusk.Studio.StudioOptions.MaximumRequestBytes.init -> void
+BlueTusk.Studio.StudioOptions.MaximumRows.get -> int
+BlueTusk.Studio.StudioOptions.MaximumRows.init -> void
+BlueTusk.Studio.StudioOptions.Path.get -> string!
+BlueTusk.Studio.StudioOptions.Path.init -> void
+BlueTusk.Studio.StudioOptions.QueryPolicy.get -> string!
+BlueTusk.Studio.StudioOptions.QueryPolicy.init -> void
+BlueTusk.Studio.StudioOptions.QueryTimeoutSeconds.get -> int
+BlueTusk.Studio.StudioOptions.QueryTimeoutSeconds.init -> void
+BlueTusk.Studio.StudioOptions.ReadPolicy.get -> string!
+BlueTusk.Studio.StudioOptions.ReadPolicy.init -> void
+BlueTusk.Studio.StudioOptions.StudioOptions() -> void
+BlueTusk.Studio.StudioQueryRequest
+BlueTusk.Studio.StudioQueryRequest.<Clone>$() -> BlueTusk.Studio.StudioQueryRequest!
+BlueTusk.Studio.StudioQueryRequest.Deconstruct(out string! Sql, out bool Explain, out int? MaximumRows) -> void
+BlueTusk.Studio.StudioQueryRequest.Equals(BlueTusk.Studio.StudioQueryRequest? other) -> bool
+BlueTusk.Studio.StudioQueryRequest.Explain.get -> bool
+BlueTusk.Studio.StudioQueryRequest.Explain.init -> void
+BlueTusk.Studio.StudioQueryRequest.MaximumRows.get -> int?
+BlueTusk.Studio.StudioQueryRequest.MaximumRows.init -> void
+BlueTusk.Studio.StudioQueryRequest.Sql.get -> string!
+BlueTusk.Studio.StudioQueryRequest.Sql.init -> void
+BlueTusk.Studio.StudioQueryRequest.StudioQueryRequest(string! Sql, bool Explain = false, int? MaximumRows = null) -> void
+BlueTusk.Studio.StudioQueryResult
+BlueTusk.Studio.StudioQueryResult.<Clone>$() -> BlueTusk.Studio.StudioQueryResult!
+BlueTusk.Studio.StudioQueryResult.Deconstruct(out System.ReadOnlyMemory<byte> Json, out int Rows) -> void
+BlueTusk.Studio.StudioQueryResult.Equals(BlueTusk.Studio.StudioQueryResult? other) -> bool
+BlueTusk.Studio.StudioQueryResult.Json.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Studio.StudioQueryResult.Json.init -> void
+BlueTusk.Studio.StudioQueryResult.Rows.get -> int
+BlueTusk.Studio.StudioQueryResult.Rows.init -> void
+BlueTusk.Studio.StudioQueryResult.StudioQueryResult(System.ReadOnlyMemory<byte> Json, int Rows) -> void
+BlueTusk.Studio.StudioQueryService
+BlueTusk.Studio.StudioQueryService.CaptureSchemaAsync(BlueTusk.Studio.StudioDatabaseScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>>
+BlueTusk.Studio.StudioQueryService.Dispose() -> void
+BlueTusk.Studio.StudioQueryService.ExecuteAsync(BlueTusk.Studio.StudioDatabaseScope! scope, BlueTusk.Studio.StudioQueryRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Studio.StudioQueryResult!>
+BlueTusk.Studio.StudioQueryService.StudioQueryService(BlueTusk.Studio.StudioOptions! options) -> void
+BlueTusk.Studio.StudioReplyLimitException
+BlueTusk.Studio.StudioReplyLimitException.StudioReplyLimitException() -> void
+override BlueTusk.Studio.StudioAuditRecord.Equals(object? obj) -> bool
+override BlueTusk.Studio.StudioAuditRecord.GetHashCode() -> int
+override BlueTusk.Studio.StudioAuditRecord.ToString() -> string!
+override BlueTusk.Studio.StudioDatabaseScope.Equals(object? obj) -> bool
+override BlueTusk.Studio.StudioDatabaseScope.GetHashCode() -> int
+override BlueTusk.Studio.StudioDatabaseScope.ToString() -> string!
+override BlueTusk.Studio.StudioOptions.Equals(object? obj) -> bool
+override BlueTusk.Studio.StudioOptions.GetHashCode() -> int
+override BlueTusk.Studio.StudioOptions.ToString() -> string!
+override BlueTusk.Studio.StudioQueryRequest.Equals(object? obj) -> bool
+override BlueTusk.Studio.StudioQueryRequest.GetHashCode() -> int
+override BlueTusk.Studio.StudioQueryRequest.ToString() -> string!
+override BlueTusk.Studio.StudioQueryResult.Equals(object? obj) -> bool
+override BlueTusk.Studio.StudioQueryResult.GetHashCode() -> int
+override BlueTusk.Studio.StudioQueryResult.ToString() -> string!
+static BlueTusk.Studio.StudioAuditRecord.operator !=(BlueTusk.Studio.StudioAuditRecord? left, BlueTusk.Studio.StudioAuditRecord? right) -> bool
+static BlueTusk.Studio.StudioAuditRecord.operator ==(BlueTusk.Studio.StudioAuditRecord? left, BlueTusk.Studio.StudioAuditRecord? right) -> bool
+static BlueTusk.Studio.StudioDatabaseScope.operator !=(BlueTusk.Studio.StudioDatabaseScope? left, BlueTusk.Studio.StudioDatabaseScope? right) -> bool
+static BlueTusk.Studio.StudioDatabaseScope.operator ==(BlueTusk.Studio.StudioDatabaseScope? left, BlueTusk.Studio.StudioDatabaseScope? right) -> bool
+static BlueTusk.Studio.StudioEndpoints.AddBlueTuskStudio<TScopeResolver, TAuditSink>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, BlueTusk.Studio.StudioOptions! options) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static BlueTusk.Studio.StudioEndpoints.MapBlueTuskStudio(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
+static BlueTusk.Studio.StudioOptions.operator !=(BlueTusk.Studio.StudioOptions? left, BlueTusk.Studio.StudioOptions? right) -> bool
+static BlueTusk.Studio.StudioOptions.operator ==(BlueTusk.Studio.StudioOptions? left, BlueTusk.Studio.StudioOptions? right) -> bool
+static BlueTusk.Studio.StudioQueryRequest.operator !=(BlueTusk.Studio.StudioQueryRequest? left, BlueTusk.Studio.StudioQueryRequest? right) -> bool
+static BlueTusk.Studio.StudioQueryRequest.operator ==(BlueTusk.Studio.StudioQueryRequest? left, BlueTusk.Studio.StudioQueryRequest? right) -> bool
+static BlueTusk.Studio.StudioQueryResult.operator !=(BlueTusk.Studio.StudioQueryResult? left, BlueTusk.Studio.StudioQueryResult? right) -> bool
+static BlueTusk.Studio.StudioQueryResult.operator ==(BlueTusk.Studio.StudioQueryResult? left, BlueTusk.Studio.StudioQueryResult? right) -> bool

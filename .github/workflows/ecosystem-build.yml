@@ -1,0 +1,93 @@
+name: Ecosystem expansion
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: Expansion contracts and PostgreSQL ${{ matrix.postgresql }} tests
+    strategy:
+      fail-fast: false
+      matrix:
+        postgresql: [15, 16, 17, 18]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Verify repository registration
+        shell: pwsh
+        run: ./eng/verify-solution-layout.ps1
+      - name: Start isolated PostgreSQL and vector fixtures
+        run: docker compose -f eng/compose/postgres.yml up -d --wait postgres${{ matrix.postgresql }} pgvector18
+      - name: Start isolated OpenSearch fixture
+        run: docker compose -f eng/compose/opensearch.yml up -d --wait opensearch
+      - name: Verify all implemented expansion products
+        shell: pwsh
+        run: |
+          $native = '${{ matrix.postgresql }}' -eq '18'
+          ./eng/test-ecosystem.ps1 -RequireDatabase -RequireStableSource -ComposeFixture -Native:$native -PostgreSqlService postgres${{ matrix.postgresql }}
+      - name: Verify freshly installed CLI and package-only SQL type consumer
+        if: matrix.postgresql == 18
+        shell: pwsh
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=127.0.0.1;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable # ggignore
+        run: ./eng/test-sql-package-consumer.ps1
+      - name: Verify synchronous physical promotion and fenced projection recovery
+        if: matrix.postgresql == 18
+        shell: pwsh
+        run: ./docs/projections/evidence/run-physical-recovery.ps1 -OutputDirectory artifacts/projections-recovery/physical-promotion
+      - name: Retain measured test results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ecosystem-tests-pg${{ matrix.postgresql }}-${{ github.sha }}
+          path: |
+            artifacts/ecosystem-tests
+            artifacts/ecosystem-native
+            artifacts/ecosystem/sql-package-consumer-*/executions.json
+            artifacts/projections-recovery
+          if-no-files-found: error
+      - name: Stop owned Compose fixture
+        if: always()
+        run: |
+          docker compose -f eng/compose/opensearch.yml down
+          docker compose -f eng/compose/postgres.yml down
+  browser:
+    name: Durable browser storage and authenticated HTTP recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Install locked workspace dependencies
+        run: npm ci --ignore-scripts
+      - name: Build and verify offline browser store
+        run: |
+          npm run build --workspace @bluetusk/edge
+          npm run test --workspace @bluetusk/edge
+          npm exec --workspace @bluetusk/edge -- playwright install --with-deps chromium
+          npm run test:browser --workspace @bluetusk/edge
+      - name: Start isolated PostgreSQL for browser HTTP recovery
+        run: docker compose -f eng/compose/postgres.yml up -d --wait postgres18
+      - name: Verify browser and server interoperability across response loss and restart
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=127.0.0.1;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable # ggignore
+          BLUETUSK_EDGE_BROWSER_CHANNEL: chromium
+        run: |
+          dotnet build tests/BlueTusk.Edge.BrowserHttpSmoke/BlueTusk.Edge.BrowserHttpSmoke.csproj -c Release -nr:false
+          dotnet run --project tests/BlueTusk.Edge.BrowserHttpSmoke/BlueTusk.Edge.BrowserHttpSmoke.csproj -c Release --no-build
+      - name: Stop owned browser fixture
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml down

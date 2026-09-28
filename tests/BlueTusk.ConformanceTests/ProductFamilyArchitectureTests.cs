@@ -14,6 +14,16 @@ public sealed class ProductFamilyArchitectureTests
             ["BlueTusk.ControlPlane"] = "ControlPlane",
             ["BlueTusk.Dashboard"] = "ControlPlane",
             ["BlueTusk.ContinuousGraph"] = "ContinuousGraph",
+            ["BlueTusk.Events"] = "Events",
+            ["BlueTusk.Jobs"] = "Jobs",
+            ["BlueTusk.Documents"] = "Documents",
+            ["BlueTusk.Projections"] = "Projections",
+            ["BlueTusk.Search"] = "Search",
+            ["BlueTusk.Schema"] = "Schema",
+            ["BlueTusk.Sql"] = "Sql",
+            ["BlueTusk.Studio"] = "Studio",
+            ["BlueTusk.Edge"] = "Edge",
+            ["BlueTusk.Workflows"] = "Workflows",
         };
 
     [Fact]

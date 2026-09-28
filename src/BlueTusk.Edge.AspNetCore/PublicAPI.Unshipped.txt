@@ -1,0 +1,42 @@
+#nullable enable
+BlueTusk.Edge.AspNetCore.EdgeEndpointExtensions
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.<Clone>$() -> BlueTusk.Edge.AspNetCore.EdgeEndpointOptions!
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.Equals(BlueTusk.Edge.AspNetCore.EdgeEndpointOptions? other) -> bool
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.AuthorizationPolicy.get -> string!
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.AuthorizationPolicy.init -> void
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.EdgeEndpointOptions() -> void
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.MaxRequestBytes.get -> int
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.MaxRequestBytes.init -> void
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.MaxResponseBytes.get -> int
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.MaxResponseBytes.init -> void
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.Prefix.get -> string!
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.Prefix.init -> void
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.WriteBusinessAsync.get -> System.Func<System.Data.Common.DbConnection!, System.Data.Common.DbTransaction!, BlueTusk.Edge.EdgeMutation!, BlueTusk.Edge.EdgeRecord!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>?
+BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.WriteBusinessAsync.init -> void
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheck
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheck.EdgeServerHealthCheck(BlueTusk.Edge.Server.PostgreSqlEdgeServerStore! store, BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions? options = null) -> void
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheck.Options.get -> BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions!
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckExtensions
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.<Clone>$() -> BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions!
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.EdgeServerHealthCheckOptions() -> void
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.Equals(BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions? other) -> bool
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.MaxConcurrentProbes.get -> int
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.MaxConcurrentProbes.init -> void
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.Timeout.get -> System.TimeSpan
+BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.Timeout.init -> void
+const BlueTusk.Edge.AspNetCore.EdgeServerHealthCheck.MeterName = "BlueTusk.Edge.Server.Health" -> string!
+override BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.Equals(object? obj) -> bool
+override BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.GetHashCode() -> int
+override BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.ToString() -> string!
+override BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.Equals(object? obj) -> bool
+override BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.GetHashCode() -> int
+override BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.ToString() -> string!
+static BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.operator !=(BlueTusk.Edge.AspNetCore.EdgeEndpointOptions? left, BlueTusk.Edge.AspNetCore.EdgeEndpointOptions? right) -> bool
+static BlueTusk.Edge.AspNetCore.EdgeEndpointOptions.operator ==(BlueTusk.Edge.AspNetCore.EdgeEndpointOptions? left, BlueTusk.Edge.AspNetCore.EdgeEndpointOptions? right) -> bool
+static BlueTusk.Edge.AspNetCore.EdgeEndpointExtensions.MapBlueTuskEdge(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, BlueTusk.Edge.Server.PostgreSqlEdgeServerStore! store, System.Func<Microsoft.AspNetCore.Http.HttpContext!, BlueTusk.Edge.EdgeScope!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<bool>>! authorizeScope, BlueTusk.Edge.AspNetCore.EdgeEndpointOptions! options) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
+static BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckExtensions.AddBlueTuskEdgeServer(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, string! name, BlueTusk.Edge.Server.PostgreSqlEdgeServerStore! store, BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions? options = null) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+static BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.operator !=(BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions? left, BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions? right) -> bool
+static BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions.operator ==(BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions? left, BlueTusk.Edge.AspNetCore.EdgeServerHealthCheckOptions? right) -> bool

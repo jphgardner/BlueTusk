@@ -1,0 +1,99 @@
+#nullable enable
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.<Clone>$() -> BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions!
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.CommandTimeoutSeconds.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.CommandTimeoutSeconds.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.Equals(BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions? other) -> bool
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.Lifetime.get -> System.TimeSpan
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.Lifetime.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxCandidates.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxCandidates.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxConcurrentOperations.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxConcurrentOperations.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxRetainedBytes.get -> long
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxRetainedBytes.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxSnapshotBytes.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxSnapshotBytes.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxSnapshots.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxSnapshots.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxSnapshotsPerTenantIndex.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.MaxSnapshotsPerTenantIndex.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.OpenSearchCursorStoreOptions() -> void
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.Schema.get -> string!
+BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.Schema.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchPage
+BlueTusk.Search.OpenSearch.OpenSearchPage.<Clone>$() -> BlueTusk.Search.OpenSearch.OpenSearchPage!
+BlueTusk.Search.OpenSearch.OpenSearchPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Search.SearchHit!>! Hits, out int? NextAfterRank, out System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Search.OpenSearch.OpenSearchPage.Equals(BlueTusk.Search.OpenSearch.OpenSearchPage? other) -> bool
+BlueTusk.Search.OpenSearch.OpenSearchPage.ExpiresAt.get -> System.DateTimeOffset
+BlueTusk.Search.OpenSearch.OpenSearchPage.ExpiresAt.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchPage.Hits.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Search.SearchHit!>!
+BlueTusk.Search.OpenSearch.OpenSearchPage.Hits.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchPage.NextAfterRank.get -> int?
+BlueTusk.Search.OpenSearch.OpenSearchPage.NextAfterRank.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchPage.OpenSearchPage(System.Collections.Generic.IReadOnlyList<BlueTusk.Search.SearchHit!>! Hits, int? NextAfterRank, System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Search.OpenSearch.OpenSearchResponseException
+BlueTusk.Search.OpenSearch.OpenSearchResponseException.OpenSearchResponseException(int statusCode) -> void
+BlueTusk.Search.OpenSearch.OpenSearchResponseException.StatusCode.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchSearchSession
+BlueTusk.Search.OpenSearch.OpenSearchSearchSession.CandidateCount.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchSearchSession.ExpiresAt.get -> System.DateTimeOffset
+BlueTusk.Search.OpenSearch.OpenSearchStore
+BlueTusk.Search.OpenSearch.OpenSearchStore.ContinueDurableSearchAsync(BlueTusk.Search.SearchScope! scope, BlueTusk.Search.SearchCursor! cursor, BlueTusk.Search.OpenSearch.PostgreSqlOpenSearchCursorStore! cursors, int pageSize = 20, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.SearchPage!>
+BlueTusk.Search.OpenSearch.OpenSearchStore.DeleteAsync(string! tenant, string! index, string! id, long version, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.SearchIngestionResult!>
+BlueTusk.Search.OpenSearch.OpenSearchStore.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.OpenSearch.OpenSearchStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.OpenSearch.OpenSearchStore.OpenSearchStore(System.Net.Http.HttpClient! httpClient, BlueTusk.Search.OpenSearch.OpenSearchStoreOptions! options, BlueTusk.Search.ISearchEmbeddingProvider? embeddings = null, BlueTusk.Search.OpenSearch.SearchHttpClientOwnership ownership = BlueTusk.Search.OpenSearch.SearchHttpClientOwnership.Borrowed) -> void
+BlueTusk.Search.OpenSearch.OpenSearchStore.Options.get -> BlueTusk.Search.OpenSearch.OpenSearchStoreOptions!
+BlueTusk.Search.OpenSearch.OpenSearchStore.ReadPageAsync(BlueTusk.Search.SearchScope! scope, BlueTusk.Search.OpenSearch.OpenSearchSearchSession! session, int pageSize = 20, int afterRank = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.OpenSearch.OpenSearchPage!>
+BlueTusk.Search.OpenSearch.OpenSearchStore.SearchAsync(BlueTusk.Search.SearchScope! scope, BlueTusk.Search.SearchRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.OpenSearch.OpenSearchSearchSession!>
+BlueTusk.Search.OpenSearch.OpenSearchStore.SearchDurableAsync(BlueTusk.Search.SearchScope! scope, BlueTusk.Search.SearchRequest! request, BlueTusk.Search.OpenSearch.PostgreSqlOpenSearchCursorStore! cursors, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.SearchPage!>
+BlueTusk.Search.OpenSearch.OpenSearchStore.UpsertAsync(BlueTusk.Search.SearchDocument! document, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.SearchIngestionResult!>
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.<Clone>$() -> BlueTusk.Search.OpenSearch.OpenSearchStoreOptions!
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.Endpoint.get -> System.Uri!
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.Endpoint.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.Equals(BlueTusk.Search.OpenSearch.OpenSearchStoreOptions? other) -> bool
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.IndexName.get -> string!
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.IndexName.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.Limits.get -> BlueTusk.Search.SearchStoreOptions!
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.Limits.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.MaxConcurrentOperations.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.MaxConcurrentOperations.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.MaxRequestBytes.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.MaxRequestBytes.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.MaxResponseBytes.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.MaxResponseBytes.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.OpenSearchStoreOptions() -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.PrimaryShards.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.PrimaryShards.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.Replicas.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.Replicas.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.RequestTimeout.get -> System.TimeSpan
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.RequestTimeout.init -> void
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.VectorDimensions.get -> int
+BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.VectorDimensions.init -> void
+BlueTusk.Search.OpenSearch.PostgreSqlOpenSearchCursorStore
+BlueTusk.Search.OpenSearch.PostgreSqlOpenSearchCursorStore.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.OpenSearch.PostgreSqlOpenSearchCursorStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.OpenSearch.PostgreSqlOpenSearchCursorStore.Options.get -> BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions!
+BlueTusk.Search.OpenSearch.PostgreSqlOpenSearchCursorStore.PostgreSqlOpenSearchCursorStore(System.Data.Common.DbDataSource! source, BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions? options = null, BlueTusk.Search.SearchDataSourceOwnership ownership = BlueTusk.Search.SearchDataSourceOwnership.Borrowed) -> void
+BlueTusk.Search.OpenSearch.PostgreSqlOpenSearchCursorStore.PruneExpiredAsync(int maximumCount = 128, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Search.OpenSearch.SearchHttpClientOwnership
+BlueTusk.Search.OpenSearch.SearchHttpClientOwnership.Borrowed = 0 -> BlueTusk.Search.OpenSearch.SearchHttpClientOwnership
+BlueTusk.Search.OpenSearch.SearchHttpClientOwnership.Owned = 1 -> BlueTusk.Search.OpenSearch.SearchHttpClientOwnership
+override BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.Equals(object? obj) -> bool
+override BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.GetHashCode() -> int
+override BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.ToString() -> string!
+override BlueTusk.Search.OpenSearch.OpenSearchPage.Equals(object? obj) -> bool
+override BlueTusk.Search.OpenSearch.OpenSearchPage.GetHashCode() -> int
+override BlueTusk.Search.OpenSearch.OpenSearchPage.ToString() -> string!
+override BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.Equals(object? obj) -> bool
+override BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.GetHashCode() -> int
+override BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.ToString() -> string!
+static BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.operator !=(BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions? left, BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions? right) -> bool
+static BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions.operator ==(BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions? left, BlueTusk.Search.OpenSearch.OpenSearchCursorStoreOptions? right) -> bool
+static BlueTusk.Search.OpenSearch.OpenSearchPage.operator !=(BlueTusk.Search.OpenSearch.OpenSearchPage? left, BlueTusk.Search.OpenSearch.OpenSearchPage? right) -> bool
+static BlueTusk.Search.OpenSearch.OpenSearchPage.operator ==(BlueTusk.Search.OpenSearch.OpenSearchPage? left, BlueTusk.Search.OpenSearch.OpenSearchPage? right) -> bool
+static BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.operator !=(BlueTusk.Search.OpenSearch.OpenSearchStoreOptions? left, BlueTusk.Search.OpenSearch.OpenSearchStoreOptions? right) -> bool
+static BlueTusk.Search.OpenSearch.OpenSearchStoreOptions.operator ==(BlueTusk.Search.OpenSearch.OpenSearchStoreOptions? left, BlueTusk.Search.OpenSearch.OpenSearchStoreOptions? right) -> bool

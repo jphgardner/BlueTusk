@@ -1,0 +1,39 @@
+{
+  "Tests": [
+    {
+      "Server": "PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+      "TrxPath": "artifacts\\jobs-postgresql-matrix\\20260927-203316-8908790-bb880dac257c49148c57685674ca980d\\pg16\\Jobs.trx",
+      "Total": 36,
+      "PostgreSqlVersion": 16,
+      "Passed": 36,
+      "Family": "Jobs"
+    },
+    {
+      "Server": "PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+      "TrxPath": "artifacts\\jobs-postgresql-matrix\\20260927-203316-8908790-bb880dac257c49148c57685674ca980d\\pg16\\Workflows.trx",
+      "Total": 26,
+      "PostgreSqlVersion": 16,
+      "Passed": 26,
+      "Family": "Workflows"
+    },
+    {
+      "Server": "PostgreSQL 17.11 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+      "TrxPath": "artifacts\\jobs-postgresql-matrix\\20260927-203316-8908790-bb880dac257c49148c57685674ca980d\\pg17\\Jobs.trx",
+      "Total": 36,
+      "PostgreSqlVersion": 17,
+      "Passed": 36,
+      "Family": "Jobs"
+    },
+    {
+      "Server": "PostgreSQL 17.11 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+      "TrxPath": "artifacts\\jobs-postgresql-matrix\\20260927-203316-8908790-bb880dac257c49148c57685674ca980d\\pg17\\Workflows.trx",
+      "Total": 26,
+      "PostgreSqlVersion": 17,
+      "Passed": 26,
+      "Family": "Workflows"
+    }
+  ],
+  "Qualification": "Owned local fixture compatibility evidence; production qualification remains open",
+  "Configuration": "Release",
+  "TimestampUtc": "2026-09-27T20:33:49.9241435+00:00"
+}

@@ -1,0 +1,159 @@
+#nullable enable
+BlueTusk.Documents.DocumentCollectionDefinition<T>
+BlueTusk.Documents.DocumentCollectionDefinition<T>.DocumentCollectionDefinition(string! name, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! jsonTypeInfo, int schemaVersion = 1) -> void
+BlueTusk.Documents.DocumentCollectionDefinition<T>.JsonTypeInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>!
+BlueTusk.Documents.DocumentCollectionDefinition<T>.Name.get -> string!
+BlueTusk.Documents.DocumentCollectionDefinition<T>.SchemaVersion.get -> int
+BlueTusk.Documents.DocumentConcurrencyException
+BlueTusk.Documents.DocumentConcurrencyException.ActualRevision.get -> long?
+BlueTusk.Documents.DocumentConcurrencyException.Collection.get -> string!
+BlueTusk.Documents.DocumentConcurrencyException.DocumentConcurrencyException(string! tenant, string! collection, string! id, long? expectedRevision, long? actualRevision) -> void
+BlueTusk.Documents.DocumentConcurrencyException.ExpectedRevision.get -> long?
+BlueTusk.Documents.DocumentConcurrencyException.Id.get -> string!
+BlueTusk.Documents.DocumentConcurrencyException.Tenant.get -> string!
+BlueTusk.Documents.DocumentDataSourceOwnership
+BlueTusk.Documents.DocumentDataSourceOwnership.Borrowed = 0 -> BlueTusk.Documents.DocumentDataSourceOwnership
+BlueTusk.Documents.DocumentDataSourceOwnership.Owned = 1 -> BlueTusk.Documents.DocumentDataSourceOwnership
+BlueTusk.Documents.DocumentIndexDefinition
+BlueTusk.Documents.DocumentIndexDefinition.Collection.get -> string?
+BlueTusk.Documents.DocumentIndexDefinition.DocumentIndexDefinition(string! name, BlueTusk.Documents.DocumentIndexKind kind, string? collection = null, System.Collections.Generic.IReadOnlyList<string!>? path = null) -> void
+BlueTusk.Documents.DocumentIndexDefinition.Kind.get -> BlueTusk.Documents.DocumentIndexKind
+BlueTusk.Documents.DocumentIndexDefinition.Name.get -> string!
+BlueTusk.Documents.DocumentIndexDefinition.Path.get -> System.Collections.Generic.IReadOnlyList<string!>?
+BlueTusk.Documents.DocumentIndexKind
+BlueTusk.Documents.DocumentIndexKind.JsonContainment = 0 -> BlueTusk.Documents.DocumentIndexKind
+BlueTusk.Documents.DocumentIndexKind.TextPath = 1 -> BlueTusk.Documents.DocumentIndexKind
+BlueTusk.Documents.DocumentMigration<T>
+BlueTusk.Documents.DocumentMigration<T>.DocumentMigration(int fromVersion, int toVersion, System.Func<System.Text.Json.JsonElement, T>! transform) -> void
+BlueTusk.Documents.DocumentMigration<T>.FromVersion.get -> int
+BlueTusk.Documents.DocumentMigration<T>.ToVersion.get -> int
+BlueTusk.Documents.DocumentMigration<T>.Transform.get -> System.Func<System.Text.Json.JsonElement, T>!
+BlueTusk.Documents.DocumentMigrationPage
+BlueTusk.Documents.DocumentMigrationPage.<Clone>$() -> BlueTusk.Documents.DocumentMigrationPage!
+BlueTusk.Documents.DocumentMigrationPage.Deconstruct(out int MigratedCount, out string? NextAfterId) -> void
+BlueTusk.Documents.DocumentMigrationPage.DocumentMigrationPage(int MigratedCount, string? NextAfterId) -> void
+BlueTusk.Documents.DocumentMigrationPage.Equals(BlueTusk.Documents.DocumentMigrationPage? other) -> bool
+BlueTusk.Documents.DocumentMigrationPage.MigratedCount.get -> int
+BlueTusk.Documents.DocumentMigrationPage.MigratedCount.init -> void
+BlueTusk.Documents.DocumentMigrationPage.NextAfterId.get -> string?
+BlueTusk.Documents.DocumentMigrationPage.NextAfterId.init -> void
+BlueTusk.Documents.DocumentPage<T>
+BlueTusk.Documents.DocumentPage<T>.<Clone>$() -> BlueTusk.Documents.DocumentPage<T>!
+BlueTusk.Documents.DocumentPage<T>.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.StoredDocument<T>!>! Items, out string? NextAfterId) -> void
+BlueTusk.Documents.DocumentPage<T>.DocumentPage(System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.StoredDocument<T>!>! Items, string? NextAfterId) -> void
+BlueTusk.Documents.DocumentPage<T>.Equals(BlueTusk.Documents.DocumentPage<T>? other) -> bool
+BlueTusk.Documents.DocumentPage<T>.Items.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.StoredDocument<T>!>!
+BlueTusk.Documents.DocumentPage<T>.Items.init -> void
+BlueTusk.Documents.DocumentPage<T>.NextAfterId.get -> string?
+BlueTusk.Documents.DocumentPage<T>.NextAfterId.init -> void
+BlueTusk.Documents.DocumentPatch
+BlueTusk.Documents.DocumentPatch.JsonValue.get -> string?
+BlueTusk.Documents.DocumentPatch.Kind.get -> BlueTusk.Documents.DocumentPatchKind
+BlueTusk.Documents.DocumentPatch.Path.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Documents.DocumentPatchKind
+BlueTusk.Documents.DocumentPatchKind.Remove = 1 -> BlueTusk.Documents.DocumentPatchKind
+BlueTusk.Documents.DocumentPatchKind.Set = 0 -> BlueTusk.Documents.DocumentPatchKind
+BlueTusk.Documents.DocumentSchemaVersionException
+BlueTusk.Documents.DocumentSchemaVersionException.ActualVersion.get -> int
+BlueTusk.Documents.DocumentSchemaVersionException.Collection.get -> string!
+BlueTusk.Documents.DocumentSchemaVersionException.DocumentSchemaVersionException(string! collection, string! id, int requestedVersion, int actualVersion) -> void
+BlueTusk.Documents.DocumentSchemaVersionException.Id.get -> string!
+BlueTusk.Documents.DocumentSchemaVersionException.RequestedVersion.get -> int
+BlueTusk.Documents.DocumentSession
+BlueTusk.Documents.DocumentSession.Clear() -> void
+BlueTusk.Documents.DocumentSession.Delete<T>(BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, long expectedRevision) -> void
+BlueTusk.Documents.DocumentSession.Dispose() -> void
+BlueTusk.Documents.DocumentSession.Insert<T>(BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, T value) -> void
+BlueTusk.Documents.DocumentSession.Patch<T>(BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, long expectedRevision, System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.DocumentPatch!>! operations) -> void
+BlueTusk.Documents.DocumentSession.PendingCount.get -> int
+BlueTusk.Documents.DocumentSession.Replace<T>(BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, T value, long expectedRevision) -> void
+BlueTusk.Documents.DocumentSession.SaveChangesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.DocumentWriteResult!>!>
+BlueTusk.Documents.DocumentSession.Tenant.get -> string!
+BlueTusk.Documents.DocumentStore
+BlueTusk.Documents.DocumentStore.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Documents.DocumentStore.DocumentStore(System.Data.Common.DbDataSource! dataSource, BlueTusk.Documents.DocumentStoreOptions? options = null, BlueTusk.Documents.DocumentDataSourceOwnership ownership = BlueTusk.Documents.DocumentDataSourceOwnership.Borrowed) -> void
+BlueTusk.Documents.DocumentStore.EnsureIndexAsync(BlueTusk.Documents.DocumentIndexDefinition! definition, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Documents.DocumentStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Documents.DocumentStore.LoadAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.StoredDocument<T>?>
+BlueTusk.Documents.DocumentStore.MigratePageAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! targetCollection, BlueTusk.Documents.DocumentMigration<T>! migration, int pageSize = 100, string? afterId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.DocumentMigrationPage!>
+BlueTusk.Documents.DocumentStore.OpenSession(string! tenant) -> BlueTusk.Documents.DocumentSession!
+BlueTusk.Documents.DocumentStore.Options.get -> BlueTusk.Documents.DocumentStoreOptions!
+BlueTusk.Documents.DocumentStore.ReadHealthAsync(string! tenant, string! collection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.DocumentStoreHealthSnapshot!>
+BlueTusk.Documents.DocumentStore.ReadPageAsync<T>(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, int pageSize = 100, string? afterId = null, System.Text.Json.JsonElement? contains = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.DocumentPage<T>!>
+BlueTusk.Documents.DocumentStoreHealthSnapshot
+BlueTusk.Documents.DocumentStoreHealthSnapshot.DatabaseTime.get -> System.DateTimeOffset
+BlueTusk.Documents.DocumentStoreHealthSnapshot.HasDocuments.get -> bool
+BlueTusk.Documents.DocumentStoreHealthSnapshot.MaxDocumentBytes.get -> int
+BlueTusk.Documents.DocumentStoreHealthSnapshot.StorageVersion.get -> int
+BlueTusk.Documents.DocumentStoreOptions
+BlueTusk.Documents.DocumentStoreOptions.<Clone>$() -> BlueTusk.Documents.DocumentStoreOptions!
+BlueTusk.Documents.DocumentStoreOptions.CommandsPerBatch.get -> int
+BlueTusk.Documents.DocumentStoreOptions.CommandsPerBatch.init -> void
+BlueTusk.Documents.DocumentStoreOptions.CommandTimeoutSeconds.get -> int
+BlueTusk.Documents.DocumentStoreOptions.CommandTimeoutSeconds.init -> void
+BlueTusk.Documents.DocumentStoreOptions.DocumentStoreOptions() -> void
+BlueTusk.Documents.DocumentStoreOptions.Equals(BlueTusk.Documents.DocumentStoreOptions? other) -> bool
+BlueTusk.Documents.DocumentStoreOptions.MaxDocumentBytes.get -> int
+BlueTusk.Documents.DocumentStoreOptions.MaxDocumentBytes.init -> void
+BlueTusk.Documents.DocumentStoreOptions.MaxPageBytes.get -> long
+BlueTusk.Documents.DocumentStoreOptions.MaxPageBytes.init -> void
+BlueTusk.Documents.DocumentStoreOptions.MaxPageSize.get -> int
+BlueTusk.Documents.DocumentStoreOptions.MaxPageSize.init -> void
+BlueTusk.Documents.DocumentStoreOptions.MaxSessionBytes.get -> long
+BlueTusk.Documents.DocumentStoreOptions.MaxSessionBytes.init -> void
+BlueTusk.Documents.DocumentStoreOptions.MaxSessionOperations.get -> int
+BlueTusk.Documents.DocumentStoreOptions.MaxSessionOperations.init -> void
+BlueTusk.Documents.DocumentStoreOptions.Schema.get -> string!
+BlueTusk.Documents.DocumentStoreOptions.Schema.init -> void
+BlueTusk.Documents.DocumentWriteResult
+BlueTusk.Documents.DocumentWriteResult.<Clone>$() -> BlueTusk.Documents.DocumentWriteResult!
+BlueTusk.Documents.DocumentWriteResult.Collection.get -> string!
+BlueTusk.Documents.DocumentWriteResult.Collection.init -> void
+BlueTusk.Documents.DocumentWriteResult.Deconstruct(out string! Collection, out string! Id, out long? Revision) -> void
+BlueTusk.Documents.DocumentWriteResult.DocumentWriteResult(string! Collection, string! Id, long? Revision) -> void
+BlueTusk.Documents.DocumentWriteResult.Equals(BlueTusk.Documents.DocumentWriteResult? other) -> bool
+BlueTusk.Documents.DocumentWriteResult.Id.get -> string!
+BlueTusk.Documents.DocumentWriteResult.Id.init -> void
+BlueTusk.Documents.DocumentWriteResult.Revision.get -> long?
+BlueTusk.Documents.DocumentWriteResult.Revision.init -> void
+BlueTusk.Documents.StoredDocument<T>
+BlueTusk.Documents.StoredDocument<T>.<Clone>$() -> BlueTusk.Documents.StoredDocument<T>!
+BlueTusk.Documents.StoredDocument<T>.Deconstruct(out string! Id, out T Value, out long Revision, out int SchemaVersion) -> void
+BlueTusk.Documents.StoredDocument<T>.Equals(BlueTusk.Documents.StoredDocument<T>? other) -> bool
+BlueTusk.Documents.StoredDocument<T>.Id.get -> string!
+BlueTusk.Documents.StoredDocument<T>.Id.init -> void
+BlueTusk.Documents.StoredDocument<T>.Revision.get -> long
+BlueTusk.Documents.StoredDocument<T>.Revision.init -> void
+BlueTusk.Documents.StoredDocument<T>.SchemaVersion.get -> int
+BlueTusk.Documents.StoredDocument<T>.SchemaVersion.init -> void
+BlueTusk.Documents.StoredDocument<T>.StoredDocument(string! Id, T Value, long Revision, int SchemaVersion) -> void
+BlueTusk.Documents.StoredDocument<T>.Value.get -> T
+BlueTusk.Documents.StoredDocument<T>.Value.init -> void
+const BlueTusk.Documents.DocumentStore.CurrentStorageVersion = 1 -> int
+override BlueTusk.Documents.DocumentMigrationPage.Equals(object? obj) -> bool
+override BlueTusk.Documents.DocumentMigrationPage.GetHashCode() -> int
+override BlueTusk.Documents.DocumentMigrationPage.ToString() -> string!
+override BlueTusk.Documents.DocumentPage<T>.Equals(object? obj) -> bool
+override BlueTusk.Documents.DocumentPage<T>.GetHashCode() -> int
+override BlueTusk.Documents.DocumentPage<T>.ToString() -> string!
+override BlueTusk.Documents.DocumentStoreOptions.Equals(object? obj) -> bool
+override BlueTusk.Documents.DocumentStoreOptions.GetHashCode() -> int
+override BlueTusk.Documents.DocumentStoreOptions.ToString() -> string!
+override BlueTusk.Documents.DocumentWriteResult.Equals(object? obj) -> bool
+override BlueTusk.Documents.DocumentWriteResult.GetHashCode() -> int
+override BlueTusk.Documents.DocumentWriteResult.ToString() -> string!
+override BlueTusk.Documents.StoredDocument<T>.Equals(object? obj) -> bool
+override BlueTusk.Documents.StoredDocument<T>.GetHashCode() -> int
+override BlueTusk.Documents.StoredDocument<T>.ToString() -> string!
+static BlueTusk.Documents.DocumentMigrationPage.operator !=(BlueTusk.Documents.DocumentMigrationPage? left, BlueTusk.Documents.DocumentMigrationPage? right) -> bool
+static BlueTusk.Documents.DocumentMigrationPage.operator ==(BlueTusk.Documents.DocumentMigrationPage? left, BlueTusk.Documents.DocumentMigrationPage? right) -> bool
+static BlueTusk.Documents.DocumentPage<T>.operator !=(BlueTusk.Documents.DocumentPage<T>? left, BlueTusk.Documents.DocumentPage<T>? right) -> bool
+static BlueTusk.Documents.DocumentPage<T>.operator ==(BlueTusk.Documents.DocumentPage<T>? left, BlueTusk.Documents.DocumentPage<T>? right) -> bool
+static BlueTusk.Documents.DocumentPatch.Remove(System.Collections.Generic.IReadOnlyList<string!>! path) -> BlueTusk.Documents.DocumentPatch!
+static BlueTusk.Documents.DocumentPatch.Set(System.Collections.Generic.IReadOnlyList<string!>! path, System.Text.Json.JsonElement value) -> BlueTusk.Documents.DocumentPatch!
+static BlueTusk.Documents.DocumentStoreOptions.operator !=(BlueTusk.Documents.DocumentStoreOptions? left, BlueTusk.Documents.DocumentStoreOptions? right) -> bool
+static BlueTusk.Documents.DocumentStoreOptions.operator ==(BlueTusk.Documents.DocumentStoreOptions? left, BlueTusk.Documents.DocumentStoreOptions? right) -> bool
+static BlueTusk.Documents.DocumentWriteResult.operator !=(BlueTusk.Documents.DocumentWriteResult? left, BlueTusk.Documents.DocumentWriteResult? right) -> bool
+static BlueTusk.Documents.DocumentWriteResult.operator ==(BlueTusk.Documents.DocumentWriteResult? left, BlueTusk.Documents.DocumentWriteResult? right) -> bool
+static BlueTusk.Documents.StoredDocument<T>.operator !=(BlueTusk.Documents.StoredDocument<T>? left, BlueTusk.Documents.StoredDocument<T>? right) -> bool
+static BlueTusk.Documents.StoredDocument<T>.operator ==(BlueTusk.Documents.StoredDocument<T>? left, BlueTusk.Documents.StoredDocument<T>? right) -> bool

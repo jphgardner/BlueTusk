@@ -1,0 +1,35 @@
+#nullable enable
+BlueTusk.Sql.PostgreSqlStatementGuard
+BlueTusk.Sql.SqlContractMismatchException
+BlueTusk.Sql.SqlContractMismatchException.SqlContractMismatchException() -> void
+BlueTusk.Sql.SqlQuery<TArguments, TResult>
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.Columns.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Sql.SqlResultColumn!>!
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.CommandTimeoutSeconds.get -> int
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.Fingerprint.get -> string!
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.MaximumFieldBytes.get -> int
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.MaximumResultBytes.get -> long
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.MaximumRows.get -> int
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.Name.get -> string!
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.ReadAsync(System.Data.Common.DbConnection! connection, TArguments arguments, System.Data.Common.DbTransaction? transaction = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.Sql.get -> string!
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.SqlQuery(string! name, string! sql, System.Collections.Generic.IEnumerable<BlueTusk.Sql.SqlResultColumn!>! columns, System.Action<System.Data.Common.DbCommand!, TArguments>! bind, System.Func<System.Data.Common.DbDataReader!, TResult>! read, int maximumRows = 1000, int commandTimeoutSeconds = 30, int maximumFieldBytes = 1048576, long maximumResultBytes = 67108864) -> void
+BlueTusk.Sql.SqlQuery<TArguments, TResult>.ValidateAsync(System.Data.Common.DbDataSource! dataSource, TArguments sampleArguments, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sql.SqlResultColumn
+BlueTusk.Sql.SqlResultColumn.<Clone>$() -> BlueTusk.Sql.SqlResultColumn!
+BlueTusk.Sql.SqlResultColumn.Deconstruct(out string! Name, out string! PostgreSqlType, out bool IsNullable) -> void
+BlueTusk.Sql.SqlResultColumn.Equals(BlueTusk.Sql.SqlResultColumn? other) -> bool
+BlueTusk.Sql.SqlResultColumn.IsNullable.get -> bool
+BlueTusk.Sql.SqlResultColumn.IsNullable.init -> void
+BlueTusk.Sql.SqlResultColumn.Name.get -> string!
+BlueTusk.Sql.SqlResultColumn.Name.init -> void
+BlueTusk.Sql.SqlResultColumn.PostgreSqlType.get -> string!
+BlueTusk.Sql.SqlResultColumn.PostgreSqlType.init -> void
+BlueTusk.Sql.SqlResultColumn.SqlResultColumn(string! Name, string! PostgreSqlType, bool IsNullable) -> void
+BlueTusk.Sql.SqlResultLimitException
+BlueTusk.Sql.SqlResultLimitException.SqlResultLimitException() -> void
+override BlueTusk.Sql.SqlResultColumn.Equals(object? obj) -> bool
+override BlueTusk.Sql.SqlResultColumn.GetHashCode() -> int
+override BlueTusk.Sql.SqlResultColumn.ToString() -> string!
+static BlueTusk.Sql.PostgreSqlStatementGuard.AdmitReadQuery(string! sql) -> string!
+static BlueTusk.Sql.SqlResultColumn.operator !=(BlueTusk.Sql.SqlResultColumn? left, BlueTusk.Sql.SqlResultColumn? right) -> bool
+static BlueTusk.Sql.SqlResultColumn.operator ==(BlueTusk.Sql.SqlResultColumn? left, BlueTusk.Sql.SqlResultColumn? right) -> bool

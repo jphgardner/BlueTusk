@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Edge</BlueTuskProductFamily>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Durable scoped Edge documents, atomic mutation inbox and consistent snapshot/change feeds for PostgreSQL.</Description>
+    <PackageTags>postgresql;offline;sync;inbox</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Edge.props" />
+  <ItemGroup><ProjectReference Include="..\BlueTusk.Edge\BlueTusk.Edge.csproj" /></ItemGroup>
+</Project>

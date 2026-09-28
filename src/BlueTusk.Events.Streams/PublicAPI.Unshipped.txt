@@ -1,0 +1,32 @@
+#nullable enable
+BlueTusk.Events.Streams.EventOutboxChangeDecoder
+BlueTusk.Events.Streams.EventOutboxChangeDecoder.EventOutboxChangeDecoder(string! schema = "bluetusk_events", int maximumEventBytes = 1048576) -> void
+BlueTusk.Events.Streams.EventOutboxChangeDecoder.TryDecode(BlueTusk.Streams.Change! change, out BlueTusk.Events.StoredEvent? value) -> bool
+BlueTusk.Events.Streams.EventOutboxChangeDecoder.TryDecodeRow(BlueTusk.Streams.ChangeRow! row, out BlueTusk.Events.StoredEvent? value) -> bool
+BlueTusk.Events.Streams.EventOutboxDecodingException
+BlueTusk.Events.Streams.EventOutboxDecodingException.EventOutboxDecodingException(string! column) -> void
+BlueTusk.Events.Streams.EventStreamsDeliveryOptions
+BlueTusk.Events.Streams.EventStreamsDeliveryOptions.EventStreamsDeliveryOptions() -> void
+BlueTusk.Events.Streams.EventStreamsDeliveryOptions.MaximumEvents.get -> int
+BlueTusk.Events.Streams.EventStreamsDeliveryOptions.MaximumEvents.init -> void
+BlueTusk.Events.Streams.EventStreamsDeliveryOptions.MaximumPayloadBytes.get -> int
+BlueTusk.Events.Streams.EventStreamsDeliveryOptions.MaximumPayloadBytes.init -> void
+BlueTusk.Events.Streams.EventStreamsDeliveryOptions.MaximumSourceChanges.get -> int
+BlueTusk.Events.Streams.EventStreamsDeliveryOptions.MaximumSourceChanges.init -> void
+BlueTusk.Events.Streams.EventStreamsDeliveryResult
+BlueTusk.Events.Streams.EventStreamsDeliveryResult.<Clone>$() -> BlueTusk.Events.Streams.EventStreamsDeliveryResult!
+BlueTusk.Events.Streams.EventStreamsDeliveryResult.Deconstruct(out int OutboxEvents, out int HandledEvents) -> void
+BlueTusk.Events.Streams.EventStreamsDeliveryResult.Equals(BlueTusk.Events.Streams.EventStreamsDeliveryResult? other) -> bool
+BlueTusk.Events.Streams.EventStreamsDeliveryResult.EventStreamsDeliveryResult(int OutboxEvents, int HandledEvents) -> void
+BlueTusk.Events.Streams.EventStreamsDeliveryResult.HandledEvents.get -> int
+BlueTusk.Events.Streams.EventStreamsDeliveryResult.HandledEvents.init -> void
+BlueTusk.Events.Streams.EventStreamsDeliveryResult.OutboxEvents.get -> int
+BlueTusk.Events.Streams.EventStreamsDeliveryResult.OutboxEvents.init -> void
+BlueTusk.Events.Streams.PostgreSqlEventDeliveryProcessor
+BlueTusk.Events.Streams.PostgreSqlEventDeliveryProcessor.PostgreSqlEventDeliveryProcessor(System.Data.Common.DbDataSource! targetDataSource, BlueTusk.Events.PostgreSqlEventStore! inbox, BlueTusk.Events.Streams.EventOutboxChangeDecoder! decoder, string! consumerId, BlueTusk.Streams.ChangeSourceIdentity! source, BlueTusk.Events.Streams.EventStreamsDeliveryOptions? options = null) -> void
+BlueTusk.Events.Streams.PostgreSqlEventDeliveryProcessor.ProcessAsync(BlueTusk.Streams.ChangeTransactionDelivery! delivery, BlueTusk.Events.EventTransactionHandler! handler, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.Streams.EventStreamsDeliveryResult!>
+override BlueTusk.Events.Streams.EventStreamsDeliveryResult.Equals(object? obj) -> bool
+override BlueTusk.Events.Streams.EventStreamsDeliveryResult.GetHashCode() -> int
+override BlueTusk.Events.Streams.EventStreamsDeliveryResult.ToString() -> string!
+static BlueTusk.Events.Streams.EventStreamsDeliveryResult.operator !=(BlueTusk.Events.Streams.EventStreamsDeliveryResult? left, BlueTusk.Events.Streams.EventStreamsDeliveryResult? right) -> bool
+static BlueTusk.Events.Streams.EventStreamsDeliveryResult.operator ==(BlueTusk.Events.Streams.EventStreamsDeliveryResult? left, BlueTusk.Events.Streams.EventStreamsDeliveryResult? right) -> bool

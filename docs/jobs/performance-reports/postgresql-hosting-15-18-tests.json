@@ -1,0 +1,85 @@
+{
+  "Tests": [
+    {
+      "TrxPath": "artifacts\\jobs-hosting-matrix\\20260927-205712-7870108-300542239615426eb1878736bd7ebb3f\\pg15\\Hosting.trx",
+      "Passed": 6,
+      "PostgreSqlVersion": 15,
+      "Total": 6,
+      "Server": "PostgreSQL 15.19 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit"
+    },
+    {
+      "TrxPath": "artifacts\\jobs-hosting-matrix\\20260927-205712-7870108-300542239615426eb1878736bd7ebb3f\\pg16\\Hosting.trx",
+      "Passed": 6,
+      "PostgreSqlVersion": 16,
+      "Total": 6,
+      "Server": "PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit"
+    },
+    {
+      "TrxPath": "artifacts\\jobs-hosting-matrix\\20260927-205712-7870108-300542239615426eb1878736bd7ebb3f\\pg17\\Hosting.trx",
+      "Passed": 6,
+      "PostgreSqlVersion": 17,
+      "Total": 6,
+      "Server": "PostgreSQL 17.11 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit"
+    },
+    {
+      "TrxPath": "artifacts\\jobs-hosting-matrix\\20260927-205712-7870108-300542239615426eb1878736bd7ebb3f\\pg18\\Hosting.trx",
+      "Passed": 6,
+      "PostgreSqlVersion": 18,
+      "Total": 6,
+      "Server": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit"
+    }
+  ],
+  "Qualification": "Owned local PostgreSQL compatibility, readiness authorization/deadline and unique-role credential replacement evidence; not failover or production qualification",
+  "Sources": [
+    {
+      "Sha256": "00BDA62F633B91C3605B42645CE69CF97FC593B2F65182756F90076A34EBB356",
+      "Path": "src/BlueTusk.Jobs.DependencyInjection/BlueTusk.Jobs.DependencyInjection.csproj"
+    },
+    {
+      "Sha256": "06863D122AD8A0BC06F5298C3252D131B59F4A7CB3E86415F85039736949AE6B",
+      "Path": "src/BlueTusk.Jobs.DependencyInjection/JobHealthServiceCollectionExtensions.cs"
+    },
+    {
+      "Sha256": "A720089C97C5CA5566D0825531E05A7225926B9873F7BE67D3160DAC3127E929",
+      "Path": "src/BlueTusk.Jobs.DependencyInjection/JobQueueHealthCheck.cs"
+    },
+    {
+      "Sha256": "5DD54EDD62D63038AF19B52137B820951EF6FF1680FCF15EC89814E7B7EB4216",
+      "Path": "src/BlueTusk.Jobs.DependencyInjection/JobReadiness.cs"
+    },
+    {
+      "Sha256": "9A7234EBC720FB84AF0B553810001B011A6532B41A4C3CC32C12C3DDD55B6035",
+      "Path": "src/BlueTusk.Workflows.DependencyInjection/BlueTusk.Workflows.DependencyInjection.csproj"
+    },
+    {
+      "Sha256": "75AE587C75CBD4B6AF2C91419B71DAF002C293862CC673442A3BDF51F012760D",
+      "Path": "src/BlueTusk.Workflows.DependencyInjection/WorkflowHealthServiceCollectionExtensions.cs"
+    },
+    {
+      "Sha256": "BDF4257C7CB31B12C0C19D46CE4939EFE8FC90D8FE70D6195BE567BF71D3AB0B",
+      "Path": "src/BlueTusk.Workflows.DependencyInjection/WorkflowReadiness.cs"
+    },
+    {
+      "Sha256": "935DBEFD4FEFE1B334ECAF971C28D29A3F68B71BFDD30A0A33C84C296D11C3F1",
+      "Path": "src/BlueTusk.Workflows.DependencyInjection/WorkflowScopeHealthCheck.cs"
+    },
+    {
+      "Sha256": "7525E3E561B3914A88EA3646B538121A8FB0D1DD99E70FE3E9AD7C162F72C682",
+      "Path": "tests/BlueTusk.Workflows.DependencyInjection.Tests/BlueTusk.Workflows.DependencyInjection.Tests.csproj"
+    },
+    {
+      "Sha256": "7D1D55B0EC6819CDE49079C761D31707CC10E0C1ADD70B98AAE65E6A29D169D9",
+      "Path": "tests/BlueTusk.Workflows.DependencyInjection.Tests/CredentialRotationTests.cs"
+    },
+    {
+      "Sha256": "66200806E37CB7A240FEA4422F227300AC4E87557D18E8551644D9B94C85DAF0",
+      "Path": "tests/BlueTusk.Workflows.DependencyInjection.Tests/HostingReadinessTests.cs"
+    },
+    {
+      "Sha256": "30520A0CB82DE9F65CB5B2800B0515F4D7E7980C858F1F47CA8A46678A79B0BA",
+      "Path": "tests/BlueTusk.Workflows.DependencyInjection.Tests/OwnedOperationalRole.cs"
+    }
+  ],
+  "Configuration": "Release",
+  "TimestampUtc": "2026-09-27T20:57:39.6478163+00:00"
+}

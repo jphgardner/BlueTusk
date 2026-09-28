@@ -1,0 +1,3 @@
+#nullable enable
+BlueTusk.Events.EntityFrameworkCore.EventsDbContextExtensions
+static BlueTusk.Events.EntityFrameworkCore.EventsDbContextExtensions.AppendEventsAsync(this Microsoft.EntityFrameworkCore.DbContext! context, BlueTusk.Events.PostgreSqlEventStore! store, BlueTusk.Events.EventStreamKey! stream, System.Collections.Generic.IReadOnlyList<BlueTusk.Events.EventWrite!>! events, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Events.EventAppendReceipt!>!>

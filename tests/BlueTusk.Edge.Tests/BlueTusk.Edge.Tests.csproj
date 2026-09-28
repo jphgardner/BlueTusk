@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Edge</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Edge.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge.Http\BlueTusk.Edge.Http.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge.AspNetCore\BlueTusk.Edge.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge.Server\BlueTusk.Edge.Server.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge\BlueTusk.Edge.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge.Sqlite\BlueTusk.Edge.Sqlite.csproj" />
+  </ItemGroup>
+</Project>

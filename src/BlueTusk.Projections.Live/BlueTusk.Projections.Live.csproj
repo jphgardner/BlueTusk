@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Projections</BlueTuskProductFamily>
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Tenant-bound Live subscriptions over published durable BlueTusk projection versions.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Projections.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Projections\BlueTusk.Projections.csproj" />
+    <ProjectReference Include="..\BlueTusk.Live\BlueTusk.Live.csproj" />
+  </ItemGroup>
+</Project>

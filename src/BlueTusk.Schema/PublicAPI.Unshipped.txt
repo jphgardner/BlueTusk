@@ -1,0 +1,582 @@
+#nullable enable
+BlueTusk.Schema.PostgreSqlConcurrentIndexDeployer
+BlueTusk.Schema.PostgreSqlConcurrentIndexDeployer.PostgreSqlConcurrentIndexDeployer(BlueTusk.Data.BlueTuskDataSource! source, BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator! coordinator, int maximumBuildSeconds = 3600) -> void
+BlueTusk.Schema.PostgreSqlConcurrentIndexDeployer.ReconcileAndApplyAsync(BlueTusk.Schema.SchemaConcurrentIndexPlan! plan, BlueTusk.Schema.SchemaDeploymentLease! lease, BlueTusk.Schema.SchemaDeploymentDefinition! definition, string! stepId, BlueTusk.Schema.SchemaDeploymentStepAttempt! pending, System.TimeSpan leaseDuration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string!>
+BlueTusk.Schema.SchemaConcurrentIndexBuild
+BlueTusk.Schema.SchemaConcurrentIndexBuild.CreateSql.get -> string!
+BlueTusk.Schema.SchemaConcurrentIndexBuild.ExpectedDefinition.get -> string!
+BlueTusk.Schema.SchemaConcurrentIndexBuild.IndexName.get -> string!
+BlueTusk.Schema.SchemaConcurrentIndexBuild.Relation.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaConcurrentIndexDriftException
+BlueTusk.Schema.SchemaConcurrentIndexDriftException.SchemaConcurrentIndexDriftException(BlueTusk.Schema.SchemaRelationIdentity relation, string! indexName) -> void
+BlueTusk.Schema.SchemaConcurrentIndexInvalidException
+BlueTusk.Schema.SchemaConcurrentIndexInvalidException.SchemaConcurrentIndexInvalidException(BlueTusk.Schema.SchemaRelationIdentity relation, string! indexName) -> void
+BlueTusk.Schema.SchemaConcurrentIndexPlan
+BlueTusk.Schema.SchemaConcurrentIndexPlan.ActionContent.get -> string!
+BlueTusk.Schema.SchemaConcurrentIndexPlan.AfterFingerprint.get -> string!
+BlueTusk.Schema.SchemaConcurrentIndexPlan.BeforeFingerprint.get -> string!
+BlueTusk.Schema.SchemaConcurrentIndexPlan.Builds.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaConcurrentIndexBuild!>!
+BlueTusk.Schema.SchemaConcurrentIndexPlan.Fingerprint.get -> string!
+static BlueTusk.Schema.SchemaConcurrentIndexPlan.Create(BlueTusk.Schema.SchemaCatalogSnapshot! before, BlueTusk.Schema.SchemaCatalogSnapshot! after) -> BlueTusk.Schema.SchemaConcurrentIndexPlan!
+BlueTusk.Schema.PostgreSqlSchemaCapture
+BlueTusk.Schema.PostgreSqlSchemaCapture.CaptureAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Schema.SchemaSnapshot!>
+BlueTusk.Schema.PostgreSqlSchemaCapture.CaptureInTransactionAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Schema.SchemaSnapshot!>
+BlueTusk.Schema.PostgreSqlSchemaCapture.PostgreSqlSchemaCapture(System.Data.Common.DbDataSource! dataSource, BlueTusk.Schema.SchemaCaptureOptions! options) -> void
+BlueTusk.Schema.PostgreSqlSchemaCatalogCapture
+BlueTusk.Schema.PostgreSqlSchemaCatalogCapture.CaptureAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Schema.SchemaCatalogSnapshot!>
+BlueTusk.Schema.PostgreSqlSchemaCatalogCapture.CaptureInTransactionAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Schema.SchemaCatalogSnapshot!>
+BlueTusk.Schema.PostgreSqlSchemaCatalogCapture.PostgreSqlSchemaCatalogCapture(System.Data.Common.DbDataSource! dataSource, BlueTusk.Schema.SchemaCatalogCaptureOptions! options) -> void
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.AcquireAsync(string! deploymentId, BlueTusk.Schema.SchemaDeploymentDefinition! definition, string! owner, System.TimeSpan leaseDuration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Schema.SchemaDeploymentLease?>
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.BeginExternalStepAsync(BlueTusk.Schema.SchemaDeploymentLease! lease, BlueTusk.Schema.SchemaDeploymentDefinition! definition, string! stepId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Schema.SchemaDeploymentStepAttempt!>
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.CompleteExternalStepAsync(BlueTusk.Schema.SchemaDeploymentLease! lease, BlueTusk.Schema.SchemaDeploymentDefinition! definition, string! stepId, int attempt, string! evidenceSha256, string? observedFingerprint = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.ExecuteTransactionalSqlStepAsync(BlueTusk.Schema.SchemaDeploymentLease! lease, BlueTusk.Schema.SchemaDeploymentDefinition! definition, string! stepId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Schema.SchemaDeploymentStepAttempt!>
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.PostgreSqlSchemaDeploymentCoordinator(BlueTusk.Data.BlueTuskDataSource! dataSource, string! schema = "bluetusk_schema", int commandTimeoutSeconds = 30) -> void
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.ReadStepAsync(string! deploymentId, BlueTusk.Schema.SchemaDeploymentDefinition! definition, string! stepId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Schema.SchemaDeploymentStepAttempt?>
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.ReconcileNotAppliedAsync(BlueTusk.Schema.SchemaDeploymentLease! lease, BlueTusk.Schema.SchemaDeploymentDefinition! definition, string! stepId, int attempt, string! evidenceSha256, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.RegisterAsync(string! deploymentId, BlueTusk.Schema.SchemaDeploymentDefinition! definition, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.ReleaseAsync(BlueTusk.Schema.SchemaDeploymentLease! lease, BlueTusk.Schema.SchemaDeploymentDefinition! definition, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Schema.PostgreSqlSchemaDeploymentCoordinator.RenewAsync(BlueTusk.Schema.SchemaDeploymentLease! lease, BlueTusk.Schema.SchemaDeploymentDefinition! definition, System.TimeSpan leaseDuration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Schema.SchemaCaptureLimitException
+BlueTusk.Schema.SchemaCaptureLimitException.SchemaCaptureLimitException() -> void
+BlueTusk.Schema.SchemaCaptureOptions
+BlueTusk.Schema.SchemaCaptureOptions.<Clone>$() -> BlueTusk.Schema.SchemaCaptureOptions!
+BlueTusk.Schema.SchemaCaptureOptions.CommandTimeoutSeconds.get -> int
+BlueTusk.Schema.SchemaCaptureOptions.CommandTimeoutSeconds.init -> void
+BlueTusk.Schema.SchemaCaptureOptions.Equals(BlueTusk.Schema.SchemaCaptureOptions? other) -> bool
+BlueTusk.Schema.SchemaCaptureOptions.MaximumColumns.get -> int
+BlueTusk.Schema.SchemaCaptureOptions.MaximumColumns.init -> void
+BlueTusk.Schema.SchemaCaptureOptions.MaximumConstraints.get -> int
+BlueTusk.Schema.SchemaCaptureOptions.MaximumConstraints.init -> void
+BlueTusk.Schema.SchemaCaptureOptions.MaximumIndexes.get -> int
+BlueTusk.Schema.SchemaCaptureOptions.MaximumIndexes.init -> void
+BlueTusk.Schema.SchemaCaptureOptions.MaximumMetadataBytes.get -> long
+BlueTusk.Schema.SchemaCaptureOptions.MaximumMetadataBytes.init -> void
+BlueTusk.Schema.SchemaCaptureOptions.MaximumPolicies.get -> int
+BlueTusk.Schema.SchemaCaptureOptions.MaximumPolicies.init -> void
+BlueTusk.Schema.SchemaCaptureOptions.MaximumRelations.get -> int
+BlueTusk.Schema.SchemaCaptureOptions.MaximumRelations.init -> void
+BlueTusk.Schema.SchemaCaptureOptions.SchemaCaptureOptions() -> void
+BlueTusk.Schema.SchemaCaptureOptions.Schemas.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Schema.SchemaCaptureOptions.Schemas.init -> void
+BlueTusk.Schema.SchemaCatalogCaptureOptions
+BlueTusk.Schema.SchemaCatalogCaptureOptions.<Clone>$() -> BlueTusk.Schema.SchemaCatalogCaptureOptions!
+BlueTusk.Schema.SchemaCatalogCaptureOptions.Equals(BlueTusk.Schema.SchemaCatalogCaptureOptions? other) -> bool
+BlueTusk.Schema.SchemaCatalogCaptureOptions.Limits.get -> BlueTusk.Schema.SchemaCatalogLimits!
+BlueTusk.Schema.SchemaCatalogCaptureOptions.Limits.init -> void
+BlueTusk.Schema.SchemaCatalogCaptureOptions.Relations.get -> BlueTusk.Schema.SchemaCaptureOptions!
+BlueTusk.Schema.SchemaCatalogCaptureOptions.Relations.init -> void
+BlueTusk.Schema.SchemaCatalogCaptureOptions.SchemaCatalogCaptureOptions() -> void
+BlueTusk.Schema.SchemaCatalogChange
+BlueTusk.Schema.SchemaCatalogChange.<Clone>$() -> BlueTusk.Schema.SchemaCatalogChange!
+BlueTusk.Schema.SchemaCatalogChange.ContractKind.get -> string!
+BlueTusk.Schema.SchemaCatalogChange.ContractKind.init -> void
+BlueTusk.Schema.SchemaCatalogChange.Deconstruct(out string! ContractKind, out BlueTusk.Schema.SchemaRelationIdentity Identity, out BlueTusk.Schema.SchemaCatalogChangeKind Kind, out BlueTusk.Schema.SchemaChangeImpact Impact, out string? Member) -> void
+BlueTusk.Schema.SchemaCatalogChange.Equals(BlueTusk.Schema.SchemaCatalogChange? other) -> bool
+BlueTusk.Schema.SchemaCatalogChange.Identity.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaCatalogChange.Identity.init -> void
+BlueTusk.Schema.SchemaCatalogChange.Impact.get -> BlueTusk.Schema.SchemaChangeImpact
+BlueTusk.Schema.SchemaCatalogChange.Impact.init -> void
+BlueTusk.Schema.SchemaCatalogChange.Kind.get -> BlueTusk.Schema.SchemaCatalogChangeKind
+BlueTusk.Schema.SchemaCatalogChange.Kind.init -> void
+BlueTusk.Schema.SchemaCatalogChange.Member.get -> string?
+BlueTusk.Schema.SchemaCatalogChange.Member.init -> void
+BlueTusk.Schema.SchemaCatalogChange.SchemaCatalogChange(string! ContractKind, BlueTusk.Schema.SchemaRelationIdentity Identity, BlueTusk.Schema.SchemaCatalogChangeKind Kind, BlueTusk.Schema.SchemaChangeImpact Impact, string? Member = null) -> void
+BlueTusk.Schema.SchemaCatalogChangeKind
+BlueTusk.Schema.SchemaCatalogChangeKind.Added = 0 -> BlueTusk.Schema.SchemaCatalogChangeKind
+BlueTusk.Schema.SchemaCatalogChangeKind.Changed = 2 -> BlueTusk.Schema.SchemaCatalogChangeKind
+BlueTusk.Schema.SchemaCatalogChangeKind.Removed = 1 -> BlueTusk.Schema.SchemaCatalogChangeKind
+BlueTusk.Schema.SchemaCatalogComparison
+BlueTusk.Schema.SchemaCatalogComparison.Changes.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaCatalogChange!>!
+BlueTusk.Schema.SchemaCatalogComparison.HasIncompatibleChanges.get -> bool
+BlueTusk.Schema.SchemaCatalogComparison.Relations.get -> BlueTusk.Schema.SchemaComparison!
+BlueTusk.Schema.SchemaCatalogComparison.RequiresReview.get -> bool
+BlueTusk.Schema.SchemaCatalogCompatibility
+BlueTusk.Schema.SchemaCatalogLimits
+BlueTusk.Schema.SchemaCatalogLimits.<Clone>$() -> BlueTusk.Schema.SchemaCatalogLimits!
+BlueTusk.Schema.SchemaCatalogLimits.Equals(BlueTusk.Schema.SchemaCatalogLimits? other) -> bool
+BlueTusk.Schema.SchemaCatalogLimits.MaximumDomainConstraints.get -> int
+BlueTusk.Schema.SchemaCatalogLimits.MaximumDomainConstraints.init -> void
+BlueTusk.Schema.SchemaCatalogLimits.MaximumEntries.get -> int
+BlueTusk.Schema.SchemaCatalogLimits.MaximumEntries.init -> void
+BlueTusk.Schema.SchemaCatalogLimits.MaximumEnumLabels.get -> int
+BlueTusk.Schema.SchemaCatalogLimits.MaximumEnumLabels.init -> void
+BlueTusk.Schema.SchemaCatalogLimits.MaximumMetadataBytes.get -> int
+BlueTusk.Schema.SchemaCatalogLimits.MaximumMetadataBytes.init -> void
+BlueTusk.Schema.SchemaCatalogLimits.Relations.get -> BlueTusk.Schema.SchemaSnapshotLimits!
+BlueTusk.Schema.SchemaCatalogLimits.Relations.init -> void
+BlueTusk.Schema.SchemaCatalogLimits.SchemaCatalogLimits() -> void
+BlueTusk.Schema.SchemaCatalogSerializer
+BlueTusk.Schema.SchemaCatalogSnapshot
+BlueTusk.Schema.SchemaCatalogSnapshot.Extensions.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaExtensionContract!>!
+BlueTusk.Schema.SchemaCatalogSnapshot.Fingerprint.get -> string!
+BlueTusk.Schema.SchemaCatalogSnapshot.Privileges.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaPrivilegeContract!>!
+BlueTusk.Schema.SchemaCatalogSnapshot.Publications.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaPublicationMemberContract!>!
+BlueTusk.Schema.SchemaCatalogSnapshot.Relations.get -> BlueTusk.Schema.SchemaSnapshot!
+BlueTusk.Schema.SchemaCatalogSnapshot.Routines.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaRoutineContract!>!
+BlueTusk.Schema.SchemaCatalogSnapshot.SchemaCatalogSnapshot(BlueTusk.Schema.SchemaSnapshot! relations, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaTypeContract!>? types = null, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaRoutineContract!>? routines = null, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaPrivilegeContract!>? privileges = null, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaPublicationMemberContract!>? publications = null, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaExtensionContract!>? extensions = null, BlueTusk.Schema.SchemaCatalogLimits? limits = null) -> void
+BlueTusk.Schema.SchemaCatalogSnapshot.Types.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaTypeContract!>!
+BlueTusk.Schema.SchemaChange
+BlueTusk.Schema.SchemaChange.<Clone>$() -> BlueTusk.Schema.SchemaChange!
+BlueTusk.Schema.SchemaChange.Deconstruct(out BlueTusk.Schema.SchemaRelationIdentity Relation, out BlueTusk.Schema.SchemaChangeKind Kind, out BlueTusk.Schema.SchemaChangeImpact Impact, out string? Member) -> void
+BlueTusk.Schema.SchemaChange.Equals(BlueTusk.Schema.SchemaChange? other) -> bool
+BlueTusk.Schema.SchemaChange.Impact.get -> BlueTusk.Schema.SchemaChangeImpact
+BlueTusk.Schema.SchemaChange.Impact.init -> void
+BlueTusk.Schema.SchemaChange.Kind.get -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChange.Kind.init -> void
+BlueTusk.Schema.SchemaChange.Member.get -> string?
+BlueTusk.Schema.SchemaChange.Member.init -> void
+BlueTusk.Schema.SchemaChange.Relation.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaChange.Relation.init -> void
+BlueTusk.Schema.SchemaChange.SchemaChange(BlueTusk.Schema.SchemaRelationIdentity Relation, BlueTusk.Schema.SchemaChangeKind Kind, BlueTusk.Schema.SchemaChangeImpact Impact, string? Member = null) -> void
+BlueTusk.Schema.SchemaChangeImpact
+BlueTusk.Schema.SchemaChangeImpact.Additive = 1 -> BlueTusk.Schema.SchemaChangeImpact
+BlueTusk.Schema.SchemaChangeImpact.Incompatible = 3 -> BlueTusk.Schema.SchemaChangeImpact
+BlueTusk.Schema.SchemaChangeImpact.Informational = 0 -> BlueTusk.Schema.SchemaChangeImpact
+BlueTusk.Schema.SchemaChangeImpact.RequiresReview = 2 -> BlueTusk.Schema.SchemaChangeImpact
+BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ColumnAdded = 5 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ColumnCollationChanged = 11 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ColumnNullabilityChanged = 8 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ColumnOrdinalChanged = 9 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ColumnRemoved = 6 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ColumnTypeChanged = 7 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ColumnWriteBehaviorChanged = 10 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ConstraintAdded = 12 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ConstraintChanged = 14 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ConstraintRemoved = 13 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.IndexAdded = 15 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.IndexChanged = 17 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.IndexRemoved = 16 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.PolicyAdded = 18 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.PolicyChanged = 20 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.PolicyRemoved = 19 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.RelationAdded = 0 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.RelationDefinitionChanged = 21 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.RelationKindChanged = 2 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.RelationRemoved = 1 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.ReplicaIdentityChanged = 4 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaChangeKind.SecurityChanged = 3 -> BlueTusk.Schema.SchemaChangeKind
+BlueTusk.Schema.SchemaColumn
+BlueTusk.Schema.SchemaColumn.<Clone>$() -> BlueTusk.Schema.SchemaColumn!
+BlueTusk.Schema.SchemaColumn.Collation.get -> string?
+BlueTusk.Schema.SchemaColumn.Collation.init -> void
+BlueTusk.Schema.SchemaColumn.Deconstruct(out string! Name, out int Ordinal, out string! PostgreSqlType, out bool IsNullable, out string? DefaultSql, out string! IdentityKind, out string! GeneratedKind, out string? Collation) -> void
+BlueTusk.Schema.SchemaColumn.DefaultSql.get -> string?
+BlueTusk.Schema.SchemaColumn.DefaultSql.init -> void
+BlueTusk.Schema.SchemaColumn.Equals(BlueTusk.Schema.SchemaColumn? other) -> bool
+BlueTusk.Schema.SchemaColumn.GeneratedKind.get -> string!
+BlueTusk.Schema.SchemaColumn.GeneratedKind.init -> void
+BlueTusk.Schema.SchemaColumn.IdentityKind.get -> string!
+BlueTusk.Schema.SchemaColumn.IdentityKind.init -> void
+BlueTusk.Schema.SchemaColumn.IsNullable.get -> bool
+BlueTusk.Schema.SchemaColumn.IsNullable.init -> void
+BlueTusk.Schema.SchemaColumn.Name.get -> string!
+BlueTusk.Schema.SchemaColumn.Name.init -> void
+BlueTusk.Schema.SchemaColumn.Ordinal.get -> int
+BlueTusk.Schema.SchemaColumn.Ordinal.init -> void
+BlueTusk.Schema.SchemaColumn.PostgreSqlType.get -> string!
+BlueTusk.Schema.SchemaColumn.PostgreSqlType.init -> void
+BlueTusk.Schema.SchemaColumn.SchemaColumn(string! Name, int Ordinal, string! PostgreSqlType, bool IsNullable, string? DefaultSql = null, string! IdentityKind = "", string! GeneratedKind = "", string? Collation = null) -> void
+BlueTusk.Schema.SchemaComparison
+BlueTusk.Schema.SchemaComparison.Changes.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaChange!>!
+BlueTusk.Schema.SchemaComparison.HasIncompatibleChanges.get -> bool
+BlueTusk.Schema.SchemaComparison.RequiresReview.get -> bool
+BlueTusk.Schema.SchemaCompatibility
+BlueTusk.Schema.SchemaConcurrentDdlException
+BlueTusk.Schema.SchemaConcurrentDdlException.SchemaConcurrentDdlException() -> void
+BlueTusk.Schema.SchemaConstraint
+BlueTusk.Schema.SchemaConstraint.<Clone>$() -> BlueTusk.Schema.SchemaConstraint!
+BlueTusk.Schema.SchemaConstraint.Deconstruct(out string! Name, out string! Kind, out string! Definition) -> void
+BlueTusk.Schema.SchemaConstraint.Definition.get -> string!
+BlueTusk.Schema.SchemaConstraint.Definition.init -> void
+BlueTusk.Schema.SchemaConstraint.Equals(BlueTusk.Schema.SchemaConstraint? other) -> bool
+BlueTusk.Schema.SchemaConstraint.Kind.get -> string!
+BlueTusk.Schema.SchemaConstraint.Kind.init -> void
+BlueTusk.Schema.SchemaConstraint.Name.get -> string!
+BlueTusk.Schema.SchemaConstraint.Name.init -> void
+BlueTusk.Schema.SchemaConstraint.SchemaConstraint(string! Name, string! Kind, string! Definition) -> void
+BlueTusk.Schema.SchemaConsumerContract
+BlueTusk.Schema.SchemaConsumerContract.Columns.get -> System.Collections.ObjectModel.ReadOnlyCollection<string!>!
+BlueTusk.Schema.SchemaConsumerContract.ConsumesWholeRow.get -> bool
+BlueTusk.Schema.SchemaConsumerContract.Name.get -> string!
+BlueTusk.Schema.SchemaConsumerContract.Relation.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaConsumerContract.SchemaConsumerContract(string! name, BlueTusk.Schema.SchemaRelationIdentity relation, System.Collections.Generic.IEnumerable<string!>! columns, bool consumesWholeRow = false) -> void
+BlueTusk.Schema.SchemaConsumerImpact
+BlueTusk.Schema.SchemaConsumerImpact.<Clone>$() -> BlueTusk.Schema.SchemaConsumerImpact!
+BlueTusk.Schema.SchemaConsumerImpact.Changes.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaChange!>!
+BlueTusk.Schema.SchemaConsumerImpact.Changes.init -> void
+BlueTusk.Schema.SchemaConsumerImpact.Consumer.get -> string!
+BlueTusk.Schema.SchemaConsumerImpact.Consumer.init -> void
+BlueTusk.Schema.SchemaConsumerImpact.Deconstruct(out string! Consumer, out System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaChange!>! Changes) -> void
+BlueTusk.Schema.SchemaConsumerImpact.Equals(BlueTusk.Schema.SchemaConsumerImpact? other) -> bool
+BlueTusk.Schema.SchemaConsumerImpact.SchemaConsumerImpact(string! Consumer, System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaChange!>! Changes) -> void
+BlueTusk.Schema.SchemaContractDependency
+BlueTusk.Schema.SchemaContractDependency.<Clone>$() -> BlueTusk.Schema.SchemaContractDependency!
+BlueTusk.Schema.SchemaContractDependency.ContractKind.get -> string!
+BlueTusk.Schema.SchemaContractDependency.ContractKind.init -> void
+BlueTusk.Schema.SchemaContractDependency.Deconstruct(out string! ContractKind, out BlueTusk.Schema.SchemaRelationIdentity Identity, out string? Member) -> void
+BlueTusk.Schema.SchemaContractDependency.Equals(BlueTusk.Schema.SchemaContractDependency? other) -> bool
+BlueTusk.Schema.SchemaContractDependency.Identity.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaContractDependency.Identity.init -> void
+BlueTusk.Schema.SchemaContractDependency.Member.get -> string?
+BlueTusk.Schema.SchemaContractDependency.Member.init -> void
+BlueTusk.Schema.SchemaContractDependency.SchemaContractDependency(string! ContractKind, BlueTusk.Schema.SchemaRelationIdentity Identity, string? Member = null) -> void
+BlueTusk.Schema.SchemaDeploymentAction
+BlueTusk.Schema.SchemaDeploymentAction.Content.get -> string!
+BlueTusk.Schema.SchemaDeploymentAction.Fingerprint.get -> string!
+BlueTusk.Schema.SchemaDeploymentAction.Kind.get -> BlueTusk.Schema.SchemaDeploymentActionKind
+BlueTusk.Schema.SchemaDeploymentAction.SchemaDeploymentAction(string! stepId, BlueTusk.Schema.SchemaDeploymentActionKind kind, string! content) -> void
+BlueTusk.Schema.SchemaDeploymentAction.StepId.get -> string!
+BlueTusk.Schema.SchemaDeploymentActionKind
+BlueTusk.Schema.SchemaDeploymentActionKind.External = 0 -> BlueTusk.Schema.SchemaDeploymentActionKind
+BlueTusk.Schema.SchemaDeploymentActionKind.TransactionalSql = 1 -> BlueTusk.Schema.SchemaDeploymentActionKind
+BlueTusk.Schema.SchemaDeploymentAttemptState
+BlueTusk.Schema.SchemaDeploymentAttemptState.Completed = 1 -> BlueTusk.Schema.SchemaDeploymentAttemptState
+BlueTusk.Schema.SchemaDeploymentAttemptState.Pending = 0 -> BlueTusk.Schema.SchemaDeploymentAttemptState
+BlueTusk.Schema.SchemaDeploymentAttemptState.ReconciledNotApplied = 2 -> BlueTusk.Schema.SchemaDeploymentAttemptState
+BlueTusk.Schema.SchemaDeploymentConsumer
+BlueTusk.Schema.SchemaDeploymentConsumer.Dependencies.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaContractDependency!>!
+BlueTusk.Schema.SchemaDeploymentConsumer.Name.get -> string!
+BlueTusk.Schema.SchemaDeploymentConsumer.RebuildOnChange.get -> bool
+BlueTusk.Schema.SchemaDeploymentConsumer.SchemaDeploymentConsumer(string! name, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaContractDependency!>! dependencies, bool rebuildOnChange = true) -> void
+BlueTusk.Schema.SchemaDeploymentDefinition
+BlueTusk.Schema.SchemaDeploymentDefinition.Actions.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaDeploymentAction!>!
+BlueTusk.Schema.SchemaDeploymentDefinition.Fingerprint.get -> string!
+BlueTusk.Schema.SchemaDeploymentDefinition.Plan.get -> BlueTusk.Schema.SchemaDeploymentPlan!
+BlueTusk.Schema.SchemaDeploymentDefinition.SchemaDeploymentDefinition(BlueTusk.Schema.SchemaDeploymentPlan! plan, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaDeploymentAction!>! actions) -> void
+BlueTusk.Schema.SchemaDeploymentLease
+BlueTusk.Schema.SchemaDeploymentLease.<Clone>$() -> BlueTusk.Schema.SchemaDeploymentLease!
+BlueTusk.Schema.SchemaDeploymentLease.Deconstruct(out string! DeploymentId, out string! Owner, out long FencingToken) -> void
+BlueTusk.Schema.SchemaDeploymentLease.DeploymentId.get -> string!
+BlueTusk.Schema.SchemaDeploymentLease.DeploymentId.init -> void
+BlueTusk.Schema.SchemaDeploymentLease.Equals(BlueTusk.Schema.SchemaDeploymentLease? other) -> bool
+BlueTusk.Schema.SchemaDeploymentLease.FencingToken.get -> long
+BlueTusk.Schema.SchemaDeploymentLease.FencingToken.init -> void
+BlueTusk.Schema.SchemaDeploymentLease.Owner.get -> string!
+BlueTusk.Schema.SchemaDeploymentLease.Owner.init -> void
+BlueTusk.Schema.SchemaDeploymentLease.SchemaDeploymentLease(string! DeploymentId, string! Owner, long FencingToken) -> void
+BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.ApplyReviewedChanges = 5 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.ApproveReview = 1 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.Cutover = 8 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.DeployCompatibleConsumers = 2 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.Expand = 4 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.FenceDelivery = 3 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.RebuildConsumers = 6 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.RetireOldVersions = 9 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.VerifyBaseline = 0 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPhase.VerifyTarget = 7 -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentPlan
+BlueTusk.Schema.SchemaDeploymentPlan.AffectedConsumers.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaDeploymentConsumer!>!
+BlueTusk.Schema.SchemaDeploymentPlan.AfterFingerprint.get -> string!
+BlueTusk.Schema.SchemaDeploymentPlan.BeforeFingerprint.get -> string!
+BlueTusk.Schema.SchemaDeploymentPlan.Begin() -> BlueTusk.Schema.SchemaDeploymentProgress!
+BlueTusk.Schema.SchemaDeploymentPlan.Fingerprint.get -> string!
+BlueTusk.Schema.SchemaDeploymentPlan.RequiresReview.get -> bool
+BlueTusk.Schema.SchemaDeploymentPlan.Steps.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaDeploymentStep!>!
+BlueTusk.Schema.SchemaDeploymentProgress
+BlueTusk.Schema.SchemaDeploymentProgress.CompletedSteps.get -> System.Collections.ObjectModel.ReadOnlyCollection<string!>!
+BlueTusk.Schema.SchemaDeploymentProgress.CompleteStep(string! stepId, string? observedFingerprint = null) -> BlueTusk.Schema.SchemaDeploymentProgress!
+BlueTusk.Schema.SchemaDeploymentProgress.IsComplete.get -> bool
+BlueTusk.Schema.SchemaDeploymentProgress.Plan.get -> BlueTusk.Schema.SchemaDeploymentPlan!
+BlueTusk.Schema.SchemaDeploymentProgress.ReadySteps.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaDeploymentStep!>!
+BlueTusk.Schema.SchemaDeploymentStep
+BlueTusk.Schema.SchemaDeploymentStep.Consumer.get -> string?
+BlueTusk.Schema.SchemaDeploymentStep.DependsOn.get -> System.Collections.ObjectModel.ReadOnlyCollection<string!>!
+BlueTusk.Schema.SchemaDeploymentStep.Id.get -> string!
+BlueTusk.Schema.SchemaDeploymentStep.Phase.get -> BlueTusk.Schema.SchemaDeploymentPhase
+BlueTusk.Schema.SchemaDeploymentStepAttempt
+BlueTusk.Schema.SchemaDeploymentStepAttempt.<Clone>$() -> BlueTusk.Schema.SchemaDeploymentStepAttempt!
+BlueTusk.Schema.SchemaDeploymentStepAttempt.ActionFingerprint.get -> string!
+BlueTusk.Schema.SchemaDeploymentStepAttempt.ActionFingerprint.init -> void
+BlueTusk.Schema.SchemaDeploymentStepAttempt.Attempt.get -> int
+BlueTusk.Schema.SchemaDeploymentStepAttempt.Attempt.init -> void
+BlueTusk.Schema.SchemaDeploymentStepAttempt.Deconstruct(out string! StepId, out int Attempt, out BlueTusk.Schema.SchemaDeploymentAttemptState State, out bool IsNew, out string! ActionFingerprint, out string? ObservedFingerprint, out string? EvidenceSha256) -> void
+BlueTusk.Schema.SchemaDeploymentStepAttempt.Equals(BlueTusk.Schema.SchemaDeploymentStepAttempt? other) -> bool
+BlueTusk.Schema.SchemaDeploymentStepAttempt.EvidenceSha256.get -> string?
+BlueTusk.Schema.SchemaDeploymentStepAttempt.EvidenceSha256.init -> void
+BlueTusk.Schema.SchemaDeploymentStepAttempt.IsNew.get -> bool
+BlueTusk.Schema.SchemaDeploymentStepAttempt.IsNew.init -> void
+BlueTusk.Schema.SchemaDeploymentStepAttempt.ObservedFingerprint.get -> string?
+BlueTusk.Schema.SchemaDeploymentStepAttempt.ObservedFingerprint.init -> void
+BlueTusk.Schema.SchemaDeploymentStepAttempt.SchemaDeploymentStepAttempt(string! StepId, int Attempt, BlueTusk.Schema.SchemaDeploymentAttemptState State, bool IsNew, string! ActionFingerprint, string? ObservedFingerprint, string? EvidenceSha256) -> void
+BlueTusk.Schema.SchemaDeploymentStepAttempt.State.get -> BlueTusk.Schema.SchemaDeploymentAttemptState
+BlueTusk.Schema.SchemaDeploymentStepAttempt.State.init -> void
+BlueTusk.Schema.SchemaDeploymentStepAttempt.StepId.get -> string!
+BlueTusk.Schema.SchemaDeploymentStepAttempt.StepId.init -> void
+BlueTusk.Schema.SchemaExtensionContract
+BlueTusk.Schema.SchemaExtensionContract.<Clone>$() -> BlueTusk.Schema.SchemaExtensionContract!
+BlueTusk.Schema.SchemaExtensionContract.Deconstruct(out string! Name, out string! Schema, out string! Version, out bool IsRelocatable) -> void
+BlueTusk.Schema.SchemaExtensionContract.Equals(BlueTusk.Schema.SchemaExtensionContract? other) -> bool
+BlueTusk.Schema.SchemaExtensionContract.IsRelocatable.get -> bool
+BlueTusk.Schema.SchemaExtensionContract.IsRelocatable.init -> void
+BlueTusk.Schema.SchemaExtensionContract.Name.get -> string!
+BlueTusk.Schema.SchemaExtensionContract.Name.init -> void
+BlueTusk.Schema.SchemaExtensionContract.Schema.get -> string!
+BlueTusk.Schema.SchemaExtensionContract.Schema.init -> void
+BlueTusk.Schema.SchemaExtensionContract.SchemaExtensionContract(string! Name, string! Schema, string! Version, bool IsRelocatable) -> void
+BlueTusk.Schema.SchemaExtensionContract.Version.get -> string!
+BlueTusk.Schema.SchemaExtensionContract.Version.init -> void
+BlueTusk.Schema.SchemaIndex
+BlueTusk.Schema.SchemaIndex.<Clone>$() -> BlueTusk.Schema.SchemaIndex!
+BlueTusk.Schema.SchemaIndex.Deconstruct(out string! Name, out string! Definition, out bool IsValid) -> void
+BlueTusk.Schema.SchemaIndex.Definition.get -> string!
+BlueTusk.Schema.SchemaIndex.Definition.init -> void
+BlueTusk.Schema.SchemaIndex.Equals(BlueTusk.Schema.SchemaIndex? other) -> bool
+BlueTusk.Schema.SchemaIndex.IsValid.get -> bool
+BlueTusk.Schema.SchemaIndex.IsValid.init -> void
+BlueTusk.Schema.SchemaIndex.Name.get -> string!
+BlueTusk.Schema.SchemaIndex.Name.init -> void
+BlueTusk.Schema.SchemaIndex.SchemaIndex(string! Name, string! Definition, bool IsValid) -> void
+BlueTusk.Schema.SchemaPolicy
+BlueTusk.Schema.SchemaPolicy.<Clone>$() -> BlueTusk.Schema.SchemaPolicy!
+BlueTusk.Schema.SchemaPolicy.CheckSql.get -> string?
+BlueTusk.Schema.SchemaPolicy.CheckSql.init -> void
+BlueTusk.Schema.SchemaPolicy.Command.get -> string!
+BlueTusk.Schema.SchemaPolicy.Command.init -> void
+BlueTusk.Schema.SchemaPolicy.Deconstruct(out string! Name, out string! Command, out bool IsPermissive, out string! Roles, out string? UsingSql, out string? CheckSql) -> void
+BlueTusk.Schema.SchemaPolicy.Equals(BlueTusk.Schema.SchemaPolicy? other) -> bool
+BlueTusk.Schema.SchemaPolicy.IsPermissive.get -> bool
+BlueTusk.Schema.SchemaPolicy.IsPermissive.init -> void
+BlueTusk.Schema.SchemaPolicy.Name.get -> string!
+BlueTusk.Schema.SchemaPolicy.Name.init -> void
+BlueTusk.Schema.SchemaPolicy.Roles.get -> string!
+BlueTusk.Schema.SchemaPolicy.Roles.init -> void
+BlueTusk.Schema.SchemaPolicy.SchemaPolicy(string! Name, string! Command, bool IsPermissive, string! Roles, string? UsingSql, string? CheckSql) -> void
+BlueTusk.Schema.SchemaPolicy.UsingSql.get -> string?
+BlueTusk.Schema.SchemaPolicy.UsingSql.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract
+BlueTusk.Schema.SchemaPrivilegeContract.<Clone>$() -> BlueTusk.Schema.SchemaPrivilegeContract!
+BlueTusk.Schema.SchemaPrivilegeContract.Deconstruct(out string! ObjectKind, out BlueTusk.Schema.SchemaRelationIdentity Identity, out string? Member, out string? IdentityArguments, out string! Grantor, out string! Grantee, out string! Privilege, out bool IsGrantable, out bool IsPublic) -> void
+BlueTusk.Schema.SchemaPrivilegeContract.Equals(BlueTusk.Schema.SchemaPrivilegeContract? other) -> bool
+BlueTusk.Schema.SchemaPrivilegeContract.Grantee.get -> string!
+BlueTusk.Schema.SchemaPrivilegeContract.Grantee.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract.Grantor.get -> string!
+BlueTusk.Schema.SchemaPrivilegeContract.Grantor.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract.Identity.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaPrivilegeContract.Identity.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract.IdentityArguments.get -> string?
+BlueTusk.Schema.SchemaPrivilegeContract.IdentityArguments.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract.IsGrantable.get -> bool
+BlueTusk.Schema.SchemaPrivilegeContract.IsGrantable.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract.IsPublic.get -> bool
+BlueTusk.Schema.SchemaPrivilegeContract.IsPublic.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract.Member.get -> string?
+BlueTusk.Schema.SchemaPrivilegeContract.Member.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract.ObjectKind.get -> string!
+BlueTusk.Schema.SchemaPrivilegeContract.ObjectKind.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract.Privilege.get -> string!
+BlueTusk.Schema.SchemaPrivilegeContract.Privilege.init -> void
+BlueTusk.Schema.SchemaPrivilegeContract.SchemaPrivilegeContract(string! ObjectKind, BlueTusk.Schema.SchemaRelationIdentity Identity, string? Member, string? IdentityArguments, string! Grantor, string! Grantee, string! Privilege, bool IsGrantable, bool IsPublic = false) -> void
+BlueTusk.Schema.SchemaPublicationMemberContract
+BlueTusk.Schema.SchemaPublicationMemberContract.<Clone>$() -> BlueTusk.Schema.SchemaPublicationMemberContract!
+BlueTusk.Schema.SchemaPublicationMemberContract.AllTables.get -> bool
+BlueTusk.Schema.SchemaPublicationMemberContract.AllTables.init -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.Columns.get -> string!
+BlueTusk.Schema.SchemaPublicationMemberContract.Columns.init -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.Deconstruct(out string! Publication, out BlueTusk.Schema.SchemaRelationIdentity Relation, out bool AllTables, out bool ViaPartitionRoot, out bool PublishesInsert, out bool PublishesUpdate, out bool PublishesDelete, out bool PublishesTruncate, out string! Columns, out string? RowFilterSql) -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.Equals(BlueTusk.Schema.SchemaPublicationMemberContract? other) -> bool
+BlueTusk.Schema.SchemaPublicationMemberContract.Publication.get -> string!
+BlueTusk.Schema.SchemaPublicationMemberContract.Publication.init -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.PublishesDelete.get -> bool
+BlueTusk.Schema.SchemaPublicationMemberContract.PublishesDelete.init -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.PublishesInsert.get -> bool
+BlueTusk.Schema.SchemaPublicationMemberContract.PublishesInsert.init -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.PublishesTruncate.get -> bool
+BlueTusk.Schema.SchemaPublicationMemberContract.PublishesTruncate.init -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.PublishesUpdate.get -> bool
+BlueTusk.Schema.SchemaPublicationMemberContract.PublishesUpdate.init -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.Relation.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaPublicationMemberContract.Relation.init -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.RowFilterSql.get -> string?
+BlueTusk.Schema.SchemaPublicationMemberContract.RowFilterSql.init -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.SchemaPublicationMemberContract(string! Publication, BlueTusk.Schema.SchemaRelationIdentity Relation, bool AllTables, bool ViaPartitionRoot, bool PublishesInsert, bool PublishesUpdate, bool PublishesDelete, bool PublishesTruncate, string! Columns, string? RowFilterSql) -> void
+BlueTusk.Schema.SchemaPublicationMemberContract.ViaPartitionRoot.get -> bool
+BlueTusk.Schema.SchemaPublicationMemberContract.ViaPartitionRoot.init -> void
+BlueTusk.Schema.SchemaRelation
+BlueTusk.Schema.SchemaRelation.Columns.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaColumn!>!
+BlueTusk.Schema.SchemaRelation.Constraints.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaConstraint!>!
+BlueTusk.Schema.SchemaRelation.DefinitionSql.get -> string?
+BlueTusk.Schema.SchemaRelation.ForceRowSecurity.get -> bool
+BlueTusk.Schema.SchemaRelation.Identity.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaRelation.Indexes.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaIndex!>!
+BlueTusk.Schema.SchemaRelation.Kind.get -> string!
+BlueTusk.Schema.SchemaRelation.Policies.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaPolicy!>!
+BlueTusk.Schema.SchemaRelation.ReplicaIdentity.get -> string!
+BlueTusk.Schema.SchemaRelation.RowSecurity.get -> bool
+BlueTusk.Schema.SchemaRelation.SchemaRelation(BlueTusk.Schema.SchemaRelationIdentity identity, string! kind, bool rowSecurity, bool forceRowSecurity, string! replicaIdentity, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaColumn!>! columns, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaConstraint!>? constraints = null, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaIndex!>? indexes = null, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaPolicy!>? policies = null, string? definitionSql = null, BlueTusk.Schema.SchemaSnapshotLimits? limits = null) -> void
+BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaRelationIdentity.Deconstruct(out string! Schema, out string! Name) -> void
+BlueTusk.Schema.SchemaRelationIdentity.Equals(BlueTusk.Schema.SchemaRelationIdentity other) -> bool
+BlueTusk.Schema.SchemaRelationIdentity.Name.get -> string!
+BlueTusk.Schema.SchemaRelationIdentity.Name.init -> void
+BlueTusk.Schema.SchemaRelationIdentity.Schema.get -> string!
+BlueTusk.Schema.SchemaRelationIdentity.Schema.init -> void
+BlueTusk.Schema.SchemaRelationIdentity.SchemaRelationIdentity() -> void
+BlueTusk.Schema.SchemaRelationIdentity.SchemaRelationIdentity(string! Schema, string! Name) -> void
+BlueTusk.Schema.SchemaRoutineContract
+BlueTusk.Schema.SchemaRoutineContract.<Clone>$() -> BlueTusk.Schema.SchemaRoutineContract!
+BlueTusk.Schema.SchemaRoutineContract.Deconstruct(out BlueTusk.Schema.SchemaRelationIdentity Identity, out string! IdentityArguments, out string! Kind, out string! ResultType, out string! Language, out bool SecurityDefiner, out bool IsStrict, out string! Volatility, out string! ParallelSafety, out string! DefinitionSql) -> void
+BlueTusk.Schema.SchemaRoutineContract.DefinitionSql.get -> string!
+BlueTusk.Schema.SchemaRoutineContract.DefinitionSql.init -> void
+BlueTusk.Schema.SchemaRoutineContract.Equals(BlueTusk.Schema.SchemaRoutineContract? other) -> bool
+BlueTusk.Schema.SchemaRoutineContract.Identity.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaRoutineContract.Identity.init -> void
+BlueTusk.Schema.SchemaRoutineContract.IdentityArguments.get -> string!
+BlueTusk.Schema.SchemaRoutineContract.IdentityArguments.init -> void
+BlueTusk.Schema.SchemaRoutineContract.IsStrict.get -> bool
+BlueTusk.Schema.SchemaRoutineContract.IsStrict.init -> void
+BlueTusk.Schema.SchemaRoutineContract.Kind.get -> string!
+BlueTusk.Schema.SchemaRoutineContract.Kind.init -> void
+BlueTusk.Schema.SchemaRoutineContract.Language.get -> string!
+BlueTusk.Schema.SchemaRoutineContract.Language.init -> void
+BlueTusk.Schema.SchemaRoutineContract.ParallelSafety.get -> string!
+BlueTusk.Schema.SchemaRoutineContract.ParallelSafety.init -> void
+BlueTusk.Schema.SchemaRoutineContract.ResultType.get -> string!
+BlueTusk.Schema.SchemaRoutineContract.ResultType.init -> void
+BlueTusk.Schema.SchemaRoutineContract.SchemaRoutineContract(BlueTusk.Schema.SchemaRelationIdentity Identity, string! IdentityArguments, string! Kind, string! ResultType, string! Language, bool SecurityDefiner, bool IsStrict, string! Volatility, string! ParallelSafety, string! DefinitionSql) -> void
+BlueTusk.Schema.SchemaRoutineContract.SecurityDefiner.get -> bool
+BlueTusk.Schema.SchemaRoutineContract.SecurityDefiner.init -> void
+BlueTusk.Schema.SchemaRoutineContract.Volatility.get -> string!
+BlueTusk.Schema.SchemaRoutineContract.Volatility.init -> void
+BlueTusk.Schema.SchemaSnapshot
+BlueTusk.Schema.SchemaSnapshot.Fingerprint.get -> string!
+BlueTusk.Schema.SchemaSnapshot.Relations.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaRelation!>!
+BlueTusk.Schema.SchemaSnapshot.SchemaSnapshot(System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaRelation!>! relations, BlueTusk.Schema.SchemaSnapshotLimits? limits = null) -> void
+BlueTusk.Schema.SchemaSnapshotLimits
+BlueTusk.Schema.SchemaSnapshotLimits.<Clone>$() -> BlueTusk.Schema.SchemaSnapshotLimits!
+BlueTusk.Schema.SchemaSnapshotLimits.Equals(BlueTusk.Schema.SchemaSnapshotLimits? other) -> bool
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumColumns.get -> int
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumColumns.init -> void
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumConstraints.get -> int
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumConstraints.init -> void
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumIndexes.get -> int
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumIndexes.init -> void
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumMetadataBytes.get -> int
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumMetadataBytes.init -> void
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumPolicies.get -> int
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumPolicies.init -> void
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumRelations.get -> int
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumRelations.init -> void
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumStringBytes.get -> int
+BlueTusk.Schema.SchemaSnapshotLimits.MaximumStringBytes.init -> void
+BlueTusk.Schema.SchemaSnapshotLimits.SchemaSnapshotLimits() -> void
+BlueTusk.Schema.SchemaSnapshotSerializer
+BlueTusk.Schema.SchemaTypeContract
+BlueTusk.Schema.SchemaTypeContract.BaseType.get -> string?
+BlueTusk.Schema.SchemaTypeContract.Collation.get -> string?
+BlueTusk.Schema.SchemaTypeContract.Constraints.get -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaConstraint!>!
+BlueTusk.Schema.SchemaTypeContract.DefaultSql.get -> string?
+BlueTusk.Schema.SchemaTypeContract.EnumLabels.get -> System.Collections.ObjectModel.ReadOnlyCollection<string!>!
+BlueTusk.Schema.SchemaTypeContract.Identity.get -> BlueTusk.Schema.SchemaRelationIdentity
+BlueTusk.Schema.SchemaTypeContract.IsNullable.get -> bool
+BlueTusk.Schema.SchemaTypeContract.Kind.get -> string!
+BlueTusk.Schema.SchemaTypeContract.SchemaTypeContract(BlueTusk.Schema.SchemaRelationIdentity identity, string! kind, System.Collections.Generic.IEnumerable<string!>? enumLabels = null, string? baseType = null, bool isNullable = true, string? defaultSql = null, string? collation = null, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaConstraint!>? constraints = null, BlueTusk.Schema.SchemaCatalogLimits? limits = null) -> void
+const BlueTusk.Schema.SchemaCatalogSnapshot.CurrentFormatVersion = 1 -> int
+const BlueTusk.Schema.SchemaSnapshot.CurrentFormatVersion = 1 -> int
+const BlueTusk.Schema.SchemaSnapshotSerializer.MaximumDocumentBytes = 67108864 -> int
+override BlueTusk.Schema.SchemaCaptureOptions.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaCaptureOptions.GetHashCode() -> int
+override BlueTusk.Schema.SchemaCaptureOptions.ToString() -> string!
+override BlueTusk.Schema.SchemaCatalogCaptureOptions.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaCatalogCaptureOptions.GetHashCode() -> int
+override BlueTusk.Schema.SchemaCatalogCaptureOptions.ToString() -> string!
+override BlueTusk.Schema.SchemaCatalogChange.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaCatalogChange.GetHashCode() -> int
+override BlueTusk.Schema.SchemaCatalogChange.ToString() -> string!
+override BlueTusk.Schema.SchemaCatalogLimits.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaCatalogLimits.GetHashCode() -> int
+override BlueTusk.Schema.SchemaCatalogLimits.ToString() -> string!
+override BlueTusk.Schema.SchemaChange.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaChange.GetHashCode() -> int
+override BlueTusk.Schema.SchemaChange.ToString() -> string!
+override BlueTusk.Schema.SchemaColumn.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaColumn.GetHashCode() -> int
+override BlueTusk.Schema.SchemaColumn.ToString() -> string!
+override BlueTusk.Schema.SchemaConstraint.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaConstraint.GetHashCode() -> int
+override BlueTusk.Schema.SchemaConstraint.ToString() -> string!
+override BlueTusk.Schema.SchemaConsumerImpact.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaConsumerImpact.GetHashCode() -> int
+override BlueTusk.Schema.SchemaConsumerImpact.ToString() -> string!
+override BlueTusk.Schema.SchemaContractDependency.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaContractDependency.GetHashCode() -> int
+override BlueTusk.Schema.SchemaContractDependency.ToString() -> string!
+override BlueTusk.Schema.SchemaDeploymentLease.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaDeploymentLease.GetHashCode() -> int
+override BlueTusk.Schema.SchemaDeploymentLease.ToString() -> string!
+override BlueTusk.Schema.SchemaDeploymentStepAttempt.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaDeploymentStepAttempt.GetHashCode() -> int
+override BlueTusk.Schema.SchemaDeploymentStepAttempt.ToString() -> string!
+override BlueTusk.Schema.SchemaExtensionContract.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaExtensionContract.GetHashCode() -> int
+override BlueTusk.Schema.SchemaExtensionContract.ToString() -> string!
+override BlueTusk.Schema.SchemaIndex.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaIndex.GetHashCode() -> int
+override BlueTusk.Schema.SchemaIndex.ToString() -> string!
+override BlueTusk.Schema.SchemaPolicy.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaPolicy.GetHashCode() -> int
+override BlueTusk.Schema.SchemaPolicy.ToString() -> string!
+override BlueTusk.Schema.SchemaPrivilegeContract.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaPrivilegeContract.GetHashCode() -> int
+override BlueTusk.Schema.SchemaPrivilegeContract.ToString() -> string!
+override BlueTusk.Schema.SchemaPublicationMemberContract.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaPublicationMemberContract.GetHashCode() -> int
+override BlueTusk.Schema.SchemaPublicationMemberContract.ToString() -> string!
+override BlueTusk.Schema.SchemaRelationIdentity.GetHashCode() -> int
+override BlueTusk.Schema.SchemaRoutineContract.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaRoutineContract.GetHashCode() -> int
+override BlueTusk.Schema.SchemaRoutineContract.ToString() -> string!
+override BlueTusk.Schema.SchemaSnapshotLimits.Equals(object? obj) -> bool
+override BlueTusk.Schema.SchemaSnapshotLimits.GetHashCode() -> int
+override BlueTusk.Schema.SchemaSnapshotLimits.ToString() -> string!
+static BlueTusk.Schema.SchemaCaptureOptions.operator !=(BlueTusk.Schema.SchemaCaptureOptions? left, BlueTusk.Schema.SchemaCaptureOptions? right) -> bool
+static BlueTusk.Schema.SchemaCaptureOptions.operator ==(BlueTusk.Schema.SchemaCaptureOptions? left, BlueTusk.Schema.SchemaCaptureOptions? right) -> bool
+static BlueTusk.Schema.SchemaCatalogCaptureOptions.operator !=(BlueTusk.Schema.SchemaCatalogCaptureOptions? left, BlueTusk.Schema.SchemaCatalogCaptureOptions? right) -> bool
+static BlueTusk.Schema.SchemaCatalogCaptureOptions.operator ==(BlueTusk.Schema.SchemaCatalogCaptureOptions? left, BlueTusk.Schema.SchemaCatalogCaptureOptions? right) -> bool
+static BlueTusk.Schema.SchemaCatalogChange.operator !=(BlueTusk.Schema.SchemaCatalogChange? left, BlueTusk.Schema.SchemaCatalogChange? right) -> bool
+static BlueTusk.Schema.SchemaCatalogChange.operator ==(BlueTusk.Schema.SchemaCatalogChange? left, BlueTusk.Schema.SchemaCatalogChange? right) -> bool
+static BlueTusk.Schema.SchemaCatalogCompatibility.Compare(BlueTusk.Schema.SchemaCatalogSnapshot! before, BlueTusk.Schema.SchemaCatalogSnapshot! after) -> BlueTusk.Schema.SchemaCatalogComparison!
+static BlueTusk.Schema.SchemaCatalogLimits.operator !=(BlueTusk.Schema.SchemaCatalogLimits? left, BlueTusk.Schema.SchemaCatalogLimits? right) -> bool
+static BlueTusk.Schema.SchemaCatalogLimits.operator ==(BlueTusk.Schema.SchemaCatalogLimits? left, BlueTusk.Schema.SchemaCatalogLimits? right) -> bool
+static BlueTusk.Schema.SchemaCatalogSerializer.Deserialize(System.ReadOnlySpan<byte> utf8Json, BlueTusk.Schema.SchemaCatalogLimits? limits = null) -> BlueTusk.Schema.SchemaCatalogSnapshot!
+static BlueTusk.Schema.SchemaCatalogSerializer.Serialize(BlueTusk.Schema.SchemaCatalogSnapshot! snapshot, int maximumDocumentBytes = 67108864) -> byte[]!
+static BlueTusk.Schema.SchemaChange.operator !=(BlueTusk.Schema.SchemaChange? left, BlueTusk.Schema.SchemaChange? right) -> bool
+static BlueTusk.Schema.SchemaChange.operator ==(BlueTusk.Schema.SchemaChange? left, BlueTusk.Schema.SchemaChange? right) -> bool
+static BlueTusk.Schema.SchemaColumn.operator !=(BlueTusk.Schema.SchemaColumn? left, BlueTusk.Schema.SchemaColumn? right) -> bool
+static BlueTusk.Schema.SchemaColumn.operator ==(BlueTusk.Schema.SchemaColumn? left, BlueTusk.Schema.SchemaColumn? right) -> bool
+static BlueTusk.Schema.SchemaCompatibility.AnalyzeConsumers(BlueTusk.Schema.SchemaComparison! comparison, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaConsumerContract!>! contracts) -> System.Collections.ObjectModel.ReadOnlyCollection<BlueTusk.Schema.SchemaConsumerImpact!>!
+static BlueTusk.Schema.SchemaCompatibility.Compare(BlueTusk.Schema.SchemaSnapshot! before, BlueTusk.Schema.SchemaSnapshot! after) -> BlueTusk.Schema.SchemaComparison!
+static BlueTusk.Schema.SchemaConstraint.operator !=(BlueTusk.Schema.SchemaConstraint? left, BlueTusk.Schema.SchemaConstraint? right) -> bool
+static BlueTusk.Schema.SchemaConstraint.operator ==(BlueTusk.Schema.SchemaConstraint? left, BlueTusk.Schema.SchemaConstraint? right) -> bool
+static BlueTusk.Schema.SchemaConsumerImpact.operator !=(BlueTusk.Schema.SchemaConsumerImpact? left, BlueTusk.Schema.SchemaConsumerImpact? right) -> bool
+static BlueTusk.Schema.SchemaConsumerImpact.operator ==(BlueTusk.Schema.SchemaConsumerImpact? left, BlueTusk.Schema.SchemaConsumerImpact? right) -> bool
+static BlueTusk.Schema.SchemaContractDependency.operator !=(BlueTusk.Schema.SchemaContractDependency? left, BlueTusk.Schema.SchemaContractDependency? right) -> bool
+static BlueTusk.Schema.SchemaContractDependency.operator ==(BlueTusk.Schema.SchemaContractDependency? left, BlueTusk.Schema.SchemaContractDependency? right) -> bool
+static BlueTusk.Schema.SchemaDeploymentLease.operator !=(BlueTusk.Schema.SchemaDeploymentLease? left, BlueTusk.Schema.SchemaDeploymentLease? right) -> bool
+static BlueTusk.Schema.SchemaDeploymentLease.operator ==(BlueTusk.Schema.SchemaDeploymentLease? left, BlueTusk.Schema.SchemaDeploymentLease? right) -> bool
+static BlueTusk.Schema.SchemaDeploymentPlan.Create(BlueTusk.Schema.SchemaCatalogSnapshot! before, BlueTusk.Schema.SchemaCatalogSnapshot! after, System.Collections.Generic.IEnumerable<BlueTusk.Schema.SchemaDeploymentConsumer!>! consumers) -> BlueTusk.Schema.SchemaDeploymentPlan!
+static BlueTusk.Schema.SchemaDeploymentStepAttempt.operator !=(BlueTusk.Schema.SchemaDeploymentStepAttempt? left, BlueTusk.Schema.SchemaDeploymentStepAttempt? right) -> bool
+static BlueTusk.Schema.SchemaDeploymentStepAttempt.operator ==(BlueTusk.Schema.SchemaDeploymentStepAttempt? left, BlueTusk.Schema.SchemaDeploymentStepAttempt? right) -> bool
+static BlueTusk.Schema.SchemaExtensionContract.operator !=(BlueTusk.Schema.SchemaExtensionContract? left, BlueTusk.Schema.SchemaExtensionContract? right) -> bool
+static BlueTusk.Schema.SchemaExtensionContract.operator ==(BlueTusk.Schema.SchemaExtensionContract? left, BlueTusk.Schema.SchemaExtensionContract? right) -> bool
+static BlueTusk.Schema.SchemaIndex.operator !=(BlueTusk.Schema.SchemaIndex? left, BlueTusk.Schema.SchemaIndex? right) -> bool
+static BlueTusk.Schema.SchemaIndex.operator ==(BlueTusk.Schema.SchemaIndex? left, BlueTusk.Schema.SchemaIndex? right) -> bool
+static BlueTusk.Schema.SchemaPolicy.operator !=(BlueTusk.Schema.SchemaPolicy? left, BlueTusk.Schema.SchemaPolicy? right) -> bool
+static BlueTusk.Schema.SchemaPolicy.operator ==(BlueTusk.Schema.SchemaPolicy? left, BlueTusk.Schema.SchemaPolicy? right) -> bool
+static BlueTusk.Schema.SchemaPrivilegeContract.operator !=(BlueTusk.Schema.SchemaPrivilegeContract? left, BlueTusk.Schema.SchemaPrivilegeContract? right) -> bool
+static BlueTusk.Schema.SchemaPrivilegeContract.operator ==(BlueTusk.Schema.SchemaPrivilegeContract? left, BlueTusk.Schema.SchemaPrivilegeContract? right) -> bool
+static BlueTusk.Schema.SchemaPublicationMemberContract.operator !=(BlueTusk.Schema.SchemaPublicationMemberContract? left, BlueTusk.Schema.SchemaPublicationMemberContract? right) -> bool
+static BlueTusk.Schema.SchemaPublicationMemberContract.operator ==(BlueTusk.Schema.SchemaPublicationMemberContract? left, BlueTusk.Schema.SchemaPublicationMemberContract? right) -> bool
+static BlueTusk.Schema.SchemaRelationIdentity.operator !=(BlueTusk.Schema.SchemaRelationIdentity left, BlueTusk.Schema.SchemaRelationIdentity right) -> bool
+static BlueTusk.Schema.SchemaRelationIdentity.operator ==(BlueTusk.Schema.SchemaRelationIdentity left, BlueTusk.Schema.SchemaRelationIdentity right) -> bool
+static BlueTusk.Schema.SchemaRoutineContract.operator !=(BlueTusk.Schema.SchemaRoutineContract? left, BlueTusk.Schema.SchemaRoutineContract? right) -> bool
+static BlueTusk.Schema.SchemaRoutineContract.operator ==(BlueTusk.Schema.SchemaRoutineContract? left, BlueTusk.Schema.SchemaRoutineContract? right) -> bool
+static BlueTusk.Schema.SchemaSnapshotLimits.operator !=(BlueTusk.Schema.SchemaSnapshotLimits? left, BlueTusk.Schema.SchemaSnapshotLimits? right) -> bool
+static BlueTusk.Schema.SchemaSnapshotLimits.operator ==(BlueTusk.Schema.SchemaSnapshotLimits? left, BlueTusk.Schema.SchemaSnapshotLimits? right) -> bool
+static BlueTusk.Schema.SchemaSnapshotSerializer.Deserialize(System.ReadOnlySpan<byte> utf8Json, BlueTusk.Schema.SchemaSnapshotLimits? limits = null) -> BlueTusk.Schema.SchemaSnapshot!
+static BlueTusk.Schema.SchemaSnapshotSerializer.Serialize(BlueTusk.Schema.SchemaSnapshot! snapshot, int maximumDocumentBytes = 67108864) -> byte[]!
+~override BlueTusk.Schema.SchemaRelationIdentity.Equals(object obj) -> bool
+~override BlueTusk.Schema.SchemaRelationIdentity.ToString() -> string

@@ -119,7 +119,20 @@ internal static class BlueTuskValueDecoder
     }
 
     public static Type GetFieldType(BlueTuskFieldDescription field)
+
         => GetFieldType(BuiltInTypes, field);
+
+    internal static TElement?[] DecodeNullableArray<TElement>(in BlueTuskResolvedField resolved,
+        ReadOnlyMemory<byte>? value) where TElement : struct
+    {
+        if (value is null) { throw new InvalidCastException("A database NULL cannot be read as a non-null array."); }
+        if (resolved.Type is not { } type || resolved.Codec is not IBlueTuskNullableArrayCodec codec)
+        { throw new InvalidCastException("The field does not provide nullable array element decoding."); }
+        var reader = new BlueTuskReader(value.Value.Span);
+        var result = codec.ReadNullableElements<TElement>(ref reader, GetFormat(resolved), type);
+        EnsureFullyRead(type, reader.Remaining);
+        return result;
+    }
 
     public static Type GetFieldType(BlueTuskTypeRegistry types, BlueTuskFieldDescription field)
     {

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Search</BlueTuskProductFamily>
+    <Description>Atomic versioned nested-chunk OpenSearch ingestion and authorized full-text/vector/hybrid retrieval.</Description>
+    <PackageTags>opensearch;search;hybrid;vectors</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Search.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Search\BlueTusk.Search.csproj" />
+  </ItemGroup>
+</Project>

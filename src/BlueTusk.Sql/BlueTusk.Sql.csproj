@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Sql</BlueTuskProductFamily>
+    <Description>Typed PostgreSQL query contracts, bounded streaming execution, and authoritative result-shape validation.</Description>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Sql.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+  </ItemGroup>
+</Project>

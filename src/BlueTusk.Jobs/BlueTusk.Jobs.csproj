@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Jobs</BlueTuskProductFamily>
+    <Description>Durable PostgreSQL jobs with fenced leases, transactional enqueue, typed handlers, and bounded workers.</Description>
+    <PackageTags>postgresql;jobs;background;durable;outbox</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Jobs.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+  </ItemGroup>
+</Project>

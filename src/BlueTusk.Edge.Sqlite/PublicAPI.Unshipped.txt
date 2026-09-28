@@ -1,0 +1,57 @@
+#nullable enable
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.<Clone>$() -> BlueTusk.Edge.Sqlite.SqliteEdgeOptions!
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.BusyTimeoutSeconds.get -> int
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.BusyTimeoutSeconds.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.DatabasePath.get -> string!
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.DatabasePath.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.Equals(BlueTusk.Edge.Sqlite.SqliteEdgeOptions? other) -> bool
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxBatchBytes.get -> long
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxBatchBytes.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxBatchRecords.get -> int
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxBatchRecords.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxCacheBytes.get -> long
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxCacheBytes.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxCacheRecords.get -> int
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxCacheRecords.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxPageBytes.get -> long
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxPageBytes.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxPageSize.get -> int
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxPageSize.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxPendingBytes.get -> long
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxPendingBytes.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxPendingMutations.get -> int
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxPendingMutations.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxReceiptRecords.get -> int
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxReceiptRecords.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxRecordBytes.get -> int
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxRecordBytes.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxScopes.get -> int
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxScopes.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.SqliteEdgeOptions() -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.TimeProvider.get -> System.TimeProvider!
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.TimeProvider.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeStore
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.AcknowledgeAsync(BlueTusk.Edge.EdgeMutationLease! lease, BlueTusk.Edge.EdgeMutationOutcome! outcome, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.ActivateScopeAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeEpochChangePolicy policy = BlueTusk.Edge.EdgeEpochChangePolicy.RejectIfPending, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.ApplyChangesAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeChangeBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.ApplySnapshotBatchAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid snapshotId, System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>! records, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.BeginSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeSnapshot! snapshot, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.ClaimAsync(BlueTusk.Edge.EdgeScope! scope, System.TimeSpan leaseDuration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutationLease?>
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.CommitSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid snapshotId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.DatabasePath.get -> string!
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.EnqueueAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.GetAsync(BlueTusk.Edge.EdgeScope! scope, string! id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeCachedDocument?>
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.GetCheckpointAsync(BlueTusk.Edge.EdgeScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeCheckpoint!>
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.Options.get -> BlueTusk.Edge.Sqlite.SqliteEdgeOptions!
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.PruneReceiptsAsync(System.DateTimeOffset recordedBefore, int maxRecords = 100, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.ReadPageAsync(BlueTusk.Edge.EdgeScope! scope, int pageSize = 100, string? afterId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeCachePage!>
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.ResolveConflictAsync(System.Guid conflictedMutationId, BlueTusk.Edge.EdgeMutation! replacement, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Sqlite.SqliteEdgeStore.SqliteEdgeStore(BlueTusk.Edge.Sqlite.SqliteEdgeOptions! options) -> void
+const BlueTusk.Edge.Sqlite.SqliteEdgeStore.CurrentSchemaVersion = 2 -> int
+override BlueTusk.Edge.Sqlite.SqliteEdgeOptions.Equals(object? obj) -> bool
+override BlueTusk.Edge.Sqlite.SqliteEdgeOptions.GetHashCode() -> int
+override BlueTusk.Edge.Sqlite.SqliteEdgeOptions.ToString() -> string!
+static BlueTusk.Edge.Sqlite.SqliteEdgeOptions.operator !=(BlueTusk.Edge.Sqlite.SqliteEdgeOptions? left, BlueTusk.Edge.Sqlite.SqliteEdgeOptions? right) -> bool
+static BlueTusk.Edge.Sqlite.SqliteEdgeOptions.operator ==(BlueTusk.Edge.Sqlite.SqliteEdgeOptions? left, BlueTusk.Edge.Sqlite.SqliteEdgeOptions? right) -> bool

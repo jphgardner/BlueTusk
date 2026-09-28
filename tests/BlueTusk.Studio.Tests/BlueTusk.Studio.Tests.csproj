@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Studio</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Studio.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\BlueTusk.Studio\BlueTusk.Studio.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Studio.ControlPlane\BlueTusk.Studio.ControlPlane.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Studio.Events\BlueTusk.Studio.Events.csproj" />
+  </ItemGroup>
+</Project>

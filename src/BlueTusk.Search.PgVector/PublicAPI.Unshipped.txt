@@ -1,0 +1,12 @@
+#nullable enable
+BlueTusk.Search.PgVector.PgVectorSearchAdapter
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.ColumnTypeSql.get -> string!
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.CreateHnswIndexAsync(System.Data.Common.DbDataSource! source, string! searchSchema, string! indexName = "chunks_embedding_cosine", int connectionsPerLayer = 16, int constructionCandidates = 64, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.Dimensions.get -> int
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.DistanceSql(string! trustedColumnSql, string! trustedParameterSql) -> string!
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.Encode(System.ReadOnlySpan<float> vector) -> string!
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.ExtensionSchema.get -> string!
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.ParameterSql(string! trustedParameterSql) -> string!
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.PgVectorSearchAdapter(int dimensions, string! extensionSchema = "public") -> void
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.StorageContract.get -> string!
+BlueTusk.Search.PgVector.PgVectorSearchAdapter.ValidateInstallationAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask

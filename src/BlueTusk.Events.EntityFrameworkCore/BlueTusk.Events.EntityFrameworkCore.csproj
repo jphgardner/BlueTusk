@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Events</BlueTuskProductFamily>
+    <Description>Explicit caller-transaction EF Core adapter for BlueTusk.Events.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Events.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Events\BlueTusk.Events.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,39 @@
+#nullable enable
+BlueTusk.Studio.Events.IStudioEventScopeResolver
+BlueTusk.Studio.Events.IStudioEventScopeResolver.ResolveAsync(System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Studio.Events.StudioEventScope!>
+BlueTusk.Studio.Events.StudioEventEndpoints
+BlueTusk.Studio.Events.StudioEventOptions
+BlueTusk.Studio.Events.StudioEventOptions.<Clone>$() -> BlueTusk.Studio.Events.StudioEventOptions!
+BlueTusk.Studio.Events.StudioEventOptions.Equals(BlueTusk.Studio.Events.StudioEventOptions? other) -> bool
+BlueTusk.Studio.Events.StudioEventOptions.MaximumConcurrentReads.get -> int
+BlueTusk.Studio.Events.StudioEventOptions.MaximumConcurrentReads.init -> void
+BlueTusk.Studio.Events.StudioEventOptions.MaximumEvents.get -> int
+BlueTusk.Studio.Events.StudioEventOptions.MaximumEvents.init -> void
+BlueTusk.Studio.Events.StudioEventOptions.MaximumPayloadBytes.get -> int
+BlueTusk.Studio.Events.StudioEventOptions.MaximumPayloadBytes.init -> void
+BlueTusk.Studio.Events.StudioEventOptions.MaximumReplyBytes.get -> int
+BlueTusk.Studio.Events.StudioEventOptions.MaximumReplyBytes.init -> void
+BlueTusk.Studio.Events.StudioEventOptions.StudioEventOptions() -> void
+BlueTusk.Studio.Events.StudioEventOptions.TimeoutSeconds.get -> int
+BlueTusk.Studio.Events.StudioEventOptions.TimeoutSeconds.init -> void
+BlueTusk.Studio.Events.StudioEventScope
+BlueTusk.Studio.Events.StudioEventScope.<Clone>$() -> BlueTusk.Studio.Events.StudioEventScope!
+BlueTusk.Studio.Events.StudioEventScope.Deconstruct(out BlueTusk.Events.PostgreSqlEventStore! Store, out System.Collections.Generic.IReadOnlyDictionary<string!, BlueTusk.Events.EventStreamKey!>! Streams) -> void
+BlueTusk.Studio.Events.StudioEventScope.Equals(BlueTusk.Studio.Events.StudioEventScope? other) -> bool
+BlueTusk.Studio.Events.StudioEventScope.Store.get -> BlueTusk.Events.PostgreSqlEventStore!
+BlueTusk.Studio.Events.StudioEventScope.Store.init -> void
+BlueTusk.Studio.Events.StudioEventScope.Streams.get -> System.Collections.Generic.IReadOnlyDictionary<string!, BlueTusk.Events.EventStreamKey!>!
+BlueTusk.Studio.Events.StudioEventScope.Streams.init -> void
+BlueTusk.Studio.Events.StudioEventScope.StudioEventScope(BlueTusk.Events.PostgreSqlEventStore! Store, System.Collections.Generic.IReadOnlyDictionary<string!, BlueTusk.Events.EventStreamKey!>! Streams) -> void
+override BlueTusk.Studio.Events.StudioEventOptions.Equals(object? obj) -> bool
+override BlueTusk.Studio.Events.StudioEventOptions.GetHashCode() -> int
+override BlueTusk.Studio.Events.StudioEventOptions.ToString() -> string!
+override BlueTusk.Studio.Events.StudioEventScope.Equals(object? obj) -> bool
+override BlueTusk.Studio.Events.StudioEventScope.GetHashCode() -> int
+override BlueTusk.Studio.Events.StudioEventScope.ToString() -> string!
+static BlueTusk.Studio.Events.StudioEventEndpoints.AddBlueTuskStudioEvents<TResolver>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, BlueTusk.Studio.Events.StudioEventOptions! options) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static BlueTusk.Studio.Events.StudioEventEndpoints.MapBlueTuskStudioEvents(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
+static BlueTusk.Studio.Events.StudioEventOptions.operator !=(BlueTusk.Studio.Events.StudioEventOptions? left, BlueTusk.Studio.Events.StudioEventOptions? right) -> bool
+static BlueTusk.Studio.Events.StudioEventOptions.operator ==(BlueTusk.Studio.Events.StudioEventOptions? left, BlueTusk.Studio.Events.StudioEventOptions? right) -> bool
+static BlueTusk.Studio.Events.StudioEventScope.operator !=(BlueTusk.Studio.Events.StudioEventScope? left, BlueTusk.Studio.Events.StudioEventScope? right) -> bool
+static BlueTusk.Studio.Events.StudioEventScope.operator ==(BlueTusk.Studio.Events.StudioEventScope? left, BlueTusk.Studio.Events.StudioEventScope? right) -> bool

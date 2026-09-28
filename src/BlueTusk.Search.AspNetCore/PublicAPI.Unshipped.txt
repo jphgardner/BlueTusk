@@ -1,0 +1,21 @@
+#nullable enable
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheck
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheck.Options.get -> BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions!
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheck.SearchStoreHealthCheck(BlueTusk.Search.PostgreSqlSearchStore! store, BlueTusk.Search.SearchScope! scope, BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions? options = null) -> void
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheckExtensions
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.<Clone>$() -> BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions!
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.Equals(BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions? other) -> bool
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.MaxConcurrentProbes.get -> int
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.MaxConcurrentProbes.init -> void
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.SearchStoreHealthCheckOptions() -> void
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.Timeout.get -> System.TimeSpan
+BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.Timeout.init -> void
+const BlueTusk.Search.AspNetCore.SearchStoreHealthCheck.MeterName = "BlueTusk.Search.Health" -> string!
+override BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.Equals(object? obj) -> bool
+override BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.GetHashCode() -> int
+override BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.ToString() -> string!
+static BlueTusk.Search.AspNetCore.SearchStoreHealthCheckExtensions.AddBlueTuskSearch(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, string! name, BlueTusk.Search.PostgreSqlSearchStore! store, BlueTusk.Search.SearchScope! scope, BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions? options = null) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+static BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.operator !=(BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions? left, BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions? right) -> bool
+static BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions.operator ==(BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions? left, BlueTusk.Search.AspNetCore.SearchStoreHealthCheckOptions? right) -> bool

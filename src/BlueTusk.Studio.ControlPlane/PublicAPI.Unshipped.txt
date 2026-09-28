@@ -1,0 +1,65 @@
+#nullable enable
+BlueTusk.Studio.ControlPlane.IStudioControlPlaneScopeResolver
+BlueTusk.Studio.ControlPlane.IStudioControlPlaneScopeResolver.ResolveAsync(System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Studio.ControlPlane.StudioControlPlaneScope!>
+BlueTusk.Studio.ControlPlane.StudioControlPlaneEndpoints
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.<Clone>$() -> BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions!
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.Equals(BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions? other) -> bool
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.MaximumAuthorizedSubscriptions.get -> int
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.MaximumAuthorizedSubscriptions.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.MaximumConcurrentOperations.get -> int
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.MaximumConcurrentOperations.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.MaximumReplyBytes.get -> int
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.MaximumReplyBytes.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.MaximumSubscriptions.get -> int
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.MaximumSubscriptions.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.ReplayPolicy.get -> string!
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.ReplayPolicy.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.StudioControlPlaneOptions() -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.TimeoutSeconds.get -> int
+BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.TimeoutSeconds.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.<Clone>$() -> BlueTusk.Studio.ControlPlane.StudioControlPlaneScope!
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.Actor.get -> BlueTusk.ControlPlane.ControlPlaneActor!
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.Actor.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.Deconstruct(out BlueTusk.ControlPlane.IControlPlaneLiveQueryService! LiveQueries, out BlueTusk.ControlPlane.ControlPlaneOperationExecutor! Operations, out BlueTusk.ControlPlane.ControlPlaneActor! Actor, out System.Collections.Generic.IReadOnlySet<string!>! SubscriptionFingerprints, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! ReplayTargets) -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.Equals(BlueTusk.Studio.ControlPlane.StudioControlPlaneScope? other) -> bool
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.LiveQueries.get -> BlueTusk.ControlPlane.IControlPlaneLiveQueryService!
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.LiveQueries.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.Operations.get -> BlueTusk.ControlPlane.ControlPlaneOperationExecutor!
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.Operations.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.ReplayTargets.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.ReplayTargets.init -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.StudioControlPlaneScope(BlueTusk.ControlPlane.IControlPlaneLiveQueryService! LiveQueries, BlueTusk.ControlPlane.ControlPlaneOperationExecutor! Operations, BlueTusk.ControlPlane.ControlPlaneActor! Actor, System.Collections.Generic.IReadOnlySet<string!>! SubscriptionFingerprints, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! ReplayTargets) -> void
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.SubscriptionFingerprints.get -> System.Collections.Generic.IReadOnlySet<string!>!
+BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.SubscriptionFingerprints.init -> void
+BlueTusk.Studio.ControlPlane.StudioReplayRequest
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.<Clone>$() -> BlueTusk.Studio.ControlPlane.StudioReplayRequest!
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.Confirmation.get -> string!
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.Confirmation.init -> void
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.Deconstruct(out System.Guid OperationId, out string! Target, out string! Confirmation, out string! Reason) -> void
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.Equals(BlueTusk.Studio.ControlPlane.StudioReplayRequest? other) -> bool
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.OperationId.get -> System.Guid
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.OperationId.init -> void
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.Reason.get -> string!
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.Reason.init -> void
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.StudioReplayRequest(System.Guid OperationId, string! Target, string! Confirmation, string! Reason) -> void
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.Target.get -> string!
+BlueTusk.Studio.ControlPlane.StudioReplayRequest.Target.init -> void
+override BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.Equals(object? obj) -> bool
+override BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.GetHashCode() -> int
+override BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.ToString() -> string!
+override BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.Equals(object? obj) -> bool
+override BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.GetHashCode() -> int
+override BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.ToString() -> string!
+override BlueTusk.Studio.ControlPlane.StudioReplayRequest.Equals(object? obj) -> bool
+override BlueTusk.Studio.ControlPlane.StudioReplayRequest.GetHashCode() -> int
+override BlueTusk.Studio.ControlPlane.StudioReplayRequest.ToString() -> string!
+static BlueTusk.Studio.ControlPlane.StudioControlPlaneEndpoints.AddBlueTuskStudioControlPlane<TResolver>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions! options) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static BlueTusk.Studio.ControlPlane.StudioControlPlaneEndpoints.MapBlueTuskStudioControlPlane(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
+static BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.operator !=(BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions? left, BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions? right) -> bool
+static BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions.operator ==(BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions? left, BlueTusk.Studio.ControlPlane.StudioControlPlaneOptions? right) -> bool
+static BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.operator !=(BlueTusk.Studio.ControlPlane.StudioControlPlaneScope? left, BlueTusk.Studio.ControlPlane.StudioControlPlaneScope? right) -> bool
+static BlueTusk.Studio.ControlPlane.StudioControlPlaneScope.operator ==(BlueTusk.Studio.ControlPlane.StudioControlPlaneScope? left, BlueTusk.Studio.ControlPlane.StudioControlPlaneScope? right) -> bool
+static BlueTusk.Studio.ControlPlane.StudioReplayRequest.operator !=(BlueTusk.Studio.ControlPlane.StudioReplayRequest? left, BlueTusk.Studio.ControlPlane.StudioReplayRequest? right) -> bool
+static BlueTusk.Studio.ControlPlane.StudioReplayRequest.operator ==(BlueTusk.Studio.ControlPlane.StudioReplayRequest? left, BlueTusk.Studio.ControlPlane.StudioReplayRequest? right) -> bool

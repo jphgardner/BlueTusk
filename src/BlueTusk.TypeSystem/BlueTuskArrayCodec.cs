@@ -5,8 +5,9 @@ using System.Text;
 namespace BlueTusk.TypeSystem;
 
 /// <summary>Encodes PostgreSQL arrays by composing the catalogue-discovered element codec.</summary>
-public sealed class BlueTuskArrayCodec :
+public sealed partial class BlueTuskArrayCodec :
     IBlueTuskCodec,
+    IBlueTuskNullableArrayCodec,
     IBlueTuskRangeCodecFactory,
     IBlueTuskWriteFormatSelector
 {
@@ -546,6 +547,7 @@ public sealed class BlueTuskArrayCodec :
 
 internal sealed class BlueTuskArrayCodec<T> :
     IBlueTuskCodec<T[]>,
+    IBlueTuskNullableArrayCodec,
     IBlueTuskRangeCodecFactory,
     IBlueTuskWriteFormatSelector
 {
@@ -563,6 +565,9 @@ internal sealed class BlueTuskArrayCodec<T> :
     }
 
     public Type ClrType => typeof(T[]);
+
+    TElement?[] IBlueTuskNullableArrayCodec.ReadNullableElements<TElement>(ref BlueTuskReader reader,
+        BlueTuskDataFormat format, BlueTuskTypeDescriptor type) => _fallback.ReadNullableElements<TElement>(ref reader, format, type);
 
     public object Read(
         ref BlueTuskReader reader,

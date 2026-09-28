@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph')]
+    [ValidateSet('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph',
+        'Events', 'Jobs', 'Documents', 'Projections', 'Search', 'Schema', 'Sql', 'Studio', 'Edge', 'Workflows')]
     [string] $Family,
 
     [string] $Configuration = 'Release',

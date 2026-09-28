@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Search</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Search.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Compile Include="..\BlueTusk.Documents.Tests\StoreHealthTestSupport.cs" Link="StoreHealthTestSupport.cs" />
+    <ProjectReference Include="..\..\src\BlueTusk.Search.AspNetCore\BlueTusk.Search.AspNetCore.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\BlueTusk.Search\BlueTusk.Search.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Search.PgVector\BlueTusk.Search.PgVector.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Search.Jobs\BlueTusk.Search.Jobs.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Search.OpenSearch\BlueTusk.Search.OpenSearch.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+  </ItemGroup>
+</Project>

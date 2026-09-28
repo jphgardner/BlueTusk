@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Workflows</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <StripSymbols>true</StripSymbols>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Workflows.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.Workflows\BlueTusk.Workflows.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Jobs.DependencyInjection\BlueTusk.Jobs.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Workflows.DependencyInjection\BlueTusk.Workflows.DependencyInjection.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+</Project>

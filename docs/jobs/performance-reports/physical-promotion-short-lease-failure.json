@@ -1,0 +1,111 @@
+{
+  "TimestampUtc": "2026-09-27T21:33:10.6654243+00:00",
+  "Observation": "All six workflow states recovered after promotion; dead-first-host selection caused ~1s reads and up to ~2s fenced effects, exceeding the 1s lease and exhausting ordinary Jobs retries. These failed trials prompted a named lease/concurrency policy change; no runtime/provider changes.",
+  "DiagnosticEnvironment": {
+    "ImageDigest": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+    "ImageInspect": {
+      "Id": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+      "RepoTags": [
+        "postgres:18-alpine"
+      ],
+      "RepoDigests": [
+        "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873"
+      ],
+      "Comment": "buildkit.dockerfile.v0",
+      "Created": "2026-09-17T21:29:50.207676277Z",
+      "Config": {
+        "ExposedPorts": {
+          "5432/tcp": {}
+        },
+        "Env": [
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "GOSU_VERSION=1.19",
+          "LANG=en_US.utf8",
+          "PG_MAJOR=18",
+          "PG_VERSION=18.6",
+          "PG_SHA256=555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f",
+          "DOCKER_PG_LLVM_DEPS=llvm21-dev \t\tclang21",
+          "PGDATA=/var/lib/postgresql/18/docker"
+        ],
+        "Entrypoint": [
+          "docker-entrypoint.sh"
+        ],
+        "Cmd": [
+          "postgres"
+        ],
+        "Volumes": {
+          "/var/lib/postgresql": {}
+        },
+        "WorkingDir": "/",
+        "StopSignal": "SIGINT"
+      },
+      "Architecture": "amd64",
+      "Os": "linux",
+      "Size": 432729433,
+      "RootFS": {
+        "Type": "layers",
+        "Layers": [
+          "sha256:74d97c428c51a828f9051a7a40a53ff1fc99e54fc30323ce36760701b0b7f711",
+          "sha256:0c215ed2e2d3befa88ee4967365c3a0dafd92551ea50ce2632cd5c3e54de80df",
+          "sha256:afaa93afde1c6674beeb827cf0214759e7d6be6527ea301ac23c45883ccafab8",
+          "sha256:64da5ceddd11db95af72f22788a20d9167a14a49bcd786ea54e33f152824c426",
+          "sha256:c098e77d88f2829ea186b1b2e2f40d5858f19c09e9726fce61c38febe33c65af",
+          "sha256:139076bf0b4422f3219cb0cbae85dde24dd97ae0ef077036324265fa8e5e5a8d",
+          "sha256:68240e981e1a68580381069bf47f0b9b307f0c5449112cccdb24900412ef9cd0",
+          "sha256:0317a57309e527ae290973cc0c0c7977255d84dd00a9f3c8c6c7daf0c396e76c",
+          "sha256:66cdd92492be99d2bead50be69cdfa33cb789a19f69bb3038554b567b3e18636"
+        ]
+      },
+      "Metadata": {
+        "LastTagTime": "2026-09-27T10:08:01.139167349Z"
+      },
+      "Descriptor": {
+        "mediaType": "application/vnd.oci.image.index.v1+json",
+        "digest": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+        "size": 10293
+      },
+      "Identity": {
+        "Pull": [
+          {
+            "Repository": "docker.io/library/postgres"
+          }
+        ]
+      }
+    },
+    "BeforePrimarySettings": [
+      "fsync=on",
+      "full_page_writes=on",
+      "max_connections=100",
+      "synchronous_commit=remote_apply",
+      "synchronous_standby_names=FIRST 1 (bluetusk_jobs_recovery_standby)",
+      "wal_level=replica"
+    ]
+  },
+  "DiagnosticTrx": "artifacts/jobs-physical-recovery/jobs-physical-d9bf22c783684888a75f575d546c6d0b/run1/PhysicalRecovery.trx",
+  "HeartbeatMilliseconds": 100,
+  "DiagnosticSourceHashes": [
+    {
+      "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.csproj",
+      "Sha256": "07478587F015764A31F973E8535B9B2578F81F5F884DE303CEAFB73FA420BA4A"
+    },
+    {
+      "Name": "JobsWorkflowPhysicalRecoveryTests.cs",
+      "Sha256": "A55A09A02A2B58603C2AC49C5B23386FFBD77612B8A55E65BC0F8A480C3F18AF"
+    },
+    {
+      "Name": "PhysicalRecoveryFixture.cs",
+      "Sha256": "BF779AD4805092F49BA2992B89A3BE45CE9E1D9FA4850AADF725976380E7B4EB"
+    }
+  ],
+  "PrototypeTrx": "artifacts/jobs-physical-recovery/jobs-physical-104b34987b25498781b4124809297ad8/run1/PhysicalRecovery.trx",
+  "Outcome": "failed exploratory recovery policy trials, never claimed as passing qualification",
+  "DiagnosticImage": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "PrototypeContention": "first trial overlapped native compilation; diagnostic trial after native window release",
+  "DrainPhaseSeconds": 45,
+  "JobsConcurrencyPerTenant": 1,
+  "ScenarioSeconds": 180,
+  "LeaseSeconds": 1,
+  "DiagnosticTestAssemblySha256": "EAFB041C41A56CB820196226AA7FDE98F02102F56963EA49F4CF806A5F7479D0",
+  "WorkflowConcurrencyPerTenant": 3,
+  "ConnectTimeoutSeconds": 1
+}

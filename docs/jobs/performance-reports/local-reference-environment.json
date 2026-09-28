@@ -1,0 +1,70 @@
+{
+  "TimestampUtc": "2026-09-27T20:07:35.9076678+00:00",
+  "Settings": [
+    {
+      "Unit": "",
+      "Value": "on",
+      "Name": "autovacuum"
+    },
+    {
+      "Unit": "s",
+      "Value": "60",
+      "Name": "autovacuum_naptime"
+    },
+    {
+      "Unit": "",
+      "Value": "0.2",
+      "Name": "autovacuum_vacuum_scale_factor"
+    },
+    {
+      "Unit": "",
+      "Value": "50",
+      "Name": "autovacuum_vacuum_threshold"
+    },
+    {
+      "Unit": "s",
+      "Value": "300",
+      "Name": "checkpoint_timeout"
+    },
+    {
+      "Unit": "",
+      "Value": "on",
+      "Name": "fsync"
+    },
+    {
+      "Unit": "",
+      "Value": "100",
+      "Name": "max_connections"
+    },
+    {
+      "Unit": "MB",
+      "Value": "1024",
+      "Name": "max_wal_size"
+    },
+    {
+      "Unit": "8kB",
+      "Value": "16384",
+      "Name": "shared_buffers"
+    },
+    {
+      "Unit": "",
+      "Value": "on",
+      "Name": "synchronous_commit"
+    },
+    {
+      "Unit": "",
+      "Value": "logical",
+      "Name": "wal_level"
+    },
+    {
+      "Unit": "kB",
+      "Value": "4096",
+      "Name": "work_mem"
+    }
+  ],
+  "PhysicalMemoryBytes": 68636164096,
+  "Label": "Local Windows x64 host and owned PostgreSQL18 Alpine fixture; shared development activity",
+  "Limitations": "Post-run environment snapshot; shared host and database; not immutable release qualification",
+  "PostgreSqlContainerImageId": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "Cpu": "AMD Ryzen 7 5800X 8-Core Processor             "
+}

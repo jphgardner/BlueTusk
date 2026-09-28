@@ -1,0 +1,39 @@
+{
+  "ScriptSha256": "8220AD7CFA66EEB2B1999148CDA12D531E2BD8D3B6D66BA56D190AAC4AB08A9F",
+  "Boundary": "Disposable unique schemas on the owned local PostgreSQL18 fixture; operator identity postgres; no global checkpoint, restart, full vacuum or shared application tables.",
+  "Script": "eng/jobs-workflows-vacuum.sql",
+  "PostgreSqlVersion": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "CompletedAtUtc": "2026-09-27T20:30:59.3611987+00:00",
+  "VerifiedChecks": [
+    {
+      "ExpectedVacuumCounts": {
+        "jobs": 1,
+        "instances": 1,
+        "adjacentBusinessEffects": 0
+      },
+      "Passed": true,
+      "Name": "Jobs+Workflows known tables"
+    },
+    {
+      "ExpectedVacuumCounts": {
+        "adjacentBusinessEffects": 0,
+        "jobs": 1
+      },
+      "Passed": true,
+      "Name": "Jobs-only empty workflow schema"
+    },
+    {
+      "Passed": true,
+      "PsqlExitCode": 3,
+      "Name": "Missing requested runtime target",
+      "VacuumIssued": false
+    },
+    {
+      "ServerLockTimeoutMilliseconds": 2000,
+      "Passed": true,
+      "PsqlExitCode": 3,
+      "Name": "Exclusive lock deadline",
+      "ObservedMillisecondsRounded": 2280
+    }
+  ]
+}

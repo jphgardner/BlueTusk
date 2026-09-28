@@ -1,0 +1,156 @@
+{
+  "SourceFiles": 2397,
+  "Trials": [
+    {
+      "FinalMs": 10995.41,
+      "Operations": [
+        {
+          "Name": "job.enqueue_recheck",
+          "Observed": 66,
+          "P50Milliseconds": 2.8973,
+          "P95Milliseconds": 5.0072,
+          "P99Milliseconds": 5.8524
+        },
+        {
+          "Name": "job.fenced_effect",
+          "Observed": 65,
+          "P50Milliseconds": 5.0573,
+          "P95Milliseconds": 6.3538,
+          "P99Milliseconds": 9.571
+        },
+        {
+          "Name": "job.health",
+          "Observed": 10,
+          "P50Milliseconds": 2.4172,
+          "P95Milliseconds": 6.2095,
+          "P99Milliseconds": 6.2095
+        },
+        {
+          "Name": "job.read",
+          "Observed": 67,
+          "P50Milliseconds": 1.9243,
+          "P95Milliseconds": 2.2898,
+          "P99Milliseconds": 8.1089
+        },
+        {
+          "Name": "workflow.read",
+          "Observed": 10,
+          "P50Milliseconds": 1.6355,
+          "P95Milliseconds": 2.7539,
+          "P99Milliseconds": 2.7539
+        }
+      ],
+      "FirstAckMs": 9305.78,
+      "FirstReplayEffectMs": 8959.72,
+      "SystemId": "7690339816512557091",
+      "Fixture": "jobs-physical-9a6da2b28c544f5f9e60de3331e6718f-run1",
+      "Timeline": "1 to 2",
+      "KillToPromotionMs": 9058.59,
+      "Repetition": 1,
+      "DrainedMs": 9519.77,
+      "Provider": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+    },
+    {
+      "FinalMs": 10015.71,
+      "Operations": [
+        {
+          "Name": "job.enqueue_recheck",
+          "Observed": 66,
+          "P50Milliseconds": 2.7298,
+          "P95Milliseconds": 4.9954,
+          "P99Milliseconds": 5.4704
+        },
+        {
+          "Name": "job.fenced_effect",
+          "Observed": 64,
+          "P50Milliseconds": 5.5903,
+          "P95Milliseconds": 12.075,
+          "P99Milliseconds": 15.4277
+        },
+        {
+          "Name": "job.health",
+          "Observed": 8,
+          "P50Milliseconds": 2.977,
+          "P95Milliseconds": 9.6416,
+          "P99Milliseconds": 9.6416
+        },
+        {
+          "Name": "job.read",
+          "Observed": 67,
+          "P50Milliseconds": 1.7653,
+          "P95Milliseconds": 2.3168,
+          "P99Milliseconds": 6.7709
+        },
+        {
+          "Name": "workflow.read",
+          "Observed": 8,
+          "P50Milliseconds": 1.7839,
+          "P95Milliseconds": 3.112,
+          "P99Milliseconds": 3.112
+        }
+      ],
+      "FirstAckMs": 8338.36,
+      "FirstReplayEffectMs": 8089.67,
+      "SystemId": "7690339919043268643",
+      "Fixture": "jobs-physical-9a6da2b28c544f5f9e60de3331e6718f-run2",
+      "Timeline": "1 to 2",
+      "KillToPromotionMs": 8260.48,
+      "Repetition": 2,
+      "DrainedMs": 8543.02,
+      "Provider": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+    },
+    {
+      "FinalMs": 10818.46,
+      "Operations": [
+        {
+          "Name": "job.enqueue_recheck",
+          "Observed": 66,
+          "P50Milliseconds": 2.857,
+          "P95Milliseconds": 5.3157,
+          "P99Milliseconds": 5.4387
+        },
+        {
+          "Name": "job.fenced_effect",
+          "Observed": 64,
+          "P50Milliseconds": 6.0496,
+          "P95Milliseconds": 14.3201,
+          "P99Milliseconds": 14.9623
+        },
+        {
+          "Name": "job.health",
+          "Observed": 8,
+          "P50Milliseconds": 2.8463,
+          "P95Milliseconds": 11.0905,
+          "P99Milliseconds": 11.0905
+        },
+        {
+          "Name": "job.read",
+          "Observed": 67,
+          "P50Milliseconds": 1.9221,
+          "P95Milliseconds": 2.4934,
+          "P99Milliseconds": 8.3452
+        },
+        {
+          "Name": "workflow.read",
+          "Observed": 8,
+          "P50Milliseconds": 1.7321,
+          "P95Milliseconds": 4.0372,
+          "P99Milliseconds": 4.0372
+        }
+      ],
+      "FirstAckMs": 9102.15,
+      "FirstReplayEffectMs": 8913.44,
+      "SystemId": "7690340014890217507",
+      "Fixture": "jobs-physical-9a6da2b28c544f5f9e60de3331e6718f-run3",
+      "Timeline": "1 to 2",
+      "KillToPromotionMs": 9022.67,
+      "Repetition": 3,
+      "DrainedMs": 9314.08,
+      "Provider": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+    }
+  ],
+  "TestSourceSha256": "8223A4AE009399F1B757A267ADFFE333C5C777CA033D8146B2F833ED1A75C5A3",
+  "SourceSha256": "f70f0ce491b552ea03beb3c19eb6d03cde6841c91b088c914c4a3495c2a69602",
+  "OwnedResourcesRemaining": 0,
+  "ProviderSha256": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+}

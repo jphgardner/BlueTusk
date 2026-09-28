@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Workflows</BlueTuskProductFamily>
+    <Description>Versioned durable PostgreSQL workflows with activities, joins, timers, signals, compensation, and fenced recovery.</Description>
+    <PackageTags>postgresql;workflows;durable;saga;jobs</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Workflows.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Jobs\BlueTusk.Jobs.csproj" />
+    <InternalsVisibleTo Include="BlueTusk.Workflows.Tests" />
+  </ItemGroup>
+</Project>
