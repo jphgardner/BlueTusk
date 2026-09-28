@@ -1728,7 +1728,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2359,
+    "wordCount": 2358,
     "readMinutes": 11,
     "searchText": "BlueTusk.Documents BlueTusk.Documents `0.1.0-preview.1` provides typed PostgreSQL JSONB documents and optimistic atomic write sessions. The core accepts `DbDataSource`, depends on neither Npgsql nor EF Core, and requires explicit `JsonTypeInfo<T>` metadata for serialization and deserialization. BlueTusk's native data source works directly. The application supplies its `OrderJsonContext` using System.Text.Json source generation. Every document must serialize to a JSON object. Schemas, collection names, identifiers and tenant identifiers are separate from type names; no reflection-based serializer fallback is available. Storage and concurrency The primary key is `(tenant, collection, id)`, using PostgreSQL `C` collation for stable key ordering. Every read and write includes all required tenant and collection predicates. This is an application isolation contract, not a database privilege boundary: configure PostgreSQL privileges or RLS separately when untrusted callers can execute SQL. A store borrows its data source by default. Pass `DocumentDataSourceOwnership.Owned` to transfer disposal responsibility. Store disposal invalidates its sessions. Sessions exclusively own the connection and transaction for each save. An application cannot attach an externally owned transaction to a session. Inserts use `ON CONFLICT DO NOTHING`, replacements and deletes use revision compare-and-swap, and every failed precondition raises `DocumentConcurrencyException`. The exception contains tenant, collection, ID, expected revision and the observed current revision (or null when missing). All staged operations roll back when any operation conflicts, including writes completed in an earlier batch. Failed sessions retain their pending writes so the application can inspect and clear them; success clears them. Revisions come from a non-cycling database sequence. Updates advance revisions and delete/reinsert cannot reuse a revision. Gaps caused by failed transactions are expected. Sequence val",
     "blocks": [
@@ -1784,7 +1784,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>The suite passes 38 tests with no skips. Tests cover source-generated JSON round trips, competing inserts and updates, cross-batch atomic rollback, missing-document conflicts, tenant and collection separation, keyset/byte-bounded pagination, ordered patches, deletion/recreation revision fencing, migration and downgrade protection, declarative index/catalog drift, cancellation, source ownership, initialization and bounded admission. Eight content-sidecar tests add tenant/digest isolation, CAS rollback, delete/reinsert, a GC/attachment race, schema drift, bounded cursor sweeps and repeated 64 KiB attachment without rewriting its content row, link row or JSONB body. The serialization cases include exact UTF8 byte-limit and invalid-root rejection plus large/small owned JSON round trips. Five operator cases additionally check SELECT-only roles with denied payload access, fixed scope/role-protected actual HTTP readiness (401/403), storage/byte-contract drift, metadata-lock deadlines/cancellation/recovery, retained admission for late driver work and status-only metrics. A bounded concurrent workload checks committed row counts and no lost successful increments; it is functional workload evidence, not a throughput or endurance certification.</p>\n<p>The core and optional ASP.NET adapter enable NativeAOT/trimming analyzers. The combined <code>tests/BlueTusk.Edge.NativeAotSmoke</code> executable was published as win-x64 NativeAOT without warnings and run against disposable PostgreSQL/pgvector databases and a real SQLite file. It verifies Documents source-generated JSON, CAS and complete session rollback, plus authenticated readiness, incompatible storage detection and recovery through the ASP.NET adapter. Search and Edge paths pass in the same executable. Set both <code>BLUETUSK_TEST_CONNECTION_STRING</code> and <code>BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING</code> when running it. This qualifies the exercised paths on this architecture; the optional Streams/Live adapters are not included in that native smoke.</p>\n<p>The <a href=\"/documentation/operations/documents-evidence-2026-09-28-maintenance-pair\">source-frozen 600-second Documents comparison</a>\nadds real process-kill recovery and measured PostgreSQL/TOAST/WAL resource profiles. Its\nfixed-cardinality write workload still grew the Documents relation to 16.20 GB with package\ndefaults and 9.06 GB with aggressive fixture-only TOAST vacuum. Neither profile established a\nphysical storage bound, and the aggressive profile had lower throughput and worse tail latency.\nThe opt-in attached-content fixture passed a source-stable, 60-second PostgreSQL 18\nrun with distinct stable 64 KiB content per retained document: 118,132\ntransitions, 18.6 MB peak across all owned relations, 37.3 MB WAL and 144 ms\nsave p99. Its capacity verifier passed the configured local limits, and the\nrun verified exact content/revision, recovery and cleanup. This shared-host,\nshort, dirty-tree measurement is not a sustained capacity bound or a qualified\ncomparison with the earlier 600-second inline JSONB evidence. A source-frozen\nlonger run with independent load, repeated maintenance cycles and failure\noperation remains necessary.\nArchitecture-specific qualification beyond the exercised Windows x64 paths, ambiguous COMMIT\nand connection-loss injection, longer endurance, sustained hot-key performance, online index\ndeployment, RLS guidance, session/query/write telemetry, two-phase document consumers,\nsnapshot-cutover application recipes and immutable cross-version release gates remain outstanding.\nProduction-scale performance and efficiency are not yet proven.</p>\n"
+        "html": "<p>The suite passes 38 tests with no skips. Tests cover source-generated JSON round trips, competing inserts and updates, cross-batch atomic rollback, missing-document conflicts, tenant and collection separation, keyset/byte-bounded pagination, ordered patches, deletion/recreation revision fencing, migration and downgrade protection, declarative index/catalog drift, cancellation, source ownership, initialization and bounded admission. Eight content-sidecar tests add tenant/digest isolation, CAS rollback, delete/reinsert, a GC/attachment race, schema drift, bounded cursor sweeps and repeated 64 KiB attachment without rewriting its content row, link row or JSONB body. The serialization cases include exact UTF8 byte-limit and invalid-root rejection plus large/small owned JSON round trips. Five operator cases additionally check SELECT-only roles with denied payload access, fixed scope/role-protected actual HTTP readiness (401/403), storage/byte-contract drift, metadata-lock deadlines/cancellation/recovery, retained admission for late driver work and status-only metrics. A bounded concurrent workload checks committed row counts and no lost successful increments; it is functional workload evidence, not a throughput or endurance certification.</p>\n<p>The core and optional ASP.NET adapter enable NativeAOT/trimming analyzers. The combined <code>tests/BlueTusk.Edge.NativeAotSmoke</code> executable was published as win-x64 NativeAOT without warnings and run against disposable PostgreSQL/pgvector databases and a real SQLite file. It verifies Documents source-generated JSON, CAS and complete session rollback, plus authenticated readiness, incompatible storage detection and recovery through the ASP.NET adapter. Search and Edge paths pass in the same executable. Set both <code>BLUETUSK_TEST_CONNECTION_STRING</code> and <code>BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING</code> when running it. This qualifies the exercised paths on this architecture; the optional Streams/Live adapters are not included in that native smoke.</p>\n<p>The <a href=\"/documentation/operations/documents-evidence-2026-09-28-maintenance-pair\">source-frozen 600-second Documents comparison</a>\nadds real process-kill recovery and measured PostgreSQL/TOAST/WAL resource profiles. Its\nfixed-cardinality write workload still grew the Documents relation to 16.20 GB with package\ndefaults and 9.06 GB with aggressive fixture-only TOAST vacuum. Neither profile established a\nphysical storage bound, and the aggressive profile had lower throughput and worse tail latency.\nThe <a href=\"/documentation/operations/documents-evidence-2026-09-28-attached-content-600s\">clean-commit attached-content 600-second run</a>\nkept distinct stable 64 KiB content for 256 documents while changing small\nJSONB metadata: 1,326,904 transitions at 2,211/s, 100 ms save p99, 19.0 MB\npeak owned relations and 375 MB WAL. It passed a 120-second idle drain,\ncapacity budgets, exact content/revision checks, hard-killed writer recovery\nand source/binary binding. This dedicated-fixture, shared-host local run is a\nfinite result for immutable attachments, not a qualified comparison with the\nearlier inline-JSONB run or a production capacity bound. Repeated 30-minute\ncampaigns, independent load and more failure operation remain necessary.\nArchitecture-specific qualification beyond the exercised Windows x64 paths, ambiguous COMMIT\nand connection-loss injection, longer endurance, sustained hot-key performance, online index\ndeployment, RLS guidance, session/query/write telemetry, two-phase document consumers,\nsnapshot-cutover application recipes and immutable cross-version release gates remain outstanding.\nProduction-scale performance and efficiency are not yet proven.</p>\n"
       }
     ]
   },
@@ -1926,6 +1926,45 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "documents-evidence-2026-09-28-attached-content-600s",
+    "summary": "The clean checkout of commit a837001a8d38cfca1817ee716d1dc7072ce68dd5 ran eng/run-documents-load.ps1 -CellSeconds 10 -SustainedSeconds 600 -IdleDrainSeconds 120 -StorageMode AttachedContent -NoBuild on 28 September 20…",
+    "keywords": [
+      "docs",
+      "documents",
+      "evidence",
+      "2026",
+      "09",
+      "28",
+      "attached",
+      "content",
+      "600s",
+      "README"
+    ],
+    "order": 1061,
+    "title": "Attached-content 600-second local capacity run",
+    "sourcePath": "docs/documents/evidence/2026-09-28-attached-content-600s/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-attached-content-600s/README.md",
+    "headings": [
+      {
+        "id": "attached-content-600-second-local-capacity-run",
+        "text": "Attached-content 600-second local capacity run",
+        "level": 1
+      }
+    ],
+    "wordCount": 450,
+    "readMinutes": 3,
+    "searchText": "Attached-content 600-second local capacity run The clean checkout of commit `a837001a8d38cfca1817ee716d1dc7072ce68dd5` ran `eng/run-documents-load.ps1 -CellSeconds 10 -SustainedSeconds 600 -IdleDrainSeconds 120 -StorageMode AttachedContent -NoBuild` on 28 September 2026. The dedicated, digest-pinned PostgreSQL 18 fixture ran on a shared Windows Ryzen 7 5800X development host. The 15 inline-JSONB sweep cells and the attached-content sustained scenario all passed exact-state checks. The runner then verified hard-killed writer recovery, source/binary bindings and owned-resource cleanup. [`documents-load.json`](documents-load.json) is the full raw report; [`bindings.json`](bindings.json) records the unchanged source fingerprint and measured assembly hashes. The [before](candidate-inputs.sha256) and [after](candidate-inputs-final.sha256) candidate-input inventories, [workload log](workload.log) and [cleanup record](owned-resource-cleanup.json) are retained with it. The sustained scenario kept 256 documents across eight tenants. Each had a distinct, stable 64 KiB content blob; the JSONB metadata changed through replacement, patch and delete/reinsert cycles. The verifier counted exactly 256 content rows and 256 links after the run, read and hashed every retained blob, checked revisions and hot-key increments, and found no orphan to collect. Measured signal Result Committed transitions / measured duration 1,326,904 / 600.102 s Transitions per second / save p99 2,211.1 / 100.352 ms Peak owned relations, including content TOAST and indexes 19,038,208 bytes Owned relations after writes / final-half endpoint growth 18,939,904 bytes / -6,663 bytes per minute Peak whole database / after 120-second idle drain 27,719,359 / 27,317,951 bytes Cluster WAL delta / bytes per transition 375,238,632 / 282.8 Database and owned-storage samples during writes / idle observations 120 / 24 Acknowledged recovery batches and documents / kill-to-verification 16 and 32 / 143 ms `eng/verify-documents",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Attached-content 600-second local capacity run</h1>\n<p>The clean checkout of commit <code>a837001a8d38cfca1817ee716d1dc7072ce68dd5</code> ran <code>eng/run-documents-load.ps1 -CellSeconds 10 -SustainedSeconds 600 -IdleDrainSeconds 120 -StorageMode AttachedContent -NoBuild</code> on 28 September 2026. The dedicated, digest-pinned PostgreSQL 18 fixture ran on a shared Windows Ryzen 7 5800X development host. The 15 inline-JSONB sweep cells and the attached-content sustained scenario all passed exact-state checks. The runner then verified hard-killed writer recovery, source/binary bindings and owned-resource cleanup. <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-attached-content-600s/documents-load.json\" target=\"_blank\" rel=\"noreferrer\"><code>documents-load.json</code></a> is the full raw report; <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-attached-content-600s/bindings.json\" target=\"_blank\" rel=\"noreferrer\"><code>bindings.json</code></a> records the unchanged source fingerprint and measured assembly hashes. The <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-attached-content-600s/candidate-inputs.sha256\" target=\"_blank\" rel=\"noreferrer\">before</a> and <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-attached-content-600s/candidate-inputs-final.sha256\" target=\"_blank\" rel=\"noreferrer\">after</a> candidate-input inventories, <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-attached-content-600s/workload.log\" target=\"_blank\" rel=\"noreferrer\">workload log</a> and <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-attached-content-600s/owned-resource-cleanup.json\" target=\"_blank\" rel=\"noreferrer\">cleanup record</a> are retained with it.</p>\n<p>The sustained scenario kept 256 documents across eight tenants. Each had a distinct, stable 64 KiB content blob; the JSONB metadata changed through replacement, patch and delete/reinsert cycles. The verifier counted exactly 256 content rows and 256 links after the run, read and hashed every retained blob, checked revisions and hot-key increments, and found no orphan to collect.</p>\n<table>\n<thead>\n<tr>\n<th>Measured signal</th>\n<th class=\"align-right\">Result</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Committed transitions / measured duration</td>\n<td class=\"align-right\">1,326,904 / 600.102 s</td>\n</tr>\n<tr>\n<td>Transitions per second / save p99</td>\n<td class=\"align-right\">2,211.1 / 100.352 ms</td>\n</tr>\n<tr>\n<td>Peak owned relations, including content TOAST and indexes</td>\n<td class=\"align-right\">19,038,208 bytes</td>\n</tr>\n<tr>\n<td>Owned relations after writes / final-half endpoint growth</td>\n<td class=\"align-right\">18,939,904 bytes / -6,663 bytes per minute</td>\n</tr>\n<tr>\n<td>Peak whole database / after 120-second idle drain</td>\n<td class=\"align-right\">27,719,359 / 27,317,951 bytes</td>\n</tr>\n<tr>\n<td>Cluster WAL delta / bytes per transition</td>\n<td class=\"align-right\">375,238,632 / 282.8</td>\n</tr>\n<tr>\n<td>Database and owned-storage samples during writes / idle observations</td>\n<td class=\"align-right\">120 / 24</td>\n</tr>\n<tr>\n<td>Acknowledged recovery batches and documents / kill-to-verification</td>\n<td class=\"align-right\">16 and 32 / 143 ms</td>\n</tr>\n</tbody>\n</table>\n<p><code>eng/verify-documents-capacity-report.ps1</code> passed this report at a minimum 600-second duration, 500 transitions/s, 500 ms save p99, 1 GiB peak owned relations, 16 MiB/minute late owned growth and 64 KiB WAL per transition. The runner also enforced a 24 GiB database stop and 8 GiB minimum filesystem headroom. The 1 GiB owned limit includes the detached content table; whole-database size is reported separately so sidecar storage cannot disappear from the measurement. <code>pg_total_relation_size</code> already includes each table’s TOAST and indexes, so those bytes are counted once.</p>\n<p>This establishes a finite local bound for <strong>stable attached content with changing small metadata</strong> on this workload. It does not qualify 30-minute repeats, an independent load host, mutable large content, long retention, failover during the measured window or production disk/WAL budgets. The earlier inline-JSONB 600-second runs reached 16.20 GB and 9.06 GB for a similar retained source-content scale; their payload distribution, code and host contention differed, so this run is not a controlled throughput comparison. Existing inline-body users still bear that physical-growth risk.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "documents-evidence-2026-09-28-maintenance-pair",
     "summary": "Two fresh, owned PostgreSQL 18.6 fixtures ran the same 15-cell payload/concurrency sweep, followed by 600 seconds of 64 KiB mixed document churn, 120 seconds idle, and a hard-killed writer recovery check. The second f…",
     "keywords": [
@@ -1938,7 +1977,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "maintenance",
       "pair"
     ],
-    "order": 1061,
+    "order": 1062,
     "title": "Documents fixed-cardinality maintenance comparison, 28 September 2026",
     "sourcePath": "docs/documents/evidence/2026-09-28-maintenance-pair.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-maintenance-pair.md",
@@ -1971,7 +2010,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "evidence",
       "README"
     ],
-    "order": 1062,
+    "order": 1063,
     "title": "Documents workload and process recovery",
     "sourcePath": "docs/documents/evidence/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/README.md",
@@ -1982,13 +2021,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 1305,
-    "readMinutes": 6,
+    "wordCount": 1361,
+    "readMinutes": 7,
     "searchText": "Documents workload and process recovery `eng/run-documents-load.ps1` provisions a dedicated labelled PostgreSQL 18 fixture on loopback port 55818 with four Docker CPUs, a 2 GiB memory limit, `track_io_timing=on` and 40 server connections. Its container/volume names are unique. Cleanup checks both ownership labels before removing either resource. It does not inject failures into the ordinary shared test databases. The runner restores its process environment and retains reports under ignored `artifacts/documents-load` by default. The [27 September PostgreSQL 18 baseline](2026-09-27-pg18-baseline/README.md) retains a 600-second completed campaign, actual hard-killed writer recovery, and its unresolved physical TOAST growth. Shared-host contention and invalid baseline database activity fields are disclosed; the raw baseline is not production qualification. The [separate corrected-activity diagnostic](2026-09-27-activity-diagnostic/run-notes.json) verified nonzero server client peaks equal to the provider's one/eight connection pool caps in all sixteen scenarios, plus hard-killed writer recovery and owned fixture cleanup. It is an instrumentation check; its short, shared-host timings are not an optimization comparison. The [retained-binary allocation pair](2026-09-27-allocation-pair/README.md) measures six BenchmarkDotNet staging and source-generated serialization cases on the original and optimized Documents executables. It supports a lower staging allocation claim, not a database throughput or latency improvement. The [TOAST maintenance profiler diagnostics](2026-09-27-maintenance-diagnostics/README.md) verify direct parent/TOAST observations, actual fixture-only vacuum settings, Docker filesystem headroom sampling, intentional resource-stop evidence and cleanup. They are too short and contended to establish whether tuning controls the sustained physical growth. The [28 September source-frozen 600-second comparison](2026-09-28-maintenance-pair.md) records successful de",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Documents workload and process recovery</h1>\n<p><code>eng/run-documents-load.ps1</code> provisions a dedicated labelled PostgreSQL 18 fixture on loopback port\n55818 with four Docker CPUs, a 2 GiB memory limit, <code>track_io_timing=on</code> and 40 server connections.\nIts container/volume names are unique. Cleanup checks both ownership labels before removing either\nresource. It does not inject failures into the ordinary shared test databases. The runner restores\nits process environment and retains reports under ignored <code>artifacts/documents-load</code> by default.</p>\n<p>The <a href=\"/documentation/operations/documents-evidence-2026-09-27-pg18-baseline\">27 September PostgreSQL 18 baseline</a> retains a\n600-second completed campaign, actual hard-killed writer recovery, and its unresolved physical\nTOAST growth. Shared-host contention and invalid baseline database activity fields are disclosed;\nthe raw baseline is not production qualification.\nThe <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-27-activity-diagnostic/run-notes.json\" target=\"_blank\" rel=\"noreferrer\">separate corrected-activity diagnostic</a>\nverified nonzero server client peaks equal to the provider’s one/eight connection pool caps\nin all sixteen scenarios, plus hard-killed writer recovery and owned fixture cleanup. It is\nan instrumentation check; its short, shared-host timings are not an optimization comparison.\nThe <a href=\"/documentation/operations/documents-evidence-2026-09-27-allocation-pair\">retained-binary allocation pair</a> measures six\nBenchmarkDotNet staging and source-generated serialization cases on the original and optimized\nDocuments executables. It supports a lower staging allocation claim, not a database throughput\nor latency improvement.\nThe <a href=\"/documentation/operations/documents-evidence-2026-09-27-maintenance-diagnostics\">TOAST maintenance profiler diagnostics</a>\nverify direct parent/TOAST observations, actual fixture-only vacuum settings, Docker filesystem\nheadroom sampling, intentional resource-stop evidence and cleanup. They are too short and\ncontended to establish whether tuning controls the sustained physical growth.\nThe <a href=\"/documentation/operations/documents-evidence-2026-09-28-maintenance-pair\">28 September source-frozen 600-second comparison</a>\nrecords successful default and fast-TOAST-vacuum fixtures with the same inputs and binaries.\nTuning reduced measured relation growth but increased WAL per transition and tail latency;\nneither profile established a physical storage bound.</p>\n"
+        "html": "<h1>Documents workload and process recovery</h1>\n<p><code>eng/run-documents-load.ps1</code> provisions a dedicated labelled PostgreSQL 18 fixture on loopback port\n55818 with four Docker CPUs, a 2 GiB memory limit, <code>track_io_timing=on</code> and 40 server connections.\nIts container/volume names are unique. Cleanup checks both ownership labels before removing either\nresource. It does not inject failures into the ordinary shared test databases. The runner restores\nits process environment and retains reports under ignored <code>artifacts/documents-load</code> by default.</p>\n<p>The <a href=\"/documentation/operations/documents-evidence-2026-09-27-pg18-baseline\">27 September PostgreSQL 18 baseline</a> retains a\n600-second completed campaign, actual hard-killed writer recovery, and its unresolved physical\nTOAST growth. Shared-host contention and invalid baseline database activity fields are disclosed;\nthe raw baseline is not production qualification.\nThe <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-27-activity-diagnostic/run-notes.json\" target=\"_blank\" rel=\"noreferrer\">separate corrected-activity diagnostic</a>\nverified nonzero server client peaks equal to the provider’s one/eight connection pool caps\nin all sixteen scenarios, plus hard-killed writer recovery and owned fixture cleanup. It is\nan instrumentation check; its short, shared-host timings are not an optimization comparison.\nThe <a href=\"/documentation/operations/documents-evidence-2026-09-27-allocation-pair\">retained-binary allocation pair</a> measures six\nBenchmarkDotNet staging and source-generated serialization cases on the original and optimized\nDocuments executables. It supports a lower staging allocation claim, not a database throughput\nor latency improvement.\nThe <a href=\"/documentation/operations/documents-evidence-2026-09-27-maintenance-diagnostics\">TOAST maintenance profiler diagnostics</a>\nverify direct parent/TOAST observations, actual fixture-only vacuum settings, Docker filesystem\nheadroom sampling, intentional resource-stop evidence and cleanup. They are too short and\ncontended to establish whether tuning controls the sustained physical growth.\nThe <a href=\"/documentation/operations/documents-evidence-2026-09-28-maintenance-pair\">28 September source-frozen 600-second comparison</a>\nrecords successful default and fast-TOAST-vacuum fixtures with the same inputs and binaries.\nTuning reduced measured relation growth but increased WAL per transition and tail latency;\nneither profile established a physical storage bound.\nThe <a href=\"/documentation/operations/documents-evidence-2026-09-28-attached-content-600s\">clean-commit attached-content 600-second run</a>\nretains its raw report and bindings. Stable distinct content plus changing small metadata\nstayed below 19.1 MB of owned relations through 1.33 million transitions and passed the\noffline capacity verifier, idle drain and hard-killed writer recovery. It measures an opt-in\nstorage mode, not an automatic fix for existing inline JSONB documents.</p>\n"
       },
       {
         "kind": "code",
@@ -2024,7 +2063,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "implementation",
       "programme"
     ],
-    "order": 1063,
+    "order": 1064,
     "title": "BlueTusk ecosystem expansion",
     "sourcePath": "docs/ecosystem/implementation-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/implementation-programme.md",
@@ -2076,7 +2115,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "ecosystem",
       "performance"
     ],
-    "order": 1064,
+    "order": 1065,
     "title": "Ecosystem performance qualification",
     "sourcePath": "docs/ecosystem/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/performance.md",
@@ -2108,7 +2147,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "ecosystem",
       "progress"
     ],
-    "order": 1065,
+    "order": 1066,
     "title": "Ecosystem expansion evidence ledger",
     "sourcePath": "docs/ecosystem/progress.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/progress.md",
@@ -2129,13 +2168,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1185,
+    "wordCount": 1244,
     "readMinutes": 6,
     "searchText": "Ecosystem expansion evidence ledger Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent `0.1.0-preview.1` packages. Publication is disabled for all ten families. Implemented paths and passing local gates are substantial, but no family is production qualified. Family Implemented and directly exercised Material work still open Events Transactional outbox/inbox, typed routing, replay and Streams adapter; 44 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign Longer retention, large producer/consumer fleets, upgrades and disaster recovery Jobs Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion Representative multi-day retention/capacity and operations under repeated failure Documents Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits Projections Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; 34 live tests per version, 100,000-effect exact-state campaign, 600-second overload and physical promotion Longer independent-host load, retention/format upgrades and wider failure distributions Search Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets Schema Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests per version and native execution Destructive/partition-parent migrations, invalid-index repair automation and broad upgrade",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Ecosystem expansion evidence ledger</h1>\n<p>Working branch: <code>codex/ecosystem-products</code>. Events, Jobs, Documents, Projections,\nSearch, Schema, Sql, Studio, Edge, and Workflows have independent\n<code>0.1.0-preview.1</code> packages. Publication is disabled for all ten families.\nImplemented paths and passing local gates are substantial, but no family is\nproduction qualified.</p>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>Implemented and directly exercised</th>\n<th>Material work still open</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Events</td>\n<td>Transactional outbox/inbox, typed routing, replay and Streams adapter; 44 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign</td>\n<td>Longer retention, large producer/consumer fleets, upgrades and disaster recovery</td>\n</tr>\n<tr>\n<td>Jobs</td>\n<td>Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion</td>\n<td>Representative multi-day retention/capacity and operations under repeated failure</td>\n</tr>\n<tr>\n<td>Documents</td>\n<td>Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery</td>\n<td>Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits</td>\n</tr>\n<tr>\n<td>Projections</td>\n<td>Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; 34 live tests per version, 100,000-effect exact-state campaign, 600-second overload and physical promotion</td>\n<td>Longer independent-host load, retention/format upgrades and wider failure distributions</td>\n</tr>\n<tr>\n<td>Search</td>\n<td>Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution</td>\n<td>Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets</td>\n</tr>\n<tr>\n<td>Schema</td>\n<td>Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests per version and native execution</td>\n<td>Destructive/partition-parent migrations, invalid-index repair automation and broad upgrade operations</td>\n</tr>\n<tr>\n<td>Sql</td>\n<td>Runtime contracts, incremental generator and installed catalogue-validation CLI; 33 runtime, 31 generator and 8 CLI tests per version, native and fresh package-only consumer</td>\n<td>Broader PostgreSQL type/shape coverage and multi-version upgrade receipts</td>\n</tr>\n<tr>\n<td>Studio</td>\n<td>Authenticated SQL/explain/schema workspace, durable audit, Events/ControlPlane adapters and CLI; 14 core plus 2 CLI tests per version</td>\n<td>Large multi-tenant deployment, operational hardening and long-lived audit retention</td>\n</tr>\n<tr>\n<td>Edge</td>\n<td>SQLite/IndexedDB durable cache/queue, authenticated HTTP server, atomic application callback; 33 live tests per version, 14 browser contracts, real browser restart/HTTP recovery and native execution</td>\n<td>Wider browser/platform matrix, long offline retention and repeated server failover</td>\n</tr>\n<tr>\n<td>Workflows</td>\n<td>Durable DAG, activities, signals/timers/joins, compensation and replay; 26 core plus 6 DI tests per version, 600-second Jobs/Workflows campaign and physical promotion</td>\n<td>Multi-day workload, large definitions/history and repeated failover/upgrade operation</td>\n</tr>\n</tbody>\n</table>\n<h2>Current local gates</h2>\n<ul>\n<li>The full 195-project Release solution builds with zero warnings and errors.\nLayout verification finds 73 ordered solution folders; two embedded template\nprojects are intentionally excluded. The source supply-chain gate finds pinned\nactions and CI images across 15 workflows. All 16 API family budgets pass,\ncovering 16,974 public signatures.</li>\n<li>An earlier candidate’s combined database gate passed <strong>419 tests in 15 projects</strong> with zero\nfailures or skips on each PostgreSQL <strong>15, 16, 17 and 18</strong>. All four runs used\nthe same unchanged candidate source. PostgreSQL 18 additionally passed five\nreal Windows x64 NativeAOT executables. An actual Linux x64 container ran\nthe same 419 tests and five separate Linux NativeAOT executables against the\nexact source archive. These are local source-stable runs of an earlier dirty\nworking tree, not an immutable release or CI result. The latest Documents\nsidecar adds three tests; its 38-test suite passes on all four PostgreSQL\nversions, while the complete combined gate awaits the committed candidate.</li>\n<li>Edge’s locked npm install, TypeScript build, 14 contract tests, real browser\nIndexedDB restart smoke and real browser/PostgreSQL HTTP recovery smoke pass.\nThe fresh installed Schema/SQL tools and a separate package-only SQL consumer\npass relation and catalogue receipt modes, including qualified enum/domain\nround trips.</li>\n<li>All ten candidate package sets verify locally: 32 NuGet packages, 31 symbol\npackages and one Edge npm package. This verifies archive metadata and content,\nnot that the unpublished dependency graph can be restored from a public feed.\nThe dependency audit reports zero vulnerable entries across 195 .NET projects;\nlocked npm audit reports zero vulnerabilities in its 63-package tree. Audits\nare a point-in-time input, not a security certification.</li>\n<li>Events/Projections have source-bound exact-state 100,000-effect sweeps and a\n600-second bounded overload run with 866,618 rejected admissions rather than\nan unbounded queue. Three synchronous physical promotions recover with fenced\nownership. Jobs/Workflows have storage/fault and physical-promotion campaigns.\nTheir evidence lives under ignored <code>artifacts/</code> in this worktree; the\ncorresponding product documents explain measured scope and limitations.</li>\n<li>Jobs/Workflows now offer distinct seeded 1 KiB payloads in the physical\nstorage profile. A 600-second PostgreSQL 15 shared-host development campaign\npassed exact effects, terminal pruning and all five recovery faults: Jobs\ncompleted 36,168 effects at 60.2/s with an 8.9 MB relation peak and 6.8 KiB\ncluster WAL per accepted item; Workflows completed 10,710 at 17.8/s with a\n16.1 MB peak and 58.2 KiB WAL per accepted item. Both final-half relation\nendpoints fell. The source was stable but dirty, and the run is not an\nimmutable-candidate or multi-day capacity qualification.</li>\n<li>The <a href=\"/documentation/operations/documents-evidence-2026-09-28-maintenance-pair\">Documents fixed-cardinality comparison</a>\ncompleted two source-frozen 600-second profiles with exact logical checks,\n120-second idle drains and hard-killed writer recovery. The default profile\nended at 16.20 GB of relation storage for roughly 16 MiB retained source\ncontent; experimental fast TOAST vacuum ended at 9.06 GB with lower\nthroughput, higher tail latency and more WAL per transition. Neither profile\nestablished a physical bound.</li>\n<li>A new offline capacity verifier now rejects incomplete sustained reports and\nexplicit peak-size, late-growth, WAL, throughput and p99 budgets. The old\ndefault report fails an illustrative 512 MiB peak/16 MiB per minute late-growth\ntarget. The guarded harness now supports a six-hour request with a rolling\nfilesystem-observer window, and its sustained payload is distinct per\ndocument. A short owned PostgreSQL 18 fixture passed all 16 scenarios,\nkilled-writer recovery, source/binary binding and label-checked cleanup after\nthese harness changes. That short run is a correctness check, not capacity\nevidence; no remedy for full-body JSONB rewrites has passed a long gate.</li>\n<li>The opt-in Documents content sidecar and bounded paged GC passed eight new\nPostgreSQL integration tests on 17 and 18, with 38 total Documents tests on\neach version. A source-stable 60-second\nattached-content fixture passed its explicit local budget with 118,132\ntransitions, 18.6 MB peak owned relation bytes, 37.3 MB WAL and 144 ms save\np99. It has not yet passed repeated multi-hour capacity and failover gates;\nexisting inline-body users still have the measured growth problem.</li>\n</ul>\n<h2>Production qualification still required</h2>\n<p>The ten products need explicit application-level throughput, p99 and capacity\nbudgets; longer representative runs on independent load hosts; bounded storage\nand recovery under sustained hot updates; version/format and rolling upgrades;\ncredential rotation, network partition, storage pressure and repeated failover\nacross more families; security review and operational telemetry/runbooks; and\nreproducible, clean-commit packages with SBOM/provenance and passing CI on the\ncommitted candidate. Windows browser evidence does not establish a Linux/browser\nmatrix. PostgreSQL 15–17 combined managed gates do not execute every native\nsmoke on those versions. The package publication policy and unreleased\ndependency gates remain disabled. Passing tests and short campaigns should not\nbe read as proof of massive-production performance or efficiency.</p>\n"
+        "html": "<h1>Ecosystem expansion evidence ledger</h1>\n<p>Working branch: <code>codex/ecosystem-products</code>. Events, Jobs, Documents, Projections,\nSearch, Schema, Sql, Studio, Edge, and Workflows have independent\n<code>0.1.0-preview.1</code> packages. Publication is disabled for all ten families.\nImplemented paths and passing local gates are substantial, but no family is\nproduction qualified.</p>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>Implemented and directly exercised</th>\n<th>Material work still open</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Events</td>\n<td>Transactional outbox/inbox, typed routing, replay and Streams adapter; 44 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign</td>\n<td>Longer retention, large producer/consumer fleets, upgrades and disaster recovery</td>\n</tr>\n<tr>\n<td>Jobs</td>\n<td>Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion</td>\n<td>Representative multi-day retention/capacity and operations under repeated failure</td>\n</tr>\n<tr>\n<td>Documents</td>\n<td>Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery</td>\n<td>Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits</td>\n</tr>\n<tr>\n<td>Projections</td>\n<td>Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; 34 live tests per version, 100,000-effect exact-state campaign, 600-second overload and physical promotion</td>\n<td>Longer independent-host load, retention/format upgrades and wider failure distributions</td>\n</tr>\n<tr>\n<td>Search</td>\n<td>Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution</td>\n<td>Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets</td>\n</tr>\n<tr>\n<td>Schema</td>\n<td>Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests per version and native execution</td>\n<td>Destructive/partition-parent migrations, invalid-index repair automation and broad upgrade operations</td>\n</tr>\n<tr>\n<td>Sql</td>\n<td>Runtime contracts, incremental generator and installed catalogue-validation CLI; 33 runtime, 31 generator and 8 CLI tests per version, native and fresh package-only consumer</td>\n<td>Broader PostgreSQL type/shape coverage and multi-version upgrade receipts</td>\n</tr>\n<tr>\n<td>Studio</td>\n<td>Authenticated SQL/explain/schema workspace, durable audit, Events/ControlPlane adapters and CLI; 14 core plus 2 CLI tests per version</td>\n<td>Large multi-tenant deployment, operational hardening and long-lived audit retention</td>\n</tr>\n<tr>\n<td>Edge</td>\n<td>SQLite/IndexedDB durable cache/queue, authenticated HTTP server, atomic application callback; 33 live tests per version, 14 browser contracts, real browser restart/HTTP recovery and native execution</td>\n<td>Wider browser/platform matrix, long offline retention and repeated server failover</td>\n</tr>\n<tr>\n<td>Workflows</td>\n<td>Durable DAG, activities, signals/timers/joins, compensation and replay; 26 core plus 6 DI tests per version, 600-second Jobs/Workflows campaign and physical promotion</td>\n<td>Multi-day workload, large definitions/history and repeated failover/upgrade operation</td>\n</tr>\n</tbody>\n</table>\n<h2>Current local gates</h2>\n<ul>\n<li>The full 195-project Release solution builds with zero warnings and errors.\nLayout verification finds 73 ordered solution folders; two embedded template\nprojects are intentionally excluded. The source supply-chain gate finds pinned\nactions and CI images across 15 workflows. All 16 API family budgets pass,\ncovering 16,974 public signatures.</li>\n<li>An earlier candidate’s combined database gate passed <strong>419 tests in 15 projects</strong> with zero\nfailures or skips on each PostgreSQL <strong>15, 16, 17 and 18</strong>. All four runs used\nthe same unchanged candidate source. PostgreSQL 18 additionally passed five\nreal Windows x64 NativeAOT executables. An actual Linux x64 container ran\nthe same 419 tests and five separate Linux NativeAOT executables against the\nexact source archive. These are local source-stable runs of an earlier dirty\nworking tree, not an immutable release or CI result. The latest Documents\nsidecar adds three tests; its 38-test suite passes on all four PostgreSQL\nversions, while the complete combined gate awaits the committed candidate.</li>\n<li>Edge’s locked npm install, TypeScript build, 14 contract tests, real browser\nIndexedDB restart smoke and real browser/PostgreSQL HTTP recovery smoke pass.\nThe fresh installed Schema/SQL tools and a separate package-only SQL consumer\npass relation and catalogue receipt modes, including qualified enum/domain\nround trips.</li>\n<li>All ten candidate package sets verify at clean commit <code>a837001</code>: 32 NuGet\npackages, 31 symbol packages and one Edge npm package. CycloneDX 1.6, SPDX\n2.3 and provenance checks cover all 64 archives and 318 components. This\nverifies archive metadata and content,\nnot that the unpublished dependency graph can be restored from a public feed.\nThe dependency audit reports zero vulnerable entries across 195 .NET projects;\nlocked npm audit reports zero vulnerabilities in its 63-package tree. Audits\nare a point-in-time input, not a security certification.</li>\n<li>Events/Projections have source-bound exact-state 100,000-effect sweeps and a\n600-second bounded overload run with 866,618 rejected admissions rather than\nan unbounded queue. Three synchronous physical promotions recover with fenced\nownership. Jobs/Workflows have storage/fault and physical-promotion campaigns.\nTheir evidence lives under ignored <code>artifacts/</code> in this worktree; the\ncorresponding product documents explain measured scope and limitations.</li>\n<li>Jobs/Workflows now offer distinct seeded 1 KiB payloads in the physical\nstorage profile. A 600-second PostgreSQL 15 shared-host development campaign\npassed exact effects, terminal pruning and all five recovery faults: Jobs\ncompleted 36,168 effects at 60.2/s with an 8.9 MB relation peak and 6.8 KiB\ncluster WAL per accepted item; Workflows completed 10,710 at 17.8/s with a\n16.1 MB peak and 58.2 KiB WAL per accepted item. Both final-half relation\nendpoints fell. The source was stable but dirty, and the run is not an\nimmutable-candidate or multi-day capacity qualification.</li>\n<li>The <a href=\"/documentation/operations/documents-evidence-2026-09-28-maintenance-pair\">Documents fixed-cardinality comparison</a>\ncompleted two source-frozen 600-second profiles with exact logical checks,\n120-second idle drains and hard-killed writer recovery. The default profile\nended at 16.20 GB of relation storage for roughly 16 MiB retained source\ncontent; experimental fast TOAST vacuum ended at 9.06 GB with lower\nthroughput, higher tail latency and more WAL per transition. Neither profile\nestablished a physical bound.</li>\n<li>A new offline capacity verifier now rejects incomplete sustained reports and\nexplicit peak-size, late-growth, WAL, throughput and p99 budgets. The old\ndefault report fails an illustrative 512 MiB peak/16 MiB per minute late-growth\ntarget. The guarded harness now supports a six-hour request with a rolling\nfilesystem-observer window, and its sustained payload is distinct per\ndocument. A short owned PostgreSQL 18 fixture passed all 16 scenarios,\nkilled-writer recovery, source/binary binding and label-checked cleanup after\nthese harness changes. That short run is a correctness check; full-body\nJSONB rewrites retain the measured growth problem.</li>\n<li>The opt-in Documents content sidecar and bounded paged GC passed eight new\nPostgreSQL integration tests, with 38 total Documents tests on each version\n15–18. A <a href=\"/documentation/operations/documents-evidence-2026-09-28-attached-content-600s\">clean-commit 600-second attached-content run</a>\npassed its explicit local budget with 1,326,904 transitions at 2,211/s,\n19.0 MB peak owned relations, 375 MB WAL and 100 ms save p99. The 120-second\nidle drain, exact retained content, recovery and source/binary bindings\npassed. It has not yet passed repeated multi-hour capacity and failover gates;\nexisting inline-body users still have the measured growth problem.</li>\n<li>The <a href=\"/documentation/operations/ecosystem-performance\">manual exact-commit performance gate</a> now requires two\n30-minute campaigns each for Jobs, Workflows, Projections and Documents with\ndeclared throughput, p99, WAL and storage budgets. Its clean-SHA preflight\npassed, but the multi-hour gate itself has not run.</li>\n</ul>\n<h2>Production qualification still required</h2>\n<p>The ten products need explicit application-level throughput, p99 and capacity\nbudgets; longer representative runs on independent load hosts; bounded storage\nand recovery under sustained hot updates; version/format and rolling upgrades;\ncredential rotation, network partition, storage pressure and repeated failover\nacross more families; security review and operational telemetry/runbooks; and\nrepeated clean-commit packages with SBOM/provenance and passing CI on the\ncommitted candidate. Windows browser evidence does not establish a Linux/browser\nmatrix. PostgreSQL 15–17 combined managed gates do not execute every native\nsmoke on those versions. The package publication policy and unreleased\ndependency gates remain disabled. Passing tests and short campaigns should not\nbe read as proof of massive-production performance or efficiency.</p>\n"
       }
     ]
   },
@@ -2150,7 +2189,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "edge",
       "README"
     ],
-    "order": 1066,
+    "order": 1067,
     "title": "BlueTusk.Edge",
     "sourcePath": "docs/edge/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/README.md",
@@ -2262,7 +2301,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "events",
       "README"
     ],
-    "order": 1070,
+    "order": 1071,
     "title": "BlueTusk.Events",
     "sourcePath": "docs/events/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
@@ -2338,7 +2377,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "docs",
       "fuzzing"
     ],
-    "order": 1073,
+    "order": 1074,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -2430,7 +2469,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1079,
+    "order": 1080,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -2507,7 +2546,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "improvement",
       "audit"
     ],
-    "order": 1080,
+    "order": 1081,
     "title": "BlueTusk improvement audit and action record",
     "sourcePath": "docs/improvement-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
@@ -2559,7 +2598,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "README"
     ],
-    "order": 1081,
+    "order": 1082,
     "title": "BlueTusk.Jobs",
     "sourcePath": "docs/jobs/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
@@ -2637,7 +2676,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "durable",
       "format"
     ],
-    "order": 1082,
+    "order": 1083,
     "title": "Durable-format support and rehearsal",
     "sourcePath": "docs/jobs/durable-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
@@ -2669,7 +2708,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "failover"
     ],
-    "order": 1083,
+    "order": 1084,
     "title": "Jobs and Workflows physical promotion rehearsal",
     "sourcePath": "docs/jobs/failover.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
@@ -2741,7 +2780,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "hosting"
     ],
-    "order": 1084,
+    "order": 1085,
     "title": "Scoped Jobs and Workflows host readiness",
     "sourcePath": "docs/jobs/hosting.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
@@ -2793,7 +2832,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "maintenance"
     ],
-    "order": 1085,
+    "order": 1086,
     "title": "Durable storage maintenance contract",
     "sourcePath": "docs/jobs/maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
@@ -2825,7 +2864,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "performance"
     ],
-    "order": 1086,
+    "order": 1087,
     "title": "Jobs and Workflows capacity and recovery harness",
     "sourcePath": "docs/jobs/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
@@ -2934,7 +2973,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1094,
+    "order": 1095,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -3032,7 +3071,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1095,
+    "order": 1096,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -3141,7 +3180,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1097,
+    "order": 1098,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -3215,7 +3254,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1098,
+    "order": 1099,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -3272,7 +3311,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1100,
+    "order": 1101,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -3400,7 +3439,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1101,
+    "order": 1102,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -3485,7 +3524,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "1",
       "1"
     ],
-    "order": 1102,
+    "order": 1103,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -3558,7 +3597,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1105,
+    "order": 1106,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -3717,7 +3756,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1106,
+    "order": 1107,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -3805,7 +3844,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "website",
       "production"
     ],
-    "order": 1109,
+    "order": 1110,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -3872,7 +3911,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1111,
+    "order": 1112,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -3904,7 +3943,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LIVE"
     ],
-    "order": 1112,
+    "order": 1113,
     "title": "Published projections in Live",
     "sourcePath": "docs/projections/LIVE.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
@@ -3966,7 +4005,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LOAD"
     ],
-    "order": 1113,
+    "order": 1114,
     "title": "Workload and recovery qualification",
     "sourcePath": "docs/projections/LOAD.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
@@ -4023,7 +4062,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "README"
     ],
-    "order": 1114,
+    "order": 1115,
     "title": "BlueTusk.Projections",
     "sourcePath": "docs/projections/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
@@ -4090,7 +4129,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "RECOVERY"
     ],
-    "order": 1115,
+    "order": 1116,
     "title": "Explicit source recovery and controlled DDL",
     "sourcePath": "docs/projections/RECOVERY.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
@@ -4128,7 +4167,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "evidence",
       "README"
     ],
-    "order": 1116,
+    "order": 1117,
     "title": "Local bounded workload evidence",
     "sourcePath": "docs/projections/evidence/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
@@ -4174,7 +4213,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1119,
+    "order": 1120,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -4206,7 +4245,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "process"
     ],
-    "order": 1124,
+    "order": 1125,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -4254,7 +4293,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1126,
+    "order": 1127,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -4305,7 +4344,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1127,
+    "order": 1128,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -4390,7 +4429,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1128,
+    "order": 1129,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -4435,7 +4474,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1130,
+    "order": 1131,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -4483,7 +4522,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1131,
+    "order": 1132,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -4555,7 +4594,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "schema",
       "README"
     ],
-    "order": 1135,
+    "order": 1136,
     "title": "BlueTusk Schema",
     "sourcePath": "docs/schema/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
@@ -4678,7 +4717,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "catalogue",
       "attestation"
     ],
-    "order": 1136,
+    "order": 1137,
     "title": "Catalogue consistency attestation",
     "sourcePath": "docs/schema/catalogue-attestation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
@@ -4740,7 +4779,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "README"
     ],
-    "order": 1137,
+    "order": 1138,
     "title": "BlueTusk.Search",
     "sourcePath": "docs/search/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
@@ -4852,7 +4891,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sql",
       "README"
     ],
-    "order": 1139,
+    "order": 1140,
     "title": "BlueTusk Sql",
     "sourcePath": "docs/sql/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
@@ -4934,7 +4973,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "studio",
       "README"
     ],
-    "order": 1156,
+    "order": 1157,
     "title": "BlueTusk Studio",
     "sourcePath": "docs/studio/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
@@ -5016,7 +5055,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1165,
+    "order": 1166,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -5074,7 +5113,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1166,
+    "order": 1167,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -5121,7 +5160,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "workflows",
       "README"
     ],
-    "order": 1167,
+    "order": 1168,
     "title": "BlueTusk.Workflows",
     "sourcePath": "docs/workflows/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",

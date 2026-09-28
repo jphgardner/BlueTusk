@@ -129,6 +129,7 @@
 /documentation/operations/documents-evidence-2026-09-27-allocation-pair
 /documentation/operations/documents-evidence-2026-09-27-maintenance-diagnostics
 /documentation/operations/documents-evidence-2026-09-27-pg18-baseline
+/documentation/operations/documents-evidence-2026-09-28-attached-content-600s
 /documentation/operations/documents-evidence-2026-09-28-maintenance-pair
 /documentation/operations/documents-evidence
 /documentation/operations/ecosystem-implementation-programme

@@ -142,15 +142,15 @@ adds real process-kill recovery and measured PostgreSQL/TOAST/WAL resource profi
 fixed-cardinality write workload still grew the Documents relation to 16.20 GB with package
 defaults and 9.06 GB with aggressive fixture-only TOAST vacuum. Neither profile established a
 physical storage bound, and the aggressive profile had lower throughput and worse tail latency.
-The opt-in attached-content fixture passed a source-stable, 60-second PostgreSQL 18
-run with distinct stable 64 KiB content per retained document: 118,132
-transitions, 18.6 MB peak across all owned relations, 37.3 MB WAL and 144 ms
-save p99. Its capacity verifier passed the configured local limits, and the
-run verified exact content/revision, recovery and cleanup. This shared-host,
-short, dirty-tree measurement is not a sustained capacity bound or a qualified
-comparison with the earlier 600-second inline JSONB evidence. A source-frozen
-longer run with independent load, repeated maintenance cycles and failure
-operation remains necessary.
+The [clean-commit attached-content 600-second run](evidence/2026-09-28-attached-content-600s/README.md)
+kept distinct stable 64 KiB content for 256 documents while changing small
+JSONB metadata: 1,326,904 transitions at 2,211/s, 100 ms save p99, 19.0 MB
+peak owned relations and 375 MB WAL. It passed a 120-second idle drain,
+capacity budgets, exact content/revision checks, hard-killed writer recovery
+and source/binary binding. This dedicated-fixture, shared-host local run is a
+finite result for immutable attachments, not a qualified comparison with the
+earlier inline-JSONB run or a production capacity bound. Repeated 30-minute
+campaigns, independent load and more failure operation remain necessary.
 Architecture-specific qualification beyond the exercised Windows x64 paths, ambiguous COMMIT
 and connection-loss injection, longer endurance, sustained hot-key performance, online index
 deployment, RLS guidance, session/query/write telemetry, two-phase document consumers,

@@ -26,6 +26,11 @@ The [28 September source-frozen 600-second comparison](2026-09-28-maintenance-pa
 records successful default and fast-TOAST-vacuum fixtures with the same inputs and binaries.
 Tuning reduced measured relation growth but increased WAL per transition and tail latency;
 neither profile established a physical storage bound.
+The [clean-commit attached-content 600-second run](2026-09-28-attached-content-600s/README.md)
+retains its raw report and bindings. Stable distinct content plus changing small metadata
+stayed below 19.1 MB of owned relations through 1.33 million transitions and passed the
+offline capacity verifier, idle drain and hard-killed writer recovery. It measures an opt-in
+storage mode, not an automatic fix for existing inline JSONB documents.
 
 ```powershell
 # Build provider/Documents dependencies first when running from a fresh checkout.

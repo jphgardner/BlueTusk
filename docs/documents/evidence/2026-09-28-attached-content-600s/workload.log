@@ -1,0 +1,36 @@
+Documents 1024B/1 tenants/1 writers: 467.4 docs/s, save p99 7.62 ms; verified.
+Documents 1024B/8 tenants/1 writers: 471.3 docs/s, save p99 7.65 ms; verified.
+Documents 1024B/8 tenants/8 writers: 2880.1 docs/s, save p99 11.07 ms; verified.
+Documents 1024B/32 tenants/8 writers: 2807.5 docs/s, save p99 12.29 ms; verified.
+Documents 1024B/32 tenants/32 writers: 2906.6 docs/s, save p99 29.06 ms; verified.
+Documents 65536B/1 tenants/1 writers: 239.1 docs/s, save p99 35.07 ms; verified.
+Documents 65536B/8 tenants/1 writers: 232.4 docs/s, save p99 31.23 ms; verified.
+Documents 65536B/8 tenants/8 writers: 907.3 docs/s, save p99 57.86 ms; verified.
+Documents 65536B/32 tenants/8 writers: 1005.8 docs/s, save p99 36.61 ms; verified.
+Documents 65536B/32 tenants/32 writers: 1010.1 docs/s, save p99 93.18 ms; verified.
+Documents 1048576B/1 tenants/1 writers: 11.1 docs/s, save p99 536.58 ms; verified.
+Documents 1048576B/8 tenants/1 writers: 6.6 docs/s, save p99 1171.46 ms; verified.
+Documents 1048576B/8 tenants/8 writers: 72.7 docs/s, save p99 450.56 ms; verified.
+Documents 1048576B/32 tenants/8 writers: 64.1 docs/s, save p99 528.38 ms; verified.
+Documents 1048576B/32 tenants/32 writers: 49.5 docs/s, save p99 1507.33 ms; verified.
+Documents churn 30s: 63952 transitions, 18497536 relation bytes, 12970 estimated dead rows.
+Documents churn 60s: 131428 transitions, 18767872 relation bytes, 7718 estimated dead rows.
+Documents churn 90s: 199612 transitions, 18767872 relation bytes, 21583 estimated dead rows.
+Documents churn 120s: 265776 transitions, 19005440 relation bytes, 7701 estimated dead rows.
+Documents churn 150s: 333652 transitions, 19005440 relation bytes, 21492 estimated dead rows.
+Documents churn 180s: 401364 transitions, 18948096 relation bytes, 7318 estimated dead rows.
+Documents churn 210s: 468572 transitions, 18948096 relation bytes, 21233 estimated dead rows.
+Documents churn 240s: 534988 transitions, 18915328 relation bytes, 7992 estimated dead rows.
+Documents churn 270s: 602828 transitions, 18915328 relation bytes, 21910 estimated dead rows.
+Documents churn 300s: 670700 transitions, 18972672 relation bytes, 8240 estimated dead rows.
+Documents churn 330s: 737952 transitions, 18972672 relation bytes, 21883 estimated dead rows.
+Documents churn 360s: 805924 transitions, 18972672 relation bytes, 8010 estimated dead rows.
+Documents churn 390s: 873336 transitions, 18972672 relation bytes, 21803 estimated dead rows.
+Documents churn 420s: 941244 transitions, 19005440 relation bytes, 6767 estimated dead rows.
+Documents churn 450s: 1008636 transitions, 19005440 relation bytes, 19886 estimated dead rows.
+Documents churn 480s: 1076532 transitions, 18939904 relation bytes, 7601 estimated dead rows.
+Documents churn 510s: 1143892 transitions, 18939904 relation bytes, 21445 estimated dead rows.
+Documents churn 540s: 1211856 transitions, 18939904 relation bytes, 8023 estimated dead rows.
+Documents churn 570s: 1278984 transitions, 18939904 relation bytes, 21749 estimated dead rows.
+Documents churn 600s: 1326780 transitions, 18939904 relation bytes, 5334 estimated dead rows.
+Documents workload and actual child-process recovery verified; report written.

@@ -51,7 +51,9 @@ try {
         'postgres', '-c', 'wal_level=logical', '-c', 'max_wal_senders=12', '-c', 'max_replication_slots=12') | Out-Null
     $ready = $false
     for ($i = 0; $i -lt 100; $i++) {
-        & $dockerCommand exec $primary pg_isready -U postgres *> $null
+        # The image's temporary initialization server accepts Unix-socket probes
+        # before it stops and starts the final TCP-listening postmaster.
+        & $dockerCommand exec $primary pg_isready -h 127.0.0.1 -U postgres *> $null
         if ($LASTEXITCODE -eq 0) { $ready = $true; break }
         Start-Sleep -Milliseconds 200
     }

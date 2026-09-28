@@ -424,7 +424,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1078,
+    "order": 1079,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",

@@ -40,8 +40,10 @@ production qualified.
   The fresh installed Schema/SQL tools and a separate package-only SQL consumer
   pass relation and catalogue receipt modes, including qualified enum/domain
   round trips.
-- All ten candidate package sets verify locally: 32 NuGet packages, 31 symbol
-  packages and one Edge npm package. This verifies archive metadata and content,
+- All ten candidate package sets verify at clean commit `a837001`: 32 NuGet
+  packages, 31 symbol packages and one Edge npm package. CycloneDX 1.6, SPDX
+  2.3 and provenance checks cover all 64 archives and 318 components. This
+  verifies archive metadata and content,
   not that the unpublished dependency graph can be restored from a public feed.
   The dependency audit reports zero vulnerable entries across 195 .NET projects;
   locked npm audit reports zero vulnerabilities in its 63-package tree. Audits
@@ -74,15 +76,20 @@ production qualified.
   filesystem-observer window, and its sustained payload is distinct per
   document. A short owned PostgreSQL 18 fixture passed all 16 scenarios,
   killed-writer recovery, source/binary binding and label-checked cleanup after
-  these harness changes. That short run is a correctness check, not capacity
-  evidence; no remedy for full-body JSONB rewrites has passed a long gate.
+  these harness changes. That short run is a correctness check; full-body
+  JSONB rewrites retain the measured growth problem.
 - The opt-in Documents content sidecar and bounded paged GC passed eight new
-  PostgreSQL integration tests on 17 and 18, with 38 total Documents tests on
-  each version. A source-stable 60-second
-  attached-content fixture passed its explicit local budget with 118,132
-  transitions, 18.6 MB peak owned relation bytes, 37.3 MB WAL and 144 ms save
-  p99. It has not yet passed repeated multi-hour capacity and failover gates;
+  PostgreSQL integration tests, with 38 total Documents tests on each version
+  15–18. A [clean-commit 600-second attached-content run](../documents/evidence/2026-09-28-attached-content-600s/README.md)
+  passed its explicit local budget with 1,326,904 transitions at 2,211/s,
+  19.0 MB peak owned relations, 375 MB WAL and 100 ms save p99. The 120-second
+  idle drain, exact retained content, recovery and source/binary bindings
+  passed. It has not yet passed repeated multi-hour capacity and failover gates;
   existing inline-body users still have the measured growth problem.
+- The [manual exact-commit performance gate](performance.md) now requires two
+  30-minute campaigns each for Jobs, Workflows, Projections and Documents with
+  declared throughput, p99, WAL and storage budgets. Its clean-SHA preflight
+  passed, but the multi-hour gate itself has not run.
 
 ## Production qualification still required
 
@@ -91,7 +98,7 @@ budgets; longer representative runs on independent load hosts; bounded storage
 and recovery under sustained hot updates; version/format and rolling upgrades;
 credential rotation, network partition, storage pressure and repeated failover
 across more families; security review and operational telemetry/runbooks; and
-reproducible, clean-commit packages with SBOM/provenance and passing CI on the
+repeated clean-commit packages with SBOM/provenance and passing CI on the
 committed candidate. Windows browser evidence does not establish a Linux/browser
 matrix. PostgreSQL 15–17 combined managed gates do not execute every native
 smoke on those versions. The package publication policy and unreleased
