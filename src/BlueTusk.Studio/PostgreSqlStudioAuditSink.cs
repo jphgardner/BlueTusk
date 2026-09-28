@@ -1,3 +1,4 @@
+using System.Data;
 using System.Data.Common;
 using System.Globalization;
 
@@ -307,7 +308,7 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
             insert.CommandTimeout = _timeout;
             insert.CommandText = $"INSERT INTO {_schema}.studio_audit_archives(kind, through_ms, archive_reference) VALUES(@kind, @through, @reference)";
             Add(insert, "kind", kind);
-            Add(insert, "through", through is { } value ? value : DBNull.Value);
+            Add(insert, "through", through is { } value ? value : DBNull.Value, DbType.Int64);
             Add(insert, "reference", archiveReference);
             _ = await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -380,11 +381,12 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
         return deleted;
     }
 
-    private static void Add(DbCommand command, string name, object value)
+    private static void Add(DbCommand command, string name, object value, DbType? type = null)
     {
         var parameter = command.CreateParameter();
         parameter.ParameterName = name;
         parameter.Value = value;
+        if (type is { } concreteType) { parameter.DbType = concreteType; }
         command.Parameters.Add(parameter);
     }
 }
