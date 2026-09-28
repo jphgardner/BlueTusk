@@ -54,6 +54,15 @@ try {
   await context.close(); context = undefined;
   context = await chromium.launchPersistentContext(profile, { channel, headless: true });
   page = await context.newPage(); await page.goto(url);
+  // A browser fetch rejection hides the network reason; keep the failed request and
+  // CORS console error visible in CI when the deliberately severed write is replayed.
+  page.on("requestfailed", request => {
+    if (request.url().startsWith(endpoint)) process.stderr.write(`Edge browser request failed: ${request.method()} ${new URL(request.url()).pathname}: ${request.failure()}\n`);
+  });
+  page.on("console", message => {
+    if (message.type() === "error") process.stderr.write(`Edge browser console: ${message.text()}\n`);
+  });
+  page.on("pageerror", error => process.stderr.write(`Edge browser page error: ${error}\n`));
   const resumed = await page.evaluate(async ({ endpoint, mutationId }) => {
     const { IndexedDbEdgeStore, EdgeHttpRemoteTransport, EdgeHttpError, synchronizeEdge } = await import("/edge.js");
     const scope = { tenant: "tenant", id: "orders", epoch: "1" };

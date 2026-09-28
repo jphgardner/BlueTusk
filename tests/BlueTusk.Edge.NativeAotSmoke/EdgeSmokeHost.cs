@@ -36,6 +36,25 @@ internal sealed class EdgeSmokeHost(WebApplication application, Uri endpoint) : 
                 .WithMethods("GET", "POST", "DELETE").WithHeaders("authorization", "content-type", "x-bluetusk-test-drop")));
         }
         var application = builder.Build();
+        if (browserCors)
+        {
+            application.Use(async (context, next) =>
+            {
+                try { await next(context); }
+                catch (Exception error)
+                {
+                    Console.Error.WriteLine($"Edge HTTP smoke {context.Request.Method} {context.Request.Path} exception: {error}");
+                    throw;
+                }
+                finally
+                {
+                    if (context.Request.Path.StartsWithSegments("/edge"))
+                    {
+                        Console.Error.WriteLine($"Edge HTTP smoke {context.Request.Method} {context.Request.Path} status={context.Response.StatusCode} aborted={context.RequestAborted.IsCancellationRequested} drop={context.Request.Headers.ContainsKey("x-bluetusk-test-drop")}");
+                    }
+                }
+            });
+        }
         if (browserCors) { application.UseCors("edge-smoke"); }
         application.UseAuthentication(); application.UseAuthorization();
         application.Use(async (context, next) =>

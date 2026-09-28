@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using BlueTusk.Edge.Sqlite;
 using Microsoft.Data.Sqlite;
@@ -75,7 +76,7 @@ public sealed class SqliteEdgeStoreTests
     public Task Ordered_allocation_and_confirmation_outbox_are_atomic_across_instances_and_restart() => WithReadyStoreAsync(async (store, options) =>
     {
         var allocated = await Task.WhenAll(Enumerable.Range(0, 8).Select(index => Task.Run(async () =>
-            await new SqliteEdgeStore(options).EnqueueOrderedAsync(Scope, index.ToString("D3"), 0, EdgeMutationKind.Upsert, Payload("offline")))));
+            await new SqliteEdgeStore(options).EnqueueOrderedAsync(Scope, index.ToString("D3", CultureInfo.InvariantCulture), 0, EdgeMutationKind.Upsert, Payload("offline")))));
         var sequences = allocated.Select(mutation =>
         {
             Assert.True(EdgeOrderedMutationId.TryParse(mutation.Id, out var stream, out var sequence));
@@ -136,7 +137,7 @@ public sealed class SqliteEdgeStoreTests
     });
 
     [Fact]
-    public Task Ordered_horizon_reclaims_local_receipt_capacity_without_reusing_sequence() => WithReadyStoreAsync(async (store, _) =>
+    public Task Ordered_horizon_reclaims_local_receipt_capacity_without_reusing_sequence() => WithReadyStoreAsync(async (store, unusedOptions) =>
     {
         var first = await store.EnqueueOrderedAsync(Scope, "first", 0, EdgeMutationKind.Upsert, Payload("first"));
         var firstLease = (await store.ClaimAsync(Scope, TimeSpan.FromMinutes(1)))!;

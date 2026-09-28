@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Globalization;
 using BlueTusk.Data;
 using BlueTusk.Edge.Server;
 
@@ -90,7 +91,7 @@ public sealed class EdgeServerStoreTests
         await fixture.Store.ActivateScopeAsync(scope);
         await using var bounded = new PostgreSqlEdgeServerStore(fixture.Source, fixture.Store.Options with { MaxReceiptsPerScope = 2 });
         var stream = EdgeOrderedMutationId.NewStreamId();
-        EdgeMutation Write(long sequence) => new(scope, EdgeOrderedMutationId.Create(stream, sequence), sequence.ToString(), 0, EdgeMutationKind.Upsert, "{}"u8.ToArray());
+        EdgeMutation Write(long sequence) => new(scope, EdgeOrderedMutationId.Create(stream, sequence), sequence.ToString(CultureInfo.InvariantCulture), 0, EdgeMutationKind.Upsert, "{}"u8.ToArray());
         var first = Write(1); var second = Write(2); var third = Write(3);
         Assert.Equal((stream, 2L), Parse(second.Id));
         await Assert.ThrowsAsync<EdgeMutationIdentityException>(async () => await bounded.ApplyMutationAsync(second));
