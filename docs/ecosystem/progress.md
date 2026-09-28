@@ -57,6 +57,15 @@ production qualified.
   content; experimental fast TOAST vacuum ended at 9.06 GB with lower
   throughput, higher tail latency and more WAL per transition. Neither profile
   established a physical bound.
+- A new offline capacity verifier now rejects incomplete sustained reports and
+  explicit peak-size, late-growth, WAL, throughput and p99 budgets. The old
+  default report fails an illustrative 512 MiB peak/16 MiB per minute late-growth
+  target. The guarded harness now supports a six-hour request with a rolling
+  filesystem-observer window, and its sustained payload is distinct per
+  document. A short owned PostgreSQL 18 fixture passed all 16 scenarios,
+  killed-writer recovery, source/binary binding and label-checked cleanup after
+  these harness changes. That short run is a correctness check, not capacity
+  evidence; no remedy for full-body JSONB rewrites has passed a long gate.
 
 ## Production qualification still required
 

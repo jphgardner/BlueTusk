@@ -1,6 +1,6 @@
 param(
     [ValidateRange(1,30)][int]$CellSeconds = 3,
-    [ValidateRange(1,600)][int]$SustainedSeconds = 60,
+    [ValidateRange(1,21600)][int]$SustainedSeconds = 60,
     [ValidateRange(1024,65535)][int]$Port = 55818,
     [string]$OutputDirectory,
     [string]$ReferenceHost = 'local-Windows-DotNet10-Docker-PG18-cpu4-mem2GiB',
@@ -121,7 +121,7 @@ try {
     $watcherStart.UseShellExecute = $false
     $watcherStart.CreateNoWindow = $true
     foreach ($argument in @('-NoLogo','-NoProfile','-NonInteractive','-File',$watcher,'-Container',$container,
-        '-Fixture',$fixture,'-Output',$guardSample,'-StopFile',$guardStop,'-MaximumSeconds','1800')) {
+        '-Fixture',$fixture,'-Output',$guardSample,'-StopFile',$guardStop,'-MaximumSeconds','24000')) {
         [void]$watcherStart.ArgumentList.Add([string]$argument)
     }
     $observerProcess = [Diagnostics.Process]::Start($watcherStart)

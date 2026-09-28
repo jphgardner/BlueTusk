@@ -23,7 +23,7 @@ internal static partial class Program
             ?? throw new InvalidOperationException("A dedicated disposable Documents workload database must be explicitly configured.");
         var budget = StorageBudget.Read();
         var cellSeconds = ReadSeconds("BLUETUSK_DOCUMENTS_LOAD_CELL_SECONDS", 3, 30);
-        var sustainedSeconds = ReadSeconds("BLUETUSK_DOCUMENTS_LOAD_SECONDS", 60, 600);
+        var sustainedSeconds = ReadSeconds("BLUETUSK_DOCUMENTS_LOAD_SECONDS", 60, 21600);
         var output = Path.GetFullPath(Environment.GetEnvironmentVariable("BLUETUSK_DOCUMENTS_LOAD_REPORT") ?? "artifacts/documents-load/report.json");
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15 * (cellSeconds + 3) + sustainedSeconds + budget.IdleDrainSeconds + 360));
         await using var observer = CreateSource(raw, Application + "Observer", 2);
@@ -49,7 +49,7 @@ internal static partial class Program
             _ = await budget.ReadFilesystemAsync(deadline.Token);
             stage = "write-report";
             var report = new CampaignReport(environment, DateTimeOffset.UtcNow, cellSeconds, sustainedSeconds,
-                "Local bounded measured campaign with fixture-only maintenance profile and sampled physical/host limits. Latencies include harness work and instrumentation. Percentiles are upper histogram-bin bounds (128 bins per power of two). Allocation/CPU/GC describe this process, including its observer. WAL/statistics are cluster/database scoped and may lag; use the owned dedicated fixture. Parent relation bytes already include its TOAST child. This dirty working-tree evidence is not immutable release or production qualification.",
+                "Local bounded measured campaign with fixture-only maintenance profile and sampled physical/host limits. Latencies include harness work and instrumentation. Percentiles are upper histogram-bin bounds (128 bins per power of two). Allocation/CPU/GC describe this process, including its observer. WAL/statistics are cluster/database scoped and may lag; use the owned dedicated fixture. Parent relation bytes already include its TOAST child. Source identity and report budgets require separate verification; this campaign alone is not production qualification.",
                 scenarios.ToArray(), recovery,
                 new ResourcePolicyReport(budget.Profile.ToString(), budget.MaximumDatabaseBytes, budget.MinimumFilesystemAvailableBytes,
                     budget.IdleDrainSeconds, StorageBudget.MaximumFilesystemSampleAgeSeconds, StorageBudget.MaximumMaintenanceGapSeconds,
@@ -109,10 +109,10 @@ internal static partial class Program
         if (value < 1 || value > maximum) { throw new ArgumentOutOfRangeException(name); }
         return value;
     }
-    internal static string Payload(int bytes)
+    internal static string Payload(int bytes, int salt = 0)
     {
         // Deterministic synthetic low-compressibility content; never use this fixture generator for secrets.
-        var data = new byte[(bytes * 3 + 3) / 4]; new Random(17041 + bytes).NextBytes(data);
+        var data = new byte[(bytes * 3 + 3) / 4]; new Random(17041 + bytes + salt).NextBytes(data);
         return Convert.ToBase64String(data)[..bytes];
     }
     private static async Task<EnvironmentReport> CaptureEnvironmentAsync(BlueTuskDataSource observer, CancellationToken token)

@@ -26,7 +26,12 @@ internal static partial class Program
                 await File.WriteAllBytesAsync(temporary, JsonSerializer.SerializeToUtf8Bytes(sample, StorageJson.Default.FilesystemObservation));
                 for (var attempt = 1; attempt <= 10; attempt++)
                 {
-                    try { File.Move(temporary, completed); return completed; }
+                    try
+                    {
+                        File.Move(temporary, completed);
+                        if (sequence > 64) { File.Delete(Path.Combine(path, $"{sequence - 64:D6}.json")); }
+                        return completed;
+                    }
                     catch (Exception exception) when (attempt < 10 && exception is IOException or UnauthorizedAccessException) { await Task.Delay(50); }
                 }
             }

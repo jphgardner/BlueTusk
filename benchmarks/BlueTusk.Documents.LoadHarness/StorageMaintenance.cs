@@ -13,7 +13,7 @@ internal sealed record StorageBudget(MaintenanceProfile Profile, long MaximumDat
     internal const int MaximumFilesystemSampleAgeSeconds = 30;
     internal const int MaximumMaintenanceGapSeconds = 45;
     internal const int MaximumFilesystemReadAttempts = 5;
-    internal const int MaximumFilesystemSamples = 1800;
+    internal const int MaximumFilesystemSamples = 65;
     internal static StorageBudget Read()
     {
         var profile = Environment.GetEnvironmentVariable("BLUETUSK_DOCUMENTS_LOAD_MAINTENANCE_PROFILE") ?? "PackageDefaults";

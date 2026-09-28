@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][string]$Fixture,
     [Parameter(Mandatory)][string]$Output,
     [Parameter(Mandatory)][string]$StopFile,
-    [ValidateRange(30,3600)][int]$MaximumSeconds = 1800
+    [ValidateRange(30,24000)][int]$MaximumSeconds = 1800
 )
 $ErrorActionPreference = 'Stop'
 $owner = 'bluetusk.documents.load'
@@ -48,7 +48,7 @@ try {
             MinimumAvailableBytesObserved = [long]($minimumAvailableKiB * 1024L)
             MaximumUsedBytesObserved = [long]($maximumUsedKiB * 1024L)
         } | ConvertTo-Json -Compress
-        if ($sampleIndex -ge 1800) { throw 'owned-filesystem-sample-count-exceeded' }
+        if ($sampleIndex -ge 24000) { throw 'owned-filesystem-sample-count-exceeded' }
         $sampleIndex++
         $stage = 'sample-write'
         $temporary = Join-Path $Output ('{0:D6}.{1}.tmp' -f $sampleIndex, $PID)
@@ -70,6 +70,12 @@ try {
             }
         }
         if (-not $published) { throw 'owned-filesystem-observation-atomic-publish-failed' }
+        # Keep a bounded recent window. Each observation carries lifetime minimum
+        # headroom and maximum use, while the workload report retains the physical
+        # time series. The reader always selects the highest completed sample ID.
+        if ($sampleIndex -gt 64) {
+            [IO.File]::Delete((Join-Path $Output ('{0:D6}.json' -f ($sampleIndex - 64))))
+        }
         Start-Sleep -Seconds 1
     }
 }

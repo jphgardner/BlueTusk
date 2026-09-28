@@ -55,7 +55,11 @@ short or overloaded cell can take longer than its requested minimum duration. Th
 pool is capped at eight connections; an independent two-connection observer avoids collecting
 activity through the saturated application pool.
 
-The timed mixed workload loads bounded batches and performs complete replacement, Count-only
+The sustained fixture now gives each retained document a distinct, stable seeded payload, so
+content-addressed storage cannot appear successful merely by deduplicating different documents.
+Earlier retained reports used one shared payload per scenario; they remain valid evidence of
+JSONB/TOAST growth but cannot qualify a future immutable-content design. The timed mixed
+workload loads bounded batches and performs complete replacement, Count-only
 JSONB patch, and explicit delete/reinsert cycles. The latter are two separate session commits,
 with an expected absent interval; they are not an atomic update. After the measured phase,
 bounded keyset pages verify every retained payload, tenant marker and expected mutation count,
@@ -108,3 +112,16 @@ The runner retains runnable dependency binaries and scoped sources before measur
 their hashes against the raw report, and writes before/after candidate comparisons to `bindings.json`.
 Repeat runs, Linux/other native architectures, representative application distributions,
 explicit latency/throughput budgets, longer endurance and recovery campaigns remain required.
+
+`eng/verify-documents-capacity-report.ps1` is an offline qualification check. It requires
+explicit limits for peak parent-relation bytes (which already include TOAST), late-window
+physical growth, WAL per committed transition, throughput, and save p99. It also rejects missing
+maintenance samples, a shared-payload sustained fixture, incomplete logical checks, and failed
+hard-kill recovery. The old 600-second default report exceeds an illustrative 512 MiB relation
+ceiling and 16 MiB/minute late-growth ceiling; that failure is expected. Limits must be chosen
+for the intended reference hardware and workload, then met on a new, source-frozen, multi-hour
+campaign before qualifying Documents capacity.
+The guarded runner can request up to six hours of sustained writes. Its filesystem observer
+publishes atomic samples once per second and retains the latest 64 files plus lifetime minimum
+headroom and maximum use; the workload report retains five-second database and maintenance
+time series. A campaign still stops at its database-size or filesystem-headroom guard.

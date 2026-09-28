@@ -35,6 +35,17 @@ internal static partial class Program
         var payload = Payload(bytes);
         var states = Enumerable.Range(0, writers).Select(writer => new WriterState(writer,
             Enumerable.Range(0, tenants).Select(step => (writer + step * writers) % tenants).Distinct().ToArray(), rows)).ToArray();
+        // The sustained fixture uses a different stable payload for every retained document.
+        // Sharing one payload would let a future content-addressed store appear to save space
+        // through cross-document deduplication rather than reuse of each document's own content.
+        var distinctPayloads = sustained
+            ? states.SelectMany(state => state.Tenants.SelectMany(tenant => Enumerable.Range(0, rows)
+                .Select(row => (Tenant: tenant, Writer: state.Writer, Row: row))))
+                .ToDictionary(key => key, key => Payload(bytes,
+                    1 + key.Tenant * 1_000_003 + key.Writer * 10_007 + key.Row * 101))
+            : null;
+        string PayloadFor(int tenant, int writer, int row) =>
+            distinctPayloads is null ? payload : distinctPayloads[(tenant, writer, row)];
         var scenarioOperation = "initialize";
         Exception? primaryFailure = null;
         async Task<ScenarioReport> ExecuteScenarioAsync()
@@ -53,7 +64,8 @@ internal static partial class Program
                 foreach (var tenant in state.Tenants)
                 {
                     using var seed = store.OpenSession(Tenant(tenant));
-                    for (var row = 0; row < rows; row++) { seed.Insert(Collection, Id(state.Writer, row), new(Tenant(tenant), payload, 0)); }
+                    for (var row = 0; row < rows; row++)
+                    { seed.Insert(Collection, Id(state.Writer, row), new(Tenant(tenant), PayloadFor(tenant, state.Writer, row), 0)); }
                     Check((await seed.SaveChangesAsync(token)).Count == rows, "seed atomic batch");
                     _ = await ObserveMaintenanceAsync(observer, schema, budget, token);
                 }
@@ -85,8 +97,8 @@ internal static partial class Program
                 {
                     while (await timer.WaitForNextTickAsync(scenarioStop.Token))
                     {
-                        Check(samples.Count < 128, "bounded storage time series");
-                        Check(maintenanceSamples.Count < 128, "bounded maintenance time series");
+                        Check(samples.Count < 5000, "bounded storage time series");
+                        Check(maintenanceSamples.Count < 5000, "bounded maintenance time series");
                         MaintenanceObservation maintenance;
                         try { maintenance = await ObserveMaintenanceAsync(observer, schema, budget, scenarioStop.Token); }
                         catch (TimeoutException)
@@ -201,7 +213,7 @@ internal static partial class Program
                 }
             });
             scenarioOperation = "verify-retained-records";
-            await VerifyStateAsync(store, states, payload, tenants, hotExpected, token);
+            await VerifyStateAsync(store, states, PayloadFor, tenants, hotExpected, token);
             var afterVerification = await ObserveMaintenanceAsync(observer, schema, budget, token);
             Check(tenantProgress.All(value => value > 0), "all configured tenants progress");
             var idleSamples = new List<MaintenanceSample>();
@@ -224,7 +236,8 @@ internal static partial class Program
                 measuredSeconds, committed, committed / measuredSeconds, committed * (double)bytes / measuredSeconds, tenantProgress, replaces, patches, deletes,
                 hotExpected.Sum(), hotConflicts, rejected, load.Snapshot(), save.Snapshot(), operation.Snapshot(), hotLatency.Snapshot(), runtime, before, after, samples.ToArray(), true,
                 new(beforeMaintenance, afterMaintenance, afterVerification, afterIdle, maintenanceSamples.ToArray(), idleSamples.ToArray(),
-                    new(databaseProbeTimeouts, maximumConsecutiveDatabaseProbeTimeouts, maximumMaintenanceGap)));
+                    new(databaseProbeTimeouts, maximumConsecutiveDatabaseProbeTimeouts, maximumMaintenanceGap)),
+                sustained ? "distinct-stable-per-document" : "shared-within-scenario");
             if (sustained)
             {
                 scenarioOperation = "persist-sustained-checkpoint";
@@ -260,12 +273,15 @@ internal static partial class Program
         throw new InvalidOperationException("Observer timeout fault injection did not time out.");
     }
 
-    private static async Task VerifyStateAsync(DocumentStore store, WriterState[] states, string payload, int tenants, long[] hotExpected, CancellationToken token)
+    private static async Task VerifyStateAsync(DocumentStore store, WriterState[] states,
+        Func<int, int, int, string> payloadFor, int tenants, long[] hotExpected, CancellationToken token)
     {
         for (var tenant = 0; tenant < tenants; tenant++)
         {
             var expected = states.Where(state => state.Tenants.Contains(tenant)).SelectMany(state => state.Counts.Where(entry => entry.Key.Tenant == tenant)
-                .Select(entry => (Id: Id(state.Writer, entry.Key.Row), Count: entry.Value))).ToDictionary(entry => entry.Id, entry => entry.Count, StringComparer.Ordinal);
+                .Select(entry => (Id: Id(state.Writer, entry.Key.Row), Count: entry.Value,
+                    Payload: payloadFor(tenant, state.Writer, entry.Key.Row))))
+                .ToDictionary(entry => entry.Id, entry => (entry.Count, entry.Payload), StringComparer.Ordinal);
             var seen = new HashSet<string>(StringComparer.Ordinal); string? cursor = null;
             do
             {
@@ -274,7 +290,11 @@ internal static partial class Program
                 {
                     Check(seen.Add(value.Id) && value.Value.TenantMarker == Tenant(tenant), "no duplicate/cross-tenant page");
                     if (value.Id == "hot-key") { Check(value.Value.Count == hotExpected[tenant], "no lost hot-key successful increments"); }
-                    else { Check(expected.TryGetValue(value.Id, out var count) && count == value.Value.Count && value.Value.Payload == payload, "exact payload/version after bounded pages"); }
+                    else
+                    {
+                        Check(expected.TryGetValue(value.Id, out var item) && item.Count == value.Value.Count &&
+                        item.Payload == value.Value.Payload, "exact payload/version after bounded pages");
+                    }
                 }
                 Check(page.NextAfterId is null || page.Items.Count > 0, "bounded pagination progresses"); cursor = page.NextAfterId;
             } while (cursor is not null);

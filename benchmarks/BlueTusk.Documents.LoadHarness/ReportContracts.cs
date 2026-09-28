@@ -42,7 +42,7 @@ internal sealed record ScenarioReport(string Name, int PayloadBytes, int Tenants
     long[] TenantProgress, long ReplaceSaves, long PatchSaves, long DeleteReinsertCycles, long HotKeyIncrements, long HotKeyConflicts,
     long RejectedBoundedWrites, Percentiles LoadLatency, Percentiles SaveLatency, Percentiles OperationLatency, Percentiles HotKeyLatency,
     RuntimeMetrics Runtime, DatabaseObservation Before, DatabaseObservation After, StorageSample[] StorageSamples, bool Verified,
-    MaintenanceEvidence? Maintenance = null);
+    MaintenanceEvidence? Maintenance = null, string PayloadDistribution = "shared-within-scenario");
 internal sealed record RecoveryReport(int AcknowledgedBatches, int AcknowledgedDocuments, int Tenants, bool BlockedSecondInsertObserved,
     bool ChildHardKilled, bool NoPartialBatch, bool AllAcknowledgedWritesSurvivedReopen, bool TenantIsolation, bool StaleRevisionRejectedAfterReinsert,
     double KillToVerifiedMilliseconds);
