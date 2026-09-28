@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text;
 using BlueTusk.Events;
-using BlueTusk.Projections;
 using BlueTusk.Replication;
 using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
@@ -257,14 +256,18 @@ public sealed class ProjectionPublishedRetentionTests
             var table = Assert.Single(Lineage.Tables);
             var values = new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                ["retention_epoch"] = epoch.ToString("D"), ["tenant_id"] = "tenant", ["stream_id"] = stream,
-                ["first_sequence"] = "1", ["through_sequence"] = through.ToString(CultureInfo.InvariantCulture),
+                ["retention_epoch"] = epoch.ToString("D"),
+                ["tenant_id"] = "tenant",
+                ["stream_id"] = stream,
+                ["first_sequence"] = "1",
+                ["through_sequence"] = through.ToString(CultureInfo.InvariantCulture),
                 ["archive_manifest_sha256"] = "\\x" + new string('a', 64),
                 ["source_system_identifier"] = EventSource.SystemIdentifier,
                 ["source_database"] = EventSource.DatabaseName,
                 ["source_database_oid"] = Lineage.DatabaseOid.ToString(CultureInfo.InvariantCulture),
                 ["source_timeline"] = EventSource.Timeline.ToString(CultureInfo.InvariantCulture),
-                ["source_slot"] = EventSource.SlotName, ["source_publication"] = EventSource.PublicationName,
+                ["source_slot"] = EventSource.SlotName,
+                ["source_publication"] = EventSource.PublicationName,
                 ["source_publication_oid"] = PublicationOid.ToString(CultureInfo.InvariantCulture),
                 ["membership_revision"] = "1"
             };
