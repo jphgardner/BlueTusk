@@ -34,7 +34,11 @@ try {
     $taskPort = $taskFixture.NetworkSettings.Ports.'5432/tcp'[0].HostPort
     $env:BLUETUSK_TEST_CONNECTION_STRING = 'Host=127.0.0.1;Port={0};Username={1};Password={2};Database={3};SSL Mode=Disable;Channel Binding=Disable' -f
         $taskPort, $taskEnvironment.POSTGRES_USER, $taskEnvironment.POSTGRES_PASSWORD, $taskEnvironment.POSTGRES_DB
-    $taskOutputPath = [IO.Path]::GetFullPath((Join-Path $taskRepository $Output))
+    $taskOutputPath = if ([IO.Path]::IsPathRooted($Output)) {
+        [IO.Path]::GetFullPath($Output)
+    } else {
+        [IO.Path]::GetFullPath((Join-Path $taskRepository $Output))
+    }
     $null = New-Item -ItemType Directory -Path (Split-Path -Parent $taskOutputPath) -Force
     $taskSettingsQuery = @'
 SELECT json_build_object('server', version(), 'settings',
