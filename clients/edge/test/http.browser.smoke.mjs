@@ -45,6 +45,9 @@ try {
       disconnected = true;
     }
     if (!disconnected) throw new Error("The real committed response was not disconnected.");
+    const committed = await new EdgeHttpRemoteTransport({ endpoint, bearerToken: () => "edge-smoke-reader" }).readChanges(scope, "0", 8);
+    if (!committed || committed.toPosition !== "1" || committed.records.length !== 1 || committed.records[0].payload !== payload)
+      throw new Error("The disconnected write did not commit on the server.");
     const cached = await store.get(scope, "1"); store.close();
     return { mutationId: mutation.id, payload: cached.payload, status: cached.pendingStatus };
   }, endpoint);
@@ -62,7 +65,7 @@ try {
   // A browser fetch rejection hides the network reason; keep the failed request and
   // CORS console error visible in CI when the deliberately severed write is replayed.
   page.on("requestfailed", request => {
-    if (request.url().startsWith(endpoint)) process.stderr.write(`Edge browser request failed: ${request.method()} ${new URL(request.url()).pathname}: ${request.failure()}\n`);
+    if (request.url().startsWith(endpoint)) process.stderr.write(`Edge browser request failed: ${request.method()} ${new URL(request.url()).pathname}: ${JSON.stringify(request.failure())}\n`);
   });
   page.on("console", message => {
     if (message.type() === "error") process.stderr.write(`Edge browser console: ${message.text()}\n`);
