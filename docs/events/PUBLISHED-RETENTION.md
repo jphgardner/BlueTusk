@@ -51,10 +51,40 @@ or relayed deliveries without this binding cannot produce a retention ACK.
 Redelivery verifies the existing ACK byte-for-byte; a conflicting epoch fails.
 The protected processor rejects an older or conflicting source transaction position, and an
 unconfigured new processor refuses a control row. Target DB timeline, database and system drift
-block subsequent marker ACKs. Projections, independent subscriptions and recovery candidates do
-not yet produce these ACKs and remain blocking obligations. A same-lineage target rewind is not
+block subsequent marker ACKs. A same-lineage target rewind is not
 provably detectable from the current target tables; deployments must rotate incarnation on every
 restore, and a future deletion coordinator must verify that operational fence independently.
+
+Projection schema v7 adds a separate **target-local preparation stage**. Capture the actual
+single-publication source lineage and bind it before the projection snapshot. Supply that lineage
+and a source membership registration to
+`PostgreSqlProjectionStore.RegisterPublishedRetentionTargetAsync` for each tenant/stream and
+projection version. An explicitly configured `StreamsProjectionConsumer.CreateProtected` requires
+the built-in Streams delivery's verified single `START_REPLICATION` publication and the
+replication connection's `IDENTIFY_SYSTEM` timeline. The store
+intercepts the marker before application code, requires it to be the only raw change, and commits
+the exact marker ACK with its projection checkpoint in one transaction under the same head/state
+locks as promotion. The ACK records the version, definition fingerprint, bound source lineage,
+snapshot epoch, target database incarnation and whether this commit was active, candidate or a
+recovery candidate with its recovery ticket. Former recovery writers are fenced. Duplicate marker
+delivery requires an exact existing ACK; a fresh snapshot whose checkpoint passes a marker cannot
+manufacture one. A candidate ACK can be replayed after promotion for transport progress, but
+retains its historical candidate role rather than becoming an active ACK. A subsequent
+active marker must be processed under the active role. Unconfigured projections refuse a control
+row. Source/target control-function privilege and frozen publication DDL are required.
+
+These rows are **not source deletion authorization**. Source membership still supports only one
+slot/publication lineage per stream, so independently slotted projection versions cannot yet join
+the same protected set. `IDENTIFY_SYSTEM` does not return the source database OID, so that OID
+is bound from a separately captured source catalogue lineage and still requires independent
+coordinator verification; it is not intrinsic replication-delivery provenance. The target
+registration currently consumes a caller-supplied source
+registration record; a future source coordinator must verify the actual source membership and
+target ACK across databases, including current projection head, recovery ticket, snapshot epoch,
+target incarnation and durable transport checkpoint. A marker already included in a fresh snapshot
+has no ordered target ACK, and recovery after a pruned prefix needs an explicit archive/bootstrap
+proof or a newer marker. Independent subscriptions remain blocking obligations. Slot recreation
+under the same name and a same-lineage target rewind remain unresolved fences.
 
 This marker proves that the archived prefix was readable and matched committed manifests when the
 marker was emitted. It does **not** prove continuing archive availability, delivery to a subscriber,
@@ -106,8 +136,8 @@ be considered, even when source and target ACK rows otherwise agree.
    inbox, replay or retention-control tombstones. Rollout must upgrade and prove all protected
    consumers before enabling the first delete.
 
-This protocol needs coordinated changes to Streams delivery, Projections definitions/recovery,
-consumer registration, restore procedures and mixed-binary rollout gates. Those contracts do not
-exist yet. `AssessLocalRetentionAsync` therefore reports a published outbox as a blocker, regardless
+This protocol still needs remote proof coordination, multi-lineage registration, independent
+subscription coverage, restore procedures and mixed-binary rollout gates.
+`AssessLocalRetentionAsync` therefore reports a published outbox as a blocker, regardless
 of archive progress or a local replay checkpoint. Dropping a publication solely to pass that check
 would abandon the protected consumers and is not a supported retention procedure.

@@ -11,8 +11,23 @@ public sealed class StreamsProjectionConsumer : IChangeStreamConsumer
     private readonly PostgreSqlProjectionStore _store;
     private readonly ProjectionLease _lease;
     private readonly IProjectionDefinition _definition;
+    private readonly ProjectionPublishedRetentionTargetOptions? _protectedRetention;
 
     public StreamsProjectionConsumer(PostgreSqlProjectionStore store, ProjectionLease lease, IProjectionDefinition definition)
+        : this(store, lease, definition, null)
+    {
+    }
+
+    public static StreamsProjectionConsumer CreateProtected(PostgreSqlProjectionStore store,
+        ProjectionLease lease, IProjectionDefinition definition,
+        ProjectionPublishedRetentionTargetOptions protectedRetention)
+    {
+        ArgumentNullException.ThrowIfNull(protectedRetention);
+        return new StreamsProjectionConsumer(store, lease, definition, protectedRetention);
+    }
+
+    private StreamsProjectionConsumer(PostgreSqlProjectionStore store, ProjectionLease lease,
+        IProjectionDefinition definition, ProjectionPublishedRetentionTargetOptions? protectedRetention)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(lease);
@@ -25,6 +40,7 @@ public sealed class StreamsProjectionConsumer : IChangeStreamConsumer
         _store = store;
         _lease = lease;
         _definition = definition;
+        _protectedRetention = protectedRetention;
     }
 
     public ValueTask ResetSnapshotAsync(SnapshotReset reset, CancellationToken cancellationToken = default)
@@ -58,7 +74,15 @@ public sealed class StreamsProjectionConsumer : IChangeStreamConsumer
     public async ValueTask ConsumeTransactionAsync(ChangeTransactionDelivery delivery, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(delivery);
-        _ = await _store.ApplyAsync(_lease, _definition, delivery.Transaction, cancellationToken).ConfigureAwait(false);
+        if (_protectedRetention is null)
+        {
+            _ = await _store.ApplyAsync(_lease, _definition, delivery.Transaction, cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            _ = await _store.ApplyProtectedAsync(_lease, _definition, delivery,
+                _protectedRetention, cancellationToken).ConfigureAwait(false);
+        }
         // An acknowledgement failure can redeliver; the committed destination checkpoint deduplicates it.
         await delivery.AcknowledgeAsync(cancellationToken).ConfigureAwait(false);
     }

@@ -15,9 +15,11 @@ namespace BlueTusk.Projections;
 public sealed class ProjectionSourceLineage
 {
     internal ProjectionSourceLineage(ChangeSourceIdentity source, uint timeline, uint databaseOid,
-        string publicationFingerprint, string fingerprint, IReadOnlyList<ChangeTable> tables)
+        string publicationName, uint publicationOid, string publicationFingerprint,
+        string fingerprint, IReadOnlyList<ChangeTable> tables)
     {
         Source = source; Timeline = timeline; DatabaseOid = databaseOid;
+        PublicationName = publicationName; PublicationOid = publicationOid;
         PublicationFingerprint = publicationFingerprint; Fingerprint = fingerprint; Tables = tables;
         CapturedAt = DateTimeOffset.UtcNow;
         CaptureTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -26,6 +28,8 @@ public sealed class ProjectionSourceLineage
     public uint Timeline { get; }
     public uint DatabaseOid { get; }
     public string PublicationFingerprint { get; }
+    internal string PublicationName { get; }
+    internal uint PublicationOid { get; }
     public string Fingerprint { get; }
     public IReadOnlyList<ChangeTable> Tables { get; }
     public DateTimeOffset CapturedAt { get; }
@@ -88,6 +92,7 @@ public static class PostgreSqlProjectionLineage
             }
         }
         uint databaseOid;
+        uint publicationOid;
         using var publicationHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         await using (var command = ProjectionSql.Command(connection, transaction, 30, """
             SELECT d.oid, current_setting('server_version_num')::integer / 10000, p.oid, p.pubname,
@@ -98,6 +103,7 @@ public static class PostgreSqlProjectionLineage
         {
             if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false)) { throw new InvalidOperationException("The named source publication does not exist."); }
             databaseOid = reader.GetFieldValue<uint>(0);
+            publicationOid = reader.GetFieldValue<uint>(2);
             if (!reader.GetBoolean(5) || !reader.GetBoolean(6) || !reader.GetBoolean(7) || !reader.GetBoolean(8))
             {
                 throw new InvalidOperationException("A rebuild publication must include inserts, updates, deletes and truncates for complete snapshot/WAL coverage.");
@@ -160,7 +166,8 @@ public static class PostgreSqlProjectionLineage
         Append(lineageHash, system.Timeline.ToString(System.Globalization.CultureInfo.InvariantCulture)); Append(lineageHash, publicationFingerprint);
         var fingerprint = Convert.ToHexStringLower(lineageHash.GetHashAndReset());
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return new ProjectionSourceLineage(source, system.Timeline, databaseOid, publicationFingerprint, fingerprint, tables.AsReadOnly());
+        return new ProjectionSourceLineage(source, system.Timeline, databaseOid, publication,
+            publicationOid, publicationFingerprint, fingerprint, tables.AsReadOnly());
     }
 
     private static void Append(IncrementalHash hash, string text)

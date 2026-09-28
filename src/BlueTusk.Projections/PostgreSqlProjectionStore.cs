@@ -1,6 +1,8 @@
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
+using BlueTusk.Events;
+using BlueTusk.Events.Streams;
 using BlueTusk.Streams;
 using BlueTusk.TypeSystem;
 
@@ -123,13 +125,76 @@ public sealed partial class PostgreSqlProjectionStore
         await using (var command = Command(connection, transaction, $"SELECT version FROM {_schema}.schema_version WHERE singleton"))
         {
             var schemaVersion = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
-            if (schemaVersion is not 1 and not 2 and not 3 and not 4 and not 5 and not 6)
+            if (schemaVersion is not 1 and not 2 and not 3 and not 4 and not 5 and not 6 and not 7)
             {
                 throw new InvalidOperationException("The projection schema version is not supported.");
             }
         }
 
-        await ExecuteAsync(connection, transaction, $"ALTER TABLE {_schema}.heads ADD COLUMN IF NOT EXISTS publication_revision bigint NOT NULL DEFAULT 0 CHECK(publication_revision >= 0); ALTER TABLE {_schema}.state ADD COLUMN IF NOT EXISTS source_lineage text NULL; ALTER TABLE {_schema}.state ADD COLUMN IF NOT EXISTS source_snapshot_contract jsonb NULL; ALTER TABLE {_schema}.state ADD COLUMN IF NOT EXISTS snapshot_started_at timestamptz NULL; ALTER TABLE {_schema}.state DROP CONSTRAINT IF EXISTS state_phase_check; ALTER TABLE {_schema}.state ADD CONSTRAINT state_phase_check CHECK(phase BETWEEN 0 AND 3); CREATE UNIQUE INDEX IF NOT EXISTS recovery_pending ON {_schema}.recovery_tickets(projection) WHERE completed_at IS NULL; UPDATE {_schema}.schema_version SET version = 6 WHERE singleton", cancellationToken).ConfigureAwait(false);
+        await ExecuteAsync(connection, transaction, $"ALTER TABLE {_schema}.heads ADD COLUMN IF NOT EXISTS publication_revision bigint NOT NULL DEFAULT 0 CHECK(publication_revision >= 0); ALTER TABLE {_schema}.state ADD COLUMN IF NOT EXISTS source_lineage text NULL; ALTER TABLE {_schema}.state ADD COLUMN IF NOT EXISTS source_snapshot_contract jsonb NULL; ALTER TABLE {_schema}.state ADD COLUMN IF NOT EXISTS snapshot_started_at timestamptz NULL; ALTER TABLE {_schema}.state DROP CONSTRAINT IF EXISTS state_phase_check; ALTER TABLE {_schema}.state ADD CONSTRAINT state_phase_check CHECK(phase BETWEEN 0 AND 3); CREATE UNIQUE INDEX IF NOT EXISTS recovery_pending ON {_schema}.recovery_tickets(projection) WHERE completed_at IS NULL; UPDATE {_schema}.schema_version SET version = 6 WHERE singleton AND version < 6", cancellationToken).ConfigureAwait(false);
+        await ExecuteAsync(connection, transaction, $"""
+            CREATE TABLE IF NOT EXISTS {_schema}.published_retention_targets (
+                projection text NOT NULL, version integer NOT NULL, tenant_id text NOT NULL,
+                stream_id text NOT NULL, consumer_group text NOT NULL, target_incarnation uuid NOT NULL,
+                membership_revision bigint NOT NULL CHECK(membership_revision > 0),
+                source_system_identifier text NOT NULL, source_database text NOT NULL,
+                source_database_oid oid NOT NULL, source_timeline bigint NOT NULL,
+                source_slot text NOT NULL, source_publication text NOT NULL,
+                source_publication_oid oid NOT NULL, source_fingerprint text NOT NULL,
+                definition_fingerprint text NOT NULL, projection_source_lineage text NOT NULL,
+                target_system_identifier text NOT NULL, target_database text NOT NULL,
+                target_database_oid oid NOT NULL, target_timeline bigint NOT NULL,
+                PRIMARY KEY(projection,version,tenant_id,stream_id,consumer_group,target_incarnation),
+                FOREIGN KEY(projection,version) REFERENCES {_schema}.state(projection,version)
+            );
+            CREATE TABLE IF NOT EXISTS {_schema}.published_retention_acknowledgements (
+                projection text NOT NULL, version integer NOT NULL, tenant_id text NOT NULL,
+                stream_id text NOT NULL, consumer_group text NOT NULL, target_incarnation uuid NOT NULL,
+                retention_epoch uuid NOT NULL, first_sequence bigint NOT NULL,
+                through_sequence bigint NOT NULL, archive_manifest_sha256 bytea NOT NULL
+                    CHECK(octet_length(archive_manifest_sha256)=32),
+                membership_revision bigint NOT NULL, source_system_identifier text NOT NULL,
+                source_database text NOT NULL, source_database_oid oid NOT NULL,
+                source_timeline bigint NOT NULL, source_slot text NOT NULL,
+                source_publication text NOT NULL, source_publication_oid oid NOT NULL,
+                target_system_identifier text NOT NULL, target_database text NOT NULL,
+                target_database_oid oid NOT NULL, target_timeline bigint NOT NULL,
+                definition_fingerprint text NOT NULL, source_fingerprint text NOT NULL,
+                projection_source_lineage text NOT NULL, snapshot_epoch uuid NOT NULL,
+                active_version integer NULL, recovery_id uuid NULL,
+                role text NOT NULL CHECK(role IN ('active','candidate','recovery_candidate')),
+                commit_end_position numeric(20,0) NOT NULL,
+                source_transaction_id bigint NOT NULL, checkpoint numeric(20,0) NOT NULL,
+                acknowledged_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+                PRIMARY KEY(projection,version,retention_epoch,consumer_group,target_incarnation),
+                FOREIGN KEY(projection,version,tenant_id,stream_id,consumer_group,target_incarnation)
+                    REFERENCES {_schema}.published_retention_targets
+                        (projection,version,tenant_id,stream_id,consumer_group,target_incarnation)
+            );
+            CREATE OR REPLACE FUNCTION {_schema}.reject_published_retention_mutation() RETURNS trigger LANGUAGE plpgsql AS $trigger$
+            BEGIN
+                RAISE EXCEPTION 'Published projection retention registrations and acknowledgements are append-only';
+            END $trigger$;
+            DO $migration$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_trigger
+                    WHERE tgname='projection_retention_target_immutable'
+                        AND tgrelid='{_schema}.published_retention_targets'::regclass)
+                THEN
+                    CREATE TRIGGER projection_retention_target_immutable BEFORE UPDATE OR DELETE OR TRUNCATE
+                        ON {_schema}.published_retention_targets FOR EACH STATEMENT
+                        EXECUTE FUNCTION {_schema}.reject_published_retention_mutation();
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_trigger
+                    WHERE tgname='projection_retention_ack_immutable'
+                        AND tgrelid='{_schema}.published_retention_acknowledgements'::regclass)
+                THEN
+                    CREATE TRIGGER projection_retention_ack_immutable BEFORE UPDATE OR DELETE OR TRUNCATE
+                        ON {_schema}.published_retention_acknowledgements FOR EACH STATEMENT
+                        EXECUTE FUNCTION {_schema}.reject_published_retention_mutation();
+                END IF;
+            END $migration$;
+            UPDATE {_schema}.schema_version SET version=7 WHERE singleton AND version=6
+            """, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -245,7 +310,8 @@ public sealed partial class PostgreSqlProjectionStore
     }
 
     private async ValueTask<ProjectionApplyResult> ApplyCoreAsync(ProjectionLease lease, IProjectionDefinition definition,
-        ChangeTransaction transaction, CancellationToken cancellationToken)
+        ChangeTransaction transaction, CancellationToken cancellationToken,
+        ProjectionPublishedRetentionTargetOptions? protectedRetention = null)
     {
         ValidateDefinition(lease, definition);
         ArgumentNullException.ThrowIfNull(transaction);
@@ -260,7 +326,7 @@ public sealed partial class PostgreSqlProjectionStore
             throw new ProjectionBoundExceededException("The source CDC transaction exceeds the configured change or byte bound.");
         }
 
-        await ValidateChangeBytesAsync(transaction, cancellationToken).ConfigureAwait(false);
+        var control = await ValidateChangeBytesAsync(transaction, protectedRetention, cancellationToken).ConfigureAwait(false);
 
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var targetTransaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken).ConfigureAwait(false);
@@ -276,26 +342,40 @@ public sealed partial class PostgreSqlProjectionStore
 
         if (transaction.CommitEndPosition <= locked.State.Checkpoint)
         {
+            if (control is not null)
+            {
+                await VerifyExistingProjectionControlAsync(connection, targetTransaction, lease,
+                    protectedRetention!, control, transaction, locked.State, cancellationToken).ConfigureAwait(false);
+            }
             await targetTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new ProjectionApplyResult(false, locked.State.Checkpoint, locked.State.Generation);
         }
 
-        var context = new ProjectionWriteContext(connection, targetTransaction, lease.Identity, _options);
-        try
+        ProjectionWriteContext? context = null;
+        if (control is null)
         {
-            await definition.ApplyTransactionAsync(transaction, context, cancellationToken).ConfigureAwait(false);
-            context.EnsureComplete();
-        }
-        finally
-        {
-            context.Close();
+            context = new ProjectionWriteContext(connection, targetTransaction, lease.Identity, _options);
+            try
+            {
+                await definition.ApplyTransactionAsync(transaction, context, cancellationToken).ConfigureAwait(false);
+                context.EnsureComplete();
+            }
+            finally
+            {
+                context.Close();
+            }
         }
 
         await CheckpointAsync(connection, targetTransaction, lease, transaction.CommitEndPosition, cancellationToken).ConfigureAwait(false);
+        if (control is not null)
+        {
+            await AcknowledgeProjectionControlAsync(connection, targetTransaction, lease,
+                protectedRetention!, control, transaction, locked.State, cancellationToken).ConfigureAwait(false);
+        }
         await ExecuteAsync(connection, targetTransaction, $"UPDATE {_schema}.heads SET publication_revision = publication_revision + 1 WHERE projection = @projection AND active_version = @version",
             cancellationToken, ("projection", lease.Identity.Name), ("version", lease.Identity.Version)).ConfigureAwait(false);
         await targetTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        ProjectionsDiagnostics.Commit("cdc", context);
+        if (context is not null) { ProjectionsDiagnostics.Commit("cdc", context); }
         return new ProjectionApplyResult(true, transaction.CommitEndPosition, checked(locked.State.Generation + 1));
     }
 
@@ -491,16 +571,31 @@ public sealed partial class PostgreSqlProjectionStore
         }
     }
 
-    private async ValueTask ValidateChangeBytesAsync(ChangeTransaction transaction, CancellationToken cancellationToken)
+    private async ValueTask<PublishedRetentionControl?> ValidateChangeBytesAsync(ChangeTransaction transaction,
+        ProjectionPublishedRetentionTargetOptions? protectedRetention, CancellationToken cancellationToken)
     {
         long bytes = 0;
         var count = 0;
+        var decoder = protectedRetention is null ? null : new EventPublishedRetentionChangeDecoder(protectedRetention.EventsSchema);
+        PublishedRetentionControl? control = null;
         await foreach (var change in transaction.Changes.WithCancellation(cancellationToken).ConfigureAwait(false))
         {
             if (change.Id.Source != transaction.Source || change.Id.CommitEndPosition != transaction.CommitEndPosition ||
                 change.Id.TransactionId != transaction.TransactionId || change.Id.Ordinal != count++)
             {
                 throw new ArgumentException("Every CDC change must retain its ordered transaction identity.", nameof(transaction));
+            }
+
+            if (change is InsertChange insert && IsRetentionTable(insert.NewRow.Table) ||
+                change is UpdateChange update && (IsRetentionTable(update.OldRow.Table) || IsRetentionTable(update.NewRow.Table)) ||
+                change is DeleteChange delete && IsRetentionTable(delete.OldRow.Table) ||
+                change is TruncateChange truncate && truncate.Tables.Any(IsRetentionTable))
+            {
+                if (decoder is null || !decoder.TryDecode(change, out control) ||
+                    control.Source != protectedRetention!.Source || transaction.Changes.Count != 1 || count != 1)
+                {
+                    throw new InvalidOperationException("The published retention marker is unprotected, malformed, or not the only raw source change.");
+                }
             }
 
             bytes = checked(bytes + (change switch
@@ -518,10 +613,15 @@ public sealed partial class PostgreSqlProjectionStore
             }
         }
 
+        bool IsRetentionTable(ChangeTable table) =>
+            table.Name == "published_retention_intents" &&
+            (protectedRetention is null || table.Schema == protectedRetention.EventsSchema);
+
         if (count != transaction.Changes.Count)
         {
             throw new ArgumentException("CDC change enumeration did not match the declared transaction change count.", nameof(transaction));
         }
+        return control;
     }
 
     private static long RowBytes(ChangeRow row)
