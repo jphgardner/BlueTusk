@@ -23,8 +23,10 @@ public static class EdgeOrderedMutationId
     {
         var hex = id.ToString("N");
         if (hex[12] != '8' || hex[16] != 'a') { streamId = string.Empty; sequence = 0; return false; }
-        streamId = hex[..12] + hex.Substring(13, 3);
-        sequence = long.Parse(hex.Substring(17, 3) + hex[20..], NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
+        streamId = string.Concat(hex.AsSpan(0, 12), hex.AsSpan(13, 3));
+        var high = long.Parse(hex.AsSpan(17, 3), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
+        var low = long.Parse(hex.AsSpan(20), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
+        sequence = (high << 48) | low;
         return true;
     }
 }

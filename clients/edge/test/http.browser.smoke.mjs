@@ -9,7 +9,8 @@ const endpoint = process.env.BLUETUSK_EDGE_HTTP_ENDPOINT;
 if (!endpoint) throw new Error("Run the BlueTusk.Edge.BrowserHttpSmoke host, or set its disposable test endpoint.");
 const assets = new Map([
   ["/edge.js", await readFile(new URL("../dist/index.js", import.meta.url))],
-  ["/http.js", await readFile(new URL("../dist/http.js", import.meta.url))]
+  ["/http.js", await readFile(new URL("../dist/http.js", import.meta.url))],
+  ["/ordered.js", await readFile(new URL("../dist/ordered.js", import.meta.url))]
 ]);
 const server = createServer((request, response) => {
   response.setHeader("Cache-Control", "no-store");

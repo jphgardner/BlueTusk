@@ -7,10 +7,12 @@ import { chromium } from "playwright";
 
 const asset = await readFile(new URL("../dist/index.js", import.meta.url));
 const httpAsset = await readFile(new URL("../dist/http.js", import.meta.url));
+const orderedAsset = await readFile(new URL("../dist/ordered.js", import.meta.url));
 const server = createServer((request, response) => {
   response.setHeader("Cache-Control", "no-store");
   if (request.url === "/edge.js") { response.setHeader("Content-Type", "text/javascript"); response.end(asset) }
   else if (request.url === "/http.js") { response.setHeader("Content-Type", "text/javascript"); response.end(httpAsset) }
+  else if (request.url === "/ordered.js") { response.setHeader("Content-Type", "text/javascript"); response.end(orderedAsset) }
   else { response.setHeader("Content-Type", "text/html"); response.end("<!doctype html><title>BlueTusk Edge IndexedDB verification</title>") }
 });
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
