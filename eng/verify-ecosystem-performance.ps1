@@ -199,7 +199,9 @@ function VerifyProjections($Root, $Configuration, $Run, $Source, [string]$Profil
         Require ($item.Configuration.Backlog -eq 10000 -and $item.Configuration.OfferedPerSecond -eq 1500 -and
             $item.Configuration.PayloadBytes -eq 4096 -and $item.Configuration.Tenants -eq 32 -and
             $item.Configuration.Fanout -eq 64 -and $item.Rejected -gt 0 -and
-            $item.PeakQueued -le $item.Configuration.QueueCapacity) "Projections overload run $Run lacks bounded admission and rejection."
+            # The harness counter includes an item handed to a writer until that writer decrements it.
+            # The bounded channel itself holds at most QueueCapacity; at most Writers handoffs can overlap.
+            $item.PeakQueued -le ($item.Configuration.QueueCapacity + $item.Configuration.Writers)) "Projections overload run $Run lacks bounded admission and rejection."
     }
     Positive $item.Runtime.MaximumOwnedStorageBytes "Projections run $Run owned storage peak"
     AtMost $item.Runtime.MaximumOwnedStorageBytes $limits.maximumOwnedStorageBytes "Projections $Profile run $Run owned storage peak"
