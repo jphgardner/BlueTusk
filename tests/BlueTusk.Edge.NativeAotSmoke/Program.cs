@@ -152,10 +152,13 @@ try
         { if (!ready.IsSuccessStatusCode || await ready.Content.ReadAsStringAsync() != "Healthy") { throw new InvalidOperationException("Native authorized operator readiness failed."); } }
         using (var denied = await anonymousHttp.GetAsync(new Uri(host.Endpoint, "/ops/edge")))
         { if ((int)denied.StatusCode != 401) { throw new InvalidOperationException("Native health authorization was bypassed."); } }
+        int installedServerVersion;
+        await using (var version = source.CreateCommand($"SELECT version FROM \"{serverSchema}\".metadata WHERE singleton"))
+        { installedServerVersion = (int)(await version.ExecuteScalarAsync() ?? throw new InvalidOperationException("Edge storage metadata is absent.")); }
         await using (var drift = source.CreateCommand($"UPDATE \"{serverSchema}\".metadata SET version=999")) { _ = await drift.ExecuteNonQueryAsync(); }
         using (var unhealthy = await http.GetAsync(new Uri(host.Endpoint, "/ops/edge")))
         { if ((int)unhealthy.StatusCode != 503 || await unhealthy.Content.ReadAsStringAsync() != "Unhealthy") { throw new InvalidOperationException("Native operator health did not reject durable format drift."); } }
-        await using (var restore = source.CreateCommand($"UPDATE \"{serverSchema}\".metadata SET version=3")) { _ = await restore.ExecuteNonQueryAsync(); }
+        await using (var restore = source.CreateCommand($"UPDATE \"{serverSchema}\".metadata SET version={installedServerVersion}")) { _ = await restore.ExecuteNonQueryAsync(); }
         await using (var drift = source.CreateCommand($"UPDATE \"{documentSchema}\".storage_metadata SET storage_version=999")) { _ = await drift.ExecuteNonQueryAsync(); }
         using (var unhealthy = await http.GetAsync(new Uri(host.Endpoint, "/ops/edge")))
         { if ((int)unhealthy.StatusCode != 503) { throw new InvalidOperationException("Native Documents operator probe ignored format drift."); } }
