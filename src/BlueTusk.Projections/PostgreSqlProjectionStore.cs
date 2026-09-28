@@ -586,10 +586,10 @@ public sealed partial class PostgreSqlProjectionStore
                 throw new ArgumentException("Every CDC change must retain its ordered transaction identity.", nameof(transaction));
             }
 
-            if (change is InsertChange insert && IsRetentionTable(insert.NewRow.Table) ||
-                change is UpdateChange update && (IsRetentionTable(update.OldRow.Table) || IsRetentionTable(update.NewRow.Table)) ||
-                change is DeleteChange delete && IsRetentionTable(delete.OldRow.Table) ||
-                change is TruncateChange truncate && truncate.Tables.Any(IsRetentionTable))
+            if (change is InsertChange markerInsert && IsRetentionTable(markerInsert.NewRow.Table) ||
+                change is UpdateChange markerUpdate && (IsRetentionTable(markerUpdate.OldRow.Table) || IsRetentionTable(markerUpdate.NewRow.Table)) ||
+                change is DeleteChange markerDelete && IsRetentionTable(markerDelete.OldRow.Table) ||
+                change is TruncateChange markerTruncate && markerTruncate.Tables.Any(IsRetentionTable))
             {
                 if (decoder is null || !decoder.TryDecode(change, out control) ||
                     control.Source != protectedRetention!.Source || transaction.Changes.Count != 1 || count != 1)
