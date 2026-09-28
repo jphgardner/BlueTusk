@@ -1,5 +1,5 @@
-using System.Globalization;
 using System.Data.Common;
+using System.Globalization;
 using System.Text;
 
 namespace BlueTusk.Events.Tests;
