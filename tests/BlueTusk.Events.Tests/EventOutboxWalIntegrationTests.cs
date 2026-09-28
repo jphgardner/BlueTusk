@@ -1,3 +1,4 @@
+using System.Globalization;
 using BlueTusk.Events.Streams;
 using BlueTusk.Replication;
 using BlueTusk.Streams;
@@ -106,7 +107,7 @@ public sealed class EventOutboxWalIntegrationTests
                     command.CommandText = $"SELECT count(*) FROM \"{fixture.Schema}\".published_retention_acknowledgements WHERE retention_epoch=@epoch AND target_incarnation=@incarnation";
                     var epoch = command.CreateParameter(); epoch.ParameterName = "epoch"; epoch.Value = intent.Epoch; command.Parameters.Add(epoch);
                     var target = command.CreateParameter(); target.ParameterName = "incarnation"; target.Value = incarnation; command.Parameters.Add(target);
-                    markerSeen = Convert.ToInt64(await command.ExecuteScalarAsync(token)) == 1;
+                    markerSeen = Convert.ToInt64(await command.ExecuteScalarAsync(token), CultureInfo.InvariantCulture) == 1;
                 }
                 Assert.True(markerSeen);
                 Assert.Equal(0, (await fixture.Store.ReadRetentionStatusAsync(stream, token)).RetainedThrough);
@@ -196,7 +197,7 @@ public sealed class EventOutboxWalIntegrationTests
                 Assert.Equal(0, await fixture.EffectCountAsync());
                 await using var check = fixture.DataSource.CreateCommand($"SELECT count(*) FROM \"{fixture.Schema}\".published_retention_acknowledgements WHERE retention_epoch=@epoch");
                 var epoch = check.CreateParameter(); epoch.ParameterName = "epoch"; epoch.Value = intent.Epoch; check.Parameters.Add(epoch);
-                Assert.Equal(0L, Convert.ToInt64(await check.ExecuteScalarAsync(token)));
+                Assert.Equal(0L, Convert.ToInt64(await check.ExecuteScalarAsync(token), CultureInfo.InvariantCulture));
             }
         }
         finally
