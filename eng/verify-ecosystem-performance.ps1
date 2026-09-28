@@ -146,36 +146,79 @@ function VerifyJobs($Root, $Configuration, $Run) {
     }
     return [string]$report.SourceSha256
 }
-function VerifyProjections($Root, $Configuration, $Run, $Source) {
+function VerifyProjections($Root, $Configuration, $Run, $Source, [string]$Profile) {
+    Require ($Profile -in @('capacity', 'soak')) "Projections run $Run has an unknown profile."
+    $limits = if ($Profile -eq 'capacity') { $Configuration.capacity } else { $Configuration.overload }
+    $scenarioName = if ($Profile -eq 'capacity') { 'sustainable-capacity' } else { 'overload-fairness' }
     $metadata = Json (Join-Path $Root 'campaign.json')
-    Require ($metadata.Profile -ceq 'soak' -and $metadata.Seconds -eq $Configuration.secondsPerRun -and $metadata.Repetitions -eq 1) "Projections run $Run has the wrong campaign configuration."
+    Require ($metadata.Profile -ceq $Profile -and $metadata.Seconds -eq $Configuration.secondsPerRun -and $metadata.Repetitions -eq 1) "Projections $Profile run $Run has the wrong campaign configuration."
     Require ($metadata.ImageDigest -ceq $budget.postgreSql18Image) "Projections run $Run used the wrong PostgreSQL image."
     Require ($metadata.Passed -eq $true -and $metadata.CandidateUnchanged -eq $true) "Projections run $Run failed or changed candidate."
     VerifySource (Json (Join-Path $Root 'source-before.json')) (Json (Join-Path $Root 'source-after.json'))
     $before = Json (Join-Path $Root 'source-before.json')
     Require ($before.sourceTreeSha256 -ceq $Source.sourceTreeSha256) "Projections run $Run is not bound to the gate candidate."
     $report = Json (Join-Path $Root 'run-1.json')
-    Require ($report.Profile -ceq 'soak' -and $report.Passed -eq $true -and @($report.Scenarios).Count -eq 1) "Projections run $Run is incomplete."
+    Require ($report.Profile -ceq $Profile -and $report.Passed -eq $true -and @($report.Scenarios).Count -eq 1) "Projections $Profile run $Run is incomplete."
     $item = $report.Scenarios[0]
-    Require ($item.Configuration.Name -ceq 'overload-fairness' -and $item.Configuration.Seconds -eq $Configuration.secondsPerRun -and $item.ExactStateVerified -eq $true) "Projections run $Run lacks exact-state verification."
-    Require ([string]$item.PostgreSql -match '^PostgreSQL 18\.') "Projections run $Run used the wrong PostgreSQL version."
+    Require ($item.Configuration.Name -ceq $scenarioName -and $item.Configuration.Seconds -eq $Configuration.secondsPerRun -and $item.ExactStateVerified -eq $true) "Projections $Profile run $Run lacks exact-state verification."
+    Require ([string]$item.PostgreSql -match '^18\.') "Projections run $Run used the wrong PostgreSQL version."
     AtLeast $item.MeasuredSeconds ($Configuration.secondsPerRun - 1) "Projections run $Run measured seconds"
-    Require ($item.Committed -gt 0 -and $item.WalTransactions -ge $item.Committed -and $item.InboxEffects -ge $item.Committed) "Projections run $Run has missing durable transactions."
-    AtLeast $item.TransactionsPerSecond $Configuration.minimumTransactionsPerSecond "Projections run $Run transactions/s"
-    foreach ($pair in @(@('Commit', 'maximumCommitP99Milliseconds'), @('Projection', 'maximumProjectionP99Milliseconds'), @('Inbox', 'maximumInboxP99Milliseconds'))) {
-        $latency = $item.($pair[0])
-        Require ($latency.Samples -gt 0) "Projections run $Run has no $($pair[0]) latency samples."
-        Positive $latency.P99Milliseconds "Projections run $Run $($pair[0]) p99"
-        AtMost $latency.P99Milliseconds $Configuration.($pair[1]) "Projections run $Run $($pair[0]) p99"
+    # One published WAL transaction may carry several committed operations.
+    Require ($item.Committed -gt 0 -and $item.WalTransactions -gt 0 -and
+        $item.StandbyFeedbackUpdates -eq $item.WalTransactions -and
+        $item.InboxEffects -ge $item.Committed) "Projections run $Run has missing durable WAL feedback or inbox effects."
+    # The historical report field is named TransactionsPerSecond but counts committed operations,
+    # including batched backlog operations, over the whole pipeline and subscriber drain.
+    AtLeast $item.TransactionsPerSecond $limits.minimumCommittedOperationsPerSecond "Projections $Profile run $Run committed operations/s"
+    foreach ($name in @('Commit', 'Projection', 'Inbox')) {
+        $latency = $item.$name
+        Require ($latency.Samples -gt 0) "Projections $Profile run $Run has no $name latency samples."
+        Positive $latency.P99Milliseconds "Projections $Profile run $Run $name p99"
+    }
+    AtMost $item.Commit.P99Milliseconds $limits.maximumCommitP99Milliseconds "Projections $Profile run $Run commit p99"
+    AtMost $item.DrainSeconds $limits.maximumDrainSeconds "Projections $Profile run $Run drain seconds"
+    $offer = $item.OfferWindow
+    Require ($null -ne $offer -and $offer.Offered -gt 0 -and $offer.Accepted -gt 0 -and
+        $offer.Accepted + $offer.Rejected -eq $offer.Offered -and $offer.Inbox -le $offer.Accepted -and
+        $offer.PendingInboxAtEnd -eq $offer.Accepted - $offer.Inbox) "Projections $Profile run $Run has inconsistent offer-window evidence."
+    if ($Profile -eq 'capacity') {
+        Require ($item.Configuration.Backlog -eq 0 -and $item.Configuration.OfferedPerSecond -eq 20 -and
+            $item.Configuration.PayloadBytes -eq 4096 -and $item.Configuration.Tenants -eq 32 -and
+            $item.Configuration.Fanout -eq 64) "Projections capacity run $Run has the wrong steady workload."
+        AtLeast ($offer.Offered / $item.MeasuredSeconds) $limits.minimumOfferedOperationsPerSecond "Projections capacity run $Run offered operations/s"
+        AtLeast ($offer.Accepted / $offer.Offered) $limits.minimumAdmissionRatio "Projections capacity run $Run admission ratio"
+        AtLeast $offer.AcceptedPerSecond $limits.minimumAcceptedOperationsPerSecond "Projections capacity run $Run accepted operations/s"
+        AtLeast $offer.InboxPerSecond $limits.minimumInboxOperationsPerSecondDuringOffer "Projections capacity run $Run inbox operations/s during offer"
+        AtLeast ($offer.Inbox / $offer.Accepted) $limits.minimumInboxCoverageDuringOffer "Projections capacity run $Run inbox coverage during offer"
+        AtMost $item.Projection.P99Milliseconds $limits.maximumProjectionP99Milliseconds "Projections capacity run $Run projection p99"
+        AtMost $item.Inbox.P99Milliseconds $limits.maximumInboxP99Milliseconds "Projections capacity run $Run inbox p99"
+        Require ($item.LiveCoverage.Samples -gt 0) "Projections capacity run $Run has no Live coverage latency samples."
+        Positive $item.LiveCoverage.P99Milliseconds "Projections capacity run $Run Live coverage p99"
+        AtMost $item.LiveCoverage.P99Milliseconds $limits.maximumLiveCoverageP99Milliseconds "Projections capacity run $Run Live coverage p99"
+    } else {
+        Require ($item.Configuration.Backlog -eq 10000 -and $item.Configuration.OfferedPerSecond -eq 1500 -and
+            $item.Configuration.PayloadBytes -eq 4096 -and $item.Configuration.Tenants -eq 32 -and
+            $item.Configuration.Fanout -eq 64 -and $item.Rejected -gt 0 -and
+            $item.PeakQueued -le $item.Configuration.QueueCapacity) "Projections overload run $Run lacks bounded admission and rejection."
     }
     Positive $item.Runtime.MaximumOwnedStorageBytes "Projections run $Run owned storage peak"
-    AtMost $item.Runtime.MaximumOwnedStorageBytes $Configuration.maximumOwnedStorageBytes "Projections run $Run owned storage peak"
-    AtMost $item.Runtime.MaximumRetainedSlotBytes $Configuration.maximumRetainedSlotBytes "Projections run $Run retained slot peak"
+    AtMost $item.Runtime.MaximumOwnedStorageBytes $limits.maximumOwnedStorageBytes "Projections $Profile run $Run owned storage peak"
+    AtMost $item.Runtime.MaximumRetainedSlotBytes $limits.maximumRetainedSlotBytes "Projections $Profile run $Run retained slot peak"
     $walDelta = (Number $item.After.WalBytes 'Projections after WAL bytes') - (Number $item.Before.WalBytes 'Projections before WAL bytes')
     Require ($walDelta -ge 0) "Projections run $Run WAL counter regressed."
-    AtMost ($walDelta / $item.Committed) $Configuration.maximumWalBytesPerTransaction "Projections run $Run WAL bytes/transaction"
+    AtMost ($walDelta / $item.Committed) $limits.maximumWalBytesPerCommittedOperation "Projections $Profile run $Run WAL bytes/committed operation"
     $windows = @($item.ServiceWindows)
     Require ($windows.Count -ge [math]::Floor($Configuration.secondsPerRun / 15) -and $windows[-1].ElapsedSeconds -ge $Configuration.secondsPerRun - 20) "Projections run $Run lacks continuous service-window evidence."
+    $physical = @($windows | Where-Object { $_.OwnedStorageBytes -gt 0 -and $_.PhysicalSampleAgeSeconds -ne $null -and $_.PhysicalSampleAgeSeconds -le 30 })
+    Require ($physical.Count -ge [math]::Floor($Configuration.secondsPerRun / 15) -and $physical[-1].ElapsedSeconds -ge $Configuration.secondsPerRun - 20) "Projections $Profile run $Run lacks current physical samples."
+    AtMost (($physical | Measure-Object -Property OwnedStorageBytes -Maximum).Maximum) $limits.maximumOwnedStorageBytes "Projections $Profile run $Run sampled owned storage"
+    AtMost (($physical | Measure-Object -Property RetainedSlotBytes -Maximum).Maximum) $limits.maximumRetainedSlotBytes "Projections $Profile run $Run sampled retained slot"
+    if ($Profile -eq 'soak') {
+        $middle = @($windows | Where-Object { $_.ElapsedSeconds -ge $Configuration.secondsPerRun / 2 })[0]
+        for ($tenant = 0; $tenant -lt $item.Configuration.Tenants; $tenant++) {
+            Require ($windows[-1].Delivered[$tenant] -gt $middle.Delivered[$tenant]) "Projections overload run $Run starved tenant $tenant in the final half."
+        }
+    }
 }
 function VerifyDocuments($Root, $Configuration, $Run) {
     $path = Join-Path $Root 'documents-load.json'
@@ -226,7 +269,8 @@ function VerifyEvidence($Source) {
     $jobFingerprints = @()
     for ($run = 1; $run -le $budget.repetitions; $run++) {
         $jobFingerprints += VerifyJobs (Join-Path $evidence "run-$run/jobs-workflows") $budget.jobsWorkflows $run
-        VerifyProjections (Join-Path $evidence "run-$run/projections") $budget.projections $run $Source
+        VerifyProjections (Join-Path $evidence "run-$run/projections-capacity") $budget.projections $run $Source 'capacity'
+        VerifyProjections (Join-Path $evidence "run-$run/projections-overload") $budget.projections $run $Source 'soak'
         VerifyDocuments (Join-Path $evidence "run-$run/documents") $budget.documents $run
     }
     Require (@($jobFingerprints | Sort-Object -Unique).Count -eq 1) 'Jobs/Workflows repeats used different source fingerprints.'
@@ -260,21 +304,29 @@ try {
         SnapshotBinaries (Join-Path $evidence 'binary-snapshot')
         for ($run = 1; $run -le $budget.repetitions; $run++) {
             $runRoot = Join-Path $evidence "run-$run"
-            foreach ($name in @('jobs-workflows', 'projections', 'documents')) { New-Item -ItemType Directory -Path (Join-Path $runRoot $name) -Force | Out-Null }
+            foreach ($name in @('jobs-workflows', 'projections-capacity', 'projections-overload', 'documents')) { New-Item -ItemType Directory -Path (Join-Path $runRoot $name) -Force | Out-Null }
             $jobs = Join-Path $runRoot 'jobs-workflows'
             InvokeCampaign "Jobs/Workflows run $run" {
                 & ./eng/jobs-storage-campaign.ps1 -Version 15 -Seconds $budget.jobsWorkflows.secondsPerProduct -PayloadMode SeededHighEntropy -NoBuild -Output (Join-Path $jobs 'jobs-workflows.json')
             } (Join-Path $jobs 'campaign.log')
-            $projections = Join-Path $runRoot 'projections'
-            InvokeCampaign "Projections run $run" {
-                & ./docs/projections/evidence/run-load.ps1 -Profile soak -Seconds $budget.projections.secondsPerRun -Repetitions 1 -NoBuild -OutputDirectory $projections
-            } (Join-Path $projections 'campaign.log')
+            [void](VerifyJobs $jobs $budget.jobsWorkflows $run)
+            VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
+            foreach ($profile in @('capacity', 'soak')) {
+                $name = if ($profile -eq 'capacity') { 'projections-capacity' } else { 'projections-overload' }
+                $projections = Join-Path $runRoot $name
+                InvokeCampaign "Projections $profile run $run" {
+                    & ./docs/projections/evidence/run-load.ps1 -Profile $profile -Seconds $budget.projections.secondsPerRun -Repetitions 1 -NoBuild -OutputDirectory $projections
+                } (Join-Path $projections 'campaign.log')
+                VerifyProjections $projections $budget.projections $run $source $profile
+                VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
+            }
             $documents = Join-Path $runRoot 'documents'
             InvokeCampaign "Documents run $run" {
                 & ./eng/run-documents-load.ps1 -CellSeconds $budget.documents.cellSeconds -SustainedSeconds $budget.documents.sustainedSeconds `
                     -MaximumDatabaseBytes $budget.documents.maximumDatabaseBytes -MinimumFilesystemAvailableBytes $budget.documents.minimumFilesystemAvailableBytes `
                     -IdleDrainSeconds $budget.documents.idleDrainSeconds -StorageMode $budget.documents.storageMode -NoBuild -OutputDirectory $documents
             } (Join-Path $documents 'campaign.log')
+            VerifyDocuments $documents $budget.documents $run
             VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
         }
         CaptureSource (Join-Path $evidence 'source-after.json')

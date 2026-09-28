@@ -19,8 +19,8 @@ internal static class Program
             return summaries.Length > 0 && summaries.All(static summary => !summary.HasCriticalValidationErrors &&
                 summary.Reports.Length > 0 && summary.Reports.All(static report => report.Success)) ? 0 : 1;
         }
-        if (profile is not ("quick" or "matrix" or "soak" or "promotion")) { throw new ArgumentException("Profile must be quick, matrix, soak or promotion."); }
-        var seconds = args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : profile == "soak" ? 600 : 5;
+        if (profile is not ("quick" or "matrix" or "soak" or "capacity" or "promotion")) { throw new ArgumentException("Profile must be quick, matrix, soak, capacity or promotion."); }
+        var seconds = args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : profile is "soak" or "capacity" ? 600 : 5;
         ArgumentOutOfRangeException.ThrowIfLessThan(seconds, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(seconds, 3600);
         var output = Path.GetFullPath(args.Length > 2 ? args[2] : "artifacts/projections-load/report.json");
@@ -33,6 +33,7 @@ internal static class Program
         {
             "matrix" => Matrix(seconds),
             "soak" => [new LoadCase("overload-fairness", seconds, 4096, 32, 16, 10_000, 64, 1500, 6, 256, 150_000, 600)],
+            "capacity" => [new LoadCase("sustainable-capacity", seconds, 4096, 32, 16, 0, 64, 20, 6, 256, 150_000, 120)],
             "promotion" => [new LoadCase("physical-backlog", seconds, 4096, 8, 4, 2_000, 16, 400, 12, 128, 30_000, 240)],
             _ => [new LoadCase("smoke", seconds, smokePayload, 2, 2, 100, 4, 100, 12, 64, 10_000, 90)]
         };

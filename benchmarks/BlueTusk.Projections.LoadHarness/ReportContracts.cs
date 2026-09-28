@@ -27,14 +27,19 @@ internal sealed record RecoveryObservation(string Mode, uint BeforeTimeline, uin
     long PendingBeforePromotion, double PromotionMilliseconds, double RebuildMilliseconds, bool OldOwnerRejected,
     bool TimelineRejected, bool ReconnectReset, bool RemoteApplyVerified, long PrunedRetiredRows, int RetentionCalls);
 internal sealed record ServiceWindow(double ElapsedSeconds, long[] Offered, long[] Rejected, long[] Committed,
-    long[] Delivered, int Queued, int PoolBusy, int PoolWaiting);
+    long[] Delivered, int Queued, int PoolBusy, int PoolWaiting, long RetainedSlotBytes,
+    long OwnedStorageBytes, double? PhysicalSampleAgeSeconds);
+internal sealed record OfferWindowReport(long Offered, long Accepted, long Rejected, long Committed,
+    long Projected, long Inbox, long LiveCovered, long PendingInboxAtEnd, double AcceptedPerSecond,
+    double InboxPerSecond);
 internal sealed record ScenarioReport(LoadCase Configuration, string Scope, string PostgreSql, double SetupSeconds,
     double MeasuredSeconds, double DrainSeconds, double PipelineSeconds, double RuntimeSeconds, double VerificationSeconds,
     long Offered, long Rejected, long Committed, long WalTransactions, long StandbyFeedbackUpdates, long InboxEffects, long LiveFrames,
     long LiveReplayFrames, long LiveFanOutFrames, long DuplicateRetries, long LeaseRecoveries, int PeakQueued, long PeakQueuedPayloadBytes,
     double TransactionsPerSecond, LatencySummary Commit, LatencySummary Projection, LatencySummary Inbox,
     LatencySummary LiveCoverage, TenantReport[] Tenants, RuntimeObservation Runtime, StorageObservation Before,
-    StorageObservation After, RecoveryObservation? Recovery, ServiceWindow[] ServiceWindows, bool ExactStateVerified);
+    StorageObservation After, RecoveryObservation? Recovery, ServiceWindow[] ServiceWindows, OfferWindowReport OfferWindow,
+    bool ExactStateVerified);
 internal sealed record LoadEvent(Guid OperationId, string Tenant, string Order, bool CustomerChange, string Padding);
 
 [JsonSerializable(typeof(CampaignReport))]

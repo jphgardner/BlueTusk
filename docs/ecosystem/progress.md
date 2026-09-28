@@ -8,10 +8,10 @@ production qualified.
 
 | Family | Implemented and directly exercised | Material work still open |
 | --- | --- | --- |
-| Events | Transactional outbox/inbox, typed routing, replay and Streams adapter; 44 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign | Longer retention, large producer/consumer fleets, upgrades and disaster recovery |
+| Events | Transactional outbox/inbox, typed routing, replay and Streams adapter; guarded local-only archive/prune with durable ID fence; 50 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign | Published-outbox retention, large producer/consumer fleets, upgrades and disaster recovery |
 | Jobs | Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion | Representative multi-day retention/capacity and operations under repeated failure |
 | Documents | Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery | Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits |
-| Projections | Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; 34 live tests per version, 100,000-effect exact-state campaign, 600-second overload and physical promotion | Longer independent-host load, retention/format upgrades and wider failure distributions |
+| Projections | Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; selective dependency reconciliation; 35 live PostgreSQL 17 tests, 100,000-effect exact-state campaign, 600-second overload and physical promotion | Longer independent-host steady/overload load, retention/format upgrades and wider failure distributions |
 | Search | Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution | Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets |
 | Schema | Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests per version and native execution | Destructive/partition-parent migrations, invalid-index repair automation and broad upgrade operations |
 | Sql | Runtime contracts, incremental generator and installed catalogue-validation CLI; 33 runtime, 31 generator and 8 CLI tests per version, native and fresh package-only consumer | Broader PostgreSQL type/shape coverage and multi-version upgrade receipts |
@@ -25,7 +25,7 @@ production qualified.
   Layout verification finds 73 ordered solution folders; two embedded template
   projects are intentionally excluded. The source supply-chain gate finds pinned
   actions and CI images across 15 workflows. All 16 API family budgets pass,
-  covering 16,974 public signatures.
+  covering 17,040 public signatures.
 - An earlier candidate's combined database gate passed **419 tests in 15 projects** with zero
   failures or skips on each PostgreSQL **15, 16, 17 and 18**. All four runs used
   the same unchanged candidate source. PostgreSQL 18 additionally passed five
@@ -40,7 +40,7 @@ production qualified.
   The fresh installed Schema/SQL tools and a separate package-only SQL consumer
   pass relation and catalogue receipt modes, including qualified enum/domain
   round trips.
-- All ten candidate package sets verify at clean commit `a837001`: 32 NuGet
+- All ten candidate package sets verify at clean commit `40c757a`: 32 NuGet
   packages, 31 symbol packages and one Edge npm package. CycloneDX 1.6, SPDX
   2.3 and provenance checks cover all 64 archives and 318 components. This
   verifies archive metadata and content,
@@ -54,6 +54,18 @@ production qualified.
   ownership. Jobs/Workflows have storage/fault and physical-promotion campaigns.
   Their evidence lives under ignored `artifacts/` in this worktree; the
   corresponding product documents explain measured scope and limitations.
+- Events' guarded local-only archive and retention stage passes 50 tests on each
+  PostgreSQL version 15–18, including archived retry identity, lagging replay,
+  failed archive, published-outbox refusal and a direct old-client insert after
+  pruning. It does not prune the outbox published to Projections or bound the
+  permanent identity and inbox ledgers.
+- A separate 60-second Projections steady-load diagnostic run accepted and
+  delivered all 1,200 offers with zero rejection and
+  129 ms projection / 132 ms inbox p99. The source fingerprint remained stable,
+  but the worktree was dirty; neither this short run nor the earlier overload
+  run is an exact-commit 30-minute qualification. Selective dependency
+  reconciliation passes all 35 Projections tests on PostgreSQL 17; its
+  performance effect has not been measured in a controlled comparison.
 - Jobs/Workflows now offer distinct seeded 1 KiB payloads in the physical
   storage profile. A 600-second PostgreSQL 15 shared-host development campaign
   passed exact effects, terminal pruning and all five recovery faults: Jobs
@@ -87,9 +99,11 @@ production qualified.
   passed. It has not yet passed repeated multi-hour capacity and failover gates;
   existing inline-body users still have the measured growth problem.
 - The [manual exact-commit performance gate](performance.md) now requires two
-  30-minute campaigns each for Jobs, Workflows, Projections and Documents with
-  declared throughput, p99, WAL and storage budgets. Its clean-SHA preflight
-  passed, but the multi-hour gate itself has not run.
+  30-minute campaigns each for Jobs, Workflows, Documents, and both steady and
+  overload Projections profiles with profile-specific admission, throughput,
+  p99, WAL and storage budgets. A previous clean-SHA preflight passed, but the
+  multi-hour gate has not passed; setup and verifier defects found during local
+  attempts were corrected before another qualification run.
 
 ## Production qualification still required
 

@@ -126,12 +126,13 @@ internal sealed partial class Scenario : IAsyncDisposable
         using var pipeline = CancellationTokenSource.CreateLinkedTokenSource(token);
         var wal = ConsumeWalAsync(pipeline.Token);
         var lives = RefreshLiveAsync(pipeline.Token);
-        var service = ObserveServiceAsync(pipeline.Token);
+        var service = ObserveServiceAsync(probe, pipeline.Token);
         var monitor = MonitorAsync([wal, lives, service, probe.Completion], pipeline);
         var queue = Channel.CreateBounded<Operation>(new BoundedChannelOptions(_configuration.QueueCapacity)
         { SingleWriter = true, SingleReader = _configuration.Writers == 1, FullMode = BoundedChannelFullMode.Wait });
         var writers = Enumerable.Range(0, _configuration.Writers).Select(_ => ProduceAsync(queue.Reader, pipeline.Token)).ToArray();
         var offeredStarted = Stopwatch.GetTimestamp();
+        long offeredEnded = 0;
         TimeSpan offeredElapsed;
         long drain;
         // Subscriber buffers drain after publishers stop, so this deadline must survive controlled
@@ -141,7 +142,8 @@ internal sealed partial class Scenario : IAsyncDisposable
         {
             await OfferAsync(queue.Writer, offeredStarted, pipeline.Token);
             queue.Writer.Complete();
-            offeredElapsed = Stopwatch.GetElapsedTime(offeredStarted);
+            offeredEnded = Stopwatch.GetTimestamp();
+            offeredElapsed = Stopwatch.GetElapsedTime(offeredStarted, offeredEnded);
             drain = Stopwatch.GetTimestamp();
             drainDeadline.CancelAfter(TimeSpan.FromSeconds(_configuration.DrainSeconds));
             await Task.WhenAll(writers).WaitAsync(drainDeadline.Token);
@@ -174,6 +176,21 @@ internal sealed partial class Scenario : IAsyncDisposable
         // A new query transaction refreshes statistics snapshots; no global RESET/CHECKPOINT/VACUUM.
         var after = await DatabaseProbe.StorageAsync(_source, _schema, _eventsSchema, token);
         var committed = _operations.Values.Count(static operation => Volatile.Read(ref operation.Committed) != 0);
+        var offeredRows = _operations.Values.Where(operation => operation.Offered >= offeredStarted).ToArray();
+        long CompletedDuringOffer(Func<Operation, long> read) => offeredRows.LongCount(row =>
+        {
+            var timestamp = read(row);
+            return timestamp != 0 && timestamp <= offeredEnded;
+        });
+        var offeredDuring = _offered.Sum() - _configuration.Backlog;
+        var rejectedDuring = _rejected.Sum();
+        Program.Check(offeredDuring == offeredRows.LongLength + rejectedDuring, "offer-window admission is exact");
+        var inboxDuring = CompletedDuringOffer(static row => Volatile.Read(ref row.Inbox));
+        var offerWindow = new OfferWindowReport(offeredDuring, offeredRows.LongLength, rejectedDuring,
+            CompletedDuringOffer(static row => Volatile.Read(ref row.Committed)),
+            CompletedDuringOffer(static row => Volatile.Read(ref row.Projected)), inboxDuring,
+            CompletedDuringOffer(static row => Volatile.Read(ref row.Live)), offeredRows.LongLength - inboxDuring,
+            offeredRows.LongLength / offeredElapsed.TotalSeconds, inboxDuring / offeredElapsed.TotalSeconds);
         var tenants = new List<TenantReport>();
         for (var index = 0; index < _configuration.Tenants; index++)
         {
@@ -191,7 +208,7 @@ internal sealed partial class Scenario : IAsyncDisposable
             _duplicateRetries, _leaseRecoveries, _peakQueued, _peakQueueBytes, committed / pipelineSeconds,
             Latency(_operations.Values, static row => row.Committed), Latency(_operations.Values, static row => row.Projected),
             Latency(_operations.Values, static row => row.Inbox), Latency(_operations.Values, static row => row.Live), tenants.ToArray(),
-            runtime, before, after, recovery, _serviceWindows.ToArray(), true);
+            runtime, before, after, recovery, _serviceWindows.ToArray(), offerWindow, true);
     }
 
     private async Task InitializeAsync(CancellationToken token)
@@ -395,7 +412,7 @@ internal sealed partial class Scenario : IAsyncDisposable
             values[(int)Math.Ceiling(values.Length * .95) - 1], values[(int)Math.Ceiling(values.Length * .99) - 1], values[^1]);
     }
 
-    private async Task ObserveServiceAsync(CancellationToken token)
+    private async Task ObserveServiceAsync(DatabaseProbe probe, CancellationToken token)
     {
         var started = Stopwatch.GetTimestamp();
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
@@ -404,8 +421,10 @@ internal sealed partial class Scenario : IAsyncDisposable
             Program.Check(_serviceWindows.Count < 512, "service-window telemetry bound");
             static long[] Read(long[] values) => Enumerable.Range(0, values.Length).Select(index => Interlocked.Read(ref values[index])).ToArray();
             var pool = _source.GetPoolStatistics();
+            var physical = probe.CurrentPhysical();
             _serviceWindows.Add(new(Stopwatch.GetElapsedTime(started).TotalSeconds, Read(_offered), Read(_rejected),
-                Read(_committedByTenant), Read(_deliveredByTenant), Math.Max(0, Volatile.Read(ref _queued)), pool.Busy, pool.Waiting));
+                Read(_committedByTenant), Read(_deliveredByTenant), Math.Max(0, Volatile.Read(ref _queued)), pool.Busy, pool.Waiting,
+                physical.RetainedSlotBytes, physical.OwnedStorageBytes, physical.AgeSeconds));
         }
         try { do { Record(); } while (await timer.WaitForNextTickAsync(token)); }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { Record(); }

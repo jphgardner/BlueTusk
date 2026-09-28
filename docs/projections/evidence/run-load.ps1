@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('quick','matrix','soak','promotion')][string]$Profile = 'quick',
+    [ValidateSet('quick','matrix','soak','capacity','promotion')][string]$Profile = 'quick',
     [int]$Seconds = 0,
     [int]$PrimaryPort = 55718,
     [int]$StandbyPort = 55719,
@@ -11,7 +11,7 @@ param(
     [switch]$NoBuild
 )
 $ErrorActionPreference = 'Stop'
-if ($Seconds -eq 0) { $Seconds = if ($Profile -eq 'soak') { 600 } else { 5 } }
+if ($Seconds -eq 0) { $Seconds = if ($Profile -in @('soak','capacity')) { 600 } else { 5 } }
 if ($Seconds -lt 1 -or $Seconds -gt 3600) { throw 'Seconds must be between 1 and 3600.' }
 if ($Repetitions -eq 0) { $Repetitions = if ($Profile -eq 'promotion') { 3 } else { 1 } }
 if ($Repetitions -lt 1 -or $Repetitions -gt 10) { throw 'Repetitions must be between 1 and 10.' }

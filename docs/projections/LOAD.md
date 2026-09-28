@@ -12,6 +12,7 @@ Run from the checkout using PowerShell 7, .NET 10, Python 3 and Docker:
 ./docs/projections/evidence/run-load.ps1 -Profile quick -SmokePayloadBytes 65536
 ./docs/projections/evidence/run-load.ps1 -Profile matrix -Seconds 10
 ./docs/projections/evidence/run-load.ps1 -Profile soak -Seconds 600
+./docs/projections/evidence/run-load.ps1 -Profile capacity -Seconds 600
 ./docs/projections/evidence/run-load.ps1 -Profile promotion -Repetitions 3
 dotnet run --project benchmarks/BlueTusk.Projections.LoadHarness -c Release -- micro --job short --filter '*' --artifacts artifacts/projections-load/micro
 ```
@@ -89,6 +90,13 @@ The 600-second profile combines 32 tenants, 16 writers, a six-connection pool, 4
 backlog recovery and per-tenant service are reported explicitly; this is not a promise of fairness or
 latency under every application-defined hot-key lock pattern.
 
+The separate `capacity` profile uses the same 32 tenants, 16 writers, six-connection pool, 4 KiB
+payloads, fanout 64 and ten-hot-to-one-cold offer mix, but starts without a backlog and schedules
+20 operations/second. It preserves the complete SQL/Streams/Events/Live pipeline and final exact-state
+verification. Its lower offered rate is a conservative candidate for steady-service latency measurement,
+not an asserted maximum. Admission and delivery rates must be checked against the measured offer
+window; a successful final drain alone does not show that the pipeline kept up while offers ran.
+
 The harness verifies every accepted operation against durable SQL: exact operation/outbox/inbox/effect
 counts and identities; tenant isolation; contiguous event sequence count/min/max/sum; every joined
 document through bounded keyset pages; tenant aggregate equals authoritative order amounts and the
@@ -103,10 +111,16 @@ the scenario configuration, counts, admission rejection, overall throughput, off
 projection, inbox and Live coverage P50/P95/P99/max, per-tenant results, and cumulative ten-second
 service windows. `MeasuredSeconds` is the observed offering period; `PipelineSeconds` includes initial
 backlog/recovery and ends at verified subscriber drain.
-`TransactionsPerSecond` divides committed transactions by `PipelineSeconds`, so it includes
+`TransactionsPerSecond` divides committed operations by `PipelineSeconds`, so it includes
 backlog recovery and subscriber drain. To estimate accepted throughput during the scheduled
-offering period, subtract seeded backlog commits from the committed total before dividing by
+offering period, subtract seeded backlog operations from the committed total before dividing by
 `MeasuredSeconds`; the two rates answer different questions.
+`OfferWindow` records actual scheduled offers, accepted and rejected operations, and committed,
+projected, inbox-settled and Live-covered operations whose boundary timestamps occurred by the exact
+end of the offer period. Its accepted and inbox rates divide those counts by `MeasuredSeconds`;
+`PendingInboxAtEnd` is accepted minus inbox-settled work at that boundary. These fields distinguish
+steady service from eventual success after a long drain. The historical `TransactionsPerSecond` name
+is an operation throughput measure: backlog batches can contain several operations per WAL transaction.
 `RuntimeSeconds` covers the concurrent pipeline and drain only; `VerificationSeconds` separately records
 final SQL/model/reconnect checks and report statistics. Live replay and fan-out frame totals are reported
 separately. Difference adjacent service windows to examine hot/cold progress during saturation.
@@ -120,6 +134,11 @@ owned table heap/index/total bytes, live/dead tuple estimates and vacuum/analyze
 samples logical-slot retained WAL and owned table growth, failing at 8 GiB retained WAL or 12 GiB owned
 table storage. Docker's raw JSONL statistics capture fixture server CPU/memory/block/network activity
 in sampling order. PostgreSQL statistics are estimates and can lag flushes; they are never globally reset.
+Each bounded ten-second `ServiceWindow` also includes the most recent retained-slot and owned-relation
+bytes and that PostgreSQL probe sample's age. Use their time series, not only maxima, to inspect
+physical progression. At most 512 windows are retained, covering the bounded one-hour offering and
+maximum drain. The probe includes the fixture's projection and Events schemas; `pg_total_relation_size`
+includes each relation's TOAST and index storage.
 Only the fresh exclusive fixture makes server-global deltas attributable to this campaign. Other host
 workloads must still be disclosed, since container CPU limits do not isolate the client or host storage.
 
@@ -128,6 +147,10 @@ is measured, not disguised as bounded retention. Projection derived-version clea
 trial deletes at most 37 total rows per transaction and proves the retirement fence and event identities
 survive. The BenchmarkDotNet micro profile separately measures source-generated event/document
 encoding/decoding and immutable event admission with allocation diagnostics; it is not database capacity.
+The Live replay store's window is 30 minutes in both `soak` and `capacity`; neither profile invokes
+replay pruning. A 30-minute campaign therefore measures a finite accumulation horizon and cannot
+establish a replay-storage plateau. A separate longer maintenance trial with explicit pruning and
+reconnect-after-expiry assertions is needed for that claim.
 
 ## Promotion under acknowledged backlog
 

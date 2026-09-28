@@ -17,8 +17,16 @@ internal sealed class DatabaseProbe : IAsyncDisposable
     private readonly int[] _collections = [GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2)];
     private readonly Task _sampling;
     private long _workingSet, _managed, _clients, _locks, _waiting, _retained, _storage;
+    private long _currentRetained, _currentStorage, _lastPhysicalSample;
     private int _total, _busy, _poolWaiting;
     internal Task Completion => _sampling;
+
+    internal (long RetainedSlotBytes, long OwnedStorageBytes, double? AgeSeconds) CurrentPhysical()
+    {
+        var sampledAt = Interlocked.Read(ref _lastPhysicalSample);
+        return (Interlocked.Read(ref _currentRetained), Interlocked.Read(ref _currentStorage),
+            sampledAt == 0 ? null : Stopwatch.GetElapsedTime(sampledAt).TotalSeconds);
+    }
 
     internal DatabaseProbe(BlueTuskDataSource source, string schema, string events, string slot)
     {
@@ -61,8 +69,14 @@ internal sealed class DatabaseProbe : IAsyncDisposable
                 await using var reader = await command.ExecuteReaderAsync(token);
                 Program.Check(await reader.ReadAsync(token), "bounded database probe row");
                 _clients = Math.Max(_clients, reader.GetInt64(0)); _locks = Math.Max(_locks, reader.GetInt64(1));
-                _waiting = Math.Max(_waiting, reader.GetInt64(2)); _retained = Math.Max(_retained, reader.GetInt64(3));
-                _storage = Math.Max(_storage, reader.GetInt64(4));
+                _waiting = Math.Max(_waiting, reader.GetInt64(2));
+                var retained = reader.GetInt64(3);
+                var storage = reader.GetInt64(4);
+                _retained = Math.Max(_retained, retained);
+                _storage = Math.Max(_storage, storage);
+                Interlocked.Exchange(ref _currentRetained, retained);
+                Interlocked.Exchange(ref _currentStorage, storage);
+                Interlocked.Exchange(ref _lastPhysicalSample, Stopwatch.GetTimestamp());
                 Program.Check(_retained < 8L * 1024 * 1024 * 1024 && _storage < 12L * 1024 * 1024 * 1024, "owned WAL/storage safety ceiling");
             } while (await timer.WaitForNextTickAsync(token));
         }

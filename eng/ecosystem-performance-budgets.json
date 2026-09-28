@@ -17,13 +17,30 @@
   },
   "projections": {
     "secondsPerRun": 1800,
-    "minimumTransactionsPerSecond": 5,
-    "maximumCommitP99Milliseconds": 5000,
-    "maximumProjectionP99Milliseconds": 10000,
-    "maximumInboxP99Milliseconds": 5000,
-    "maximumOwnedStorageBytes": 2147483648,
-    "maximumRetainedSlotBytes": 1073741824,
-    "maximumWalBytesPerTransaction": 8388608
+    "capacity": {
+      "minimumCommittedOperationsPerSecond": 18,
+      "minimumOfferedOperationsPerSecond": 19,
+      "minimumAcceptedOperationsPerSecond": 19,
+      "minimumInboxOperationsPerSecondDuringOffer": 18,
+      "minimumAdmissionRatio": 0.99,
+      "minimumInboxCoverageDuringOffer": 0.95,
+      "maximumDrainSeconds": 60,
+      "maximumCommitP99Milliseconds": 1000,
+      "maximumProjectionP99Milliseconds": 2000,
+      "maximumInboxP99Milliseconds": 2000,
+      "maximumLiveCoverageP99Milliseconds": 3000,
+      "maximumOwnedStorageBytes": 2147483648,
+      "maximumRetainedSlotBytes": 268435456,
+      "maximumWalBytesPerCommittedOperation": 262144
+    },
+    "overload": {
+      "minimumCommittedOperationsPerSecond": 30,
+      "maximumDrainSeconds": 600,
+      "maximumCommitP99Milliseconds": 5000,
+      "maximumOwnedStorageBytes": 4294967296,
+      "maximumRetainedSlotBytes": 2147483648,
+      "maximumWalBytesPerCommittedOperation": 262144
+    }
   },
   "documents": {
     "storageMode": "AttachedContent",
