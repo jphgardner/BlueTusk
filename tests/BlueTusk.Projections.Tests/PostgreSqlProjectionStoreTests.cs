@@ -103,6 +103,57 @@ public sealed class PostgreSqlProjectionStoreTests
     }
 
     [Fact]
+    public async Task ChangingOrderCustomerReconcilesFanOutToTheNewCustomer()
+    {
+        await using var fixture = await ProjectionDatabase.CreateAsync();
+        var (lease, definition) = await fixture.ReadyAsync();
+        await fixture.Store.PromoteAsync(lease, new BlueTuskLogSequenceNumber(100), null);
+        await using (var added = fixture.Delivery(200,
+            id => new InsertChange(id, ProjectionDatabase.Customer("other", "first", "Bob"))))
+        {
+            await fixture.Store.ApplyAsync(lease, definition, added.Transaction);
+        }
+
+        await using (var moved = fixture.Delivery(300,
+            id => new UpdateChange(id, ProjectionDatabase.Order("1", "first", "customer", 10m),
+                ProjectionDatabase.Order("1", "first", "other", 10m), new ChangedColumnSet(true, [2]))))
+        {
+            await fixture.Store.ApplyAsync(lease, definition, moved.Transaction);
+        }
+
+        Assert.Equal("Bob", (await fixture.ReadAsync())!.CustomerName);
+        await using (var connection = await fixture.DataSource.OpenConnectionAsync())
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = $"""
+                SELECT string_agg(key_id, ',' ORDER BY key_id)
+                FROM "{fixture.Schema}".dependencies
+                WHERE projection='orders' AND version=1 AND tenant_id='first'
+                    AND document_key='1' AND table_id='public.customers'
+                """;
+            Assert.Equal("other", await command.ExecuteScalarAsync());
+        }
+
+        await using (var oldCustomer = fixture.Delivery(400,
+            id => new UpdateChange(id, ProjectionDatabase.Customer("customer", "first", "Alice"),
+                ProjectionDatabase.Customer("customer", "first", "Alicia"), new ChangedColumnSet(true, [2]))))
+        {
+            await fixture.Store.ApplyAsync(lease, definition, oldCustomer.Transaction);
+        }
+
+        Assert.Equal("Bob", (await fixture.ReadAsync())!.CustomerName);
+        await using (var newCustomer = fixture.Delivery(500,
+            id => new UpdateChange(id, ProjectionDatabase.Customer("other", "first", "Bob"),
+                ProjectionDatabase.Customer("other", "first", "Bobby"), new ChangedColumnSet(true, [2]))))
+        {
+            await fixture.Store.ApplyAsync(lease, definition, newCustomer.Transaction);
+        }
+
+        Assert.Equal("Bobby", (await fixture.ReadAsync())!.CustomerName);
+        Assert.Equal(10m, await fixture.AggregateAsync());
+    }
+
+    [Fact]
     public async Task CdcBatchStagesAllSourceTablesBeforeRenderingJoinAndCommitsAggregateExactlyOnce()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();

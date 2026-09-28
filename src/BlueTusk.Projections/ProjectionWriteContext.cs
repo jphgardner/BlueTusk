@@ -37,7 +37,7 @@ public sealed class ProjectionWriteContext
     internal int InvalidationCount => _invalidations;
     internal long WriteBytes => _writeBytes;
 
-    /// <summary>Bulk-replace documents and all dependencies with three SQL commands, bounded by count and bytes.</summary>
+    /// <summary>Bulk-upsert documents and reconcile dependencies with three SQL commands, bounded by count and bytes.</summary>
     public async ValueTask UpsertManyAsync(IReadOnlyList<ProjectionDocumentWrite> documents,
         CancellationToken cancellationToken = default)
     {
@@ -113,14 +113,18 @@ public sealed class ProjectionWriteContext
             ON CONFLICT(projection, version, tenant_id, document_key) DO UPDATE SET payload = EXCLUDED.payload
             """, cancellationToken, ("batch", batch)).ConfigureAwait(false);
         await ExecuteAsync($"""
-            DELETE FROM {_schema}.dependencies d USING jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(tenant_id text, document_key text)
+            DELETE FROM {_schema}.dependencies d USING jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(tenant_id text, document_key text, dependencies jsonb)
             WHERE d.projection = @projection AND d.version = @version AND d.tenant_id = i.tenant_id AND d.document_key = i.document_key
+                AND NOT EXISTS (
+                    SELECT 1 FROM jsonb_to_recordset(i.dependencies) AS wanted(table_id text, key_id text)
+                    WHERE wanted.table_id = d.table_id AND wanted.key_id = d.key_id)
             """, cancellationToken, ("batch", batch)).ConfigureAwait(false);
         await ExecuteAsync($"""
             INSERT INTO {_schema}.dependencies(projection, version, tenant_id, document_key, table_id, key_id)
             SELECT @projection, @version, i.tenant_id, i.document_key, d.table_id, d.key_id
             FROM jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(tenant_id text, document_key text, dependencies jsonb)
             CROSS JOIN LATERAL jsonb_to_recordset(i.dependencies) AS d(table_id text, key_id text)
+            ON CONFLICT(projection, version, tenant_id, document_key, table_id, key_id) DO NOTHING
             """, cancellationToken, ("batch", batch)).ConfigureAwait(false);
     }
 
