@@ -40,7 +40,7 @@
       "apiExemptProjects": []
     },
     "Events": {
-      "maximumSignatures": 184,
+      "maximumSignatures": 250,
       "baselineProjects": 3,
       "apiExemptProjects": []
     },

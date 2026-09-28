@@ -359,7 +359,8 @@ internal sealed class EventDatabase : IAsyncDisposable
             Schema = "events_test_" + Guid.NewGuid().ToString("N"),
             MaximumAppendEvents = configured?.MaximumAppendEvents ?? 1024,
             MaximumEventBytes = configured?.MaximumEventBytes ?? 1_048_576,
-            MaximumAppendBytes = configured?.MaximumAppendBytes ?? 8_388_608
+            MaximumAppendBytes = configured?.MaximumAppendBytes ?? 8_388_608,
+            EnableLocalOnlyRetention = configured?.EnableLocalOnlyRetention ?? false
         };
         var fixture = new EventDatabase(BlueTuskDataSource.Create(connectionString), options);
         try

@@ -129,6 +129,55 @@ explicit source bootstrap/replay policy before wiring a remote live event subscr
 changes require deliberate consumer/source reconfiguration. Target effects must use the processor's
 supplied connection/transaction, and its data source must address the inbox store's database/schema.
 
+## Local-only archive and retention
+
+Schema version 2 adds a compact `(tenant, event ID)` identity ledger, an archive manifest and explicit
+per-stream `ArchivedThrough` and `RetainedThrough` horizons. New outbox inserts write their identity
+record through a database trigger, including when an older application binary inserts the row. A v1
+deployment migrates metadata without scanning its entire outbox. An old v1 event receives its identity
+record when its bounded archive batch is sealed, before it is eligible for pruning. The ledger preserves
+the original sequence and detects cross-stream identity reuse. An archived retry compares immutable
+metadata, payload length and SHA-256; byte-for-byte comparison still applies while the outbox row exists.
+Identity records, stream heads, replay checkpoints/fences, archive manifests and inbox rows are retained.
+Their storage still grows with event count; this first stage only removes archived outbox payload rows.
+
+Local retention is **off by default**. Set `PostgreSqlEventsOptions.EnableLocalOnlyRetention = true`
+only after inventorying readers and freezing publication changes. Supply an `IEventArchiveStore` backed
+by durable, immutable external storage. `ArchiveNextAsync` writes a bounded contiguous prefix, reads it
+back in full, verifies every event, then commits its manifest, batch digest and any legacy identities.
+If the archive write/readback or DB commit fails, the stream horizon does not move; an unreferenced
+external object may remain for archive-side garbage collection. `ReadRetentionStatusAsync` exposes the
+committed horizons without reading payloads.
+
+After all registered local replay consumers have checkpointed the archived prefix, call
+`AdvanceLocalRetentionAsync` with the expected prior floor and a stream-bound
+`new EventLocalRetentionCertification(stream, operatorId, changeReference,
+confirmedNoExternalReaders: true)`.
+This operator certificate explicitly asserts that no unregistered direct or external reader needs the
+prefix. The method rejects lagging registered replay consumers and any PostgreSQL publication containing
+the outbox. `PruneRetainedAsync` removes at most the requested number of rows per transaction and checks
+publication membership again before every batch. It retains every event identity and inbox row.
+
+`ReadAsync` throws `EventHistoryUnavailableException` when `afterSequence` is below the retained floor;
+`ReplayAsync` applies the same guard to its checkpoint. A new replay consumer cannot acquire a lease
+after the floor advances. Existing consumers continue from their acknowledged checkpoint. There is no
+implicit skip, archive replay API or snapshot bootstrap in this stage. Restore the archived range using
+an application-owned procedure, or create a separately specified snapshot bootstrap before admitting a
+new consumer.
+
+The publication check uses `pg_publication_tables` and holds a `SHARE UPDATE EXCLUSIVE` lock on outbox
+through each floor advance and bounded delete. This serializes explicit-table publication changes with
+the check. PostgreSQL all-tables and schema-level publication DDL may not lock the individual outbox
+relation, so deployment policy **must forbid publication DDL while local retention is enabled** and keep
+publication privileges separate from the runtime role. PostgreSQL cannot discover application readers
+that do not register in `replay`; the operator certificate is a required external inventory claim, not
+automatic proof. Never use this API for the published outbox consumed by `BlueTusk.Events.Streams` or
+Projections: their current decoders reject outbox deletes. A published-outbox retention protocol needs
+an ordered source control record and durable acknowledgements from every CDC consumer/version before
+deletes can be interpreted as maintenance. Source/target restore must preserve the external archive and
+manifest together. The archive backend's durability, periodic integrity audit, physical compaction/
+vacuum, and migration under sustained load remain deployment responsibilities.
+
 ## Validation and remaining release gates
 
 The `BlueTusk.Events` meter records bounded append preparation/duplicate counts, inbox attempt outcome,
@@ -169,4 +218,5 @@ testing; partition/archive/retention strategies preserving deduplication and rep
 query-plan verification; control-plane/Streams transport integrations; observability and operational
 runbooks; least-privilege tenant/RLS deployment validation; and full NativeAOT/endurance/release gates.
 Do not delete outbox or inbox records behind a replay consumer: retained identity and contiguous offset
-invariants are part of correctness. There is deliberately no destructive retention API in this preview.
+invariants are part of correctness. The local-only API above is an explicit, guarded exception; it is
+not a retention path for published outboxes or a claim of bounded whole-system storage.

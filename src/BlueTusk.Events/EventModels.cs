@@ -81,6 +81,8 @@ public sealed class PostgreSqlEventsOptions
     public int MaximumEventBytes { get; init; } = 1_048_576;
     public int MaximumAppendBytes { get; init; } = 8_388_608;
     public int CommandTimeoutSeconds { get; init; } = 30;
+    /// <summary>Explicitly permit operator-certified retention of local-only, unpublished outboxes.</summary>
+    public bool EnableLocalOnlyRetention { get; init; }
 
     internal void Validate()
     {

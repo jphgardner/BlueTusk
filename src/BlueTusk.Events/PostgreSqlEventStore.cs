@@ -27,7 +27,7 @@ public sealed partial class PostgreSqlEventStore
         _schema = '"' + _options.Schema + '"';
     }
 
-    /// <summary>Install schema version 1. Run during deployment, not on application hot paths.</summary>
+    /// <summary>Install or migrate the schema. Run during deployment, not on application hot paths.</summary>
     public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
     {
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -46,6 +46,14 @@ public sealed partial class PostgreSqlEventStore
                 tenant_id text NOT NULL CHECK (length(tenant_id) BETWEEN 1 AND 200),
                 stream_id text NOT NULL CHECK (length(stream_id) BETWEEN 1 AND 200),
                 last_sequence bigint NOT NULL DEFAULT 0 CHECK (last_sequence >= 0),
+                archived_through bigint NOT NULL DEFAULT 0 CHECK (archived_through >= 0),
+                retained_through bigint NOT NULL DEFAULT 0 CHECK (retained_through >= 0),
+                local_retention_enabled boolean NOT NULL DEFAULT false,
+                retention_operator text NULL CHECK (length(retention_operator) BETWEEN 1 AND 200),
+                retention_change_ref text NULL CHECK (length(retention_change_ref) BETWEEN 1 AND 200),
+                retention_enabled_at timestamptz NULL,
+                CONSTRAINT streams_retention_bounds
+                    CHECK (retained_through <= archived_through AND archived_through <= last_sequence),
                 PRIMARY KEY (tenant_id, stream_id)
             );
             CREATE TABLE IF NOT EXISTS {_schema}.outbox (
@@ -85,16 +93,80 @@ public sealed partial class PostgreSqlEventStore
                 expires_at timestamptz NULL,
                 PRIMARY KEY (consumer_id, tenant_id, stream_id),
                 FOREIGN KEY (tenant_id, stream_id) REFERENCES {_schema}.streams (tenant_id, stream_id)
+            );
+            CREATE TABLE IF NOT EXISTS {_schema}.event_identities (
+                tenant_id text NOT NULL, event_id uuid NOT NULL, stream_id text NOT NULL,
+                sequence bigint NOT NULL CHECK (sequence > 0), event_type text NOT NULL,
+                version integer NOT NULL, occurred_at timestamptz NOT NULL,
+                payload_length integer NOT NULL CHECK (payload_length > 0),
+                payload_sha256 bytea NULL CHECK (payload_sha256 IS NULL OR octet_length(payload_sha256) = 32),
+                PRIMARY KEY (tenant_id, event_id),
+                UNIQUE (tenant_id, stream_id, sequence),
+                FOREIGN KEY (tenant_id, stream_id) REFERENCES {_schema}.streams (tenant_id, stream_id)
+            );
+            CREATE TABLE IF NOT EXISTS {_schema}.archive_segments (
+                tenant_id text NOT NULL, stream_id text NOT NULL,
+                first_sequence bigint NOT NULL CHECK (first_sequence > 0),
+                last_sequence bigint NOT NULL CHECK (last_sequence >= first_sequence),
+                archive_id text NOT NULL CHECK (length(archive_id) BETWEEN 1 AND 2048),
+                batch_sha256 bytea NOT NULL CHECK (octet_length(batch_sha256) = 32),
+                event_count integer NOT NULL CHECK (event_count > 0),
+                archived_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+                PRIMARY KEY (tenant_id, stream_id, first_sequence),
+                FOREIGN KEY (tenant_id, stream_id) REFERENCES {_schema}.streams (tenant_id, stream_id)
             )
             """, cancellationToken).ConfigureAwait(false);
+        int version;
         await using (var command = Command(connection, transaction, $"SELECT version FROM {_schema}.schema_version WHERE singleton"))
         {
-            var version = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
-            if (version != 1)
+            version = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
+            if (version is not 1 and not 2)
             {
                 throw new InvalidOperationException($"Unsupported BlueTusk.Events schema version {version}.");
             }
         }
+
+        if (version == 1)
+        {
+            await ExecuteAsync(connection, transaction, $"""
+                ALTER TABLE {_schema}.streams ADD COLUMN IF NOT EXISTS archived_through bigint NOT NULL DEFAULT 0;
+                ALTER TABLE {_schema}.streams ADD COLUMN IF NOT EXISTS retained_through bigint NOT NULL DEFAULT 0;
+                ALTER TABLE {_schema}.streams ADD COLUMN IF NOT EXISTS local_retention_enabled boolean NOT NULL DEFAULT false;
+                ALTER TABLE {_schema}.streams ADD COLUMN IF NOT EXISTS retention_operator text NULL;
+                ALTER TABLE {_schema}.streams ADD COLUMN IF NOT EXISTS retention_change_ref text NULL;
+                ALTER TABLE {_schema}.streams ADD COLUMN IF NOT EXISTS retention_enabled_at timestamptz NULL;
+                DO $migration$ BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_constraint
+                        WHERE conname='streams_retention_bounds' AND conrelid='{_schema}.streams'::regclass)
+                    THEN
+                        ALTER TABLE {_schema}.streams ADD CONSTRAINT streams_retention_bounds
+                            CHECK (retained_through <= archived_through AND archived_through <= last_sequence);
+                    END IF;
+                END $migration$;
+                UPDATE {_schema}.schema_version SET version = 2 WHERE singleton
+                """, cancellationToken).ConfigureAwait(false);
+        }
+
+        // The database-owned insert fence also covers an older application binary that still writes
+        // outbox rows during a rolling deployment. It cannot reuse an ID whose payload was pruned.
+        await ExecuteAsync(connection, transaction, $"""
+            CREATE OR REPLACE FUNCTION {_schema}.record_outbox_identity() RETURNS trigger LANGUAGE plpgsql AS $trigger$
+            BEGIN
+                INSERT INTO {_schema}.event_identities
+                    (tenant_id,event_id,stream_id,sequence,event_type,version,occurred_at,payload_length,payload_sha256)
+                VALUES(NEW.tenant_id,NEW.event_id,NEW.stream_id,NEW.sequence,NEW.event_type,NEW.version,
+                    NEW.occurred_at,octet_length(NEW.payload),sha256(NEW.payload));
+                RETURN NEW;
+            END $trigger$;
+            DO $migration$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_trigger
+                    WHERE tgname='outbox_identity_insert' AND tgrelid='{_schema}.outbox'::regclass)
+                THEN
+                    CREATE TRIGGER outbox_identity_insert AFTER INSERT ON {_schema}.outbox
+                        FOR EACH ROW EXECUTE FUNCTION {_schema}.record_outbox_identity();
+                END IF;
+            END $migration$
+            """, cancellationToken).ConfigureAwait(false);
 
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -143,18 +215,33 @@ public sealed partial class PostgreSqlEventStore
         }
 
         var wireBatch = SerializeBatch(events);
-        var existing = new Dictionary<Guid, StoredEvent>();
+        var existing = new Dictionary<Guid, EventIdentity>();
         await using (var command = Command(connection, transaction, $"""
-            SELECT o.stream_id, o.sequence, o.event_id, o.event_type, o.version, o.occurred_at, o.payload
-            FROM {_schema}.outbox o
-            JOIN jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(event_id uuid) ON i.event_id = o.event_id
-            WHERE o.tenant_id = @tenant
+            WITH incoming AS MATERIALIZED (
+                SELECT event_id FROM jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(event_id uuid)
+            )
+            SELECT e.stream_id, e.sequence, e.event_id, e.event_type, e.version, e.occurred_at,
+                e.payload_length, e.payload_sha256, o.payload
+            FROM {_schema}.event_identities e
+            JOIN incoming i ON i.event_id = e.event_id
+            LEFT JOIN {_schema}.outbox o ON o.tenant_id=e.tenant_id AND o.stream_id=e.stream_id AND o.sequence=e.sequence
+            WHERE e.tenant_id = @tenant
+            UNION ALL
+            SELECT o.stream_id,o.sequence,o.event_id,o.event_type,o.version,o.occurred_at,
+                octet_length(o.payload),NULL::bytea,o.payload
+            FROM {_schema}.outbox o JOIN incoming i ON i.event_id=o.event_id
+            WHERE o.tenant_id=@tenant AND NOT EXISTS (
+                SELECT 1 FROM {_schema}.event_identities e WHERE e.tenant_id=o.tenant_id AND e.event_id=o.event_id)
             """, ("batch", wireBatch), ("tenant", stream.TenantId)))
         await using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
         {
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                var value = ReadEvent(reader, stream.TenantId);
+                var value = new EventIdentity(reader.GetString(0), reader.GetInt64(1), reader.GetGuid(2),
+                    reader.GetString(3), reader.GetInt32(4),
+                    new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(5), DateTimeKind.Utc)),
+                    reader.GetInt32(6), reader.IsDBNull(7) ? null : reader.GetFieldValue<byte[]>(7),
+                    reader.IsDBNull(8) ? null : reader.GetFieldValue<byte[]>(8));
                 existing.Add(value.EventId, value);
             }
         }
@@ -166,9 +253,13 @@ public sealed partial class PostgreSqlEventStore
             var value = events[i];
             if (existing.TryGetValue(value.EventId, out var prior))
             {
-                if (prior.Stream != stream || !string.Equals(prior.EventType, value.EventType, StringComparison.Ordinal) ||
+                if (!string.Equals(prior.StreamId, stream.StreamId, StringComparison.Ordinal) ||
+                    !string.Equals(prior.EventType, value.EventType, StringComparison.Ordinal) ||
                     prior.Version != value.Version || prior.OccurredAt != PostgreSqlTimestamp(value.OccurredAt) ||
-                    !prior.Payload.Span.SequenceEqual(value.Payload.Span))
+                    prior.PayloadLength != value.Payload.Length ||
+                    (prior.Payload is not null
+                        ? !prior.Payload.AsSpan().SequenceEqual(value.Payload.Span)
+                        : prior.PayloadSha256 is null || !prior.PayloadSha256.AsSpan().SequenceEqual(SHA256.HashData(value.Payload.Span))))
                 {
                     throw new EventIdentityConflictException(value.EventId);
                 }
@@ -287,6 +378,24 @@ public sealed partial class PostgreSqlEventStore
         await ExecuteAsync(connection, transaction, $"""
             INSERT INTO {_schema}.streams (tenant_id, stream_id) VALUES (@tenant, @stream) ON CONFLICT DO NOTHING
             """, cancellationToken, ("tenant", stream.TenantId), ("stream", stream.StreamId)).ConfigureAwait(false);
+        await using (var admission = Command(connection, transaction, $"""
+            SELECT retained_through FROM {_schema}.streams WHERE tenant_id=@tenant AND stream_id=@stream FOR UPDATE
+            """, ("tenant", stream.TenantId), ("stream", stream.StreamId)))
+        {
+            var retainedThrough = Convert.ToInt64(await admission.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
+            if (retainedThrough > 0)
+            {
+                await using var registered = Command(connection, transaction, $"""
+                    SELECT checkpoint FROM {_schema}.replay
+                    WHERE consumer_id=@consumer AND tenant_id=@tenant AND stream_id=@stream
+                    """, ("consumer", consumerId), ("tenant", stream.TenantId), ("stream", stream.StreamId));
+                var checkpoint = await registered.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                if (checkpoint is null or DBNull || Convert.ToInt64(checkpoint, CultureInfo.InvariantCulture) < retainedThrough)
+                {
+                    throw new EventHistoryUnavailableException(stream, retainedThrough);
+                }
+            }
+        }
         long? token;
         await using (var command = Command(connection, transaction, $"""
             INSERT INTO {_schema}.replay (consumer_id, tenant_id, stream_id, owner_id, fencing_token, expires_at)
@@ -424,31 +533,44 @@ public sealed partial class PostgreSqlEventStore
         EventStreamKey stream, long afterSequence, int maximumEvents, int maximumPayloadBytes, CancellationToken cancellationToken)
     {
         await using var command = Command(connection, transaction, $"""
-            WITH candidates AS MATERIALIZED (
+            WITH floor AS MATERIALIZED (
+                SELECT COALESCE((SELECT retained_through FROM {_schema}.streams
+                    WHERE tenant_id=@tenant AND stream_id=@stream),0) AS retained_through
+            ), candidates AS MATERIALIZED (
                 SELECT stream_id, sequence, event_id, event_type, version, occurred_at, payload
                 FROM {_schema}.outbox WHERE tenant_id = @tenant AND stream_id = @stream AND sequence > @after
                 ORDER BY sequence LIMIT @count
             ), bounded AS (
                 SELECT *, sum(octet_length(payload)) OVER (ORDER BY sequence) AS payload_bytes FROM candidates
             )
-            SELECT stream_id, sequence, event_id, event_type, version, occurred_at, payload
-            FROM bounded WHERE payload_bytes <= @bytes ORDER BY sequence
+            SELECT floor.retained_through,b.stream_id,b.sequence,b.event_id,b.event_type,b.version,b.occurred_at,b.payload
+            FROM floor LEFT JOIN bounded b ON b.payload_bytes <= @bytes ORDER BY b.sequence
             """, ("tenant", stream.TenantId), ("stream", stream.StreamId), ("after", afterSequence),
             ("count", maximumEvents), ("bytes", maximumPayloadBytes));
         var result = new List<StoredEvent>(Math.Min(maximumEvents, 256));
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            result.Add(ReadEvent(reader, stream.TenantId));
+            var retainedThrough = reader.GetInt64(0);
+            if (afterSequence < retainedThrough)
+            {
+                throw new EventHistoryUnavailableException(stream, retainedThrough);
+            }
+
+            if (!reader.IsDBNull(1))
+            {
+                result.Add(ReadEvent(reader, stream.TenantId, 1));
+            }
         }
 
         return result;
     }
 
-    private static StoredEvent ReadEvent(DbDataReader reader, string tenantId) => new(
-        new EventStreamKey(tenantId, reader.GetString(0)), reader.GetInt64(1), reader.GetGuid(2), reader.GetString(3),
-        reader.GetInt32(4), new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(5), DateTimeKind.Utc)),
-        reader.GetFieldValue<byte[]>(6));
+    private static StoredEvent ReadEvent(DbDataReader reader, string tenantId, int offset) => new(
+        new EventStreamKey(tenantId, reader.GetString(offset)), reader.GetInt64(offset + 1), reader.GetGuid(offset + 2),
+        reader.GetString(offset + 3), reader.GetInt32(offset + 4),
+        new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(offset + 5), DateTimeKind.Utc)),
+        reader.GetFieldValue<byte[]>(offset + 6));
 
     private void ValidateRead(EventStreamKey stream, long afterSequence, int maximumEvents, int maximumPayloadBytes)
     {
@@ -548,4 +670,7 @@ public sealed partial class PostgreSqlEventStore
 
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
+
+    private sealed record EventIdentity(string StreamId, long Sequence, Guid EventId, string EventType,
+        int Version, DateTimeOffset OccurredAt, int PayloadLength, byte[]? PayloadSha256, byte[]? Payload);
 }
