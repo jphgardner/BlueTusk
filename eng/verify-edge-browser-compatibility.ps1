@@ -61,7 +61,7 @@ foreach ($source in @($before,$after)) {
 Require ($before.sourceTreeSha256 -ceq $after.sourceTreeSha256 -and
     $before.sourceTreeSha256 -ceq $manifest.SourceTreeSha256) 'Browser candidate source changed during testing.'
 $runtime = Json 'runtime.json'
-$lockedPlaywright = (Get-Content -LiteralPath (Join-Path $root 'package-lock.json') -Raw | ConvertFrom-Json -Depth 20).packages.'node_modules/playwright'.version
+$lockedPlaywright = (Get-Content -LiteralPath (Join-Path $root 'package-lock.json') -Raw | ConvertFrom-Json -AsHashtable -Depth 20)['packages']['node_modules/playwright']['version']
 Require ($runtime.CandidateSha -ceq $head -and $runtime.SourceTreeSha256 -ceq $before.sourceTreeSha256 -and
     $runtime.Platform -ceq $ExpectedPlatform -and $runtime.Browser -ceq $Browser -and $runtime.Scope -ceq $scope -and
     [string]$runtime.ReviewHeadSha -ceq $reviewHead -and

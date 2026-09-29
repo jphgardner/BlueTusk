@@ -48,7 +48,7 @@ try {
         LockfileSha256 = Hash 'package-lock.json'
         ProductionQualified = $false
     }
-    $lockedPlaywright = (Get-Content -LiteralPath package-lock.json -Raw | ConvertFrom-Json -Depth 20).packages.'node_modules/playwright'.version
+    $lockedPlaywright = (Get-Content -LiteralPath package-lock.json -Raw | ConvertFrom-Json -AsHashtable -Depth 20)['packages']['node_modules/playwright']['version']
     Require ($runtime.NodeVersion -match '^v24\.' -and $runtime.DotnetVersion -match '^10\.' -and
         $runtime.PlaywrightVersion -ceq $lockedPlaywright) 'Runtime versions differ from the Edge CI contract or lockfile.'
     $runtime | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $evidence 'runtime.json') -Encoding utf8
