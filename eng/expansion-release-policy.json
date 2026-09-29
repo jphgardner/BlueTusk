@@ -8,7 +8,7 @@
       "upgradeWorkflow": "events-release-upgrade.yml"
     },
     "Jobs": {
-      "capacityWorkflow": "ecosystem-performance.yml",
+      "capacityWorkflow": "jobs-release-capacity.yml",
       "failoverWorkflow": "jobs-release-failover.yml",
       "upgradeWorkflow": "jobs-release-upgrade.yml"
     },

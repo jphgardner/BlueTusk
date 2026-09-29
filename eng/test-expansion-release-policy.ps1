@@ -52,6 +52,14 @@ try
         PolicyPath = $policyPath
         GovernancePath = $governancePath
     }
+    $testPolicy = Join-Path $temporaryRoot 'policy.json'
+    $policy = Get-Content -LiteralPath $policyPath -Raw | ConvertFrom-Json -AsHashtable
+    $policy.families.Jobs.capacityWorkflow = 'ecosystem-performance.yml'
+    $policy | ConvertTo-Json -Depth 20 |
+        Set-Content -LiteralPath $testPolicy -Encoding utf8
+    $arguments.PolicyPath = $testPolicy
+    Assert-Rejected -ExpectedMessage 'product-specific capacity' -Arguments $arguments
+    $arguments.PolicyPath = $policyPath
     Assert-Rejected -ExpectedMessage 'stable 1.0.0-or-newer version' -Arguments $arguments
 
     $versionDirectory = Join-Path $temporaryRoot 'eng/versions'
@@ -70,7 +78,7 @@ try
     }
     Assert-Rejected -ExpectedMessage "must require exact 'fuzzing.yml'" -Arguments $arguments
 
-    $workflows = @('fuzzing.yml', 'ecosystem-performance.yml',
+    $workflows = @('fuzzing.yml', 'jobs-release-capacity.yml',
         'jobs-release-failover.yml', 'jobs-release-upgrade.yml',
         'expansion-candidate-readiness.yml')
     foreach ($workflow in $workflows)
@@ -82,12 +90,16 @@ try
     }
     $manifest | ConvertTo-Json -Depth 20 |
         Set-Content -LiteralPath $testManifest -Encoding utf8
-    foreach ($workflow in $workflows)
+    foreach ($workflow in @($workflows | Where-Object { $_ -cne 'jobs-release-capacity.yml' }))
     {
         Set-Content -LiteralPath (Join-Path $workflowDirectory $workflow) `
             -Value "name: fixture`non:`n  workflow_dispatch:`njobs:`n  fixture:`n    runs-on: ubuntu-latest`n    steps:`n      - run: true`n" `
             -Encoding utf8
     }
+    Assert-Rejected -ExpectedMessage "missing required workflow 'jobs-release-capacity.yml'" -Arguments $arguments
+    Set-Content -LiteralPath (Join-Path $workflowDirectory 'jobs-release-capacity.yml') `
+        -Value "name: fixture`non:`n  workflow_dispatch:`njobs:`n  fixture:`n    runs-on: ubuntu-latest`n    steps:`n      - run: true`n" `
+        -Encoding utf8
     $failoverPath = Join-Path $workflowDirectory 'jobs-release-failover.yml'
     Set-Content -LiteralPath $failoverPath `
         -Value "name: fixture`non:`n  push:`n  workflow_dispatch:`njobs:`n  fixture:`n    runs-on: ubuntu-latest`n    steps:`n      - run: true`n" `

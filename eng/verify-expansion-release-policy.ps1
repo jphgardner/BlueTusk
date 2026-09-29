@@ -25,7 +25,7 @@ $governance = Get-Content -LiteralPath $GovernancePath -Raw | ConvertFrom-Json
 
 $expansionFamilies = @('Events', 'Jobs', 'Documents', 'Schema', 'Projections',
     'Search', 'Sql', 'Studio', 'Edge', 'Workflows')
-$sharedCapacityFamilies = @('Jobs', 'Documents', 'Projections', 'Workflows')
+$sharedCapacityFamilies = @('Documents', 'Projections', 'Workflows')
 $requiredBaseWorkflows = @('build.yml', 'security.yml', 'fuzzing.yml',
     'ecosystem-build.yml')
 

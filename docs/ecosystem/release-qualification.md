@@ -14,21 +14,27 @@ manual workflow set in its family manifest, a protected independent
 `expansion-candidate-readiness` environment, and the exact versioned tag
 pattern in the `package-production` governance contract. The tagged workflow
 also runs `verify-release-gates.ps1`, which requires successful manual runs
-whose `head_sha` equals the tag commit and verifies that exact-version release
-dependencies are already public. The protected publish job checks the live
-repository and environment settings before any registry write. A source-only
-governance declaration cannot substitute for those live settings. Source policy
-checks neither run outcomes nor report contents. The current generic release
-verifier checks workflow identity, event, conclusion and commit; the future
-qualification workflows and protected candidate aggregator must validate
-their own raw evidence before a successful run can count.
+whose `head_sha` equals the tag commit, a readiness artifact bound to the exact
+family, commit, tag, version and qualification artifact digests, and verifies
+that exact-version release dependencies are already public. The protected
+publish job checks the live repository and environment settings before any
+registry write. A source-only governance declaration cannot substitute for
+those live settings. Source policy
+checks neither run outcomes nor report contents. The release verifier checks
+workflow identity, event, conclusion, commit and the readiness artifact's
+references to the exact qualification runs and their retained artifact digests.
+The future qualification workflows and protected candidate aggregator must
+validate their own raw measurements before a successful run can count.
 
 Each family must have its own capacity, failover and durable-format upgrade
 qualification. The required workflow identities are fixed in
-`eng/expansion-release-policy.json`. Jobs, Workflows, Projections and Documents
-share the exact-candidate `ecosystem-performance.yml` capacity campaign because
-that workflow measures each of those four explicitly. Its pending result is
-not a pass. The other six need dedicated capacity workflows. Every family
+`eng/expansion-release-policy.json`. Jobs needs a dedicated
+`jobs-release-capacity.yml` workflow; the combined `ecosystem-performance.yml`
+campaign cannot qualify it alone. Workflows, Projections and Documents share
+that exact-candidate capacity campaign because it measures each explicitly.
+It must emit a separate retained capacity artifact for each family before
+any can use it as release evidence. Its result alone is not a product
+release pass. The other six need dedicated capacity workflows. Every family
 needs a dedicated failover and upgrade workflow, plus the protected expansion
 candidate aggregator. Those workflows and their complete evidence readers are
 not implemented yet. An arming edit is therefore rejected even if generic
@@ -45,6 +51,20 @@ paths for durable formats and supported PostgreSQL/client versions, including
 in-flight state. Independent review must inspect those retained reports and
 operator runbooks. A workflow that exits successfully without these checks
 must not be added to the family manifest as qualification evidence.
+
+The candidate-readiness run must upload one
+`expansion-readiness-<lowercase-family>-<full-sha>` artifact containing
+`readiness.json`. Its schema 1 record must state the exact `family`,
+`candidateCommit`, `tag`, `version`, `readinessRun.id` and
+`readinessRun.attempt`. Its `qualificationEvidence` must contain exactly one
+`capacity`, `failover` and `upgrade` entry. Each names the policy workflow,
+successful exact-candidate run ID and attempt, and an
+`expansion-<lowercase-family>-<role>-<full-sha>` artifact with its SHA-256
+digest. The tagged release verifier compares these entries with GitHub's
+retained, unexpired run artifacts and verifies the downloaded readiness ZIP
+digest. This binds the reviewed evidence set to one candidate; the readiness
+workflow must still inspect the reports' substance and get independent
+approval. No workflow currently produces this release artifact.
 
 Source arming necessarily changes the commit SHA. The reviewed arming commit
 is therefore the immutable candidate; its manual runs and approvals occur

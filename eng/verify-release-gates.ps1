@@ -312,6 +312,7 @@ foreach ($requirement in @($publication.requiredWorkflowEvidence))
                 event = [string]$_.event
                 conclusion = [string]$_.conclusion
                 runId = [long]$_.id
+                runAttempt = [int]$_.run_attempt
                 url = [string]$_.html_url
             }
         })
@@ -340,6 +341,26 @@ foreach ($requirement in @($publication.requiredWorkflowEvidence))
     }
 
     $verifiedRuns.Add($successfulRun)
+}
+
+if ($Family -in @('Events', 'Jobs', 'Documents', 'Schema', 'Projections',
+    'Search', 'Sql', 'Studio', 'Edge', 'Workflows'))
+{
+    $readinessArguments = @{
+        Family = $Family
+        Commit = $Commit
+        Tag = $Tag
+        Version = $version
+        VerifiedRuns = @($verifiedRuns.ToArray())
+        Repository = $Repository
+        Token = $Token
+    }
+    if ($null -ne $fixtureRuns)
+    {
+        $readinessArguments.EvidencePath = [string]$fixture.readinessEvidencePath
+        $readinessArguments.ArtifactIndexPath = [string]$fixture.artifactIndexPath
+    }
+    & (Join-Path $PSScriptRoot 'verify-expansion-readiness-evidence.ps1') @readinessArguments | Out-Null
 }
 
 Write-Output (
