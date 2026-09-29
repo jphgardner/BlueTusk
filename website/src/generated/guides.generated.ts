@@ -1282,7 +1282,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1120,
+    "order": 1121,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1314,7 +1314,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1121,
+    "order": 1122,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1350,7 +1350,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1136,
+    "order": 1137,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1411,7 +1411,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1167,
+    "order": 1169,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
@@ -2680,7 +2680,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1091,
+    "order": 1092,
     "title": "Live public API compatibility",
     "sourcePath": "docs/live/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/api-compatibility.md",
@@ -2707,7 +2707,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1092,
+    "order": 1093,
     "title": "Live format compatibility",
     "sourcePath": "docs/live/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/format-compatibility.md",
@@ -2733,7 +2733,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "live",
       "reference"
     ],
-    "order": 1093,
+    "order": 1094,
     "title": "BlueTusk Live",
     "sourcePath": "docs/live/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/reference.md",
@@ -2825,7 +2825,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1094,
+    "order": 1095,
     "title": "BlueTusk Live 0.1.0-preview.1",
     "sourcePath": "docs/live/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-0.1.0-preview.1.md",
@@ -2875,7 +2875,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1095,
+    "order": 1096,
     "title": "BlueTusk Live 1.0.0 release record",
     "sourcePath": "docs/live/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-1.0.0.md",
@@ -2903,7 +2903,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1125,
+    "order": 1126,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -2935,7 +2935,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1144,
+    "order": 1146,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -2961,7 +2961,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1145,
+    "order": 1147,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -2987,7 +2987,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1146,
+    "order": 1148,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -3013,7 +3013,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1147,
+    "order": 1149,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -3040,7 +3040,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1149,
+    "order": 1151,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -3067,7 +3067,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1151,
+    "order": 1153,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -3109,7 +3109,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1153,
+    "order": 1155,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -3154,7 +3154,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1154,
+    "order": 1156,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -3180,7 +3180,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1155,
+    "order": 1157,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -3207,7 +3207,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1158,
+    "order": 1160,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -3254,7 +3254,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1161,
+    "order": 1163,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -3281,7 +3281,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1162,
+    "order": 1164,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -3307,7 +3307,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1163,
+    "order": 1165,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -3412,7 +3412,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1165,
+    "order": 1167,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
@@ -3490,7 +3490,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "extensions",
       "reference"
     ],
-    "order": 1074,
+    "order": 1075,
     "title": "Extension SDK",
     "sourcePath": "docs/extensions/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/reference.md",
@@ -3801,7 +3801,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1080,
+    "order": 1081,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
@@ -6346,9 +6346,36 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2772,
-    "readMinutes": 13,
-    "searchText": "BlueTusk.Edge BlueTusk.Edge `0.1.0-preview.1` supplies offline synchronization contracts and a bounded coordinator. BlueTusk.Edge.Sqlite provides a durable file cache and queued mutations. BlueTusk.Edge.Server supplies a PostgreSQL record repository with an atomic mutation inbox, consistent snapshots and a retained change feed. BlueTusk.Edge.Http and BlueTusk.Edge.AspNetCore connect that repository through authenticated HTTP. `@bluetusk/edge` supplies durable IndexedDB storage, an interoperable HTTP client and a bounded reconnect helper. The host obtains tenant, selective scope identity and increasing epoch from an authenticated server contract. A scope may represent a user, permission set and selection filter; changing any access boundary should rotate its epoch. The client cannot authorize its own arbitrary scope ID or epoch. Local persistence is not an authentication boundary or encryption mechanism; the host owns local file/browser profile access and logout/revocation handling. Cache, snapshots and changes SQLite keys include tenant, scope and epoch. IndexedDB uses the same composite identity. Activating a newer epoch atomically purges prior cached/staged state and receipts, resets its checkpoint, and invalidates older-epoch reads. Pending writes make rotation fail by default. The host must explicitly choose `DiscardPending`/`discard` after its pending-write policy is resolved; the library does not silently discard offline user changes. A host detecting authorization revocation must stop using the old scope while resolving that policy. Snapshots use stable identities, stage bounded batches separately from the active cache, and publish their full selective record set plus checkpoint in one transaction. Reopening/restarting does not expose partial snapshots, and repeating the same begin preserves staged batches. Completing a new snapshot removes records outside its authorized selection. The cache budget includes active plus staged rows, so reserve capacity for cut"
+    "wordCount": 3109,
+    "readMinutes": 15,
+    "searchText": "BlueTusk.Edge BlueTusk.Edge `0.1.0-preview.1` supplies offline synchronization contracts and a bounded coordinator. BlueTusk.Edge.Sqlite provides a durable file cache and queued mutations. BlueTusk.Edge.Server supplies a PostgreSQL record repository with an atomic mutation inbox, consistent snapshots and a retained change feed. BlueTusk.Edge.Http and BlueTusk.Edge.AspNetCore connect that repository through authenticated HTTP. `@bluetusk/edge` supplies durable IndexedDB storage, an interoperable HTTP client and a bounded reconnect helper. The host obtains tenant, selective scope identity and increasing epoch from an authenticated server contract. A scope may represent a user, permission set and selection filter; changing any access boundary should rotate its epoch. The client cannot authorize its own arbitrary scope ID or epoch. Local persistence is not an authentication boundary or encryption mechanism; the host owns local file/browser profile access and logout/revocation handling. Cache, snapshots and changes SQLite keys include tenant, scope and epoch. IndexedDB uses the same composite identity. Activating a newer epoch atomically purges prior cached/staged state and receipts, resets its checkpoint, and invalidates older-epoch reads. Pending writes make rotation fail by default. The host must explicitly choose `DiscardPending`/`discard` after its pending-write policy is resolved; the library does not silently discard offline user changes. A host detecting authorization revocation must stop using the old scope while resolving that policy. Snapshots use stable identities, stage bounded batches separately from the active cache, and publish their full selective record set plus checkpoint in one transaction. Reopening/restarting does not expose partial snapshots, and repeating the same begin preserves staged batches. Completing a new snapshot removes records outside its authorized selection. SQLite and IndexedDB enforce separate active and staged limits, each defaultin"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "events-published-retention",
+    "summary": "ArchiveNextAsync can already copy a published stream's immutable events into an external archive. It never authorizes physical deletion. The current Events.Streams decoder rejects every outbox DELETE,",
+    "keywords": [
+      "docs",
+      "events",
+      "PUBLISHED",
+      "RETENTION"
+    ],
+    "order": 1072,
+    "title": "Published outbox retention: required protocol",
+    "sourcePath": "docs/events/PUBLISHED-RETENTION.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/PUBLISHED-RETENTION.md",
+    "headings": [
+      {
+        "id": "published-outbox-retention-required-protocol",
+        "text": "Published outbox retention: required protocol",
+        "level": 1
+      }
+    ],
+    "wordCount": 568,
+    "readMinutes": 3,
+    "searchText": "Published outbox retention: required protocol `ArchiveNextAsync` can already copy a published stream's immutable events into an external archive. It never authorizes physical deletion. The current Events.Streams decoder rejects every outbox DELETE, and a Projections source may include the same outbox table in its publication. A source slot position only states how far that transport has acknowledged WAL; it does not prove that every target inbox, projection version, independent subscription or recovery candidate has committed the event effects. No source-only API can safely infer those remote obligations from the present contracts. Published pruning needs a distinct, opt-in protocol, with the following durable order: Register every protected consumer group, target incarnation, projection version/candidate and recovery source against an immutable source identity and publication/slot lineage. Registration must be fenced against concurrent retention, and unregistered readers must be explicitly outside the guarantee. A new consumer starting below the eventual floor must use archive replay or a complete fresh snapshot with an explicit bootstrap checkpoint. Archive a contiguous tenant/stream prefix, verify each immutable object by readback, and retain the permanent `(tenant, event ID)` identity ledger. The archive manifest needs a source lineage, sequence range, count and digest. Archive availability must be revalidated before any destructive step and monitored afterward; a source database restore without its corresponding objects is not a usable historical restore. Commit an append-only retention intent/control record **after** the archived prefix, on the same ordered logical source seen by all protected consumers. It must identify the tenant/stream, exact inclusive sequence floor, archive manifest digest, source incarnation and unique retention epoch. The control relation must be present in every relevant publication from the outset. Merely writing a marker into the sou"
   },
   {
     "category": "operations",
@@ -6361,7 +6388,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "events",
       "README"
     ],
-    "order": 1072,
+    "order": 1073,
     "title": "BlueTusk.Events",
     "sourcePath": "docs/events/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
@@ -6402,8 +6429,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2158,
-    "readMinutes": 10,
+    "wordCount": 2306,
+    "readMinutes": 11,
     "searchText": "BlueTusk.Events BlueTusk.Events is an independent `0.1.0-preview.1` family targeting .NET 10. It records typed, versioned business intent in the same PostgreSQL transaction as business data, deduplicates database effects in a consumer inbox, and replays an ordered tenant stream with durable fenced checkpoints. The runtime uses ADO.NET and BlueTusk.Data. Npgsql and EF Core are not runtime dependencies of the core. Transactional publishing Define a stable contract name/version and generate JSON metadata for each historical wire version: Generate event identity and occurrence time once, outside a retry loop. A retry of the same tenant/event identity must contain identical stream, contract, timestamp (at PostgreSQL microsecond precision), and payload bytes. A conflicting identity fails. The tenant is part of identity: the same UUID in two tenants identifies two separate events. Cross-stream races for the same tenant/event identity can fail with PostgreSQL's unique constraint; roll back the transaction and correct the publisher. The optional `BlueTusk.Events.EntityFrameworkCore` adapter exposes `context.AppendEventsAsync(...)`. Begin an explicit relational transaction, save business changes, append events, then commit. The adapter requires that transaction; it does not start one, call SaveChanges, or commit on the caller's behalf. The caller owns the data source, connection and transaction lifetime. Call `InitializeAsync` during controlled deployment. Schema version 1 is installed transactionally under an advisory lock. Unknown versions are rejected. No hot path automatically migrates schemas. Ordering and scale There is no global sequence. The primary key is `(tenant_id, stream_id, sequence)`. Appending locks that stream's counter row until the application's transaction commits or rolls back. A later writer therefore cannot publish offset 2 before offset 1 commits, and rollback does not consume an offset. Unrelated streams can proceed concurrently. Choose an aggregate o"
   },
   {
@@ -6416,7 +6443,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "docs",
       "fuzzing"
     ],
-    "order": 1075,
+    "order": 1076,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -6452,7 +6479,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1081,
+    "order": 1082,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -6493,7 +6520,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "improvement",
       "audit"
     ],
-    "order": 1082,
+    "order": 1083,
     "title": "BlueTusk improvement audit and action record",
     "sourcePath": "docs/improvement-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
@@ -6539,7 +6566,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "README"
     ],
-    "order": 1083,
+    "order": 1084,
     "title": "BlueTusk.Jobs",
     "sourcePath": "docs/jobs/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
@@ -6591,7 +6618,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "durable",
       "format"
     ],
-    "order": 1084,
+    "order": 1085,
     "title": "Durable-format support and rehearsal",
     "sourcePath": "docs/jobs/durable-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
@@ -6617,7 +6644,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "failover"
     ],
-    "order": 1085,
+    "order": 1086,
     "title": "Jobs and Workflows physical promotion rehearsal",
     "sourcePath": "docs/jobs/failover.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
@@ -6663,7 +6690,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "hosting"
     ],
-    "order": 1086,
+    "order": 1087,
     "title": "Scoped Jobs and Workflows host readiness",
     "sourcePath": "docs/jobs/hosting.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
@@ -6699,7 +6726,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "maintenance"
     ],
-    "order": 1087,
+    "order": 1088,
     "title": "Durable storage maintenance contract",
     "sourcePath": "docs/jobs/maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
@@ -6725,7 +6752,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "performance"
     ],
-    "order": 1088,
+    "order": 1089,
     "title": "Jobs and Workflows capacity and recovery harness",
     "sourcePath": "docs/jobs/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
@@ -6806,7 +6833,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "upgrade"
     ],
-    "order": 1089,
+    "order": 1090,
     "title": "Jobs binary upgrade and rollback gate",
     "sourcePath": "docs/jobs/upgrade.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/upgrade.md",
@@ -6834,7 +6861,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1097,
+    "order": 1098,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -6906,7 +6933,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1098,
+    "order": 1099,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -6989,7 +7016,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1100,
+    "order": 1101,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -7037,7 +7064,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1101,
+    "order": 1102,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -7088,7 +7115,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1103,
+    "order": 1104,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -7200,7 +7227,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1104,
+    "order": 1105,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -7249,7 +7276,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "1",
       "1"
     ],
-    "order": 1105,
+    "order": 1106,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -7306,7 +7333,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1108,
+    "order": 1109,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -7409,7 +7436,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1109,
+    "order": 1110,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -7471,7 +7498,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "website",
       "production"
     ],
-    "order": 1112,
+    "order": 1113,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -7512,7 +7539,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1114,
+    "order": 1115,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -7538,7 +7565,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "LIVE"
     ],
-    "order": 1115,
+    "order": 1116,
     "title": "Published projections in Live",
     "sourcePath": "docs/projections/LIVE.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
@@ -7584,7 +7611,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "LOAD"
     ],
-    "order": 1116,
+    "order": 1117,
     "title": "Workload and recovery qualification",
     "sourcePath": "docs/projections/LOAD.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
@@ -7625,7 +7652,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "README"
     ],
-    "order": 1117,
+    "order": 1118,
     "title": "BlueTusk.Projections",
     "sourcePath": "docs/projections/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
@@ -7676,7 +7703,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "RECOVERY"
     ],
-    "order": 1118,
+    "order": 1119,
     "title": "Explicit source recovery and controlled DDL",
     "sourcePath": "docs/projections/RECOVERY.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
@@ -7708,7 +7735,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "evidence",
       "README"
     ],
-    "order": 1119,
+    "order": 1120,
     "title": "Local bounded workload evidence",
     "sourcePath": "docs/projections/evidence/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
@@ -7738,7 +7765,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1122,
+    "order": 1123,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -7764,7 +7791,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "process"
     ],
-    "order": 1127,
+    "order": 1128,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -7806,7 +7833,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1129,
+    "order": 1130,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -7851,7 +7878,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1130,
+    "order": 1131,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -7930,7 +7957,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1131,
+    "order": 1132,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -7969,7 +7996,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1133,
+    "order": 1134,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -8011,7 +8038,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1134,
+    "order": 1135,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -8047,7 +8074,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "schema",
       "README"
     ],
-    "order": 1138,
+    "order": 1139,
     "title": "BlueTusk Schema",
     "sourcePath": "docs/schema/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
@@ -8078,7 +8105,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2296,
+    "wordCount": 2329,
     "readMinutes": 11,
     "searchText": "BlueTusk Schema `BlueTusk.Schema` is a new preview product for consistent PostgreSQL relation contracts and consumer compatibility analysis. The caller owns the data source. Relation discovery uses one read-only repeatable-read transaction and an explicit `pg_catalog` search path. Schema names are parameters. Row counts and total metadata bytes are bounded; crossing a limit fails instead of returning a silently partial snapshot. Command deadlines and cancellation apply to every discovery operation. Snapshot inputs are copied into immutable collections. PostgreSQL catalogue deparsers can consult newer caches during concurrent DDL; relation format 1 alone does not attest that boundary. Use the expanded catalogue capture below when validating a deployment contract under concurrent DDL. The canonical SHA-256 fingerprint excludes transient OIDs. It includes relation kind, column ordinals/types/nullability/defaults/generated and identity behavior, collation, keys and constraints, index definitions/validity, RLS flags and policies, and view/partition definitions. Collection order is normalized and fields are length delimited. Schema metadata can contain sensitive default or policy expressions; fingerprints do not encrypt it, and the library does not log those expressions. Caller-created PostgreSQL type strings are metadata labels; capture obtains authoritative type names from the database. `SchemaSnapshotSerializer` exports source-generated, versioned JSON and verifies the canonical fingerprint on import. It rejects future versions, malformed Unicode/identifiers/catalogue flags, null members, excessive strings, collection width and aggregate metadata before materializing an object graph. Constructors bound enumeration before sorting. Optional `SchemaSnapshotLimits` adjusts the document admission contract; serialized output remains capped at 64 MiB and can be given a smaller exact byte bound. Identifier validation uses PostgreSQL's standard 63-byte UTF-8 identifier limit. B"
   },
@@ -8094,7 +8121,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "catalogue",
       "attestation"
     ],
-    "order": 1139,
+    "order": 1140,
     "title": "Catalogue consistency attestation",
     "sourcePath": "docs/schema/catalogue-attestation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
@@ -8130,7 +8157,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "search",
       "README"
     ],
-    "order": 1140,
+    "order": 1141,
     "title": "BlueTusk.Search",
     "sourcePath": "docs/search/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
@@ -8171,9 +8198,35 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 3248,
-    "readMinutes": 15,
+    "wordCount": 3531,
+    "readMinutes": 17,
     "searchText": "BlueTusk.Search BlueTusk.Search `0.1.0-preview.1` provides versioned PostgreSQL full-text ingestion and retrieval with tenant and permission filtering. BlueTusk.Search.PgVector adds schema-qualified vector storage, cosine retrieval and optional HNSW indexing. Both use `DbDataSource`; neither depends on Npgsql or EF Core. The adapter requires a separately installed pgvector extension, validated during initialization. The host must derive tenant, index and principals from authenticated authorization state. The library cannot authenticate supplied principal strings. Every ingestion identity, query candidate and result page is tenant/index scoped. Private documents are the default; an explicit public flag grants retrieval within the document's tenant and index only. Durable ingestion and deletion Each `(tenant,index,document)` retains its highest source version and payload fingerprint. Versions must be positive and monotonically increasing for that logical source identity. A higher version atomically replaces all chunks and metadata in one PostgreSQL transaction. Same-version identical replay is idempotent; conflicting payload at the same version raises `SearchVersionConflictException`. Lower versions are ignored. Deletions retain a durable tombstone and remove all chunks, so delayed older ingestion cannot resurrect a document. No tombstone expiration is automatic: purging fences requires an independently proven upstream replay floor. Titles, metadata and ACLs live once per document; chunks retain content, weighted full-text terms and optional embeddings. Chunk replacement and version advancement share the same commit boundary. Existing search snapshots recheck source version and deletion state, so removed or replaced documents are not returned from old snapshots. Deterministic chunking preserves UTF-16 surrogate pairs, includes configurable overlap and rejects content exceeding the configured maximum chunks. Empty content produces one chunk so the title remains searcha"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "search-capacity",
+    "summary": "eng/run-search-capacity.ps1 runs a dedicated PostgreSQL 18 Search campaign from a clean, full commit SHA. It provisions a digest-pinned, labelled Docker volume and container on loopback, with four CPUs and 2 GiB of me…",
+    "keywords": [
+      "docs",
+      "search",
+      "capacity"
+    ],
+    "order": 1142,
+    "title": "Search mixed ingestion and retrieval capacity campaign",
+    "sourcePath": "docs/search/capacity.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/capacity.md",
+    "headings": [
+      {
+        "id": "search-mixed-ingestion-and-retrieval-capacity-campaign",
+        "text": "Search mixed ingestion and retrieval capacity campaign",
+        "level": 1
+      }
+    ],
+    "wordCount": 522,
+    "readMinutes": 3,
+    "searchText": "Search mixed ingestion and retrieval capacity campaign `eng/run-search-capacity.ps1` runs a dedicated PostgreSQL 18 Search campaign from a **clean, full commit SHA**. It provisions a digest-pinned, labelled Docker volume and container on loopback, with four CPUs and 2 GiB of memory, then removes only its own fixture. The runner takes before/after whole-source fingerprints, snapshots the built executable and dependencies, checks the executable after each run, and hashes every archived raw artifact. It never publishes a package or marks the product production-qualified. The workload seeds 128 distinct 4 KiB documents in each of eight tenants. Content is deterministic high-entropy text with a searchable marker. Documents include public, `readers`-authorized and `restricted`-only ACLs. One writer per tenant offers an update every 200 ms while four readers each offer a scoped full-text query every 100 ms: nominally 40 writes and 40 reads per second. The schedule uses a monotonic clock and skips missed slots instead of building an unbounded client queue. Every planned slot is counted as offered or skipped; every offered call is counted as accepted or explicitly rejected by bounded Search admission. Accepted and rejected operations retain separate nearest-rank p50/p95/p99 timing samples. Five-second physical samples include owned relation bytes, whole-database bytes and inserted WAL position. WAL is PostgreSQL-cluster scoped, so the owned fixture must remain isolated. At the end, the harness checks every persisted document's exact version and tenant, rejects a stale write and a conflicting same-version write, accepts an identical replay, verifies tenant/ACL isolation under concurrent reads, and waits for query snapshots to expire and prune. A failed invariant stops the campaign and leaves bounded failure evidence. The fixed corpus measures update churn and query retention; it does not model unbounded corpus growth. The first run should be a **diagnostic** on a committed ca"
   },
   {
     "category": "operations",
@@ -8186,7 +8239,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "sql",
       "README"
     ],
-    "order": 1142,
+    "order": 1144,
     "title": "BlueTusk Sql",
     "sourcePath": "docs/sql/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
@@ -8197,9 +8250,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 1359,
+    "wordCount": 1459,
     "readMinutes": 7,
-    "searchText": "BlueTusk Sql New preview typed SQL tooling consists of `BlueTusk.Sql` and the incremental `BlueTusk.Sql.SourceGeneration` analyzer. Reference the generator as an analyzer with `ReferenceOutputAssembly=\"false\"` and add `.sql` files as `AdditionalFiles`. Generated code contains a typed `Arguments` record, a typed `Row` record and one immutable `Definition`. Positional parameter OIDs, result getters and nullable handling are emitted directly; there is no reflection-driven construction. Invalid/duplicate identifiers, types, bounds or directives fail compilation. Directives precede the SQL body, preserving application SQL literals. PostgreSQL validates read query grammar and actual result name/type contracts through a zero-row wrapper in a read-only transaction. Runtime execution checks the result contract and required nulls before constructing rows. Row counts and command time are bounded. Each field defaults to one MiB and each result to 64 MiB of encoded PostgreSQL field data plus four length bytes per field. The BlueTusk reader exposes encoded field length without value decoding/copying, so limits are checked before the generated projector allocates strings/byte arrays. Binary prefixes and text encodings count toward this budget; it is not a bound on every transport/CLR allocation. Execution requires BlueTuskDataReader for this admission contract. Streaming and early disposal release commands/readers without committing or disposing caller-owned transactions. Overflow is explicit, and result-shape validation does not establish application authorization. The initial generator supports bool, int2/int4/int8, text/varchar, UUID, float4/float8, decimal numeric, timestamp/timestamptz, bytea and JSON/JSONB. It also supports `numeric-precise` as lossless `BlueTuskNumeric`, date/time, `interval-pg` as the PostgreSQL months/days/microseconds representation, scalar arrays, nullable int2/int4/int8 array elements (`int4?[]`), nullable text/JSON array elements, and a two-dimensiona"
+    "searchText": "BlueTusk Sql New preview typed SQL tooling consists of `BlueTusk.Sql` and the incremental `BlueTusk.Sql.SourceGeneration` analyzer. Reference the generator as an analyzer with `ReferenceOutputAssembly=\"false\"` and add `.sql` files as `AdditionalFiles`. Generated code contains a typed `Arguments` record, a typed `Row` record and one immutable `Definition`. Positional parameter OIDs, result getters and nullable handling are emitted directly; there is no reflection-driven construction. Invalid/duplicate identifiers, types, bounds or directives fail compilation. Directives precede the SQL body, preserving application SQL literals. PostgreSQL validates read query grammar and actual result name/type contracts through a zero-row wrapper in a read-only transaction. Runtime execution checks the result contract and required nulls before constructing rows. Runtime execution wraps each admitted single read query in an outer limit of `MaximumRows + 1`, so PostgreSQL sends at most the declared rows plus one overflow sentinel even for a query without parameters. The original `ORDER BY`, `LIMIT`, and `OFFSET` remain inside the wrapper. BlueTusk SQL requests a non-sequential portal reader and rejects a connection configured to buffer entire readers before executing the query. SQL forms that PostgreSQL cannot use inside a derived table fail rather than running without the cap. Command time is also bounded. Each field defaults to one MiB and each result to 64 MiB of encoded PostgreSQL field data plus four length bytes per field. The BlueTusk reader exposes encoded field length without value decoding/copying, so limits are checked before the generated projector allocates strings/byte arrays. The non-sequential portal reader buffers one row before field admission, so a single oversized row can still allocate memory beyond these limits. Binary prefixes and text encodings count toward this budget; it is not a bound on every transport/CLR allocation. Execution requires BlueTuskDataReader f"
   },
   {
     "category": "operations",
@@ -8212,7 +8265,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "studio",
       "README"
     ],
-    "order": 1159,
+    "order": 1161,
     "title": "BlueTusk Studio",
     "sourcePath": "docs/studio/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
@@ -8233,9 +8286,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1150,
-    "readMinutes": 6,
-    "searchText": "BlueTusk Studio New preview ASP.NET Core developer workspace: an embedded SQL editor, schema browser, query-plan viewer, authorized event traces, Live inspection and audited quarantine replay. SQL/schema, Events and Control Plane integrations are separate packages so the core workspace does not require either operational runtime. The scope resolver is required. It chooses the authenticated principal's least-privilege PostgreSQL data source/role and the schemas exposed in the browser. Schema visibility is not a SQL authorization boundary: PostgreSQL grants, RLS and function privileges must enforce that principal's actual query access. Studio does not borrow an unrestricted operator data source implicitly. The caller owns all resolved data sources. Durable audit is also required. `PostgreSqlStudioAuditSink` supplies a durable borrowed-data-source implementation. Provision its schema during deployment with `InitializeAsync`, using a deployment role, then register the configured sink instance before `AddBlueTuskStudio`: The runtime audit role needs SELECT/INSERT/UPDATE only on that dedicated audit repository; the database scope resolver must use a separate least-privilege role for user queries. Retries of an operation/outcome identity require identical actor, fingerprint and row count. Unknown durable versions reject initialization and append. Completion audit failure leaves an uncertain response outcome: inspect the operation's audit rather than assuming the handler did not run. Retention, archive/restore, access controls on actor identity and storage alerting are host operations; the initial sink does not silently delete audits. Every route requires the read policy; execution additionally requires the query policy and a session-bound antiforgery token, issued through `/session`. Query audit records contain operation identity, actor, query fingerprint, outcome and row count, never SQL or result values. Audit attempts persist before executing. Read query admission under"
+    "wordCount": 1813,
+    "readMinutes": 9,
+    "searchText": "BlueTusk Studio New preview ASP.NET Core developer workspace: an embedded SQL editor, schema browser, query-plan viewer, authorized event traces, Live inspection and audited quarantine replay. SQL/schema, Events and Control Plane integrations are separate packages so the core workspace does not require either operational runtime. The scope resolver is required. It chooses the authenticated principal's least-privilege PostgreSQL data source/role, a stable non-sensitive `StudioDatabaseScope.AuditScopeId` identifying the selected database/tenant scope, and the schemas exposed in the browser. Schema visibility is not a SQL authorization boundary: PostgreSQL grants, RLS and function privileges must enforce that principal's actual query access. Studio does not borrow an unrestricted operator data source implicitly. The caller owns all resolved data sources. Durable audit is also required. This preview upgrade requires existing host resolvers to set `AuditScopeId` to an opaque value that is stable across replicas and restarts and distinct for different database/tenant scopes. Leaving it empty fails the query audit closed. `PostgreSqlStudioAuditSink` supplies a durable borrowed-data-source implementation. Provision its schema during deployment with `InitializeAsync`, using a deployment role, then register the configured sink instance before `AddBlueTuskStudio`: The runtime audit role needs SELECT/INSERT only on that dedicated audit repository; the database scope resolver must use a separate least-privilege role for user queries. Retries of an operation/outcome identity require identical actor, scope, fingerprint and row count; exact duplicates leave the stored tuple unchanged. Unknown durable versions reject initialization and append. Initialization upgrades known v1 audit storage to v2 in one deployment transaction, marking older rows `legacy-unknown` because their database/tenant scope cannot be recovered. Run this migration in a maintenance window: the added column requi"
   },
   {
     "category": "operations",
@@ -8248,7 +8301,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1168,
+    "order": 1170,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -8290,7 +8343,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1169,
+    "order": 1171,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -8331,7 +8384,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "workflows",
       "README"
     ],
-    "order": 1170,
+    "order": 1172,
     "title": "BlueTusk.Workflows",
     "sourcePath": "docs/workflows/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",

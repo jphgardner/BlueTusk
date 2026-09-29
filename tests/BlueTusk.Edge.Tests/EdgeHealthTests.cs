@@ -36,7 +36,7 @@ public sealed class EdgeHealthTests
         var health = await fixture.Store.ReadHealthAsync(fixture.Scope);
         Assert.Equal(2, health.HeadPosition); Assert.Equal(0, health.ReplayFloor);
         Assert.Equal(1, health.RecordCount); Assert.Equal(0, health.RecordBytes);
-        Assert.Equal(3, health.ReceiptCount); Assert.Equal(2, health.ChangeCount); Assert.Equal(2, health.ChangeBytes);
+        Assert.Equal(3, health.ReceiptCount); Assert.Equal(4, health.ReceiptBytes); Assert.Equal(2, health.ChangeCount); Assert.Equal(2, health.ChangeBytes);
         Assert.Equal(1, health.ActiveSnapshots); Assert.False(health.MutationCapacityReached);
         Assert.InRange(health.DatabaseTime, DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddMinutes(1));
         Assert.Equal(0, (await fixture.Store.ReadHealthAsync(other)).RecordCount);
@@ -48,6 +48,7 @@ public sealed class EdgeHealthTests
         await fixture.Store.ActivateScopeAsync(next);
         await Assert.ThrowsAsync<EdgeScopeMismatchException>(async () => await fixture.Store.ReadHealthAsync(fixture.Scope));
         Assert.Equal(0, (await fixture.Store.ReadHealthAsync(next)).ReceiptCount);
+        Assert.Equal(0, (await fixture.Store.ReadHealthAsync(next)).ReceiptBytes);
     });
 
     [Fact]
@@ -118,7 +119,7 @@ public sealed class EdgeHealthTests
         await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=999");
         var drift = await check.CheckHealthAsync(new HealthCheckContext());
         Assert.Equal("edge_store_unavailable", drift.Description); Assert.Null(drift.Exception); Assert.Empty(drift.Data);
-        await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=1");
+        await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=3");
         Assert.Equal(HealthStatus.Healthy, (await check.CheckHealthAsync(new HealthCheckContext())).Status);
         await fixture.Store.DisposeAsync();
         var disposed = await check.CheckHealthAsync(new HealthCheckContext());
@@ -170,7 +171,7 @@ public sealed class EdgeHealthTests
         using (var capacity = await http.GetAsync("/ops/edge")) { Assert.Equal(HttpStatusCode.ServiceUnavailable, capacity.StatusCode); Assert.Equal("Degraded", await capacity.Content.ReadAsStringAsync()); }
         await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=999");
         using (var drift = await http.GetAsync("/ops/edge")) { Assert.Equal(HttpStatusCode.ServiceUnavailable, drift.StatusCode); Assert.Equal("Unhealthy", await drift.Content.ReadAsStringAsync()); }
-        await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=1");
+        await fixture.ExecuteAsync($"UPDATE {fixture.Schema}.metadata SET version=3");
         var next = new EdgeScope("tenant", "orders", 2);
         await bounded.ActivateScopeAsync(next);
         var service = app.Services.GetRequiredService<HealthCheckService>();

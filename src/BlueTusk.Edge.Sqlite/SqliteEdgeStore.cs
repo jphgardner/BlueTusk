@@ -333,12 +333,13 @@ public sealed partial class SqliteEdgeStore : IEdgeLocalStore
 
     private async ValueTask CheckCacheBudgetAsync(SqliteConnection connection, SqliteTransaction transaction, CancellationToken cancellationToken)
     {
-        await using var command = Command(connection, transaction, "SELECT (SELECT count(*) FROM records)+(SELECT count(*) FROM snapshot_records),(SELECT COALESCE(sum(length(payload)),0) FROM records)+(SELECT COALESCE(sum(length(payload)),0) FROM snapshot_records)");
+        await using var command = Command(connection, transaction, "SELECT (SELECT count(*) FROM records),(SELECT COALESCE(sum(length(payload)),0) FROM records),(SELECT count(*) FROM snapshot_records),(SELECT COALESCE(sum(length(payload)),0) FROM snapshot_records)");
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         _ = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
-        if (reader.GetInt64(0) > Options.MaxCacheRecords || reader.GetInt64(1) > Options.MaxCacheBytes)
+        if (reader.GetInt64(0) > Options.MaxCacheRecords || reader.GetInt64(1) > Options.MaxCacheBytes ||
+            reader.GetInt64(2) > Options.MaxStagedRecords || reader.GetInt64(3) > Options.MaxStagedBytes)
         {
-            throw new EdgeCapacityException("The bounded local cache is full; narrow the authorized scope or replace it with an explicit snapshot.");
+            throw new EdgeCapacityException("The bounded active cache or snapshot staging area is full; narrow the authorized scope.");
         }
     }
 }

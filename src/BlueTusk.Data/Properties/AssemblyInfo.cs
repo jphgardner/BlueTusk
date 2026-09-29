@@ -5,3 +5,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("BlueTusk.EntityFrameworkCore")]
 [assembly: InternalsVisibleTo("BlueTusk.EntityFrameworkCore.Tests")]
 [assembly: InternalsVisibleTo("BlueTusk.Fuzzing")]
+[assembly: InternalsVisibleTo("BlueTusk.Sql")]

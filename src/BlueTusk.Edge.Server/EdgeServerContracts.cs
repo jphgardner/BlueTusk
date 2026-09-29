@@ -9,6 +9,8 @@ public sealed record EdgeServerOptions
     public int MaxRecordsPerScope { get; init; } = 100_000;
     public long MaxRecordBytesPerScope { get; init; } = 256L * 1024 * 1024;
     public int MaxReceiptsPerScope { get; init; } = 100_000;
+    /// <summary>Caps retained authoritative outcome payloads; a new identity is refused rather than evicting its retry fence.</summary>
+    public long MaxReceiptBytesPerScope { get; init; } = 256L * 1024 * 1024;
     public int MaxChangesPerScope { get; init; } = 100_000;
     public long MaxChangeBytesPerScope { get; init; } = 256L * 1024 * 1024;
     public int MaxSnapshotsPerScope { get; init; } = 4;
@@ -20,3 +22,5 @@ public sealed record EdgeServerOptions
 public sealed record EdgeServerSnapshotPage(IReadOnlyList<EdgeRecord> Records, string? NextAfterId);
 public sealed class EdgeServerSnapshotExpiredException() : Exception("The Edge snapshot is expired, missing or belongs to another scope.");
 public sealed class EdgeServerReplayExpiredException() : Exception("The requested Edge checkpoint precedes the retained replay floor; obtain a fresh consistent snapshot.");
+public sealed class EdgeServerReceiptFinalizedException() : Exception("The mutation receipt was confirmed and its outcome was released; the mutation identity cannot be applied again.");
+public sealed class EdgeServerReceiptMissingException() : Exception("The mutation receipt does not exist in the active scope.");

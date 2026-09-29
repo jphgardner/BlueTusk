@@ -122,7 +122,9 @@ public sealed class StudioQueryServiceTests
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
         using var service = new StudioQueryService(Options() with { MaximumReplyBytes = 1024 });
         var scope = new StudioDatabaseScope(dataSource, ["public"]);
-        await Assert.ThrowsAsync<StudioReplyLimitException>(() => service.ExecuteAsync(scope, new("SELECT repeat('x',2048)"), TestContext.Current.CancellationToken).AsTask());
+        // This large no-parameter result must be rejected by the sequential reader
+        // before Studio decodes or buffers its value.
+        await Assert.ThrowsAsync<StudioReplyLimitException>(() => service.ExecuteAsync(scope, new("SELECT repeat('x',2*1024*1024)"), TestContext.Current.CancellationToken).AsTask());
         Assert.Equal(1, (await service.ExecuteAsync(scope, new("SELECT 1"), TestContext.Current.CancellationToken)).Rows);
     }
 

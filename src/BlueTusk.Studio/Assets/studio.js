@@ -28,17 +28,18 @@ async function refreshSchema() {
 async function query(explain) {
   byId("run").disabled = byId("explain").disabled = true;
   byId("status").textContent = explain ? "Requesting query plan…" : "Running bounded read query…";
+  const operationId = crypto.randomUUID();
   try {
     session ??= await responseJson("session");
-    const result = await responseJson("query", {method:"POST",headers:{"Content-Type":"application/json",[session.header ?? session.Header]:session.token ?? session.Token},body:JSON.stringify({Sql:byId("sql").value,Explain:explain})});
+    const result = await responseJson("query", {method:"POST",headers:{"Content-Type":"application/json",[session.header ?? session.Header]:session.token ?? session.Token},body:JSON.stringify({Sql:byId("sql").value,Explain:explain,OperationId:operationId})});
     const table = document.createElement("table"), head = document.createElement("thead"), headRow = document.createElement("tr");
     for (const column of result.columns) { const th = document.createElement("th"); th.textContent = `${column.name} · ${column.type}`; headRow.append(th); }
     head.append(headRow); table.append(head);
     const body = document.createElement("tbody");
     for (const row of result.rows) { const tr = document.createElement("tr"); for (const value of row) { const td = document.createElement("td"); td.textContent = value === null ? "NULL" : String(value); tr.append(td); } body.append(tr); }
     table.append(body); byId("results").replaceChildren(table);
-    byId("status").textContent = `${result.count} rows returned${explain ? " · query plan" : ""}.`;
-  } catch (error) { byId("status").textContent = error.message; }
+    byId("status").textContent = `${result.count} rows returned${explain ? " · query plan" : ""}. Audit operation ${operationId}.`;
+  } catch (error) { byId("status").textContent = `${error.message} Request ${operationId}; if execution may have begun, inspect its audit before retrying.`; }
   finally { byId("run").disabled = byId("explain").disabled = false; }
 }
 byId("run").addEventListener("click", () => query(false));

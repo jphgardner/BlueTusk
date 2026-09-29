@@ -149,6 +149,18 @@ If the archive write/readback or DB commit fails, the stream horizon does not mo
 external object may remain for archive-side garbage collection. `ReadRetentionStatusAsync` exposes the
 committed horizons without reading payloads.
 
+`AssessLocalRetentionAsync(stream, throughSequence, expectedRetainedThrough)` gives a point-in-time,
+read-only preflight. Its flags distinguish disabled options, a missing stream, stale/not-forward floor,
+head or archive shortfall, lagging registered replay, and a published outbox. It reports at most 32
+publication names plus an overflow marker; the publication catalog lookup itself is not a bounded
+scan. `OutboxContractChanged` means the expected ordinary outbox relation or enabled, unfiltered
+identity insert trigger is missing or altered; restore the schema before retrying. Repair archive
+and replay blockers before retrying; an `OutboxPublished` result means this local-only path cannot
+delete rows. The preflight is advisory:
+`AdvanceLocalRetentionAsync` and `PruneRetainedAsync` repeat their checks under their own locks.
+The structural trigger check cannot attest its function body against privileged DDL; schema changes
+also require the deployment freeze described below.
+
 After all registered local replay consumers have checkpointed the archived prefix, call
 `AdvanceLocalRetentionAsync` with the expected prior floor and a stream-bound
 `new EventLocalRetentionCertification(stream, operatorId, changeReference,
@@ -177,6 +189,10 @@ an ordered source control record and durable acknowledgements from every CDC con
 deletes can be interpreted as maintenance. Source/target restore must preserve the external archive and
 manifest together. The archive backend's durability, periodic integrity audit, physical compaction/
 vacuum, and migration under sustained load remain deployment responsibilities.
+
+The proposed published-outbox contract and its required cross-product acknowledgements are described
+in [Published outbox retention design](PUBLISHED-RETENTION.md). No published-delete implementation is
+enabled by this package.
 
 ## Validation and remaining release gates
 

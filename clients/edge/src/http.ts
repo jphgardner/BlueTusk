@@ -81,6 +81,14 @@ export class EdgeHttpRemoteTransport {
     if (value.kind !== "applied" && value.kind !== "conflict") throw new TypeError("Invalid mutation outcome.");
     return { kind: value.kind, record: value.record === null ? null : this.record(value.record) };
   }
+  /** Call only after the outcome is durable locally; retry a lost confirmation response with the same mutation. */
+  async finalizeMutationReceipt(mutation: EdgeMutation, signal?: AbortSignal): Promise<void> {
+    const result = await this.request("POST", "mutations/confirm" + this.query(mutation.scope), {
+      id: uuid(mutation.id), documentId: mutation.documentId, expectedRevision: integer(mutation.expectedRevision), kind: mutation.kind,
+      payload: encodePayload(mutation.payload, this.limits.record)
+    }, signal);
+    if (result !== null) throw new TypeError("Mutation confirmation must return no content.");
+  }
   private record(value: unknown): EdgeRecord {
     const row = object(value); if (typeof row.deleted !== "boolean") throw new TypeError("Invalid deletion state.");
     return { id: text(row.id), revision: integer(row.revision), payload: decodePayload(row.payload, this.limits.record), deleted: row.deleted };

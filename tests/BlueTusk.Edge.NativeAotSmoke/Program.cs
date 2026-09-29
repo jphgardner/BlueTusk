@@ -155,7 +155,7 @@ try
         await using (var drift = source.CreateCommand($"UPDATE \"{serverSchema}\".metadata SET version=999")) { _ = await drift.ExecuteNonQueryAsync(); }
         using (var unhealthy = await http.GetAsync(new Uri(host.Endpoint, "/ops/edge")))
         { if ((int)unhealthy.StatusCode != 503 || await unhealthy.Content.ReadAsStringAsync() != "Unhealthy") { throw new InvalidOperationException("Native operator health did not reject durable format drift."); } }
-        await using (var restore = source.CreateCommand($"UPDATE \"{serverSchema}\".metadata SET version=1")) { _ = await restore.ExecuteNonQueryAsync(); }
+        await using (var restore = source.CreateCommand($"UPDATE \"{serverSchema}\".metadata SET version=3")) { _ = await restore.ExecuteNonQueryAsync(); }
         await using (var drift = source.CreateCommand($"UPDATE \"{documentSchema}\".storage_metadata SET storage_version=999")) { _ = await drift.ExecuteNonQueryAsync(); }
         using (var unhealthy = await http.GetAsync(new Uri(host.Endpoint, "/ops/edge")))
         { if ((int)unhealthy.StatusCode != 503) { throw new InvalidOperationException("Native Documents operator probe ignored format drift."); } }
@@ -163,7 +163,7 @@ try
         await using (var drift = vectorSource.CreateCommand($"UPDATE \"{searchSchema}\".storage_metadata SET storage_version=999")) { _ = await drift.ExecuteNonQueryAsync(); }
         using (var unhealthy = await http.GetAsync(new Uri(host.Endpoint, "/ops/edge")))
         { if ((int)unhealthy.StatusCode != 503) { throw new InvalidOperationException("Native Search operator probe ignored format drift."); } }
-        await using (var restore = vectorSource.CreateCommand($"UPDATE \"{searchSchema}\".storage_metadata SET storage_version=1")) { _ = await restore.ExecuteNonQueryAsync(); }
+        await using (var restore = vectorSource.CreateCommand($"UPDATE \"{searchSchema}\".storage_metadata SET storage_version={PostgreSqlSearchStore.CurrentStorageVersion}")) { _ = await restore.ExecuteNonQueryAsync(); }
         using (var recovered = await http.GetAsync(new Uri(host.Endpoint, "/ops/edge")))
         { if (!recovered.IsSuccessStatusCode) { throw new InvalidOperationException("Native combined operator readiness did not recover."); } }
         await using var effects = source.CreateCommand($"SELECT counter FROM \"{serverSchema}\".business_effects");

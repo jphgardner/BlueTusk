@@ -38,21 +38,32 @@ public sealed record StudioOptions
 }
 
 /// <summary>The resolver selects a principal's database role/data source. SQL authorization remains PostgreSQL-owned.</summary>
-public sealed record StudioDatabaseScope(DbDataSource DataSource, IReadOnlyList<string> Schemas);
+public sealed record StudioDatabaseScope(DbDataSource DataSource, IReadOnlyList<string> Schemas)
+{
+    /// <summary>Host-issued stable, non-sensitive identity for the selected database/tenant audit scope.</summary>
+    public string AuditScopeId { get; init; } = string.Empty;
+}
 
 public interface IStudioScopeResolver
 {
     ValueTask<StudioDatabaseScope> ResolveAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default);
 }
 
-public sealed record StudioAuditRecord(Guid OperationId, string ActorId, string QueryFingerprint, string Outcome, int ReturnedRows);
+public sealed record StudioAuditRecord(Guid OperationId, string ActorId, string QueryFingerprint, string Outcome, int ReturnedRows)
+{
+    public string ScopeId { get; init; } = string.Empty;
+}
 
 public interface IStudioAuditSink
 {
     ValueTask RecordAsync(StudioAuditRecord record, CancellationToken cancellationToken = default);
 }
 
-public sealed record StudioQueryRequest(string Sql, bool Explain = false, int? MaximumRows = null);
+public sealed record StudioQueryRequest(string Sql, bool Explain = false, int? MaximumRows = null)
+{
+    /// <summary>Client-issued identity retained for audit reconciliation after an uncertain response.</summary>
+    public Guid OperationId { get; init; }
+}
 public sealed record StudioQueryResult(ReadOnlyMemory<byte> Json, int Rows);
 
 public sealed class StudioCapacityException : InvalidOperationException

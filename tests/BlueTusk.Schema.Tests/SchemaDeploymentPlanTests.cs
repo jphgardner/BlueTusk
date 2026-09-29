@@ -57,6 +57,30 @@ public sealed class SchemaDeploymentPlanTests
         Assert.True(unchanged.Begin().CompleteStep("verify-baseline", before.Fingerprint).CompleteStep("verify-target", before.Fingerprint).IsComplete);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Removed_and_changed_indexes_require_review_and_an_apply_step(bool changed)
+    {
+        var identity = new SchemaRelationIdentity("app", "items");
+        var original = new SchemaIndex("items_id_idx", "CREATE INDEX items_id_idx ON app.items USING btree (id)", true);
+        var replacement = new SchemaIndex("items_id_idx", "CREATE UNIQUE INDEX items_id_idx ON app.items USING btree (id)", true);
+        SchemaCatalogSnapshot Snapshot(SchemaIndex[] indexes) => new(new([
+            new SchemaRelation(identity, "r", false, false, "d", [new("id", 1, "int4", false)], indexes: indexes)
+        ]));
+        var before = Snapshot(new[] { original });
+        var after = Snapshot(changed ? new[] { replacement } : Array.Empty<SchemaIndex>());
+        var difference = Assert.Single(SchemaCompatibility.Compare(before.Relations, after.Relations).Changes);
+        Assert.Equal(changed ? SchemaChangeKind.IndexChanged : SchemaChangeKind.IndexRemoved, difference.Kind);
+        Assert.Equal(SchemaChangeImpact.RequiresReview, difference.Impact);
+
+        var plan = SchemaDeploymentPlan.Create(before, after, []);
+        Assert.True(plan.RequiresReview);
+        Assert.Contains(plan.Steps, step => step.Phase == SchemaDeploymentPhase.ApproveReview);
+        Assert.Contains(plan.Steps, step => step.Phase == SchemaDeploymentPhase.ApplyReviewedChanges);
+        Assert.DoesNotContain(plan.Steps, step => step.Phase == SchemaDeploymentPhase.Expand);
+    }
+
     [Fact]
     public void Large_consumer_sets_remain_bounded_and_duplicate_or_invalid_dependencies_fail_closed()
     {

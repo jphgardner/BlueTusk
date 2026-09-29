@@ -158,19 +158,20 @@ public static class StudioControlPlaneEndpoints
             ValidateScope(scope, options);
             if (!scope.ReplayTargets.TryGetValue(request.Target, out var target)) { context.Response.StatusCode = StatusCodes.Status403Forbidden; return; }
             var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("ReplayQuarantine:" + request.Target)));
-            await audit.RecordAsync(new(request.OperationId, scope.Actor.ActorId, fingerprint, "replay-attempt", 0), deadline.Token).ConfigureAwait(false);
+            var scopeId = "replay:" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(target)));
+            await audit.RecordAsync(new(request.OperationId, scope.Actor.ActorId, fingerprint, "replay-attempt", 0) { ScopeId = scopeId }, deadline.Token).ConfigureAwait(false);
             try
             {
                 // The Control Plane executor separately enforces actor roles, exact target
                 // confirmation and durable requested/completion audits before any handler runs.
                 await scope.Operations.ExecuteAsync(scope.Actor, new(request.OperationId, ControlPlaneOperationKind.ReplayQuarantine,
                     target, "ReplayQuarantine:" + target, request.Reason), deadline.Token).ConfigureAwait(false);
-                await audit.RecordAsync(new(request.OperationId, scope.Actor.ActorId, fingerprint, "replay-completed", 0), deadline.Token).ConfigureAwait(false);
+                await audit.RecordAsync(new(request.OperationId, scope.Actor.ActorId, fingerprint, "replay-completed", 0) { ScopeId = scopeId }, deadline.Token).ConfigureAwait(false);
             }
             catch
             {
                 using var completionDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(options.TimeoutSeconds));
-                await audit.RecordAsync(new(request.OperationId, scope.Actor.ActorId, fingerprint, "replay-failed", 0), completionDeadline.Token).ConfigureAwait(false);
+                await audit.RecordAsync(new(request.OperationId, scope.Actor.ActorId, fingerprint, "replay-failed", 0) { ScopeId = scopeId }, completionDeadline.Token).ConfigureAwait(false);
                 throw;
             }
             context.Response.StatusCode = StatusCodes.Status204NoContent;

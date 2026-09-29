@@ -9,6 +9,7 @@ BlueTusk.Edge.Server.EdgeServerHealthSnapshot.ChangeCount.get -> long
 BlueTusk.Edge.Server.EdgeServerHealthSnapshot.DatabaseTime.get -> System.DateTimeOffset
 BlueTusk.Edge.Server.EdgeServerHealthSnapshot.HeadPosition.get -> long
 BlueTusk.Edge.Server.EdgeServerHealthSnapshot.MutationCapacityReached.get -> bool
+BlueTusk.Edge.Server.EdgeServerHealthSnapshot.ReceiptBytes.get -> long
 BlueTusk.Edge.Server.EdgeServerHealthSnapshot.ReceiptCount.get -> long
 BlueTusk.Edge.Server.EdgeServerHealthSnapshot.RecordBytes.get -> long
 BlueTusk.Edge.Server.EdgeServerHealthSnapshot.RecordCount.get -> long
@@ -28,6 +29,8 @@ BlueTusk.Edge.Server.EdgeServerOptions.MaxChangeBytesPerScope.get -> long
 BlueTusk.Edge.Server.EdgeServerOptions.MaxChangeBytesPerScope.init -> void
 BlueTusk.Edge.Server.EdgeServerOptions.MaxChangesPerScope.get -> int
 BlueTusk.Edge.Server.EdgeServerOptions.MaxChangesPerScope.init -> void
+BlueTusk.Edge.Server.EdgeServerOptions.MaxReceiptBytesPerScope.get -> long
+BlueTusk.Edge.Server.EdgeServerOptions.MaxReceiptBytesPerScope.init -> void
 BlueTusk.Edge.Server.EdgeServerOptions.MaxReceiptsPerScope.get -> int
 BlueTusk.Edge.Server.EdgeServerOptions.MaxReceiptsPerScope.init -> void
 BlueTusk.Edge.Server.EdgeServerOptions.MaxRecordBytes.get -> int
@@ -44,6 +47,10 @@ BlueTusk.Edge.Server.EdgeServerOptions.Schema.get -> string!
 BlueTusk.Edge.Server.EdgeServerOptions.Schema.init -> void
 BlueTusk.Edge.Server.EdgeServerOptions.SnapshotLifetime.get -> System.TimeSpan
 BlueTusk.Edge.Server.EdgeServerOptions.SnapshotLifetime.init -> void
+BlueTusk.Edge.Server.EdgeServerReceiptFinalizedException
+BlueTusk.Edge.Server.EdgeServerReceiptFinalizedException.EdgeServerReceiptFinalizedException() -> void
+BlueTusk.Edge.Server.EdgeServerReceiptMissingException
+BlueTusk.Edge.Server.EdgeServerReceiptMissingException.EdgeServerReceiptMissingException() -> void
 BlueTusk.Edge.Server.EdgeServerReplayExpiredException
 BlueTusk.Edge.Server.EdgeServerReplayExpiredException.EdgeServerReplayExpiredException() -> void
 BlueTusk.Edge.Server.EdgeServerSnapshotExpiredException
@@ -63,6 +70,7 @@ BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.ApplyMutationAsync(BlueTusk.Edge.
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.ApplyMutationWithBusinessAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Func<System.Data.Common.DbConnection!, System.Data.Common.DbTransaction!, BlueTusk.Edge.EdgeMutation!, BlueTusk.Edge.EdgeRecord!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! writeBusiness, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutationOutcome!>
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.BeginSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeSnapshot!>
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.FinalizeMutationReceiptAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.GetAsync(BlueTusk.Edge.EdgeScope! scope, string! id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeRecord?>
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Edge.Server.PostgreSqlEdgeServerStore.Options.get -> BlueTusk.Edge.Server.EdgeServerOptions!

@@ -164,6 +164,8 @@ BlueTusk.Search.SearchStoreOptions.MaxChunksPerDocument.get -> int
 BlueTusk.Search.SearchStoreOptions.MaxChunksPerDocument.init -> void
 BlueTusk.Search.SearchStoreOptions.MaxConcurrentIngestions.get -> int
 BlueTusk.Search.SearchStoreOptions.MaxConcurrentIngestions.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxConcurrentRankings.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxConcurrentRankings.init -> void
 BlueTusk.Search.SearchStoreOptions.MaxDocumentBytes.get -> int
 BlueTusk.Search.SearchStoreOptions.MaxDocumentBytes.init -> void
 BlueTusk.Search.SearchStoreOptions.MaxMetadataBytes.get -> int
@@ -174,6 +176,12 @@ BlueTusk.Search.SearchStoreOptions.MaxPageSize.get -> int
 BlueTusk.Search.SearchStoreOptions.MaxPageSize.init -> void
 BlueTusk.Search.SearchStoreOptions.MaxRerankingBytes.get -> long
 BlueTusk.Search.SearchStoreOptions.MaxRerankingBytes.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxRetainedQueries.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxRetainedQueries.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxRetainedRankBytes.get -> long
+BlueTusk.Search.SearchStoreOptions.MaxRetainedRankBytes.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxRetainedRankRows.get -> long
+BlueTusk.Search.SearchStoreOptions.MaxRetainedRankRows.init -> void
 BlueTusk.Search.SearchStoreOptions.MaxTitleBytes.get -> int
 BlueTusk.Search.SearchStoreOptions.MaxTitleBytes.init -> void
 BlueTusk.Search.SearchStoreOptions.QueryLifetime.get -> System.TimeSpan
@@ -196,7 +204,7 @@ BlueTusk.Search.SearchVersionConflictException
 BlueTusk.Search.SearchVersionConflictException.DocumentId.get -> string!
 BlueTusk.Search.SearchVersionConflictException.SearchVersionConflictException(string! id, long version) -> void
 BlueTusk.Search.SearchVersionConflictException.Version.get -> long
-const BlueTusk.Search.PostgreSqlSearchStore.CurrentStorageVersion = 1 -> int
+const BlueTusk.Search.PostgreSqlSearchStore.CurrentStorageVersion = 3 -> int
 override BlueTusk.Search.SearchCursor.Equals(object? obj) -> bool
 override BlueTusk.Search.SearchCursor.GetHashCode() -> int
 override BlueTusk.Search.SearchCursor.ToString() -> string!

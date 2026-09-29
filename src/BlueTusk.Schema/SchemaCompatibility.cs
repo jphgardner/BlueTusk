@@ -230,7 +230,7 @@ public static class SchemaCompatibility
             SchemaChangeImpact.RequiresReview, changes);
         CompareMembers(before.Identity, before.Indexes, after.Indexes, item => item.Name,
             SchemaChangeKind.IndexAdded, SchemaChangeKind.IndexRemoved, SchemaChangeKind.IndexChanged,
-            SchemaChangeImpact.Informational, changes);
+            SchemaChangeImpact.Informational, changes, nonAdditionImpact: SchemaChangeImpact.RequiresReview);
         CompareMembers(before.Identity, before.Policies, after.Policies, item => item.Name,
             SchemaChangeKind.PolicyAdded, SchemaChangeKind.PolicyRemoved, SchemaChangeKind.PolicyChanged,
             SchemaChangeImpact.RequiresReview, changes);
@@ -238,7 +238,7 @@ public static class SchemaCompatibility
 
     private static void CompareMembers<T>(SchemaRelationIdentity identity, IReadOnlyList<T> before, IReadOnlyList<T> after,
         Func<T, string> name, SchemaChangeKind added, SchemaChangeKind removed, SchemaChangeKind changed,
-        SchemaChangeImpact impact, List<SchemaChange> changes)
+        SchemaChangeImpact impact, List<SchemaChange> changes, SchemaChangeImpact? nonAdditionImpact = null)
     {
         if (EqualMembers(before, after)) { return; }
         var oldMembers = before.ToDictionary(name, StringComparer.Ordinal);
@@ -247,11 +247,11 @@ public static class SchemaCompatibility
         {
             if (!newMembers.TryGetValue(key, out var next))
             {
-                changes.Add(new(identity, removed, impact, key));
+                changes.Add(new(identity, removed, nonAdditionImpact ?? impact, key));
             }
             else if (!EqualityComparer<T>.Default.Equals(value, next))
             {
-                changes.Add(new(identity, changed, impact, key));
+                changes.Add(new(identity, changed, nonAdditionImpact ?? impact, key));
             }
         }
 

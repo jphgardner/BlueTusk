@@ -76,6 +76,81 @@ public sealed class SqlQueryTests
     }
 
     [Fact]
+    public async Task Parameterless_large_result_stops_at_one_overflow_row_on_the_server()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
+        await using var connection = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
+        await using (var setup = connection.CreateCommand())
+        {
+            setup.CommandText = "CREATE TEMP SEQUENCE bluetusk_sql_row_budget_seq";
+            await setup.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+        }
+
+        var query = new SqlQuery<int, long>("bounded-rows",
+            "SELECT nextval('pg_temp.bluetusk_sql_row_budget_seq') AS value FROM generate_series(1, 1000000)",
+            [new("value", "int8", false)], static (_, _) => { }, static reader => reader.GetInt64(0),
+            maximumRows: 2, commandTimeoutSeconds: 10);
+        var returned = new List<long>();
+        await Assert.ThrowsAsync<SqlResultLimitException>(async () =>
+        {
+            await foreach (var row in query.ReadAsync(connection, 0, cancellationToken: TestContext.Current.CancellationToken))
+            {
+                returned.Add(row);
+            }
+        });
+
+        Assert.Equal(new long[] { 1, 2 }, returned);
+        await using var probe = connection.CreateCommand();
+        probe.CommandText = "SELECT last_value FROM pg_temp.bluetusk_sql_row_budget_seq";
+        Assert.Equal(3L, Assert.IsType<long>(await probe.ExecuteScalarAsync(TestContext.Current.CancellationToken)));
+    }
+
+    [Fact]
+    public async Task Bounded_wrapper_preserves_cte_order_limit_offset_parameters_and_terminal_comments()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
+        await using var connection = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
+        var query = new SqlQuery<int, int>("wrapped-query",
+            "WITH valueset(value) AS (VALUES (1), (2), (3), (4)) " +
+            "SELECT value FROM valueset WHERE value <= $1::int4 ORDER BY value DESC LIMIT 2 OFFSET 1; -- terminal",
+            [new("value", "int4", false)],
+            static (command, maximum) => command.Parameters.Add(new BlueTuskParameter<int>(maximum)),
+            static reader => reader.GetInt32(0), maximumRows: 3);
+        await query.ValidateAsync(dataSource, 4, TestContext.Current.CancellationToken);
+        var returned = new List<int>();
+        await foreach (var row in query.ReadAsync(connection, 4, cancellationToken: TestContext.Current.CancellationToken))
+        {
+            returned.Add(row);
+        }
+        Assert.Collection(returned, value => Assert.Equal(3, value), value => Assert.Equal(2, value));
+    }
+
+    [Fact]
+    public async Task Bounded_wrapper_preserves_for_update_in_a_callers_transaction()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
+        await using var connection = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
+        await using (var setup = connection.CreateCommand())
+        {
+            setup.Transaction = transaction;
+            setup.CommandText = "CREATE TEMP TABLE bluetusk_sql_lock_rows(value int4) ON COMMIT DROP; " +
+                "INSERT INTO bluetusk_sql_lock_rows(value) VALUES (2), (1)";
+            await setup.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+        }
+        var query = new SqlQuery<int, int>("locking-read",
+            "SELECT value FROM pg_temp.bluetusk_sql_lock_rows ORDER BY value FOR UPDATE",
+            [new("value", "int4", false)], static (_, _) => { }, static reader => reader.GetInt32(0), maximumRows: 2);
+        var returned = new List<int>();
+        await foreach (var row in query.ReadAsync(connection, 0, transaction, TestContext.Current.CancellationToken))
+        {
+            returned.Add(row);
+        }
+        Assert.Collection(returned, value => Assert.Equal(1, value), value => Assert.Equal(2, value));
+        await transaction.RollbackAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
     public async Task Authoritative_validation_rejects_column_name_and_type_drift_without_reading_rows()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());

@@ -14,6 +14,9 @@ export interface EdgeOptions {
   readonly maxRecordBytes?: number;
   readonly maxCacheRecords?: number;
   readonly maxCacheBytes?: number;
+  /** Separate snapshot staging reserve; allow up to twice the active payload during cutover. */
+  readonly maxStagedRecords?: number;
+  readonly maxStagedBytes?: number;
   readonly maxPendingRecords?: number;
   readonly maxPendingBytes?: number;
   readonly maxReceipts?: number;
@@ -34,7 +37,7 @@ interface StoredRecord extends EdgeRecord { scope: EdgeScope; fingerprint: strin
 interface StagedRecord extends StoredRecord { snapshotId: string }
 interface Pending extends EdgeMutation { status: Status; sequence: number; fingerprint: string; fence: number; leaseUntil: number }
 interface Receipt { scope: EdgeScope; id: string; fingerprint: string; outcomeFingerprint: string; time: number; resolvedBy: string | null }
-interface Totals { key: "totals"; cacheRows: number; cacheBytes: number; pendingRows: number; pendingBytes: number; receiptRows: number; scopes: number; sequence: number }
+interface Totals { key: "totals"; cacheRows: number; cacheBytes: number; stagedRows: number; stagedBytes: number; pendingRows: number; pendingBytes: number; receiptRows: number; scopes: number; sequence: number }
 const stores = ["scopes", "records", "staging", "mutations", "receipts", "metadata"] as const;
 const encoder = new TextEncoder();
 const maxInt64 = 9223372036854775807n;
@@ -72,7 +75,7 @@ async function hash(value: string): Promise<string> {
   return Array.from(new Uint8Array(bytes), value => value.toString(16).padStart(2, "0")).join("");
 }
 function charge(record: EdgeRecord): number { return encoder.encode(record.payload).byteLength + encoder.encode(record.id).byteLength }
-function blankTotals(): Totals { return { key: "totals", cacheRows: 0, cacheBytes: 0, pendingRows: 0, pendingBytes: 0, receiptRows: 0, scopes: 0, sequence: 0 } }
+function blankTotals(): Totals { return { key: "totals", cacheRows: 0, cacheBytes: 0, stagedRows: 0, stagedBytes: 0, pendingRows: 0, pendingBytes: 0, receiptRows: 0, scopes: 0, sequence: 0 } }
 
 /** Browser persistence adapter. Int64 revisions, epochs and checkpoints use decimal strings without precision loss. */
 export class IndexedDbEdgeStore {
@@ -82,12 +85,13 @@ export class IndexedDbEdgeStore {
   private constructor(db: IDBDatabase, options: EdgeOptions) {
     this.db = db; this.now = options.now ?? Date.now;
     this.limits = { maxRecordBytes: options.maxRecordBytes ?? 512 * 1024, maxCacheRecords: options.maxCacheRecords ?? 100_000,
-      maxCacheBytes: options.maxCacheBytes ?? 256 * 1024 * 1024, maxPendingRecords: options.maxPendingRecords ?? 10_000,
+      maxCacheBytes: options.maxCacheBytes ?? 256 * 1024 * 1024, maxStagedRecords: options.maxStagedRecords ?? 100_000,
+      maxStagedBytes: options.maxStagedBytes ?? 256 * 1024 * 1024, maxPendingRecords: options.maxPendingRecords ?? 10_000,
       maxPendingBytes: options.maxPendingBytes ?? 32 * 1024 * 1024, maxReceipts: options.maxReceipts ?? 100_000,
       maxPageRecords: options.maxPageRecords ?? 1000, maxPageBytes: options.maxPageBytes ?? 8 * 1024 * 1024,
       maxBatchRecords: options.maxBatchRecords ?? 512, maxScopes: options.maxScopes ?? 256 };
     for (const value of Object.values(this.limits)) if (!Number.isSafeInteger(value) || value <= 0) throw new TypeError("Edge limits must be positive safe integers.");
-    if (this.limits.maxRecordBytes > this.limits.maxCacheBytes || this.limits.maxRecordBytes > this.limits.maxPendingBytes || this.limits.maxRecordBytes > this.limits.maxPageBytes) throw new EdgeCapacityError();
+    if (this.limits.maxRecordBytes > this.limits.maxCacheBytes || this.limits.maxRecordBytes > this.limits.maxStagedBytes || this.limits.maxRecordBytes > this.limits.maxPendingBytes || this.limits.maxRecordBytes > this.limits.maxPageBytes) throw new EdgeCapacityError();
   }
   static async open(options: EdgeOptions): Promise<IndexedDbEdgeStore> {
     key(options.databaseName, 512);
@@ -122,7 +126,7 @@ export class IndexedDbEdgeStore {
     };
     const db = await request(opening);
     db.onversionchange = () => db.close();
-    try { return new IndexedDbEdgeStore(db, options) } catch (error) { db.close(); throw error }
+    try { const store = new IndexedDbEdgeStore(db, options); await store.migrateTotals(); return store } catch (error) { db.close(); throw error }
   }
   close(): void { this.db.close() }
   private async transact<T>(mode: IDBTransactionMode, action: (tx: IDBTransaction) => Promise<T>): Promise<T> {
@@ -139,8 +143,23 @@ export class IndexedDbEdgeStore {
     return state;
   }
   private async totals(tx: IDBTransaction): Promise<Totals> { return await request<Totals | undefined>(tx.objectStore("metadata").get("totals")) ?? blankTotals() }
+  private async migrateTotals(): Promise<void> {
+    await this.transact("readwrite", async tx => {
+      const totals = await this.totals(tx);
+      if (Number.isSafeInteger(totals.stagedRows) && Number.isSafeInteger(totals.stagedBytes)) return;
+      totals.stagedRows = 0; totals.stagedBytes = 0;
+      const cursorRequest = tx.objectStore("staging").openCursor();
+      for (let cursor = await request(cursorRequest); cursor; ) {
+        totals.stagedRows++; totals.stagedBytes += charge(cursor.value as StagedRecord);
+        const next = request(cursorRequest); cursor.continue(); cursor = await next;
+      }
+      tx.objectStore("metadata").put(totals);
+    });
+  }
   private budget(totals: Totals): void {
-    if (totals.cacheRows > this.limits.maxCacheRecords || totals.cacheBytes > this.limits.maxCacheBytes || totals.pendingRows > this.limits.maxPendingRecords || totals.pendingBytes > this.limits.maxPendingBytes || totals.receiptRows > this.limits.maxReceipts || totals.scopes > this.limits.maxScopes) throw new EdgeCapacityError();
+    if (totals.cacheRows - totals.stagedRows > this.limits.maxCacheRecords || totals.cacheBytes - totals.stagedBytes > this.limits.maxCacheBytes ||
+      totals.stagedRows > this.limits.maxStagedRecords || totals.stagedBytes > this.limits.maxStagedBytes || totals.pendingRows > this.limits.maxPendingRecords ||
+      totals.pendingBytes > this.limits.maxPendingBytes || totals.receiptRows > this.limits.maxReceipts || totals.scopes > this.limits.maxScopes) throw new EdgeCapacityError();
   }
   async activate(scopeInput: EdgeScope, policy: "reject" | "discard" = "reject"): Promise<void> {
     const scope = scopeCopy(scopeInput);
@@ -157,7 +176,10 @@ export class IndexedDbEdgeStore {
         for (const name of ["records", "staging", "mutations", "receipts"] as const) {
           const values = await request<Array<StoredRecord | StagedRecord | Pending | Receipt>>(tx.objectStore(name).index("base").getAll(range));
           for (const value of values) {
-            if (name === "records" || name === "staging") { totals.cacheRows--; totals.cacheBytes -= charge(value as StoredRecord) }
+            if (name === "records" || name === "staging") {
+              totals.cacheRows--; totals.cacheBytes -= charge(value as StoredRecord);
+              if (name === "staging") { totals.stagedRows--; totals.stagedBytes -= charge(value as StagedRecord) }
+            }
             else if (name === "mutations") { totals.pendingRows--; totals.pendingBytes -= encoder.encode((value as Pending).payload).byteLength }
             else totals.receiptRows--;
             const id = name === "staging" ? [...scopeKey(value.scope), (value as StagedRecord).snapshotId, value.id] : identity(value.scope, value.id);
@@ -234,8 +256,10 @@ export class IndexedDbEdgeStore {
       if (snapshotId !== null && previous.revision !== record.revision || previous.revision === record.revision && previous.fingerprint !== fingerprint) throw new EdgeRevisionError();
       if (integer(previous.revision) >= integer(record.revision)) return;
       totals.cacheBytes -= charge(previous);
-    } else totals.cacheRows++;
+      if (snapshotId !== null) totals.stagedBytes -= charge(previous);
+    } else { totals.cacheRows++; if (snapshotId !== null) totals.stagedRows++ }
     totals.cacheBytes += charge(record);
+    if (snapshotId !== null) totals.stagedBytes += charge(record);
     this.budget(totals);
     if (snapshotId === null) store.put({ ...record, scope, fingerprint } satisfies StoredRecord);
     else store.put({ ...record, scope, fingerprint, snapshotId } satisfies StagedRecord);
@@ -247,7 +271,7 @@ export class IndexedDbEdgeStore {
       if (integer(position) < integer(state.position) || state.snapshotId === id && state.snapshotPosition !== position) throw new EdgeRevisionError();
       const totals = await this.totals(tx);
       const rows = await request<StagedRecord[]>(tx.objectStore("staging").index("scope").getAll(IDBKeyRange.only(scopeKey(scope))));
-      for (const row of rows) if (row.snapshotId !== id) { tx.objectStore("staging").delete([...scopeKey(scope), row.snapshotId, row.id]); totals.cacheRows--; totals.cacheBytes -= charge(row) }
+      for (const row of rows) if (row.snapshotId !== id) { tx.objectStore("staging").delete([...scopeKey(scope), row.snapshotId, row.id]); totals.cacheRows--; totals.cacheBytes -= charge(row); totals.stagedRows--; totals.stagedBytes -= charge(row) }
       state.snapshotId = id; state.snapshotPosition = position;
       tx.objectStore("scopes").put(state); tx.objectStore("metadata").put(totals);
     });
@@ -275,7 +299,9 @@ export class IndexedDbEdgeStore {
         if (row.snapshotId !== id) throw new EdgeScopeError();
         tx.objectStore("records").put({ scope, id: row.id, revision: row.revision, payload: row.payload, deleted: row.deleted, fingerprint: row.fingerprint } satisfies StoredRecord);
         tx.objectStore("staging").delete([...scopeKey(scope), id, row.id]);
+        totals.stagedRows--; totals.stagedBytes -= charge(row);
       }
+      this.budget(totals);
       state.position = state.snapshotPosition; state.snapshotPosition = null; state.snapshotId = null; state.ready = true;
       tx.objectStore("scopes").put(state); tx.objectStore("metadata").put(totals);
     });

@@ -42,55 +42,114 @@ public sealed partial class PostgreSqlSearchStore
             _ = _vectors.Encode(vector.Span);
         }
 
-        var queryId = Guid.NewGuid();
-        await using (var connection = await OpenAsync(cancellationToken).ConfigureAwait(false))
-        await using (var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false))
+        var rankingSlotTaken = false;
+        if (_ranking is not null)
         {
-            await AdmitQueryAsync(connection, transaction, scope, cancellationToken).ConfigureAwait(false);
-            await using (var command = Command(connection, transaction, $"INSERT INTO {_schema}.queries (query_id,tenant,index_name,scope_fingerprint,expires_at) VALUES (@query,@tenant,@index,@scope,clock_timestamp()+(@lifetime * interval '1 second'))"))
+            if (!await _rankingSlots.WaitAsync(0, cancellationToken).ConfigureAwait(false))
             {
-                ScopeParameters(command, scope);
-                Parameter(command, "query", queryId, DbType.Guid);
-                Parameter(command, "scope", scope.Fingerprint);
-                Parameter(command, "lifetime", Options.QueryLifetime.TotalSeconds, DbType.Double);
-                _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                throw new SearchBackpressureException();
             }
 
-            var sql = CandidateSql(request);
-            await using (var command = Command(connection, transaction, sql))
-            {
-                ScopeParameters(command, scope);
-                Parameter(command, "query", queryId, DbType.Guid);
-                Parameter(command, "candidates", request.CandidateLimit, DbType.Int32);
-                if (request.Mode is not SearchMode.Vector)
-                {
-                    Parameter(command, "text", request.Text);
-                }
-
-                if (request.Mode is not SearchMode.FullText)
-                {
-                    Parameter(command, "vector", _vectors!.Encode(vector.Span));
-                }
-
-                if (request.Mode is SearchMode.Hybrid)
-                {
-                    Parameter(command, "text_weight", request.FullTextWeight, DbType.Double);
-                    Parameter(command, "vector_weight", request.VectorWeight, DbType.Double);
-                    Parameter(command, "rrf", request.ReciprocalRankConstant, DbType.Int32);
-                }
-
-                _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-
-            if (_ranking is not null)
-            {
-                await ApplyRankingAsync(connection, transaction, queryId, scope, request.Text, cancellationToken).ConfigureAwait(false);
-            }
-
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            rankingSlotTaken = true;
         }
 
-        return await ContinueSearchAsync(scope, new SearchCursor(queryId, 0), request.PageSize, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var queryId = Guid.NewGuid();
+            var reserved = false;
+            try
+            {
+                // Admission counts both pending and published snapshots, but releases its scope lock
+                // before any candidate work or caller-provided ranking code begins.
+                await using (var connection = await OpenAsync(cancellationToken).ConfigureAwait(false))
+                await using (var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    await AdmitQueryAsync(connection, transaction, scope, request.CandidateLimit, cancellationToken).ConfigureAwait(false);
+                    await using var command = Command(connection, transaction, $"INSERT INTO {_schema}.queries (query_id,tenant,index_name,scope_fingerprint,expires_at,ready,reserved_rows,reserved_bytes) VALUES (@query,@tenant,@index,@scope,clock_timestamp()+(@lifetime * interval '1 second'),false,@rows,@bytes)");
+                    ScopeParameters(command, scope);
+                    Parameter(command, "query", queryId, DbType.Guid);
+                    Parameter(command, "scope", scope.Fingerprint);
+                    Parameter(command, "lifetime", Options.QueryLifetime.TotalSeconds, DbType.Double);
+                    Parameter(command, "rows", request.CandidateLimit, DbType.Int64);
+                    Parameter(command, "bytes", (long)request.CandidateLimit * 552, DbType.Int64);
+                    _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                reserved = true;
+                await using (var connection = await OpenAsync(cancellationToken).ConfigureAwait(false))
+                await using (var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    await using var command = Command(connection, transaction, CandidateSql(request));
+                    ScopeParameters(command, scope);
+                    Parameter(command, "query", queryId, DbType.Guid);
+                    Parameter(command, "candidates", request.CandidateLimit, DbType.Int32);
+                    if (request.Mode is not SearchMode.Vector)
+                    {
+                        Parameter(command, "text", request.Text);
+                    }
+
+                    if (request.Mode is not SearchMode.FullText)
+                    {
+                        Parameter(command, "vector", _vectors!.Encode(vector.Span));
+                    }
+
+                    if (request.Mode is SearchMode.Hybrid)
+                    {
+                        Parameter(command, "text_weight", request.FullTextWeight, DbType.Double);
+                        Parameter(command, "vector_weight", request.VectorWeight, DbType.Double);
+                        Parameter(command, "rrf", request.ReciprocalRankConstant, DbType.Int32);
+                    }
+
+                    _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    if (_ranking is null)
+                    {
+                        await PublishQueryAsync(connection, transaction, queryId, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                if (_ranking is not null)
+                {
+                    var candidates = await ReadRankingCandidatesAsync(queryId, scope, cancellationToken).ConfigureAwait(false);
+                    var scores = await _ranking.RankAsync(scope, request.Text, candidates.AsReadOnly(), cancellationToken).ConfigureAwait(false);
+
+                    await using (var connection = await OpenAsync(cancellationToken).ConfigureAwait(false))
+                    await using (var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false))
+                    {
+                        await PublishQueryAsync(connection, transaction, queryId, cancellationToken).ConfigureAwait(false);
+                        await ApplyRankingAsync(connection, transaction, queryId, candidates, scores, cancellationToken).ConfigureAwait(false);
+                        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch
+            {
+                if (reserved)
+                {
+                    await TryRemovePendingQueryAsync(queryId).ConfigureAwait(false);
+                }
+
+                throw;
+            }
+
+            // The first page is ordinary retrieval; it should not occupy ranker capacity.
+            if (rankingSlotTaken)
+            {
+                _rankingSlots.Release();
+                rankingSlotTaken = false;
+            }
+
+            return await ContinueSearchAsync(scope, new SearchCursor(queryId, 0), request.PageSize, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (rankingSlotTaken)
+            {
+                _rankingSlots.Release();
+            }
+        }
     }
 
     public async ValueTask<SearchPage> ContinueSearchAsync(SearchScope scope, SearchCursor cursor, int pageSize = 20, CancellationToken cancellationToken = default)
@@ -106,7 +165,7 @@ public sealed partial class PostgreSqlSearchStore
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken).ConfigureAwait(false);
         DateTimeOffset expires;
-        await using (var command = Command(connection, transaction, $"SELECT expires_at FROM {_schema}.queries WHERE query_id=@query AND tenant=@tenant AND index_name=@index AND scope_fingerprint=@scope AND expires_at>clock_timestamp()"))
+        await using (var command = Command(connection, transaction, $"SELECT expires_at FROM {_schema}.queries WHERE query_id=@query AND tenant=@tenant AND index_name=@index AND scope_fingerprint=@scope AND ready AND expires_at>clock_timestamp()"))
         {
             ScopeParameters(command, scope, includePrincipals: false);
             Parameter(command, "query", cursor.QueryId, DbType.Guid);
@@ -236,10 +295,11 @@ public sealed partial class PostgreSqlSearchStore
             """;
     }
 
-    private async ValueTask ApplyRankingAsync(DbConnection connection, DbTransaction transaction, Guid queryId, SearchScope scope, string text, CancellationToken cancellationToken)
+    private async ValueTask<List<SearchHit>> ReadRankingCandidatesAsync(Guid queryId, SearchScope scope, CancellationToken cancellationToken)
     {
         var candidates = new List<SearchHit>();
-        await using (var command = Command(connection, transaction, $"""
+        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using (var command = Command(connection, null, $"""
             WITH candidates AS (
                 SELECT r.rank,c.document_id,c.ordinal,c.source_version,d.title,c.content,d.metadata,r.score,
                     sum(octet_length(c.content)+octet_length(d.title)+octet_length(d.metadata::text)) OVER (ORDER BY r.rank) AS total_bytes
@@ -272,7 +332,13 @@ public sealed partial class PostgreSqlSearchStore
             }
         }
 
-        var scores = await _ranking!.RankAsync(scope, text, candidates.AsReadOnly(), cancellationToken).ConfigureAwait(false);
+        return candidates;
+    }
+
+    private async ValueTask ApplyRankingAsync(DbConnection connection, DbTransaction transaction, Guid queryId, List<SearchHit> candidates,
+        IReadOnlyList<SearchRankingScore> scores, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(scores);
         if (scores.Count > candidates.Count)
         {
             throw new InvalidOperationException("The ranking extension returned more results than the bounded candidate set.");
@@ -322,34 +388,139 @@ public sealed partial class PostgreSqlSearchStore
         }
     }
 
-    private async ValueTask AdmitQueryAsync(DbConnection connection, DbTransaction transaction, SearchScope scope, CancellationToken cancellationToken)
+    private async ValueTask PublishQueryAsync(DbConnection connection, DbTransaction transaction, Guid queryId, CancellationToken cancellationToken)
     {
+        await using var command = Command(connection, transaction,
+            $"UPDATE {_schema}.queries SET ready=true WHERE query_id=@query AND NOT ready AND expires_at>clock_timestamp()");
+        Parameter(command, "query", queryId, DbType.Guid);
+        if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+        {
+            throw new SearchCursorExpiredException();
+        }
+    }
+
+    private async ValueTask TryRemovePendingQueryAsync(Guid queryId)
+    {
+        // Cleanup uses an independent, short deadline so caller cancellation cannot strand a
+        // reservation indefinitely. Expiry pruning remains the recovery path if the DB is down.
+        using var cleanupDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        try
+        {
+            await using var connection = await OpenAsync(cleanupDeadline.Token).ConfigureAwait(false);
+            await using var transaction = await connection.BeginTransactionAsync(cleanupDeadline.Token).ConfigureAwait(false);
+            await LockSnapshotBudgetAsync(connection, transaction, cleanupDeadline.Token).ConfigureAwait(false);
+            long? reservedRows = null;
+            long reservedBytes = 0;
+            await using (var command = Command(connection, transaction, $"DELETE FROM {_schema}.queries WHERE query_id=@query AND NOT ready RETURNING reserved_rows,reserved_bytes"))
+            {
+                Parameter(command, "query", queryId, DbType.Guid);
+                await using var reader = await command.ExecuteReaderAsync(cleanupDeadline.Token).ConfigureAwait(false);
+                if (await reader.ReadAsync(cleanupDeadline.Token).ConfigureAwait(false))
+                {
+                    reservedRows = reader.GetInt64(0);
+                    reservedBytes = reader.GetInt64(1);
+                }
+            }
+            if (reservedRows is not null)
+                await ReleaseSnapshotBudgetAsync(connection, transaction, 1, reservedRows.Value, reservedBytes, cleanupDeadline.Token).ConfigureAwait(false);
+            await transaction.CommitAsync(cleanupDeadline.Token).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            // The original query failure is more useful to callers. The pending row is bounded
+            // by its database-clock deadline and can be pruned on admission or by the host.
+        }
+    }
+
+    private async ValueTask AdmitQueryAsync(DbConnection connection, DbTransaction transaction, SearchScope scope, int candidateLimit, CancellationToken cancellationToken)
+    {
+        await LockSnapshotBudgetAsync(connection, transaction, cancellationToken).ConfigureAwait(false);
         await using (var guard = Command(connection, transaction, "SELECT pg_advisory_xact_lock(hashtextextended(@name, 0))"))
         {
             Parameter(guard, "name", "BlueTusk.Search.Query:" + SearchValidation.Hash(scope.Tenant + "\0" + scope.Index));
             _ = await guard.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        await using (var cleanup = Command(connection, transaction, $"""
-            WITH expired AS (
-                SELECT query_id FROM {_schema}.queries WHERE tenant=@tenant AND index_name=@index AND expires_at<=clock_timestamp()
-                ORDER BY expires_at LIMIT 100 FOR UPDATE SKIP LOCKED)
-            DELETE FROM {_schema}.queries q USING expired e WHERE q.query_id=e.query_id
-            """))
-        {
-            ScopeParameters(cleanup, scope, includePrincipals: false);
-            _ = await cleanup.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
+        _ = await PruneQueriesAsync(connection, transaction, scope, 8, cancellationToken).ConfigureAwait(false);
+        _ = await PruneQueriesAsync(connection, transaction, null, 8, cancellationToken).ConfigureAwait(false);
 
-        await using (var count = Command(connection, transaction, $"SELECT count(*) FROM {_schema}.queries WHERE tenant=@tenant AND index_name=@index"))
+        await using (var count = Command(connection, transaction, $"SELECT count(*) FROM (SELECT 1 FROM {_schema}.queries WHERE tenant=@tenant AND index_name=@index LIMIT @maximum) bounded"))
         {
             ScopeParameters(count, scope, includePrincipals: false);
+            Parameter(count, "maximum", Options.MaxActiveQueriesPerScope, DbType.Int32);
             var total = Convert.ToInt64(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), System.Globalization.CultureInfo.InvariantCulture);
             if (total >= Options.MaxActiveQueriesPerScope)
             {
                 throw new SearchBackpressureException();
             }
         }
+
+        await using (var reserve = Command(connection, transaction, $"""
+            UPDATE {_schema}.snapshot_budget SET reserved_queries=reserved_queries+1,
+                reserved_rows=reserved_rows+@rows,reserved_bytes=reserved_bytes+@bytes
+            WHERE singleton AND max_queries=@max_queries AND max_rows=@max_rows AND max_bytes=@max_bytes
+                AND reserved_queries<max_queries AND reserved_rows<=max_rows-@rows AND reserved_bytes<=max_bytes-@bytes
+            """))
+        {
+            Parameter(reserve, "rows", candidateLimit, DbType.Int64);
+            Parameter(reserve, "bytes", (long)candidateLimit * 552, DbType.Int64);
+            Parameter(reserve, "max_queries", Options.MaxRetainedQueries, DbType.Int64);
+            Parameter(reserve, "max_rows", Options.MaxRetainedRankRows, DbType.Int64);
+            Parameter(reserve, "max_bytes", Options.MaxRetainedRankBytes, DbType.Int64);
+            if (await reserve.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+                throw new SearchBackpressureException();
+        }
+    }
+
+    private async ValueTask LockSnapshotBudgetAsync(DbConnection connection, DbTransaction transaction, CancellationToken cancellationToken)
+    {
+        await using var command = Command(connection, transaction, "SELECT pg_try_advisory_xact_lock(hashtextextended(@name, 0))");
+        Parameter(command, "name", "BlueTusk.Search.SnapshotBudget:" + Options.Schema);
+        if (await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is not true)
+            throw new SearchBackpressureException();
+    }
+
+    private async ValueTask<int> PruneQueriesAsync(DbConnection connection, DbTransaction transaction, SearchScope? scope, int maximum, CancellationToken cancellationToken)
+    {
+        var filter = scope is null ? string.Empty : "tenant=@tenant AND index_name=@index AND ";
+        await using var command = Command(connection, transaction, $"""
+            WITH expired AS (
+                SELECT query_id FROM {_schema}.queries WHERE {filter}expires_at<=clock_timestamp()
+                ORDER BY expires_at LIMIT @maximum FOR UPDATE SKIP LOCKED),
+            removed AS (DELETE FROM {_schema}.queries q USING expired e WHERE q.query_id=e.query_id
+                RETURNING q.reserved_rows,q.reserved_bytes)
+            SELECT count(*),coalesce(sum(reserved_rows),0)::bigint,coalesce(sum(reserved_bytes),0)::bigint FROM removed
+            """);
+        if (scope is not null)
+            ScopeParameters(command, scope, includePrincipals: false);
+        Parameter(command, "maximum", maximum, DbType.Int32);
+        int removed;
+        long rows;
+        long bytes;
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+        {
+            _ = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            removed = checked((int)reader.GetInt64(0));
+            rows = reader.GetInt64(1);
+            bytes = reader.GetInt64(2);
+        }
+        if (removed > 0)
+            await ReleaseSnapshotBudgetAsync(connection, transaction, removed, rows, bytes, cancellationToken).ConfigureAwait(false);
+        return removed;
+    }
+
+    private async ValueTask ReleaseSnapshotBudgetAsync(DbConnection connection, DbTransaction transaction, int queries, long rows, long bytes, CancellationToken cancellationToken)
+    {
+        await using var command = Command(connection, transaction, $"""
+            UPDATE {_schema}.snapshot_budget SET reserved_queries=reserved_queries-@queries,
+                reserved_rows=reserved_rows-@rows,reserved_bytes=reserved_bytes-@bytes
+            WHERE singleton AND reserved_queries>=@queries AND reserved_rows>=@rows AND reserved_bytes>=@bytes
+            """);
+        Parameter(command, "queries", queries, DbType.Int64);
+        Parameter(command, "rows", rows, DbType.Int64);
+        Parameter(command, "bytes", bytes, DbType.Int64);
+        if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+            throw new InvalidOperationException("Search snapshot budget accounting differs from retained queries.");
     }
 
     private void ValidateRequest(SearchRequest request)

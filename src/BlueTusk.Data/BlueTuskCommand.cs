@@ -282,6 +282,8 @@ public sealed class BlueTuskCommand : DbCommand
         return ExecuteBufferedDataReaderAsync(behavior, cancellationToken);
     }
 
+    internal bool WillStreamReader(CommandBehavior behavior) => ShouldUseStreamingReader(ValidateCommandBehavior(behavior));
+
     private bool ShouldUseStreamingReader(CommandBehavior behavior)
     {
         if (behavior.HasFlag(CommandBehavior.SequentialAccess))

@@ -137,6 +137,7 @@
 /documentation/operations/ecosystem-progress
 /documentation/operations/ecosystem-release-qualification
 /documentation/operations/edge
+/documentation/operations/events-published-retention
 /documentation/operations/events
 /documentation/operations/fuzzing
 /documentation/operations/hardening-programme
@@ -174,6 +175,7 @@
 /documentation/operations/schema
 /documentation/operations/schema-catalogue-attestation
 /documentation/operations/search
+/documentation/operations/search-capacity
 /documentation/operations/sql
 /documentation/operations/studio
 /documentation/operations/v1-applications

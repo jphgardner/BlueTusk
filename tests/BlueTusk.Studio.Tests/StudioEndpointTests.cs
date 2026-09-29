@@ -128,24 +128,113 @@ public sealed class StudioEndpointTests
         Assert.Empty(audit.Records);
         using var session = JsonDocument.Parse(await client.GetStringAsync("session", TestContext.Current.CancellationToken));
         client.DefaultRequestHeaders.Add(session.RootElement.GetProperty("header").GetString()!, session.RootElement.GetProperty("token").GetString());
-        var query = await client.PostAsJsonAsync("query", new { Sql = "SELECT '<script>unsafe</script>'::text AS value" }, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("query", new { Sql = "SELECT 1" }, TestContext.Current.CancellationToken)).StatusCode);
+        Assert.Empty(audit.Records);
+        var operation = Guid.NewGuid();
+        var query = await client.PostAsJsonAsync("query", new { Sql = "SELECT '<script>unsafe</script>'::text AS value", OperationId = operation }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, query.StatusCode);
+        Assert.Equal(operation.ToString("D"), query.Headers.GetValues("X-BlueTusk-Studio-Operation-Id").Single());
         using var result = JsonDocument.Parse(await query.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         Assert.Equal("<script>unsafe</script>", result.RootElement.GetProperty("rows")[0][0].GetString());
         Assert.Equal(2, audit.Records.Count);
         Assert.Equal("attempt", audit.Records[0].Outcome);
         Assert.Equal("completed", audit.Records[1].Outcome);
         Assert.All(audit.Records, record => Assert.Equal(64, record.QueryFingerprint.Length));
-        var invalid = await client.PostAsJsonAsync("query", new { Sql = "SELECT 1; COMMIT; DELETE FROM forbidden" }, TestContext.Current.CancellationToken);
+        Assert.All(audit.Records, record => Assert.Equal("fixture-database", record.ScopeId));
+        var invalid = await client.PostAsJsonAsync("query", new { Sql = "SELECT 1; COMMIT; DELETE FROM forbidden", OperationId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
         Assert.DoesNotContain("forbidden", await invalid.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
+        await app.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task Query_capacity_is_taken_before_audit_and_scope_resolution()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
+        var audit = new BlockingAudit();
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.Services.AddSingleton(dataSource);
+        builder.Services.AddSingleton(audit);
+        builder.Services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser());
+            options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
+        });
+        builder.Services.AddBlueTuskStudio<FixtureScope, BlockingAuditAdapter>(StudioQueryServiceTests.Options() with
+        {
+            MaximumConcurrentQueries = 1,
+            QueryTimeoutSeconds = 30,
+        });
+        await using var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapBlueTuskStudio();
+        await app.StartAsync(TestContext.Current.CancellationToken);
+        var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+        using var handler = new HttpClientHandler { CookieContainer = new CookieContainer(), AllowAutoRedirect = false };
+        using var client = new HttpClient(handler) { BaseAddress = new Uri(address + "/bluetusk/studio/") };
+        client.DefaultRequestHeaders.Add("X-Fixture-User", "operator");
+        using var session = JsonDocument.Parse(await client.GetStringAsync("session", TestContext.Current.CancellationToken));
+        client.DefaultRequestHeaders.Add(session.RootElement.GetProperty("header").GetString()!, session.RootElement.GetProperty("token").GetString());
+        var first = client.PostAsJsonAsync("query", new { Sql = "SELECT 1", OperationId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
+        try
+        {
+            await audit.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            var rejected = await client.PostAsJsonAsync("query", new { Sql = "SELECT 2", OperationId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
+            Assert.Equal(HttpStatusCode.TooManyRequests, (await client.GetAsync("schema", TestContext.Current.CancellationToken)).StatusCode);
+            Assert.Equal(1, audit.Attempts);
+        }
+        finally { audit.Release.TrySetResult(); }
+        Assert.Equal(HttpStatusCode.OK, (await first).StatusCode);
+        await app.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Theory]
+    [InlineData(false, HttpStatusCode.TooManyRequests)]
+    [InlineData(true, HttpStatusCode.ServiceUnavailable)]
+    public async Task Distributed_admission_rejects_before_audit_or_query(bool unavailable, HttpStatusCode expected)
+    {
+        await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
+        var audit = new FixtureAudit();
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.Services.AddSingleton(dataSource);
+        builder.Services.AddSingleton(audit);
+        builder.Services.AddSingleton<IStudioDistributedAdmission>(new FixtureDistributedAdmission(unavailable));
+        builder.Services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser());
+            options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
+        });
+        builder.Services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
+        await using var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapBlueTuskStudio();
+        await app.StartAsync(TestContext.Current.CancellationToken);
+        var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+        using var handler = new HttpClientHandler { CookieContainer = new CookieContainer() };
+        using var client = new HttpClient(handler) { BaseAddress = new Uri(address + "/bluetusk/studio/") };
+        client.DefaultRequestHeaders.Add("X-Fixture-User", "operator");
+        using var session = JsonDocument.Parse(await client.GetStringAsync("session", TestContext.Current.CancellationToken));
+        client.DefaultRequestHeaders.Add(session.RootElement.GetProperty("header").GetString()!, session.RootElement.GetProperty("token").GetString());
+        Assert.Equal(expected, (await client.PostAsJsonAsync("query", new { Sql = "SELECT 1", OperationId = Guid.NewGuid() },
+            TestContext.Current.CancellationToken)).StatusCode);
+        Assert.Equal(expected, (await client.GetAsync("schema", TestContext.Current.CancellationToken)).StatusCode);
+        Assert.Empty(audit.Records);
         await app.StopAsync(TestContext.Current.CancellationToken);
     }
 
     private sealed class FixtureScope(BlueTuskDataSource dataSource) : IStudioScopeResolver
     {
         public ValueTask<StudioDatabaseScope> ResolveAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(new StudioDatabaseScope(dataSource, ["public"]));
+            ValueTask.FromResult(new StudioDatabaseScope(dataSource, ["public"]) { AuditScopeId = "fixture-database" });
     }
 
     private sealed class FixtureEventScope(PostgreSqlEventStore store) : IStudioEventScopeResolver
@@ -159,6 +248,12 @@ public sealed class StudioEndpointTests
         public List<StudioAuditRecord> Records { get; } = [];
     }
 
+    private sealed class FixtureDistributedAdmission(bool unavailable) : IStudioDistributedAdmission
+    {
+        public ValueTask<IAsyncDisposable?> TryAcquireAsync(string scopeId, CancellationToken cancellationToken = default) =>
+            unavailable ? throw new InvalidOperationException("Admission repository unavailable.") : ValueTask.FromResult<IAsyncDisposable?>(null);
+    }
+
     private sealed class FixtureAuditAdapter(FixtureAudit audit) : IStudioAuditSink
     {
         public ValueTask RecordAsync(StudioAuditRecord record, CancellationToken cancellationToken = default)
@@ -166,6 +261,28 @@ public sealed class StudioEndpointTests
             audit.Records.Add(record);
             return ValueTask.CompletedTask;
         }
+    }
+
+    private sealed class BlockingAudit
+    {
+        private int _attempts;
+        public int Attempts => Volatile.Read(ref _attempts);
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public async ValueTask RecordAsync(StudioAuditRecord record, CancellationToken cancellationToken)
+        {
+            if (record.Outcome == "attempt" && Interlocked.Increment(ref _attempts) == 1)
+            {
+                Entered.TrySetResult();
+                await Release.Task.WaitAsync(cancellationToken);
+            }
+        }
+    }
+
+    private sealed class BlockingAuditAdapter(BlockingAudit audit) : IStudioAuditSink
+    {
+        public ValueTask RecordAsync(StudioAuditRecord record, CancellationToken cancellationToken = default) =>
+            audit.RecordAsync(record, cancellationToken);
     }
 
     private sealed class FixtureAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)

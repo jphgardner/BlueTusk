@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.TypeSystem;
 
@@ -94,6 +95,19 @@ public sealed class SqlQuery<TArguments, TResult>
     {
         ArgumentNullException.ThrowIfNull(connection);
         await using var command = CreateCommand(connection, transaction, arguments);
+        // The provider may buffer a parameterless query before returning its reader.
+        // Bound the server result as well as the rows delivered to the caller.
+        command.CommandText = "SELECT * FROM (\n" + PostgreSqlStatementGuard.AdmitReadQuery(Sql) +
+            "\n) AS bluetusk_bounded LIMIT " + (MaximumRows + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        if (command is not BlueTuskCommand blueTuskCommand)
+        {
+            throw new NotSupportedException("Typed SQL reads require a BlueTusk command with a streaming reader.");
+        }
+        blueTuskCommand.ExecutionMode = BlueTuskCommandExecutionMode.Extended;
+        if (!blueTuskCommand.WillStreamReader(CommandBehavior.Default))
+        {
+            throw new NotSupportedException("Typed SQL reads require a streaming reader; buffered reader mode is unsupported.");
+        }
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         ValidateResultShape(reader, connection);
         var count = 0;

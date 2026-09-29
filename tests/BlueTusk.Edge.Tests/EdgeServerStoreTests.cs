@@ -59,6 +59,46 @@ public sealed class EdgeServerStoreTests
     });
 
     [Fact]
+    public Task Confirmed_receipt_releases_payload_but_permanently_rejects_late_retry() => WithFixtureAsync(async fixture =>
+    {
+        var scope = new EdgeScope("tenant", "orders", 1);
+        await fixture.Store.ActivateScopeAsync(scope);
+        await using var bounded = new PostgreSqlEdgeServerStore(fixture.Source, fixture.Store.Options with { MaxReceiptBytesPerScope = 40 });
+        var mutation = Upsert(scope, "a", 0, "{\"text\":\"12345678901234567890\"}"u8.ToArray());
+        var applied = await bounded.ApplyMutationAsync(mutation);
+        Assert.Equal((long)mutation.Payload.Length, (await bounded.ReadHealthAsync(scope)).ReceiptBytes);
+        await bounded.FinalizeMutationReceiptAsync(mutation);
+        await bounded.FinalizeMutationReceiptAsync(mutation);
+        var health = await bounded.ReadHealthAsync(scope);
+        Assert.Equal(1, health.ReceiptCount);
+        Assert.Equal(0, health.ReceiptBytes);
+        Assert.Equal(1, health.ChangeCount);
+        Assert.Equal(applied.ServerRecord!.Revision, (await bounded.GetAsync(scope, "a"))!.Revision);
+        await Assert.ThrowsAsync<EdgeServerReceiptFinalizedException>(async () => await bounded.ApplyMutationAsync(mutation));
+        await Assert.ThrowsAsync<EdgeMutationIdentityException>(async () => await bounded.ApplyMutationAsync(new EdgeMutation(scope, mutation.Id, "other", 0, EdgeMutationKind.Upsert, "{}"u8.ToArray())));
+        await Assert.ThrowsAsync<EdgeMutationIdentityException>(async () => await bounded.FinalizeMutationReceiptAsync(new EdgeMutation(scope, mutation.Id, "other", 0, EdgeMutationKind.Upsert, "{}"u8.ToArray())));
+        await Assert.ThrowsAsync<EdgeServerReceiptMissingException>(async () => await bounded.FinalizeMutationReceiptAsync(Upsert(scope, "missing", 0, "{}"u8.ToArray())));
+        Assert.Equal(EdgeMutationOutcomeKind.Applied, (await bounded.ApplyMutationAsync(Upsert(scope, "b", 0, "{\"text\":\"12345678901234567890\"}"u8.ToArray()))).Kind);
+        Assert.Equal(2, (await bounded.ReadHealthAsync(scope)).ReceiptCount);
+        Assert.Equal(2, (await bounded.ReadChangesAsync(scope, 0))!.ToPosition);
+    }, new EdgeServerOptions { MaxRecordBytes = 40 });
+
+    [Fact]
+    public Task Version_two_receipts_upgrade_to_unconfirmed_version_three() => WithFixtureAsync(async fixture =>
+    {
+        var scope = new EdgeScope("tenant", "orders", 1);
+        await fixture.Store.ActivateScopeAsync(scope);
+        var mutation = Upsert(scope, "a", 0, "{}"u8.ToArray());
+        var first = await fixture.Store.ApplyMutationAsync(mutation);
+        await using (var downgrade = fixture.Source.CreateCommand($"ALTER TABLE \"{fixture.Store.Options.Schema}\".receipts DROP COLUMN finalized; UPDATE \"{fixture.Store.Options.Schema}\".metadata SET version=2"))
+        { _ = await downgrade.ExecuteNonQueryAsync(); }
+        await fixture.Store.InitializeAsync();
+        Assert.Equal(first.ServerRecord!.Revision, (await fixture.Store.ApplyMutationAsync(mutation)).ServerRecord!.Revision);
+        await fixture.Store.FinalizeMutationReceiptAsync(mutation);
+        await Assert.ThrowsAsync<EdgeServerReceiptFinalizedException>(async () => await fixture.Store.ApplyMutationAsync(mutation));
+    });
+
+    [Fact]
     public Task Competing_CAS_has_one_applied_result_and_conflicts_preserve_authoritative_revision() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
@@ -152,6 +192,31 @@ public sealed class EdgeServerStoreTests
         var first = (await bounded.ReadChangesAsync(scope, 0, 10))!;
         Assert.Single(first.Records);
         Assert.Equal(1, first.ToPosition);
+    }, new EdgeServerOptions { MaxRecordBytes = 40 });
+
+    [Fact]
+    public Task Receipt_payload_bytes_are_bounded_and_replay_survives_admission_refusal() => WithFixtureAsync(async fixture =>
+    {
+        var scope = new EdgeScope("tenant", "orders", 1);
+        await fixture.Store.ActivateScopeAsync(scope);
+        await using var bounded = new PostgreSqlEdgeServerStore(fixture.Source, fixture.Store.Options with
+        {
+            MaxReceiptBytesPerScope = 40,
+            MaxReceiptsPerScope = 10,
+        });
+        var mutation = Upsert(scope, "a", 0, "{\"text\":\"12345678901234567890\"}"u8.ToArray());
+        var applied = await bounded.ApplyMutationAsync(mutation);
+        Assert.Equal((long)mutation.Payload.Length, (await bounded.ReadHealthAsync(scope)).ReceiptBytes);
+        await using (var oldSchema = fixture.Source.CreateCommand($"ALTER TABLE \"{fixture.Store.Options.Schema}\".scopes DROP COLUMN receipt_bytes CASCADE; UPDATE \"{fixture.Store.Options.Schema}\".metadata SET version=1"))
+        { _ = await oldSchema.ExecuteNonQueryAsync(); }
+        await bounded.InitializeAsync();
+        Assert.Equal((long)mutation.Payload.Length, (await bounded.ReadHealthAsync(scope)).ReceiptBytes);
+        var conflict = Upsert(scope, "a", 0, "{}"u8.ToArray());
+        await Assert.ThrowsAsync<EdgeCapacityException>(async () => await bounded.ApplyMutationAsync(conflict));
+        Assert.Equal(1, (await bounded.ReadHealthAsync(scope)).ReceiptCount);
+        Assert.Equal((long)mutation.Payload.Length, (await bounded.ReadHealthAsync(scope)).ReceiptBytes);
+        Assert.Equal(applied.ServerRecord!.Revision, (await bounded.ApplyMutationAsync(mutation)).ServerRecord!.Revision);
+        Assert.Equal(1, (await bounded.ReadHealthAsync(scope)).ReceiptCount);
     }, new EdgeServerOptions { MaxRecordBytes = 40 });
 
     [Fact]

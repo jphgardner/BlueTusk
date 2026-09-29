@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { IndexedDbEdgeStore, EdgeScopeError, EdgeCapacityError, EdgeRevisionError, EdgeIdentityError, EdgeLeaseError } from "../dist/index.js";
+import { IndexedDbEdgeStore, EdgeHttpRemoteTransport, EdgeHttpError, EdgeScopeError, EdgeCapacityError, EdgeRevisionError, EdgeIdentityError, EdgeLeaseError } from "../dist/index.js";
 
 const scope = { tenant: "tenant", id: "readers", epoch: "1" };
 const record = (id, revision, value) => ({ id, revision, payload: JSON.stringify({ value }), deleted: false });
@@ -41,6 +41,51 @@ test("staged snapshots are invisible, resume after reopen, and atomically replac
       assert.equal(JSON.parse((await reopened.get(scope, "1")).payload).value, "new");
     } finally { reopened.close() }
   });
+});
+
+test("replay-expired full cache resnapshots atomically while preserving a queued write", async () => {
+  await fixture(async store => {
+    await ready(store);
+    await store.applyChanges(scope, "0", "2", [record("1", "1", "old"), record("2", "1", "old")]);
+    const queued = mutation("2", "1", "offline");
+    await store.enqueue(queued);
+    const expired = new EdgeHttpRemoteTransport({ endpoint: "https://example.test/edge", bearerToken: () => "token",
+      fetch: async () => new Response(null, { status: 410 }) });
+    await assert.rejects(() => expired.readChanges(scope, "2"), error => error instanceof EdgeHttpError && error.status === 410);
+    const snapshot = crypto.randomUUID();
+    await store.beginSnapshot(scope, snapshot, "3");
+    await assert.rejects(store.applySnapshot(scope, snapshot, [record("1", "2", "new"), record("2", "1", "old"), record("3", "1", "excess")]), EdgeCapacityError);
+    await store.applySnapshot(scope, snapshot, [record("1", "2", "new"), record("2", "1", "old")]);
+    assert.equal(JSON.parse((await store.get(scope, "1")).payload).value, "old");
+    assert.equal((await store.checkpoint(scope)).position, "2");
+    await store.commitSnapshot(scope, snapshot);
+    assert.equal(JSON.parse((await store.get(scope, "1")).payload).value, "new");
+    const overlay = await store.get(scope, "2");
+    assert.equal(overlay.pendingId, queued.id);
+    assert.equal(JSON.parse(overlay.payload).value, "offline");
+    assert.deepEqual(await store.checkpoint(scope), { position: "3", ready: true });
+    assert.equal((await store.claim(scope)).mutation.id, queued.id);
+  }, { maxCacheRecords: 2, maxStagedRecords: 2 });
+});
+
+test("HTTP receipt confirmation sends the original mutation and accepts idempotent no-content responses", async () => {
+  const write = mutation("confirmed", "0", "value");
+  const requests = [];
+  const remote = new EdgeHttpRemoteTransport({ endpoint: "https://example.test/edge", bearerToken: () => "token",
+    fetch: async (url, options) => { requests.push({ url, options }); return new Response(null, { status: 204 }) } });
+  await remote.finalizeMutationReceipt(write);
+  await remote.finalizeMutationReceipt(write);
+  assert.equal(requests.length, 2);
+  assert.equal(requests[0].url, "https://example.test/edge/mutations/confirm?tenant=tenant&scope=readers&epoch=1");
+  assert.equal(requests[0].options.method, "POST");
+  assert.equal(requests[0].options.credentials, "omit");
+  assert.deepEqual(JSON.parse(requests[0].options.body), {
+    id: write.id, documentId: write.documentId, expectedRevision: "0", kind: "upsert",
+    payload: btoa(write.payload)
+  });
+  const gone = new EdgeHttpRemoteTransport({ endpoint: "https://example.test/edge", bearerToken: () => "token",
+    fetch: async () => new Response(null, { status: 410 }) });
+  await assert.rejects(() => gone.applyMutation(write), error => error instanceof EdgeHttpError && error.status === 410);
 });
 
 test("checkpoint and revision conflicts roll back whole batches and tombstones fence resurrection", async () => {
@@ -171,21 +216,30 @@ test("version-one IndexedDB schema upgrades without dropping cached data", async
   const opening = indexedDB.open(databaseName, 1);
   opening.onupgradeneeded = () => {
     const db = opening.result;
-    db.createObjectStore("scopes", { keyPath: ["tenant", "id"] }).put({ ...scope, position: "12", ready: true, snapshotId: null, snapshotPosition: null });
+    db.createObjectStore("scopes", { keyPath: ["tenant", "id"] }).put({ ...scope, position: "12", ready: true, snapshotId: "legacy-snapshot", snapshotPosition: "13" });
     for (const name of ["records", "staging"]) {
       const store = db.createObjectStore(name, { keyPath: name === "records" ? ["scope.tenant", "scope.id", "scope.epoch", "id"] : ["scope.tenant", "scope.id", "scope.epoch", "snapshotId", "id"] });
       store.createIndex("scope", ["scope.tenant", "scope.id", "scope.epoch"]); store.createIndex("base", ["scope.tenant", "scope.id"]);
       if (name === "records") store.put({ scope, ...record("1", "5", "preserved"), fingerprint: "legacy" });
+      else store.put({ scope, ...record("2", "6", "staged"), fingerprint: "legacy-staged", snapshotId: "legacy-snapshot" });
     }
     const pending = db.createObjectStore("mutations", { keyPath: ["scope.tenant", "scope.id", "scope.epoch", "id"] });
     pending.createIndex("scope", ["scope.tenant", "scope.id", "scope.epoch"]); pending.createIndex("base", ["scope.tenant", "scope.id"]);
     pending.createIndex("document", ["scope.tenant", "scope.id", "scope.epoch", "documentId"], { unique: true });
     pending.createIndex("claim", ["scope.tenant", "scope.id", "scope.epoch", "status", "sequence"]);
     pending.createIndex("expiry", ["scope.tenant", "scope.id", "scope.epoch", "status", "leaseUntil"]);
-    db.createObjectStore("metadata", { keyPath: "key" }).put({ key: "totals", cacheRows: 1, cacheBytes: 22, pendingRows: 0, pendingBytes: 0, receiptRows: 0, scopes: 1, sequence: 0 });
+    const cacheBytes = Buffer.byteLength(record("1", "5", "preserved").payload) + 1 + Buffer.byteLength(record("2", "6", "staged").payload) + 1;
+    db.createObjectStore("metadata", { keyPath: "key" }).put({ key: "totals", cacheRows: 2, cacheBytes, pendingRows: 0, pendingBytes: 0, receiptRows: 0, scopes: 1, sequence: 0 });
   };
   const original = await req(opening); original.close();
   const upgraded = await IndexedDbEdgeStore.open({ databaseName });
-  try { assert.equal(JSON.parse((await upgraded.get(scope, "1")).payload).value, "preserved"); assert.deepEqual(await upgraded.checkpoint(scope), { position: "12", ready: true }) }
+  try {
+    assert.equal(JSON.parse((await upgraded.get(scope, "1")).payload).value, "preserved");
+    assert.deepEqual(await upgraded.checkpoint(scope), { position: "12", ready: true });
+    await upgraded.commitSnapshot(scope, "legacy-snapshot");
+    assert.equal(await upgraded.get(scope, "1"), null);
+    assert.equal(JSON.parse((await upgraded.get(scope, "2")).payload).value, "staged");
+    assert.deepEqual(await upgraded.checkpoint(scope), { position: "13", ready: true });
+  }
   finally { upgraded.close(); await req(indexedDB.deleteDatabase(databaseName)) }
 });

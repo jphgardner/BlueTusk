@@ -8,13 +8,14 @@ namespace BlueTusk.Search;
 /// <summary>Version-fenced PostgreSQL ingestion and scoped retrieval with persisted bounded rank snapshots.</summary>
 public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
 {
-    public const int CurrentStorageVersion = 1;
+    public const int CurrentStorageVersion = 3;
     private readonly DbDataSource _source;
     private readonly SearchDataSourceOwnership _ownership;
     private readonly IPostgreSqlSearchVectorAdapter? _vectors;
     private readonly ISearchEmbeddingProvider? _embeddings;
     private readonly ISearchRankingExtension? _ranking;
     private readonly SemaphoreSlim _ingestionSlots;
+    private readonly SemaphoreSlim _rankingSlots;
     private readonly string _schema;
     private readonly string _contract;
     private int _disposed;
@@ -46,6 +47,7 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
         _ownership = ownership;
         _schema = SearchValidation.Identifier(Options.Schema);
         _ingestionSlots = new SemaphoreSlim(Options.MaxConcurrentIngestions, Options.MaxConcurrentIngestions);
+        _rankingSlots = new SemaphoreSlim(Options.MaxConcurrentRankings, Options.MaxConcurrentRankings);
         _contract = string.Create(CultureInfo.InvariantCulture, $"v1:chunk={Options.MaxChunkCharacters}:overlap={Options.ChunkOverlapCharacters}:vector={vectors?.StorageContract ?? "none"}:model={embeddings?.ModelIdentity ?? "none"}");
     }
 
@@ -82,13 +84,18 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
             _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        var previousVersion = CurrentStorageVersion;
         await using (var command = Command(connection, transaction, $"SELECT storage_version, contract FROM {_schema}.storage_metadata WHERE singleton"))
         await using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt32(0) != CurrentStorageVersion || !string.Equals(reader.GetString(1), _contract, StringComparison.Ordinal))
+            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ||
+                reader.GetInt32(0) is not (1 or 2 or CurrentStorageVersion) ||
+                !string.Equals(reader.GetString(1), _contract, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException("Installed search storage, chunking, embedding model or vector contract differs from this store.");
             }
+
+            previousVersion = reader.GetInt32(0);
         }
 
         var embeddingColumn = _vectors is null ? string.Empty : ", embedding " + _vectors.ColumnTypeSql;
@@ -124,7 +131,10 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
                 tenant text NOT NULL,
                 index_name text NOT NULL,
                 scope_fingerprint char(64) NOT NULL,
-                expires_at timestamptz NOT NULL);
+                expires_at timestamptz NOT NULL,
+                ready boolean NOT NULL DEFAULT true,
+                reserved_rows bigint NOT NULL DEFAULT 0 CHECK (reserved_rows>=0),
+                reserved_bytes bigint NOT NULL DEFAULT 0 CHECK (reserved_bytes>=0));
             CREATE INDEX IF NOT EXISTS queries_expiry ON {_schema}.queries (expires_at);
             CREATE INDEX IF NOT EXISTS queries_scope_expiry ON {_schema}.queries (tenant, index_name, expires_at);
             CREATE TABLE IF NOT EXISTS {_schema}.query_results (
@@ -135,9 +145,89 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
                 source_version bigint NOT NULL,
                 score double precision NOT NULL,
                 PRIMARY KEY (query_id, rank));
+            CREATE TABLE IF NOT EXISTS {_schema}.snapshot_budget (
+                singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
+                max_queries bigint NOT NULL CHECK (max_queries>0),
+                max_rows bigint NOT NULL CHECK (max_rows>0),
+                max_bytes bigint NOT NULL CHECK (max_bytes>0),
+                reserved_queries bigint NOT NULL DEFAULT 0 CHECK (reserved_queries>=0 AND reserved_queries<=max_queries),
+                reserved_rows bigint NOT NULL DEFAULT 0 CHECK (reserved_rows>=0 AND reserved_rows<=max_rows),
+                reserved_bytes bigint NOT NULL DEFAULT 0 CHECK (reserved_bytes>=0 AND reserved_bytes<=max_bytes));
             """))
         {
             _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (previousVersion == 1)
+        {
+            // Existing snapshots were committed before pending reservations existed.
+            await using (var command = Command(connection, transaction, $"ALTER TABLE {_schema}.queries ADD COLUMN IF NOT EXISTS ready boolean NOT NULL DEFAULT true"))
+            {
+                _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+        }
+
+        if (previousVersion < CurrentStorageVersion)
+        {
+            await using (var command = Command(connection, transaction, $"ALTER TABLE {_schema}.queries ADD COLUMN IF NOT EXISTS reserved_rows bigint NOT NULL DEFAULT 0 CHECK (reserved_rows>=0); ALTER TABLE {_schema}.queries ADD COLUMN IF NOT EXISTS reserved_bytes bigint NOT NULL DEFAULT 0 CHECK (reserved_bytes>=0)"))
+            {
+                _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            // Bound the one-time migration scan by the configured quota, including the sentinel.
+            await using (var command = Command(connection, transaction, $"SELECT count(*) FROM (SELECT query_id FROM {_schema}.queries LIMIT @maximum) q"))
+            {
+                Parameter(command, "maximum", Options.MaxRetainedQueries + 1, DbType.Int32);
+                if (Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture) > Options.MaxRetainedQueries)
+                    throw new InvalidOperationException("Existing Search snapshots exceed the deployment-wide query quota; prune before upgrading.");
+            }
+
+            long migratedRows;
+            long migratedBytes;
+            await using (var command = Command(connection, transaction, $"SELECT count(*),coalesce(sum(octet_length(document_id)+40),0) FROM (SELECT document_id FROM {_schema}.query_results LIMIT @maximum) r"))
+            {
+                Parameter(command, "maximum", Options.MaxRetainedRankRows + 1, DbType.Int64);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                _ = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                migratedRows = reader.GetInt64(0);
+                migratedBytes = reader.GetInt64(1);
+            }
+            if (migratedRows > Options.MaxRetainedRankRows || migratedBytes > Options.MaxRetainedRankBytes)
+                throw new InvalidOperationException("Existing Search ranks exceed the deployment-wide row or byte quota; prune before upgrading.");
+
+            await using (var command = Command(connection, transaction, $"UPDATE {_schema}.queries q SET reserved_rows=r.rows,reserved_bytes=r.bytes FROM (SELECT query_id,count(*) AS rows,sum(octet_length(document_id)+40) AS bytes FROM {_schema}.query_results GROUP BY query_id) r WHERE q.query_id=r.query_id"))
+            {
+                _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        var budgetSeed = previousVersion < CurrentStorageVersion
+            ? $"SELECT @queries,@rows,@bytes,count(*),coalesce(sum(reserved_rows),0),coalesce(sum(reserved_bytes),0) FROM {_schema}.queries WHERE true"
+            : "SELECT @queries,@rows,@bytes,0,0,0 WHERE NOT EXISTS (SELECT 1 FROM " + _schema + ".queries LIMIT 1)";
+        await using (var command = Command(connection, transaction, $"INSERT INTO {_schema}.snapshot_budget (max_queries,max_rows,max_bytes,reserved_queries,reserved_rows,reserved_bytes) {budgetSeed} ON CONFLICT (singleton) DO NOTHING"))
+        {
+            Parameter(command, "queries", Options.MaxRetainedQueries, DbType.Int64);
+            Parameter(command, "rows", Options.MaxRetainedRankRows, DbType.Int64);
+            Parameter(command, "bytes", Options.MaxRetainedRankBytes, DbType.Int64);
+            _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await using (var command = Command(connection, transaction, $"SELECT max_queries,max_rows,max_bytes FROM {_schema}.snapshot_budget WHERE singleton"))
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+        {
+            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt64(0) != Options.MaxRetainedQueries || reader.GetInt64(1) != Options.MaxRetainedRankRows || reader.GetInt64(2) != Options.MaxRetainedRankBytes)
+                throw new InvalidOperationException("Installed Search rank-snapshot quotas differ from this store.");
+        }
+
+        if (previousVersion < CurrentStorageVersion)
+        {
+            await using var command = Command(connection, transaction, $"UPDATE {_schema}.storage_metadata SET storage_version=@version WHERE singleton AND storage_version=@previous AND contract=@contract");
+            Parameter(command, "version", CurrentStorageVersion, DbType.Int32);
+            Parameter(command, "previous", previousVersion, DbType.Int32);
+            Parameter(command, "contract", _contract);
+            if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+                throw new InvalidOperationException("The search storage version changed during upgrade.");
         }
 
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -244,14 +334,11 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
         ArgumentOutOfRangeException.ThrowIfLessThan(maxQueries, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(maxQueries, 10_000);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using var command = Command(connection, null, $"""
-            WITH expired AS (
-                SELECT query_id FROM {_schema}.queries WHERE expires_at <= clock_timestamp()
-                ORDER BY expires_at LIMIT @count FOR UPDATE SKIP LOCKED)
-            DELETE FROM {_schema}.queries q USING expired e WHERE q.query_id = e.query_id
-            """);
-        Parameter(command, "count", maxQueries, DbType.Int32);
-        return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await LockSnapshotBudgetAsync(connection, transaction, cancellationToken).ConfigureAwait(false);
+        var removed = await PruneQueriesAsync(connection, transaction, null, maxQueries, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return removed;
     }
 
     public async ValueTask DisposeAsync()
@@ -266,7 +353,13 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
             await _ingestionSlots.WaitAsync().ConfigureAwait(false);
         }
 
+        for (var i = 0; i < Options.MaxConcurrentRankings; i++)
+        {
+            await _rankingSlots.WaitAsync().ConfigureAwait(false);
+        }
+
         _ingestionSlots.Dispose();
+        _rankingSlots.Dispose();
         if (_ownership is SearchDataSourceOwnership.Owned)
         {
             await _source.DisposeAsync().ConfigureAwait(false);

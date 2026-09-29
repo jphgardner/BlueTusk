@@ -17,7 +17,7 @@ await local.enqueue({ scope, id: crypto.randomUUID(), documentId: "order-42",
 const offline = await local.get(scope, "order-42");
 ```
 
-The host supplies an authenticated authorization scope and durable idempotent remote write protocol. Epochs, revisions and checkpoint positions are decimal Int64 strings. Inputs and payloads are snapshotted, capacities are explicit, and no network operation occurs inside an IndexedDB transaction. Pages merge ordered cache and mutation cursors. Deletion/revision fences survive restart. Conflicts preserve local content until an explicit new-identity resolution.
+The host supplies an authenticated authorization scope and durable idempotent remote write protocol. Epochs, revisions and checkpoint positions are decimal Int64 strings. Inputs and payloads are snapshotted, capacities are explicit, and no network operation occurs inside an IndexedDB transaction. Pages merge ordered cache and mutation cursors. Deletion/revision fences survive restart. Conflicts preserve local content until an explicit new-identity resolution. Active and staged snapshot records have independent default limits of 100000 records/256 MiB each, so a full-cache refresh can need roughly twice the payload storage temporarily; provision browser quota accordingly.
 
 ```typescript
 import { EdgeHttpRemoteTransport, synchronizeEdge } from "@bluetusk/edge";

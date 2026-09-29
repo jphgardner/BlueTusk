@@ -4,8 +4,12 @@ public sealed record SqliteEdgeOptions
 {
     public required string DatabasePath { get; init; }
     public int MaxRecordBytes { get; init; } = 512 * 1024;
+    /// <summary>Maximum authoritative cached rows; snapshot staging has its own reserve.</summary>
     public int MaxCacheRecords { get; init; } = 100_000;
     public long MaxCacheBytes { get; init; } = 256L * 1024 * 1024;
+    /// <summary>Transient snapshot reserve. A full refresh can require active plus staged storage on disk.</summary>
+    public int MaxStagedRecords { get; init; } = 100_000;
+    public long MaxStagedBytes { get; init; } = 256L * 1024 * 1024;
     public int MaxPendingMutations { get; init; } = 10_000;
     public long MaxPendingBytes { get; init; } = 32L * 1024 * 1024;
     public int MaxReceiptRecords { get; init; } = 100_000;
@@ -24,6 +28,8 @@ public sealed record SqliteEdgeOptions
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRecordBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxCacheRecords);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxCacheBytes);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxStagedRecords);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxStagedBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPendingMutations);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPendingBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxReceiptRecords);
@@ -34,7 +40,7 @@ public sealed record SqliteEdgeOptions
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPageBytes);
         ArgumentOutOfRangeException.ThrowIfLessThan(BusyTimeoutSeconds, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(BusyTimeoutSeconds, 60);
-        if (MaxRecordBytes > MaxCacheBytes || MaxRecordBytes > MaxPendingBytes || MaxRecordBytes > MaxBatchBytes ||
+        if (MaxRecordBytes > MaxCacheBytes || MaxRecordBytes > MaxStagedBytes || MaxRecordBytes > MaxPendingBytes || MaxRecordBytes > MaxBatchBytes ||
             MaxRecordBytes > MaxPageBytes || MaxBatchRecords > 10_000 || MaxPageSize > 10_000)
         {
             throw new ArgumentException("Edge record budgets must fit inside bounded cache, queue, batch and page budgets.");

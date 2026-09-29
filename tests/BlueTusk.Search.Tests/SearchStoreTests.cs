@@ -210,6 +210,300 @@ public sealed class SearchStoreTests
     });
 
     [Fact]
+    public Task Pending_ranking_does_not_hold_scope_admission_and_cannot_be_paged() => WithStoreAsync(async (store, source) =>
+    {
+        await store.UpsertAsync(Doc("1", 1, "cat", true));
+        var ranker = new BarrierRanking();
+        await using var ranked = new PostgreSqlSearchStore(source, store.Options with { MaxActiveQueriesPerScope = 2, MaxConcurrentRankings = 2 }, ranking: ranker);
+        var scope = new SearchScope("tenant", "library");
+        var first = ranked.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask();
+        await ranker.Started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        try
+        {
+            await using var connection = await source.OpenConnectionAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = $"SELECT query_id FROM \"{store.Options.Schema}\".queries WHERE NOT ready";
+            var pendingId = Assert.IsType<Guid>(await command.ExecuteScalarAsync());
+            _ = await Assert.ThrowsAsync<SearchCursorExpiredException>(() => ranked.ContinueSearchAsync(scope, new SearchCursor(pendingId, 0)).AsTask());
+            var second = await ranked.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal("1", Assert.Single(second.Hits).DocumentId);
+            _ = await Assert.ThrowsAsync<SearchBackpressureException>(() => ranked.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask());
+        }
+        finally
+        {
+            ranker.Release.TrySetResult();
+        }
+
+        Assert.Equal("1", Assert.Single((await first.WaitAsync(TimeSpan.FromSeconds(10))).Hits).DocumentId);
+    });
+
+    [Fact]
+    public Task Failed_ranking_and_candidate_insert_release_pending_capacity() => WithStoreAsync(async (store, source) =>
+    {
+        await store.UpsertAsync(Doc("1", 1, "cat", true));
+        var options = store.Options with { MaxActiveQueriesPerScope = 1 };
+        var scope = new SearchScope("tenant", "library");
+        await using (var invalid = new PostgreSqlSearchStore(source, options, ranking: new InjectedRanking()))
+        {
+            _ = await Assert.ThrowsAsync<InvalidOperationException>(() => invalid.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask());
+        }
+
+        await using var connection = await source.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT count(*) FROM \"{store.Options.Schema}\".queries";
+        Assert.Equal(0L, await command.ExecuteScalarAsync());
+        command.CommandText = $"""
+            CREATE FUNCTION "{store.Options.Schema}".reject_rank() RETURNS trigger LANGUAGE plpgsql AS $$
+            BEGIN RAISE EXCEPTION 'injected rank failure'; END $$;
+            CREATE TRIGGER fail_rank BEFORE INSERT ON "{store.Options.Schema}".query_results
+            FOR EACH ROW EXECUTE FUNCTION "{store.Options.Schema}".reject_rank();
+            """;
+        _ = await command.ExecuteNonQueryAsync();
+        _ = await Assert.ThrowsAsync<BlueTuskException>(() => store.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask());
+        command.CommandText = $"SELECT count(*) FROM \"{store.Options.Schema}\".queries";
+        Assert.Equal(0L, await command.ExecuteScalarAsync());
+        command.CommandText = $"SELECT reserved_queries,reserved_rows,reserved_bytes FROM \"{store.Options.Schema}\".snapshot_budget";
+        await using (var budget = await command.ExecuteReaderAsync())
+        {
+            Assert.True(await budget.ReadAsync());
+            Assert.Equal(0L, budget.GetInt64(0));
+            Assert.Equal(0L, budget.GetInt64(1));
+            Assert.Equal(0L, budget.GetInt64(2));
+        }
+        command.CommandText = $"DROP TRIGGER fail_rank ON \"{store.Options.Schema}\".query_results";
+        _ = await command.ExecuteNonQueryAsync();
+        await using var bounded = new PostgreSqlSearchStore(source, options);
+        Assert.Equal("1", Assert.Single((await bounded.SearchAsync(scope, new SearchRequest { Text = "cat" })).Hits).DocumentId);
+    });
+
+    [Fact]
+    public Task Expired_pending_ranking_cannot_publish_and_is_pruned() => WithStoreAsync(async (store, source) =>
+    {
+        await store.UpsertAsync(Doc("1", 1, "cat", true));
+        var ranker = new BarrierRanking();
+        await using var ranked = new PostgreSqlSearchStore(source, store.Options with { MaxActiveQueriesPerScope = 1 }, ranking: ranker);
+        var first = ranked.SearchAsync(new SearchScope("tenant", "library"), new SearchRequest { Text = "cat" }).AsTask();
+        await ranker.Started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        try
+        {
+            await using var connection = await source.OpenConnectionAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = $"UPDATE \"{store.Options.Schema}\".queries SET expires_at=clock_timestamp()-interval '1 second' WHERE NOT ready";
+            Assert.Equal(1, await command.ExecuteNonQueryAsync());
+            Assert.Equal(1, await ranked.PruneExpiredQueriesAsync(1));
+        }
+        finally
+        {
+            ranker.Release.TrySetResult();
+        }
+
+        _ = await Assert.ThrowsAsync<SearchCursorExpiredException>(() => first);
+        Assert.Single((await store.SearchAsync(new SearchScope("tenant", "library"), new SearchRequest { Text = "cat" })).Hits);
+    });
+
+    [Fact]
+    public Task Revocation_during_ranking_is_rechecked_before_delivery() => WithStoreAsync(async (store, source) =>
+    {
+        await store.UpsertAsync(Doc("1", 1, "cat", principals: ["readers"]));
+        var ranker = new BarrierRanking();
+        await using var ranked = new PostgreSqlSearchStore(source, store.Options, ranking: ranker);
+        var scope = new SearchScope("tenant", "library", ["readers"]);
+        var first = ranked.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask();
+        await ranker.Started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        try
+        {
+            await store.UpsertAsync(Doc("1", 2, "cat", principals: ["admins"]));
+        }
+        finally
+        {
+            ranker.Release.TrySetResult();
+        }
+
+        Assert.Empty((await first.WaitAsync(TimeSpan.FromSeconds(10))).Hits);
+    });
+
+    [Fact]
+    public Task Ranking_admission_rejects_overload_without_adding_pending_rows() => WithStoreAsync(async (store, source) =>
+    {
+        await store.UpsertAsync(Doc("1", 1, "cat", true));
+        var ranker = new BarrierRanking();
+        await using var ranked = new PostgreSqlSearchStore(source, store.Options with { MaxConcurrentRankings = 1 }, ranking: ranker);
+        var scope = new SearchScope("tenant", "library");
+        var first = ranked.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask();
+        await ranker.Started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        try
+        {
+            _ = await Assert.ThrowsAsync<SearchBackpressureException>(() => ranked.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask());
+            await using var connection = await source.OpenConnectionAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = $"SELECT count(*) FROM \"{store.Options.Schema}\".queries WHERE NOT ready";
+            Assert.Equal(1L, await command.ExecuteScalarAsync());
+        }
+        finally
+        {
+            ranker.Release.TrySetResult();
+        }
+
+        Assert.Single((await first.WaitAsync(TimeSpan.FromSeconds(10))).Hits);
+    });
+
+    [Fact]
+    public Task Cancelled_ranking_releases_its_reservation_and_local_slot() => WithStoreAsync(async (store, source) =>
+    {
+        await store.UpsertAsync(Doc("1", 1, "cat", true));
+        var ranker = new BarrierRanking();
+        await using var ranked = new PostgreSqlSearchStore(source,
+            store.Options with { MaxActiveQueriesPerScope = 1, MaxConcurrentRankings = 1 }, ranking: ranker);
+        var scope = new SearchScope("tenant", "library");
+        using var cancellation = new CancellationTokenSource();
+        var first = ranked.SearchAsync(scope, new SearchRequest { Text = "cat" }, cancellation.Token).AsTask();
+        await ranker.Started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await cancellation.CancelAsync();
+        _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first);
+        await using var connection = await source.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT count(*) FROM \"{store.Options.Schema}\".queries";
+        Assert.Equal(0L, await command.ExecuteScalarAsync());
+        Assert.Single((await ranked.SearchAsync(scope, new SearchRequest { Text = "cat" })).Hits);
+    });
+
+    [Fact]
+    public Task Version_one_rank_snapshots_upgrade_as_ready_without_losing_cursor() => WithStoreAsync(async (store, source) =>
+    {
+        await store.UpsertAsync(Doc("1", 1, "cat", true));
+        await store.UpsertAsync(Doc("2", 1, "cat", true));
+        var scope = new SearchScope("tenant", "library");
+        var first = await store.SearchAsync(scope, new SearchRequest { Text = "cat", PageSize = 1 });
+        Assert.NotNull(first.NextCursor);
+        await using var connection = await source.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"DROP TABLE \"{store.Options.Schema}\".snapshot_budget; ALTER TABLE \"{store.Options.Schema}\".queries DROP COLUMN reserved_rows, DROP COLUMN reserved_bytes, DROP COLUMN ready; UPDATE \"{store.Options.Schema}\".storage_metadata SET storage_version=1";
+        _ = await command.ExecuteNonQueryAsync();
+        await using var upgraded = new PostgreSqlSearchStore(source, store.Options);
+        await upgraded.InitializeAsync();
+        Assert.Equal("2", Assert.Single((await upgraded.ContinueSearchAsync(scope, first.NextCursor!, 1)).Hits).DocumentId);
+        command.CommandText = $"SELECT count(*) FROM \"{store.Options.Schema}\".queries WHERE ready";
+        Assert.Equal(1L, await command.ExecuteScalarAsync());
+    });
+
+    [Fact]
+    public Task Version_two_rank_snapshots_upgrade_with_accounted_rows_and_existing_cursor() => WithStoreAsync(async (store, source) =>
+    {
+        await store.UpsertAsync(Doc("1", 1, "cat", true));
+        await store.UpsertAsync(Doc("2", 1, "cat", true));
+        var scope = new SearchScope("tenant", "library");
+        var first = await store.SearchAsync(scope, new SearchRequest { Text = "cat", PageSize = 1 });
+        Assert.NotNull(first.NextCursor);
+        await using var connection = await source.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"DROP TABLE \"{store.Options.Schema}\".snapshot_budget; ALTER TABLE \"{store.Options.Schema}\".queries DROP COLUMN reserved_rows, DROP COLUMN reserved_bytes; UPDATE \"{store.Options.Schema}\".storage_metadata SET storage_version=2";
+        _ = await command.ExecuteNonQueryAsync();
+        await using var upgraded = new PostgreSqlSearchStore(source, store.Options);
+        await upgraded.InitializeAsync();
+        Assert.Equal("2", Assert.Single((await upgraded.ContinueSearchAsync(scope, first.NextCursor!, 1)).Hits).DocumentId);
+        command.CommandText = $"SELECT reserved_queries,reserved_rows,reserved_bytes FROM \"{store.Options.Schema}\".snapshot_budget";
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(1L, reader.GetInt64(0));
+        Assert.Equal(2L, reader.GetInt64(1));
+        Assert.True(reader.GetInt64(2) >= 80);
+    });
+
+    [Fact]
+    public Task Deployment_wide_rank_budget_spans_tenants_and_store_instances_and_releases_expiry() => WithStoreAsync(async (store, source) =>
+    {
+        var options = store.Options;
+        await using var second = new PostgreSqlSearchStore(source, options);
+        await second.InitializeAsync();
+        var request = new SearchRequest { Text = "cat", CandidateLimit = 1, PageSize = 1 };
+        var first = new SearchScope("tenant-a", "library");
+        var other = new SearchScope("tenant-b", "library");
+        _ = await store.SearchAsync(first, request);
+        _ = await second.SearchAsync(other, request);
+        _ = await Assert.ThrowsAsync<SearchBackpressureException>(() => store.SearchAsync(new SearchScope("tenant-c", "library"), request).AsTask());
+
+        await using var connection = await source.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT reserved_queries,reserved_rows,reserved_bytes FROM \"{options.Schema}\".snapshot_budget";
+        await using (var reader = await command.ExecuteReaderAsync())
+        {
+            Assert.True(await reader.ReadAsync());
+            Assert.Equal(2L, reader.GetInt64(0));
+            Assert.Equal(2L, reader.GetInt64(1));
+            Assert.Equal(1104L, reader.GetInt64(2));
+        }
+
+        command.CommandText = $"UPDATE \"{options.Schema}\".queries SET expires_at=clock_timestamp()-interval '1 second' WHERE tenant='tenant-a'";
+        Assert.Equal(1, await command.ExecuteNonQueryAsync());
+        Assert.Equal(1, await second.PruneExpiredQueriesAsync(1));
+        _ = await store.SearchAsync(new SearchScope("tenant-c", "library"), request);
+        command.CommandText = $"SELECT reserved_queries,reserved_rows,reserved_bytes FROM \"{options.Schema}\".snapshot_budget";
+        await using var after = await command.ExecuteReaderAsync();
+        Assert.True(await after.ReadAsync());
+        Assert.Equal(2L, after.GetInt64(0));
+        Assert.Equal(2L, after.GetInt64(1));
+        Assert.Equal(1104L, after.GetInt64(2));
+    }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 2, MaxRetainedRankRows = 3, MaxRetainedRankBytes = 1656 });
+
+    [Fact]
+    public Task Rank_row_budget_rejects_across_scopes_and_failure_rolls_back_reservation() => WithStoreAsync(async (store, source) =>
+    {
+        await store.UpsertAsync(Doc("one", 1, "cat", true));
+        var request = new SearchRequest { Text = "cat", CandidateLimit = 1, PageSize = 1 };
+        await using (var invalid = new PostgreSqlSearchStore(source, store.Options, ranking: new InjectedRanking()))
+            _ = await Assert.ThrowsAsync<InvalidOperationException>(() => invalid.SearchAsync(new SearchScope("tenant", "library"), request).AsTask());
+
+        var other = new SearchScope("another", "library");
+        _ = await store.SearchAsync(other, request);
+        _ = await Assert.ThrowsAsync<SearchBackpressureException>(() => store.SearchAsync(new SearchScope("third", "library"), request).AsTask());
+        await using var connection = await source.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT reserved_queries,reserved_rows,reserved_bytes FROM \"{store.Options.Schema}\".snapshot_budget";
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(1L, reader.GetInt64(0));
+        Assert.Equal(1L, reader.GetInt64(1));
+        Assert.Equal(552L, reader.GetInt64(2));
+    }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 4, MaxRetainedRankRows = 1, MaxRetainedRankBytes = 1104 });
+
+    [Fact]
+    public Task Rank_byte_budget_rejects_second_scope_even_with_row_headroom() => WithStoreAsync(async (store, unusedSource) =>
+    {
+        var request = new SearchRequest { Text = "cat", CandidateLimit = 1, PageSize = 1 };
+        _ = await store.SearchAsync(new SearchScope("first", "library"), request);
+        _ = await Assert.ThrowsAsync<SearchBackpressureException>(() => store.SearchAsync(new SearchScope("second", "library"), request).AsTask());
+    }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 4, MaxRetainedRankRows = 2, MaxRetainedRankBytes = 552 });
+
+    [Fact]
+    public Task Concurrent_tenants_cannot_overbook_shared_rank_budget() => WithStoreAsync(async (store, source) =>
+    {
+        await using var other = new PostgreSqlSearchStore(source, store.Options);
+        var request = new SearchRequest { Text = "cat", CandidateLimit = 1, PageSize = 1 };
+        await Task.WhenAll(Enumerable.Range(0, 24).Select(async i =>
+        {
+            try
+            {
+                _ = await (i % 2 == 0 ? store : other).SearchAsync(new SearchScope($"tenant-{i}", "library"), request);
+            }
+            catch (SearchBackpressureException)
+            {
+                // A nonwaiting global reservation is allowed to shed simultaneous arrivals.
+            }
+        }));
+
+        await using var connection = await source.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT b.reserved_queries,b.reserved_rows,b.reserved_bytes,(SELECT count(*) FROM \"{store.Options.Schema}\".queries) FROM \"{store.Options.Schema}\".snapshot_budget b";
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        var retained = reader.GetInt64(0);
+        Assert.InRange(retained, 1L, 4L);
+        Assert.Equal(retained, reader.GetInt64(1));
+        Assert.Equal(retained * 552, reader.GetInt64(2));
+        Assert.Equal(retained, reader.GetInt64(3));
+    }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 4, MaxRetainedRankRows = 4, MaxRetainedRankBytes = 2208 });
+
+    [Fact]
     public Task Page_and_ranking_byte_budgets_stop_payloads_before_they_leave_postgresql() => WithStoreAsync(async (store, source) =>
     {
         for (var i = 0; i < 3; i++)
@@ -340,6 +634,25 @@ public sealed class SearchStoreTests
         {
             IReadOnlyList<SearchRankingScore> result = candidates.Select(static hit => new SearchRankingScore(hit.DocumentId, hit.ChunkOrdinal, hit.DocumentId[0])).ToArray();
             return ValueTask.FromResult(result);
+        }
+    }
+
+    private sealed class BarrierRanking : ISearchRankingExtension
+    {
+        private int _calls;
+        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public async ValueTask<IReadOnlyList<SearchRankingScore>> RankAsync(SearchScope scope, string queryText,
+            IReadOnlyList<SearchHit> candidates, CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _calls) == 1)
+            {
+                Started.TrySetResult();
+                await Release.Task.WaitAsync(cancellationToken);
+            }
+
+            return candidates.Select(static hit => new SearchRankingScore(hit.DocumentId, hit.ChunkOrdinal, hit.Score)).ToArray();
         }
     }
 

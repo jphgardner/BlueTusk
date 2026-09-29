@@ -31,14 +31,23 @@ await foreach (var row in FindOrders.Definition.ReadAsync(
 
 PostgreSQL validates read query grammar and actual result name/type contracts
 through a zero-row wrapper in a read-only transaction. Runtime execution checks
-the result contract and required nulls before constructing rows. Row counts and
-command time are bounded. Each field defaults to one MiB and each result to
+the result contract and required nulls before constructing rows. Runtime
+execution wraps each admitted single read query in an outer limit of
+`MaximumRows + 1`, so PostgreSQL sends at most the declared rows plus one
+overflow sentinel even for a query without parameters. The original `ORDER BY`,
+`LIMIT`, and `OFFSET` remain inside the wrapper. BlueTusk SQL requests a non-sequential
+portal reader and rejects a connection configured to buffer entire readers
+before executing the query. SQL forms that PostgreSQL cannot use inside a
+derived table fail rather than running without the cap. Command time is also
+bounded. Each field defaults to one MiB and each result to
 64 MiB of encoded PostgreSQL field data plus four length bytes per field. The
 BlueTusk reader exposes encoded field length without value decoding/copying, so
 limits are checked before the generated projector allocates strings/byte arrays.
-Binary prefixes and text encodings count toward this budget; it is not a bound
-on every transport/CLR allocation. Execution requires BlueTuskDataReader for
-this admission contract. Streaming and early disposal release commands/readers
+The non-sequential portal reader buffers one row before field admission, so a
+single oversized row can still allocate memory beyond these limits. Binary
+prefixes and text encodings count toward this budget; it is not a bound on
+every transport/CLR allocation. Execution requires BlueTuskDataReader for
+this admission contract. Early disposal releases commands/readers
 without committing or disposing caller-owned transactions. Overflow is explicit,
 and result-shape validation does not establish application authorization.
 

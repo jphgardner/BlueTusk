@@ -101,9 +101,13 @@ public sealed record SearchStoreOptions
     public int ChunkOverlapCharacters { get; init; } = 128;
     public int EmbeddingBatchSize { get; init; } = 32;
     public int MaxConcurrentIngestions { get; init; } = 8;
+    public int MaxConcurrentRankings { get; init; } = 8;
     public int MaxCandidateCount { get; init; } = 1000;
     public int MaxPageSize { get; init; } = 100;
     public int MaxActiveQueriesPerScope { get; init; } = 128;
+    public int MaxRetainedQueries { get; init; } = 4096;
+    public long MaxRetainedRankRows { get; init; } = 1_000_000;
+    public long MaxRetainedRankBytes { get; init; } = 512L * 1024 * 1024;
     public long MaxRerankingBytes { get; init; } = 8L * 1024 * 1024;
     public long MaxPageBytes { get; init; } = 8L * 1024 * 1024;
     public TimeSpan QueryLifetime { get; init; } = TimeSpan.FromMinutes(2);
@@ -121,15 +125,20 @@ public sealed record SearchStoreOptions
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(ChunkOverlapCharacters, MaxChunkCharacters);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(EmbeddingBatchSize);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxConcurrentIngestions);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxConcurrentRankings);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxCandidateCount);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPageSize);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxActiveQueriesPerScope);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRetainedQueries);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRetainedRankRows);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRetainedRankBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRerankingBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPageBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(CommandTimeoutSeconds);
         if (MaxChunksPerDocument > 4096 || MaxChunkCharacters is < 2 or > 16_384 || EmbeddingBatchSize > 256 ||
-            MaxConcurrentIngestions > 256 || MaxCandidateCount > 10_000 || MaxPageSize > MaxCandidateCount ||
-            MaxActiveQueriesPerScope > 10_000 ||
+            MaxConcurrentIngestions > 256 || MaxConcurrentRankings > 256 || MaxCandidateCount > 10_000 || MaxPageSize > MaxCandidateCount ||
+            MaxActiveQueriesPerScope > 10_000 || MaxRetainedQueries > 1_000_000 ||
+            MaxRetainedRankRows > 100_000_000 || MaxRetainedRankBytes > 1L * 1024 * 1024 * 1024 * 1024 ||
             QueryLifetime <= TimeSpan.Zero || QueryLifetime > TimeSpan.FromHours(1))
         {
             throw new ArgumentException("Search options exceed bounded ingestion, retrieval or retention limits.");

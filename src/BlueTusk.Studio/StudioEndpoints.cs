@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -59,8 +60,21 @@ public static class StudioEndpoints
         {
             try
             {
-                var scope = await resolver.ResolveAsync(context.User, context.RequestAborted).ConfigureAwait(false);
-                return Results.Bytes((await service.CaptureSchemaAsync(scope, context.RequestAborted).ConfigureAwait(false)).ToArray(), "application/json");
+                using var admission = service.TryAcquire(context.RequestAborted);
+                if (admission is null) { return Results.StatusCode(StatusCodes.Status429TooManyRequests); }
+                using var deadline = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
+                deadline.CancelAfter(TimeSpan.FromSeconds(options.QueryTimeoutSeconds));
+                var scope = await resolver.ResolveAsync(context.User, deadline.Token).ConfigureAwait(false);
+                IAsyncDisposable? distributed;
+                try { distributed = await service.TryAcquireDistributedAsync(scope.AuditScopeId, deadline.Token).ConfigureAwait(false); }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception exception) when (exception is not OutOfMemoryException)
+                {
+                    return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+                }
+                await using var distributedAdmission = distributed;
+                if (distributed is null) { return Results.StatusCode(StatusCodes.Status429TooManyRequests); }
+                return Results.Bytes((await service.CaptureSchemaAdmittedAsync(admission, scope, deadline.Token).ConfigureAwait(false)).ToArray(), "application/json");
             }
             catch (StudioCapacityException) { return Results.StatusCode(StatusCodes.Status429TooManyRequests); }
             catch (StudioReplyLimitException) { return Results.StatusCode(StatusCodes.Status413PayloadTooLarge); }
@@ -79,10 +93,19 @@ public static class StudioEndpoints
     {
         try { await antiforgery.ValidateRequestAsync(context).ConfigureAwait(false); }
         catch (AntiforgeryValidationException) { context.Response.StatusCode = StatusCodes.Status400BadRequest; return; }
+        // Admit before reading the request, writing an audit or resolving a data source.
+        // Rejected requests cannot exhaust the audit repository or scope resolver.
+        StudioQueryAdmission? acquired;
+        try { acquired = service.TryAcquire(context.RequestAborted); }
+        catch (OperationCanceledException) { context.Response.StatusCode = StatusCodes.Status408RequestTimeout; return; }
+        using var admission = acquired;
+        if (admission is null) { context.Response.StatusCode = StatusCodes.Status429TooManyRequests; return; }
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
+        deadline.CancelAfter(TimeSpan.FromSeconds(options.QueryTimeoutSeconds));
         StudioQueryRequest request;
         try
         {
-            var body = await ReadBoundedAsync(context.Request, options.MaximumRequestBytes, context.RequestAborted).ConfigureAwait(false);
+            var body = await ReadBoundedAsync(context.Request, options.MaximumRequestBytes, deadline.Token).ConfigureAwait(false);
             request = JsonSerializer.Deserialize(body.Span, StudioJsonContext.Default.StudioQueryRequest)
                 ?? throw new JsonException();
         }
@@ -91,21 +114,65 @@ public static class StudioEndpoints
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             return;
         }
-        var operation = Guid.NewGuid();
-        var actor = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub") ?? "authenticated";
-        var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(request.Sql ?? string.Empty)));
-        await audit.RecordAsync(new(operation, actor, fingerprint, "attempt", 0), context.RequestAborted).ConfigureAwait(false);
+        catch (OperationCanceledException)
+        {
+            context.Response.StatusCode = StatusCodes.Status408RequestTimeout;
+            return;
+        }
+        if (request.OperationId == Guid.Empty) { context.Response.StatusCode = StatusCodes.Status400BadRequest; return; }
+        var operation = request.OperationId;
+        context.Response.Headers["X-BlueTusk-Studio-Operation-Id"] = operation.ToString("D");
+        var actor = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");
+        if (string.IsNullOrWhiteSpace(actor)) { context.Response.StatusCode = StatusCodes.Status403Forbidden; return; }
+        // Bind retries to the full execution shape, not just the SQL text.
+        var fingerprintInput = (request.Sql ?? string.Empty) + "\0" + (request.Explain ? "1" : "0") + "\0" +
+            (request.MaximumRows ?? options.MaximumRows).ToString(CultureInfo.InvariantCulture);
+        var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprintInput)));
+        StudioDatabaseScope scope;
+        try { scope = await resolver.ResolveAsync(context.User, deadline.Token).ConfigureAwait(false); }
+        catch (OperationCanceledException) { context.Response.StatusCode = StatusCodes.Status408RequestTimeout; return; }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            context.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+            return;
+        }
+        IAsyncDisposable? distributed;
+        try { distributed = await service.TryAcquireDistributedAsync(scope.AuditScopeId, deadline.Token).ConfigureAwait(false); }
+        catch (OperationCanceledException) { context.Response.StatusCode = StatusCodes.Status408RequestTimeout; return; }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+            return;
+        }
+        await using var distributedAdmission = distributed;
+        if (distributedAdmission is null) { context.Response.StatusCode = StatusCodes.Status429TooManyRequests; return; }
+        try { await audit.RecordAsync(new(operation, actor, fingerprint, "attempt", 0) { ScopeId = scope.AuditScopeId }, deadline.Token).ConfigureAwait(false); }
+        catch (OperationCanceledException) { context.Response.StatusCode = StatusCodes.Status408RequestTimeout; return; }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+            return;
+        }
         try
         {
-            var scope = await resolver.ResolveAsync(context.User, context.RequestAborted).ConfigureAwait(false);
-            var result = await service.ExecuteAsync(scope, request, context.RequestAborted).ConfigureAwait(false);
-            await audit.RecordAsync(new(operation, actor, fingerprint, "completed", result.Rows), context.RequestAborted).ConfigureAwait(false);
+            var result = await service.ExecuteAdmittedAsync(admission, scope, request, deadline.Token).ConfigureAwait(false);
+            await audit.RecordAsync(new(operation, actor, fingerprint, "completed", result.Rows) { ScopeId = scope.AuditScopeId }, deadline.Token).ConfigureAwait(false);
             context.Response.ContentType = "application/json";
-            await context.Response.Body.WriteAsync(result.Json, context.RequestAborted).ConfigureAwait(false);
+            await context.Response.Body.WriteAsync(result.Json, deadline.Token).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
-            await audit.RecordAsync(new(operation, actor, fingerprint, "failed", 0), CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                using var failureDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(Math.Min(5, options.QueryTimeoutSeconds)));
+                await audit.RecordAsync(new(operation, actor, fingerprint, "failed", 0) { ScopeId = scope.AuditScopeId }, failureDeadline.Token).ConfigureAwait(false);
+            }
+            catch (Exception auditException) when (auditException is not OutOfMemoryException)
+            {
+                if (!context.Response.HasStarted) { context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable; }
+                return;
+            }
+            if (context.Response.HasStarted) { return; }
             context.Response.StatusCode = exception switch
             {
                 StudioCapacityException => StatusCodes.Status429TooManyRequests,

@@ -286,6 +286,11 @@ public sealed partial class PostgreSqlEventStore
         // freeze; it does not necessarily lock this individual relation.
         await ExecuteAsync(connection, transaction, $"LOCK TABLE {_schema}.outbox IN SHARE UPDATE EXCLUSIVE MODE", cancellationToken)
             .ConfigureAwait(false);
+        if (!await HasOutboxIdentityFenceAsync(connection, transaction, cancellationToken).ConfigureAwait(false))
+        {
+            throw new InvalidOperationException("The outbox relation or durable event identity insert fence has changed.");
+        }
+
         await using var command = Command(connection, transaction, """
             SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_publication_tables
                 WHERE schemaname=@schema AND tablename='outbox')
@@ -294,6 +299,26 @@ public sealed partial class PostgreSqlEventStore
         {
             throw new InvalidOperationException("The outbox is published to CDC; local-only retention is refused.");
         }
+    }
+
+    private async ValueTask<bool> HasOutboxIdentityFenceAsync(DbConnection connection, DbTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        await using var command = Command(connection, transaction, """
+            SELECT c.relkind='r' AND EXISTS(
+                SELECT 1 FROM pg_catalog.pg_trigger t
+                JOIN pg_catalog.pg_proc p ON p.oid=t.tgfoid
+                JOIN pg_catalog.pg_namespace pn ON pn.oid=p.pronamespace
+                WHERE t.tgrelid=c.oid AND t.tgname='outbox_identity_insert'
+                    AND t.tgenabled IN ('O','A') AND NOT t.tgisinternal
+                    AND t.tgtype=5 AND t.tgqual IS NULL
+                    AND pn.nspname=@schema AND p.proname='record_outbox_identity' AND p.pronargs=0)
+            FROM pg_catalog.pg_class c
+            JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+            WHERE n.nspname=@schema AND c.relname='outbox'
+            """, ("schema", _options.Schema));
+        var result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return result is bool present && present;
     }
 
     private static void ValidateArchiveBatch(EventStreamKey stream, IReadOnlyList<StoredEvent> events, long expectedFirst)

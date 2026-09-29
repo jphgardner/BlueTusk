@@ -57,6 +57,13 @@ public static class EdgeEndpointExtensions
                 : await store.ApplyMutationWithBusinessAsync(mutation, options.WriteBusinessAsync, context.RequestAborted).ConfigureAwait(false);
             return EdgeWireCodec.SerializeOutcome(outcome);
         }));
+        group.MapPost("/mutations/confirm", (HttpContext context) => HandleAsync(context, store, authorizeScope, options, async scope =>
+        {
+            var body = await BodyAsync(context.Request, options.MaxRequestBytes, context.RequestAborted).ConfigureAwait(false);
+            var mutation = EdgeWireCodec.DeserializeMutation(scope, body, store.Options.MaxRecordBytes);
+            await store.FinalizeMutationReceiptAsync(mutation, context.RequestAborted).ConfigureAwait(false);
+            return null;
+        }));
         return group;
     }
 
@@ -78,6 +85,8 @@ public static class EdgeEndpointExtensions
         }
         catch (EdgeServerReplayExpiredException) { context.Response.StatusCode = 410; }
         catch (EdgeServerSnapshotExpiredException) { context.Response.StatusCode = 410; }
+        catch (EdgeServerReceiptFinalizedException) { context.Response.StatusCode = 410; }
+        catch (EdgeServerReceiptMissingException) { context.Response.StatusCode = 404; }
         catch (EdgeScopeMismatchException) { context.Response.StatusCode = 409; }
         catch (EdgeCheckpointMismatchException) { context.Response.StatusCode = 409; }
         catch (EdgeMutationIdentityException) { context.Response.StatusCode = 409; }

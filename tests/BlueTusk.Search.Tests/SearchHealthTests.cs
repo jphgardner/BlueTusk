@@ -73,7 +73,7 @@ public sealed class SearchHealthTests
         var check = new SearchStoreHealthCheck(store, new SearchScope("tenant", "index"));
         Assert.Equal(HealthStatus.Healthy, (await check.CheckHealthAsync(new HealthCheckContext())).Status);
         await database.ExecuteAsync($"UPDATE {database.Schema}.storage_metadata SET storage_version=999"); AssertRedacted(await check.CheckHealthAsync(new HealthCheckContext()));
-        await database.ExecuteAsync($"UPDATE {database.Schema}.storage_metadata SET storage_version=1");
+        await database.ExecuteAsync($"UPDATE {database.Schema}.storage_metadata SET storage_version={PostgreSqlSearchStore.CurrentStorageVersion}");
         await using var different = new PostgreSqlSearchStore(database.Source, store.Options with { MaxChunkCharacters = store.Options.MaxChunkCharacters + 1 });
         AssertRedacted(await new SearchStoreHealthCheck(different, new SearchScope("tenant", "index")).CheckHealthAsync(new HealthCheckContext()));
         Assert.Equal(HealthStatus.Healthy, (await check.CheckHealthAsync(new HealthCheckContext())).Status);
@@ -99,7 +99,7 @@ public sealed class SearchHealthTests
         _ = await bounded.SearchAsync(scope, new SearchRequest { Text = "unused" });
         await host.AssertStatusAsync(HttpStatusCode.ServiceUnavailable, "Degraded");
         await database.ExecuteAsync($"UPDATE {database.Schema}.storage_metadata SET storage_version=999"); await host.AssertStatusAsync(HttpStatusCode.ServiceUnavailable, "Unhealthy");
-        await database.ExecuteAsync($"UPDATE {database.Schema}.storage_metadata SET storage_version=1; UPDATE {database.Schema}.queries SET expires_at=clock_timestamp()-interval '1 second'");
+        await database.ExecuteAsync($"UPDATE {database.Schema}.storage_metadata SET storage_version={PostgreSqlSearchStore.CurrentStorageVersion}; UPDATE {database.Schema}.queries SET expires_at=clock_timestamp()-interval '1 second'");
         _ = await bounded.PruneExpiredQueriesAsync(); await host.AssertStatusAsync(HttpStatusCode.OK, "Healthy");
     });
 

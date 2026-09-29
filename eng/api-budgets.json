@@ -40,7 +40,7 @@
       "apiExemptProjects": []
     },
     "Events": {
-      "maximumSignatures": 250,
+      "maximumSignatures": 270,
       "baselineProjects": 3,
       "apiExemptProjects": []
     },
@@ -60,7 +60,7 @@
       "apiExemptProjects": []
     },
     "Search": {
-      "maximumSignatures": 446,
+      "maximumSignatures": 454,
       "baselineProjects": 5,
       "apiExemptProjects": []
     },
@@ -80,7 +80,7 @@
       ]
     },
     "Studio": {
-      "maximumSignatures": 211,
+      "maximumSignatures": 223,
       "baselineProjects": 3,
       "apiExemptProjects": [
         "tooling/BlueTusk.Studio.Tool/BlueTusk.Studio.Tool.csproj"
@@ -92,7 +92,7 @@
       "apiExemptProjects": []
     },
     "Edge": {
-      "maximumSignatures": 425,
+      "maximumSignatures": 438,
       "baselineProjects": 5,
       "apiExemptProjects": []
     }

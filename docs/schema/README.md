@@ -261,6 +261,9 @@ schema and definitions that are not captured `CREATE INDEX` statements. For an
 index-only change, the deployment graph now includes review approval and an
 Expand step. Bind that step as an external action using the index plan's exact
 `ActionContent`; all other steps still need their own reviewed actions.
+Removed or changed indexes require review approval and an `ApplyReviewedChanges`
+step. The concurrent-index addition plan does not generate removal or replacement
+SQL; supply the reviewed action and verify the physical index state separately.
 
 ```csharp
 var indexPlan = SchemaConcurrentIndexPlan.Create(beforeCatalogue, afterCatalogue);

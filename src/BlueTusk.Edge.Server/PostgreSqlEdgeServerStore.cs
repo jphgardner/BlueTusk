@@ -22,7 +22,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
         if (Options.MaxScopes is < 1 or > 100_000 || Options.MaxRecordBytes is < 1 or > 64 * 1024 * 1024 ||
             Options.MaxRecordsPerScope is < 1 or > 1_000_000 || Options.MaxReceiptsPerScope is < 1 or > 1_000_000 || Options.MaxChangesPerScope is < 1 or > 1_000_000 ||
             Options.MaxSnapshotsPerScope is < 1 or > 64 || Options.MaxBatchRecords is < 1 or > 10_000 || Options.CommandTimeoutSeconds is < 1 or > 300 ||
-            Options.MaxRecordBytesPerScope < Options.MaxRecordBytes || Options.MaxChangeBytesPerScope < Options.MaxRecordBytes || Options.MaxBatchBytes < Options.MaxRecordBytes ||
+            Options.MaxRecordBytesPerScope < Options.MaxRecordBytes || Options.MaxReceiptBytesPerScope < Options.MaxRecordBytes || Options.MaxChangeBytesPerScope < Options.MaxRecordBytes || Options.MaxBatchBytes < Options.MaxRecordBytes ||
             Options.SnapshotLifetime <= TimeSpan.Zero || Options.SnapshotLifetime > TimeSpan.FromHours(1))
         { throw new ArgumentException("Server options exceed bounded record, feed, receipt, snapshot or request limits.", nameof(options)); }
         _source = source;
@@ -42,19 +42,39 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
         await using (var setup = Command(connection, transaction, $"""
             CREATE SCHEMA IF NOT EXISTS {_schema};
             CREATE TABLE IF NOT EXISTS {_schema}.metadata(singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton), version integer NOT NULL, max_record_bytes integer NOT NULL);
-            INSERT INTO {_schema}.metadata(version,max_record_bytes) VALUES(1,{Options.MaxRecordBytes.ToString(CultureInfo.InvariantCulture)}) ON CONFLICT DO NOTHING;
+            INSERT INTO {_schema}.metadata(version,max_record_bytes) VALUES(3,{Options.MaxRecordBytes.ToString(CultureInfo.InvariantCulture)}) ON CONFLICT DO NOTHING;
             CREATE SEQUENCE IF NOT EXISTS {_schema}.revisions AS bigint NO CYCLE;
-            CREATE TABLE IF NOT EXISTS {_schema}.scopes(tenant text COLLATE "C" NOT NULL, scope text COLLATE "C" NOT NULL, epoch bigint NOT NULL CHECK(epoch>0), head bigint NOT NULL DEFAULT 0, floor bigint NOT NULL DEFAULT 0, record_count bigint NOT NULL DEFAULT 0,record_bytes bigint NOT NULL DEFAULT 0,receipt_count bigint NOT NULL DEFAULT 0,change_count bigint NOT NULL DEFAULT 0,change_bytes bigint NOT NULL DEFAULT 0,PRIMARY KEY(tenant,scope),CHECK(head>=floor AND floor>=0 AND record_count>=0 AND record_bytes>=0 AND receipt_count>=0 AND change_count>=0 AND change_bytes>=0));
+            CREATE TABLE IF NOT EXISTS {_schema}.scopes(tenant text COLLATE "C" NOT NULL, scope text COLLATE "C" NOT NULL, epoch bigint NOT NULL CHECK(epoch>0), head bigint NOT NULL DEFAULT 0, floor bigint NOT NULL DEFAULT 0, record_count bigint NOT NULL DEFAULT 0,record_bytes bigint NOT NULL DEFAULT 0,receipt_count bigint NOT NULL DEFAULT 0,receipt_bytes bigint NOT NULL DEFAULT 0,change_count bigint NOT NULL DEFAULT 0,change_bytes bigint NOT NULL DEFAULT 0,PRIMARY KEY(tenant,scope),CHECK(head>=floor AND floor>=0 AND record_count>=0 AND record_bytes>=0 AND receipt_count>=0 AND receipt_bytes>=0 AND change_count>=0 AND change_bytes>=0));
             CREATE TABLE IF NOT EXISTS {_schema}.records(tenant text COLLATE "C" NOT NULL,scope text COLLATE "C" NOT NULL,epoch bigint NOT NULL,id text COLLATE "C" NOT NULL,revision bigint NOT NULL CHECK(revision>0),payload bytea NOT NULL CHECK(octet_length(payload)<={Options.MaxRecordBytes.ToString(CultureInfo.InvariantCulture)}),deleted boolean NOT NULL,PRIMARY KEY(tenant,scope,epoch,id),CHECK(NOT deleted OR octet_length(payload)=0));
             CREATE TABLE IF NOT EXISTS {_schema}.changes(tenant text COLLATE "C" NOT NULL,scope text COLLATE "C" NOT NULL,epoch bigint NOT NULL,position bigint NOT NULL,id text COLLATE "C" NOT NULL,revision bigint NOT NULL,payload bytea NOT NULL,deleted boolean NOT NULL,PRIMARY KEY(tenant,scope,epoch,position));
-            CREATE TABLE IF NOT EXISTS {_schema}.receipts(tenant text COLLATE "C" NOT NULL,scope text COLLATE "C" NOT NULL,epoch bigint NOT NULL,mutation_id uuid NOT NULL,fingerprint text NOT NULL,outcome smallint NOT NULL CHECK(outcome IN(0,1)),id text COLLATE "C" NULL,revision bigint NULL,payload bytea NULL,deleted boolean NULL,PRIMARY KEY(tenant,scope,epoch,mutation_id));
+            CREATE TABLE IF NOT EXISTS {_schema}.receipts(tenant text COLLATE "C" NOT NULL,scope text COLLATE "C" NOT NULL,epoch bigint NOT NULL,mutation_id uuid NOT NULL,fingerprint text NOT NULL,outcome smallint NOT NULL CHECK(outcome IN(0,1)),id text COLLATE "C" NULL,revision bigint NULL,payload bytea NULL,deleted boolean NULL,finalized boolean NOT NULL DEFAULT false,PRIMARY KEY(tenant,scope,epoch,mutation_id));
             CREATE TABLE IF NOT EXISTS {_schema}.snapshots(tenant text COLLATE "C" NOT NULL,scope text COLLATE "C" NOT NULL,epoch bigint NOT NULL,snapshot_id uuid NOT NULL,position bigint NOT NULL,expires_at timestamptz NOT NULL,PRIMARY KEY(tenant,scope,epoch,snapshot_id));
             CREATE TABLE IF NOT EXISTS {_schema}.snapshot_records(tenant text COLLATE "C" NOT NULL,scope text COLLATE "C" NOT NULL,epoch bigint NOT NULL,snapshot_id uuid NOT NULL,id text COLLATE "C" NOT NULL,revision bigint NOT NULL,payload bytea NOT NULL,deleted boolean NOT NULL,PRIMARY KEY(tenant,scope,epoch,snapshot_id,id),FOREIGN KEY(tenant,scope,epoch,snapshot_id) REFERENCES {_schema}.snapshots ON DELETE CASCADE);
             """)) { _ = await setup.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false); }
+        int installedVersion;
+        await using (var version = Command(connection, transaction, $"SELECT version FROM {_schema}.metadata WHERE singleton"))
+        { installedVersion = (int)(await version.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1); }
+        if (installedVersion == 1)
+        {
+            await using var migrate = Command(connection, transaction, $"""
+                ALTER TABLE {_schema}.scopes ADD COLUMN IF NOT EXISTS receipt_bytes bigint NOT NULL DEFAULT 0;
+                UPDATE {_schema}.scopes AS scope_state SET receipt_bytes=(SELECT coalesce(sum(octet_length(payload)),0) FROM {_schema}.receipts AS receipt WHERE receipt.tenant=scope_state.tenant AND receipt.scope=scope_state.scope AND receipt.epoch=scope_state.epoch);
+                UPDATE {_schema}.metadata SET version=2 WHERE singleton AND version=1;
+                """);
+            _ = await migrate.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+        if (installedVersion is 1 or 2)
+        {
+            await using var migrate = Command(connection, transaction, $"""
+                ALTER TABLE {_schema}.receipts ADD COLUMN IF NOT EXISTS finalized boolean NOT NULL DEFAULT false;
+                UPDATE {_schema}.metadata SET version=3 WHERE singleton AND version=2;
+                """);
+            _ = await migrate.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
         await using (var validate = Command(connection, transaction, $"SELECT version,max_record_bytes FROM {_schema}.metadata WHERE singleton"))
         await using (var reader = await validate.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt32(0) != 1 || reader.GetInt32(1) != Options.MaxRecordBytes)
+            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt32(0) != 3 || reader.GetInt32(1) != Options.MaxRecordBytes)
             { throw new InvalidOperationException("The Edge server storage version or installed record byte contract differs."); }
         }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -86,7 +106,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
             await using var clear = Scoped(connection, transaction, $"DELETE FROM {_schema}.{table} WHERE tenant=@tenant AND scope=@scope", scope);
             _ = await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
-        await using (var activate = Scoped(connection, transaction, $"INSERT INTO {_schema}.scopes(tenant,scope,epoch) VALUES(@tenant,@scope,@epoch) ON CONFLICT(tenant,scope) DO UPDATE SET epoch=EXCLUDED.epoch,head=0,floor=0,record_count=0,record_bytes=0,receipt_count=0,change_count=0,change_bytes=0", scope))
+        await using (var activate = Scoped(connection, transaction, $"INSERT INTO {_schema}.scopes(tenant,scope,epoch) VALUES(@tenant,@scope,@epoch) ON CONFLICT(tenant,scope) DO UPDATE SET epoch=EXCLUDED.epoch,head=0,floor=0,record_count=0,record_bytes=0,receipt_count=0,receipt_bytes=0,change_count=0,change_bytes=0", scope))
         { _ = await activate.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false); }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -122,13 +142,14 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var state = await LockScopeAsync(connection, transaction, mutation.Scope, cancellationToken).ConfigureAwait(false);
-        await using (var receipt = Scoped(connection, transaction, $"SELECT fingerprint,outcome,id,revision,payload,deleted FROM {_schema}.receipts WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch AND mutation_id=@mutation", mutation.Scope))
+        await using (var receipt = Scoped(connection, transaction, $"SELECT fingerprint,outcome,id,revision,payload,deleted,finalized FROM {_schema}.receipts WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch AND mutation_id=@mutation", mutation.Scope))
         {
             Parameter(receipt, "mutation", mutation.Id);
             await using var reader = await receipt.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 if (reader.GetString(0) != mutation.Fingerprint) { throw new EdgeMutationIdentityException(); }
+                if (reader.GetBoolean(6)) { throw new EdgeServerReceiptFinalizedException(); }
                 var replay = new EdgeMutationOutcome((EdgeMutationOutcomeKind)reader.GetInt16(1), reader.IsDBNull(2) ? null : ReadRecord(reader, 2));
                 await reader.DisposeAsync().ConfigureAwait(false);
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -166,7 +187,9 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
             }
             outcome = new(EdgeMutationOutcomeKind.Applied, record);
         }
-        await using (var insert = Scoped(connection, transaction, $"INSERT INTO {_schema}.receipts VALUES(@tenant,@scope,@epoch,@mutation,@fingerprint,@outcome,@id,@revision,@payload,@deleted); UPDATE {_schema}.scopes SET receipt_count=receipt_count+1 WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch", mutation.Scope))
+        var receiptBytes = outcome.ServerRecord?.Payload.Length ?? 0;
+        if (state.ReceiptBytes > Options.MaxReceiptBytesPerScope - receiptBytes) { throw new EdgeCapacityException("Server receipt payload retention capacity is full."); }
+        await using (var insert = Scoped(connection, transaction, $"INSERT INTO {_schema}.receipts(tenant,scope,epoch,mutation_id,fingerprint,outcome,id,revision,payload,deleted) VALUES(@tenant,@scope,@epoch,@mutation,@fingerprint,@outcome,@id,@revision,@payload,@deleted); UPDATE {_schema}.scopes SET receipt_count=receipt_count+1,receipt_bytes=receipt_bytes+@receiptbytes WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch", mutation.Scope))
         {
             Parameter(insert, "mutation", mutation.Id);
             Parameter(insert, "fingerprint", mutation.Fingerprint);
@@ -175,6 +198,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
             Parameter(insert, "revision", outcome.ServerRecord?.Revision, DbType.Int64);
             Parameter(insert, "payload", outcome.ServerRecord?.Payload.ToArray(), DbType.Binary);
             Parameter(insert, "deleted", outcome.ServerRecord?.Deleted, DbType.Boolean);
+            Parameter(insert, "receiptbytes", receiptBytes);
             _ = await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
         if (outcome.Kind is EdgeMutationOutcomeKind.Applied && writeBusiness is not null)
@@ -184,6 +208,39 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
         }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return outcome;
+    }
+
+    /// <summary>After a client durably acknowledges an outcome, release its payload while retaining the permanent UUID/fingerprint retry fence. Confirmation is idempotent.</summary>
+    public async ValueTask FinalizeMutationReceiptAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(mutation);
+        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        _ = await LockScopeAsync(connection, transaction, mutation.Scope, cancellationToken).ConfigureAwait(false);
+        long bytes;
+        bool finalized;
+        await using (var read = Scoped(connection, transaction, $"SELECT fingerprint,coalesce(octet_length(payload),0)::bigint,finalized FROM {_schema}.receipts WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch AND mutation_id=@mutation", mutation.Scope))
+        {
+            Parameter(read, "mutation", mutation.Id);
+            await using var reader = await read.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false)) { throw new EdgeServerReceiptMissingException(); }
+            if (reader.GetString(0) != mutation.Fingerprint) { throw new EdgeMutationIdentityException(); }
+            bytes = reader.GetInt64(1);
+            finalized = reader.GetBoolean(2);
+        }
+        if (!finalized)
+        {
+            await using var compact = Scoped(connection, transaction, $"""
+                UPDATE {_schema}.receipts SET finalized=true,id=NULL,revision=NULL,payload=NULL,deleted=NULL
+                    WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch AND mutation_id=@mutation;
+                UPDATE {_schema}.scopes SET receipt_bytes=receipt_bytes-@bytes
+                    WHERE tenant=@tenant AND scope=@scope AND epoch=@epoch
+                """, mutation.Scope);
+            Parameter(compact, "mutation", mutation.Id);
+            Parameter(compact, "bytes", bytes);
+            _ = await compact.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask DisposeAsync()
@@ -200,10 +257,10 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
     private async ValueTask<ScopeState> LockScopeAsync(DbConnection connection, DbTransaction transaction, EdgeScope scope, CancellationToken cancellationToken, bool write = true)
     {
         ArgumentNullException.ThrowIfNull(scope);
-        await using var command = Scoped(connection, transaction, $"SELECT epoch,head,floor,record_count,record_bytes,receipt_count,change_count,change_bytes FROM {_schema}.scopes WHERE tenant=@tenant AND scope=@scope " + (write ? "FOR UPDATE" : "FOR SHARE"), scope);
+        await using var command = Scoped(connection, transaction, $"SELECT epoch,head,floor,record_count,record_bytes,receipt_count,receipt_bytes,change_count,change_bytes FROM {_schema}.scopes WHERE tenant=@tenant AND scope=@scope " + (write ? "FOR UPDATE" : "FOR SHARE"), scope);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt64(0) != scope.Epoch) { throw new EdgeScopeMismatchException(); }
-        return new(reader.GetInt64(1), reader.GetInt64(2), reader.GetInt64(3), reader.GetInt64(4), reader.GetInt64(5), reader.GetInt64(6), reader.GetInt64(7));
+        return new(reader.GetInt64(1), reader.GetInt64(2), reader.GetInt64(3), reader.GetInt64(4), reader.GetInt64(5), reader.GetInt64(6), reader.GetInt64(7), reader.GetInt64(8));
     }
     private async ValueTask<EdgeRecord?> RecordAsync(DbConnection connection, DbTransaction transaction, EdgeScope scope, string id, CancellationToken cancellationToken)
     {
@@ -212,7 +269,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? ReadRecord(reader) : null;
     }
-    private sealed record ScopeState(long Head, long Floor, long RecordCount, long RecordBytes, long ReceiptCount, long ChangeCount, long ChangeBytes);
+    private sealed record ScopeState(long Head, long Floor, long RecordCount, long RecordBytes, long ReceiptCount, long ReceiptBytes, long ChangeCount, long ChangeBytes);
     private DbCommand Command(DbConnection connection, DbTransaction? transaction, string sql)
     {
         var command = connection.CreateCommand();

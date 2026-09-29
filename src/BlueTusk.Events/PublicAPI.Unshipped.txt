@@ -88,6 +88,25 @@ BlueTusk.Events.EventReplayStatus.ReplayExists.get -> bool
 BlueTusk.Events.EventReplayStatus.Stream.get -> BlueTusk.Events.EventStreamKey!
 BlueTusk.Events.EventReplayStatus.StreamExists.get -> bool
 BlueTusk.Events.EventReplayStatus.StreamHead.get -> long
+BlueTusk.Events.EventRetentionAssessment
+BlueTusk.Events.EventRetentionAssessment.AdditionalPublicationsOmitted.get -> bool
+BlueTusk.Events.EventRetentionAssessment.Blockers.get -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionAssessment.ExpectedRetainedThrough.get -> long
+BlueTusk.Events.EventRetentionAssessment.PublicationNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Events.EventRetentionAssessment.RequestedThrough.get -> long
+BlueTusk.Events.EventRetentionAssessment.Status.get -> BlueTusk.Events.EventRetentionStatus!
+BlueTusk.Events.EventRetentionAssessment.Stream.get -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.ArchiveIncomplete = 32 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.BeyondStreamHead = 16 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.FloorChanged = 4 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.FloorNotForward = 8 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.LocalRetentionDisabled = 1 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.None = 0 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.OutboxContractChanged = 256 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.OutboxPublished = 128 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.ReplayCheckpointBehind = 64 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.StreamMissing = 2 -> BlueTusk.Events.EventRetentionBlocker
 BlueTusk.Events.EventRetentionStatus
 BlueTusk.Events.EventRetentionStatus.<Clone>$() -> BlueTusk.Events.EventRetentionStatus!
 BlueTusk.Events.EventRetentionStatus.ArchivedThrough.get -> long
@@ -140,6 +159,7 @@ BlueTusk.Events.PostgreSqlEventsOptions.Schema.get -> string!
 BlueTusk.Events.PostgreSqlEventsOptions.Schema.init -> void
 BlueTusk.Events.PostgreSqlEventStore
 BlueTusk.Events.PostgreSqlEventStore.AcquireReplayAsync(string! consumerId, BlueTusk.Events.EventStreamKey! stream, string! ownerId, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventReplayLease?>
+BlueTusk.Events.PostgreSqlEventStore.AssessLocalRetentionAsync(BlueTusk.Events.EventStreamKey! stream, long throughSequence, long expectedRetainedThrough, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventRetentionAssessment!>
 BlueTusk.Events.PostgreSqlEventStore.AdvanceLocalRetentionAsync(BlueTusk.Events.EventStreamKey! stream, long throughSequence, long expectedRetainedThrough, BlueTusk.Events.EventLocalRetentionCertification! certification, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventRetentionStatus!>
 BlueTusk.Events.PostgreSqlEventStore.AppendAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, BlueTusk.Events.EventStreamKey! stream, System.Collections.Generic.IReadOnlyList<BlueTusk.Events.EventWrite!>! events, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Events.EventAppendReceipt!>!>
 BlueTusk.Events.PostgreSqlEventStore.ArchiveNextAsync(BlueTusk.Events.EventStreamKey! stream, BlueTusk.Events.IEventArchiveStore! archive, int maximumEvents = 256, int maximumPayloadBytes = 8388608, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventArchiveProgress!>

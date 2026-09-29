@@ -114,6 +114,47 @@ public sealed class EdgeHttpIntegrationTests
     });
 
     [Fact]
+    public Task Replay_expired_full_Sqlite_cache_refreshes_without_losing_a_queued_write() => WithFixtureAsync(async fixture =>
+    {
+        var first = await fixture.Store.ApplyMutationAsync(new EdgeMutation(fixture.Scope, Guid.NewGuid(), "1", 0, EdgeMutationKind.Upsert, "{\"value\":\"old\"}"u8.ToArray()));
+        var second = await fixture.Store.ApplyMutationAsync(new EdgeMutation(fixture.Scope, Guid.NewGuid(), "2", 0, EdgeMutationKind.Upsert, "{\"value\":\"old\"}"u8.ToArray()));
+        await using var host = await Host.StartAsync(fixture.Store);
+        using var client = Client();
+        using var remote = new HttpEdgeRemoteTransport(client, host.Endpoint);
+        var directory = Directory.CreateTempSubdirectory("bluetusk-edge-http-").FullName;
+        try
+        {
+            var local = new SqliteEdgeStore(new SqliteEdgeOptions
+            {
+                DatabasePath = Path.Combine(directory, "edge.db"),
+                MaxCacheRecords = 2,
+                MaxStagedRecords = 2,
+            });
+            await local.InitializeAsync(); await local.ActivateScopeAsync(fixture.Scope);
+            var coordinator = new EdgeSynchronizationCoordinator(local, remote);
+            await coordinator.SynchronizeAsync(fixture.Scope);
+            Assert.Equal(2, (await local.ReadPageAsync(fixture.Scope)).Items.Count);
+            var queued = new EdgeMutation(fixture.Scope, Guid.NewGuid(), "2", second.ServerRecord!.Revision, EdgeMutationKind.Upsert, "{\"value\":\"offline\"}"u8.ToArray());
+            await local.EnqueueAsync(queued);
+            _ = await fixture.Store.ApplyMutationAsync(new EdgeMutation(fixture.Scope, Guid.NewGuid(), "1", first.ServerRecord!.Revision, EdgeMutationKind.Upsert, "{\"value\":\"new\"}"u8.ToArray()));
+            Assert.Equal(3, await fixture.Store.PruneChangesAsync(fixture.Scope, 3));
+            var expired = await Assert.ThrowsAsync<EdgeHttpTransportException>(async () => await remote.ReadChangesAsync(fixture.Scope, 2, 512));
+            Assert.Equal(410, expired.StatusCode);
+            var snapshot = await remote.BeginSnapshotAsync(fixture.Scope);
+            await local.BeginSnapshotAsync(fixture.Scope, snapshot);
+            await foreach (var batch in remote.ReadSnapshotAsync(fixture.Scope, snapshot)) { await local.ApplySnapshotBatchAsync(fixture.Scope, snapshot.Id, batch); }
+            Assert.Equal("{\"value\":\"old\"}", System.Text.Encoding.UTF8.GetString((await local.GetAsync(fixture.Scope, "1"))!.Payload.Span));
+            await local.CommitSnapshotAsync(fixture.Scope, snapshot.Id);
+            Assert.Equal(snapshot.Position, (await local.GetCheckpointAsync(fixture.Scope)).Position);
+            Assert.Equal("{\"value\":\"new\"}", System.Text.Encoding.UTF8.GetString((await local.GetAsync(fixture.Scope, "1"))!.Payload.Span));
+            Assert.Equal(queued.Id, (await local.GetAsync(fixture.Scope, "2"))!.PendingMutationId);
+            await coordinator.SynchronizeAsync(fixture.Scope);
+            Assert.Null((await local.GetAsync(fixture.Scope, "2"))!.PendingMutationId);
+        }
+        finally { DeleteOwnedDirectory(directory); }
+    });
+
+    [Fact]
     public Task Actual_HTTP_conflict_preserves_offline_payload_then_explicit_resolution_and_delete_sync() => WithFixtureAsync(async fixture =>
     {
         _ = await fixture.Store.ApplyMutationAsync(new EdgeMutation(fixture.Scope, Guid.NewGuid(), "1", 0, EdgeMutationKind.Upsert, "{\"count\":1}"u8.ToArray()));
@@ -147,6 +188,23 @@ public sealed class EdgeHttpIntegrationTests
             Assert.True((await fixture.Store.GetAsync(fixture.Scope, "1"))!.Deleted);
         }
         finally { DeleteOwnedDirectory(directory); }
+    });
+
+    [Fact]
+    public Task HTTP_confirmation_releases_outcome_without_reapplying_a_late_retry() => WithFixtureAsync(async fixture =>
+    {
+        var mutation = new EdgeMutation(fixture.Scope, Guid.NewGuid(), "confirmed", 0, EdgeMutationKind.Upsert, "{\"value\":1}"u8.ToArray());
+        await using var host = await Host.StartAsync(fixture.Store);
+        using var client = Client();
+        using var remote = new HttpEdgeRemoteTransport(client, host.Endpoint);
+        var first = await remote.ApplyMutationAsync(mutation);
+        await remote.FinalizeMutationReceiptAsync(mutation);
+        await remote.FinalizeMutationReceiptAsync(mutation);
+        var error = await Assert.ThrowsAsync<EdgeHttpTransportException>(async () => await remote.ApplyMutationAsync(mutation));
+        Assert.Equal(410, error.StatusCode);
+        Assert.Equal(first.ServerRecord!.Revision, (await fixture.Store.GetAsync(fixture.Scope, "confirmed"))!.Revision);
+        Assert.Equal(1, (await fixture.Store.ReadHealthAsync(fixture.Scope)).ReceiptCount);
+        Assert.Equal(0, (await fixture.Store.ReadHealthAsync(fixture.Scope)).ReceiptBytes);
     });
 
     private static HttpClient Client()

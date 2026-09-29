@@ -28,6 +28,10 @@ BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxRecordBytes.get -> int
 BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxRecordBytes.init -> void
 BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxScopes.get -> int
 BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxScopes.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxStagedBytes.get -> long
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxStagedBytes.init -> void
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxStagedRecords.get -> int
+BlueTusk.Edge.Sqlite.SqliteEdgeOptions.MaxStagedRecords.init -> void
 BlueTusk.Edge.Sqlite.SqliteEdgeOptions.SqliteEdgeOptions() -> void
 BlueTusk.Edge.Sqlite.SqliteEdgeOptions.TimeProvider.get -> System.TimeProvider!
 BlueTusk.Edge.Sqlite.SqliteEdgeOptions.TimeProvider.init -> void

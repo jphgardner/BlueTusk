@@ -27,6 +27,148 @@ public sealed class EventRetentionTests
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await optedIn.AdvanceLocalRetentionAsync(
             stream, 1, 0, Certificate(new EventStreamKey("other", "orders"))));
         Assert.Equal(0, (await optedIn.ReadRetentionStatusAsync(stream)).RetainedThrough);
+        var assessment = await db.Store.AssessLocalRetentionAsync(stream, 1, 0);
+        Assert.Equal(EventRetentionBlocker.LocalRetentionDisabled, assessment.Blockers);
+    }
+
+    [Fact]
+    public async Task AssessmentShowsArchiveReplayAndFloorBlockersWithoutAdvancingState()
+    {
+        await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
+        var stream = new EventStreamKey("tenant", "orders");
+        var missing = await db.Store.AssessLocalRetentionAsync(stream, 1, 0);
+        Assert.True(missing.Blockers.HasFlag(EventRetentionBlocker.StreamMissing));
+        Assert.True(missing.Blockers.HasFlag(EventRetentionBlocker.ArchiveIncomplete));
+
+        await db.AppendAsync(stream, [Write(1), Write(2)]);
+        var lease = Assert.IsType<EventReplayLease>(await db.Store.AcquireReplayAsync("slow", stream,
+            "owner", TimeSpan.FromMinutes(1)));
+        var beforeArchive = await db.Store.AssessLocalRetentionAsync(stream, 2, 0);
+        Assert.True(beforeArchive.Blockers.HasFlag(EventRetentionBlocker.ArchiveIncomplete));
+        Assert.True(beforeArchive.Blockers.HasFlag(EventRetentionBlocker.ReplayCheckpointBehind));
+        Assert.Equal(0, beforeArchive.Status.RetainedThrough);
+
+        _ = await db.Store.ArchiveNextAsync(stream, new TestArchive());
+        Assert.Equal(2, (await db.Store.ReplayAsync(lease, db.HandleAsync)).HandledCount);
+        Assert.Equal(EventRetentionBlocker.None, (await db.Store.AssessLocalRetentionAsync(stream, 2, 0)).Blockers);
+        var changed = await db.Store.AssessLocalRetentionAsync(stream, 3, 1);
+        Assert.True(changed.Blockers.HasFlag(EventRetentionBlocker.FloorChanged));
+        Assert.True(changed.Blockers.HasFlag(EventRetentionBlocker.BeyondStreamHead));
+        Assert.True(changed.Blockers.HasFlag(EventRetentionBlocker.ArchiveIncomplete));
+        Assert.Equal(0, (await db.Store.ReadRetentionStatusAsync(stream)).RetainedThrough);
+    }
+
+    [Fact]
+    public async Task AssessmentFailsClosedOnUnsupportedEventsSchemaVersion()
+    {
+        await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
+        var stream = new EventStreamKey("tenant", "orders");
+        await db.AppendAsync(stream, [Write(1)]);
+        await using (var connection = await db.DataSource.OpenConnectionAsync())
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = $"UPDATE \"{db.Schema}\".schema_version SET version=3";
+            await command.ExecuteNonQueryAsync();
+        }
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await db.Store.AssessLocalRetentionAsync(stream, 1, 0));
+    }
+
+    [Fact]
+    public async Task IdentityFenceDriftBlocksAssessmentAndBothRetentionMutations()
+    {
+        await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
+        var stream = new EventStreamKey("tenant", "orders");
+        await db.AppendAsync(stream, [Write(1)]);
+        _ = await db.Store.ArchiveNextAsync(stream, new TestArchive());
+        try
+        {
+            await SetIdentityFenceAsync(db, enabled: false);
+            var assessment = await db.Store.AssessLocalRetentionAsync(stream, 1, 0);
+            Assert.True(assessment.Blockers.HasFlag(EventRetentionBlocker.OutboxContractChanged));
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.AdvanceLocalRetentionAsync(stream, 1, 0, Certificate(stream)));
+
+            await SetIdentityFenceAsync(db, enabled: true);
+            Assert.Equal(EventRetentionBlocker.None, (await db.Store.AssessLocalRetentionAsync(stream, 1, 0)).Blockers);
+            _ = await db.Store.AdvanceLocalRetentionAsync(stream, 1, 0, Certificate(stream));
+
+            await SetIdentityFenceAsync(db, enabled: false);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await db.Store.PruneRetainedAsync(stream));
+            Assert.Equal(1L, await CountOutboxRowsAsync(db, stream));
+        }
+        finally
+        {
+            await SetIdentityFenceAsync(db, enabled: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("explicit")]
+    [InlineData("schema")]
+    [InlineData("all")]
+    public async Task AssessmentAndMutationRefuseEveryPublicationFormAndDetectLaterDrift(string form)
+    {
+        await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
+        var stream = new EventStreamKey("tenant", "orders");
+        await db.AppendAsync(stream, [Write(1)]);
+        _ = await db.Store.ArchiveNextAsync(stream, new TestArchive());
+        var publication = "events_assess_" + Guid.NewGuid().ToString("N");
+        try
+        {
+            await PublicationFormAsync(db, publication, form, true);
+            var blocked = await db.Store.AssessLocalRetentionAsync(stream, 1, 0);
+            Assert.True(blocked.Blockers.HasFlag(EventRetentionBlocker.OutboxPublished));
+            Assert.Contains(publication, blocked.PublicationNames);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await db.Store.AdvanceLocalRetentionAsync(
+                stream, 1, 0, Certificate(stream)));
+
+            await PublicationFormAsync(db, publication, form, false);
+            Assert.Equal(EventRetentionBlocker.None, (await db.Store.AssessLocalRetentionAsync(stream, 1, 0)).Blockers);
+            _ = await db.Store.AdvanceLocalRetentionAsync(stream, 1, 0, Certificate(stream));
+            await PublicationFormAsync(db, publication, form, true);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await db.Store.PruneRetainedAsync(stream));
+        }
+        finally
+        {
+            await PublicationFormAsync(db, publication, form, false);
+        }
+    }
+
+    [Fact]
+    public async Task ExplicitPublicationCommitWinsLockBeforePruneAndPruneRefusesDelete()
+    {
+        await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
+        var stream = new EventStreamKey("tenant", "orders");
+        await db.AppendAsync(stream, [Write(1)]);
+        _ = await db.Store.ArchiveNextAsync(stream, new TestArchive());
+        _ = await db.Store.AdvanceLocalRetentionAsync(stream, 1, 0, Certificate(stream));
+        var publication = "events_race_" + Guid.NewGuid().ToString("N");
+        try
+        {
+            await using (var ddlConnection = await db.DataSource.OpenConnectionAsync())
+            await using (var ddlTransaction = await ddlConnection.BeginTransactionAsync())
+            {
+                await using (var command = ddlConnection.CreateCommand())
+                {
+                    command.Transaction = ddlTransaction;
+                    command.CommandText = $"CREATE PUBLICATION \"{publication}\" FOR TABLE \"{db.Schema}\".outbox";
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                var pruneTask = db.Store.PruneRetainedAsync(stream).AsTask();
+                await WaitForOutboxLockWaitAsync(db, pruneTask);
+                await ddlTransaction.CommitAsync();
+                await Assert.ThrowsAsync<InvalidOperationException>(async () => await pruneTask);
+            }
+
+            Assert.Equal(1L, await CountOutboxRowsAsync(db, stream));
+        }
+        finally
+        {
+            await PublicationAsync(db, publication, false);
+        }
     }
 
     [Fact]
@@ -174,6 +316,66 @@ public sealed class EventRetentionTests
         await command.ExecuteNonQueryAsync();
     }
 
+    private static async Task PublicationFormAsync(EventDatabase db, string publication, string form, bool create)
+    {
+        await using var connection = await db.DataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = !create
+            ? $"DROP PUBLICATION IF EXISTS \"{publication}\""
+            : form switch
+            {
+                "explicit" => $"CREATE PUBLICATION \"{publication}\" FOR TABLE \"{db.Schema}\".outbox",
+                "schema" => $"CREATE PUBLICATION \"{publication}\" FOR TABLES IN SCHEMA \"{db.Schema}\"",
+                "all" => $"CREATE PUBLICATION \"{publication}\" FOR ALL TABLES",
+                _ => throw new ArgumentOutOfRangeException(nameof(form))
+            };
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task SetIdentityFenceAsync(EventDatabase db, bool enabled)
+    {
+        await using var connection = await db.DataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"ALTER TABLE \"{db.Schema}\".outbox {(enabled ? "ENABLE" : "DISABLE")} TRIGGER outbox_identity_insert";
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task WaitForOutboxLockWaitAsync(EventDatabase db, Task pruneTask)
+    {
+        await using var connection = await db.DataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_locks
+                WHERE relation=to_regclass(@relation) AND mode='ShareUpdateExclusiveLock' AND NOT granted)
+            """;
+        Add(command, "relation", $"\"{db.Schema}\".outbox");
+        for (var attempt = 0; attempt < 200; attempt++)
+        {
+            if (pruneTask.IsCompleted)
+            {
+                throw new InvalidOperationException("Prune completed before waiting for the publication DDL lock.");
+            }
+
+            if ((bool)(await command.ExecuteScalarAsync())!)
+            {
+                return;
+            }
+
+            await Task.Delay(25);
+        }
+
+        throw new TimeoutException("Prune did not reach the publication DDL lock within five seconds.");
+    }
+
+    private static async Task<long> CountOutboxRowsAsync(EventDatabase db, EventStreamKey stream)
+    {
+        await using var connection = await db.DataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT count(*) FROM \"{db.Schema}\".outbox WHERE tenant_id=@tenant AND stream_id=@stream";
+        Add(command, "tenant", stream.TenantId);
+        Add(command, "stream", stream.StreamId);
+        return Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
+    }
     private static EventWrite Write(int value) => new(Guid.NewGuid(), "test.event", 1,
         DateTimeOffset.UtcNow, Encoding.UTF8.GetBytes(value.ToString(CultureInfo.InvariantCulture)));
 

@@ -121,9 +121,11 @@ public static class StudioEventEndpoints
                 if (context.Request.Query.TryGetValue("limit", out var requested) && (!int.TryParse(requested, NumberStyles.None, CultureInfo.InvariantCulture, out limit) ||
                     limit < 1 || limit > options.MaximumEvents)) { throw new ArgumentException("Invalid event count."); }
                 var operation = Guid.NewGuid();
-                var actor = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub") ?? "authenticated";
+                var actor = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");
+                if (string.IsNullOrWhiteSpace(actor)) { throw new UnauthorizedAccessException("A stable Studio audit actor is required."); }
                 var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("events:" + alias + ":" + after.ToString(CultureInfo.InvariantCulture))));
-                await audit.RecordAsync(new(operation, actor, fingerprint, "event-trace-attempt", 0), deadline.Token).ConfigureAwait(false);
+                var scopeId = "events:" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(stream.TenantId + "\0" + stream.StreamId)));
+                await audit.RecordAsync(new(operation, actor, fingerprint, "event-trace-attempt", 0) { ScopeId = scopeId }, deadline.Token).ConfigureAwait(false);
                 var values = await scope.Store.ReadAsync(stream, after, limit, options.MaximumPayloadBytes, deadline.Token).ConfigureAwait(false);
                 writer.WriteStartArray("events");
                 foreach (var value in values)
@@ -143,7 +145,7 @@ public static class StudioEventEndpoints
                 // page can be continued; only an empty page proves the current end of stream.
                 if (values.Count == 0) { writer.WriteNull("next"); }
                 else { writer.WriteString("next", values[^1].Sequence.ToString(CultureInfo.InvariantCulture)); }
-                await audit.RecordAsync(new(operation, actor, fingerprint, "event-trace-completed", values.Count), deadline.Token).ConfigureAwait(false);
+                await audit.RecordAsync(new(operation, actor, fingerprint, "event-trace-completed", values.Count) { ScopeId = scopeId }, deadline.Token).ConfigureAwait(false);
             }
             writer.WriteEndObject();
             Check(writer, options.MaximumReplyBytes);

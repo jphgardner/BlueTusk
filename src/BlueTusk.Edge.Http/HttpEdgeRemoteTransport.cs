@@ -70,6 +70,13 @@ public sealed class HttpEdgeRemoteTransport : IEdgeRemoteTransport, IDisposable
         var bytes = await RequestAsync(HttpMethod.Post, "mutations" + Query(mutation.Scope), EdgeWireCodec.SerializeMutation(mutation), cancellationToken).ConfigureAwait(false);
         return EdgeWireCodec.DeserializeOutcome(bytes!, Options.MaxRecordBytes);
     }
+    /// <summary>Call only after the matching outcome has been committed to durable local storage. A lost confirmation response can be retried.</summary>
+    public async ValueTask FinalizeMutationReceiptAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(mutation);
+        if (mutation.Payload.Length > Options.MaxRecordBytes) { throw new EdgeCapacityException("Mutation payload exceeds the transport byte limit."); }
+        _ = await RequestAsync(HttpMethod.Post, "mutations/confirm" + Query(mutation.Scope), EdgeWireCodec.SerializeMutation(mutation), cancellationToken).ConfigureAwait(false);
+    }
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 0 && _ownership is EdgeHttpClientOwnership.Owned) { _client.Dispose(); }
