@@ -2,14 +2,20 @@
 param(
     [ValidateSet('Preflight', 'Run', 'Verify')][string]$Mode = 'Verify',
     [Parameter(Mandatory)][string]$ExpectedCommit,
-    [string]$EvidenceRoot = 'artifacts/ecosystem-performance'
+    [string]$EvidenceRoot = 'artifacts/ecosystem-performance',
+    [ValidateSet('All', 'Jobs')][string]$Product = 'All'
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repository = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $evidence = [IO.Path]::GetFullPath((Join-Path $repository $EvidenceRoot))
-$budgetPath = Join-Path $PSScriptRoot 'ecosystem-performance-budgets.json'
+$budgetFile = if ($Product -eq 'Jobs') {
+    'jobs-release-capacity-budgets.json'
+} else {
+    'ecosystem-performance-budgets.json'
+}
+$budgetPath = Join-Path $PSScriptRoot $budgetFile
 $budget = Get-Content -LiteralPath $budgetPath -Raw | ConvertFrom-Json -Depth 30
 
 function Require([bool]$Condition, [string]$Message) {
@@ -38,10 +44,10 @@ function CaptureSource([string]$Path) {
     Require ($LASTEXITCODE -eq 0) 'Candidate source capture failed.'
 }
 function SnapshotBinaries([string]$Root) {
-    $projects = [ordered]@{
-        jobs = 'benchmarks/BlueTusk.Workflows.LoadHarness'
-        projections = 'benchmarks/BlueTusk.Projections.LoadHarness'
-        documents = 'benchmarks/BlueTusk.Documents.LoadHarness'
+    $projects = [ordered]@{ jobs = 'benchmarks/BlueTusk.Workflows.LoadHarness' }
+    if ($Product -eq 'All') {
+        $projects.projections = 'benchmarks/BlueTusk.Projections.LoadHarness'
+        $projects.documents = 'benchmarks/BlueTusk.Documents.LoadHarness'
     }
     $records = @()
     foreach ($name in $projects.Keys) {
@@ -81,7 +87,8 @@ function VerifyArchivedBinaries([string]$Root) {
     Require ($records.Count -gt 0) 'The archived binary snapshot is empty.'
     $seen = @{}
     foreach ($entry in $records) {
-        Require ([string]$entry.Product -in @('jobs', 'projections', 'documents')) 'The archived binary product is unknown.'
+        $allowedProducts = if ($Product -eq 'Jobs') { @('jobs') } else { @('jobs', 'projections', 'documents') }
+        Require ([string]$entry.Product -in $allowedProducts) 'The archived binary product is unknown.'
         Require ([string]$entry.Name -match '^[A-Za-z0-9_.-]+$' -and [string]$entry.Name -notin @('.', '..')) 'The archived binary name is unsafe.'
         $key = "$($entry.Product)/$($entry.Name)"
         Require (-not $seen.ContainsKey($key)) 'The archived binary list contains duplicate entries.'
@@ -105,24 +112,62 @@ function VerifySource($Before, $After) {
     Require ($Before.sourceTreeSha256 -ceq $After.sourceTreeSha256) 'Candidate source changed during measurement.'
 }
 function VerifyJobs($Root, $Configuration, $Run, [string]$ExpectedImage) {
-    $path = Join-Path $Root 'jobs-workflows.json'
+    $jobsOnly = $Product -eq 'Jobs'
+    $path = Join-Path $Root $(if ($jobsOnly) { 'jobs.json' } else { 'jobs-workflows.json' })
     $report = Json $path
     $environment = Json ($path + '.environment.json')
-    Require ($report.Profile -ceq 'storage') "Jobs/Workflows run $Run has the wrong profile."
+    $expectedProfile = if ($jobsOnly) { 'storage-jobs' } else { 'storage' }
+    Require ($report.Profile -ceq $expectedProfile) "Jobs run $Run has the wrong profile."
+    if ($jobsOnly) {
+        Require ($environment.Container -ceq 'bluetusk-jobs-release-pg15' -and
+            $environment.ProductScope -ceq 'Jobs' -and
+            $environment.FixtureOwner -ceq 'jobs-release-capacity' -and
+            -not [string]::IsNullOrWhiteSpace([string]$environment.FixtureRunId)) "Jobs run $Run did not use the owned product fixture."
+        if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) {
+            Require ($environment.FixtureRunId -ceq $env:GITHUB_RUN_ID) "Jobs run $Run used a fixture from another workflow run."
+        }
+    }
     Require ($report.PayloadMode -ceq $Configuration.payloadMode -and $environment.PayloadMode -ceq $Configuration.payloadMode) "Jobs/Workflows run $Run did not attest the high-entropy payload."
     Require ([string]$report.PostgreSqlVersion -match '^PostgreSQL 15\.' -and [string]$environment.PostgreSql.server -match '^PostgreSQL 15\.') "Jobs/Workflows run $Run used the wrong PostgreSQL version."
-    Require ($ExpectedImage -match '@(?<digest>sha256:[0-9a-f]{64})$' -and
-        [string]$environment.ImageId -ceq $Matches.digest) "Jobs/Workflows run $Run used a different PostgreSQL image digest."
+    $expectedDigest = ($ExpectedImage -split '@')[-1]
+    Require ($expectedDigest -match '^sha256:[0-9a-f]{64}$') 'Capacity budget lacks a pinned PostgreSQL image.'
+    if ($jobsOnly) {
+        Require ($environment.ImageReference -ceq $ExpectedImage -and
+            [string]$environment.ImageId -match '^sha256:[0-9a-f]{64}$' -and
+            @($environment.ImageRepoDigests | Where-Object {
+                ([string]$_).EndsWith("@$expectedDigest", [StringComparison]::Ordinal)
+            }).Count -gt 0) "Jobs run $Run used a different PostgreSQL image digest."
+    } else {
+        Require ([string]$environment.ImageId -ceq $expectedDigest) "Jobs/Workflows run $Run used a different PostgreSQL image digest."
+    }
     Require ([string]$report.SourceSha256 -match '^[0-9a-fA-F]{64}$') "Jobs/Workflows run $Run has no source fingerprint."
-    Require (@($report.Faults).Count -eq 5 -and @($report.Faults | Where-Object { $_.Passed -ne $true }).Count -eq 0) "Jobs/Workflows run $Run failed recovery verification."
-    Require (@($report.Overload).Count -eq 2) "Jobs/Workflows run $Run must include both products."
-    foreach ($product in @('Jobs', 'Workflows')) {
+    $expectedFaults = if ($jobsOnly) {
+        @('process-death-after-effect-before-ack', 'ambiguous-commit-lost-server-ack', 'jobs-network-partition-and-heal')
+    } else { @() }
+    if ($jobsOnly) {
+        Require (@($report.Cases).Count -eq 0 -and @($report.Faults).Count -eq 3 -and
+            @(Compare-Object $expectedFaults @($report.Faults | ForEach-Object { [string]$_.Name })).Count -eq 0) "Jobs run $Run includes another product or lacks a Jobs recovery scenario."
+    }
+    Require (@($report.Faults).Count -eq $(if ($jobsOnly) { 3 } else { 5 }) -and
+        @($report.Faults | Where-Object { $_.Passed -ne $true }).Count -eq 0) "Jobs run $Run failed recovery verification."
+    Require (@($report.Overload).Count -eq $(if ($jobsOnly) { 1 } else { 2 })) "Jobs run $Run has an incomplete product result."
+    $products = if ($jobsOnly) { @('Jobs') } else { @('Jobs', 'Workflows') }
+    foreach ($product in $products) {
         $entries = @($report.Overload | Where-Object { $_.Product -ceq $product })
         Require ($entries.Count -eq 1) "Jobs/Workflows run $Run has missing or duplicate $product results."
         $item = $entries[0]
         Require ($item.PayloadMode -ceq $Configuration.payloadMode -and $item.Verified -eq $true) "$product run $Run did not verify the required payload mode and invariants."
         AtLeast $item.OfferedDurationSeconds $Configuration.secondsPerProduct "$product run $Run offered seconds"
+        if ($jobsOnly) {
+            AtLeast $item.AdmissionAndDrainSeconds $Configuration.secondsPerProduct "Jobs run $Run measured seconds"
+        }
         Require ($item.Accepted -gt 0 -and $item.DurableEffects -eq $item.Accepted -and $item.PrunedPrimaryRows -eq $item.Accepted) "$product run $Run has incomplete durable effects or pruning."
+        if ($jobsOnly) {
+            Require ($item.PrunedJobs -eq $item.Accepted -and $item.Rejected -gt 0 -and
+                $item.MaximumOutstanding -le 128 -and $item.MaximumAccepted -eq 200000 -and
+                $item.AdmissionSlotsPerTenant -eq 32 -and $item.ConcurrencyPerTenant -eq 4 -and
+                $item.HandlerDelayMilliseconds -eq 100) "Jobs run $Run lacks bounded overload or retention evidence."
+        }
         AtLeast $item.CompletionsPerSecond $Configuration.minimumCompletionsPerSecond.$product "$product run $Run completions/s"
         $clusterWalBytes = ([decimal]$item.After.WalPosition) - ([decimal]$item.Before.WalPosition)
         Require ($clusterWalBytes -gt 0) "$product run $Run has no positive cluster WAL observation."
@@ -138,6 +183,17 @@ function VerifyJobs($Root, $Configuration, $Run, [string]$ExpectedImage) {
         $samples = @($item.StorageSamples)
         Require ($samples.Count -ge [math]::Floor($Configuration.secondsPerProduct / 5)) "$product run $Run has too few storage samples."
         Require ($samples[0].ElapsedSeconds -le 15 -and $samples[-1].ElapsedSeconds -ge $Configuration.secondsPerProduct - 20) "$product run $Run has incomplete storage coverage."
+        if ($jobsOnly) {
+            $physicalSamples = @($samples | Where-Object { $null -ne $_.Physical })
+            Require ($physicalSamples.Count -ge
+                [math]::Floor($Configuration.secondsPerProduct / 5)) "Jobs run $Run lacks physical storage observations."
+            Require ($physicalSamples[0].Physical.WalPosition -gt 0 -and
+                $physicalSamples[-1].Physical.WalPosition -gt $physicalSamples[0].Physical.WalPosition -and
+                @($physicalSamples[-1].Physical.Relations).Count -gt 0) "Jobs run $Run lacks physical WAL or relation observations."
+            Require ($samples[-1].RetainedPrimaryRows -eq 0 -and
+                $samples[-1].RetainedJobs -eq 0 -and
+                $samples[-1].JobAttemptRows -eq 0) "Jobs run $Run did not fully prune retained rows."
+        }
         $peak = ($samples | Measure-Object -Property RuntimeRelationBytes -Maximum).Maximum
         Positive $peak "$product run $Run runtime relation peak"
         AtMost $peak $Configuration.maximumRuntimeRelationBytes.$product "$product run $Run runtime relation peak"
@@ -272,10 +328,13 @@ function VerifyEvidence($Source) {
     Require ($budget.repetitions -ge 2) 'The gate requires repeat campaigns.'
     $jobFingerprints = @()
     for ($run = 1; $run -le $budget.repetitions; $run++) {
-        $jobFingerprints += VerifyJobs (Join-Path $evidence "run-$run/jobs-workflows") $budget.jobsWorkflows $run
-        VerifyProjections (Join-Path $evidence "run-$run/projections-capacity") $budget.projections $run $Source 'capacity'
-        VerifyProjections (Join-Path $evidence "run-$run/projections-overload") $budget.projections $run $Source 'soak'
-        VerifyDocuments (Join-Path $evidence "run-$run/documents") $budget.documents $run
+        $jobsDirectory = if ($Product -eq 'Jobs') { "run-$run/jobs" } else { "run-$run/jobs-workflows" }
+        $jobFingerprints += VerifyJobs (Join-Path $evidence $jobsDirectory) $budget.jobsWorkflows $run $budget.postgreSql15Image
+        if ($Product -eq 'All') {
+            VerifyProjections (Join-Path $evidence "run-$run/projections-capacity") $budget.projections $run $Source 'capacity'
+            VerifyProjections (Join-Path $evidence "run-$run/projections-overload") $budget.projections $run $Source 'soak'
+            VerifyDocuments (Join-Path $evidence "run-$run/documents") $budget.documents $run
+        }
     }
     Require (@($jobFingerprints | Sort-Object -Unique).Count -eq 1) 'Jobs/Workflows repeats used different source fingerprints.'
 }
@@ -286,10 +345,21 @@ try {
     $head = (& git rev-parse HEAD).Trim()
     Require ($LASTEXITCODE -eq 0 -and [string]::Equals($head, $ExpectedCommit, [StringComparison]::OrdinalIgnoreCase)) 'The checkout is not the requested exact commit.'
     Require (@(& git status --porcelain --untracked-files=normal).Count -eq 0) 'The checkout must be clean before qualification.'
-    Require ($budget.schemaVersion -eq 1 -and $budget.repetitions -eq 2) 'Unsupported ecosystem performance budget contract.'
+    $expectedQualification = if ($Product -eq 'Jobs') {
+        'manual-exact-candidate-jobs-capacity'
+    } else {
+        'manual-exact-candidate-local-capacity'
+    }
+    Require ($budget.schemaVersion -eq 1 -and $budget.repetitions -eq 2 -and
+        [string]$budget.qualification -ceq $expectedQualification) 'Unsupported capacity budget contract.'
     $processor = [string](Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name)
     Require ($processor.Contains([string]$budget.referenceProcessor, [StringComparison]::OrdinalIgnoreCase)) 'This is not the specified ecosystem performance reference processor.'
-    foreach ($seconds in @($budget.jobsWorkflows.secondsPerProduct, $budget.projections.secondsPerRun, $budget.documents.sustainedSeconds)) {
+    $durations = if ($Product -eq 'Jobs') {
+        @($budget.jobsWorkflows.secondsPerProduct)
+    } else {
+        @($budget.jobsWorkflows.secondsPerProduct, $budget.projections.secondsPerRun, $budget.documents.sustainedSeconds)
+    }
+    foreach ($seconds in $durations) {
         Require ($seconds -ge 1800) 'Qualification requires at least 30 minutes per sustained product/run.'
     }
     if ($Mode -eq 'Preflight') { Write-Output "Clean exact candidate $head verified."; return }
@@ -308,13 +378,21 @@ try {
         SnapshotBinaries (Join-Path $evidence 'binary-snapshot')
         for ($run = 1; $run -le $budget.repetitions; $run++) {
             $runRoot = Join-Path $evidence "run-$run"
-            foreach ($name in @('jobs-workflows', 'projections-capacity', 'projections-overload', 'documents')) { New-Item -ItemType Directory -Path (Join-Path $runRoot $name) -Force | Out-Null }
-            $jobs = Join-Path $runRoot 'jobs-workflows'
-            InvokeCampaign "Jobs/Workflows run $run" {
-                & ./eng/jobs-storage-campaign.ps1 -Version 15 -Seconds $budget.jobsWorkflows.secondsPerProduct -PayloadMode SeededHighEntropy -NoBuild -Output (Join-Path $jobs 'jobs-workflows.json')
+            $jobsDirectory = if ($Product -eq 'Jobs') { 'jobs' } else { 'jobs-workflows' }
+            $campaignDirectories = if ($Product -eq 'Jobs') { @('jobs') } else { @('jobs-workflows', 'projections-capacity', 'projections-overload', 'documents') }
+            foreach ($name in $campaignDirectories) { New-Item -ItemType Directory -Path (Join-Path $runRoot $name) -Force | Out-Null }
+            $jobs = Join-Path $runRoot $jobsDirectory
+            $jobsOutput = if ($Product -eq 'Jobs') { 'jobs.json' } else { 'jobs-workflows.json' }
+            InvokeCampaign "$Product Jobs run $run" {
+                if ($Product -eq 'Jobs') {
+                    & ./eng/jobs-storage-campaign.ps1 -Version 15 -Seconds $budget.jobsWorkflows.secondsPerProduct -PayloadMode SeededHighEntropy -Product Jobs -FixtureName bluetusk-jobs-release-pg15 -NoBuild -Output (Join-Path $jobs $jobsOutput)
+                } else {
+                    & ./eng/jobs-storage-campaign.ps1 -Version 15 -Seconds $budget.jobsWorkflows.secondsPerProduct -PayloadMode SeededHighEntropy -NoBuild -Output (Join-Path $jobs $jobsOutput)
+                }
             } (Join-Path $jobs 'campaign.log')
             [void](VerifyJobs $jobs $budget.jobsWorkflows $run $budget.postgreSql15Image)
             VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
+            if ($Product -eq 'Jobs') { continue }
             foreach ($profile in @('capacity', 'soak')) {
                 $name = if ($profile -eq 'capacity') { 'projections-capacity' } else { 'projections-overload' }
                 $projections = Join-Path $runRoot $name
@@ -339,14 +417,16 @@ try {
         $files = @(Get-ChildItem -LiteralPath $evidence -Recurse -File | ForEach-Object {
             [ordered]@{ Path = [IO.Path]::GetRelativePath($evidence, $_.FullName).Replace('\', '/'); Sha256 = (Hash $_.FullName) }
         } | Sort-Object Path)
-        [ordered]@{ SchemaVersion = 1; CandidateSha = $head; SourceTreeSha256 = $source.sourceTreeSha256;
+        [ordered]@{ SchemaVersion = 1; Family = $Product; CandidateSha = $head; SourceTreeSha256 = $source.sourceTreeSha256;
             BudgetSha256 = (Hash (Join-Path $evidence 'budgets.json')); Repetitions = $budget.repetitions;
             QualifiedLocalCapacity = $true; ProductionQualified = $false; Files = $files } |
             ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $evidence 'manifest.json') -Encoding utf8
-        Write-Output "Manual local ecosystem performance gate passed for $head. Production qualification remains false."
+        Write-Output "Manual local $Product capacity gate passed for $head. Production qualification remains false."
     } else {
         $manifest = Json (Join-Path $evidence 'manifest.json')
         Require ($manifest.SchemaVersion -eq 1 -and $manifest.CandidateSha -ceq $head -and $manifest.QualifiedLocalCapacity -eq $true -and $manifest.ProductionQualified -eq $false) 'Invalid or mismatched gate manifest.'
+        Require (($Product -eq 'All' -and [string]$manifest.Family -in @('', 'All')) -or
+            ($Product -eq 'Jobs' -and [string]$manifest.Family -ceq 'Jobs')) 'Capacity manifest has the wrong product scope.'
         Require ((Hash (Join-Path $evidence 'budgets.json')) -ceq $manifest.BudgetSha256) 'Budget snapshot hash differs from manifest.'
         Require ((Hash $budgetPath) -ceq $manifest.BudgetSha256) 'Candidate budget differs from evidence budget.'
         $runner = Json (Join-Path $evidence 'runner.json')
@@ -368,6 +448,6 @@ try {
         Require ($source.sourceTreeSha256 -ceq $manifest.SourceTreeSha256) 'Manifest source hash differs from the candidate capture.'
         VerifyArchivedBinaries (Join-Path $evidence 'binary-snapshot')
         VerifyEvidence $source
-        Write-Output "Archived ecosystem performance evidence verified for $head."
+        Write-Output "Archived $Product capacity evidence verified for $head."
     }
 } finally { Pop-Location }

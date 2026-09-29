@@ -30,15 +30,30 @@ Each family must have its own capacity, failover and durable-format upgrade
 qualification. The required workflow identities are fixed in
 `eng/expansion-release-policy.json`. Jobs needs a dedicated
 `jobs-release-capacity.yml` workflow; the combined `ecosystem-performance.yml`
-campaign cannot qualify it alone. Workflows, Projections and Documents share
+campaign cannot qualify it alone. The Jobs-only workflow is implemented but
+has no passing release evidence. Workflows, Projections and Documents share
 that exact-candidate capacity campaign because it measures each explicitly.
 It must emit a separate retained capacity artifact for each family before
 any can use it as release evidence. Its result alone is not a product
 release pass. The other six need dedicated capacity workflows. Every family
 needs a dedicated failover and upgrade workflow, plus the protected expansion
-candidate aggregator. Those workflows and their complete evidence readers are
-not implemented yet. An arming edit is therefore rejected even if generic
-`build.yml`, `security.yml`, `performance.yml` and `ecosystem-build.yml` pass.
+candidate aggregator. Those remaining workflows and their complete evidence
+readers are not implemented yet. An arming edit is therefore rejected even if
+generic `build.yml`, `security.yml`, `performance.yml` and
+`ecosystem-build.yml` pass.
+
+The Jobs capacity workflow runs only the Jobs storage profile on a dedicated,
+digest-pinned PostgreSQL 15 fixture. It requires two separate full 1,800-second
+high-entropy campaigns on the reference runner. The Jobs-only verifier checks
+durable completions, hot and cold tenant p99 latency, exact accepted effects,
+explicit overload rejection, pruning, physical storage samples, late growth
+and cluster WAL per accepted job against
+[`eng/jobs-release-capacity-budgets.json`](../../eng/jobs-release-capacity-budgets.json).
+It retains the raw reports, fixture observations, source captures, binary
+snapshot and a file-hash manifest in the
+`expansion-jobs-capacity-<full-sha>` artifact. These are local reference-runner
+limits, not claims about independent hosts or multi-day retention. No
+capacity pass is recorded by adding the workflow.
 
 The eventual workflows must bind reports, binary/source hashes, fixture
 versions and actual workload outcomes to the same full candidate SHA. Capacity

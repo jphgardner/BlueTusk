@@ -177,6 +177,7 @@ jobs:
             }
           ./eng/test-expansion-release-policy.ps1
           ./eng/test-expansion-readiness-evidence.ps1
+          ./eng/test-jobs-release-capacity-contract.ps1
           ./eng/test-core-approval-evidence.ps1
           ./eng/test-core-endurance-evidence.ps1
           ./eng/test-core-workflow-evidence.ps1

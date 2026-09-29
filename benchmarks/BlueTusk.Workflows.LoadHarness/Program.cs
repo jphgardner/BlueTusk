@@ -33,8 +33,8 @@ internal static partial class Program
             }
 
             string profile = args.Length == 0 ? "quick" : args[0];
-            Check(profile is "quick" or "matrix" or "soak" or "faults" or "qualification" or "storage", "unknown profile");
-            int seconds = profile == "storage" ? 600 : profile == "qualification" ? 120 : profile == "soak" ? 30 : profile == "matrix" ? 10 : 3;
+            Check(profile is "quick" or "matrix" or "soak" or "faults" or "qualification" or "storage" or "storage-jobs", "unknown profile");
+            int seconds = profile is "storage" or "storage-jobs" ? 600 : profile == "qualification" ? 120 : profile == "soak" ? 30 : profile == "matrix" ? 10 : 3;
             string? output = null;
             string payloadMode = "Repeated";
             for (int index = 1; index < args.Length; index++)
@@ -52,7 +52,7 @@ internal static partial class Program
                 {
                     payloadMode = args[index];
                     Check(payloadMode is "Repeated" or "SeededHighEntropy", "unknown payload mode");
-                    Check(profile == "storage" || payloadMode == "Repeated", "high-entropy mode requires storage profile");
+                    Check(profile is "storage" or "storage-jobs" || payloadMode == "Repeated", "high-entropy mode requires storage profile");
                 }
                 else
                 {
@@ -65,16 +65,22 @@ internal static partial class Program
             var results = new List<CaseResult>();
             if (profile is not "faults" and not "qualification")
             {
-                Console.WriteLine("Warming Jobs and Workflows paths; warmup results are excluded.");
+                Console.WriteLine(profile == "storage-jobs" ? "Warming Jobs path; warmup results are excluded." : "Warming Jobs and Workflows paths; warmup results are excluded.");
                 _ = await RunCaseAsync(connection, new LoadCase("warmup-jobs", "Jobs", 50, 1, 4, 64, 0, 0));
-                _ = await RunCaseAsync(connection, new LoadCase("warmup-workflows", "Workflows", 8, 1, 4, 64, 0, 0));
+                if (profile != "storage-jobs")
+                {
+                    _ = await RunCaseAsync(connection, new LoadCase("warmup-workflows", "Workflows", 8, 1, 4, 64, 0, 0));
+                }
             }
 
             var overload = new List<OverloadResult>();
-            if (profile is "qualification" or "storage")
+            if (profile is "qualification" or "storage" or "storage-jobs")
             {
-                overload.Add(await RunOverloadAsync(connection, seconds, workflow: false, physicalStorage: profile == "storage", sampleOutputPrefix: output, payloadMode: payloadMode));
-                overload.Add(await RunOverloadAsync(connection, seconds, workflow: true, physicalStorage: profile == "storage", sampleOutputPrefix: output, payloadMode: payloadMode));
+                overload.Add(await RunOverloadAsync(connection, seconds, workflow: false, physicalStorage: profile is "storage" or "storage-jobs", sampleOutputPrefix: output, payloadMode: payloadMode));
+                if (profile != "storage-jobs")
+                {
+                    overload.Add(await RunOverloadAsync(connection, seconds, workflow: true, physicalStorage: profile == "storage", sampleOutputPrefix: output, payloadMode: payloadMode));
+                }
             }
             foreach (var scenario in Cases(profile, seconds))
             {
@@ -85,14 +91,17 @@ internal static partial class Program
             }
 
             Console.WriteLine("Running process-death and ambiguous-COMMIT recovery scenarios.");
-            var faults = new List<FaultResult>
+            var faults = new List<FaultResult> { await ProcessDeathAsync(connection) };
+            if (profile != "storage-jobs")
             {
-                await ProcessDeathAsync(connection),
-                await WorkflowProcessDeathAsync(connection),
-                await AmbiguousCommitAsync(connection),
-                await NetworkPartitionAsync(connection, workflow: false),
-                await NetworkPartitionAsync(connection, workflow: true),
-            };
+                faults.Add(await WorkflowProcessDeathAsync(connection));
+            }
+            faults.Add(await AmbiguousCommitAsync(connection));
+            faults.Add(await NetworkPartitionAsync(connection, workflow: false));
+            if (profile != "storage-jobs")
+            {
+                faults.Add(await NetworkPartitionAsync(connection, workflow: true));
+            }
             await using var metadataSource = Source(connection, poolSize: 4);
             await using var metadataConnection = await metadataSource.OpenConnectionAsync();
             await using var metadataCommand = new BlueTuskCommand("SELECT version()", metadataConnection);
@@ -169,7 +178,7 @@ internal static partial class Program
 
     private static IEnumerable<LoadCase> Cases(string profile, int seconds)
     {
-        if (profile is "faults" or "qualification" or "storage") { yield break; }
+        if (profile is "faults" or "qualification" or "storage" or "storage-jobs") { yield break; }
         if (profile == "quick")
         {
             yield return new("jobs-backlog", "Jobs", 512, 2, 4, 1024, 4000, 1);
