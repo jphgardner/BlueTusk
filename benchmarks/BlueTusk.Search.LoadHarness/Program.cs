@@ -246,11 +246,14 @@ internal static class Program
                             break;
                         }
                         var skipped = (long)Math.Floor((clock.Elapsed.TotalSeconds - due) / interval);
-                        for (var slot = 0L; slot < skipped; slot++)
+                        if (skipped > 0)
                         {
-                            Interlocked.Increment(ref readScheduleSkipped[(reader + ordinal++ * Readers) % Tenants]);
+                            for (var slot = 0L; slot < skipped; slot++)
+                            {
+                                Interlocked.Increment(ref readScheduleSkipped[(reader + ordinal++ * Readers) % Tenants]);
+                            }
+                            due += skipped * interval;
                         }
-                        due += skipped * interval;
                         var tenant = (reader + ordinal++ * Readers) % Tenants;
                         due += interval;
                         Interlocked.Increment(ref readsOffered[tenant]);
@@ -307,6 +310,9 @@ internal static class Program
                 var progress = Enumerable.Range(0, Tenants).Select(tenant => new TenantProgress(tenant,
                     writesOffered[tenant], writesAccepted[tenant], writesRejected[tenant], writeScheduleSkipped[tenant],
                     readsOffered[tenant], readsAccepted[tenant], readsRejected[tenant], readScheduleSkipped[tenant])).ToArray();
+                Check(writesOffered.Sum() + writeScheduleSkipped.Sum() == (long)Tenants * seconds * 1000 / WriteIntervalMilliseconds &&
+                    readsOffered.Sum() + readScheduleSkipped.Sum() == (long)Readers * seconds * 1000 / ReadIntervalMilliseconds,
+                    "The offered and skipped slots differ from the fixed workload schedule.");
                 Check(progress.All(static item => item.WritesAccepted > 0 && item.ReadsAccepted > 0 &&
                     item.WritesOffered == item.WritesAccepted + item.WritesRejected &&
                     item.ReadsOffered == item.ReadsAccepted + item.ReadsRejected), "A tenant lost progress or admission accounting.");

@@ -105,8 +105,9 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     }
     $writeSlots = $report.WritesOffered + $report.WriteScheduleSkipped
     $readSlots = $report.ReadsOffered + $report.ReadScheduleSkipped
-    Minimum $writeSlots (0.99 * $report.DurationSeconds * $budget.writers * 1000 / $budget.writeOfferIntervalMilliseconds) "$label scheduled write slots"
-    Minimum $readSlots (0.99 * $report.DurationSeconds * $budget.readers * 1000 / $budget.readOfferIntervalMilliseconds) "$label scheduled read slots"
+    $expectedWriteSlots = [long]([long]$report.DurationSeconds * [long]$budget.writers * 1000 / [long]$budget.writeOfferIntervalMilliseconds)
+    $expectedReadSlots = [long]([long]$report.DurationSeconds * [long]$budget.readers * 1000 / [long]$budget.readOfferIntervalMilliseconds)
+    Require ($writeSlots -eq $expectedWriteSlots -and $readSlots -eq $expectedReadSlots) "$label offered and skipped slots differ from the fixed workload schedule."
     Maximum ($report.WriteScheduleSkipped / [double]$writeSlots) $budget.maximumWriteScheduleSkippedFraction "$label missed write schedule fraction"
     Maximum ($report.ReadScheduleSkipped / [double]$readSlots) $budget.maximumReadScheduleSkippedFraction "$label missed read schedule fraction"
     Minimum ($report.WritesAccepted / $report.MeasuredSeconds) $budget.minimumWritesPerSecond "$label accepted writes/s"
