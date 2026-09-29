@@ -138,6 +138,7 @@ internal static class Program
                     }
                 }));
 
+                await AnalyzeSeededCorpusAsync(source, schema);
                 var postSeed = await SampleAsync(source, schema, 0);
                 var samples = new List<StorageSample> { postSeed };
                 var writeLatency = new LatencyCapture();
@@ -356,7 +357,7 @@ internal static class Program
                     StringComparison.OrdinalIgnoreCase), "The executing harness binary changed during the run.");
                 var report = new CampaignReport(2, candidate, sourceHash, binaryHash, image, await ServerVersionAsync(source),
                     RuntimeInformation.OSDescription, RuntimeInformation.FrameworkDescription, started, DateTimeOffset.UtcNow,
-                    "eight-tenant-seeded-high-entropy-fulltext-broad-selective", seconds, Tenants, documentsPerTenant, contentBytes,
+                    "eight-tenant-seeded-analyzed-high-entropy-fulltext-broad-selective", seconds, Tenants, documentsPerTenant, contentBytes,
                     Tenants, Readers, Tenants * documentsPerTenant, WriteIntervalMilliseconds, ReadIntervalMilliseconds,
                     progress.Sum(static item => item.WritesOffered), progress.Sum(static item => item.WritesAccepted),
                     progress.Sum(static item => item.WritesRejected), progress.Sum(static item => item.WriteScheduleSkipped),
@@ -433,6 +434,16 @@ internal static class Program
         await using var reader = await command.ExecuteReaderAsync();
         Check(await reader.ReadAsync(), "Physical Search observation is missing.");
         return new(elapsed, reader.GetInt64(2), reader.GetInt64(1), reader.GetInt64(0));
+    }
+
+    private static async Task AnalyzeSeededCorpusAsync(DbDataSource source, string schema)
+    {
+        await using var connection = await source.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"ANALYZE \"{schema}\".documents";
+        _ = await command.ExecuteNonQueryAsync();
+        command.CommandText = $"ANALYZE \"{schema}\".chunks";
+        _ = await command.ExecuteNonQueryAsync();
     }
 
     private static async Task<IndexObservation[]> ObserveFullTextIndexesAsync(DbDataSource source, string schema)
