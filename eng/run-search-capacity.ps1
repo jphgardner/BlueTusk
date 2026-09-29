@@ -30,7 +30,7 @@ function Capture([string]$Path) {
     & python eng/capture-ecosystem-source.py --output $Path
     Require ($LASTEXITCODE -eq 0) 'Candidate source capture failed.'
 }
-function Docker([string[]]$Arguments) {
+function InvokeDocker([string[]]$Arguments) {
     $result = & docker @Arguments 2>&1
     Require ($LASTEXITCODE -eq 0) "Owned Search Docker operation failed: $($Arguments[0])."
     return $result
@@ -41,8 +41,8 @@ function RemoveOwned([string]$Kind, [string]$Name, [string]$Fixture) {
     if ($LASTEXITCODE -ne 0) { return }
     $actual = $labels | ConvertFrom-Json
     Require ($actual.'bluetusk.owner' -ceq 'search-capacity' -and $actual.'bluetusk.fixture' -ceq $Fixture) "Refusing to remove a Search resource outside this fixture: $Name"
-    if ($Kind -eq 'container') { Docker @('rm','-f',$Name) | Out-Null }
-    else { Docker @('volume','rm',$Name) | Out-Null }
+    if ($Kind -eq 'container') { InvokeDocker @('rm','-f',$Name) | Out-Null }
+    else { InvokeDocker @('volume','rm',$Name) | Out-Null }
 }
 
 Push-Location -LiteralPath $root
@@ -96,8 +96,8 @@ try {
         $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,$Port)
         try { $listener.Start() } catch { throw "Search fixture loopback port $Port is occupied." } finally { $listener.Stop() }
         try {
-            Docker @('volume','create','--label','bluetusk.owner=search-capacity','--label',"bluetusk.fixture=$fixture",$volume) | Out-Null
-            Docker @('run','-d','--name',$container,'--label','bluetusk.owner=search-capacity','--label',"bluetusk.fixture=$fixture",
+            InvokeDocker @('volume','create','--label','bluetusk.owner=search-capacity','--label',"bluetusk.fixture=$fixture",$volume) | Out-Null
+            InvokeDocker @('run','-d','--name',$container,'--label','bluetusk.owner=search-capacity','--label',"bluetusk.fixture=$fixture",
                 '--cpus','4','--memory','2g','-p',"127.0.0.1:${Port}:5432",'-v',"${volume}:/var/lib/postgresql/data",
                 '-e','PGDATA=/var/lib/postgresql/data/pgdata','-e','POSTGRES_PASSWORD=postgres','-e','POSTGRES_DB=search_load', # ggignore
                 $budget.postgreSqlImage,'postgres','-c','track_io_timing=on','-c','max_connections=100') | Out-Null
