@@ -25,6 +25,7 @@ public sealed class ProjectionLiveQuery<T>
     private readonly ProjectionLiveQueryOptions _options;
     private readonly JsonTypeInfo<T> _documentTypeInfo;
     private readonly Func<T, bool>? _predicate;
+    private readonly AsyncLocal<ExpectedPublication?> _expectedPublication = new();
     private ProjectionPublication _publication = new(null, 0);
 
     public ProjectionLiveQuery(PostgreSqlProjectionStore store, string projectionName, string tenantId,
@@ -67,6 +68,13 @@ public sealed class ProjectionLiveQuery<T>
     internal ValueTask<ProjectionPublication> ReadPublicationAsync(CancellationToken cancellationToken) =>
         _store.ReadPublicationAsync(_projectionName, cancellationToken);
 
+    internal IDisposable RequirePublishedVersion(int? version)
+    {
+        var previous = _expectedPublication.Value;
+        _expectedPublication.Value = new ExpectedPublication(version);
+        return new ExpectedPublicationScope(_expectedPublication, previous);
+    }
+
     private async ValueTask<IReadOnlyList<ProjectionLiveRow<T>>> ExecuteAsync(LiveQueryExecutionContext context, CancellationToken cancellationToken)
     {
         if (context.SecurityScope != _securityScope || context.Arguments.Values.Count != 0)
@@ -75,6 +83,12 @@ public sealed class ProjectionLiveQuery<T>
         }
         var page = await _store.ReadActivePageAsync(_projectionName, _tenantId, _options.MaximumDocuments,
             _options.MaximumPayloadBytes, afterKey: _options.AfterKey, throughKey: _options.ThroughKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+        // The page and publication belong to one statement snapshot. Reject a version switch
+        // before Live can persist a row diff; the subscription will publish a reset instead.
+        if (_expectedPublication.Value is { } expected && page.Publication.Version != expected.Version)
+        {
+            throw new ProjectionLivePublicationChangedException();
+        }
         var rows = new List<ProjectionLiveRow<T>>(page.Documents.Count);
         foreach (var document in page.Documents)
         {
@@ -88,4 +102,14 @@ public sealed class ProjectionLiveQuery<T>
         Volatile.Write(ref _publication, page.Publication);
         return rows.AsReadOnly();
     }
+
+    private sealed record ExpectedPublication(int? Version);
+
+    private sealed class ExpectedPublicationScope(AsyncLocal<ExpectedPublication?> slot,
+        ExpectedPublication? previous) : IDisposable
+    {
+        public void Dispose() => slot.Value = previous;
+    }
 }
+
+internal sealed class ProjectionLivePublicationChangedException : Exception { }

@@ -96,14 +96,31 @@ public sealed class ProjectionLiveSubscription<T> : ILiveSharedSubscription
     {
         await EnsureOwnerAsync(cancellationToken).ConfigureAwait(false);
         var publication = await _query.ReadPublicationAsync(cancellationToken).ConfigureAwait(false);
-        var count = publication.Version != _publishedVersion
-            ? await _shared.ResetAsync(LiveResetReason.SchemaChanged, cancellationToken).ConfigureAwait(false)
-            : await _shared.RefreshAsync(cancellationToken).ConfigureAwait(false);
-        // A cutover may commit between the preliminary version read and the authoritative query.
-        // Detect its version from the same query statement that produced the rows, then reset.
-        if (_query.LastPublication.Version != _publishedVersion && publication.Version == _publishedVersion)
+        return await RefreshFromObservedPublicationAsync(publication, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The split keeps the preliminary read/query interleaving independently testable.
+    internal async ValueTask<int> RefreshFromObservedPublicationAsync(ProjectionPublication publication,
+        CancellationToken cancellationToken = default)
+    {
+        int count;
+        if (publication.Version != _publishedVersion)
         {
-            count += await _shared.ResetAsync(LiveResetReason.SchemaChanged, cancellationToken).ConfigureAwait(false);
+            count = await _shared.ResetAsync(LiveResetReason.SchemaChanged, cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            try
+            {
+                using (_query.RequirePublishedVersion(_publishedVersion))
+                {
+                    count = await _shared.RefreshAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (ProjectionLivePublicationChangedException)
+            {
+                count = await _shared.ResetAsync(LiveResetReason.SchemaChanged, cancellationToken).ConfigureAwait(false);
+            }
         }
         _publishedVersion = _query.LastPublication.Version;
         return count;

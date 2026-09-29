@@ -101,6 +101,35 @@ public sealed class ProjectionLiveTests
     }
 
     [Fact]
+    public async Task CutoverBetweenPreliminaryVersionReadAndPageQueryNeverPersistsNewVersionRowDiff()
+    {
+        await using var db = await ProjectionDatabase.CreateAsync();
+        var (active, _) = await db.ReadyAsync();
+        await db.Store.PromoteAsync(active, new(100), null);
+        var replay = new InMemoryLiveReplayStore();
+        await using var live = Subscription(db, "first", replay);
+        await live.StartAsync();
+        var observedBeforeCutover = await db.Store.ReadPublicationAsync("orders");
+        Assert.Equal(1, observedBeforeCutover.Version);
+
+        var (candidate, _) = await db.ReadyAsync(2);
+        await db.Store.PromoteAsync(candidate, new(100), 1);
+        Assert.Equal(2, (await db.Store.ReadPublicationAsync("orders")).Version);
+        Assert.Equal(1, await live.RefreshFromObservedPublicationAsync(observedBeforeCutover));
+
+        var connect = await live.ConnectAsync(1);
+        var reset = Assert.Single(connect.Connection!.Replay);
+        Assert.Equal(LiveEventKind.ResultReset, reset.Kind);
+        var payload = Initial(reset);
+        Assert.Equal("SchemaChanged", payload.GetProperty("resetReason").GetString());
+        var rows = payload.GetProperty("rows");
+        Assert.True(rows.GetArrayLength() > 0);
+        Assert.All(rows.EnumerateArray(),
+            row => Assert.Equal(2, row.GetProperty("PublishedVersion").GetInt32()));
+        await connect.Connection.DisposeAsync();
+    }
+
+    [Fact]
     public async Task FailedWritesAndDuplicateReplayDoNotAdvancePublicationAndQueryEnforcesSecurityScope()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
