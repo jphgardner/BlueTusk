@@ -171,9 +171,9 @@ public sealed class ProjectionPublishedRetentionTests
         internal ProjectionDatabase Database { get; }
         private string Publication { get; }
         private ChangeSourceIdentity Source { get; }
-        private ProjectionSourceLineage Lineage { get; }
+        internal ProjectionSourceLineage Lineage { get; }
         private EventPublishedSourceIdentity EventSource { get; }
-        private uint PublicationOid { get; }
+        internal uint PublicationOid { get; }
         internal uint SourceTimeline => Lineage.Timeline;
 
         internal static async ValueTask<Setup> CreateAsync()
