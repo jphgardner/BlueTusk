@@ -218,9 +218,14 @@ internal sealed class SqliteCapacityClient
 
     private long PhysicalBytes()
     {
-        long total = 0;
-        foreach (var path in new[] { _path, _path + "-wal", _path + "-shm" })
-        { if (File.Exists(path)) { total += new FileInfo(path).Length; } }
+        // The main database must remain present. SQLite may unlink WAL and SHM
+        // sidecars between a directory observation and reading their length.
+        long total = new FileInfo(_path).Length;
+        foreach (var path in new[] { _path + "-wal", _path + "-shm" })
+        {
+            try { total += new FileInfo(path).Length; }
+            catch (FileNotFoundException) { }
+        }
         return total;
     }
 
