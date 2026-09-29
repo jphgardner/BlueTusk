@@ -25,7 +25,7 @@ public sealed class ProjectionLiveQuery<T>
     private readonly ProjectionLiveQueryOptions _options;
     private readonly JsonTypeInfo<T> _documentTypeInfo;
     private readonly Func<T, bool>? _predicate;
-    private readonly AsyncLocal<ExpectedPublication?> _expectedPublication = new();
+    private readonly AsyncLocal<PublicationCaptureScope?> _publicationCapture = new();
     private ProjectionPublication _publication = new(null, 0);
 
     public ProjectionLiveQuery(PostgreSqlProjectionStore store, string projectionName, string tenantId,
@@ -68,11 +68,17 @@ public sealed class ProjectionLiveQuery<T>
     internal ValueTask<ProjectionPublication> ReadPublicationAsync(CancellationToken cancellationToken) =>
         _store.ReadPublicationAsync(_projectionName, cancellationToken);
 
-    internal IDisposable RequirePublishedVersion(int? version)
+    internal PublicationCaptureScope CapturePublication() => CreateCapture(null, requireVersion: false);
+
+    internal PublicationCaptureScope RequirePublishedVersion(int? version) =>
+        CreateCapture(version, requireVersion: true);
+
+    private PublicationCaptureScope CreateCapture(int? version, bool requireVersion)
     {
-        var previous = _expectedPublication.Value;
-        _expectedPublication.Value = new ExpectedPublication(version);
-        return new ExpectedPublicationScope(_expectedPublication, previous);
+        var scope = new PublicationCaptureScope(_publicationCapture, _publicationCapture.Value,
+            version, requireVersion);
+        _publicationCapture.Value = scope;
+        return scope;
     }
 
     private async ValueTask<IReadOnlyList<ProjectionLiveRow<T>>> ExecuteAsync(LiveQueryExecutionContext context, CancellationToken cancellationToken)
@@ -85,7 +91,9 @@ public sealed class ProjectionLiveQuery<T>
             _options.MaximumPayloadBytes, afterKey: _options.AfterKey, throughKey: _options.ThroughKey, cancellationToken: cancellationToken).ConfigureAwait(false);
         // The page and publication belong to one statement snapshot. Reject a version switch
         // before Live can persist a row diff; the subscription will publish a reset instead.
-        if (_expectedPublication.Value is { } expected && page.Publication.Version != expected.Version)
+        var capture = _publicationCapture.Value;
+        capture?.Record(page.Publication);
+        if (capture is { RequireVersion: true } && page.Publication.Version != capture.ExpectedVersion)
         {
             throw new ProjectionLivePublicationChangedException();
         }
@@ -103,11 +111,14 @@ public sealed class ProjectionLiveQuery<T>
         return rows.AsReadOnly();
     }
 
-    private sealed record ExpectedPublication(int? Version);
-
-    private sealed class ExpectedPublicationScope(AsyncLocal<ExpectedPublication?> slot,
-        ExpectedPublication? previous) : IDisposable
+    internal sealed class PublicationCaptureScope(AsyncLocal<PublicationCaptureScope?> slot,
+        PublicationCaptureScope? previous, int? expectedVersion, bool requireVersion) : IDisposable
     {
+        internal int? ExpectedVersion { get; } = expectedVersion;
+        internal bool RequireVersion { get; } = requireVersion;
+        internal ProjectionPublication? ObservedPublication { get; private set; }
+
+        internal void Record(ProjectionPublication publication) => ObservedPublication = publication;
         public void Dispose() => slot.Value = previous;
     }
 }

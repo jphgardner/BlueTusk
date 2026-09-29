@@ -130,6 +130,57 @@ public sealed class ProjectionLiveTests
     }
 
     [Fact]
+    public async Task SharedQueryCannotAdvanceAnotherSubscriptionsVersionDuringRefresh()
+    {
+        await using var db = await ProjectionDatabase.CreateAsync();
+        var (active, definition) = await db.ReadyAsync();
+        await db.Store.PromoteAsync(active, new(100), null);
+        var query = Query(db, "first");
+        var blockedReplay = new PausingLiveReplayStore();
+        await using var first = new ProjectionLiveSubscription<OrderView>(query, blockedReplay,
+            ProjectionLiveJson.EventTypeInfo);
+        await using var second = new ProjectionLiveSubscription<OrderView>(query,
+            new InMemoryLiveReplayStore(), ProjectionLiveJson.EventTypeInfo);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var token = timeout.Token;
+        await first.StartAsync(token);
+        await second.StartAsync(token);
+
+        await using var update = db.Delivery(101, id => new UpdateChange(id,
+            ProjectionDatabase.Customer("customer", "first", "Alice"),
+            ProjectionDatabase.Customer("customer", "first", "Bob"), new ChangedColumnSet(true, [2])));
+        await db.Store.ApplyAsync(active, definition, update.Transaction);
+        var firstRefresh = first.RefreshAsync(token).AsTask();
+        await blockedReplay.WaitUntilPausedAsync(token);
+        try
+        {
+            var (candidate, candidateDefinition) = await db.ReadyAsync(2);
+            await db.Store.ApplyAsync(candidate, candidateDefinition, update.Transaction);
+            await db.Store.PromoteAsync(candidate, new(101), 1);
+            Assert.Equal(1, await second.RefreshAsync(token));
+            Assert.Equal(2, query.LastPublication.Version);
+        }
+        finally
+        {
+            blockedReplay.Resume();
+            await firstRefresh;
+        }
+
+        var afterOldVersionUpdate = first.Status.PersistedSequence;
+        Assert.Equal(1, await first.RefreshAsync(token));
+        var resumed = await first.ConnectAsync(afterOldVersionUpdate, token);
+        var reset = Assert.Single(resumed.Connection!.Replay);
+        Assert.Equal(LiveEventKind.ResultReset, reset.Kind);
+        var payload = Initial(reset);
+        Assert.Equal("SchemaChanged", payload.GetProperty("resetReason").GetString());
+        var rows = payload.GetProperty("rows");
+        Assert.True(rows.GetArrayLength() > 0);
+        Assert.All(rows.EnumerateArray(),
+            row => Assert.Equal(2, row.GetProperty("PublishedVersion").GetInt32()));
+        await resumed.Connection.DisposeAsync();
+    }
+
+    [Fact]
     public async Task FailedWritesAndDuplicateReplayDoNotAdvancePublicationAndQueryEnforcesSecurityScope()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -160,6 +211,36 @@ public sealed class ProjectionLiveTests
     {
         using var document = JsonDocument.Parse(value.Payload);
         return document.RootElement.Clone();
+    }
+
+    private sealed class PausingLiveReplayStore : ILiveReplayStore
+    {
+        private readonly InMemoryLiveReplayStore _inner = new();
+        private readonly TaskCompletionSource _paused = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _resume = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _pauseNextUpdate = 1;
+
+        internal Task WaitUntilPausedAsync(CancellationToken token) => _paused.Task.WaitAsync(token);
+        internal void Resume() => _resume.TrySetResult();
+
+        public async ValueTask<LiveReplayAppendResult> AppendAsync(LiveReplayAppendRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            if (request.Events.Any(static value => value.Kind == LiveEventKind.RowUpdated) &&
+                Interlocked.Exchange(ref _pauseNextUpdate, 0) == 1)
+            {
+                _paused.TrySetResult();
+                await _resume.Task.WaitAsync(cancellationToken);
+            }
+            return await _inner.AppendAsync(request, cancellationToken);
+        }
+
+        public ValueTask<LiveReplayReadResult> ReadAsync(LiveSubscriptionIdentity identity,
+            long afterSequence, int maximumEvents, CancellationToken cancellationToken = default) =>
+            _inner.ReadAsync(identity, afterSequence, maximumEvents, cancellationToken);
+
+        public ValueTask<int> PruneAsync(CancellationToken cancellationToken = default) =>
+            _inner.PruneAsync(cancellationToken);
     }
 }
 

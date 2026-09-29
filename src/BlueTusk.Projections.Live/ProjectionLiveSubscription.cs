@@ -36,8 +36,10 @@ public sealed class ProjectionLiveSubscription<T> : ILiveSharedSubscription
         try
         {
             await EnsureOwnerAsync(cancellationToken).ConfigureAwait(false);
+            using var capture = _query.CapturePublication();
             await _shared.StartAsync(cancellationToken).ConfigureAwait(false);
-            _publishedVersion = _query.LastPublication.Version;
+            _publishedVersion = (capture.ObservedPublication ??
+                throw new InvalidOperationException("The initial projection query did not capture its publication.")).Version;
             _started = true;
         }
         catch (ProjectionLivePublisherFencedException) { await LoseOwnershipAsync().ConfigureAwait(false); throw; }
@@ -103,26 +105,32 @@ public sealed class ProjectionLiveSubscription<T> : ILiveSharedSubscription
     internal async ValueTask<int> RefreshFromObservedPublicationAsync(ProjectionPublication publication,
         CancellationToken cancellationToken = default)
     {
-        int count;
         if (publication.Version != _publishedVersion)
         {
-            count = await _shared.ResetAsync(LiveResetReason.SchemaChanged, cancellationToken).ConfigureAwait(false);
+            return await ResetAndCapturePublicationAsync(cancellationToken).ConfigureAwait(false);
         }
-        else
+        try
         {
-            try
+            using var capture = _query.RequirePublishedVersion(_publishedVersion);
+            var count = await _shared.RefreshAsync(cancellationToken).ConfigureAwait(false);
+            if (capture.ObservedPublication is { } observed)
             {
-                using (_query.RequirePublishedVersion(_publishedVersion))
-                {
-                    count = await _shared.RefreshAsync(cancellationToken).ConfigureAwait(false);
-                }
+                _publishedVersion = observed.Version;
             }
-            catch (ProjectionLivePublicationChangedException)
-            {
-                count = await _shared.ResetAsync(LiveResetReason.SchemaChanged, cancellationToken).ConfigureAwait(false);
-            }
+            return count;
         }
-        _publishedVersion = _query.LastPublication.Version;
+        catch (ProjectionLivePublicationChangedException)
+        {
+            return await ResetAndCapturePublicationAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async ValueTask<int> ResetAndCapturePublicationAsync(CancellationToken cancellationToken)
+    {
+        using var capture = _query.CapturePublication();
+        var count = await _shared.ResetAsync(LiveResetReason.SchemaChanged, cancellationToken).ConfigureAwait(false);
+        _publishedVersion = (capture.ObservedPublication ??
+            throw new InvalidOperationException("The projection reset did not capture its publication.")).Version;
         return count;
     }
 
