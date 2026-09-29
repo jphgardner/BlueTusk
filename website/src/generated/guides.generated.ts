@@ -1581,7 +1581,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "core",
       "reference"
     ],
-    "order": 1070,
+    "order": 1071,
     "title": "Entity Framework Core",
     "sourcePath": "docs/ef-core/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/reference.md",
@@ -3490,7 +3490,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "extensions",
       "reference"
     ],
-    "order": 1075,
+    "order": 1076,
     "title": "Extension SDK",
     "sourcePath": "docs/extensions/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/reference.md",
@@ -3801,7 +3801,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1081,
+    "order": 1082,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
@@ -6346,9 +6346,35 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 3633,
-    "readMinutes": 17,
+    "wordCount": 3805,
+    "readMinutes": 18,
     "searchText": "BlueTusk.Edge BlueTusk.Edge `0.1.0-preview.1` supplies offline synchronization contracts and a bounded coordinator. BlueTusk.Edge.Sqlite provides a durable file cache and queued mutations. BlueTusk.Edge.Server supplies a PostgreSQL record repository with an atomic mutation inbox, consistent snapshots and a retained change feed. BlueTusk.Edge.Http and BlueTusk.Edge.AspNetCore connect that repository through authenticated HTTP. `@bluetusk/edge` supplies durable IndexedDB storage, an interoperable HTTP client and a bounded reconnect helper. The host obtains tenant, selective scope identity and increasing epoch from an authenticated server contract. A scope may represent a user, permission set and selection filter; changing any access boundary should rotate its epoch. The client cannot authorize its own arbitrary scope ID or epoch. Local persistence is not an authentication boundary or encryption mechanism; the host owns local file/browser profile access and logout/revocation handling. Cache, snapshots and changes SQLite keys include tenant, scope and epoch. IndexedDB uses the same composite identity. Activating a newer epoch atomically purges prior cached/staged state and receipts, resets its checkpoint, and invalidates older-epoch reads. Pending writes make rotation fail by default. The host must explicitly choose `DiscardPending`/`discard` after its pending-write policy is resolved; the library does not silently discard offline user changes. A host detecting authorization revocation must stop using the old scope while resolving that policy. Snapshots use stable identities, stage bounded batches separately from the active cache, and publish their full selective record set plus checkpoint in one transaction. Reopening/restarting does not expose partial snapshots, and repeating the same begin preserves staged batches. Completing a new snapshot removes records outside its authorized selection. SQLite and IndexedDB enforce separate active and staged limits, each defaultin"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "edge-capacity",
+    "summary": "eng/run-edge-capacity.ps1 prepares a clean exact-commit local measurement. It builds the .NET harness and locked browser client, snapshots every executable dependency and the JavaScript",
+    "keywords": [
+      "docs",
+      "edge",
+      "capacity"
+    ],
+    "order": 1069,
+    "title": "Edge ordered offline capacity campaign",
+    "sourcePath": "docs/edge/capacity.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/capacity.md",
+    "headings": [
+      {
+        "id": "edge-ordered-offline-capacity-campaign",
+        "text": "Edge ordered offline capacity campaign",
+        "level": 1
+      }
+    ],
+    "wordCount": 604,
+    "readMinutes": 3,
+    "searchText": "Edge ordered offline capacity campaign `eng/run-edge-capacity.ps1` prepares a clean exact-commit local measurement. It builds the .NET harness and locked browser client, snapshots every executable dependency and the JavaScript modules, then runs two fresh digest-pinned PostgreSQL 18 fixtures. Each fixture has four Docker CPUs, 2 GiB of memory and its own database volume. A real Kestrel endpoint serves seven SQLite clients and one persistent-profile Chromium-family IndexedDB client. The runner labels and removes only its own PostgreSQL container and volume. It retains raw JSON, workload logs, local SQLite files, browser profile, source captures, binary snapshots and SHA-256 manifest under `artifacts/`. The eight isolated tenant scopes each begin with 256 distinct 4 KiB records and an empty ordered client stream. Each client schedules one 4 KiB high-entropy update every 200 ms for 30 minutes: 40 planned writes/s across the fixture. The monotonic scheduler counts missed slots and never creates an unbounded client request queue. The same key cannot have two pending writes. Each client holds at most 512 local mutations and receipts; the server caps each scope at 512 receipts and 1024 feed entries. Successful reconnect passes durably acknowledge results, confirm original mutations, advance gapless ordered horizons and prune only a feed prefix behind the active client's durable checkpoint. An intentionally lagging read verifies HTTP 410 and a fresh snapshot after the floor advances. Each run includes two 30-second offline windows, one response dropped **after** the server's business transaction commits for every client, a local SQLite reopen or real browser-profile restart, and a Kestrel restart. The response drop is injected by a client-side transport wrapper after a real successful HTTP response; it proves durable retry behavior but does not model every socket or proxy failure. The .NET SQLite handles are reopened, not forcibly killed as OS processes. The browser closes "
   },
   {
     "category": "operations",
@@ -6362,7 +6388,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "PUBLISHED",
       "RETENTION"
     ],
-    "order": 1072,
+    "order": 1073,
     "title": "Published outbox retention: required protocol",
     "sourcePath": "docs/events/PUBLISHED-RETENTION.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/PUBLISHED-RETENTION.md",
@@ -6388,7 +6414,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "events",
       "README"
     ],
-    "order": 1073,
+    "order": 1074,
     "title": "BlueTusk.Events",
     "sourcePath": "docs/events/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
@@ -6443,7 +6469,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "docs",
       "fuzzing"
     ],
-    "order": 1076,
+    "order": 1077,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -6479,7 +6505,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1082,
+    "order": 1083,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -6520,7 +6546,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "improvement",
       "audit"
     ],
-    "order": 1083,
+    "order": 1084,
     "title": "BlueTusk improvement audit and action record",
     "sourcePath": "docs/improvement-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
@@ -6566,7 +6592,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "README"
     ],
-    "order": 1084,
+    "order": 1085,
     "title": "BlueTusk.Jobs",
     "sourcePath": "docs/jobs/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
@@ -6618,7 +6644,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "durable",
       "format"
     ],
-    "order": 1085,
+    "order": 1086,
     "title": "Durable-format support and rehearsal",
     "sourcePath": "docs/jobs/durable-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
@@ -6644,7 +6670,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "failover"
     ],
-    "order": 1086,
+    "order": 1087,
     "title": "Jobs and Workflows physical promotion rehearsal",
     "sourcePath": "docs/jobs/failover.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
@@ -6690,7 +6716,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "hosting"
     ],
-    "order": 1087,
+    "order": 1088,
     "title": "Scoped Jobs and Workflows host readiness",
     "sourcePath": "docs/jobs/hosting.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
@@ -6726,7 +6752,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "maintenance"
     ],
-    "order": 1088,
+    "order": 1089,
     "title": "Durable storage maintenance contract",
     "sourcePath": "docs/jobs/maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
@@ -6752,7 +6778,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "performance"
     ],
-    "order": 1089,
+    "order": 1090,
     "title": "Jobs and Workflows capacity and recovery harness",
     "sourcePath": "docs/jobs/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
