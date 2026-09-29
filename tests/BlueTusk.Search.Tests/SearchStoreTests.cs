@@ -504,6 +504,28 @@ public sealed class SearchStoreTests
     }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 4, MaxRetainedRankRows = 4, MaxRetainedRankBytes = 2208 });
 
     [Fact]
+    public Task Short_global_budget_contention_waits_without_shedding_queries() => WithStoreAsync(async (store, source) =>
+    {
+        await using var connection = await source.OpenConnectionAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT pg_advisory_xact_lock(hashtextextended(@name, 0))";
+        var name = command.CreateParameter();
+        name.ParameterName = "name";
+        name.Value = "BlueTusk.Search.SnapshotBudget:" + store.Options.Schema;
+        command.Parameters.Add(name);
+        _ = await command.ExecuteScalarAsync();
+
+        var arrivals = Enumerable.Range(0, 4).Select(index =>
+            store.SearchAsync(new SearchScope($"tenant-{index}", "library"),
+                new SearchRequest { Text = "cat", CandidateLimit = 1, PageSize = 1 }).AsTask()).ToArray();
+        await Task.Delay(80);
+        await transaction.CommitAsync();
+        await Task.WhenAll(arrivals);
+    });
+
+    [Fact]
     public Task Page_and_ranking_byte_budgets_stop_payloads_before_they_leave_postgresql() => WithStoreAsync(async (store, source) =>
     {
         for (var i = 0; i < 3; i++)

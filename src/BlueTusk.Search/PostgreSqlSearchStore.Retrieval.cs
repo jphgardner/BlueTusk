@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace BlueTusk.Search;
@@ -474,10 +475,17 @@ public sealed partial class PostgreSqlSearchStore
 
     private async ValueTask LockSnapshotBudgetAsync(DbConnection connection, DbTransaction transaction, CancellationToken cancellationToken)
     {
-        await using var command = Command(connection, transaction, "SELECT pg_try_advisory_xact_lock(hashtextextended(@name, 0))");
-        Parameter(command, "name", "BlueTusk.Search.SnapshotBudget:" + Options.Schema);
-        if (await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is not true)
-            throw new SearchBackpressureException();
+        // A simultaneous read burst should serialize short budget reservations,
+        // while a stuck owner must not create an unbounded admission queue.
+        var wait = Stopwatch.StartNew();
+        while (true)
+        {
+            await using var command = Command(connection, transaction, "SELECT pg_try_advisory_xact_lock(hashtextextended(@name, 0))");
+            Parameter(command, "name", "BlueTusk.Search.SnapshotBudget:" + Options.Schema);
+            if (await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is true) { return; }
+            if (wait.Elapsed >= TimeSpan.FromMilliseconds(200)) { throw new SearchBackpressureException(); }
+            await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private async ValueTask<int> PruneQueriesAsync(DbConnection connection, DbTransaction transaction, SearchScope? scope, int maximum, CancellationToken cancellationToken)
