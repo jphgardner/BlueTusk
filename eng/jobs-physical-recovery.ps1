@@ -3,6 +3,7 @@ param(
     [ValidateRange(1024, 65535)] [int] $PrimaryPort = 55625,
     [ValidateRange(1024, 65535)] [int] $StandbyPort = 55626,
     [string] $OutputReport = 'docs/jobs/performance-reports/physical-promotion-pg18.json',
+    [string] $ArtifactDirectory,
     [switch] $NoBuild
 )
 
@@ -15,7 +16,18 @@ $taskImage = 'postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b
 $taskDocker = (Get-Command docker -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $taskProject = 'tests/BlueTusk.Workflows.PhysicalRecoveryTests/BlueTusk.Workflows.PhysicalRecoveryTests.csproj'
 $taskCaptureScript = Join-Path $PSScriptRoot 'capture-ecosystem-source.py'
-$taskArtifacts = Join-Path $taskRepository ('artifacts/jobs-physical-recovery/' + $taskCampaign)
+$taskArtifacts = if ([string]::IsNullOrWhiteSpace($ArtifactDirectory)) {
+    Join-Path $taskRepository ('artifacts/jobs-physical-recovery/' + $taskCampaign)
+} elseif ([IO.Path]::IsPathRooted($ArtifactDirectory)) {
+    [IO.Path]::GetFullPath($ArtifactDirectory)
+} else {
+    [IO.Path]::GetFullPath((Join-Path $taskRepository $ArtifactDirectory))
+}
+$taskAllowedArtifacts = [IO.Path]::GetFullPath((Join-Path $taskRepository 'artifacts')) +
+    [IO.Path]::DirectorySeparatorChar
+if (-not $taskArtifacts.StartsWith($taskAllowedArtifacts, [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Physical recovery artifacts must remain under the repository artifacts directory.'
+}
 $taskOutput = if ([IO.Path]::IsPathRooted($OutputReport)) { [IO.Path]::GetFullPath($OutputReport) } else { [IO.Path]::GetFullPath((Join-Path $taskRepository $OutputReport)) }
 $taskEnvironmentNames = @('PRIMARY', 'STANDBY', 'PRIMARY_CONTAINER', 'STANDBY_CONTAINER', 'FIXTURE', 'REPORT', 'DOCKER', 'IMAGE')
 $taskPreviousEnvironment = @{}
@@ -85,6 +97,7 @@ function AssertTestBinariesUnchanged($Before, $After) {
 
 Push-Location -LiteralPath $taskRepository
 try {
+    if (Test-Path -LiteralPath $taskArtifacts) { throw 'Physical recovery requires a fresh artifact directory.' }
     if ($PrimaryPort -eq $StandbyPort) { throw 'Physical fixture ports must differ.' }
     foreach ($taskPort in $PrimaryPort, $StandbyPort) {
         $taskListener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $taskPort)

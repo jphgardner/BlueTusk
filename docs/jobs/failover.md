@@ -1,5 +1,15 @@
 # Jobs and Workflows physical promotion rehearsal
 
+The manual [Jobs release failover workflow](../../.github/workflows/jobs-release-failover.yml)
+wraps this rehearsal for one clean full candidate SHA. It requires three
+fresh synchronous pairs, verifies the exact Jobs effects and stale-owner
+fences against retained raw reports and binary hashes, then uploads a
+product-specific artifact only after independent archive verification.
+Adding the workflow does not supply a passing run. Credential replacement
+during promotion, prolonged silent network partitions, persistent storage
+loss, asynchronous replication, split brain, old-primary rejoin and
+independent-host operation remain separate release evidence.
+
 `eng/jobs-physical-recovery.ps1` creates fresh labelled PostgreSQL 18 primary and
 physical standby containers, private network and separate data volumes. Default
 loopback ports are 55625/55626, independent of the shared 55415–55418 fixtures and

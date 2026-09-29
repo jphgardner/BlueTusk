@@ -37,8 +37,10 @@ It must emit a separate retained capacity artifact for each family before
 any can use it as release evidence. Its result alone is not a product
 release pass. The other six need dedicated capacity workflows. Every family
 needs a dedicated failover and upgrade workflow, plus the protected expansion
-candidate aggregator. Those remaining workflows and their complete evidence
-readers are not implemented yet. An arming edit is therefore rejected even if
+candidate aggregator. Jobs now has a source-bound synchronous-promotion
+failover workflow, but no passing exact-candidate release run. Its upgrade
+workflow, the protected aggregator, and the other families' required readers
+are not implemented yet. An arming edit is therefore rejected even if
 generic `build.yml`, `security.yml`, `performance.yml` and
 `ecosystem-build.yml` pass.
 
@@ -54,6 +56,18 @@ snapshot and a file-hash manifest in the
 `expansion-jobs-capacity-<full-sha>` artifact. These are local reference-runner
 limits, not claims about independent hosts or multi-day retention. No
 capacity pass is recorded by adding the workflow.
+
+The Jobs failover workflow repeats three fresh PostgreSQL 18 synchronous
+primary/standby promotions. Its verifier requires the exact candidate source,
+unchanged test binaries, a passing unskipped test for each pair, 66 preserved
+acknowledged Jobs/admissions and 66 singular Jobs effects per pair, newer
+attempt-two fences with stale completion/effect rejection, tenant isolation,
+and outage-to-recovery health. Raw reports, database logs, fixture samples,
+TRX results and binary snapshots are retained in
+`expansion-jobs-failover-<full-sha>`. The local hard-stop proves neither
+asynchronous-loss tolerance nor split-brain fencing, old-primary rejoin,
+credential rotation during promotion, persistent storage failure or fleet
+availability. No failover pass is recorded by adding the workflow.
 
 The eventual workflows must bind reports, binary/source hashes, fixture
 versions and actual workload outcomes to the same full candidate SHA. Capacity
