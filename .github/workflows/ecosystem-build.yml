@@ -89,6 +89,7 @@ jobs:
         run: |
           ./eng/run-edge-browser-compatibility.ps1 -ExpectedCommit '${{ github.sha }}' `
             -Browser '${{ matrix.browser }}' `
+            -ReviewHeadCommit '${{ github.event.pull_request.head.sha || github.sha }}' `
             -EvidenceDirectory 'artifacts/edge-browser-compatibility/${{ matrix.browser }}-${{ github.run_id }}-${{ github.run_attempt }}'
       - name: Retain exact-candidate browser compatibility evidence
         if: always()
@@ -101,3 +102,38 @@ jobs:
       - name: Stop owned browser fixture
         if: always()
         run: docker compose -f eng/compose/postgres.yml down
+
+  windows-browser:
+    name: Durable Windows Edge storage recovery
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Install locked workspace dependencies and Microsoft Edge
+        shell: pwsh
+        run: |
+          npm ci --ignore-scripts
+          if ($LASTEXITCODE -ne 0) { throw 'Locked npm dependencies failed to install.' }
+          npm exec --workspace @bluetusk/edge -- playwright install msedge
+          if ($LASTEXITCODE -ne 0) { throw 'Microsoft Edge browser is unavailable.' }
+      - name: Verify real Windows Edge profile recovery
+        shell: pwsh
+        run: |
+          ./eng/run-edge-browser-compatibility.ps1 -ExpectedCommit '${{ github.sha }}' `
+            -Browser msedge -StorageOnly `
+            -ReviewHeadCommit '${{ github.event.pull_request.head.sha || github.sha }}' `
+            -EvidenceDirectory 'artifacts/edge-browser-compatibility/msedge-${{ github.run_id }}-${{ github.run_attempt }}'
+      - name: Retain exact-candidate Windows Edge storage evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0 # v7.0.1
+        with:
+          name: edge-browser-msedge-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/edge-browser-compatibility
+          if-no-files-found: warn
+          retention-days: 90
