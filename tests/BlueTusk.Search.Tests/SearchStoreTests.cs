@@ -225,6 +225,9 @@ public sealed class SearchStoreTests
             command.CommandText = $"SELECT query_id FROM \"{store.Options.Schema}\".queries WHERE NOT ready";
             var pendingId = Assert.IsType<Guid>(await command.ExecuteScalarAsync());
             _ = await Assert.ThrowsAsync<SearchCursorExpiredException>(() => ranked.ContinueSearchAsync(scope, new SearchCursor(pendingId, 0)).AsTask());
+            command.CommandText = $"UPDATE \"{store.Options.Schema}\".queries SET expires_at=clock_timestamp()+interval '20 seconds' WHERE query_id=@query";
+            var query = command.CreateParameter(); query.ParameterName = "query"; query.Value = pendingId; command.Parameters.Add(query);
+            Assert.Equal(1, await command.ExecuteNonQueryAsync());
             var second = await ranked.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask().WaitAsync(TimeSpan.FromSeconds(10));
             Assert.Equal("1", Assert.Single(second.Hits).DocumentId);
             _ = await Assert.ThrowsAsync<SearchBackpressureException>(() => ranked.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask());
@@ -234,7 +237,9 @@ public sealed class SearchStoreTests
             ranker.Release.TrySetResult();
         }
 
-        Assert.Equal("1", Assert.Single((await first.WaitAsync(TimeSpan.FromSeconds(10))).Hits).DocumentId);
+        var firstPage = await first.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.Equal("1", Assert.Single(firstPage.Hits).DocumentId);
+        Assert.True(firstPage.ExpiresAt > DateTimeOffset.UtcNow.AddMinutes(1));
     });
 
     [Fact]

@@ -392,8 +392,9 @@ public sealed partial class PostgreSqlSearchStore
     private async ValueTask PublishQueryAsync(DbConnection connection, DbTransaction transaction, Guid queryId, CancellationToken cancellationToken)
     {
         await using var command = Command(connection, transaction,
-            $"UPDATE {_schema}.queries SET ready=true WHERE query_id=@query AND NOT ready AND expires_at>clock_timestamp()");
+            $"UPDATE {_schema}.queries SET ready=true,expires_at=clock_timestamp()+(@lifetime * interval '1 second') WHERE query_id=@query AND NOT ready AND expires_at>clock_timestamp()");
         Parameter(command, "query", queryId, DbType.Guid);
+        Parameter(command, "lifetime", Options.QueryLifetime.TotalSeconds, DbType.Double);
         if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
         {
             throw new SearchCursorExpiredException();
