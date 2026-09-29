@@ -3,6 +3,7 @@
     <Project Path="benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj" />
     <Project Path="benchmarks/BlueTusk.Documents.LoadHarness/BlueTusk.Documents.LoadHarness.csproj" />
     <Project Path="benchmarks/BlueTusk.Ecosystem.Benchmarks/BlueTusk.Ecosystem.Benchmarks.csproj" />
+    <Project Path="benchmarks/BlueTusk.Edge.LoadHarness/BlueTusk.Edge.LoadHarness.csproj" />
     <Project Path="benchmarks/BlueTusk.Projections.LoadHarness/BlueTusk.Projections.LoadHarness.csproj" />
     <Project Path="benchmarks/BlueTusk.Search.LoadHarness/BlueTusk.Search.LoadHarness.csproj" />
     <Project Path="benchmarks/BlueTusk.Workflows.LoadHarness/BlueTusk.Workflows.LoadHarness.csproj" />
