@@ -5010,8 +5010,8 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1055,
-    "readMinutes": 5,
+    "wordCount": 1105,
+    "readMinutes": 6,
     "searchText": "Search mixed ingestion and retrieval capacity campaign `eng/run-search-capacity.ps1` runs a dedicated PostgreSQL 18 Search campaign from a **clean, full commit SHA**. It provisions a digest-pinned, labelled Docker volume and container on loopback, with four CPUs and 2 GiB of memory, then removes only its own fixture. The runner takes before/after whole-source fingerprints, snapshots the built executable and dependencies, checks the executable after each run, and hashes every archived raw artifact. It never publishes a package or marks the product production-qualified. The workload seeds 128 distinct 4 KiB documents in each of eight tenants. Content is deterministic high-entropy text with both a common term and a unique per-document term. Documents include public, `readers`-authorized and `restricted`-only ACLs. One writer per tenant offers an update every 200 ms while four readers each offer a scoped full-text query every 100 ms: nominally 40 writes and 40 reads per second. One quarter of planned read offers seek a public document's unique term; the rest seek the common term. Both tenants assigned to each reader receive selective queries. The schedule uses a monotonic clock and skips missed slots instead of building an unbounded client queue. Every planned slot is counted as offered or skipped; every offered call is counted as accepted or explicitly rejected by bounded Search admission. Accepted broad and selective reads retain separate nearest-rank p50/p95/p99 samples, as do accepted writes and rejected admissions. Five-second physical samples include owned relation bytes, whole-database bytes and inserted WAL position. A terminal `pg_stat_user_indexes` observation records the actual full-text index method, bytes and scans during the mixed workload. WAL is PostgreSQL-cluster scoped, so the owned fixture must remain isolated. At the end, the harness checks every persisted document's exact version and tenant, rejects a stale write and a conflicting same-version write",
     "blocks": [
       {
@@ -5026,7 +5026,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>That run is too short for qualification and its manifest stays <code>QualifiedLocalCapacity=false</code>. After reviewing its raw evidence, omit <code>-Seconds</code> and <code>-Repetitions</code> for two 30-minute runs in separate fresh owned PostgreSQL fixtures:</p>\n"
+        "html": "<p><code>-DocumentsPerTenant</code> can vary the corpus from 32 through 1,024 for a diagnostic. A changed corpus never qualifies against the fixed budget. The current 128-document-per-tenant smoke returned selective hits but recorded zero full-text index scans, so a larger-corpus diagnostic is needed to learn when the indexed path is used. A short run is too short for qualification and its manifest stays <code>QualifiedLocalCapacity=false</code>. After reviewing raw evidence, omit <code>-Seconds</code>, <code>-Repetitions</code>, and corpus overrides for two 30-minute runs in separate fresh owned PostgreSQL fixtures:</p>\n"
       },
       {
         "kind": "code",

@@ -12,7 +12,7 @@ The first run should be a **diagnostic** on a committed candidate:
 ./eng/run-search-capacity.ps1 -ExpectedCommit '<full 40-character SHA>' -Seconds 60 -Repetitions 1
 ```
 
-That run is too short for qualification and its manifest stays `QualifiedLocalCapacity=false`. After reviewing its raw evidence, omit `-Seconds` and `-Repetitions` for two 30-minute runs in separate fresh owned PostgreSQL fixtures:
+`-DocumentsPerTenant` can vary the corpus from 32 through 1,024 for a diagnostic. A changed corpus never qualifies against the fixed budget. The current 128-document-per-tenant smoke returned selective hits but recorded zero full-text index scans, so a larger-corpus diagnostic is needed to learn when the indexed path is used. A short run is too short for qualification and its manifest stays `QualifiedLocalCapacity=false`. After reviewing raw evidence, omit `-Seconds`, `-Repetitions`, and corpus overrides for two 30-minute runs in separate fresh owned PostgreSQL fixtures:
 
 ```powershell
 ./eng/run-search-capacity.ps1 -ExpectedCommit '<full 40-character SHA>'

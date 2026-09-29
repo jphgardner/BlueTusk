@@ -4,6 +4,7 @@ param(
     [string]$OutputDirectory,
     [ValidateRange(0,3600)][int]$Seconds = 0,
     [ValidateRange(0,3)][int]$Repetitions = 0,
+    [ValidateRange(0,1024)][int]$DocumentsPerTenant = 0,
     [ValidateRange(1024,65535)][int]$Port = 55828
 )
 
@@ -14,7 +15,9 @@ $budgetPath = Join-Path $PSScriptRoot 'search-capacity-budgets.json'
 $budget = Get-Content -LiteralPath $budgetPath -Raw | ConvertFrom-Json -Depth 20
 if ($Seconds -eq 0) { $Seconds = [int]$budget.minimumSecondsPerRun }
 if ($Repetitions -eq 0) { $Repetitions = [int]$budget.minimumRuns }
+if ($DocumentsPerTenant -eq 0) { $DocumentsPerTenant = [int]$budget.documentsPerTenant }
 if ($Seconds -lt 5) { throw 'Diagnostic duration must be at least five seconds.' }
+if ($DocumentsPerTenant -lt 32) { throw 'Diagnostic corpus must contain at least 32 documents per tenant.' }
 $campaign = 'search-capacity-' + [guid]::NewGuid().ToString('N').Substring(0,16)
 $output = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { Join-Path $root "artifacts/search-capacity/$campaign" } else { [IO.Path]::GetFullPath($OutputDirectory) }
 $priorConnection = $env:BLUETUSK_SEARCH_LOAD_CONNECTION_STRING
@@ -77,6 +80,7 @@ try {
     $env:BLUETUSK_SEARCH_LOAD_IMAGE = $budget.postgreSqlImage
     [ordered]@{ Campaign = $campaign; CandidateSha = $head; SourceTreeSha256 = $source.sourceTreeSha256;
         Image = $budget.postgreSqlImage; RequestedSeconds = $Seconds; Runs = $Repetitions;
+        DocumentsPerTenant = $DocumentsPerTenant;
         Processor = [string](Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name);
         LogicalProcessors = [Environment]::ProcessorCount; OperatingSystem = [Runtime.InteropServices.RuntimeInformation]::OSDescription;
         DotNetSdk = (& dotnet --version); DockerServer = (& docker version --format '{{.Server.Version}}') } |
@@ -109,7 +113,7 @@ try {
             }
             Require $ready 'Owned Search PostgreSQL fixture did not become ready.'
             $env:BLUETUSK_SEARCH_LOAD_CONNECTION_STRING = "Host=127.0.0.1;Port=$Port;Username=postgres;Password=postgres;Database=search_load;SSL Mode=Disable;Channel Binding=Disable" # ggignore
-            & dotnet $dll $Seconds $budget.documentsPerTenant $budget.contentBytes (Join-Path $runRoot 'search-mixed.json') 2>&1 |
+            & dotnet $dll $Seconds $DocumentsPerTenant $budget.contentBytes (Join-Path $runRoot 'search-mixed.json') 2>&1 |
                 Tee-Object -FilePath (Join-Path $runRoot 'workload.log')
             Require ($LASTEXITCODE -eq 0) "Search mixed run $run failed; partial evidence is retained."
             foreach ($snapshot in Get-ChildItem -LiteralPath $binarySnapshot -File) {
@@ -130,7 +134,8 @@ try {
     Capture (Join-Path $output 'source-after.json')
     $after = Json (Join-Path $output 'source-after.json')
     Require ($after.dirty -eq $false -and $after.commit -ceq $head -and $after.sourceTreeSha256 -ceq $source.sourceTreeSha256) 'Candidate source changed during the Search campaign.'
-    $full = $Seconds -ge $budget.minimumSecondsPerRun -and $Repetitions -ge $budget.minimumRuns
+    $full = $Seconds -ge $budget.minimumSecondsPerRun -and $Repetitions -ge $budget.minimumRuns -and
+        $DocumentsPerTenant -eq $budget.documentsPerTenant
     $files = @(Get-ChildItem -LiteralPath $output -Recurse -File | ForEach-Object {
         [ordered]@{ Path = [IO.Path]::GetRelativePath($output, $_.FullName).Replace('\', '/'); Sha256 = (Hash $_.FullName) }
     } | Sort-Object Path)
