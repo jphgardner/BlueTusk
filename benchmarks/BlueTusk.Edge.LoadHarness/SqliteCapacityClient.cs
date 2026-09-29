@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http.Headers;
-using BlueTusk.Edge;
 using BlueTusk.Edge.Http;
 using BlueTusk.Edge.Server;
 using BlueTusk.Edge.Sqlite;
@@ -244,9 +243,16 @@ internal sealed class SqliteCapacityClient
         (elapsed >= first && elapsed < first + duration) || (elapsed >= second && elapsed < second + duration);
     private static SqliteEdgeOptions Options(string path, TimeProvider clock) => new()
     {
-        DatabasePath = path, TimeProvider = clock, MaxRecordBytes = 8192, MaxCacheRecords = 512,
-        MaxCacheBytes = 4 * 1024 * 1024, MaxStagedRecords = 512, MaxStagedBytes = 4 * 1024 * 1024,
-        MaxPendingMutations = 512, MaxPendingBytes = 4 * 1024 * 1024, MaxReceiptRecords = 512
+        DatabasePath = path,
+        TimeProvider = clock,
+        MaxRecordBytes = 8192,
+        MaxCacheRecords = 512,
+        MaxCacheBytes = 4 * 1024 * 1024,
+        MaxStagedRecords = 512,
+        MaxStagedBytes = 4 * 1024 * 1024,
+        MaxPendingMutations = 512,
+        MaxPendingBytes = 4 * 1024 * 1024,
+        MaxReceiptRecords = 512
     };
 
     private sealed class MutableTimeProvider : TimeProvider

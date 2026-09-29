@@ -6,7 +6,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using BlueTusk.Data;
-using BlueTusk.Edge;
 using BlueTusk.Edge.Http;
 using BlueTusk.Edge.Server;
 
@@ -62,9 +61,13 @@ internal static class Program
             await using var source = BlueTuskDataSource.Create(connection);
             await using var server = new PostgreSqlEdgeServerStore(source, new EdgeServerOptions
             {
-                Schema = schema, MaxRecordBytes = 8192, MaxRecordsPerScope = 512,
-                MaxRecordBytesPerScope = 4 * 1024 * 1024, MaxReceiptsPerScope = 512,
-                MaxReceiptBytesPerScope = 4 * 1024 * 1024, MaxChangesPerScope = 1024,
+                Schema = schema,
+                MaxRecordBytes = 8192,
+                MaxRecordsPerScope = 512,
+                MaxRecordBytesPerScope = 4 * 1024 * 1024,
+                MaxReceiptsPerScope = 512,
+                MaxReceiptBytesPerScope = 4 * 1024 * 1024,
+                MaxChangesPerScope = 1024,
                 MaxChangeBytesPerScope = 8 * 1024 * 1024
             });
             using var lifetime = new CancellationTokenSource(TimeSpan.FromSeconds(seconds + 900));
@@ -90,8 +93,11 @@ internal static class Program
                 var browserProfile = Path.Combine(runRoot, "browser-profile");
                 var child = new ProcessStartInfo("node")
                 {
-                    UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true,
-                    RedirectStandardError = true, WorkingDirectory = workspace
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    WorkingDirectory = workspace
                 };
                 child.ArgumentList.Add(browserScript);
                 child.Environment["BLUETUSK_EDGE_LOAD_ENDPOINT"] = host.Endpoint.ToString();
@@ -179,7 +185,9 @@ internal static class Program
         {
             await File.WriteAllTextAsync(Path.Combine(runRoot, "failure.json"), JsonSerializer.Serialize(new
             {
-                Type = error.GetType().Name, Stage = "edge-capacity-workload", FailedUtc = DateTimeOffset.UtcNow,
+                Type = error.GetType().Name,
+                Stage = "edge-capacity-workload",
+                FailedUtc = DateTimeOffset.UtcNow,
                 ProductionQualified = false
             })).ConfigureAwait(false);
             Console.Error.WriteLine($"Edge capacity run failed ({error.GetType().Name}); bounded partial evidence is retained.");

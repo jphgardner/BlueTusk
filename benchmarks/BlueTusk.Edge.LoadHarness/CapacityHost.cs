@@ -1,7 +1,6 @@
 using System.Data.Common;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
-using BlueTusk.Edge;
 using BlueTusk.Edge.AspNetCore;
 using BlueTusk.Edge.Server;
 using Microsoft.AspNetCore.Authentication;
