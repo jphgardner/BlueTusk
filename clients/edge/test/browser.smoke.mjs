@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { readFile, mkdtemp, rm } from "node:fs/promises";
+import { readFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
 const asset = await readFile(new URL("../dist/index.js", import.meta.url));
 const httpAsset = await readFile(new URL("../dist/http.js", import.meta.url));
@@ -19,10 +19,14 @@ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const url = `http://127.0.0.1:${server.address().port}`;
 const profile = await mkdtemp(join(tmpdir(), "bluetusk-edge-browser-"));
 const channel = process.env.BLUETUSK_EDGE_BROWSER_CHANNEL ?? (process.platform === "win32" ? "msedge" : "chromium");
+const browserType = { chromium, msedge: chromium, firefox, webkit }[channel];
+if (!browserType) throw new Error(`Unsupported Edge browser channel: ${channel}`);
+const launchOptions = { headless: true, ...(channel === "msedge" ? { channel } : {}) };
 let context;
 try {
-  context = await chromium.launchPersistentContext(profile, { channel, headless: true });
+  context = await browserType.launchPersistentContext(profile, launchOptions);
   let page = await context.newPage(); await page.goto(url);
+  const userAgent = await page.evaluate(() => navigator.userAgent);
   const first = await page.evaluate(async () => {
     const { IndexedDbEdgeStore, EdgeRevisionError } = await import("/edge.js");
     const scope = { tenant: "tenant", id: "readers", epoch: "1" };
@@ -43,7 +47,7 @@ try {
   });
   assert.equal(first.revision, "9007199254740997"); assert.equal(first.leaseFence, 1);
   await context.close(); context = undefined;
-  context = await chromium.launchPersistentContext(profile, { channel, headless: true });
+  context = await browserType.launchPersistentContext(profile, launchOptions);
   page = await context.newPage(); await page.goto(url);
   const resumed = await page.evaluate(async () => {
     const { IndexedDbEdgeStore, EdgeScopeError } = await import("/edge.js");
@@ -60,6 +64,14 @@ try {
     store.close(); return { checkpoint, pendingId: committed.pendingId, denied };
   });
   assert.equal(resumed.checkpoint.position, "9007199254740999"); assert.equal(resumed.pendingId, null); assert.equal(resumed.denied, true);
+  if (process.env.BLUETUSK_EDGE_BROWSER_RESULT) {
+    await writeFile(process.env.BLUETUSK_EDGE_BROWSER_RESULT, JSON.stringify({
+      formatVersion: 1, channel, engine: browserType.name(), platform: process.platform,
+      userAgent, passed: true, productionQualified: false,
+      checks: ["indexeddb-snapshot-rollback", "persistent-profile-restart", "lease-fence",
+        "atomic-acknowledgement", "int64-precision", "epoch-isolation"]
+    }, null, 2) + "\n", { flag: "wx" });
+  }
   process.stdout.write(`Real ${channel} IndexedDB: snapshot/rollback, browser restart, lease fencing, atomic acknowledgement, Int64 precision and epoch isolation passed.\n`);
 } finally {
   if (context) await context.close();
