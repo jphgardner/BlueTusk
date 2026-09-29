@@ -474,17 +474,19 @@ public sealed partial class PostgreSqlSearchStore
         }
     }
 
-    private async ValueTask LockSnapshotBudgetAsync(DbConnection connection, DbTransaction transaction, CancellationToken cancellationToken)
+    private async ValueTask LockSnapshotBudgetAsync(DbConnection connection, DbTransaction transaction,
+        CancellationToken cancellationToken, TimeSpan? maximumWait = null)
     {
-        // A simultaneous read burst should serialize short budget reservations,
-        // while a stuck owner must not create an unbounded admission queue.
+        // Foreground reads use a short bounded wait. Background maintenance can wait
+        // longer without extending the caller-visible query admission queue.
+        var deadline = maximumWait ?? TimeSpan.FromMilliseconds(200);
         var wait = Stopwatch.StartNew();
         while (true)
         {
             await using var command = Command(connection, transaction, "SELECT pg_try_advisory_xact_lock(hashtextextended(@name, 0))");
             Parameter(command, "name", "BlueTusk.Search.SnapshotBudget:" + Options.Schema);
             if (await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is true) { return; }
-            if (wait.Elapsed >= TimeSpan.FromMilliseconds(200)) { throw new SearchBackpressureException(); }
+            if (wait.Elapsed >= deadline) { throw new SearchBackpressureException(); }
             await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken).ConfigureAwait(false);
         }
     }
