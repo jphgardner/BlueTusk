@@ -104,13 +104,15 @@ function VerifySource($Before, $After) {
     }
     Require ($Before.sourceTreeSha256 -ceq $After.sourceTreeSha256) 'Candidate source changed during measurement.'
 }
-function VerifyJobs($Root, $Configuration, $Run) {
+function VerifyJobs($Root, $Configuration, $Run, [string]$ExpectedImage) {
     $path = Join-Path $Root 'jobs-workflows.json'
     $report = Json $path
     $environment = Json ($path + '.environment.json')
     Require ($report.Profile -ceq 'storage') "Jobs/Workflows run $Run has the wrong profile."
     Require ($report.PayloadMode -ceq $Configuration.payloadMode -and $environment.PayloadMode -ceq $Configuration.payloadMode) "Jobs/Workflows run $Run did not attest the high-entropy payload."
     Require ([string]$report.PostgreSqlVersion -match '^PostgreSQL 15\.' -and [string]$environment.PostgreSql.server -match '^PostgreSQL 15\.') "Jobs/Workflows run $Run used the wrong PostgreSQL version."
+    Require ($ExpectedImage -match '@(?<digest>sha256:[0-9a-f]{64})$' -and
+        [string]$environment.ImageId -ceq $Matches.digest) "Jobs/Workflows run $Run used a different PostgreSQL image digest."
     Require ([string]$report.SourceSha256 -match '^[0-9a-fA-F]{64}$') "Jobs/Workflows run $Run has no source fingerprint."
     Require (@($report.Faults).Count -eq 5 -and @($report.Faults | Where-Object { $_.Passed -ne $true }).Count -eq 0) "Jobs/Workflows run $Run failed recovery verification."
     Require (@($report.Overload).Count -eq 2) "Jobs/Workflows run $Run must include both products."
@@ -311,7 +313,7 @@ try {
             InvokeCampaign "Jobs/Workflows run $run" {
                 & ./eng/jobs-storage-campaign.ps1 -Version 15 -Seconds $budget.jobsWorkflows.secondsPerProduct -PayloadMode SeededHighEntropy -NoBuild -Output (Join-Path $jobs 'jobs-workflows.json')
             } (Join-Path $jobs 'campaign.log')
-            [void](VerifyJobs $jobs $budget.jobsWorkflows $run)
+            [void](VerifyJobs $jobs $budget.jobsWorkflows $run $budget.postgreSql15Image)
             VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
             foreach ($profile in @('capacity', 'soak')) {
                 $name = if ($profile -eq 'capacity') { 'projections-capacity' } else { 'projections-overload' }
