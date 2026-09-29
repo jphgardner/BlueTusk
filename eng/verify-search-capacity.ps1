@@ -80,7 +80,7 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     $completed = [DateTimeOffset]::Parse([string]$report.CompletedUtc)
     Require ($started -gt $previousCompleted -and $completed -gt $started) "$label has overlapping or invalid run timestamps."
     $previousCompleted = $completed
-    Require ($report.FormatVersion -eq 1 -and $report.Passed -eq $true -and $report.ProductionQualified -eq $false) "$label lacks a completed raw report."
+    Require ($report.FormatVersion -eq 2 -and $report.Passed -eq $true -and $report.ProductionQualified -eq $false) "$label lacks a completed raw report."
     Require ($report.CandidateSha -ceq $head -and $report.SourceTreeSha256 -ceq $before.sourceTreeSha256 -and
         $report.HarnessBinarySha256 -ceq $manifest.HarnessBinarySha256) "$label is not bound to the exact candidate source and harness binary."
     Require ($report.Workload -ceq $budget.workload -and $report.PostgreSqlImage -ceq $budget.postgreSqlImage -and [string]$report.PostgreSqlVersion -match '^PostgreSQL 18\.') "$label has the wrong workload or PostgreSQL fixture."
@@ -94,13 +94,23 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     Require ($report.SeededDocuments -eq ($budget.tenants * $budget.documentsPerTenant) -and $report.ExactVersionRows -eq $report.SeededDocuments) "$label has incomplete final corpus verification."
     Require ($report.StaleFenceRejected -eq $true -and $report.SameVersionReplayAccepted -eq $true -and $report.ConflictRejected -eq $true -and $report.AuthorizedRetrievalVerified -eq $true -and $report.QueryRetentionDrained -eq $true) "$label failed version, ACL or terminal-drain checks."
     Require ($report.WritesOffered -eq $report.WritesAccepted + $report.WritesRejected -and $report.ReadsOffered -eq $report.ReadsAccepted + $report.ReadsRejected) "$label has incomplete offered/admitted accounting."
+    Require ($report.SelectiveReadsOffered -eq $report.SelectiveReadsAccepted + $report.SelectiveReadsRejected -and
+        $report.SelectiveReadsAccepted -gt 0 -and $report.SelectiveReadsEmpty -ge 0 -and
+        $report.SelectiveReadsEmpty -le $report.SelectiveReadsAccepted) "$label has incomplete selective-query accounting."
+    Minimum ($report.SelectiveReadsOffered / [double]$report.ReadsOffered) $budget.minimumSelectiveReadFraction "$label selective offer fraction"
+    Maximum ($report.SelectiveReadsOffered / [double]$report.ReadsOffered) $budget.maximumSelectiveReadFraction "$label selective offer fraction"
+    Maximum ($report.SelectiveReadsEmpty / [double]$report.SelectiveReadsAccepted) $budget.maximumSelectiveEmptyFraction "$label selective empty fraction"
     Require (@($report.TenantProgress).Count -eq $budget.tenants) "$label has incomplete tenant progress."
     foreach ($tenant in $report.TenantProgress) {
         Require ($tenant.WritesAccepted -gt 0 -and $tenant.ReadsAccepted -gt 0 -and
             $tenant.WritesOffered -eq $tenant.WritesAccepted + $tenant.WritesRejected -and
-            $tenant.ReadsOffered -eq $tenant.ReadsAccepted + $tenant.ReadsRejected) "$label lost tenant progress."
+            $tenant.ReadsOffered -eq $tenant.ReadsAccepted + $tenant.ReadsRejected -and
+            $tenant.SelectiveReadsAccepted -gt 0 -and
+            $tenant.SelectiveReadsOffered -eq $tenant.SelectiveReadsAccepted + $tenant.SelectiveReadsRejected -and
+            $tenant.SelectiveReadsEmpty -ge 0 -and $tenant.SelectiveReadsEmpty -le $tenant.SelectiveReadsAccepted) "$label lost tenant progress."
     }
-    foreach ($name in @('WritesOffered','WritesAccepted','WritesRejected','WriteScheduleSkipped','ReadsOffered','ReadsAccepted','ReadsRejected','ReadScheduleSkipped')) {
+    foreach ($name in @('WritesOffered','WritesAccepted','WritesRejected','WriteScheduleSkipped','ReadsOffered','ReadsAccepted','ReadsRejected','ReadScheduleSkipped',
+        'SelectiveReadsOffered','SelectiveReadsAccepted','SelectiveReadsRejected','SelectiveReadsEmpty')) {
         Require (($report.TenantProgress | Measure-Object -Property $name -Sum).Sum -eq $report.$name) "$label tenant $name totals differ from the report."
     }
     $writeSlots = $report.WritesOffered + $report.WriteScheduleSkipped
@@ -118,7 +128,9 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     Require ($report.MaintenancePruneRejected -ge 0 -and $report.MaintenancePruneRejected -le $report.MaintenancePruneAttempts -and
         $report.MaintenancePruneRemoved -ge 0) "$label has invalid maintenance prune accounting."
     Maximum ($report.MaintenancePruneRejected / [double]$report.MaintenancePruneAttempts) $budget.maximumMaintenancePruneRejectionFraction "$label maintenance prune rejection fraction"
-    Require ($report.WriteLatency.Count -eq $report.WritesAccepted -and $report.ReadLatency.Count -eq $report.ReadsAccepted) "$label latency samples differ from accepted operations."
+    Require ($report.WriteLatency.Count -eq $report.WritesAccepted -and $report.ReadLatency.Count -eq $report.ReadsAccepted -and
+        $report.SelectiveReadLatency.Count -eq $report.SelectiveReadsAccepted -and
+        $report.BroadReadLatency.Count + $report.SelectiveReadLatency.Count -eq $report.ReadsAccepted) "$label latency samples differ from accepted operations."
     foreach ($pair in @(@('WritesRejected','RejectedWriteLatency'), @('ReadsRejected','RejectedReadLatency'))) {
         $rejections = $report.($pair[0])
         $latency = $report.($pair[1])
@@ -132,6 +144,13 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     Minimum $report.ReadLatency.P99Milliseconds 0.001 "$label read p99"
     Maximum $report.WriteLatency.P99Milliseconds $budget.maximumWriteP99Milliseconds "$label write p99"
     Maximum $report.ReadLatency.P99Milliseconds $budget.maximumReadP99Milliseconds "$label read p99"
+    Maximum $report.BroadReadLatency.P99Milliseconds $budget.maximumBroadReadP99Milliseconds "$label broad read p99"
+    Maximum $report.SelectiveReadLatency.P99Milliseconds $budget.maximumSelectiveReadP99Milliseconds "$label selective read p99"
+    Require (@($report.FullTextIndexes).Count -eq 1 -and
+        $report.FullTextIndexes[0].Name -ceq $budget.fullTextIndexName -and
+        $report.FullTextIndexes[0].Method -ceq $budget.fullTextIndexMethod -and
+        $report.FullTextIndexes[0].Bytes -gt 0 -and $report.FullTextIndexes[0].TuplesRead -ge 0) "$label has the wrong or missing full-text index."
+    Minimum $report.FullTextIndexes[0].Scans ($report.SelectiveReadsAccepted * $budget.minimumFullTextIndexScansPerSelectiveRead) "$label full-text index scans"
     $samples = @($report.StorageSamples)
     Require ($samples.Count -ge [math]::Floor($budget.minimumSecondsPerRun / 6) -and $samples[0].ElapsedSeconds -le 1 -and $samples[-1].ElapsedSeconds -ge $budget.minimumSecondsPerRun - 10) "$label has sparse or incomplete five-second physical observations."
     Require ([math]::Abs($samples[-1].ElapsedSeconds - $report.MeasuredSeconds) -le 10) "$label physical observations do not cover measured time."

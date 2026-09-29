@@ -11,17 +11,21 @@ using BlueTusk.Data;
 namespace BlueTusk.Search.LoadHarness;
 
 internal sealed record StorageSample(double ElapsedSeconds, long OwnedRelationBytes, long DatabaseBytes, long WalInsertBytes);
+internal sealed record IndexObservation(string Name, string Method, long Scans, long TuplesRead, long Bytes);
 internal sealed record Latency(long Count, double P50Milliseconds, double P95Milliseconds, double P99Milliseconds, double MaximumMilliseconds);
 internal sealed record TenantProgress(int Tenant, long WritesOffered, long WritesAccepted, long WritesRejected,
-    long WriteScheduleSkipped, long ReadsOffered, long ReadsAccepted, long ReadsRejected, long ReadScheduleSkipped);
+    long WriteScheduleSkipped, long ReadsOffered, long ReadsAccepted, long ReadsRejected, long ReadScheduleSkipped,
+    long SelectiveReadsOffered, long SelectiveReadsAccepted, long SelectiveReadsRejected, long SelectiveReadsEmpty);
 internal sealed record CampaignReport(int FormatVersion, string CandidateSha, string SourceTreeSha256, string HarnessBinarySha256, string PostgreSqlImage,
     string PostgreSqlVersion, string OperatingSystem, string Runtime, DateTimeOffset StartedUtc, DateTimeOffset CompletedUtc,
     string Workload, int DurationSeconds, int Tenants, int DocumentsPerTenant, int ContentBytes, int Writers, int Readers,
     int SeededDocuments, int WriteOfferIntervalMilliseconds, int ReadOfferIntervalMilliseconds,
     long WritesOffered, long WritesAccepted, long WritesRejected, long WriteScheduleSkipped,
     long ReadsOffered, long ReadsAccepted, long ReadsRejected, long ReadScheduleSkipped,
+    long SelectiveReadsOffered, long SelectiveReadsAccepted, long SelectiveReadsRejected, long SelectiveReadsEmpty,
     long MaintenancePruneAttempts, long MaintenancePruneRejected, long MaintenancePruneRemoved,
     double MeasuredSeconds, double DrainSeconds, Latency WriteLatency, Latency ReadLatency,
+    Latency BroadReadLatency, Latency SelectiveReadLatency, IndexObservation[] FullTextIndexes,
     Latency? RejectedWriteLatency, Latency? RejectedReadLatency,
     TenantProgress[] TenantProgress, StorageSample[] StorageSamples, StorageSample AfterDrain,
     long ExactVersionRows, bool StaleFenceRejected, bool SameVersionReplayAccepted, bool ConflictRejected,
@@ -138,6 +142,8 @@ internal static class Program
                 var samples = new List<StorageSample> { postSeed };
                 var writeLatency = new LatencyCapture();
                 var readLatency = new LatencyCapture();
+                var broadReadLatency = new LatencyCapture();
+                var selectiveReadLatency = new LatencyCapture();
                 var rejectedWriteLatency = new LatencyCapture();
                 var rejectedReadLatency = new LatencyCapture();
                 var writesOffered = new long[Tenants];
@@ -148,6 +154,10 @@ internal static class Program
                 var readsAccepted = new long[Tenants];
                 var readsRejected = new long[Tenants];
                 var readScheduleSkipped = new long[Tenants];
+                var selectiveReadsOffered = new long[Tenants];
+                var selectiveReadsAccepted = new long[Tenants];
+                var selectiveReadsRejected = new long[Tenants];
+                var selectiveReadsEmpty = new long[Tenants];
                 long maintenancePruneAttempts = 0;
                 long maintenancePruneRejected = 0;
                 long maintenancePruneRemoved = 0;
@@ -255,15 +265,27 @@ internal static class Program
                             }
                             nextSlot += skipped;
                         }
-                        var tenant = (reader + ordinal++ * Readers) % Tenants;
+                        var queryOrdinal = ordinal++;
+                        var tenant = (reader + queryOrdinal * Readers) % Tenants;
+                        // Each reader alternates two tenants; include both in the selective quarter.
+                        var selective = queryOrdinal % 8 < 2;
+                        var document = (queryOrdinal / 8 % ((documentsPerTenant + 2) / 3)) * 3;
                         nextSlot++;
                         Interlocked.Increment(ref readsOffered[tenant]);
+                        if (selective) { Interlocked.Increment(ref selectiveReadsOffered[tenant]); }
                         var began = Stopwatch.GetTimestamp();
                         try
                         {
                             var page = await store.SearchAsync(new SearchScope(Tenant(tenant), Index, Allowed),
-                                new SearchRequest { Text = "bluetusk", PageSize = 10, CandidateLimit = 64 });
-                            Check(page.Hits.Count > 0, "Authorized query returned no seeded documents.");
+                                new SearchRequest { Text = selective ? Marker(tenant, document) : "bluetusk", PageSize = 10, CandidateLimit = 64 });
+                            if (selective)
+                            {
+                                Check(page.Hits.All(hit => hit.DocumentId == Id(tenant, document) &&
+                                    hit.Content.Contains(Marker(tenant, document), StringComparison.Ordinal)),
+                                    "Selective Search returned an unrelated or stale document.");
+                                if (page.Hits.Count == 0) { Interlocked.Increment(ref selectiveReadsEmpty[tenant]); }
+                            }
+                            else { Check(page.Hits.Count > 0, "Broad authorized query returned no seeded documents."); }
                             foreach (var hit in page.Hits)
                             {
                                 Check(hit.DocumentId.StartsWith(Tenant(tenant) + "-", StringComparison.Ordinal) &&
@@ -271,11 +293,18 @@ internal static class Program
                                     "Search returned a cross-tenant or unauthorized hit.");
                             }
                             Interlocked.Increment(ref readsAccepted[tenant]);
+                            if (selective)
+                            {
+                                Interlocked.Increment(ref selectiveReadsAccepted[tenant]);
+                                selectiveReadLatency.Record(began);
+                            }
+                            else { broadReadLatency.Record(began); }
                             readLatency.Record(began);
                         }
                         catch (SearchBackpressureException)
                         {
                             Interlocked.Increment(ref readsRejected[tenant]);
+                            if (selective) { Interlocked.Increment(ref selectiveReadsRejected[tenant]); }
                             rejectedReadLatency.Record(began);
                         }
                     }
@@ -308,27 +337,36 @@ internal static class Program
                 var queriesDrained = await QueryCountAsync(source, schema) == 0;
                 Check(queriesDrained, "Retained query snapshots did not drain.");
                 var afterDrain = await SampleAsync(source, schema, clock.Elapsed.TotalSeconds);
+                var fullTextIndexes = await ObserveFullTextIndexesAsync(source, schema);
                 var progress = Enumerable.Range(0, Tenants).Select(tenant => new TenantProgress(tenant,
                     writesOffered[tenant], writesAccepted[tenant], writesRejected[tenant], writeScheduleSkipped[tenant],
-                    readsOffered[tenant], readsAccepted[tenant], readsRejected[tenant], readScheduleSkipped[tenant])).ToArray();
+                    readsOffered[tenant], readsAccepted[tenant], readsRejected[tenant], readScheduleSkipped[tenant],
+                    selectiveReadsOffered[tenant], selectiveReadsAccepted[tenant], selectiveReadsRejected[tenant],
+                    selectiveReadsEmpty[tenant])).ToArray();
                 Check(writesOffered.Sum() + writeScheduleSkipped.Sum() == (long)Tenants * seconds * 1000 / WriteIntervalMilliseconds &&
                     readsOffered.Sum() + readScheduleSkipped.Sum() == (long)Readers * seconds * 1000 / ReadIntervalMilliseconds,
                     "The offered and skipped slots differ from the fixed workload schedule.");
                 Check(progress.All(static item => item.WritesAccepted > 0 && item.ReadsAccepted > 0 &&
                     item.WritesOffered == item.WritesAccepted + item.WritesRejected &&
-                    item.ReadsOffered == item.ReadsAccepted + item.ReadsRejected), "A tenant lost progress or admission accounting.");
+                    item.ReadsOffered == item.ReadsAccepted + item.ReadsRejected &&
+                    item.SelectiveReadsOffered == item.SelectiveReadsAccepted + item.SelectiveReadsRejected &&
+                    item.SelectiveReadsEmpty <= item.SelectiveReadsAccepted), "A tenant lost progress or admission accounting.");
+                Check(fullTextIndexes.Length == 1, "The Search full-text index inventory is incomplete or ambiguous.");
                 Check(string.Equals(Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(executingBinary))), binaryHash,
                     StringComparison.OrdinalIgnoreCase), "The executing harness binary changed during the run.");
-                var report = new CampaignReport(1, candidate, sourceHash, binaryHash, image, await ServerVersionAsync(source),
+                var report = new CampaignReport(2, candidate, sourceHash, binaryHash, image, await ServerVersionAsync(source),
                     RuntimeInformation.OSDescription, RuntimeInformation.FrameworkDescription, started, DateTimeOffset.UtcNow,
-                    "eight-tenant-seeded-high-entropy-fulltext-mixed", seconds, Tenants, documentsPerTenant, contentBytes,
+                    "eight-tenant-seeded-high-entropy-fulltext-broad-selective", seconds, Tenants, documentsPerTenant, contentBytes,
                     Tenants, Readers, Tenants * documentsPerTenant, WriteIntervalMilliseconds, ReadIntervalMilliseconds,
                     progress.Sum(static item => item.WritesOffered), progress.Sum(static item => item.WritesAccepted),
                     progress.Sum(static item => item.WritesRejected), progress.Sum(static item => item.WriteScheduleSkipped),
                     progress.Sum(static item => item.ReadsOffered), progress.Sum(static item => item.ReadsAccepted),
                     progress.Sum(static item => item.ReadsRejected), progress.Sum(static item => item.ReadScheduleSkipped),
+                    progress.Sum(static item => item.SelectiveReadsOffered), progress.Sum(static item => item.SelectiveReadsAccepted),
+                    progress.Sum(static item => item.SelectiveReadsRejected), progress.Sum(static item => item.SelectiveReadsEmpty),
                     maintenancePruneAttempts, maintenancePruneRejected, maintenancePruneRemoved,
                     measuredSeconds, drain.Elapsed.TotalSeconds, writeLatency.Distribution(), readLatency.Distribution(),
+                    broadReadLatency.Distribution(), selectiveReadLatency.Distribution(), fullTextIndexes,
                     rejectedWriteLatency.DistributionOrNull(), rejectedReadLatency.DistributionOrNull(),
                     progress, samples.ToArray(), afterDrain, exactRows, true, true, true, true, queriesDrained, false, true);
                 await File.WriteAllTextAsync(reportPath, JsonSerializer.Serialize(report, CampaignJson.Default.CampaignReport));
@@ -363,6 +401,7 @@ internal static class Program
     }
 
     private static string Tenant(int tenant) => $"tenant-{tenant:D2}";
+    private static string Marker(int tenant, int document) => $"docmarker{tenant:D2}x{document:D4}";
     private static string Id(int tenant, int document)
     {
         var visibility = (document % 3) switch { 0 => "public", 1 => "allowed", _ => "secret" };
@@ -373,7 +412,7 @@ internal static class Program
     {
         var bytes = new byte[(contentBytes * 3 + 3) / 4];
         new Random(unchecked(19_373 + tenant * 1_000_003 + document * 7_919 + (int)version * 13_337)).NextBytes(bytes);
-        var prefix = $"bluetusk {Tenant(tenant)} ";
+        var prefix = $"bluetusk {Tenant(tenant)} {Marker(tenant, document)} ";
         var content = prefix + Convert.ToBase64String(bytes)[..(contentBytes - prefix.Length)];
         var visibility = document % 3;
         return new SearchDocument(Tenant(tenant), Index, Id(tenant, document), version, "bluetusk reference",
@@ -394,6 +433,30 @@ internal static class Program
         await using var reader = await command.ExecuteReaderAsync();
         Check(await reader.ReadAsync(), "Physical Search observation is missing.");
         return new(elapsed, reader.GetInt64(2), reader.GetInt64(1), reader.GetInt64(0));
+    }
+
+    private static async Task<IndexObservation[]> ObserveFullTextIndexesAsync(DbDataSource source, string schema)
+    {
+        var indexes = new List<IndexObservation>();
+        await using var connection = await source.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT s.indexrelname,a.amname,s.idx_scan,s.idx_tup_read,pg_relation_size(s.indexrelid)
+            FROM pg_stat_user_indexes s
+            JOIN pg_class i ON i.oid=s.indexrelid
+            JOIN pg_am a ON a.oid=i.relam
+            WHERE s.schemaname='{schema}' AND s.relname='chunks'
+              AND s.indexrelname IN ('chunks_terms','chunks_terms_gist')
+            ORDER BY s.indexrelname
+            """;
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            indexes.Add(new(reader.GetString(0), reader.GetString(1), reader.GetInt64(2),
+                reader.GetInt64(3), reader.GetInt64(4)));
+        }
+
+        return indexes.ToArray();
     }
 
     private static async Task<string> ServerVersionAsync(DbDataSource source)
