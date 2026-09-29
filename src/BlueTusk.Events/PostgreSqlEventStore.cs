@@ -120,7 +120,7 @@ public sealed partial class PostgreSqlEventStore
         await using (var command = Command(connection, transaction, $"SELECT version FROM {_schema}.schema_version WHERE singleton"))
         {
             version = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
-            if (version is not 1 and not 2 and not 3 and not 4 and not 5)
+            if (version is < 1 or > 6)
             {
                 throw new InvalidOperationException($"Unsupported BlueTusk.Events schema version {version}.");
             }
@@ -294,6 +294,41 @@ public sealed partial class PostgreSqlEventStore
                 END IF;
             END $migration$;
             UPDATE {_schema}.schema_version SET version = 5 WHERE singleton AND version = 4
+            """, cancellationToken).ConfigureAwait(false);
+
+        // The first verified remote observation binds the trusted endpoint configuration and
+        // target identity to its immutable source membership. Later observations cannot silently
+        // redirect that member to another endpoint or a restored/promoted target database.
+        // This binding remains observation-only; it cannot detect same-lineage physical rewind.
+        await ExecuteAsync(connection, transaction, $"""
+            CREATE TABLE IF NOT EXISTS {_schema}.published_retention_endpoint_bindings (
+                tenant_id text NOT NULL, stream_id text NOT NULL,
+                consumer_group text NOT NULL, target_incarnation uuid NOT NULL,
+                endpoint_key text NOT NULL CHECK (length(endpoint_key) BETWEEN 1 AND 200),
+                target_kind text NOT NULL CHECK (target_kind IN ('Events','Projection')),
+                target_schema text NOT NULL, transport_schema text NOT NULL,
+                projection text NULL, projection_version integer NULL,
+                target_system_identifier text NOT NULL, target_database text NOT NULL,
+                target_database_oid oid NOT NULL, target_timeline bigint NOT NULL,
+                bound_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+                PRIMARY KEY (tenant_id,stream_id,consumer_group,target_incarnation),
+                FOREIGN KEY (tenant_id,stream_id,consumer_group,target_incarnation)
+                    REFERENCES {_schema}.published_retention_members
+                        (tenant_id,stream_id,consumer_group,target_incarnation),
+                CHECK ((target_kind='Events' AND projection IS NULL AND projection_version IS NULL)
+                    OR (target_kind='Projection' AND projection IS NOT NULL AND projection_version > 0))
+            );
+            DO $migration$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_trigger
+                    WHERE tgname='retention_endpoint_bindings_immutable'
+                      AND tgrelid='{_schema}.published_retention_endpoint_bindings'::regclass)
+                THEN
+                    CREATE TRIGGER retention_endpoint_bindings_immutable BEFORE UPDATE OR DELETE OR TRUNCATE
+                        ON {_schema}.published_retention_endpoint_bindings FOR EACH STATEMENT
+                        EXECUTE FUNCTION {_schema}.reject_retention_intent_mutation();
+                END IF;
+            END $migration$;
+            UPDATE {_schema}.schema_version SET version = 6 WHERE singleton AND version = 5
             """, cancellationToken).ConfigureAwait(false);
 
         // The database-owned insert fence also covers an older application binary that still writes

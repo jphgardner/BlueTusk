@@ -68,12 +68,34 @@ public sealed class EventRetentionTests
         await using (var connection = await db.DataSource.OpenConnectionAsync())
         await using (var command = connection.CreateCommand())
         {
-            command.CommandText = $"UPDATE \"{db.Schema}\".schema_version SET version=6";
+            command.CommandText = $"UPDATE \"{db.Schema}\".schema_version SET version=7";
             await command.ExecuteNonQueryAsync();
         }
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await db.Store.AssessLocalRetentionAsync(stream, 1, 0));
+    }
+
+    [Fact]
+    public async Task VersionFiveMigrationInstallsImmutableEndpointBindings()
+    {
+        await using var db = await EventDatabase.CreateAsync();
+        await using (var command = db.DataSource.CreateCommand($"""
+            DROP TABLE "{db.Schema}".published_retention_endpoint_bindings;
+            UPDATE "{db.Schema}".schema_version SET version=5 WHERE singleton
+            """))
+        { await command.ExecuteNonQueryAsync(); }
+
+        await db.Store.InitializeAsync();
+        await using var verify = db.DataSource.CreateCommand($"""
+            SELECT version,
+                   to_regclass('"{db.Schema}".published_retention_endpoint_bindings') IS NOT NULL
+            FROM "{db.Schema}".schema_version WHERE singleton
+            """);
+        await using var reader = await verify.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(6, reader.GetInt32(0));
+        Assert.True(reader.GetBoolean(1));
     }
 
     [Fact]

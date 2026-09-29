@@ -137,10 +137,11 @@ public sealed class EventOutboxWalIntegrationTests
                     if (flush is decimal value && value >= markerPosition) { break; }
                     await Task.Delay(20, token);
                 }
+                var endpoint = new EventPublishedRetentionRemoteTarget("wal-consumer", incarnation,
+                    "events-target", fixture.DataSource, fixture.Schema, fixture.Schema,
+                    EventPublishedRetentionRemoteKind.Events);
                 var observation = await fixture.Store.ObservePublishedRetentionIntentAsync(intent.Epoch,
-                    [new EventPublishedRetentionRemoteTarget("wal-consumer", incarnation, "events-target",
-                        fixture.DataSource, fixture.Schema, fixture.Schema,
-                        EventPublishedRetentionRemoteKind.Events)],
+                    [endpoint],
                     cancellationToken: token);
                 Assert.Equal(intent.Epoch, observation.RetentionEpoch);
                 Assert.Equal(markerPosition, observation.MarkerCommitEndPosition);
@@ -155,6 +156,43 @@ public sealed class EventOutboxWalIntegrationTests
                     Assert.True(await reader.ReadAsync(token));
                     Assert.Equal("observation_only", reader.GetString(0));
                     Assert.Equal(1, reader.GetInt32(1));
+                }
+                _ = await fixture.Store.ObservePublishedRetentionIntentAsync(intent.Epoch,
+                    [endpoint], cancellationToken: token);
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await fixture.Store.ObservePublishedRetentionIntentAsync(intent.Epoch,
+                        [new EventPublishedRetentionRemoteTarget("wal-consumer", incarnation,
+                            "redirected-target", fixture.DataSource, fixture.Schema, fixture.Schema,
+                            EventPublishedRetentionRemoteKind.Events)], cancellationToken: token));
+                await using (var observations = fixture.DataSource.CreateCommand($"""
+                    SELECT count(*) FROM "{fixture.Schema}".published_retention_observations
+                    WHERE retention_epoch=@epoch
+                    """))
+                {
+                    var observedEpoch = observations.CreateParameter(); observedEpoch.ParameterName = "epoch";
+                    observedEpoch.Value = intent.Epoch; observations.Parameters.Add(observedEpoch);
+                    Assert.Equal(2L, Convert.ToInt64(await observations.ExecuteScalarAsync(token),
+                        CultureInfo.InvariantCulture));
+                }
+                await using (var bindings = fixture.DataSource.CreateCommand($"""
+                    SELECT endpoint_key FROM "{fixture.Schema}".published_retention_endpoint_bindings
+                    WHERE tenant_id='tenant' AND stream_id='orders' AND consumer_group='wal-consumer'
+                      AND target_incarnation=@incarnation
+                    """))
+                {
+                    var target = bindings.CreateParameter(); target.ParameterName = "incarnation";
+                    target.Value = incarnation; bindings.Parameters.Add(target);
+                    Assert.Equal("events-target", await bindings.ExecuteScalarAsync(token));
+                }
+                await using (var mutation = fixture.DataSource.CreateCommand($"""
+                    UPDATE "{fixture.Schema}".published_retention_endpoint_bindings
+                    SET endpoint_key='redirected-target' WHERE target_incarnation=@incarnation
+                    """))
+                {
+                    var target = mutation.CreateParameter(); target.ParameterName = "incarnation";
+                    target.Value = incarnation; mutation.Parameters.Add(target);
+                    await Assert.ThrowsAnyAsync<System.Data.Common.DbException>(() =>
+                        mutation.ExecuteNonQueryAsync(token));
                 }
                 await using (var mutation = fixture.DataSource.CreateCommand($"""
                     UPDATE "{fixture.Schema}".published_retention_observations SET target_count=2

@@ -176,6 +176,13 @@ public sealed partial class PostgreSqlEventStore
             throw new InvalidOperationException("The logical slot's confirmed flush is behind the marker or ahead of a target checkpoint.");
         }
 
+        foreach (var proof in proofs)
+        {
+            await BindRemoteEndpointAsync(connection, transaction, intent.Stream, proof,
+                endpoints[(proof.ConsumerGroup, proof.TargetIncarnation)], cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         var observationId = Guid.NewGuid();
         var evidence = SerializeRemoteProofs(proofs);
         var evidenceHash = SHA256.HashData(Encoding.UTF8.GetBytes(evidence));
@@ -282,6 +289,57 @@ public sealed partial class PostgreSqlEventStore
             throw new InvalidOperationException("The source slot has no durable, retained confirmed-flush position.");
         }
         return checked((ulong)reader.GetDecimal(0));
+    }
+
+    private async ValueTask BindRemoteEndpointAsync(DbConnection connection, DbTransaction transaction,
+        EventStreamKey stream, RemoteProof proof, EventPublishedRetentionRemoteTarget endpoint,
+        CancellationToken cancellationToken)
+    {
+        var projectionValue = endpoint.Projection is null ? "NULL::text" : "@projection";
+        var versionValue = endpoint.ProjectionVersion is null ? "NULL::integer" : "@version";
+        var parameters = new List<(string Name, object Value)>
+        {
+            ("tenant", stream.TenantId), ("stream", stream.StreamId),
+            ("consumer", proof.ConsumerGroup), ("incarnation", proof.TargetIncarnation),
+            ("endpoint", proof.EndpointKey), ("kind", proof.Kind.ToString()),
+            ("schema", endpoint.Schema), ("transport", endpoint.TransportSchema),
+            ("system", proof.TargetSystemIdentifier), ("database", proof.TargetDatabase),
+            ("database_oid", proof.TargetDatabaseOid), ("timeline", proof.TargetTimeline)
+        };
+        if (endpoint.Projection is not null) { parameters.Add(("projection", endpoint.Projection)); }
+        if (endpoint.ProjectionVersion is not null) { parameters.Add(("version", endpoint.ProjectionVersion.Value)); }
+        await ExecuteAsync(connection, transaction, $"""
+            INSERT INTO {_schema}.published_retention_endpoint_bindings
+                (tenant_id,stream_id,consumer_group,target_incarnation,endpoint_key,target_kind,
+                 target_schema,transport_schema,projection,projection_version,
+                 target_system_identifier,target_database,target_database_oid,target_timeline)
+            VALUES(@tenant,@stream,@consumer,@incarnation,@endpoint,@kind,@schema,@transport,
+                   {projectionValue},{versionValue},@system,@database,@database_oid,@timeline)
+            ON CONFLICT DO NOTHING
+            """, cancellationToken, [.. parameters])
+            .ConfigureAwait(false);
+        await using var command = Command(connection, transaction, $"""
+            SELECT endpoint_key,target_kind,target_schema,transport_schema,projection,
+                   projection_version,target_system_identifier,target_database,
+                   target_database_oid,target_timeline
+            FROM {_schema}.published_retention_endpoint_bindings
+            WHERE tenant_id=@tenant AND stream_id=@stream AND consumer_group=@consumer
+              AND target_incarnation=@incarnation FOR SHARE
+            """, ("tenant", stream.TenantId), ("stream", stream.StreamId),
+            ("consumer", proof.ConsumerGroup), ("incarnation", proof.TargetIncarnation));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ||
+            reader.GetString(0) != proof.EndpointKey || reader.GetString(1) != proof.Kind.ToString() ||
+            reader.GetString(2) != endpoint.Schema || reader.GetString(3) != endpoint.TransportSchema ||
+            (reader.IsDBNull(4) ? null : reader.GetString(4)) != endpoint.Projection ||
+            (reader.IsDBNull(5) ? (int?)null : reader.GetInt32(5)) != endpoint.ProjectionVersion ||
+            reader.GetString(6) != proof.TargetSystemIdentifier ||
+            reader.GetString(7) != proof.TargetDatabase ||
+            reader.GetFieldValue<uint>(8) != proof.TargetDatabaseOid ||
+            reader.GetInt64(9) != proof.TargetTimeline)
+        {
+            throw new InvalidOperationException("The protected member's immutable remote endpoint or target database identity changed.");
+        }
     }
 
     private static bool IntentEquals(ObservedIntent left, ObservedIntent right) =>

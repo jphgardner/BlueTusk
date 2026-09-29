@@ -127,13 +127,21 @@ complete membership revision, publication coverage, source OIDs, slot `datoid`, 
 checkpoint. Only
 then does it insert an append-only JSON evidence record and digest. Remote reads happen outside
 the source lock. An absent endpoint, ACK, checkpoint or slot transport position fails closed.
-The operator must treat endpoint keys and database credentials as trusted configuration; they are
-recorded for audit but are not yet an immutable source-side endpoint binding. A remote promotion,
+The operator must treat endpoint keys and database credentials as trusted configuration. A remote promotion,
 restore, failover, independent reader, archive outage or slot recreation can occur after the
 snapshot and invalidate the observation. No code interprets this table as authorization; the
 published-outbox deletion guard and old decoder refusal remain in force. Even a currently matching
 transport row does not prove the slot will retain its incarnation or that a restored target will
 honor its prior checkpoint at deletion time.
+
+Schema v6 adds append-only `published_retention_endpoint_bindings`. The first successful remote
+observation binds each immutable source member to the configured endpoint key, target kind,
+schema, projection version (when applicable), and observed target system/database OID/timeline.
+Later observations require an exact match; switching a connection to another target or silently
+renaming an endpoint fails closed. Binding is written under the source stream lock in the same
+transaction as the observation and rolls back if any member fails. The initial endpoint selection
+remains operator-trusted, and a physical rewind that preserves target identity can still make an
+old ACK appear current. These bindings are audit evidence, not authorization to prune.
 
 1. Register every protected consumer group, target incarnation, projection version/candidate and
    recovery source against an immutable source identity and publication/slot lineage. Registration
