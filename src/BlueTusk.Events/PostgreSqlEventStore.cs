@@ -120,7 +120,7 @@ public sealed partial class PostgreSqlEventStore
         await using (var command = Command(connection, transaction, $"SELECT version FROM {_schema}.schema_version WHERE singleton"))
         {
             version = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
-            if (version is not 1 and not 2 and not 3 and not 4)
+            if (version is not 1 and not 2 and not 3 and not 4 and not 5)
             {
                 throw new InvalidOperationException($"Unsupported BlueTusk.Events schema version {version}.");
             }
@@ -264,6 +264,36 @@ public sealed partial class PostgreSqlEventStore
                 END IF;
             END $migration$;
             UPDATE {_schema}.schema_version SET version = 4 WHERE singleton AND version = 3
+            """, cancellationToken).ConfigureAwait(false);
+
+        // Remote evidence is an append-only historical observation. No published floor or DELETE
+        // path reads this relation; a restored target can invalidate its meaning after insertion.
+        await ExecuteAsync(connection, transaction, $"""
+            CREATE TABLE IF NOT EXISTS {_schema}.published_retention_observations (
+                observation_id uuid PRIMARY KEY,
+                retention_epoch uuid NOT NULL REFERENCES {_schema}.published_retention_intents(retention_epoch),
+                tenant_id text NOT NULL, stream_id text NOT NULL,
+                membership_revision bigint NOT NULL CHECK(membership_revision > 0),
+                marker_commit_end_position numeric(20,0) NOT NULL CHECK(marker_commit_end_position > 0),
+                slot_confirmed_flush_position numeric(20,0) NOT NULL CHECK(slot_confirmed_flush_position >= marker_commit_end_position),
+                target_count integer NOT NULL CHECK(target_count BETWEEN 1 AND 64),
+                evidence_json jsonb NOT NULL,
+                evidence_sha256 bytea NOT NULL CHECK(octet_length(evidence_sha256)=32),
+                authorization_status text NOT NULL DEFAULT 'observation_only'
+                    CHECK(authorization_status='observation_only'),
+                observed_at timestamptz NOT NULL DEFAULT clock_timestamp()
+            );
+            DO $migration$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_trigger
+                    WHERE tgname='retention_observations_immutable'
+                      AND tgrelid='{_schema}.published_retention_observations'::regclass)
+                THEN
+                    CREATE TRIGGER retention_observations_immutable BEFORE UPDATE OR DELETE OR TRUNCATE
+                        ON {_schema}.published_retention_observations FOR EACH STATEMENT
+                        EXECUTE FUNCTION {_schema}.reject_retention_intent_mutation();
+                END IF;
+            END $migration$;
+            UPDATE {_schema}.schema_version SET version = 5 WHERE singleton AND version = 4
             """, cancellationToken).ConfigureAwait(false);
 
         // The database-owned insert fence also covers an older application binary that still writes

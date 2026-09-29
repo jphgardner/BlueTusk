@@ -337,7 +337,7 @@ public sealed partial class PostgreSqlEventStore
     {
         await using var command = Command(connection, transaction, """
             SELECT s.system_identifier::text,c.timeline_id::bigint,current_database(),d.oid,p.oid,
-                r.plugin,r.database,r.slot_type,pg_is_in_recovery(),r.temporary
+                r.plugin,r.database,r.slot_type,pg_is_in_recovery(),r.temporary,r.datoid
             FROM pg_catalog.pg_control_system() s CROSS JOIN pg_catalog.pg_control_checkpoint() c
             JOIN pg_catalog.pg_database d ON d.datname=current_database()
             JOIN pg_catalog.pg_publication p ON p.pubname=@publication
@@ -348,7 +348,8 @@ public sealed partial class PostgreSqlEventStore
             reader.GetString(0) != source.SystemIdentifier || reader.GetInt64(1) != source.Timeline ||
             reader.GetString(2) != source.DatabaseName || reader.GetString(5) != "pgoutput" ||
             reader.GetString(6) != source.DatabaseName || reader.GetString(7) != "logical" ||
-            reader.GetBoolean(8) || reader.GetBoolean(9))
+            reader.GetBoolean(8) || reader.GetBoolean(9) ||
+            reader.IsDBNull(10) || reader.GetFieldValue<uint>(10) != reader.GetFieldValue<uint>(3))
         {
             throw new InvalidOperationException("The current PostgreSQL system, timeline, database, publication or logical slot differs from the expected source.");
         }

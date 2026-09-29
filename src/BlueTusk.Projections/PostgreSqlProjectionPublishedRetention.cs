@@ -151,7 +151,7 @@ public sealed partial class PostgreSqlProjectionStore
             throw new InvalidOperationException("Protected projection delivery needs an active verified single-publication source and target incarnation.");
         }
         return await ApplyCoreAsync(lease, definition, delivery.Transaction, cancellationToken,
-            protectedRetention).ConfigureAwait(false);
+            protectedRetention, delivery).ConfigureAwait(false);
     }
 
     private async ValueTask AcknowledgeProjectionControlAsync(DbConnection connection, DbTransaction transaction,

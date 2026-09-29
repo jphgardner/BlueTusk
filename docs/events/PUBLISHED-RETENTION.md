@@ -48,6 +48,14 @@ Streams delivery. Protected delivery also requires evidence from the built-in co
 source that the actual `START_REPLICATION` publication set contained exactly the source registration's
 publication and the replication connection's `IDENTIFY_SYSTEM` timeline matches the marker. Generic
 or relayed deliveries without this binding cannot produce a retention ACK.
+The built-in single-publication snapshot source also reads the database and publication OIDs on
+that **same logical WAL-sender session before slot creation**, then rechecks both OIDs and the
+slot's `datoid`, plugin and timeline after every exported-snapshot reader finishes and before
+`START_REPLICATION`. A command between exported-slot creation and snapshot import would invalidate
+the exported snapshot. Those immutable session values travel with each delivery; Events and
+Projections refuse a marker ACK when its database or publication OID differs. The operational
+publication-DDL freeze remains necessary between the final check and replication start and while
+the stream runs. Missing catalogue privilege or provenance fails closed.
 Redelivery verifies the existing ACK byte-for-byte; a conflicting epoch fails.
 The protected processor rejects an older or conflicting source transaction position, and an
 unconfigured new processor refuses a control row. Target DB timeline, database and system drift
@@ -75,13 +83,13 @@ row. Source/target control-function privilege and frozen publication DDL are req
 
 These rows are **not source deletion authorization**. Source membership still supports only one
 slot/publication lineage per stream, so independently slotted projection versions cannot yet join
-the same protected set. `IDENTIFY_SYSTEM` does not return the source database OID, so that OID
-is bound from a separately captured source catalogue lineage and still requires independent
-coordinator verification; it is not intrinsic replication-delivery provenance. The target
+the same protected set. `IDENTIFY_SYSTEM` does not return the source database OID; the same-session
+catalogue read above binds it for the built-in single-publication snapshot source. The target
 registration currently consumes a caller-supplied source
-registration record; a future source coordinator must verify the actual source membership and
-target ACK across databases, including current projection head, recovery ticket, snapshot epoch,
-target incarnation and durable transport checkpoint. A marker already included in a fresh snapshot
+registration record; the observation API checks the actual source membership and target ACK across
+databases, including current projection head, recovery ticket, snapshot epoch, target incarnation
+and slot transport position. Any future deletion coordinator must reverify these mutable facts and
+establish a target restore fence. A marker already included in a fresh snapshot
 has no ordered target ACK, and recovery after a pruned prefix needs an explicit archive/bootstrap
 proof or a newer marker. Independent subscriptions remain blocking obligations. Slot recreation
 under the same name and a same-lineage target rewind remain unresolved fences.
@@ -102,6 +110,30 @@ acknowledgement.
 The current contracts cannot detect a logical slot dropped and recreated under the same name.
 That missing slot-incarnation fence is a separate proof gap before published source deletion can
 be considered, even when source and target ACK rows otherwise agree.
+
+Schema v5 adds append-only `published_retention_observations` and
+`ObservePublishedRetentionIntentAsync` as a **non-authoritative, historical proof ledger**. A
+trusted operator configuration supplies at most 64 remote target database connections and exact
+member keys, schema, target kind, and projection version. The method accepts no caller-supplied
+ACK contents. It requires the configured set to match every immutable source member, reads each
+target's current system/database OID/timeline, registration, exact marker ACK and durable
+effect checkpoint **and the separate Streams `stream_state` checkpoint** in a repeatable-read
+remote snapshot. The transport state must live in that same target database, with its control
+schema supplied explicitly, so the proof is read consistently. The method also checks the current projection head, state,
+snapshot epoch and recovery ticket against the recorded active/candidate role. All targets must
+agree on the marker commit-end LSN. It then locks the source stream row, rechecks the intent and
+complete membership revision, publication coverage, source OIDs, slot `datoid`, a present
+`restart_lsn`, and `confirmed_flush_lsn` at or beyond the marker and no further than each target
+checkpoint. Only
+then does it insert an append-only JSON evidence record and digest. Remote reads happen outside
+the source lock. An absent endpoint, ACK, checkpoint or slot transport position fails closed.
+The operator must treat endpoint keys and database credentials as trusted configuration; they are
+recorded for audit but are not yet an immutable source-side endpoint binding. A remote promotion,
+restore, failover, independent reader, archive outage or slot recreation can occur after the
+snapshot and invalidate the observation. No code interprets this table as authorization; the
+published-outbox deletion guard and old decoder refusal remain in force. Even a currently matching
+transport row does not prove the slot will retain its incarnation or that a restored target will
+honor its prior checkpoint at deletion time.
 
 1. Register every protected consumer group, target incarnation, projection version/candidate and
    recovery source against an immutable source identity and publication/slot lineage. Registration

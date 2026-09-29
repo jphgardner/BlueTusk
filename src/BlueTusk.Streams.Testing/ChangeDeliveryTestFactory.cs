@@ -12,7 +12,7 @@ public static class ChangeDeliveryTestFactory
         IEnumerable<Change>? changes = null,
         IChangeDeliveryObserver? observer = null,
         DateTimeOffset? commitTimestamp = null)
-        => CreateCommittedCore(source, transactionId, commitEndPosition, null,
+        => CreateCommittedCore(source, transactionId, commitEndPosition, null, null, null,
             changes, observer, commitTimestamp);
 
     /// <summary>Model the replication connection's actual timeline as well as its publication for protected consumers.</summary>
@@ -26,8 +26,27 @@ public static class ChangeDeliveryTestFactory
         DateTimeOffset? commitTimestamp = null)
     {
         ArgumentOutOfRangeException.ThrowIfZero(replicationTimeline);
-        return CreateCommittedCore(source, transactionId, commitEndPosition, replicationTimeline,
+        return CreateCommittedCore(source, transactionId, commitEndPosition, replicationTimeline, null, null,
             changes, observer, commitTimestamp);
+    }
+
+    /// <summary>Model a single-publication logical WAL sender with verified source catalogue identity.</summary>
+    public static ChangeTransactionDelivery CreateCommittedWithLineage(
+        ChangeSourceIdentity source,
+        uint transactionId,
+        BlueTuskLogSequenceNumber commitEndPosition,
+        uint replicationTimeline,
+        uint replicationDatabaseOid,
+        uint replicationPublicationOid,
+        IEnumerable<Change>? changes = null,
+        IChangeDeliveryObserver? observer = null,
+        DateTimeOffset? commitTimestamp = null)
+    {
+        ArgumentOutOfRangeException.ThrowIfZero(replicationTimeline);
+        ArgumentOutOfRangeException.ThrowIfZero(replicationDatabaseOid);
+        ArgumentOutOfRangeException.ThrowIfZero(replicationPublicationOid);
+        return CreateCommittedCore(source, transactionId, commitEndPosition, replicationTimeline,
+            replicationDatabaseOid, replicationPublicationOid, changes, observer, commitTimestamp);
     }
 
     private static ChangeTransactionDelivery CreateCommittedCore(
@@ -35,6 +54,8 @@ public static class ChangeDeliveryTestFactory
         uint transactionId,
         BlueTuskLogSequenceNumber commitEndPosition,
         uint? replicationTimeline,
+        uint? replicationDatabaseOid,
+        uint? replicationPublicationOid,
         IEnumerable<Change>? changes,
         IChangeDeliveryObserver? observer,
         DateTimeOffset? commitTimestamp)
@@ -68,7 +89,8 @@ public static class ChangeDeliveryTestFactory
                 isSpooled: false,
                 cancellationToken => ReadChangesAsync(materialized, cancellationToken)));
         // Synthetic test deliveries model a replication start on the named publication.
-        return CreateDelivery(transaction, observer, [source.PublicationFingerprint], replicationTimeline);
+        return CreateDelivery(transaction, observer, [source.PublicationFingerprint], replicationTimeline,
+            replicationDatabaseOid, replicationPublicationOid);
     }
 
     public static ChangeTransactionDelivery CreateTwoPhase(
@@ -117,7 +139,9 @@ public static class ChangeDeliveryTestFactory
         ChangeTransaction transaction,
         IChangeDeliveryObserver? observer,
         IReadOnlyList<string>? replicationPublicationNames,
-        uint? replicationTimeline = null)
+        uint? replicationTimeline = null,
+        uint? replicationDatabaseOid = null,
+        uint? replicationPublicationOid = null)
     {
         return new ChangeTransactionDelivery(
             transaction,
@@ -126,7 +150,9 @@ public static class ChangeDeliveryTestFactory
             (failure, cancellationToken) => observer?.NackAsync(transaction, failure, cancellationToken) ??
                                             ValueTask.CompletedTask,
             replicationPublicationNames,
-            replicationTimeline);
+            replicationTimeline,
+            replicationDatabaseOid,
+            replicationPublicationOid);
     }
 
     private static async IAsyncEnumerable<Change> ReadChangesAsync(

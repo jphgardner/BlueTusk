@@ -167,6 +167,13 @@ public sealed class PostgreSqlEventDeliveryProcessor
         {
             throw new InvalidOperationException("A retention intent must be the only raw change in its ordered source transaction.");
         }
+        if (control is not null && !delivery.HasSingleReplicationPublicationOnLineage(
+                control.Source.PublicationName, control.Source.Timeline,
+                control.SourceDatabaseOid, control.SourcePublicationOid))
+        {
+            throw new InvalidOperationException(
+                "A retention ACK requires the logical WAL sender's matching database and publication OIDs.");
+        }
 
         var handled = 0;
         if (events.Count > 0 || _protectedRetention is not null)

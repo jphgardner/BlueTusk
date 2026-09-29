@@ -98,6 +98,17 @@ public sealed class ProjectionPublishedRetentionTests
             timelineOverride: checked(setup.SourceTimeline + 1));
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await consumer.ConsumeTransactionAsync(wrongTimeline));
+        await using var wrongDatabaseOid = setup.Marker(200, Guid.NewGuid(),
+            databaseOidOverride: checked(setup.Lineage.DatabaseOid + 1));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await consumer.ConsumeTransactionAsync(wrongDatabaseOid));
+        await using var wrongPublicationOid = setup.Marker(200, Guid.NewGuid(),
+            publicationOidOverride: checked(setup.PublicationOid + 1));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await consumer.ConsumeTransactionAsync(wrongPublicationOid));
+        await using var missingOids = setup.Marker(200, Guid.NewGuid(), verifiedOids: false);
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await consumer.ConsumeTransactionAsync(missingOids));
         Assert.Equal(100UL, (await setup.Database.Store.ReadStateAsync(lease.Identity)).Checkpoint.Value);
         Assert.Equal(0L, await setup.AckCountAsync());
     }
@@ -250,7 +261,9 @@ public sealed class ProjectionPublishedRetentionTests
         }
 
         internal ChangeTransactionDelivery Marker(ulong position, Guid epoch, string stream = "orders",
-            long through = 2, bool unrelatedChange = false, uint? timelineOverride = null)
+            long through = 2, bool unrelatedChange = false, uint? timelineOverride = null,
+            uint? databaseOidOverride = null, uint? publicationOidOverride = null,
+            bool verifiedOids = true)
         {
             var lsn = new BlueTuskLogSequenceNumber(position);
             var table = Assert.Single(Lineage.Tables);
@@ -281,8 +294,12 @@ public sealed class ProjectionPublishedRetentionTests
                 changes.Add(new InsertChange(new ChangeId(Source, lsn, 42, 1), new ChangeRow(other,
                     [ChangeColumnValue.FromValue(Encoding.UTF8.GetBytes("x"), ChangeValueEncoding.Text)])));
             }
-            return ChangeDeliveryTestFactory.CreateCommittedWithTimeline(Source, 42, lsn,
-                timelineOverride ?? Lineage.Timeline, changes);
+            return verifiedOids
+                ? ChangeDeliveryTestFactory.CreateCommittedWithLineage(Source, 42, lsn,
+                    timelineOverride ?? Lineage.Timeline, databaseOidOverride ?? Lineage.DatabaseOid,
+                    publicationOidOverride ?? PublicationOid, changes)
+                : ChangeDeliveryTestFactory.CreateCommittedWithTimeline(Source, 42, lsn,
+                    timelineOverride ?? Lineage.Timeline, changes);
         }
 
         internal ChangeTransactionDelivery UnrelatedNamedRelation(ulong position)
@@ -292,8 +309,9 @@ public sealed class ProjectionPublishedRetentionTests
                 [new ChangeColumn(0, "id", 25, -1, true)]);
             var row = new ChangeRow(table,
                 [ChangeColumnValue.FromValue(Encoding.UTF8.GetBytes("x"), ChangeValueEncoding.Text)]);
-            return ChangeDeliveryTestFactory.CreateCommittedWithTimeline(Source, 42, lsn,
-                Lineage.Timeline, [new InsertChange(new ChangeId(Source, lsn, 42, 0), row)]);
+            return ChangeDeliveryTestFactory.CreateCommittedWithLineage(Source, 42, lsn,
+                Lineage.Timeline, Lineage.DatabaseOid, PublicationOid,
+                [new InsertChange(new ChangeId(Source, lsn, 42, 0), row)]);
         }
 
         internal async ValueTask<long> AckCountAsync()

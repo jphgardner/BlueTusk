@@ -87,6 +87,26 @@ BlueTusk.Events.EventPublishedRetentionIntent.Stream.get -> BlueTusk.Events.Even
 BlueTusk.Events.EventPublishedRetentionIntent.Stream.init -> void
 BlueTusk.Events.EventPublishedRetentionIntent.ThroughSequence.get -> long
 BlueTusk.Events.EventPublishedRetentionIntent.ThroughSequence.init -> void
+BlueTusk.Events.EventPublishedRetentionObservation
+BlueTusk.Events.EventPublishedRetentionObservation.MarkerCommitEndPosition.get -> ulong
+BlueTusk.Events.EventPublishedRetentionObservation.MembershipRevision.get -> long
+BlueTusk.Events.EventPublishedRetentionObservation.ObservationId.get -> System.Guid
+BlueTusk.Events.EventPublishedRetentionObservation.RetentionEpoch.get -> System.Guid
+BlueTusk.Events.EventPublishedRetentionObservation.TargetCount.get -> int
+BlueTusk.Events.EventPublishedRetentionRemoteKind
+BlueTusk.Events.EventPublishedRetentionRemoteKind.Events = 0 -> BlueTusk.Events.EventPublishedRetentionRemoteKind
+BlueTusk.Events.EventPublishedRetentionRemoteKind.Projection = 1 -> BlueTusk.Events.EventPublishedRetentionRemoteKind
+BlueTusk.Events.EventPublishedRetentionRemoteTarget
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.ConsumerGroup.get -> string!
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.DataSource.get -> System.Data.Common.DbDataSource!
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.EndpointKey.get -> string!
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.EventPublishedRetentionRemoteTarget(string! consumerGroup, System.Guid targetIncarnation, string! endpointKey, System.Data.Common.DbDataSource! dataSource, string! schema, string! transportSchema, BlueTusk.Events.EventPublishedRetentionRemoteKind kind, string? projection = null, int? projectionVersion = null) -> void
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.Kind.get -> BlueTusk.Events.EventPublishedRetentionRemoteKind
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.Projection.get -> string?
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.ProjectionVersion.get -> int?
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.Schema.get -> string!
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.TargetIncarnation.get -> System.Guid
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.TransportSchema.get -> string!
 BlueTusk.Events.EventPublishedSourceIdentity
 BlueTusk.Events.EventPublishedSourceIdentity.<Clone>$() -> BlueTusk.Events.EventPublishedSourceIdentity!
 BlueTusk.Events.EventPublishedSourceIdentity.DatabaseName.get -> string!
@@ -219,6 +239,7 @@ BlueTusk.Events.PostgreSqlEventStore.ArchiveNextAsync(BlueTusk.Events.EventStrea
 BlueTusk.Events.PostgreSqlEventStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Events.PostgreSqlEventStore.PostgreSqlEventStore(System.Data.Common.DbDataSource! dataSource, BlueTusk.Events.PostgreSqlEventsOptions? options = null) -> void
 BlueTusk.Events.PostgreSqlEventStore.ProcessInboxAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, string! consumerId, BlueTusk.Events.StoredEvent! value, BlueTusk.Events.EventTransactionHandler! handler, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Events.PostgreSqlEventStore.ObservePublishedRetentionIntentAsync(System.Guid retentionEpoch, System.Collections.Generic.IReadOnlyList<BlueTusk.Events.EventPublishedRetentionRemoteTarget!>! targets, int maximumTargets = 64, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventPublishedRetentionObservation!>
 BlueTusk.Events.PostgreSqlEventStore.PublishRetentionIntentAsync(BlueTusk.Events.EventStreamKey! stream, BlueTusk.Events.IEventArchiveStore! archive, BlueTusk.Events.EventPublishedSourceIdentity! source, long throughSequence, long expectedPreviousThrough = 0, int maximumSegments = 64, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventPublishedRetentionIntent!>
 BlueTusk.Events.PostgreSqlEventStore.PruneRetainedAsync(BlueTusk.Events.EventStreamKey! stream, int maximumEvents = 1024, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventPruneProgress!>
 BlueTusk.Events.PostgreSqlEventStore.ReadAsync(BlueTusk.Events.EventStreamKey! stream, long afterSequence = 0, int maximumEvents = 256, int maximumPayloadBytes = 8388608, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Events.StoredEvent!>!>

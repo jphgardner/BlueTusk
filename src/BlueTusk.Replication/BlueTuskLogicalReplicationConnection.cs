@@ -6,6 +6,8 @@ using BlueTusk.Client;
 
 namespace BlueTusk.Replication;
 
+internal readonly record struct BlueTuskLogicalPublicationBinding(uint DatabaseOid, uint PublicationOid);
+
 /// <summary>A PostgreSQL logical streaming replication connection.</summary>
 public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationConnection
 {
@@ -40,6 +42,40 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
             options with { ReplicationMode = BlueTuskReplicationMode.Database },
             cancellationToken).ConfigureAwait(false);
         return new BlueTuskLogicalReplicationConnection(session, options);
+    }
+
+    // This fixed catalogue query runs on the logical WAL sender itself. Catalogue helpers elsewhere
+    // open a second connection and cannot bind an OID to this START_REPLICATION session.
+    internal async ValueTask<BlueTuskLogicalPublicationBinding> ReadPublicationBindingAsync(
+        string publicationName, string? slotName, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(publicationName);
+        var slotPredicate = slotName is null
+            ? "false"
+            : $"r.slot_name = {BlueTuskSql.QuoteLiteral(slotName)}";
+        var result = await ExecuteCommandAsync($"""
+            SELECT d.oid::text,p.oid::text,r.datoid::text,r.slot_type,r.plugin,r.temporary::text
+            FROM pg_catalog.pg_database d
+            JOIN pg_catalog.pg_publication p ON p.pubname={BlueTuskSql.QuoteLiteral(publicationName)}
+            LEFT JOIN pg_catalog.pg_replication_slots r ON {slotPredicate}
+            WHERE d.datname=current_database()
+            """, cancellationToken).ConfigureAwait(false);
+        var row = GetSingleRow(result, "logical publication binding");
+        var databaseOid = ParseUInt32(GetRequiredText(row, 0, "database oid"), "database oid");
+        var publicationOid = ParseUInt32(GetRequiredText(row, 1, "publication oid"), "publication oid");
+        if (databaseOid == 0 || publicationOid == 0)
+        {
+            throw new BlueTuskReplicationProtocolException("The logical publication has an invalid database or publication OID.");
+        }
+        if (slotName is not null &&
+            (GetOptionalText(row, 2) is not { } slotDatabaseOid ||
+             ParseUInt32(slotDatabaseOid, "slot database oid") != databaseOid ||
+             GetOptionalText(row, 3) != "logical" || GetOptionalText(row, 4) != "pgoutput" ||
+             GetOptionalText(row, 5) != "false"))
+        {
+            throw new BlueTuskReplicationProtocolException("The logical slot is absent or has a different database, type, plugin, or lifetime.");
+        }
+        return new BlueTuskLogicalPublicationBinding(databaseOid, publicationOid);
     }
 
     /// <summary>Lists logical replication publications in the connected database.</summary>

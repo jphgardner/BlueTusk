@@ -311,7 +311,8 @@ public sealed partial class PostgreSqlProjectionStore
 
     private async ValueTask<ProjectionApplyResult> ApplyCoreAsync(ProjectionLease lease, IProjectionDefinition definition,
         ChangeTransaction transaction, CancellationToken cancellationToken,
-        ProjectionPublishedRetentionTargetOptions? protectedRetention = null)
+        ProjectionPublishedRetentionTargetOptions? protectedRetention = null,
+        ChangeTransactionDelivery? protectedDelivery = null)
     {
         ValidateDefinition(lease, definition);
         ArgumentNullException.ThrowIfNull(transaction);
@@ -327,6 +328,14 @@ public sealed partial class PostgreSqlProjectionStore
         }
 
         var control = await ValidateChangeBytesAsync(transaction, protectedRetention, cancellationToken).ConfigureAwait(false);
+        if (control is not null && (protectedDelivery is null ||
+            !protectedDelivery.HasSingleReplicationPublicationOnLineage(
+                control.Source.PublicationName, control.Source.Timeline,
+                control.SourceDatabaseOid, control.SourcePublicationOid)))
+        {
+            throw new InvalidOperationException(
+                "A projection retention ACK requires the logical WAL sender's matching database and publication OIDs.");
+        }
 
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var targetTransaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken).ConfigureAwait(false);

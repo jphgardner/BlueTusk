@@ -68,7 +68,7 @@ public sealed class EventRetentionTests
         await using (var connection = await db.DataSource.OpenConnectionAsync())
         await using (var command = connection.CreateCommand())
         {
-            command.CommandText = $"UPDATE \"{db.Schema}\".schema_version SET version=5";
+            command.CommandText = $"UPDATE \"{db.Schema}\".schema_version SET version=6";
             await command.ExecuteNonQueryAsync();
         }
 
@@ -339,6 +339,20 @@ public sealed class EventRetentionTests
             Assert.Equal(1, intent.ThroughSequence);
             Assert.Equal(registration.MembershipRevision, intent.MembershipRevision);
             Assert.Equal(64, intent.ArchiveManifestSha256.Length);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.ObservePublishedRetentionIntentAsync(intent.Epoch, []));
+            var remote = new EventPublishedRetentionRemoteTarget("retention-consumer", incarnation,
+                "events-target", db.DataSource, db.Schema, db.Schema,
+                EventPublishedRetentionRemoteKind.Events);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.ObservePublishedRetentionIntentAsync(intent.Epoch, [remote]));
+            await using (var observationCheck = db.DataSource.CreateCommand($"""
+                SELECT count(*) FROM "{db.Schema}".published_retention_observations
+                """))
+            {
+                Assert.Equal(0L, Convert.ToInt64(await observationCheck.ExecuteScalarAsync(),
+                    CultureInfo.InvariantCulture));
+            }
             await using (var connection = await db.DataSource.OpenConnectionAsync())
             await using (var command = connection.CreateCommand())
             {
@@ -356,6 +370,11 @@ public sealed class EventRetentionTests
                 "retention-consumer", Guid.NewGuid(), source);
             Assert.Equal(2, replacement.MembershipRevision);
             await db.Store.RegisterPublishedRetentionTargetAsync(replacement);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await db.Store.ObservePublishedRetentionIntentAsync(intent.Epoch,
+                    [remote, new EventPublishedRetentionRemoteTarget("retention-consumer",
+                        replacement.TargetIncarnation, "replacement-target", db.DataSource, db.Schema,
+                        db.Schema, EventPublishedRetentionRemoteKind.Events)]));
             await db.AppendAsync(stream, [Write(2)]);
             _ = await db.Store.ArchiveNextAsync(stream, archive);
             archive.CorruptReadback = true;
