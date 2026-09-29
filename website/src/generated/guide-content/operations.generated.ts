@@ -2168,13 +2168,46 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1397,
+    "wordCount": 1419,
     "readMinutes": 7,
-    "searchText": "Ecosystem expansion evidence ledger Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent `0.1.0-preview.1` packages. Publication is disabled for all ten families. Implemented paths and passing local gates are substantial, but no family is production qualified. Family Implemented and directly exercised Material work still open Events Transactional outbox/inbox, typed routing, replay and Streams adapter; guarded local-only archive/prune with durable ID fence; 50 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign Published-outbox retention, large producer/consumer fleets, upgrades and disaster recovery Jobs Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion Representative multi-day retention/capacity and operations under repeated failure Documents Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits Projections Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; selective dependency reconciliation; 35 live PostgreSQL 17 tests, 100,000-effect exact-state campaign, 600-second overload and physical promotion Longer independent-host steady/overload load, retention/format upgrades and wider failure distributions Search Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets Schema Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests pe",
+    "searchText": "Ecosystem expansion evidence ledger Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent `0.1.0-preview.1` packages. Publication is disabled for all ten families. Implemented paths and passing local gates are substantial, but no family is production qualified. The [expansion release contract](release-qualification.md) keeps their tagged publication path closed until product-specific evidence, governance and independent approval exist for an exact candidate. Family Implemented and directly exercised Material work still open Events Transactional outbox/inbox, typed routing, replay and Streams adapter; guarded local-only archive/prune with durable ID fence; 50 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign Published-outbox retention, large producer/consumer fleets, upgrades and disaster recovery Jobs Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion Representative multi-day retention/capacity and operations under repeated failure Documents Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits Projections Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; selective dependency reconciliation; 35 live PostgreSQL 17 tests, 100,000-effect exact-state campaign, 600-second overload and physical promotion Longer independent-host steady/overload load, retention/format upgrades and wider failure distributions Search Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution Scale limits,",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Ecosystem expansion evidence ledger</h1>\n<p>Working branch: <code>codex/ecosystem-products</code>. Events, Jobs, Documents, Projections,\nSearch, Schema, Sql, Studio, Edge, and Workflows have independent\n<code>0.1.0-preview.1</code> packages. Publication is disabled for all ten families.\nImplemented paths and passing local gates are substantial, but no family is\nproduction qualified.</p>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>Implemented and directly exercised</th>\n<th>Material work still open</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Events</td>\n<td>Transactional outbox/inbox, typed routing, replay and Streams adapter; guarded local-only archive/prune with durable ID fence; 50 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign</td>\n<td>Published-outbox retention, large producer/consumer fleets, upgrades and disaster recovery</td>\n</tr>\n<tr>\n<td>Jobs</td>\n<td>Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion</td>\n<td>Representative multi-day retention/capacity and operations under repeated failure</td>\n</tr>\n<tr>\n<td>Documents</td>\n<td>Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery</td>\n<td>Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits</td>\n</tr>\n<tr>\n<td>Projections</td>\n<td>Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; selective dependency reconciliation; 35 live PostgreSQL 17 tests, 100,000-effect exact-state campaign, 600-second overload and physical promotion</td>\n<td>Longer independent-host steady/overload load, retention/format upgrades and wider failure distributions</td>\n</tr>\n<tr>\n<td>Search</td>\n<td>Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution</td>\n<td>Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets</td>\n</tr>\n<tr>\n<td>Schema</td>\n<td>Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests per version and native execution</td>\n<td>Destructive/partition-parent migrations, invalid-index repair automation and broad upgrade operations</td>\n</tr>\n<tr>\n<td>Sql</td>\n<td>Runtime contracts, incremental generator and installed catalogue-validation CLI; 33 runtime, 31 generator and 8 CLI tests per version, native and fresh package-only consumer</td>\n<td>Broader PostgreSQL type/shape coverage and multi-version upgrade receipts</td>\n</tr>\n<tr>\n<td>Studio</td>\n<td>Authenticated SQL/explain/schema workspace, durable audit, Events/ControlPlane adapters and CLI; 14 core plus 2 CLI tests per version</td>\n<td>Large multi-tenant deployment, operational hardening and long-lived audit retention</td>\n</tr>\n<tr>\n<td>Edge</td>\n<td>SQLite/IndexedDB durable cache/queue, authenticated HTTP server, atomic application callback; 33 live tests per version, 14 browser contracts, real browser restart/HTTP recovery and native execution</td>\n<td>Wider browser/platform matrix, long offline retention and repeated server failover</td>\n</tr>\n<tr>\n<td>Workflows</td>\n<td>Durable DAG, activities, signals/timers/joins, compensation and replay; 26 core plus 6 DI tests per version, 600-second Jobs/Workflows campaign and physical promotion</td>\n<td>Multi-day workload, large definitions/history and repeated failover/upgrade operation</td>\n</tr>\n</tbody>\n</table>\n<h2>Current local gates</h2>\n<ul>\n<li>The full 195-project Release solution builds with zero warnings and errors.\nLayout verification finds 73 ordered solution folders; two embedded template\nprojects are intentionally excluded. The source supply-chain gate finds pinned\nactions and CI images across 15 workflows. All 16 API family budgets pass,\ncovering 17,040 public signatures.</li>\n<li>An earlier candidate’s combined database gate passed <strong>419 tests in 15 projects</strong> with zero\nfailures or skips on each PostgreSQL <strong>15, 16, 17 and 18</strong>. All four runs used\nthe same unchanged candidate source. PostgreSQL 18 additionally passed five\nreal Windows x64 NativeAOT executables. An actual Linux x64 container ran\nthe same 419 tests and five separate Linux NativeAOT executables against the\nexact source archive. These are local source-stable runs of an earlier dirty\nworking tree, not an immutable release or CI result. The latest Documents\nsidecar adds three tests; its 38-test suite passes on all four PostgreSQL\nversions, while the complete combined gate awaits the committed candidate.</li>\n<li>Edge’s locked npm install, TypeScript build, 14 contract tests, real browser\nIndexedDB restart smoke and real browser/PostgreSQL HTTP recovery smoke pass.\nThe fresh installed Schema/SQL tools and a separate package-only SQL consumer\npass relation and catalogue receipt modes, including qualified enum/domain\nround trips.</li>\n<li>All ten candidate package sets verify at clean commit <code>40c757a</code>: 32 NuGet\npackages, 31 symbol packages and one Edge npm package. CycloneDX 1.6, SPDX\n2.3 and provenance checks cover all 64 archives and 318 components. This\nverifies archive metadata and content,\nnot that the unpublished dependency graph can be restored from a public feed.\nThe dependency audit reports zero vulnerable entries across 195 .NET projects;\nlocked npm audit reports zero vulnerabilities in its 63-package tree. Audits\nare a point-in-time input, not a security certification.</li>\n<li>Events/Projections have source-bound exact-state 100,000-effect sweeps and a\n600-second bounded overload run with 866,618 rejected admissions rather than\nan unbounded queue. Three synchronous physical promotions recover with fenced\nownership. Jobs/Workflows have storage/fault and physical-promotion campaigns.\nTheir evidence lives under ignored <code>artifacts/</code> in this worktree; the\ncorresponding product documents explain measured scope and limitations.</li>\n<li>Events’ guarded local-only archive and retention stage passes 50 tests on each\nPostgreSQL version 15–18, including archived retry identity, lagging replay,\nfailed archive, published-outbox refusal and a direct old-client insert after\npruning. It does not prune the outbox published to Projections or bound the\npermanent identity and inbox ledgers.</li>\n<li>A separate 60-second Projections steady-load diagnostic run accepted and\ndelivered all 1,200 offers with zero rejection and\n129 ms projection / 132 ms inbox p99. The source fingerprint remained stable,\nbut the worktree was dirty; neither this short run nor the earlier overload\nrun is an exact-commit 30-minute qualification. Selective dependency\nreconciliation passes all 35 Projections tests on PostgreSQL 17; its\nperformance effect has not been measured in a controlled comparison.</li>\n<li>Jobs/Workflows now offer distinct seeded 1 KiB payloads in the physical\nstorage profile. A 600-second PostgreSQL 15 shared-host development campaign\npassed exact effects, terminal pruning and all five recovery faults: Jobs\ncompleted 36,168 effects at 60.2/s with an 8.9 MB relation peak and 6.8 KiB\ncluster WAL per accepted item; Workflows completed 10,710 at 17.8/s with a\n16.1 MB peak and 58.2 KiB WAL per accepted item. Both final-half relation\nendpoints fell. The source was stable but dirty, and the run is not an\nimmutable-candidate or multi-day capacity qualification.</li>\n<li>The <a href=\"/documentation/operations/documents-evidence-2026-09-28-maintenance-pair\">Documents fixed-cardinality comparison</a>\ncompleted two source-frozen 600-second profiles with exact logical checks,\n120-second idle drains and hard-killed writer recovery. The default profile\nended at 16.20 GB of relation storage for roughly 16 MiB retained source\ncontent; experimental fast TOAST vacuum ended at 9.06 GB with lower\nthroughput, higher tail latency and more WAL per transition. Neither profile\nestablished a physical bound.</li>\n<li>A new offline capacity verifier now rejects incomplete sustained reports and\nexplicit peak-size, late-growth, WAL, throughput and p99 budgets. The old\ndefault report fails an illustrative 512 MiB peak/16 MiB per minute late-growth\ntarget. The guarded harness now supports a six-hour request with a rolling\nfilesystem-observer window, and its sustained payload is distinct per\ndocument. A short owned PostgreSQL 18 fixture passed all 16 scenarios,\nkilled-writer recovery, source/binary binding and label-checked cleanup after\nthese harness changes. That short run is a correctness check; full-body\nJSONB rewrites retain the measured growth problem.</li>\n<li>The opt-in Documents content sidecar and bounded paged GC passed eight new\nPostgreSQL integration tests, with 38 total Documents tests on each version\n15–18. A <a href=\"/documentation/operations/documents-evidence-2026-09-28-attached-content-600s\">clean-commit 600-second attached-content run</a>\npassed its explicit local budget with 1,326,904 transitions at 2,211/s,\n19.0 MB peak owned relations, 375 MB WAL and 100 ms save p99. The 120-second\nidle drain, exact retained content, recovery and source/binary bindings\npassed. It has not yet passed repeated multi-hour capacity and failover gates;\nexisting inline-body users still have the measured growth problem.</li>\n<li>The <a href=\"/documentation/operations/ecosystem-performance\">manual exact-commit performance gate</a> now requires two\n30-minute campaigns each for Jobs, Workflows, Documents, and both steady and\noverload Projections profiles with profile-specific admission, throughput,\np99, WAL and storage budgets. A previous clean-SHA preflight passed, but the\nmulti-hour gate has not passed; setup and verifier defects found during local\nattempts were corrected before another qualification run.</li>\n</ul>\n<h2>Production qualification still required</h2>\n<p>The ten products need explicit application-level throughput, p99 and capacity\nbudgets; longer representative runs on independent load hosts; bounded storage\nand recovery under sustained hot updates; version/format and rolling upgrades;\ncredential rotation, network partition, storage pressure and repeated failover\nacross more families; security review and operational telemetry/runbooks; and\nrepeated clean-commit packages with SBOM/provenance and passing CI on the\ncommitted candidate. Windows browser evidence does not establish a Linux/browser\nmatrix. PostgreSQL 15–17 combined managed gates do not execute every native\nsmoke on those versions. The package publication policy and unreleased\ndependency gates remain disabled. Passing tests and short campaigns should not\nbe read as proof of massive-production performance or efficiency.</p>\n"
+        "html": "<h1>Ecosystem expansion evidence ledger</h1>\n<p>Working branch: <code>codex/ecosystem-products</code>. Events, Jobs, Documents, Projections,\nSearch, Schema, Sql, Studio, Edge, and Workflows have independent\n<code>0.1.0-preview.1</code> packages. Publication is disabled for all ten families.\nImplemented paths and passing local gates are substantial, but no family is\nproduction qualified. The <a href=\"/documentation/operations/ecosystem-release-qualification\">expansion release contract</a>\nkeeps their tagged publication path closed until product-specific evidence,\ngovernance and independent approval exist for an exact candidate.</p>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>Implemented and directly exercised</th>\n<th>Material work still open</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Events</td>\n<td>Transactional outbox/inbox, typed routing, replay and Streams adapter; guarded local-only archive/prune with durable ID fence; 50 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign</td>\n<td>Published-outbox retention, large producer/consumer fleets, upgrades and disaster recovery</td>\n</tr>\n<tr>\n<td>Jobs</td>\n<td>Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion</td>\n<td>Representative multi-day retention/capacity and operations under repeated failure</td>\n</tr>\n<tr>\n<td>Documents</td>\n<td>Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery</td>\n<td>Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits</td>\n</tr>\n<tr>\n<td>Projections</td>\n<td>Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; selective dependency reconciliation; 35 live PostgreSQL 17 tests, 100,000-effect exact-state campaign, 600-second overload and physical promotion</td>\n<td>Longer independent-host steady/overload load, retention/format upgrades and wider failure distributions</td>\n</tr>\n<tr>\n<td>Search</td>\n<td>Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution</td>\n<td>Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets</td>\n</tr>\n<tr>\n<td>Schema</td>\n<td>Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests per version and native execution</td>\n<td>Destructive/partition-parent migrations, invalid-index repair automation and broad upgrade operations</td>\n</tr>\n<tr>\n<td>Sql</td>\n<td>Runtime contracts, incremental generator and installed catalogue-validation CLI; 33 runtime, 31 generator and 8 CLI tests per version, native and fresh package-only consumer</td>\n<td>Broader PostgreSQL type/shape coverage and multi-version upgrade receipts</td>\n</tr>\n<tr>\n<td>Studio</td>\n<td>Authenticated SQL/explain/schema workspace, durable audit, Events/ControlPlane adapters and CLI; 14 core plus 2 CLI tests per version</td>\n<td>Large multi-tenant deployment, operational hardening and long-lived audit retention</td>\n</tr>\n<tr>\n<td>Edge</td>\n<td>SQLite/IndexedDB durable cache/queue, authenticated HTTP server, atomic application callback; 33 live tests per version, 14 browser contracts, real browser restart/HTTP recovery and native execution</td>\n<td>Wider browser/platform matrix, long offline retention and repeated server failover</td>\n</tr>\n<tr>\n<td>Workflows</td>\n<td>Durable DAG, activities, signals/timers/joins, compensation and replay; 26 core plus 6 DI tests per version, 600-second Jobs/Workflows campaign and physical promotion</td>\n<td>Multi-day workload, large definitions/history and repeated failover/upgrade operation</td>\n</tr>\n</tbody>\n</table>\n<h2>Current local gates</h2>\n<ul>\n<li>The full 195-project Release solution builds with zero warnings and errors.\nLayout verification finds 73 ordered solution folders; two embedded template\nprojects are intentionally excluded. The source supply-chain gate finds pinned\nactions and CI images across 15 workflows. All 16 API family budgets pass,\ncovering 17,040 public signatures.</li>\n<li>An earlier candidate’s combined database gate passed <strong>419 tests in 15 projects</strong> with zero\nfailures or skips on each PostgreSQL <strong>15, 16, 17 and 18</strong>. All four runs used\nthe same unchanged candidate source. PostgreSQL 18 additionally passed five\nreal Windows x64 NativeAOT executables. An actual Linux x64 container ran\nthe same 419 tests and five separate Linux NativeAOT executables against the\nexact source archive. These are local source-stable runs of an earlier dirty\nworking tree, not an immutable release or CI result. The latest Documents\nsidecar adds three tests; its 38-test suite passes on all four PostgreSQL\nversions, while the complete combined gate awaits the committed candidate.</li>\n<li>Edge’s locked npm install, TypeScript build, 14 contract tests, real browser\nIndexedDB restart smoke and real browser/PostgreSQL HTTP recovery smoke pass.\nThe fresh installed Schema/SQL tools and a separate package-only SQL consumer\npass relation and catalogue receipt modes, including qualified enum/domain\nround trips.</li>\n<li>All ten candidate package sets verify at clean commit <code>40c757a</code>: 32 NuGet\npackages, 31 symbol packages and one Edge npm package. CycloneDX 1.6, SPDX\n2.3 and provenance checks cover all 64 archives and 318 components. This\nverifies archive metadata and content,\nnot that the unpublished dependency graph can be restored from a public feed.\nThe dependency audit reports zero vulnerable entries across 195 .NET projects;\nlocked npm audit reports zero vulnerabilities in its 63-package tree. Audits\nare a point-in-time input, not a security certification.</li>\n<li>Events/Projections have source-bound exact-state 100,000-effect sweeps and a\n600-second bounded overload run with 866,618 rejected admissions rather than\nan unbounded queue. Three synchronous physical promotions recover with fenced\nownership. Jobs/Workflows have storage/fault and physical-promotion campaigns.\nTheir evidence lives under ignored <code>artifacts/</code> in this worktree; the\ncorresponding product documents explain measured scope and limitations.</li>\n<li>Events’ guarded local-only archive and retention stage passes 50 tests on each\nPostgreSQL version 15–18, including archived retry identity, lagging replay,\nfailed archive, published-outbox refusal and a direct old-client insert after\npruning. It does not prune the outbox published to Projections or bound the\npermanent identity and inbox ledgers.</li>\n<li>A separate 60-second Projections steady-load diagnostic run accepted and\ndelivered all 1,200 offers with zero rejection and\n129 ms projection / 132 ms inbox p99. The source fingerprint remained stable,\nbut the worktree was dirty; neither this short run nor the earlier overload\nrun is an exact-commit 30-minute qualification. Selective dependency\nreconciliation passes all 35 Projections tests on PostgreSQL 17; its\nperformance effect has not been measured in a controlled comparison.</li>\n<li>Jobs/Workflows now offer distinct seeded 1 KiB payloads in the physical\nstorage profile. A 600-second PostgreSQL 15 shared-host development campaign\npassed exact effects, terminal pruning and all five recovery faults: Jobs\ncompleted 36,168 effects at 60.2/s with an 8.9 MB relation peak and 6.8 KiB\ncluster WAL per accepted item; Workflows completed 10,710 at 17.8/s with a\n16.1 MB peak and 58.2 KiB WAL per accepted item. Both final-half relation\nendpoints fell. The source was stable but dirty, and the run is not an\nimmutable-candidate or multi-day capacity qualification.</li>\n<li>The <a href=\"/documentation/operations/documents-evidence-2026-09-28-maintenance-pair\">Documents fixed-cardinality comparison</a>\ncompleted two source-frozen 600-second profiles with exact logical checks,\n120-second idle drains and hard-killed writer recovery. The default profile\nended at 16.20 GB of relation storage for roughly 16 MiB retained source\ncontent; experimental fast TOAST vacuum ended at 9.06 GB with lower\nthroughput, higher tail latency and more WAL per transition. Neither profile\nestablished a physical bound.</li>\n<li>A new offline capacity verifier now rejects incomplete sustained reports and\nexplicit peak-size, late-growth, WAL, throughput and p99 budgets. The old\ndefault report fails an illustrative 512 MiB peak/16 MiB per minute late-growth\ntarget. The guarded harness now supports a six-hour request with a rolling\nfilesystem-observer window, and its sustained payload is distinct per\ndocument. A short owned PostgreSQL 18 fixture passed all 16 scenarios,\nkilled-writer recovery, source/binary binding and label-checked cleanup after\nthese harness changes. That short run is a correctness check; full-body\nJSONB rewrites retain the measured growth problem.</li>\n<li>The opt-in Documents content sidecar and bounded paged GC passed eight new\nPostgreSQL integration tests, with 38 total Documents tests on each version\n15–18. A <a href=\"/documentation/operations/documents-evidence-2026-09-28-attached-content-600s\">clean-commit 600-second attached-content run</a>\npassed its explicit local budget with 1,326,904 transitions at 2,211/s,\n19.0 MB peak owned relations, 375 MB WAL and 100 ms save p99. The 120-second\nidle drain, exact retained content, recovery and source/binary bindings\npassed. It has not yet passed repeated multi-hour capacity and failover gates;\nexisting inline-body users still have the measured growth problem.</li>\n<li>The <a href=\"/documentation/operations/ecosystem-performance\">manual exact-commit performance gate</a> now requires two\n30-minute campaigns each for Jobs, Workflows, Documents, and both steady and\noverload Projections profiles with profile-specific admission, throughput,\np99, WAL and storage budgets. A previous clean-SHA preflight passed, but the\nmulti-hour gate has not passed; setup and verifier defects found during local\nattempts were corrected before another qualification run.</li>\n</ul>\n<h2>Production qualification still required</h2>\n<p>The ten products need explicit application-level throughput, p99 and capacity\nbudgets; longer representative runs on independent load hosts; bounded storage\nand recovery under sustained hot updates; version/format and rolling upgrades;\ncredential rotation, network partition, storage pressure and repeated failover\nacross more families; security review and operational telemetry/runbooks; and\nrepeated clean-commit packages with SBOM/provenance and passing CI on the\ncommitted candidate. Windows browser evidence does not establish a Linux/browser\nmatrix. PostgreSQL 15–17 combined managed gates do not execute every native\nsmoke on those versions. The package publication policy and unreleased\ndependency gates remain disabled. Passing tests and short campaigns should not\nbe read as proof of massive-production performance or efficiency.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "ecosystem-release-qualification",
+    "summary": "Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and Workflows are implemented preview products at 0.1.0-preview.1. Their publication flags are disabled. The tagged release workflow recognizes t…",
+    "keywords": [
+      "docs",
+      "ecosystem",
+      "release",
+      "qualification"
+    ],
+    "order": 1067,
+    "title": "Expansion release qualification",
+    "sourcePath": "docs/ecosystem/release-qualification.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/release-qualification.md",
+    "headings": [
+      {
+        "id": "expansion-release-qualification",
+        "text": "Expansion release qualification",
+        "level": 1
+      }
+    ],
+    "wordCount": 860,
+    "readMinutes": 4,
+    "searchText": "Expansion release qualification Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and Workflows are implemented preview products at `0.1.0-preview.1`. Their publication flags are disabled. The tagged release workflow recognizes their names so a future qualified candidate can use the same package, SBOM, provenance and protected-publication machinery as the established families. Recognizing a tag is not authority to publish it. `eng/verify-expansion-release-policy.ps1` is the fail-closed source contract. It checks all ten preview entries while disabled. If a future candidate arms a family, it requires a stable version of at least `1.0.0`, the complete exact manual workflow set in its family manifest, a protected independent `expansion-candidate-readiness` environment, and the exact versioned tag pattern in the `package-production` governance contract. The tagged workflow also runs `verify-release-gates.ps1`, which requires successful manual runs whose `head_sha` equals the tag commit, a readiness artifact bound to the exact family, commit, tag, version and qualification artifact digests, and verifies that exact-version release dependencies are already public. The protected publish job checks the live repository and environment settings before any registry write. A source-only governance declaration cannot substitute for those live settings. Source policy checks neither run outcomes nor report contents. The release verifier checks workflow identity, event, conclusion, commit and the readiness artifact's references to the exact qualification runs and their retained artifact digests. The future qualification workflows and protected candidate aggregator must validate their own raw measurements before a successful run can count. Each family must have its own capacity, failover and durable-format upgrade qualification. The required workflow identities are fixed in `eng/expansion-release-policy.json`. Jobs needs a dedicated `jobs-release-capacity.yml` w",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Expansion release qualification</h1>\n<p>Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and\nWorkflows are implemented preview products at <code>0.1.0-preview.1</code>. Their\npublication flags are disabled. The tagged release workflow recognizes their\nnames so a future qualified candidate can use the same package, SBOM,\nprovenance and protected-publication machinery as the established families.\nRecognizing a tag is not authority to publish it.</p>\n<p><code>eng/verify-expansion-release-policy.ps1</code> is the fail-closed source contract.\nIt checks all ten preview entries while disabled. If a future candidate arms a\nfamily, it requires a stable version of at least <code>1.0.0</code>, the complete exact\nmanual workflow set in its family manifest, a protected independent\n<code>expansion-candidate-readiness</code> environment, and the exact versioned tag\npattern in the <code>package-production</code> governance contract. The tagged workflow\nalso runs <code>verify-release-gates.ps1</code>, which requires successful manual runs\nwhose <code>head_sha</code> equals the tag commit, a readiness artifact bound to the exact\nfamily, commit, tag, version and qualification artifact digests, and verifies\nthat exact-version release dependencies are already public. The protected\npublish job checks the live repository and environment settings before any\nregistry write. A source-only governance declaration cannot substitute for\nthose live settings. Source policy\nchecks neither run outcomes nor report contents. The release verifier checks\nworkflow identity, event, conclusion, commit and the readiness artifact’s\nreferences to the exact qualification runs and their retained artifact digests.\nThe future qualification workflows and protected candidate aggregator must\nvalidate their own raw measurements before a successful run can count.</p>\n<p>Each family must have its own capacity, failover and durable-format upgrade\nqualification. The required workflow identities are fixed in\n<code>eng/expansion-release-policy.json</code>. Jobs needs a dedicated\n<code>jobs-release-capacity.yml</code> workflow; the combined <code>ecosystem-performance.yml</code>\ncampaign cannot qualify it alone. The Jobs-only workflow is implemented but\nhas no passing release evidence. Workflows, Projections and Documents share\nthat exact-candidate capacity campaign because it measures each explicitly.\nIt must emit a separate retained capacity artifact for each family before\nany can use it as release evidence. Its result alone is not a product\nrelease pass. The other six need dedicated capacity workflows. Every family\nneeds a dedicated failover and upgrade workflow, plus the protected expansion\ncandidate aggregator. Jobs now has a source-bound synchronous-promotion\nfailover workflow, but no passing exact-candidate release run. Its upgrade\nworkflow, the protected aggregator, and the other families’ required readers\nare not implemented yet. An arming edit is therefore rejected even if\ngeneric <code>build.yml</code>, <code>security.yml</code>, <code>performance.yml</code> and\n<code>ecosystem-build.yml</code> pass.</p>\n<p>The Jobs capacity workflow runs only the Jobs storage profile on a dedicated,\ndigest-pinned PostgreSQL 15 fixture. It requires two separate full 1,800-second\nhigh-entropy campaigns on the reference runner. The Jobs-only verifier checks\ndurable completions, hot and cold tenant p99 latency, exact accepted effects,\nexplicit overload rejection, pruning, physical storage samples, late growth\nand cluster WAL per accepted job against\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/jobs-release-capacity-budgets.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/jobs-release-capacity-budgets.json</code></a>.\nIt retains the raw reports, fixture observations, source captures, binary\nsnapshot and a file-hash manifest in the\n<code>expansion-jobs-capacity-&lt;full-sha&gt;</code> artifact. These are local reference-runner\nlimits, not claims about independent hosts or multi-day retention. No\ncapacity pass is recorded by adding the workflow.</p>\n<p>The Jobs failover workflow repeats three fresh PostgreSQL 18 synchronous\nprimary/standby promotions. Its verifier requires the exact candidate source,\nunchanged test binaries, a passing unskipped test for each pair, 66 preserved\nacknowledged Jobs/admissions and 66 singular Jobs effects per pair, newer\nattempt-two fences with stale completion/effect rejection, tenant isolation,\nand outage-to-recovery health. Raw reports, database logs, fixture samples,\nTRX results and binary snapshots are retained in\n<code>expansion-jobs-failover-&lt;full-sha&gt;</code>. The local hard-stop proves neither\nasynchronous-loss tolerance nor split-brain fencing, old-primary rejoin,\ncredential rotation during promotion, persistent storage failure or fleet\navailability. No failover pass is recorded by adding the workflow.</p>\n<p>The eventual workflows must bind reports, binary/source hashes, fixture\nversions and actual workload outcomes to the same full candidate SHA. Capacity\nmust cover sustained throughput, P50/P95/P99 latency, allocation, memory,\nconnections, WAL, physical storage, overload and retention under documented\npayload, tenant and concurrency distributions. Failover must check\nacknowledged-effect survival, exact recovery, stale-owner fences, tenant\nisolation and repeated disturbance. Upgrade must rehearse forward and rollback\npaths for durable formats and supported PostgreSQL/client versions, including\nin-flight state. Independent review must inspect those retained reports and\noperator runbooks. A workflow that exits successfully without these checks\nmust not be added to the family manifest as qualification evidence.</p>\n<p>The candidate-readiness run must upload one\n<code>expansion-readiness-&lt;lowercase-family&gt;-&lt;full-sha&gt;</code> artifact containing\n<code>readiness.json</code>. Its schema 1 record must state the exact <code>family</code>,\n<code>candidateCommit</code>, <code>tag</code>, <code>version</code>, <code>readinessRun.id</code> and\n<code>readinessRun.attempt</code>. Its <code>qualificationEvidence</code> must contain exactly one\n<code>capacity</code>, <code>failover</code> and <code>upgrade</code> entry. Each names the policy workflow,\nsuccessful exact-candidate run ID and attempt, and an\n<code>expansion-&lt;lowercase-family&gt;-&lt;role&gt;-&lt;full-sha&gt;</code> artifact with its SHA-256\ndigest. The tagged release verifier compares these entries with GitHub’s\nretained, unexpired run artifacts and verifies the downloaded readiness ZIP\ndigest. This binds the reviewed evidence set to one candidate; the readiness\nworkflow must still inspect the reports’ substance and get independent\napproval. No workflow currently produces this release artifact.</p>\n<p>Source arming necessarily changes the commit SHA. The reviewed arming commit\nis therefore the immutable candidate; its manual runs and approvals occur\nafter that commit, and a later source change invalidates them. Until the\nproduct-specific readers, protected environment, exact tag policies and\ncandidate evidence exist, leave <code>publication.enabled=false</code> for all ten\nfamilies. This document does not declare any expansion family stable or\nproduction qualified.</p>\n"
       }
     ]
   },
@@ -2189,7 +2222,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "edge",
       "README"
     ],
-    "order": 1067,
+    "order": 1068,
     "title": "BlueTusk.Edge",
     "sourcePath": "docs/edge/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/README.md",
@@ -2301,7 +2334,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "events",
       "README"
     ],
-    "order": 1071,
+    "order": 1072,
     "title": "BlueTusk.Events",
     "sourcePath": "docs/events/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
@@ -2382,7 +2415,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "docs",
       "fuzzing"
     ],
-    "order": 1074,
+    "order": 1075,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -2474,7 +2507,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1080,
+    "order": 1081,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -2551,7 +2584,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "improvement",
       "audit"
     ],
-    "order": 1081,
+    "order": 1082,
     "title": "BlueTusk improvement audit and action record",
     "sourcePath": "docs/improvement-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
@@ -2603,7 +2636,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "README"
     ],
-    "order": 1082,
+    "order": 1083,
     "title": "BlueTusk.Jobs",
     "sourcePath": "docs/jobs/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
@@ -2681,7 +2714,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "durable",
       "format"
     ],
-    "order": 1083,
+    "order": 1084,
     "title": "Durable-format support and rehearsal",
     "sourcePath": "docs/jobs/durable-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
@@ -2692,13 +2725,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 432,
-    "readMinutes": 2,
-    "searchText": "Durable-format support and rehearsal Both products currently support durable schema format **1** only. There is no previous released Jobs/Workflows format, format-two migration or downgrade implementation. Definition versions inside a workflow are separate from the store format; `MigrateAsync` does not migrate database storage formats. `InitializeAsync` is deployment work. It serializes schema setup, checks the persisted format and durable admission fingerprint/limits, and rejects a mismatch. Do not start workers when initialization fails. Jobs persists payload and history limits; Workflows persists its definition/input/result/signal/node/ history admission bounds. Operational batch, aggregate-read/claim and command deadline tuning may change within the same durable limits. An incompatible initializer does not automatically widen constraints or rewrite existing work. The live `JobDurableFormatTests` and `WorkflowDurableFormatTests` rehearse a format-one store reopening with different operational tuning, then restoring its initial configuration. They preserve queued identity/deduplication, failed-attempt history, fencing and completion. A workflow pauses after one committed activity, reopens, receives a signal, rolls its process configuration back, and resumes its timer/final activity without repeating the earlier activity; replay must match. A separate live rehearsal exercises an actual supported definition boundary: version one commits an activity and waits for a signal, migrates quiescently to version two with an additional blocked node, reopens the store, then migrates back to version one at the current revision. The completed activity contract, result and original start/deduplication identity remain intact, the removed blocked node never executes, and the signal finishes the original definition. Stale-revision rollback is rejected and replay matches before and after rollback. This definition-version rollback is only permitted while every node is blocked or compl",
+    "wordCount": 471,
+    "readMinutes": 3,
+    "searchText": "Durable-format support and rehearsal Both products currently support durable schema format **1** only. There is no previous released Jobs/Workflows format, format-two migration or downgrade implementation. Definition versions inside a workflow are separate from the store format; `MigrateAsync` does not migrate database storage formats. `InitializeAsync` is deployment work. It serializes schema setup, checks the persisted format and durable admission fingerprint/limits, and rejects a mismatch. Do not start workers when initialization fails. Jobs persists payload and history limits; Workflows persists its definition/input/result/signal/node/ history admission bounds. Operational batch, aggregate-read/claim and command deadline tuning may change within the same durable limits. An incompatible initializer does not automatically widen constraints or rewrite existing work. The live `JobDurableFormatTests` and `WorkflowDurableFormatTests` rehearse a format-one store reopening with different operational tuning, then restoring its initial configuration. They preserve queued identity/deduplication, failed-attempt history, fencing and completion. A workflow pauses after one committed activity, reopens, receives a signal, rolls its process configuration back, and resumes its timer/final activity without repeating the earlier activity; replay must match. The manual [Jobs binary upgrade gate](upgrade.md) is separate from these same-binary tests. It requires distinct old-preview and candidate Jobs DLLs, overlapping old/new processes and an old-binary rollback on unchanged format-one state. No passing cross-binary run has yet been retained. A separate live rehearsal exercises an actual supported definition boundary: version one commits an activity and waits for a signal, migrates quiescently to version two with an additional blocked node, reopens the store, then migrates back to version one at the current revision. The completed activity contract, result and original start/deduplic",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Durable-format support and rehearsal</h1>\n<p>Both products currently support durable schema format <strong>1</strong> only. There is no\nprevious released Jobs/Workflows format, format-two migration or downgrade\nimplementation. Definition versions inside a workflow are separate from the\nstore format; <code>MigrateAsync</code> does not migrate database storage formats.</p>\n<p><code>InitializeAsync</code> is deployment work. It serializes schema setup, checks the\npersisted format and durable admission fingerprint/limits, and rejects a\nmismatch. Do not start workers when initialization fails. Jobs persists payload\nand history limits; Workflows persists its definition/input/result/signal/node/\nhistory admission bounds. Operational batch, aggregate-read/claim and command\ndeadline tuning may change within the same durable limits. An incompatible\ninitializer does not automatically widen constraints or rewrite existing work.</p>\n<p>The live <code>JobDurableFormatTests</code> and <code>WorkflowDurableFormatTests</code> rehearse a\nformat-one store reopening with different operational tuning, then restoring its\ninitial configuration. They preserve queued identity/deduplication, failed-attempt\nhistory, fencing and completion. A workflow pauses after one committed activity,\nreopens, receives a signal, rolls its process configuration back, and resumes its\ntimer/final activity without repeating the earlier activity; replay must match.</p>\n<p>A separate live rehearsal exercises an actual supported definition boundary:\nversion one commits an activity and waits for a signal, migrates quiescently to\nversion two with an additional blocked node, reopens the store, then migrates\nback to version one at the current revision. The completed activity contract,\nresult and original start/deduplication identity remain intact, the removed\nblocked node never executes, and the signal finishes the original definition.\nStale-revision rollback is rejected and replay matches before and after rollback.\nThis definition-version rollback is only permitted while every node is blocked\nor completed and every completed contract remains unchanged; it is distinct\nfrom durable database-format or binary downgrade.</p>\n<p>The rejection tests alter only a disposable schema’s format marker to an\nunsupported value, assert that initialization rejects it without rewriting\npending instances, restore the original marker, and continue normal processing.\nThey also reject changed durable admission bounds. Restoring a marker in a test\nis <strong>not</strong> a valid downgrade procedure for a real migrated schema. The tests use\nthe same candidate binary and do not establish cross-release compatibility.</p>\n<p>Run both full live suites through <code>eng/jobs-postgresql-compatibility.ps1</code> against\nthe owned disposable PostgreSQL fixtures. Retain the generated per-run TRX files\nand summary, recording the actual server patch versions and zero skipped tests.\nThese tests establish same-format configuration/restart behavior and rejection\nboundaries. A future format change still needs versioned migration tooling,\nupgrade from an actual prior binary/database snapshot, old/new worker overlap\nrules, interruption recovery, supported rollback decisions and immutable artifact\nprovenance. Until those exist, an operator should reject a mismatched deployment\nand retain its compatible binary and database backup rather than edit headers.</p>\n"
+        "html": "<h1>Durable-format support and rehearsal</h1>\n<p>Both products currently support durable schema format <strong>1</strong> only. There is no\nprevious released Jobs/Workflows format, format-two migration or downgrade\nimplementation. Definition versions inside a workflow are separate from the\nstore format; <code>MigrateAsync</code> does not migrate database storage formats.</p>\n<p><code>InitializeAsync</code> is deployment work. It serializes schema setup, checks the\npersisted format and durable admission fingerprint/limits, and rejects a\nmismatch. Do not start workers when initialization fails. Jobs persists payload\nand history limits; Workflows persists its definition/input/result/signal/node/\nhistory admission bounds. Operational batch, aggregate-read/claim and command\ndeadline tuning may change within the same durable limits. An incompatible\ninitializer does not automatically widen constraints or rewrite existing work.</p>\n<p>The live <code>JobDurableFormatTests</code> and <code>WorkflowDurableFormatTests</code> rehearse a\nformat-one store reopening with different operational tuning, then restoring its\ninitial configuration. They preserve queued identity/deduplication, failed-attempt\nhistory, fencing and completion. A workflow pauses after one committed activity,\nreopens, receives a signal, rolls its process configuration back, and resumes its\ntimer/final activity without repeating the earlier activity; replay must match.</p>\n<p>The manual <a href=\"/documentation/operations/jobs-upgrade\">Jobs binary upgrade gate</a> is separate from these\nsame-binary tests. It requires distinct old-preview and candidate Jobs DLLs,\noverlapping old/new processes and an old-binary rollback on unchanged format-one\nstate. No passing cross-binary run has yet been retained.</p>\n<p>A separate live rehearsal exercises an actual supported definition boundary:\nversion one commits an activity and waits for a signal, migrates quiescently to\nversion two with an additional blocked node, reopens the store, then migrates\nback to version one at the current revision. The completed activity contract,\nresult and original start/deduplication identity remain intact, the removed\nblocked node never executes, and the signal finishes the original definition.\nStale-revision rollback is rejected and replay matches before and after rollback.\nThis definition-version rollback is only permitted while every node is blocked\nor completed and every completed contract remains unchanged; it is distinct\nfrom durable database-format or binary downgrade.</p>\n<p>The rejection tests alter only a disposable schema’s format marker to an\nunsupported value, assert that initialization rejects it without rewriting\npending instances, restore the original marker, and continue normal processing.\nThey also reject changed durable admission bounds. Restoring a marker in a test\nis <strong>not</strong> a valid downgrade procedure for a real migrated schema. The tests use\nthe same candidate binary and do not establish cross-release compatibility.</p>\n<p>Run both full live suites through <code>eng/jobs-postgresql-compatibility.ps1</code> against\nthe owned disposable PostgreSQL fixtures. Retain the generated per-run TRX files\nand summary, recording the actual server patch versions and zero skipped tests.\nThese tests establish same-format configuration/restart behavior and rejection\nboundaries. A future format change still needs versioned migration tooling,\nupgrade from an actual prior binary/database snapshot, old/new worker overlap\nrules, interruption recovery, supported rollback decisions and immutable artifact\nprovenance. Until those exist, an operator should reject a mismatched deployment\nand retain its compatible binary and database backup rather than edit headers.</p>\n"
       }
     ]
   },
@@ -2707,13 +2740,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "categoryLabel": "Operations",
     "listed": false,
     "slug": "jobs-failover",
-    "summary": "eng/jobs-physical-recovery.ps1 creates fresh labelled PostgreSQL 18 primary and physical standby containers, private network and separate data volumes. Default loopback ports are 55625/55626, independent of the shared…",
+    "summary": "The manual Jobs release failover workflow wraps this rehearsal for one clean full candidate SHA. It requires three fresh synchronous pairs, verifies the exact Jobs effects and stale-owner",
     "keywords": [
       "docs",
       "jobs",
       "failover"
     ],
-    "order": 1084,
+    "order": 1085,
     "title": "Jobs and Workflows physical promotion rehearsal",
     "sourcePath": "docs/jobs/failover.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
@@ -2744,13 +2777,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2569,
-    "readMinutes": 12,
-    "searchText": "Jobs and Workflows physical promotion rehearsal `eng/jobs-physical-recovery.ps1` creates fresh labelled PostgreSQL 18 primary and physical standby containers, private network and separate data volumes. Default loopback ports are 55625/55626, independent of the shared 55415–55418 fixtures and the Projections recovery lab. The image is pinned by digest. It takes a physical base backup and verifies streaming synchronous replication before running the dedicated `BlueTusk.Workflows.PhysicalRecoveryTests` project. Three repetitions each receive a new pair and durable state. Cleanup verifies both owner and fixture labels before removing any container, network or volume. Each C# rehearsal has a 180-second work deadline and finite admission: two tenant scopes, 66 Jobs and six workflows. It creates the real fixture explicitly; missing configuration fails. The project is outside the ordinary `*.Tests.csproj` selector so a normal PostgreSQL test run cannot silently treat an absent failover lab as a passing scenario. The wrapper rejects skipped tests, preserves per-run TRX and PostgreSQL logs under `artifacts/jobs-physical-recovery`, and retains compact raw JSON plus fixture CPU/memory/I/O samples next to the selected report. Worker/probe shutdown and schema cleanup have separate bounded deadlines. Failed runs retain partial logs; they are not passing evidence. The wrapper captures the global candidate tree with `eng/capture-ecosystem-source.py` before and after all repetitions and rejects a changed tree. This covers provider source, shared build/central dependency inputs and the rest of the candidate, beyond the listed Jobs/Workflows source hashes. Each trial also captures and compares all executable, DLL, dependency and runtime configuration files in the dedicated test output before/after execution, including Data and the lower provider libraries. Generated reports/samples remain in ignored artifacts until the source comparison passes, then publish to the selected output. The ",
+    "wordCount": 2648,
+    "readMinutes": 13,
+    "searchText": "Jobs and Workflows physical promotion rehearsal The manual [Jobs release failover workflow](../../.github/workflows/jobs-release-failover.yml) wraps this rehearsal for one clean full candidate SHA. It requires three fresh synchronous pairs, verifies the exact Jobs effects and stale-owner fences against retained raw reports and binary hashes, then uploads a product-specific artifact only after independent archive verification. Adding the workflow does not supply a passing run. Credential replacement during promotion, prolonged silent network partitions, persistent storage loss, asynchronous replication, split brain, old-primary rejoin and independent-host operation remain separate release evidence. `eng/jobs-physical-recovery.ps1` creates fresh labelled PostgreSQL 18 primary and physical standby containers, private network and separate data volumes. Default loopback ports are 55625/55626, independent of the shared 55415–55418 fixtures and the Projections recovery lab. The image is pinned by digest. It takes a physical base backup and verifies streaming synchronous replication before running the dedicated `BlueTusk.Workflows.PhysicalRecoveryTests` project. Three repetitions each receive a new pair and durable state. Cleanup verifies both owner and fixture labels before removing any container, network or volume. Each C# rehearsal has a 180-second work deadline and finite admission: two tenant scopes, 66 Jobs and six workflows. It creates the real fixture explicitly; missing configuration fails. The project is outside the ordinary `*.Tests.csproj` selector so a normal PostgreSQL test run cannot silently treat an absent failover lab as a passing scenario. The wrapper rejects skipped tests, preserves per-run TRX and PostgreSQL logs under `artifacts/jobs-physical-recovery`, and retains compact raw JSON plus fixture CPU/memory/I/O samples next to the selected report. Worker/probe shutdown and schema cleanup have separate bounded deadlines. Failed runs retain partial logs; t",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Jobs and Workflows physical promotion rehearsal</h1>\n<p><code>eng/jobs-physical-recovery.ps1</code> creates fresh labelled PostgreSQL 18 primary and\nphysical standby containers, private network and separate data volumes. Default\nloopback ports are 55625/55626, independent of the shared 55415–55418 fixtures and\nthe Projections recovery lab. The image is pinned by digest. It takes a physical\nbase backup and verifies streaming synchronous replication before running the\ndedicated <code>BlueTusk.Workflows.PhysicalRecoveryTests</code> project. Three repetitions\neach receive a new pair and durable state. Cleanup verifies both owner and\nfixture labels before removing any container, network or volume.</p>\n"
+        "html": "<h1>Jobs and Workflows physical promotion rehearsal</h1>\n<p>The manual <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/.github/workflows/jobs-release-failover.yml\" target=\"_blank\" rel=\"noreferrer\">Jobs release failover workflow</a>\nwraps this rehearsal for one clean full candidate SHA. It requires three\nfresh synchronous pairs, verifies the exact Jobs effects and stale-owner\nfences against retained raw reports and binary hashes, then uploads a\nproduct-specific artifact only after independent archive verification.\nAdding the workflow does not supply a passing run. Credential replacement\nduring promotion, prolonged silent network partitions, persistent storage\nloss, asynchronous replication, split brain, old-primary rejoin and\nindependent-host operation remain separate release evidence.</p>\n<p><code>eng/jobs-physical-recovery.ps1</code> creates fresh labelled PostgreSQL 18 primary and\nphysical standby containers, private network and separate data volumes. Default\nloopback ports are 55625/55626, independent of the shared 55415–55418 fixtures and\nthe Projections recovery lab. The image is pinned by digest. It takes a physical\nbase backup and verifies streaming synchronous replication before running the\ndedicated <code>BlueTusk.Workflows.PhysicalRecoveryTests</code> project. Three repetitions\neach receive a new pair and durable state. Cleanup verifies both owner and\nfixture labels before removing any container, network or volume.</p>\n"
       },
       {
         "kind": "code",
@@ -2785,7 +2818,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "hosting"
     ],
-    "order": 1085,
+    "order": 1086,
     "title": "Scoped Jobs and Workflows host readiness",
     "sourcePath": "docs/jobs/hosting.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
@@ -2837,7 +2870,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "maintenance"
     ],
-    "order": 1086,
+    "order": 1087,
     "title": "Durable storage maintenance contract",
     "sourcePath": "docs/jobs/maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
@@ -2869,7 +2902,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "performance"
     ],
-    "order": 1087,
+    "order": 1088,
     "title": "Jobs and Workflows capacity and recovery harness",
     "sourcePath": "docs/jobs/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
@@ -2969,6 +3002,38 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "jobs-upgrade",
+    "summary": "The manual Jobs upgrade workflow requires two immutable full commit SHAs: an earlier Jobs preview source commit reachable from the candidate and the exact candidate commit. It builds and archives",
+    "keywords": [
+      "docs",
+      "jobs",
+      "upgrade"
+    ],
+    "order": 1089,
+    "title": "Jobs binary upgrade and rollback gate",
+    "sourcePath": "docs/jobs/upgrade.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/upgrade.md",
+    "headings": [
+      {
+        "id": "jobs-binary-upgrade-and-rollback-gate",
+        "text": "Jobs binary upgrade and rollback gate",
+        "level": 1
+      }
+    ],
+    "wordCount": 325,
+    "readMinutes": 2,
+    "searchText": "Jobs binary upgrade and rollback gate The manual [Jobs upgrade workflow](../../.github/workflows/jobs-release-upgrade.yml) requires two immutable full commit SHAs: an earlier Jobs preview source commit reachable from the candidate and the exact candidate commit. It builds and archives both Jobs packages and separate probe executables from those source trees. The executed `BlueTusk.Jobs.dll` must match its archived package and **differ** between old and candidate. A same-binary configuration reopen does not satisfy this gate. The old process initializes a fresh format-one schema, persists a running lease, a failed attempt ready for retry, and pending work. While the old process remains alive and holds its lease, the candidate process opens the same store, confirms deduplication identities, completes the retry and pending work, and signals the old process to complete its held lease. The candidate verifies that completion. After both processes exit, the old binary reopens the store, checks all states and attempt histories, then admits and completes a new job. Each phase rejects a duplicate completion. The store header must remain format 1 with unchanged payload and history admission limits throughout. This is the only supported rollback boundary; there is no format migration or downgrade procedure. The successful artifact includes the old Git source archive, both package files, both executable snapshots, phase records and process logs, and a manifest of SHA-256 hashes. Its verifier ties the source trees, probe, packages, executable Jobs DLLs and exact effect counts to the candidate and old commits. A partial or failed run uses a separate artifact name and never satisfies release readiness. This workflow has not run and creates no qualification merely by existing. An earlier preview commit such as `14b212e` is reachable from this branch, but its Jobs and Data source matches the current candidate. The binary difference check should reject it until a candidate genuinely c",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Jobs binary upgrade and rollback gate</h1>\n<p>The manual <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/.github/workflows/jobs-release-upgrade.yml\" target=\"_blank\" rel=\"noreferrer\">Jobs upgrade workflow</a>\nrequires two immutable full commit SHAs: an earlier Jobs preview source commit\nreachable from the candidate and the exact candidate commit. It builds and archives\nboth Jobs packages and separate probe executables from those source trees. The\nexecuted <code>BlueTusk.Jobs.dll</code> must match its archived package and <strong>differ</strong> between\nold and candidate. A same-binary configuration reopen does not satisfy this gate.</p>\n<p>The old process initializes a fresh format-one schema, persists a running lease,\na failed attempt ready for retry, and pending work. While the old process remains\nalive and holds its lease, the candidate process opens the same store, confirms\ndeduplication identities, completes the retry and pending work, and signals the\nold process to complete its held lease. The candidate verifies that completion.\nAfter both processes exit, the old binary reopens the store, checks all states and\nattempt histories, then admits and completes a new job. Each phase rejects a\nduplicate completion. The store header must remain format 1 with unchanged\npayload and history admission limits throughout. This is the only supported\nrollback boundary; there is no format migration or downgrade procedure.</p>\n<p>The successful artifact includes the old Git source archive, both package files,\nboth executable snapshots, phase records and process logs, and a manifest of\nSHA-256 hashes. Its verifier ties the source trees, probe, packages, executable\nJobs DLLs and exact effect counts to the candidate and old commits. A partial or\nfailed run uses a separate artifact name and never satisfies release readiness.\nThis workflow has not run and creates no qualification merely by existing.</p>\n<p>An earlier preview commit such as <code>14b212e</code> is reachable from this branch, but\nits Jobs and Data source matches the current candidate. The binary difference\ncheck should reject it until a candidate genuinely changes the Jobs assembly.\nThere is no previously published Jobs package or released durable format. A\nfuture format change requires a separate migration and rollback policy.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-application-platform-health",
     "summary": "BlueTusk's three Clean Architecture reference applications are production-shaped workloads, but Kubernetes desired state is not proof that a workload is actually running. A stale Pod object can continue to show Runnin…",
     "keywords": [
@@ -2978,7 +3043,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1095,
+    "order": 1097,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -3076,7 +3141,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1096,
+    "order": 1098,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -3185,7 +3250,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1098,
+    "order": 1100,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -3259,7 +3324,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1099,
+    "order": 1101,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -3316,7 +3381,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1101,
+    "order": 1103,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -3444,7 +3509,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1102,
+    "order": 1104,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -3529,7 +3594,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "1",
       "1"
     ],
-    "order": 1103,
+    "order": 1105,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -3602,7 +3667,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1106,
+    "order": 1108,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -3761,7 +3826,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1107,
+    "order": 1109,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -3849,7 +3914,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "website",
       "production"
     ],
-    "order": 1110,
+    "order": 1112,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -3916,7 +3981,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1112,
+    "order": 1114,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -3948,7 +4013,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LIVE"
     ],
-    "order": 1113,
+    "order": 1115,
     "title": "Published projections in Live",
     "sourcePath": "docs/projections/LIVE.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
@@ -4010,7 +4075,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LOAD"
     ],
-    "order": 1114,
+    "order": 1116,
     "title": "Workload and recovery qualification",
     "sourcePath": "docs/projections/LOAD.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
@@ -4067,7 +4132,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "README"
     ],
-    "order": 1115,
+    "order": 1117,
     "title": "BlueTusk.Projections",
     "sourcePath": "docs/projections/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
@@ -4134,7 +4199,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "RECOVERY"
     ],
-    "order": 1116,
+    "order": 1118,
     "title": "Explicit source recovery and controlled DDL",
     "sourcePath": "docs/projections/RECOVERY.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
@@ -4172,7 +4237,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "evidence",
       "README"
     ],
-    "order": 1117,
+    "order": 1119,
     "title": "Local bounded workload evidence",
     "sourcePath": "docs/projections/evidence/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
@@ -4218,7 +4283,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1120,
+    "order": 1122,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -4250,7 +4315,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "process"
     ],
-    "order": 1125,
+    "order": 1127,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -4276,13 +4341,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1305,
-    "readMinutes": 6,
-    "searchText": "Release process BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish. `eng/product-families.json` schema 2 records, for every independently versioned family: whether publication is armed in an immutable candidate; whether the release channel is stable or preview; the one exact tag prefix; cross-family release dependencies; and the GitHub Actions workflows that must have succeeded for the exact release commit from an approved event. All six families are published at stable `1.0.0` without prerelease suffixes; the [V1 publication record](releases/1.0.0-publication-record.md) documents the owner exception used for that release. During preparation a publication policy may be disabled. In a final immutable candidate, `enabled=true` means the family is armed; it does not publish a package. Exact release tags and protected `package-production` approval remain the publication boundary. Current package RC train `eng/package-prerelease-train.json` defines the prepared immutable `1.2.0-rc.1` package train for all six families in stable dependency order. This train is not public until the reviewed commit reaches `main` and the six exact RC tags publish successfully. RC packing uses version overrides and temporary npm artifact copies; it does not rewrite the stable family manifests. Every internal NuGet/npm dependency must resolve to the same exact RC version. Exact `*-v1.2.0-rc.1` tags publish through the protected `package-prerelease` environment, and npm packages use the `rc` dist-tag, never `latest`. A correction is `rc.2`; an RC is never overwritten. The complete `1.1.0-rc.1` train was published on 2026-08-29 from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm packages passed public-availability and clean-consumer verification. The [release record](releases/1.1.0-rc.1.md) is the human-readable authority. This does not arm or authorize stable `1.1.0`. The separate `eng/prere",
+    "wordCount": 1410,
+    "readMinutes": 7,
+    "searchText": "Release process BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish. `eng/product-families.json` schema 2 records, for every independently versioned family: whether publication is armed in an immutable candidate; whether the release channel is stable or preview; the one exact tag prefix; cross-family release dependencies; and the GitHub Actions workflows that must have succeeded for the exact release commit from an approved event. All six families are published at stable `1.0.0` without prerelease suffixes; the [V1 publication record](releases/1.0.0-publication-record.md) documents the owner exception used for that release. During preparation a publication policy may be disabled. In a final immutable candidate, `enabled=true` means the family is armed; it does not publish a package. Exact release tags and protected `package-production` approval remain the publication boundary. Current package RC train `eng/package-prerelease-train.json` defines the prepared immutable `1.2.0-rc.1` package train for all six historical families in dependency order. Its inclusion of Graph is prerelease packaging, not Graph stable qualification. This train is not public until the reviewed commit reaches `main` and the six exact RC tags publish successfully. RC packing uses version overrides and temporary npm artifact copies; it does not rewrite the stable family manifests. Every internal NuGet/npm dependency must resolve to the same exact RC version. Exact `*-v1.2.0-rc.1` tags publish through the protected `package-prerelease` environment, and npm packages use the `rc` dist-tag, never `latest`. A correction is `rc.2`; an RC is never overwritten. The complete `1.1.0-rc.1` train was published on 2026-08-29 from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm packages passed public-availability and clean-consumer verification. The [release record](releases/1.1.0-rc.1.md) is the human-readab",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Release process</h1>\n<p>BlueTusk release publication is fail closed. A successful build or candidate\npackage is evidence, not permission to publish.</p>\n<p><code>eng/product-families.json</code> schema 2 records, for every independently versioned\nfamily:</p>\n<ul>\n<li>whether publication is armed in an immutable candidate;</li>\n<li>whether the release channel is stable or preview;</li>\n<li>the one exact tag prefix;</li>\n<li>cross-family release dependencies; and</li>\n<li>the GitHub Actions workflows that must have succeeded for the exact release\ncommit from an approved event.</li>\n</ul>\n<p>All six families are published at stable <code>1.0.0</code> without prerelease suffixes;\nthe <a href=\"/documentation/operations/releases-1-0-0-publication-record\">V1 publication record</a> documents the\nowner exception used for that release. During preparation a publication policy\nmay be disabled. In a final immutable candidate, <code>enabled=true</code> means the family is armed; it does\nnot publish a package. Exact release tags and protected <code>package-production</code>\napproval remain the publication boundary.</p>\n<h2>Current package RC train</h2>\n<p><code>eng/package-prerelease-train.json</code> defines the prepared immutable\n<code>1.2.0-rc.1</code> package train for all six families in stable dependency order.\nThis train is not public until the reviewed commit reaches <code>main</code> and the six\nexact RC tags publish successfully. RC packing uses version\noverrides and temporary npm artifact copies; it does not rewrite the stable\nfamily manifests. Every internal NuGet/npm dependency must resolve to the same\nexact RC version. Exact <code>*-v1.2.0-rc.1</code> tags publish through the protected\n<code>package-prerelease</code> environment, and npm packages use the <code>rc</code> dist-tag,\nnever <code>latest</code>. A correction is <code>rc.2</code>; an RC is never overwritten.</p>\n<p>The complete <code>1.1.0-rc.1</code> train was published on 2026-08-29 from commit\n<code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code>. All 62 NuGet and three npm\npackages passed public-availability and clean-consumer verification. The\n<a href=\"/documentation/getting-started/release-1-1-rc1\">release record</a> is the human-readable authority. This\ndoes not arm or authorize stable <code>1.1.0</code>.</p>\n<p>The separate <code>eng/prerelease-train.json</code> manifest places the production\napplication source and image workflow on the prepared exact <code>1.2.0-rc.1</code>\ntrain. New image evidence must be generated after that train is public and from\nthe reviewed commit; it cannot reuse the historical 1.0 or 1.1 image manifest.\nEarlier application observations remain historical evidence and are not\nrewritten.</p>\n<p>Before registry publication, the package-consumer solution restores through\n<code>eng/nuget/applications-candidate.config</code> into an isolated cache. Its source\nmapping resolves <code>BlueTusk.*</code> only from <code>artifacts/prerelease/feed</code>, which is\nrebuilt from the current candidate; it cannot silently consume an older\nsame-version package from a machine cache or registry. Deployable application\nimages reverse that trust boundary: their workflow first verifies the complete\npublic RC inventory, then restores from the public registries and records image\ndigests, scans and attestations.</p>\n<p>RC tags, packages, images, deployments, and observations cannot satisfy a\nstable exact-SHA gate. The three package-consumer applications and the\nstaging/production boundary are documented in the\n<a href=\"/documentation/operations/v1-applications\">V1 application suite</a>.</p>\n<h2>Candidate sequence</h2>\n<ol>\n<li>Finish code, documentation, API/format freezes, upgrades, package inspection,\nsecurity audit, live matrices, and performance gates.</li>\n<li>After PostgreSQL 19 GA, merge a reviewed final arming PR to <code>main</code>. Its\nresulting SHA must contain exactly six stable <code>1.2.0</code> families, all armed\nin dependency order, with no stable 1.2 release tags or stable 1.2 packages\npublished. The manifest-bound public RC remains separate evidence and\ncannot satisfy the stable gate. That reviewed <code>main</code> SHA is the immutable\ncandidate.</li>\n<li>Dispatch <code>build.yml</code> explicitly at that exact commit. A normal pull-request\nor branch-push run is not release evidence because the manual run includes\nthe elevated PostgreSQL, connector, authentication, stress, and endurance\njobs.</li>\n<li>Dispatch <code>security.yml</code> at that exact commit and require the manual CodeQL\nrun to succeed. Dispatch <code>fuzzing.yml</code> at the same commit for its enforced\nminimum of one hour per target; every target must finish without a crash or\nhang finding.</li>\n<li>Dispatch <code>performance.yml</code> at that exact commit on the labelled reference\nrunner and retain its integrity-bound complete benchmark evidence.</li>\n<li>Complete <code>streams-release-endurance.yml</code>,\n<code>sync-release-endurance.yml</code>,\n<code>live-control-plane-release-endurance.yml</code>, and\n<code>continuous-graph-release-endurance.yml</code> at that commit. The four windows\nare 72, 24, 24, and 24 hours respectively. ContinuousGraph additionally requires\nat least 100,000 evaluations, 99.9% committed outcomes, P95 lifecycle at or\nbelow one second, repair/restart/cancellation/disconnect evidence, and no\nordering or reconciliation errors.</li>\n<li>Complete the external acceptance records and run\nthe protected <code>v1-candidate-readiness.yml</code> aggregation workflow as described\nin <a href=\"/documentation/operations/operations-production-readiness\">V1 production readiness</a>. Every\nfamily release requires this successful workflow at the exact commit.</li>\n<li>Do not change the candidate commit after evidence succeeds. Any source,\nproject, dependency, version, workflow, or release-policy change creates a\nnew commit and invalidates the evidence.</li>\n<li>Create the exact tags sequentially on the verified commit:\n<code>provider-v1.2.0</code>, <code>streams-v1.2.0</code>, <code>sync-v1.2.0</code>,\n<code>live-v1.2.0</code>, <code>control-plane-v1.2.0</code>, then\n<code>continuous-graph-v1.2.0</code>. After every tag, verify registry availability,\nhashes, provenance, installation, and dependency resolution before creating\nthe next tag.</li>\n</ol>\n<p>The release workflow rejects a tag that differs from the version property,\nrejects a dirty or different checkout, and queries GitHub Actions for every\nrequired successful workflow run whose <code>head_sha</code> is exactly the tagged commit.\nIt does not accept a run for an ancestor, a rebuilt binary from another tree, a\npull-request event, or a merely uploaded report. Before accepting a dependent\nfamily, it also verifies that every exact dependency package version is already\navailable from NuGet, including all npm clients owned by a dependency family.\nArming all families in the candidate therefore cannot bypass the tag and\nprotected-environment publication order.</p>\n<h2>Publication boundary</h2>\n<p>A manual dispatch of <code>release-product-family.yml</code> can only produce gated\ncandidate artifacts. It cannot publish. Publication occurs only from an exact\nmatching tag after <code>verify-release-gates.ps1</code> succeeds.</p>\n<p>The publish job downloads the artifact created by the verified job, records a\nGitHub build-provenance attestation, and runs in the <code>package-production</code>\nenvironment. That environment is configured with prevent-self-review and the\nsix allowed release-tag patterns. Before the first candidate, add another\neligible human reviewer; the repository currently has only its owner, so an\nowner-triggered deployment cannot self-approve. Configure NuGet trusted-\npublishing policies for <code>release-product-family.yml</code>, restricted to the\n<code>package-production</code> and <code>package-prerelease</code> environments and the\n<code>BlueTusk.*</code> package-ID glob. The publish jobs exchange their GitHub OIDC tokens\nfor one-hour NuGet API keys immediately before publishing; no long-lived NuGet\ncredential is stored in GitHub. Scope <code>NPM_TOKEN</code> only to the matching protected\nenvironment; it must not be available to pull-request or candidate jobs. Store\na fine-grained <code>V1_GOVERNANCE_TOKEN</code> with Administration read, Actions read,\nContents read and Environments read in both protected environments. It is used\nonly for the fail-closed live settings and required-secret-name check; no\nworkflow uses it to read secret values or change repository settings.</p>\n<p>The exact live settings are not informal setup advice. They are declared in\n<code>eng/v1-github-governance.json</code> and verified through the GitHub API by\n<code>verify-github-governance.ps1 -Mode Remote</code>. The same contract requires the\n<code>main</code> ruleset, all 35 V1 status checks, fresh independent review after the\nlast push, resolved review threads, the protected\n<code>v1-candidate-readiness</code> environment with administrator bypass disabled, and\nthe six allowed production tag patterns. It also requires the dependency\ngraph, vulnerability alerts, automated security fixes and private vulnerability\nreporting. A missing or\nunprotected environment, or a disabled repository security feature, makes both\ncandidate acceptance and tagged publication fail.</p>\n<p>The workflow packages only the selected family, and each package project is\nlisted explicitly in the manifest. Candidate package creation uses\n<code>pack-product-family.ps1 -Candidate</code>; normal packaging refuses every disabled\nfamily. Before upload, <code>verify-product-family-packages.ps1</code> requires the exact\nNuGet, symbol, and npm archive set; safe archive paths; MIT metadata; repository\ncommit provenance; correct internal dependency versions; portable PDBs; and\ncompiled npm distributions without install lifecycle scripts. Duplicate NuGet\npublication is a release failure, and npm publication uses registry provenance.\nDependency order is Provider, Streams, Sync, Live, Control Plane, then\nContinuousGraph.</p>\n<p>Every external GitHub Action reference is pinned to a full commit.\n<code>security.yml</code> runs CodeQL and pull-request dependency review, while\n<code>verify-supply-chain.ps1</code> enforces the pins and exact per-family API budgets.\nThe release job generates CycloneDX 1.6 and SPDX 2.3 SBOMs, plus a provenance\nmanifest containing the source commit and SHA-256 of every NuGet, symbols and\nnpm artifact. It verifies those records before upload and includes the package\nset and SBOMs in the GitHub build-provenance attestation.</p>\n<p>An independent reviewer completes the\n<a href=\"/documentation/operations/release-review-handoff\">release review handoff</a> for the exact candidate\nbefore an administrator enables publication. The\n<a href=\"/documentation/operations/v1-release-readiness\">V1 release-readiness record</a> separates implemented\nhardening from the remaining exact-candidate and external evidence.</p>\n"
+        "html": "<h1>Release process</h1>\n<p>BlueTusk release publication is fail closed. A successful build or candidate\npackage is evidence, not permission to publish.</p>\n<p><code>eng/product-families.json</code> schema 2 records, for every independently versioned\nfamily:</p>\n<ul>\n<li>whether publication is armed in an immutable candidate;</li>\n<li>whether the release channel is stable or preview;</li>\n<li>the one exact tag prefix;</li>\n<li>cross-family release dependencies; and</li>\n<li>the GitHub Actions workflows that must have succeeded for the exact release\ncommit from an approved event.</li>\n</ul>\n<p>All six families are published at stable <code>1.0.0</code> without prerelease suffixes;\nthe <a href=\"/documentation/operations/releases-1-0-0-publication-record\">V1 publication record</a> documents the\nowner exception used for that release. During preparation a publication policy\nmay be disabled. In a final immutable candidate, <code>enabled=true</code> means the family is armed; it does\nnot publish a package. Exact release tags and protected <code>package-production</code>\napproval remain the publication boundary.</p>\n<h2>Current package RC train</h2>\n<p><code>eng/package-prerelease-train.json</code> defines the prepared immutable\n<code>1.2.0-rc.1</code> package train for all six historical families in dependency order.\nIts inclusion of Graph is prerelease packaging, not Graph stable qualification.\nThis train is not public until the reviewed commit reaches <code>main</code> and the six\nexact RC tags publish successfully. RC packing uses version\noverrides and temporary npm artifact copies; it does not rewrite the stable\nfamily manifests. Every internal NuGet/npm dependency must resolve to the same\nexact RC version. Exact <code>*-v1.2.0-rc.1</code> tags publish through the protected\n<code>package-prerelease</code> environment, and npm packages use the <code>rc</code> dist-tag,\nnever <code>latest</code>. A correction is <code>rc.2</code>; an RC is never overwritten.</p>\n<p>The complete <code>1.1.0-rc.1</code> train was published on 2026-08-29 from commit\n<code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code>. All 62 NuGet and three npm\npackages passed public-availability and clean-consumer verification. The\n<a href=\"/documentation/getting-started/release-1-1-rc1\">release record</a> is the human-readable authority. This\ndoes not arm or authorize stable <code>1.1.0</code>.</p>\n<p>The separate <code>eng/prerelease-train.json</code> manifest places the production\napplication source and image workflow on the prepared exact <code>1.2.0-rc.1</code>\ntrain. New image evidence must be generated after that train is public and from\nthe reviewed commit; it cannot reuse the historical 1.0 or 1.1 image manifest.\nEarlier application observations remain historical evidence and are not\nrewritten.</p>\n<p>Before registry publication, the package-consumer solution restores through\n<code>eng/nuget/applications-candidate.config</code> into an isolated cache. Its source\nmapping resolves <code>BlueTusk.*</code> only from <code>artifacts/prerelease/feed</code>, which is\nrebuilt from the current candidate; it cannot silently consume an older\nsame-version package from a machine cache or registry. Deployable application\nimages reverse that trust boundary: their workflow first verifies the complete\npublic RC inventory, then restores from the public registries and records image\ndigests, scans and attestations.</p>\n<p>RC tags, packages, images, deployments, and observations cannot satisfy a\nstable exact-SHA gate. The three package-consumer applications and the\nstaging/production boundary are documented in the\n<a href=\"/documentation/operations/v1-applications\">V1 application suite</a>.</p>\n<h2>Candidate sequence</h2>\n<p>The <code>1.2.0</code> stable track contains Provider, Streams, Sync, Live and Control\nPlane. Continuous Graph remains preview until a supported server supplies\nSQL/PGQ and the separate Graph qualification passes. PostgreSQL 19 GA alone\ncannot qualify Graph. The ten ecosystem additions have separate preview\nversions and <a href=\"/documentation/operations/ecosystem-release-qualification\">release qualification</a>; none\nis armed for stable publication. The historical V1 aggregator is not a 1.2\nor expansion release verdict. The 1.2 core aggregator is still being migrated,\nso this sequence is a release plan, not permission to tag now.</p>\n<ol>\n<li>Finish code, documentation, API/format freezes, upgrades, package inspection,\nsecurity audit, live matrices, and performance gates for the chosen track.</li>\n<li>Merge a reviewed final arming PR to <code>main</code> for the five core <code>1.2.0</code>\nfamilies in dependency order. Its resulting SHA must have no stable 1.2\ntags or packages yet. The manifest-bound public RC remains separate evidence\nand cannot satisfy the stable gate. That reviewed <code>main</code> SHA is the immutable\ncandidate.</li>\n<li>Dispatch <code>build.yml</code> explicitly at that exact commit. A normal pull-request\nor branch-push run is not release evidence because the manual run includes\nthe elevated PostgreSQL, connector, authentication, stress, and endurance\njobs.</li>\n<li>Dispatch <code>security.yml</code> at that exact commit and require the manual CodeQL\nrun to succeed. Dispatch <code>fuzzing.yml</code> at the same commit for its enforced\nminimum of one hour per target; every target must finish without a crash or\nhang finding.</li>\n<li>Dispatch <code>performance.yml</code> at that exact commit on the labelled reference\nrunner and retain its integrity-bound complete benchmark evidence.</li>\n<li>Complete <code>streams-release-endurance.yml</code>,\n<code>sync-release-endurance.yml</code>, and\n<code>live-control-plane-release-endurance.yml</code> at that commit. Their windows are\n72, 24 and 24 hours respectively. Graph’s separate preview endurance cannot\nsubstitute for a core gate.</li>\n<li>Complete the external acceptance records and the migrated protected 1.2\ncore candidate aggregator at that exact commit. Its current\n<code>eng/v1.2-candidate-readiness.json</code> contract is marked migration-in-progress\nand publication-disabled. The historical <code>v1-candidate-readiness.yml</code> does\nnot satisfy this step.</li>\n<li>Do not change the candidate commit after evidence succeeds. Any source,\nproject, dependency, version, workflow, or release-policy change creates a\nnew commit and invalidates the evidence.</li>\n<li>Only after the preceding gates pass, create the exact core tags\nsequentially on the verified commit:\n<code>provider-v1.2.0</code>, <code>streams-v1.2.0</code>, <code>sync-v1.2.0</code>,\n<code>live-v1.2.0</code>, then <code>control-plane-v1.2.0</code>.\nAfter every tag, verify registry availability,\nhashes, provenance, installation, and dependency resolution before creating\nthe next tag.</li>\n</ol>\n<p>The release workflow rejects a tag that differs from the version property,\nrejects a dirty or different checkout, and queries GitHub Actions for every\nrequired successful workflow run whose <code>head_sha</code> is exactly the tagged commit.\nIt does not accept a run for an ancestor, a rebuilt binary from another tree, a\npull-request event, or a merely uploaded report. Before accepting a dependent\nfamily, it also verifies that every exact dependency package version is already\navailable from NuGet, including all npm clients owned by a dependency family.\nArming all families in the candidate therefore cannot bypass the tag and\nprotected-environment publication order.</p>\n<h2>Publication boundary</h2>\n<p>A manual dispatch of <code>release-product-family.yml</code> can only produce gated\ncandidate artifacts. It cannot publish. Publication occurs only from an exact\nmatching tag after <code>verify-release-gates.ps1</code> succeeds.</p>\n<p>The publish job downloads the artifact created by the verified job, records a\nGitHub build-provenance attestation, and runs in the <code>package-production</code>\nenvironment. That environment is configured with prevent-self-review and the\ndeclared exact release-tag patterns. Before the first candidate, add another\neligible human reviewer; the repository currently has only its owner, so an\nowner-triggered deployment cannot self-approve. Configure NuGet trusted-\npublishing policies for <code>release-product-family.yml</code>, restricted to the\n<code>package-production</code> and <code>package-prerelease</code> environments and the\n<code>BlueTusk.*</code> package-ID glob. The publish jobs exchange their GitHub OIDC tokens\nfor one-hour NuGet API keys immediately before publishing; no long-lived NuGet\ncredential is stored in GitHub. Scope <code>NPM_TOKEN</code> only to the matching protected\nenvironment; it must not be available to pull-request or candidate jobs. Store\na fine-grained <code>V1_GOVERNANCE_TOKEN</code> with Administration read, Actions read,\nContents read and Environments read in both protected environments. It is used\nonly for the fail-closed live settings and required-secret-name check; no\nworkflow uses it to read secret values or change repository settings.</p>\n<p>The exact live settings are not informal setup advice. They are declared in\n<code>eng/v1-github-governance.json</code> and verified through the GitHub API by\n<code>verify-github-governance.ps1 -Mode Remote</code>. The same contract requires the\n<code>main</code> ruleset, all 35 V1 status checks, fresh independent review after the\nlast push, resolved review threads, the protected\n<code>v1-candidate-readiness</code> environment with administrator bypass disabled, and\nthe declared production tag patterns. It also requires the dependency\ngraph, vulnerability alerts, automated security fixes and private vulnerability\nreporting. A missing or\nunprotected environment, or a disabled repository security feature, makes both\ncandidate acceptance and tagged publication fail.</p>\n<p>The workflow packages only the selected family, and each package project is\nlisted explicitly in the manifest. Candidate package creation uses\n<code>pack-product-family.ps1 -Candidate</code>; normal packaging refuses every disabled\nfamily. Before upload, <code>verify-product-family-packages.ps1</code> requires the exact\nNuGet, symbol, and npm archive set; safe archive paths; MIT metadata; repository\ncommit provenance; correct internal dependency versions; portable PDBs; and\ncompiled npm distributions without install lifecycle scripts. Duplicate NuGet\npublication is a release failure, and npm publication uses registry provenance.\nStable 1.2 core dependency order is Provider, Streams, Sync, Live, then\nControl Plane. Graph and the expansion families retain separate gates.</p>\n<p>Every external GitHub Action reference is pinned to a full commit.\n<code>security.yml</code> runs CodeQL and pull-request dependency review, while\n<code>verify-supply-chain.ps1</code> enforces the pins and exact per-family API budgets.\nThe release job generates CycloneDX 1.6 and SPDX 2.3 SBOMs, plus a provenance\nmanifest containing the source commit and SHA-256 of every NuGet, symbols and\nnpm artifact. It verifies those records before upload and includes the package\nset and SBOMs in the GitHub build-provenance attestation.</p>\n<p>An independent reviewer completes the\n<a href=\"/documentation/operations/release-review-handoff\">release review handoff</a> for the exact armed\ncandidate before any tag is created. Arming changes the commit SHA, so\npre-arming reports cannot satisfy that handoff. The\n<a href=\"/documentation/operations/v1-release-readiness\">V1 release-readiness record</a> separates implemented\nhardening from the remaining exact-candidate and external evidence.</p>\n"
       }
     ]
   },
@@ -4298,7 +4363,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1127,
+    "order": 1129,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -4349,7 +4414,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1128,
+    "order": 1130,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -4434,7 +4499,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1129,
+    "order": 1131,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -4479,7 +4544,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1131,
+    "order": 1133,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -4527,7 +4592,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1132,
+    "order": 1134,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -4599,7 +4664,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "schema",
       "README"
     ],
-    "order": 1136,
+    "order": 1138,
     "title": "BlueTusk Schema",
     "sourcePath": "docs/schema/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
@@ -4722,7 +4787,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "catalogue",
       "attestation"
     ],
-    "order": 1137,
+    "order": 1139,
     "title": "Catalogue consistency attestation",
     "sourcePath": "docs/schema/catalogue-attestation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
@@ -4784,7 +4849,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "README"
     ],
-    "order": 1138,
+    "order": 1140,
     "title": "BlueTusk.Search",
     "sourcePath": "docs/search/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
@@ -4896,7 +4961,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sql",
       "README"
     ],
-    "order": 1140,
+    "order": 1142,
     "title": "BlueTusk Sql",
     "sourcePath": "docs/sql/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
@@ -4978,7 +5043,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "studio",
       "README"
     ],
-    "order": 1157,
+    "order": 1159,
     "title": "BlueTusk Studio",
     "sourcePath": "docs/studio/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
@@ -5060,7 +5125,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1166,
+    "order": 1168,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -5118,7 +5183,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1167,
+    "order": 1169,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -5165,7 +5230,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "workflows",
       "README"
     ],
-    "order": 1168,
+    "order": 1170,
     "title": "BlueTusk.Workflows",
     "sourcePath": "docs/workflows/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",

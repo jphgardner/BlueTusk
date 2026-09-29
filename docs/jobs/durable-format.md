@@ -20,6 +20,11 @@ history, fencing and completion. A workflow pauses after one committed activity,
 reopens, receives a signal, rolls its process configuration back, and resumes its
 timer/final activity without repeating the earlier activity; replay must match.
 
+The manual [Jobs binary upgrade gate](upgrade.md) is separate from these
+same-binary tests. It requires distinct old-preview and candidate Jobs DLLs,
+overlapping old/new processes and an old-binary rollback on unchanged format-one
+state. No passing cross-binary run has yet been retained.
+
 A separate live rehearsal exercises an actual supported definition boundary:
 version one commits an activity and waits for a signal, migrates quiescently to
 version two with an additional blocked node, reopens the store, then migrates

@@ -135,6 +135,7 @@
 /documentation/operations/ecosystem-implementation-programme
 /documentation/operations/ecosystem-performance
 /documentation/operations/ecosystem-progress
+/documentation/operations/ecosystem-release-qualification
 /documentation/operations/edge
 /documentation/operations/events
 /documentation/operations/fuzzing
@@ -146,6 +147,7 @@
 /documentation/operations/jobs-hosting
 /documentation/operations/jobs-maintenance
 /documentation/operations/jobs-performance
+/documentation/operations/jobs-upgrade
 /documentation/operations/operations-application-platform-health
 /documentation/operations/operations-approval-evidence
 /documentation/operations/operations-endurance-disturbance-evidence

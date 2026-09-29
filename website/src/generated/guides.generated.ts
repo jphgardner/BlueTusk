@@ -1282,7 +1282,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1118,
+    "order": 1120,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1314,7 +1314,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1119,
+    "order": 1121,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1350,7 +1350,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1134,
+    "order": 1136,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1411,7 +1411,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1165,
+    "order": 1167,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
@@ -1581,7 +1581,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "core",
       "reference"
     ],
-    "order": 1069,
+    "order": 1070,
     "title": "Entity Framework Core",
     "sourcePath": "docs/ef-core/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/reference.md",
@@ -2680,7 +2680,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1089,
+    "order": 1091,
     "title": "Live public API compatibility",
     "sourcePath": "docs/live/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/api-compatibility.md",
@@ -2707,7 +2707,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1090,
+    "order": 1092,
     "title": "Live format compatibility",
     "sourcePath": "docs/live/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/format-compatibility.md",
@@ -2733,7 +2733,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "live",
       "reference"
     ],
-    "order": 1091,
+    "order": 1093,
     "title": "BlueTusk Live",
     "sourcePath": "docs/live/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/reference.md",
@@ -2825,7 +2825,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1092,
+    "order": 1094,
     "title": "BlueTusk Live 0.1.0-preview.1",
     "sourcePath": "docs/live/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-0.1.0-preview.1.md",
@@ -2875,7 +2875,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1093,
+    "order": 1095,
     "title": "BlueTusk Live 1.0.0 release record",
     "sourcePath": "docs/live/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-1.0.0.md",
@@ -2903,7 +2903,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1123,
+    "order": 1125,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -2935,7 +2935,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1142,
+    "order": 1144,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -2961,7 +2961,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1143,
+    "order": 1145,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -2987,7 +2987,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1144,
+    "order": 1146,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -3013,7 +3013,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1145,
+    "order": 1147,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -3040,7 +3040,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1147,
+    "order": 1149,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -3067,7 +3067,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1149,
+    "order": 1151,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -3109,7 +3109,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1151,
+    "order": 1153,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -3154,7 +3154,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1152,
+    "order": 1154,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -3180,7 +3180,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1153,
+    "order": 1155,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -3207,7 +3207,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1156,
+    "order": 1158,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -3254,7 +3254,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1159,
+    "order": 1161,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -3281,7 +3281,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1160,
+    "order": 1162,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -3307,7 +3307,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1161,
+    "order": 1163,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -3412,7 +3412,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1163,
+    "order": 1165,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
@@ -3490,7 +3490,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "extensions",
       "reference"
     ],
-    "order": 1073,
+    "order": 1074,
     "title": "Extension SDK",
     "sourcePath": "docs/extensions/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/reference.md",
@@ -3801,7 +3801,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1079,
+    "order": 1080,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
@@ -6263,9 +6263,36 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1397,
+    "wordCount": 1419,
     "readMinutes": 7,
-    "searchText": "Ecosystem expansion evidence ledger Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent `0.1.0-preview.1` packages. Publication is disabled for all ten families. Implemented paths and passing local gates are substantial, but no family is production qualified. Family Implemented and directly exercised Material work still open Events Transactional outbox/inbox, typed routing, replay and Streams adapter; guarded local-only archive/prune with durable ID fence; 50 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign Published-outbox retention, large producer/consumer fleets, upgrades and disaster recovery Jobs Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion Representative multi-day retention/capacity and operations under repeated failure Documents Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits Projections Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; selective dependency reconciliation; 35 live PostgreSQL 17 tests, 100,000-effect exact-state campaign, 600-second overload and physical promotion Longer independent-host steady/overload load, retention/format upgrades and wider failure distributions Search Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution Scale limits, rolling backend upgrades, longer queue/reindex operation and latency budgets Schema Catalogue contracts, bounded add-only plans, durable DDL journal/reconciliation and CLI; 63 core plus 6 CLI tests pe"
+    "searchText": "Ecosystem expansion evidence ledger Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent `0.1.0-preview.1` packages. Publication is disabled for all ten families. Implemented paths and passing local gates are substantial, but no family is production qualified. The [expansion release contract](release-qualification.md) keeps their tagged publication path closed until product-specific evidence, governance and independent approval exist for an exact candidate. Family Implemented and directly exercised Material work still open Events Transactional outbox/inbox, typed routing, replay and Streams adapter; guarded local-only archive/prune with durable ID fence; 50 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign Published-outbox retention, large producer/consumer fleets, upgrades and disaster recovery Jobs Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion Representative multi-day retention/capacity and operations under repeated failure Documents Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits Projections Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; selective dependency reconciliation; 35 live PostgreSQL 17 tests, 100,000-effect exact-state campaign, 600-second overload and physical promotion Longer independent-host steady/overload load, retention/format upgrades and wider failure distributions Search Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution Scale limits,"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "ecosystem-release-qualification",
+    "summary": "Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and Workflows are implemented preview products at 0.1.0-preview.1. Their publication flags are disabled. The tagged release workflow recognizes t…",
+    "keywords": [
+      "docs",
+      "ecosystem",
+      "release",
+      "qualification"
+    ],
+    "order": 1067,
+    "title": "Expansion release qualification",
+    "sourcePath": "docs/ecosystem/release-qualification.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/release-qualification.md",
+    "headings": [
+      {
+        "id": "expansion-release-qualification",
+        "text": "Expansion release qualification",
+        "level": 1
+      }
+    ],
+    "wordCount": 860,
+    "readMinutes": 4,
+    "searchText": "Expansion release qualification Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and Workflows are implemented preview products at `0.1.0-preview.1`. Their publication flags are disabled. The tagged release workflow recognizes their names so a future qualified candidate can use the same package, SBOM, provenance and protected-publication machinery as the established families. Recognizing a tag is not authority to publish it. `eng/verify-expansion-release-policy.ps1` is the fail-closed source contract. It checks all ten preview entries while disabled. If a future candidate arms a family, it requires a stable version of at least `1.0.0`, the complete exact manual workflow set in its family manifest, a protected independent `expansion-candidate-readiness` environment, and the exact versioned tag pattern in the `package-production` governance contract. The tagged workflow also runs `verify-release-gates.ps1`, which requires successful manual runs whose `head_sha` equals the tag commit, a readiness artifact bound to the exact family, commit, tag, version and qualification artifact digests, and verifies that exact-version release dependencies are already public. The protected publish job checks the live repository and environment settings before any registry write. A source-only governance declaration cannot substitute for those live settings. Source policy checks neither run outcomes nor report contents. The release verifier checks workflow identity, event, conclusion, commit and the readiness artifact's references to the exact qualification runs and their retained artifact digests. The future qualification workflows and protected candidate aggregator must validate their own raw measurements before a successful run can count. Each family must have its own capacity, failover and durable-format upgrade qualification. The required workflow identities are fixed in `eng/expansion-release-policy.json`. Jobs needs a dedicated `jobs-release-capacity.yml` w"
   },
   {
     "category": "operations",
@@ -6278,7 +6305,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "edge",
       "README"
     ],
-    "order": 1067,
+    "order": 1068,
     "title": "BlueTusk.Edge",
     "sourcePath": "docs/edge/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/README.md",
@@ -6334,7 +6361,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "events",
       "README"
     ],
-    "order": 1071,
+    "order": 1072,
     "title": "BlueTusk.Events",
     "sourcePath": "docs/events/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
@@ -6389,7 +6416,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "docs",
       "fuzzing"
     ],
-    "order": 1074,
+    "order": 1075,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -6425,7 +6452,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1080,
+    "order": 1081,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -6466,7 +6493,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "improvement",
       "audit"
     ],
-    "order": 1081,
+    "order": 1082,
     "title": "BlueTusk improvement audit and action record",
     "sourcePath": "docs/improvement-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
@@ -6512,7 +6539,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "README"
     ],
-    "order": 1082,
+    "order": 1083,
     "title": "BlueTusk.Jobs",
     "sourcePath": "docs/jobs/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
@@ -6564,7 +6591,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "durable",
       "format"
     ],
-    "order": 1083,
+    "order": 1084,
     "title": "Durable-format support and rehearsal",
     "sourcePath": "docs/jobs/durable-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
@@ -6575,22 +6602,22 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 432,
-    "readMinutes": 2,
-    "searchText": "Durable-format support and rehearsal Both products currently support durable schema format **1** only. There is no previous released Jobs/Workflows format, format-two migration or downgrade implementation. Definition versions inside a workflow are separate from the store format; `MigrateAsync` does not migrate database storage formats. `InitializeAsync` is deployment work. It serializes schema setup, checks the persisted format and durable admission fingerprint/limits, and rejects a mismatch. Do not start workers when initialization fails. Jobs persists payload and history limits; Workflows persists its definition/input/result/signal/node/ history admission bounds. Operational batch, aggregate-read/claim and command deadline tuning may change within the same durable limits. An incompatible initializer does not automatically widen constraints or rewrite existing work. The live `JobDurableFormatTests` and `WorkflowDurableFormatTests` rehearse a format-one store reopening with different operational tuning, then restoring its initial configuration. They preserve queued identity/deduplication, failed-attempt history, fencing and completion. A workflow pauses after one committed activity, reopens, receives a signal, rolls its process configuration back, and resumes its timer/final activity without repeating the earlier activity; replay must match. A separate live rehearsal exercises an actual supported definition boundary: version one commits an activity and waits for a signal, migrates quiescently to version two with an additional blocked node, reopens the store, then migrates back to version one at the current revision. The completed activity contract, result and original start/deduplication identity remain intact, the removed blocked node never executes, and the signal finishes the original definition. Stale-revision rollback is rejected and replay matches before and after rollback. This definition-version rollback is only permitted while every node is blocked or compl"
+    "wordCount": 471,
+    "readMinutes": 3,
+    "searchText": "Durable-format support and rehearsal Both products currently support durable schema format **1** only. There is no previous released Jobs/Workflows format, format-two migration or downgrade implementation. Definition versions inside a workflow are separate from the store format; `MigrateAsync` does not migrate database storage formats. `InitializeAsync` is deployment work. It serializes schema setup, checks the persisted format and durable admission fingerprint/limits, and rejects a mismatch. Do not start workers when initialization fails. Jobs persists payload and history limits; Workflows persists its definition/input/result/signal/node/ history admission bounds. Operational batch, aggregate-read/claim and command deadline tuning may change within the same durable limits. An incompatible initializer does not automatically widen constraints or rewrite existing work. The live `JobDurableFormatTests` and `WorkflowDurableFormatTests` rehearse a format-one store reopening with different operational tuning, then restoring its initial configuration. They preserve queued identity/deduplication, failed-attempt history, fencing and completion. A workflow pauses after one committed activity, reopens, receives a signal, rolls its process configuration back, and resumes its timer/final activity without repeating the earlier activity; replay must match. The manual [Jobs binary upgrade gate](upgrade.md) is separate from these same-binary tests. It requires distinct old-preview and candidate Jobs DLLs, overlapping old/new processes and an old-binary rollback on unchanged format-one state. No passing cross-binary run has yet been retained. A separate live rehearsal exercises an actual supported definition boundary: version one commits an activity and waits for a signal, migrates quiescently to version two with an additional blocked node, reopens the store, then migrates back to version one at the current revision. The completed activity contract, result and original start/deduplic"
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
     "slug": "jobs-failover",
-    "summary": "eng/jobs-physical-recovery.ps1 creates fresh labelled PostgreSQL 18 primary and physical standby containers, private network and separate data volumes. Default loopback ports are 55625/55626, independent of the shared…",
+    "summary": "The manual Jobs release failover workflow wraps this rehearsal for one clean full candidate SHA. It requires three fresh synchronous pairs, verifies the exact Jobs effects and stale-owner",
     "keywords": [
       "docs",
       "jobs",
       "failover"
     ],
-    "order": 1084,
+    "order": 1085,
     "title": "Jobs and Workflows physical promotion rehearsal",
     "sourcePath": "docs/jobs/failover.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
@@ -6621,9 +6648,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2569,
-    "readMinutes": 12,
-    "searchText": "Jobs and Workflows physical promotion rehearsal `eng/jobs-physical-recovery.ps1` creates fresh labelled PostgreSQL 18 primary and physical standby containers, private network and separate data volumes. Default loopback ports are 55625/55626, independent of the shared 55415–55418 fixtures and the Projections recovery lab. The image is pinned by digest. It takes a physical base backup and verifies streaming synchronous replication before running the dedicated `BlueTusk.Workflows.PhysicalRecoveryTests` project. Three repetitions each receive a new pair and durable state. Cleanup verifies both owner and fixture labels before removing any container, network or volume. Each C# rehearsal has a 180-second work deadline and finite admission: two tenant scopes, 66 Jobs and six workflows. It creates the real fixture explicitly; missing configuration fails. The project is outside the ordinary `*.Tests.csproj` selector so a normal PostgreSQL test run cannot silently treat an absent failover lab as a passing scenario. The wrapper rejects skipped tests, preserves per-run TRX and PostgreSQL logs under `artifacts/jobs-physical-recovery`, and retains compact raw JSON plus fixture CPU/memory/I/O samples next to the selected report. Worker/probe shutdown and schema cleanup have separate bounded deadlines. Failed runs retain partial logs; they are not passing evidence. The wrapper captures the global candidate tree with `eng/capture-ecosystem-source.py` before and after all repetitions and rejects a changed tree. This covers provider source, shared build/central dependency inputs and the rest of the candidate, beyond the listed Jobs/Workflows source hashes. Each trial also captures and compares all executable, DLL, dependency and runtime configuration files in the dedicated test output before/after execution, including Data and the lower provider libraries. Generated reports/samples remain in ignored artifacts until the source comparison passes, then publish to the selected output. The "
+    "wordCount": 2648,
+    "readMinutes": 13,
+    "searchText": "Jobs and Workflows physical promotion rehearsal The manual [Jobs release failover workflow](../../.github/workflows/jobs-release-failover.yml) wraps this rehearsal for one clean full candidate SHA. It requires three fresh synchronous pairs, verifies the exact Jobs effects and stale-owner fences against retained raw reports and binary hashes, then uploads a product-specific artifact only after independent archive verification. Adding the workflow does not supply a passing run. Credential replacement during promotion, prolonged silent network partitions, persistent storage loss, asynchronous replication, split brain, old-primary rejoin and independent-host operation remain separate release evidence. `eng/jobs-physical-recovery.ps1` creates fresh labelled PostgreSQL 18 primary and physical standby containers, private network and separate data volumes. Default loopback ports are 55625/55626, independent of the shared 55415–55418 fixtures and the Projections recovery lab. The image is pinned by digest. It takes a physical base backup and verifies streaming synchronous replication before running the dedicated `BlueTusk.Workflows.PhysicalRecoveryTests` project. Three repetitions each receive a new pair and durable state. Cleanup verifies both owner and fixture labels before removing any container, network or volume. Each C# rehearsal has a 180-second work deadline and finite admission: two tenant scopes, 66 Jobs and six workflows. It creates the real fixture explicitly; missing configuration fails. The project is outside the ordinary `*.Tests.csproj` selector so a normal PostgreSQL test run cannot silently treat an absent failover lab as a passing scenario. The wrapper rejects skipped tests, preserves per-run TRX and PostgreSQL logs under `artifacts/jobs-physical-recovery`, and retains compact raw JSON plus fixture CPU/memory/I/O samples next to the selected report. Worker/probe shutdown and schema cleanup have separate bounded deadlines. Failed runs retain partial logs; t"
   },
   {
     "category": "operations",
@@ -6636,7 +6663,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "hosting"
     ],
-    "order": 1085,
+    "order": 1086,
     "title": "Scoped Jobs and Workflows host readiness",
     "sourcePath": "docs/jobs/hosting.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
@@ -6672,7 +6699,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "maintenance"
     ],
-    "order": 1086,
+    "order": 1087,
     "title": "Durable storage maintenance contract",
     "sourcePath": "docs/jobs/maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
@@ -6698,7 +6725,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "jobs",
       "performance"
     ],
-    "order": 1087,
+    "order": 1088,
     "title": "Jobs and Workflows capacity and recovery harness",
     "sourcePath": "docs/jobs/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
@@ -6772,6 +6799,32 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "jobs-upgrade",
+    "summary": "The manual Jobs upgrade workflow requires two immutable full commit SHAs: an earlier Jobs preview source commit reachable from the candidate and the exact candidate commit. It builds and archives",
+    "keywords": [
+      "docs",
+      "jobs",
+      "upgrade"
+    ],
+    "order": 1089,
+    "title": "Jobs binary upgrade and rollback gate",
+    "sourcePath": "docs/jobs/upgrade.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/upgrade.md",
+    "headings": [
+      {
+        "id": "jobs-binary-upgrade-and-rollback-gate",
+        "text": "Jobs binary upgrade and rollback gate",
+        "level": 1
+      }
+    ],
+    "wordCount": 325,
+    "readMinutes": 2,
+    "searchText": "Jobs binary upgrade and rollback gate The manual [Jobs upgrade workflow](../../.github/workflows/jobs-release-upgrade.yml) requires two immutable full commit SHAs: an earlier Jobs preview source commit reachable from the candidate and the exact candidate commit. It builds and archives both Jobs packages and separate probe executables from those source trees. The executed `BlueTusk.Jobs.dll` must match its archived package and **differ** between old and candidate. A same-binary configuration reopen does not satisfy this gate. The old process initializes a fresh format-one schema, persists a running lease, a failed attempt ready for retry, and pending work. While the old process remains alive and holds its lease, the candidate process opens the same store, confirms deduplication identities, completes the retry and pending work, and signals the old process to complete its held lease. The candidate verifies that completion. After both processes exit, the old binary reopens the store, checks all states and attempt histories, then admits and completes a new job. Each phase rejects a duplicate completion. The store header must remain format 1 with unchanged payload and history admission limits throughout. This is the only supported rollback boundary; there is no format migration or downgrade procedure. The successful artifact includes the old Git source archive, both package files, both executable snapshots, phase records and process logs, and a manifest of SHA-256 hashes. Its verifier ties the source trees, probe, packages, executable Jobs DLLs and exact effect counts to the candidate and old commits. A partial or failed run uses a separate artifact name and never satisfies release readiness. This workflow has not run and creates no qualification merely by existing. An earlier preview commit such as `14b212e` is reachable from this branch, but its Jobs and Data source matches the current candidate. The binary difference check should reject it until a candidate genuinely c"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-application-platform-health",
     "summary": "BlueTusk's three Clean Architecture reference applications are production-shaped workloads, but Kubernetes desired state is not proof that a workload is actually running. A stale Pod object can continue to show Runnin…",
     "keywords": [
@@ -6781,7 +6834,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1095,
+    "order": 1097,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -6853,7 +6906,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1096,
+    "order": 1098,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -6936,7 +6989,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1098,
+    "order": 1100,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -6984,7 +7037,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1099,
+    "order": 1101,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -7035,7 +7088,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1101,
+    "order": 1103,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -7147,7 +7200,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1102,
+    "order": 1104,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -7196,7 +7249,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "1",
       "1"
     ],
-    "order": 1103,
+    "order": 1105,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -7253,7 +7306,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1106,
+    "order": 1108,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -7356,7 +7409,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1107,
+    "order": 1109,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -7418,7 +7471,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "website",
       "production"
     ],
-    "order": 1110,
+    "order": 1112,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -7459,7 +7512,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1112,
+    "order": 1114,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -7485,7 +7538,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "LIVE"
     ],
-    "order": 1113,
+    "order": 1115,
     "title": "Published projections in Live",
     "sourcePath": "docs/projections/LIVE.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
@@ -7531,7 +7584,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "LOAD"
     ],
-    "order": 1114,
+    "order": 1116,
     "title": "Workload and recovery qualification",
     "sourcePath": "docs/projections/LOAD.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
@@ -7572,7 +7625,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "README"
     ],
-    "order": 1115,
+    "order": 1117,
     "title": "BlueTusk.Projections",
     "sourcePath": "docs/projections/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
@@ -7623,7 +7676,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "projections",
       "RECOVERY"
     ],
-    "order": 1116,
+    "order": 1118,
     "title": "Explicit source recovery and controlled DDL",
     "sourcePath": "docs/projections/RECOVERY.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
@@ -7655,7 +7708,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "evidence",
       "README"
     ],
-    "order": 1117,
+    "order": 1119,
     "title": "Local bounded workload evidence",
     "sourcePath": "docs/projections/evidence/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
@@ -7685,7 +7738,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1120,
+    "order": 1122,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -7711,7 +7764,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "process"
     ],
-    "order": 1125,
+    "order": 1127,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -7737,9 +7790,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1305,
-    "readMinutes": 6,
-    "searchText": "Release process BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish. `eng/product-families.json` schema 2 records, for every independently versioned family: whether publication is armed in an immutable candidate; whether the release channel is stable or preview; the one exact tag prefix; cross-family release dependencies; and the GitHub Actions workflows that must have succeeded for the exact release commit from an approved event. All six families are published at stable `1.0.0` without prerelease suffixes; the [V1 publication record](releases/1.0.0-publication-record.md) documents the owner exception used for that release. During preparation a publication policy may be disabled. In a final immutable candidate, `enabled=true` means the family is armed; it does not publish a package. Exact release tags and protected `package-production` approval remain the publication boundary. Current package RC train `eng/package-prerelease-train.json` defines the prepared immutable `1.2.0-rc.1` package train for all six families in stable dependency order. This train is not public until the reviewed commit reaches `main` and the six exact RC tags publish successfully. RC packing uses version overrides and temporary npm artifact copies; it does not rewrite the stable family manifests. Every internal NuGet/npm dependency must resolve to the same exact RC version. Exact `*-v1.2.0-rc.1` tags publish through the protected `package-prerelease` environment, and npm packages use the `rc` dist-tag, never `latest`. A correction is `rc.2`; an RC is never overwritten. The complete `1.1.0-rc.1` train was published on 2026-08-29 from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm packages passed public-availability and clean-consumer verification. The [release record](releases/1.1.0-rc.1.md) is the human-readable authority. This does not arm or authorize stable `1.1.0`. The separate `eng/prere"
+    "wordCount": 1410,
+    "readMinutes": 7,
+    "searchText": "Release process BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish. `eng/product-families.json` schema 2 records, for every independently versioned family: whether publication is armed in an immutable candidate; whether the release channel is stable or preview; the one exact tag prefix; cross-family release dependencies; and the GitHub Actions workflows that must have succeeded for the exact release commit from an approved event. All six families are published at stable `1.0.0` without prerelease suffixes; the [V1 publication record](releases/1.0.0-publication-record.md) documents the owner exception used for that release. During preparation a publication policy may be disabled. In a final immutable candidate, `enabled=true` means the family is armed; it does not publish a package. Exact release tags and protected `package-production` approval remain the publication boundary. Current package RC train `eng/package-prerelease-train.json` defines the prepared immutable `1.2.0-rc.1` package train for all six historical families in dependency order. Its inclusion of Graph is prerelease packaging, not Graph stable qualification. This train is not public until the reviewed commit reaches `main` and the six exact RC tags publish successfully. RC packing uses version overrides and temporary npm artifact copies; it does not rewrite the stable family manifests. Every internal NuGet/npm dependency must resolve to the same exact RC version. Exact `*-v1.2.0-rc.1` tags publish through the protected `package-prerelease` environment, and npm packages use the `rc` dist-tag, never `latest`. A correction is `rc.2`; an RC is never overwritten. The complete `1.1.0-rc.1` train was published on 2026-08-29 from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm packages passed public-availability and clean-consumer verification. The [release record](releases/1.1.0-rc.1.md) is the human-readab"
   },
   {
     "category": "operations",
@@ -7753,7 +7806,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1127,
+    "order": 1129,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -7798,7 +7851,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1128,
+    "order": 1130,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -7877,7 +7930,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1129,
+    "order": 1131,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -7916,7 +7969,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1131,
+    "order": 1133,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -7958,7 +8011,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1132,
+    "order": 1134,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -7994,7 +8047,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "schema",
       "README"
     ],
-    "order": 1136,
+    "order": 1138,
     "title": "BlueTusk Schema",
     "sourcePath": "docs/schema/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
@@ -8041,7 +8094,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "catalogue",
       "attestation"
     ],
-    "order": 1137,
+    "order": 1139,
     "title": "Catalogue consistency attestation",
     "sourcePath": "docs/schema/catalogue-attestation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
@@ -8077,7 +8130,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "search",
       "README"
     ],
-    "order": 1138,
+    "order": 1140,
     "title": "BlueTusk.Search",
     "sourcePath": "docs/search/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
@@ -8133,7 +8186,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "sql",
       "README"
     ],
-    "order": 1140,
+    "order": 1142,
     "title": "BlueTusk Sql",
     "sourcePath": "docs/sql/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
@@ -8159,7 +8212,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "studio",
       "README"
     ],
-    "order": 1157,
+    "order": 1159,
     "title": "BlueTusk Studio",
     "sourcePath": "docs/studio/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
@@ -8195,7 +8248,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1166,
+    "order": 1168,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -8237,7 +8290,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1167,
+    "order": 1169,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -8278,7 +8331,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "workflows",
       "README"
     ],
-    "order": 1168,
+    "order": 1170,
     "title": "BlueTusk.Workflows",
     "sourcePath": "docs/workflows/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",
