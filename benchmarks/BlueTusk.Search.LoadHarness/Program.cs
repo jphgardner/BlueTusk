@@ -190,24 +190,25 @@ internal static class Program
                 {
                     var ordinal = 0;
                     const double interval = WriteIntervalMilliseconds / 1000.0;
-                    var due = 0.0;
-                    while (due < seconds)
+                    var plannedSlots = seconds * 1000 / WriteIntervalMilliseconds;
+                    for (var nextSlot = 0; nextSlot < plannedSlots;)
                     {
+                        var due = nextSlot * interval;
                         var wait = due - clock.Elapsed.TotalSeconds;
                         if (wait > 0) { await Task.Delay(TimeSpan.FromSeconds(wait)); }
                         if (clock.Elapsed.TotalSeconds >= seconds)
                         {
-                            Interlocked.Add(ref writeScheduleSkipped[tenant], RemainingSlots(due, seconds, interval));
+                            Interlocked.Add(ref writeScheduleSkipped[tenant], plannedSlots - nextSlot);
                             break;
                         }
-                        var skipped = (long)Math.Floor((clock.Elapsed.TotalSeconds - due) / interval);
+                        var skipped = Math.Clamp((int)Math.Floor((clock.Elapsed.TotalSeconds - due) / interval), 0, plannedSlots - nextSlot - 1);
                         if (skipped > 0)
                         {
                             Interlocked.Add(ref writeScheduleSkipped[tenant], skipped);
-                            due += skipped * interval;
+                            nextSlot += skipped;
                         }
                         var document = ordinal++ % documentsPerTenant;
-                        due += interval;
+                        nextSlot++;
                         var nextVersion = versions[tenant, document] + 1;
                         Interlocked.Increment(ref writesOffered[tenant]);
                         var began = Stopwatch.GetTimestamp();
@@ -231,31 +232,31 @@ internal static class Program
                 {
                     var ordinal = 0;
                     const double interval = ReadIntervalMilliseconds / 1000.0;
-                    var due = 0.0;
-                    while (due < seconds)
+                    var plannedSlots = seconds * 1000 / ReadIntervalMilliseconds;
+                    for (var nextSlot = 0; nextSlot < plannedSlots;)
                     {
+                        var due = nextSlot * interval;
                         var wait = due - clock.Elapsed.TotalSeconds;
                         if (wait > 0) { await Task.Delay(TimeSpan.FromSeconds(wait)); }
                         if (clock.Elapsed.TotalSeconds >= seconds)
                         {
-                            var remaining = RemainingSlots(due, seconds, interval);
-                            for (var slot = 0L; slot < remaining; slot++)
+                            for (var slot = nextSlot; slot < plannedSlots; slot++)
                             {
                                 Interlocked.Increment(ref readScheduleSkipped[(reader + ordinal++ * Readers) % Tenants]);
                             }
                             break;
                         }
-                        var skipped = (long)Math.Floor((clock.Elapsed.TotalSeconds - due) / interval);
+                        var skipped = Math.Clamp((int)Math.Floor((clock.Elapsed.TotalSeconds - due) / interval), 0, plannedSlots - nextSlot - 1);
                         if (skipped > 0)
                         {
-                            for (var slot = 0L; slot < skipped; slot++)
+                            for (var slot = 0; slot < skipped; slot++)
                             {
                                 Interlocked.Increment(ref readScheduleSkipped[(reader + ordinal++ * Readers) % Tenants]);
                             }
-                            due += skipped * interval;
+                            nextSlot += skipped;
                         }
                         var tenant = (reader + ordinal++ * Readers) % Tenants;
-                        due += interval;
+                        nextSlot++;
                         Interlocked.Increment(ref readsOffered[tenant]);
                         var began = Stopwatch.GetTimestamp();
                         try
@@ -362,8 +363,6 @@ internal static class Program
     }
 
     private static string Tenant(int tenant) => $"tenant-{tenant:D2}";
-    private static long RemainingSlots(double due, double seconds, double interval) =>
-        Math.Max(0, (long)Math.Ceiling((seconds - due) / interval));
     private static string Id(int tenant, int document)
     {
         var visibility = (document % 3) switch { 0 => "public", 1 => "allowed", _ => "secret" };
