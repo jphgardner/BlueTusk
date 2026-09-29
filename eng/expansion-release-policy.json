@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "readinessWorkflow": "expansion-candidate-readiness.yml",
+  "families": {
+    "Events": {
+      "capacityWorkflow": "events-release-capacity.yml",
+      "failoverWorkflow": "events-release-failover.yml",
+      "upgradeWorkflow": "events-release-upgrade.yml"
+    },
+    "Jobs": {
+      "capacityWorkflow": "ecosystem-performance.yml",
+      "failoverWorkflow": "jobs-release-failover.yml",
+      "upgradeWorkflow": "jobs-release-upgrade.yml"
+    },
+    "Documents": {
+      "capacityWorkflow": "ecosystem-performance.yml",
+      "failoverWorkflow": "documents-release-failover.yml",
+      "upgradeWorkflow": "documents-release-upgrade.yml"
+    },
+    "Schema": {
+      "capacityWorkflow": "schema-release-capacity.yml",
+      "failoverWorkflow": "schema-release-failover.yml",
+      "upgradeWorkflow": "schema-release-upgrade.yml"
+    },
+    "Projections": {
+      "capacityWorkflow": "ecosystem-performance.yml",
+      "failoverWorkflow": "projections-release-failover.yml",
+      "upgradeWorkflow": "projections-release-upgrade.yml"
+    },
+    "Search": {
+      "capacityWorkflow": "search-release-capacity.yml",
+      "failoverWorkflow": "search-release-failover.yml",
+      "upgradeWorkflow": "search-release-upgrade.yml"
+    },
+    "Sql": {
+      "capacityWorkflow": "sql-release-capacity.yml",
+      "failoverWorkflow": "sql-release-failover.yml",
+      "upgradeWorkflow": "sql-release-upgrade.yml"
+    },
+    "Studio": {
+      "capacityWorkflow": "studio-release-capacity.yml",
+      "failoverWorkflow": "studio-release-failover.yml",
+      "upgradeWorkflow": "studio-release-upgrade.yml"
+    },
+    "Edge": {
+      "capacityWorkflow": "edge-release-capacity.yml",
+      "failoverWorkflow": "edge-release-failover.yml",
+      "upgradeWorkflow": "edge-release-upgrade.yml"
+    },
+    "Workflows": {
+      "capacityWorkflow": "ecosystem-performance.yml",
+      "failoverWorkflow": "workflows-release-failover.yml",
+      "upgradeWorkflow": "workflows-release-upgrade.yml"
+    }
+  }
+}

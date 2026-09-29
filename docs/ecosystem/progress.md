@@ -4,7 +4,9 @@ Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections
 Search, Schema, Sql, Studio, Edge, and Workflows have independent
 `0.1.0-preview.1` packages. Publication is disabled for all ten families.
 Implemented paths and passing local gates are substantial, but no family is
-production qualified.
+production qualified. The [expansion release contract](release-qualification.md)
+keeps their tagged publication path closed until product-specific evidence,
+governance and independent approval exist for an exact candidate.
 
 | Family | Implemented and directly exercised | Material work still open |
 | --- | --- | --- |

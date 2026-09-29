@@ -170,6 +170,12 @@ jobs:
           ./eng/test-live-control-plane-endurance-verifier.ps1
           ./eng/verify-v1.2-release-contract.ps1
           ./eng/test-release-track-verifier.ps1
+          'Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search',
+          'Sql', 'Studio', 'Edge', 'Workflows' |
+            ForEach-Object {
+              ./eng/pack-product-family.ps1 -Family $_ -ValidateOnly
+            }
+          ./eng/test-expansion-release-policy.ps1
           ./eng/test-core-approval-evidence.ps1
           ./eng/test-core-endurance-evidence.ps1
           ./eng/test-core-workflow-evidence.ps1

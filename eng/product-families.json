@@ -313,7 +313,7 @@
       "versionFile": "eng/versions/Events.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "events",
         "requiredWorkflowEvidence": [
           {
@@ -356,7 +356,7 @@
       "versionFile": "eng/versions/Jobs.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "jobs",
         "requiredWorkflowEvidence": [
           {
@@ -397,7 +397,7 @@
       "versionFile": "eng/versions/Documents.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "documents",
         "requiredWorkflowEvidence": [
           {
@@ -442,7 +442,7 @@
       "versionFile": "eng/versions/Schema.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "schema",
         "requiredWorkflowEvidence": [
           {
@@ -483,7 +483,7 @@
       "versionFile": "eng/versions/Projections.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "projections",
         "requiredWorkflowEvidence": [
           {
@@ -527,7 +527,7 @@
       "versionFile": "eng/versions/Search.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "search",
         "requiredWorkflowEvidence": [
           {
@@ -572,7 +572,7 @@
       "versionFile": "eng/versions/Sql.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "sql",
         "requiredWorkflowEvidence": [
           {
@@ -615,7 +615,7 @@
       "versionFile": "eng/versions/Studio.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "studio",
         "requiredWorkflowEvidence": [
           {
@@ -662,7 +662,7 @@
       "versionFile": "eng/versions/Edge.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "edge",
         "requiredWorkflowEvidence": [
           {
@@ -711,7 +711,7 @@
       "versionFile": "eng/versions/Workflows.props",
       "publication": {
         "enabled": false,
-        "channel": "stable",
+        "channel": "preview",
         "tagPrefix": "workflows",
         "requiredWorkflowEvidence": [
           {

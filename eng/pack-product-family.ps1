@@ -89,6 +89,13 @@ if ($publicationChannel -notin @('stable', 'preview'))
     throw "Product family '$Family' has unsupported publication channel '$publicationChannel'."
 }
 
+if ($Family -in @('Events', 'Jobs', 'Documents', 'Schema', 'Projections',
+    'Search', 'Sql', 'Studio', 'Edge', 'Workflows'))
+{
+    & (Join-Path $PSScriptRoot 'verify-expansion-release-policy.ps1') -Family $Family |
+        Out-Null
+}
+
 $tagPrefix = [string]$publication.tagPrefix
 if ($tagPrefix -notmatch '^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$')
 {
@@ -328,7 +335,7 @@ if ($ValidateOnly)
         $blockedReleaseDependencies -join ','
     }
 
-    $mode = if ($Prerelease) { "prerelease/$familyVersion" } elseif ($Candidate) { 'candidate' } else { 'stable' }
+    $mode = if ($Prerelease) { "prerelease/$familyVersion" } elseif ($Candidate) { 'candidate' } else { $publicationChannel }
     Write-Output "Validated $Family release train with $($projects.Count) registered project(s) and $($npmPackages.Count) npm package(s); mode=$mode; publicationEnabled=$publicationEnabled; channel=$publicationChannel; releaseDependencies=$dependencySummary; blockedDependencies=$blockedSummary; exactCommitWorkflows=$($requiredWorkflowEvidence.Count)."
     return
 }
