@@ -20,6 +20,7 @@ internal sealed record CampaignReport(int FormatVersion, string CandidateSha, st
     int SeededDocuments, int WriteOfferIntervalMilliseconds, int ReadOfferIntervalMilliseconds,
     long WritesOffered, long WritesAccepted, long WritesRejected, long WriteScheduleSkipped,
     long ReadsOffered, long ReadsAccepted, long ReadsRejected, long ReadScheduleSkipped,
+    long MaintenancePruneAttempts, long MaintenancePruneRejected, long MaintenancePruneRemoved,
     double MeasuredSeconds, double DrainSeconds, Latency WriteLatency, Latency ReadLatency,
     Latency? RejectedWriteLatency, Latency? RejectedReadLatency,
     TenantProgress[] TenantProgress, StorageSample[] StorageSamples, StorageSample AfterDrain,
@@ -147,14 +148,42 @@ internal static class Program
                 var readsAccepted = new long[Tenants];
                 var readsRejected = new long[Tenants];
                 var readScheduleSkipped = new long[Tenants];
+                long maintenancePruneAttempts = 0;
+                long maintenancePruneRejected = 0;
+                long maintenancePruneRemoved = 0;
                 var clock = Stopwatch.StartNew();
                 var sampler = Task.Run(async () =>
                 {
                     while (clock.Elapsed.TotalSeconds < seconds)
                     {
                         await Task.Delay(TimeSpan.FromSeconds(5));
-                        _ = await store.PruneExpiredQueriesAsync(1000);
+                        Interlocked.Increment(ref maintenancePruneAttempts);
+                        try
+                        {
+                            Interlocked.Add(ref maintenancePruneRemoved, await store.PruneExpiredQueriesAsync(1000));
+                        }
+                        catch (SearchBackpressureException)
+                        {
+                            // Maintenance uses the same bounded snapshot lock as reads. Record a
+                            // transient admission rejection, then retry on the next sample interval.
+                            Interlocked.Increment(ref maintenancePruneRejected);
+                        }
                         samples.Add(await SampleAsync(source, schema, clock.Elapsed.TotalSeconds));
+                        var progress = new
+                        {
+                            ElapsedSeconds = clock.Elapsed.TotalSeconds,
+                            WritesAccepted = writesAccepted.Sum(),
+                            WritesRejected = writesRejected.Sum(),
+                            ReadsAccepted = readsAccepted.Sum(),
+                            ReadsRejected = readsRejected.Sum(),
+                            MaintenancePruneAttempts = Interlocked.Read(ref maintenancePruneAttempts),
+                            MaintenancePruneRejected = Interlocked.Read(ref maintenancePruneRejected),
+                            LatestStorageSample = samples[^1]
+                        };
+                        var progressPath = Path.ChangeExtension(reportPath, ".progress.json");
+                        var temporaryPath = progressPath + ".tmp";
+                        await File.WriteAllTextAsync(temporaryPath, JsonSerializer.Serialize(progress));
+                        File.Move(temporaryPath, progressPath, overwrite: true);
                     }
                 });
                 var writers = Enumerable.Range(0, Tenants).Select(tenant => Task.Run(async () =>
@@ -291,6 +320,7 @@ internal static class Program
                     progress.Sum(static item => item.WritesRejected), progress.Sum(static item => item.WriteScheduleSkipped),
                     progress.Sum(static item => item.ReadsOffered), progress.Sum(static item => item.ReadsAccepted),
                     progress.Sum(static item => item.ReadsRejected), progress.Sum(static item => item.ReadScheduleSkipped),
+                    maintenancePruneAttempts, maintenancePruneRejected, maintenancePruneRemoved,
                     measuredSeconds, drain.Elapsed.TotalSeconds, writeLatency.Distribution(), readLatency.Distribution(),
                     rejectedWriteLatency.DistributionOrNull(), rejectedReadLatency.DistributionOrNull(),
                     progress, samples.ToArray(), afterDrain, exactRows, true, true, true, true, queriesDrained, false, true);
@@ -315,6 +345,7 @@ internal static class Program
                 ProductionQualified = false,
                 FailedUtc = DateTimeOffset.UtcNow,
                 FailureType = error.GetType().Name,
+                FailureStack = error.StackTrace,
                 CandidateSha = candidate,
                 SourceTreeSha256 = sourceHash
             };

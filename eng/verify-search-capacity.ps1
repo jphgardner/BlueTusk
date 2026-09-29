@@ -113,6 +113,10 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     Minimum ($report.ReadsAccepted / $report.MeasuredSeconds) $budget.minimumReadsPerSecond "$label accepted reads/s"
     Maximum ($report.WritesRejected / [double]$report.WritesOffered) $budget.maximumWriteRejectionFraction "$label write rejection fraction"
     Maximum ($report.ReadsRejected / [double]$report.ReadsOffered) $budget.maximumReadRejectionFraction "$label read rejection fraction"
+    Minimum $report.MaintenancePruneAttempts ([math]::Floor($report.DurationSeconds / 6)) "$label maintenance prune attempts"
+    Require ($report.MaintenancePruneRejected -ge 0 -and $report.MaintenancePruneRejected -le $report.MaintenancePruneAttempts -and
+        $report.MaintenancePruneRemoved -ge 0) "$label has invalid maintenance prune accounting."
+    Maximum ($report.MaintenancePruneRejected / [double]$report.MaintenancePruneAttempts) $budget.maximumMaintenancePruneRejectionFraction "$label maintenance prune rejection fraction"
     Require ($report.WriteLatency.Count -eq $report.WritesAccepted -and $report.ReadLatency.Count -eq $report.ReadsAccepted) "$label latency samples differ from accepted operations."
     foreach ($pair in @(@('WritesRejected','RejectedWriteLatency'), @('ReadsRejected','RejectedReadLatency'))) {
         $rejections = $report.($pair[0])

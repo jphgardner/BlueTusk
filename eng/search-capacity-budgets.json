@@ -20,6 +20,7 @@
   "maximumRejectedAdmissionP99Milliseconds": 500,
   "maximumWriteRejectionFraction": 0.10,
   "maximumReadRejectionFraction": 0.10,
+  "maximumMaintenancePruneRejectionFraction": 0.02,
   "maximumOwnedRelationBytes": 1073741824,
   "maximumLateOwnedGrowthBytesPerMinute": 33554432,
   "maximumDatabaseBytes": 8589934592,
