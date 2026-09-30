@@ -16,7 +16,7 @@ internal sealed class SqliteCapacityClient : IDisposable
     private readonly int _payloadBytes;
     private readonly Random _random;
     private readonly MutableTimeProvider _clock;
-    private readonly LatencyCapture _enqueue = new(), _ack = new(), _syncPass = new(), _ackScan = new();
+    private readonly LatencyCapture _enqueue = new(), _ack = new(), _syncPass = new();
     private readonly EdgeLocalPhaseTimings _localPhases = new();
     private readonly Dictionary<string, (Guid Id, long Started, double OfferedAt)> _pending = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _pendingGate = new(1, 1);
@@ -26,6 +26,7 @@ internal sealed class SqliteCapacityClient : IDisposable
     private readonly HttpEdgeRemoteTransport _remote;
     private readonly FaultTransport _fault;
     private EdgeSynchronizationCoordinator _coordinator;
+    private Func<EdgeMutation, long, CancellationToken, ValueTask>? _ackObserver;
     private EdgeMutation? _firstMutation;
     private Guid _lostMutation;
     private double _lostAt;
@@ -39,7 +40,8 @@ internal sealed class SqliteCapacityClient : IDisposable
         _index = index; _scope = new EdgeScope(Tenant(index), "orders", 1); _path = path;
         _payloadBytes = payloadBytes; _clock = clock; _random = new Random(84273 + index);
         _local = local; _http = http; _remote = remote; _fault = fault;
-        _coordinator = new EdgeSynchronizationCoordinator(new TimedEdgeLocalStore(local, _localPhases), fault);
+        _coordinator = new EdgeSynchronizationCoordinator(
+            new TimedEdgeLocalStore(local, _localPhases, ObserveDurableAcknowledgementAsync), fault);
     }
 
     internal static async Task<SqliteCapacityClient> OpenAsync(int index, string directory, Uri endpoint,
@@ -70,6 +72,8 @@ internal sealed class SqliteCapacityClient : IDisposable
         var offlineSeconds = seconds >= 1800 ? 30.0 : Math.Min(5.0, seconds / 12.0);
         var offlineOne = seconds / 3.0; var lossAt = seconds / 2.0;
         var offlineTwo = seconds * 2.0 / 3.0; var hostAt = seconds * 3.0 / 4.0;
+        _ackObserver = (mutation, committed, cancellationToken) =>
+            MarkAcknowledgedAsync(mutation, committed, clock, offlineOne, offlineTwo, offlineSeconds, hostAt, cancellationToken);
         _fault.LossAt = lossAt; _fault.Clock = clock;
         var plannedSlots = (long)seconds * 1000 / 200;
         long next = 0;
@@ -153,9 +157,6 @@ internal sealed class SqliteCapacityClient : IDisposable
             $"horizon read {_localPhases.ReadHorizon.Snapshot().P95Milliseconds:F1}, " +
             $"horizon mark {_localPhases.AdvanceHorizon.Snapshot().P95Milliseconds:F1}, " +
             $"apply changes {_localPhases.ApplyChanges.Snapshot().P95Milliseconds:F1}.");
-        var ackScan = _ackScan.Snapshot();
-        Console.WriteLine($"SQLite client {_index} acknowledgement scans {ackScan.Samples} p50/p95/p99 " +
-            $"{ackScan.P50Milliseconds:F1}/{ackScan.P95Milliseconds:F1}/{ackScan.P99Milliseconds:F1} ms.");
     }
 
     internal async Task<ClientReport> ReportAsync(PostgreSqlEdgeServerStore server, CancellationToken token)
@@ -250,7 +251,8 @@ internal sealed class SqliteCapacityClient : IDisposable
             {
                 _local = new SqliteEdgeStore(Options(_path, _clock));
                 await _local.InitializeAsync(token).ConfigureAwait(false);
-                _coordinator = new EdgeSynchronizationCoordinator(new TimedEdgeLocalStore(_local, _localPhases), _fault);
+                _coordinator = new EdgeSynchronizationCoordinator(
+                    new TimedEdgeLocalStore(_local, _localPhases, ObserveDurableAcknowledgementAsync), _fault);
                 var lost = _pending.SingleOrDefault(item => item.Value.Id == _lostMutation);
                 var persisted = lost.Key is null ? null : await _local.GetAsync(_scope, lost.Key, token).ConfigureAwait(false);
                 if (persisted?.PendingMutationId != _lostMutation)
@@ -262,7 +264,6 @@ internal sealed class SqliteCapacityClient : IDisposable
         catch (HttpRequestException) when (clock.Elapsed.TotalSeconds >= hostAt - 2 && clock.Elapsed.TotalSeconds <= hostAt + 30) { return; }
         catch (TaskCanceledException) when (clock.Elapsed.TotalSeconds >= hostAt - 2 && clock.Elapsed.TotalSeconds <= hostAt + 30) { return; }
         finally { _syncPass.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds); }
-        await MarkAcknowledgedAsync(clock, offlineOne, offlineTwo, offlineSeconds, hostAt, token).ConfigureAwait(false);
         var elapsed = clock.Elapsed.TotalSeconds;
         if (!_firstOfflineRecovered && elapsed >= offlineOne + offlineSeconds)
         { _recoveries.Add(elapsed - (offlineOne + offlineSeconds)); _firstOfflineRecovered = true; }
@@ -272,50 +273,31 @@ internal sealed class SqliteCapacityClient : IDisposable
         { _recoveries.Add(elapsed - hostAt); _hostRecovered = true; }
     }
 
-    private async Task MarkAcknowledgedAsync(Stopwatch clock, double offlineOne, double offlineTwo,
-        double offlineSeconds, double hostAt, CancellationToken token)
+    private ValueTask ObserveDurableAcknowledgementAsync(EdgeMutation mutation, long committed, CancellationToken token) =>
+        _ackObserver is { } observer ? observer(mutation, committed, token) : ValueTask.CompletedTask;
+
+    private async ValueTask MarkAcknowledgedAsync(EdgeMutation mutation, long committed, Stopwatch clock,
+        double offlineOne, double offlineTwo, double offlineSeconds, double hostAt, CancellationToken token)
     {
-        var started = Stopwatch.GetTimestamp();
+        var acknowledgedAt = clock.Elapsed.TotalSeconds;
         await _pendingGate.WaitAsync(token).ConfigureAwait(false);
         try
         {
-            if (_pending.Count == 0) { return; }
-            // Read all pending identities in one consistent SQLite snapshot. A per-key
-            // GetAsync here adds one new connection and query for every offline write.
-            var builder = new SqliteConnectionStringBuilder { DataSource = _path, Mode = SqliteOpenMode.ReadOnly, Pooling = false };
-            await using var connection = new SqliteConnection(builder.ToString());
-            await connection.OpenAsync(token).ConfigureAwait(false);
-            await using var command = connection.CreateCommand();
-            command.CommandText = "SELECT mutation_id FROM mutations WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch";
-            command.Parameters.AddWithValue("tenant", _scope.Tenant);
-            command.Parameters.AddWithValue("scope", _scope.Id);
-            command.Parameters.AddWithValue("epoch", _scope.Epoch);
-            var stillPending = new HashSet<Guid>();
-            await using (var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false))
+            if (!_pending.TryGetValue(mutation.DocumentId, out var row) || row.Id != mutation.Id)
             {
-                while (await reader.ReadAsync(token).ConfigureAwait(false))
-                { stillPending.Add(Guid.ParseExact(reader.GetString(0), "N")); }
+                throw new InvalidOperationException("A durably acknowledged SQLite mutation was not tracked by the offer loop.");
             }
-            foreach (var item in _pending.ToArray())
+            _pending.Remove(mutation.DocumentId); _acknowledged++;
+            if (mutation.Id == _lostMutation)
             {
-                if (stillPending.Contains(item.Value.Id)) { continue; }
-                _pending.Remove(item.Key); _acknowledged++;
-                if (item.Value.Id == _lostMutation)
-                {
-                    _recoveries.Add(clock.Elapsed.TotalSeconds - _lostAt);
-                    _lostRecovered = true;
-                }
-                var now = clock.Elapsed.TotalSeconds;
-                if (!OverlapsFault(item.Value.OfferedAt, now, offlineOne, offlineTwo, offlineSeconds,
-                        hostAt, _lostAt, _lostMutation != Guid.Empty))
-                { _ack.Add(Stopwatch.GetElapsedTime(item.Value.Started).TotalMilliseconds); }
+                _recoveries.Add(acknowledgedAt - _lostAt);
+                _lostRecovered = true;
             }
+            if (!OverlapsFault(row.OfferedAt, acknowledgedAt, offlineOne, offlineTwo, offlineSeconds,
+                    hostAt, _lostAt, _lostMutation != Guid.Empty))
+            { _ack.Add(Stopwatch.GetElapsedTime(row.Started, committed).TotalMilliseconds); }
         }
-        finally
-        {
-            _pendingGate.Release();
-            _ackScan.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
-        }
+        finally { _pendingGate.Release(); }
     }
 
     private async Task<(long Pending, long Outbox, long Receipts, string StreamId, long NextSequence, long Horizon)> LocalStateAsync(CancellationToken token)
