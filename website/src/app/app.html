@@ -34,9 +34,13 @@
         </a>
         <a mat-flat-button routerLink="/documentation" class="topbar-cta">Get Started</a>
         <button
+          #mobileNavTrigger
           mat-icon-button
-          [matMenuTriggerFor]="mobileMenu"
+          type="button"
+          (click)="openMobileNav()"
           aria-label="Open navigation"
+          aria-controls="mobile-navigation"
+          [attr.aria-expanded]="mobileNavOpen()"
           class="mobile-menu-trigger"
         >
           <mat-icon>menu</mat-icon>
@@ -45,14 +49,23 @@
     </div>
   </header>
 
-  <mat-menu #mobileMenu="matMenu" class="mobile-menu">
-    @for (item of navItems; track item.href) {
-      <a mat-menu-item [routerLink]="item.href">
-        <mat-icon>{{ item.icon }}</mat-icon>
-        <span>{{ item.label }}</span>
-      </a>
-    }
-  </mat-menu>
+  @if (mobileNavOpen()) {
+    <div class="mobile-nav-backdrop" role="presentation" (click)="closeMobileNav()">
+      <nav
+        id="mobile-navigation"
+        class="mobile-nav-sheet"
+        aria-label="Mobile navigation"
+        (click)="$event.stopPropagation()"
+      >
+        @for (item of navItems; track item.href) {
+          <a #mobileNavFirst [routerLink]="item.href" (click)="closeMobileNav(false)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+    </div>
+  }
 
   <main>
     <router-outlet />
@@ -95,23 +108,24 @@
       >
         <div class="search-input-row">
           <mat-icon>search</mat-icon>
-          <mat-form-field appearance="outline">
-            <mat-label>Search the platform</mat-label>
-            <input
-              #searchField
-              matInput
-              autofocus
-              [value]="searchQuery()"
-              (input)="updateSearch($event)"
-              placeholder="Provider, COPY, checkpoints, SQL/PGQ…"
-            />
-          </mat-form-field>
+          <input
+            #searchField
+            class="search-field"
+            type="search"
+            aria-label="Search the platform"
+            [value]="searchQuery()"
+            (input)="updateSearch($event)"
+            placeholder="Provider, COPY, checkpoints, SQL/PGQ…"
+          />
           <button mat-icon-button type="button" (click)="closeSearch()" aria-label="Close search">
             <mat-icon>close</mat-icon>
           </button>
         </div>
 
         <div class="search-results">
+          @if (guideSearchUnavailable()) {
+            <p class="empty-search">Documentation search is temporarily unavailable.</p>
+          }
           @for (item of filteredSearchItems(); track item.route) {
             <a [routerLink]="item.route" (click)="closeSearch()">
               <mat-icon>{{ item.icon }}</mat-icon>

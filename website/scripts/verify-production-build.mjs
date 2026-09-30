@@ -11,7 +11,9 @@ const contractPath = path.join(websiteRoot, 'production-contract.json');
 const contract = JSON.parse(await readFile(contractPath, 'utf8'));
 
 if (contract.schemaVersion !== 1) {
-  throw new Error(`Expected website production contract schema 1; found ${contract.schemaVersion}.`);
+  throw new Error(
+    `Expected website production contract schema 1; found ${contract.schemaVersion}.`,
+  );
 }
 
 const distributionRoot = path.join(websiteRoot, contract.distributionRoot);
@@ -60,9 +62,13 @@ if (sourceMaps.length !== 0) {
   throw new Error(`Production output contains ${sourceMaps.length} source map(s).`);
 }
 
-const initialReferences = [
-  ...index.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g),
-].map((match) => match[1].replace(/^\//, ''));
+const initialReferences = [...index.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)].map((match) =>
+  match[1].replace(/^\//, ''),
+);
+const entryScripts = [...index.matchAll(/<script\b[^>]*src="([^"]+\.js)"[^>]*>/g)];
+if (entryScripts.length !== 1 || !/^\/?main-[A-Za-z0-9_-]{8,}\.js$/.test(entryScripts[0][1])) {
+  throw new Error('Production index must reference one hashed main entry script.');
+}
 const initialAssets = [...new Set(initialReferences)].map((relativePath) => {
   const file = fileMap.get(relativePath);
   if (!file) {
@@ -74,10 +80,10 @@ const initialAssets = [...new Set(initialReferences)].map((relativePath) => {
   return file;
 });
 if (
-  initialAssets.filter((file) => file.relativePath.endsWith('.js')).length !== 1 ||
+  initialAssets.filter((file) => file.relativePath.endsWith('.js')).length < 1 ||
   initialAssets.filter((file) => file.relativePath.endsWith('.css')).length !== 1
 ) {
-  throw new Error('Production index must reference exactly one initial JavaScript and CSS asset.');
+  throw new Error('Production index must reference initial JavaScript and exactly one CSS asset.');
 }
 
 function brotliBytes(file) {
@@ -99,10 +105,7 @@ for (const file of files.filter((candidate) => /\.(?:js|css)$/.test(candidate.re
 
 const measuredInitial = initialAssets.map((file) => measuredAssets.get(file.relativePath));
 const initialRawBytes = measuredInitial.reduce((total, file) => total + file.bytes, 0);
-const initialBrotliBytes = measuredInitial.reduce(
-  (total, file) => total + file.brotliBytes,
-  0,
-);
+const initialBrotliBytes = measuredInitial.reduce((total, file) => total + file.brotliBytes, 0);
 const lazyAssets = [...measuredAssets.values()].filter(
   (file) => !initialAssets.some((initial) => initial.relativePath === file.relativePath),
 );
