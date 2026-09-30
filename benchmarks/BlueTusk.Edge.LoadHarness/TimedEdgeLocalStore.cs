@@ -15,7 +15,8 @@ internal sealed class EdgeLocalPhaseTimings
     internal LatencyCapture ApplyChanges { get; } = new();
 }
 
-internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseTimings timings) : IEdgeOrderedLocalStore
+internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseTimings timings,
+    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedLocalStore
 {
     public ValueTask ActivateScopeAsync(EdgeScope scope, EdgeEpochChangePolicy policy = EdgeEpochChangePolicy.RejectIfPending,
         CancellationToken cancellationToken = default) => inner.ActivateScopeAsync(scope, policy, cancellationToken);
@@ -55,7 +56,9 @@ internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseT
     {
         var started = Stopwatch.GetTimestamp();
         await inner.AcknowledgeAsync(lease, outcome, cancellationToken).ConfigureAwait(false);
-        timings.Acknowledge.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        var committed = Stopwatch.GetTimestamp();
+        timings.Acknowledge.Add(Stopwatch.GetElapsedTime(started, committed).TotalMilliseconds);
+        await onDurableAcknowledgement(lease.Mutation, committed, cancellationToken).ConfigureAwait(false);
     }
 
     public ValueTask BeginSnapshotAsync(EdgeScope scope, EdgeSnapshot snapshot, CancellationToken cancellationToken = default) =>
