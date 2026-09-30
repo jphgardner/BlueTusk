@@ -10,8 +10,10 @@ files, browser profile, source captures, binary snapshots and SHA-256 manifest u
 
 The eight isolated tenant scopes each begin with 256 distinct 4 KiB records and an empty ordered
 client stream. Each client schedules one 4 KiB high-entropy update every 200 ms for 30 minutes:
-40 planned writes/s across the fixture. The monotonic scheduler counts missed slots and never
-creates an unbounded client request queue. The same key cannot have two pending writes. Each
+40 planned writes/s across the fixture. The monotonic scheduler counts every slot as offered or
+skipped, including slots remaining after a slow operation crosses the deadline, and never creates
+an unbounded client request queue. The offline verifier requires exact planned-slot accounting for
+each client. The same key cannot have two pending writes. Each
 client holds at most 512 local mutations and receipts; the server caps each scope at 512 receipts
 and 1024 feed entries. Successful reconnect passes durably acknowledge results, confirm original
 mutations, advance gapless ordered horizons and prune only a feed prefix behind the active

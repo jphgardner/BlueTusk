@@ -69,8 +69,9 @@ internal sealed class SqliteCapacityClient
         var offlineOne = seconds / 3.0; var lossAt = seconds / 2.0;
         var offlineTwo = seconds * 2.0 / 3.0; var hostAt = seconds * 3.0 / 4.0;
         _fault.LossAt = lossAt; _fault.Clock = clock;
+        var plannedSlots = (long)seconds * 1000 / 200;
         long next = 0;
-        while (clock.Elapsed.TotalSeconds < seconds)
+        while (next < plannedSlots && clock.Elapsed.TotalSeconds < seconds)
         {
             token.ThrowIfCancellationRequested();
             var elapsed = clock.Elapsed.TotalSeconds;
@@ -100,6 +101,7 @@ internal sealed class SqliteCapacityClient
             if (Offline(clock.Elapsed.TotalSeconds, offlineOne, offlineTwo, offlineSeconds)) { continue; }
             await SynchronizeAsync(clock, offlineOne, offlineTwo, offlineSeconds, hostAt, token).ConfigureAwait(false);
         }
+        _skipped += plannedSlots - next;
         var drainStarted = Stopwatch.GetTimestamp();
         while (_pending.Count > 0 || await _local.ReadNextUnconfirmedOrderedReceiptAsync(_scope, token).ConfigureAwait(false) is not null ||
             await _local.ReadConfirmedOrderedHorizonAsync(_scope, 64, token).ConfigureAwait(false) is not null)

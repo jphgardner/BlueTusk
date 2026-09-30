@@ -128,7 +128,8 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
         Require ($client.Kind -ceq $(if ($index -eq 7) { 'IndexedDB' } else { 'SQLite' }) -and
             [string]$client.OrderedStreamId -match '^[0-9a-f]{15}$') "$label client $index used the wrong durable store or ordered identity."
         $planned = $client.Offered + $client.Skipped
-        Minimum $planned (0.99 * $report.DurationSeconds * 1000 / $budget.offerIntervalMilliseconds) "$label client $index planned slots"
+        $expectedSlots = [long]([long]$report.DurationSeconds * 1000 / [long]$budget.offerIntervalMilliseconds)
+        Require ($planned -eq $expectedSlots) "$label client $index offered and skipped slots differ from the fixed schedule."
         Maximum ($client.Skipped / [double]$planned) $budget.maximumSkippedFraction "$label client $index skipped fraction"
         Require ($client.Offered -gt 0 -and $client.Acknowledged -eq $client.Offered -and
             $client.ExpectedConflicts -eq 0 -and $client.UnexpectedConflicts -eq 0 -and

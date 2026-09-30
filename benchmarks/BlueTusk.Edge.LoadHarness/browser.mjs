@@ -148,8 +148,9 @@ try {
   if (!Number.isSafeInteger(startEpoch)) throw new Error("Invalid capacity start signal.");
   const before = startEpoch - Date.now(); if (before > 0) await new Promise(resolve => setTimeout(resolve, before));
   const began = performance.now();
+  const plannedSlots = seconds * 1000 / 200;
   let next = 0;
-  while ((performance.now() - began) / 1000 < seconds) {
+  while (next < plannedSlots && (performance.now() - began) / 1000 < seconds) {
     const elapsed = (performance.now() - began) / 1000;
     const due = next * .2;
     if (due > elapsed) { await new Promise(resolve => setTimeout(resolve, Math.min(20, (due - elapsed) * 1000))); continue; }
@@ -231,6 +232,7 @@ try {
       { recoveries.push(elapsed - hostAt); hostRecovered = true; }
     await sample(elapsed);
   }
+  skipped += plannedSlots - next;
   const drainStart = performance.now();
   while (true) {
     const current = await state();
