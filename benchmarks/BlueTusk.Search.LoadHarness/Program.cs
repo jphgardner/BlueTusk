@@ -195,7 +195,24 @@ internal static class Program
                         var progressPath = Path.ChangeExtension(reportPath, ".progress.json");
                         var temporaryPath = progressPath + ".tmp";
                         await File.WriteAllTextAsync(temporaryPath, JsonSerializer.Serialize(progress));
-                        File.Move(temporaryPath, progressPath, overwrite: true);
+                        // A reader of the previous snapshot can briefly deny replacement on Windows.
+                        // Keep sampling while that handle closes, but fail on a persistent I/O error.
+                        for (var attempt = 0; ; attempt++)
+                        {
+                            try
+                            {
+                                File.Move(temporaryPath, progressPath, overwrite: true);
+                                break;
+                            }
+                            catch (IOException) when (attempt < 40)
+                            {
+                                await Task.Delay(TimeSpan.FromMilliseconds(50));
+                            }
+                            catch (UnauthorizedAccessException) when (attempt < 40)
+                            {
+                                await Task.Delay(TimeSpan.FromMilliseconds(50));
+                            }
+                        }
                     }
                 });
                 var writers = Enumerable.Range(0, Tenants).Select(tenant => Task.Run(async () =>
