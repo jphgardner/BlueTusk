@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: performance-leadership-${{ inputs.candidate_sha }}
+  group: bluetusk-reference-host
   cancel-in-progress: false
 
 jobs:

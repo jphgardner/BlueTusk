@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: v1-reference-performance
+  group: bluetusk-reference-host
   cancel-in-progress: false
 
 jobs:

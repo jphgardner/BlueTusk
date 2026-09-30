@@ -35,7 +35,11 @@ has no passing release evidence. Workflows, Projections and Documents share
 that exact-candidate capacity campaign because it measures each explicitly.
 It must emit a separate retained capacity artifact for each family before
 any can use it as release evidence. Its result alone is not a product
-release pass. The other six need dedicated capacity workflows. Every family
+release pass. Search now has a dedicated full-text local-capacity workflow,
+which requires two separate 1,800-second campaigns and retains an exact-candidate
+artifact only after its offline verifier passes. A prior local capacity pass
+does not qualify a later source commit or substitute for that workflow run.
+Events, Schema, Sql, Studio and Edge still need dedicated capacity workflows. Every family
 needs a dedicated failover and upgrade workflow, plus the protected expansion
 candidate aggregator. Jobs now has a source-bound synchronous-promotion
 failover workflow and an old/new/old binary upgrade workflow, but neither has
@@ -44,6 +48,12 @@ families' required readers are not implemented yet. An arming edit is therefore
 rejected even if
 generic `build.yml`, `security.yml`, `performance.yml` and
 `ecosystem-build.yml` pass.
+
+The benchmark-host workflows share one repository-wide concurrency group so
+reference measurements and disturbance campaigns cannot run concurrently on
+the labeled host through separate manual workflow dispatches. The benchmark
+runner must still be provisioned and kept isolated from other host workloads;
+the workflow definition alone is not a passing capacity run.
 
 The Jobs capacity workflow runs only the Jobs storage profile on a dedicated,
 digest-pinned PostgreSQL 15 fixture. It requires two separate full 1,800-second
