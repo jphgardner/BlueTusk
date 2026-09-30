@@ -38,9 +38,10 @@ any can use it as release evidence. Its result alone is not a product
 release pass. The other six need dedicated capacity workflows. Every family
 needs a dedicated failover and upgrade workflow, plus the protected expansion
 candidate aggregator. Jobs now has a source-bound synchronous-promotion
-failover workflow, but no passing exact-candidate release run. Its upgrade
-workflow, the protected aggregator, and the other families' required readers
-are not implemented yet. An arming edit is therefore rejected even if
+failover workflow and an old/new/old binary upgrade workflow, but neither has
+a passing exact-candidate release run. The protected aggregator and the other
+families' required readers are not implemented yet. An arming edit is therefore
+rejected even if
 generic `build.yml`, `security.yml`, `performance.yml` and
 `ecosystem-build.yml` pass.
 

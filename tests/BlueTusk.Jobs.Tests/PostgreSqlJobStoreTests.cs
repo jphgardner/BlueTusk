@@ -67,6 +67,28 @@ public sealed class PostgreSqlJobStoreTests
     }
 
     [Fact]
+    public async Task ExpiredLeaseUsesItsExpiryTimeWhenOrderedWithPendingWork()
+    {
+        await using var database = await JobDatabase.CreateAsync();
+        Guid expired = await database.Store.EnqueueAsync(database.Request("expired"));
+        var first = Assert.Single(await database.Store.ClaimAsync(database.Scope, "old-worker", 1, TimeSpan.FromMinutes(1)));
+        Assert.Equal(expired, first.JobId);
+
+        Guid pending = await database.Store.EnqueueAsync(database.Request("pending"));
+        await database.ExecuteAsync("UPDATE {schema}.jobs SET lease_expires = clock_timestamp() WHERE id = '" + expired + "'");
+
+        var next = Assert.Single(await database.Store.ClaimAsync(database.Scope, "new-worker", 1, TimeSpan.FromMinutes(1)));
+        Assert.Equal(pending, next.JobId);
+        Assert.True(await database.Store.CompleteAsync(next));
+
+        var reclaimed = Assert.Single(await database.Store.ClaimAsync(database.Scope, "recovery-worker", 1, TimeSpan.FromMinutes(1)));
+        Assert.Equal(expired, reclaimed.JobId);
+        Assert.Equal(2, reclaimed.Attempt);
+        Assert.False(await database.Store.CompleteAsync(first));
+        Assert.True(await database.Store.CompleteAsync(reclaimed));
+    }
+
+    [Fact]
     public async Task CrashedFinalAttemptBecomesFailedWithoutBeingClaimedAgain()
     {
         await using var database = await JobDatabase.CreateAsync();

@@ -25,8 +25,10 @@ Jobs DLLs and exact effect counts to the candidate and old commits. A partial or
 failed run uses a separate artifact name and never satisfies release readiness.
 This workflow has not run and creates no qualification merely by existing.
 
-An earlier preview commit such as `14b212e` is reachable from this branch, but
-its Jobs and Data source matches the current candidate. The binary difference
-check should reject it until a candidate genuinely changes the Jobs assembly.
+An earlier preview commit such as `14b212e` is reachable from this branch.
+The candidate's claim-ordering correction changes the Jobs assembly while
+preserving format one, so it provides a real cross-binary boundary to rehearse.
+The verifier still checks the selected old commit and both packaged DLLs; no
+passing rehearsal has yet been retained.
 There is no previously published Jobs package or released durable format. A
 future format change requires a separate migration and rollback policy.

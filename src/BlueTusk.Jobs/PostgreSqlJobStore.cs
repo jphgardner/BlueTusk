@@ -213,22 +213,22 @@ public sealed partial class PostgreSqlJobStore
         await using var command = CreateCommand(connection, transaction: null, $"""
             WITH db_now AS MATERIALIZED (SELECT clock_timestamp() AS now),
             pending AS MATERIALIZED (
-                SELECT j.id, j.available_at, octet_length(j.payload) AS payload_bytes FROM {_jobs} j, db_now n
+                SELECT j.id, j.available_at AS due_at, octet_length(j.payload) AS payload_bytes FROM {_jobs} j, db_now n
                 WHERE j.tenant = @tenant AND j.queue = @queue {typeFilter}
                   AND j.status = 0 AND j.available_at <= n.now
                 ORDER BY j.available_at, j.id
                 FOR UPDATE OF j SKIP LOCKED LIMIT @count
             ), expired AS MATERIALIZED (
-                SELECT j.id, j.available_at, octet_length(j.payload) AS payload_bytes FROM {_jobs} j, db_now n
+                SELECT j.id, j.lease_expires AS due_at, octet_length(j.payload) AS payload_bytes FROM {_jobs} j, db_now n
                 WHERE j.tenant = @tenant AND j.queue = @queue {typeFilter}
                   AND j.status = 1 AND j.lease_expires <= n.now
                 ORDER BY j.lease_expires, j.id
                 FOR UPDATE OF j SKIP LOCKED LIMIT @count
             ), due AS MATERIALIZED (
                 SELECT id FROM (
-                    SELECT id, available_at, sum(payload_bytes) OVER (ORDER BY available_at, id) AS total_bytes
+                    SELECT id, due_at, sum(payload_bytes) OVER (ORDER BY due_at, id) AS total_bytes
                     FROM (SELECT * FROM pending UNION ALL SELECT * FROM expired) candidates
-                ) bounded WHERE total_bytes <= @bytes ORDER BY available_at, id LIMIT @count
+                ) bounded WHERE total_bytes <= @bytes ORDER BY due_at, id LIMIT @count
             ), changed AS (
                 UPDATE {_jobs} j SET
                     status = CASE WHEN j.attempts >= j.maximum_attempts THEN 3 ELSE 1 END,

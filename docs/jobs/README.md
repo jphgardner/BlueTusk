@@ -101,6 +101,9 @@ provide strict global FIFO. A worker is explicitly tenant and queue scoped, so
 large tenants cannot consume another tenant's worker allocation. Provision a
 bounded allocation for each queue; cross-tenant scheduling policy belongs to
 the host, rather than scanning every tenant in a global work queue.
+Pending jobs enter the claim order at their availability deadline; expired
+leases re-enter at their lease-expiry deadline. An old job's original enqueue
+time does not repeatedly put it ahead of newly eligible work after lease loss.
 
 Retry backoff is exponential, capped, with bounded one-sided jitter. A job's
 maximum attempts are durable. A classified failure can stop retry immediately.
