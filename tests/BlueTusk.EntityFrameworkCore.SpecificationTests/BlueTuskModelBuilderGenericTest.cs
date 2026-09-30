@@ -20,6 +20,10 @@ public sealed class BlueTuskModelBuilderGenericTest : RelationalModelBuilderTest
     public sealed class BlueTuskGenericComplexType(BlueTuskModelBuilderFixture fixture)
         : RelationalComplexTypeTestBase(fixture), IClassFixture<BlueTuskModelBuilderFixture>
     {
+        [ConditionalFact]
+        public override void Can_specify_discriminator_value()
+            => base.Can_specify_discriminator_value();
+
         protected override TestModelBuilder CreateModelBuilder(
             Action<ModelConfigurationBuilder>? configure)
             => new GenericTestModelBuilder(Fixture, configure);
