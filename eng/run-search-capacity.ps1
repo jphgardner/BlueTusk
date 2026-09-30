@@ -91,6 +91,7 @@ try {
         $fixture = "$campaign-$run"
         $container = "$fixture-pg18"
         $volume = "$fixture-data"
+        $fixturePassword = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24))
         $runRoot = Join-Path $output "run-$run"
         New-Item -ItemType Directory -Path $runRoot -Force | Out-Null
         foreach ($snapshot in Get-ChildItem -LiteralPath $binarySnapshot -File) {
@@ -103,7 +104,7 @@ try {
             InvokeDocker @('volume','create','--label','bluetusk.owner=search-capacity','--label',"bluetusk.fixture=$fixture",$volume) | Out-Null
             InvokeDocker @('run','-d','--name',$container,'--label','bluetusk.owner=search-capacity','--label',"bluetusk.fixture=$fixture",
                 '--cpus','4','--memory','2g','-p',"127.0.0.1:${Port}:5432",'-v',"${volume}:/var/lib/postgresql/data",
-                '-e','PGDATA=/var/lib/postgresql/data/pgdata','-e','POSTGRES_PASSWORD=postgres','-e','POSTGRES_DB=search_load', # ggignore
+                '-e','PGDATA=/var/lib/postgresql/data/pgdata','-e',"POSTGRES_PASSWORD=$fixturePassword",'-e','POSTGRES_DB=search_load',
                 $budget.postgreSqlImage,'postgres','-c','track_io_timing=on','-c','max_connections=100') | Out-Null
             $ready = $false
             for ($attempt = 0; $attempt -lt 150; $attempt++) {
@@ -112,7 +113,7 @@ try {
                 Start-Sleep -Milliseconds 200
             }
             Require $ready 'Owned Search PostgreSQL fixture did not become ready.'
-            $env:BLUETUSK_SEARCH_LOAD_CONNECTION_STRING = "Host=127.0.0.1;Port=$Port;Username=postgres;Password=postgres;Database=search_load;SSL Mode=Disable;Channel Binding=Disable" # ggignore
+            $env:BLUETUSK_SEARCH_LOAD_CONNECTION_STRING = "Host=127.0.0.1;Port=$Port;Username=postgres;Password=$fixturePassword;Database=search_load;SSL Mode=Disable;Channel Binding=Disable"
             & dotnet $dll $Seconds $DocumentsPerTenant $budget.contentBytes (Join-Path $runRoot 'search-mixed.json') 2>&1 |
                 Tee-Object -FilePath (Join-Path $runRoot 'workload.log')
             Require ($LASTEXITCODE -eq 0) "Search mixed run $run failed; partial evidence is retained."

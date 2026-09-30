@@ -30,6 +30,14 @@ function Minimum($Value, $Budget, [string]$Name) {
 function Maximum($Value, $Budget, [string]$Name) {
     Require ((Number $Value $Name) -le (Number $Budget "$Name budget")) "$Name exceeds its maximum $Budget."
 }
+function Instant($Value, [string]$Name) {
+    Require ($null -ne $Value) "$Name is missing."
+    if ($Value -is [DateTime]) {
+        return [DateTimeOffset]::new($Value.ToUniversalTime(), [TimeSpan]::Zero)
+    }
+    return [DateTimeOffset]::Parse([string]$Value, [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::RoundtripKind)
+}
 
 Require ($ExpectedCommit -match '^[0-9a-fA-F]{40}$') 'A full candidate SHA is required.'
 $head = (& git -C $root rev-parse HEAD).Trim()
@@ -76,8 +84,8 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     $runSource = Json (Join-Path $runRoot 'source-after.json')
     Require ($runSource.commit -ceq $head -and $runSource.dirty -eq $false -and
         $runSource.sourceTreeSha256 -ceq $before.sourceTreeSha256) "$label changed candidate source."
-    $started = [DateTimeOffset]::Parse([string]$report.StartedUtc)
-    $completed = [DateTimeOffset]::Parse([string]$report.CompletedUtc)
+    $started = Instant $report.StartedUtc "$label start"
+    $completed = Instant $report.CompletedUtc "$label completion"
     Require ($started -gt $previousCompleted -and $completed -gt $started) "$label has overlapping or invalid run timestamps."
     $previousCompleted = $completed
     Require ($report.FormatVersion -eq 2 -and $report.Passed -eq $true -and $report.ProductionQualified -eq $false) "$label lacks a completed raw report."
