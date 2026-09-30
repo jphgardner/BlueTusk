@@ -43,6 +43,7 @@ let firstMutation = null, lostMutation = null, lostAt = 0, lostRecovered = false
 let firstOfflineRecovered = false, secondOfflineRecovered = false, hostRecovered = false;
 let offlineActive = false, lossArmed = false, restarted = false;
 let lastSample = 0;
+let syncJob = null, syncFailure = null, lastSyncStart = 0;
 const offlineLength = seconds >= 1800 ? 30 : Math.min(5, seconds / 12);
 const offlineOne = seconds / 3, lossAt = seconds / 2, offlineTwo = seconds * 2 / 3, hostAt = seconds * .75;
 const overlaps = (offeredAt, acknowledgedAt, start, end) => offeredAt <= end && acknowledgedAt >= start;
@@ -167,60 +168,23 @@ try {
   const began = performance.now();
   const plannedSlots = seconds * 1000 / 200;
   let next = 0;
-  while (next < plannedSlots && (performance.now() - began) / 1000 < seconds) {
-    const elapsed = (performance.now() - began) / 1000;
-    const due = next * .2;
-    if (due > elapsed) { await new Promise(resolve => setTimeout(resolve, Math.min(20, (due - elapsed) * 1000))); continue; }
-    const current = Math.floor(elapsed / .2);
-    if (current > next) { skipped += current - next; scheduleSkipped += current - next; next = current; }
-    const key = "doc-" + String(next % 256).padStart(3, "0");
-    const injectedOffline = (elapsed >= offlineOne && elapsed < offlineOne + offlineLength) ||
-      (elapsed >= offlineTwo && elapsed < offlineTwo + offlineLength);
-    if (injectedOffline && !offlineActive) { await context.setOffline(true); offlineActive = true; }
-    if (!injectedOffline && offlineActive) { await context.setOffline(false); offlineActive = false; }
-    const offerStarted = performance.now();
-    const payload = await page.evaluate(() => {
-      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-      const random = crypto.getRandomValues(new Uint8Array(4088));
-      let text = '{"v":"'; for (const value of random) text += alphabet[value & 63]; return text + '"}';
-    });
-    const offeredResult = await page.evaluate(async ({ key, payload }) => {
-      const { local, scope } = window.edgeCapacity;
-      const cached = await local.get(scope, key);
-      if (cached.pendingId !== null) return { skipped: true };
-      const began = performance.now();
-      const mutation = await local.enqueueOrdered({ scope, documentId: key, expectedRevision: cached.revision,
-        kind: "upsert", payload });
-      return { skipped: false, mutation, enqueueMilliseconds: performance.now() - began };
-    }, { key, payload });
-    offerTimes.push(performance.now() - offerStarted);
-    if (offeredResult.skipped) { skipped++; pendingKeySkipped++; }
-    else {
-      offered++; enqueueTimes.push(offeredResult.enqueueMilliseconds);
-      pending.set(key, { id: offeredResult.mutation.id, began: performance.now(), offeredAt: elapsed,
-        mutation: offeredResult.mutation });
-      if (!firstMutation) firstMutation = offeredResult.mutation;
-      peakPending = Math.max(peakPending, pending.size);
-    }
-    next++;
-    if (injectedOffline) { await sample(elapsed); continue; }
-    // Batch five offered writes into each bounded reconnect pass. The 200 ms
-    // offer schedule remains independent of redundant empty remote polls.
-    if (next % 5 !== 0) { await sample(elapsed); continue; }
-    if (elapsed >= lossAt && !lossArmed) {
-      lossArmed = true;
-      await page.evaluate(() => { window.edgeDropNextResponse = true; });
-    }
+  async function finishSync() {
+    if (syncJob) await syncJob;
+    if (syncFailure) throw syncFailure;
+  }
+  async function runSync(elapsed) {
     let synced;
     try { synced = await synchronize(elapsed, [...pending.keys()]); }
     catch (error) {
-      if (elapsed >= hostAt - 2 && elapsed <= hostAt + 30 && (error instanceof Error)) { await sample(elapsed); continue; }
+      const now = (performance.now() - began) / 1000;
+      if (now >= hostAt - 2 && now <= hostAt + 30 && error instanceof Error) return;
       throw error;
     }
     if (synced.failure === "fetch") {
-      if (elapsed >= hostAt - 2 && elapsed <= hostAt + 30) { await sample(elapsed); continue; }
+      const now = (performance.now() - began) / 1000;
+      if (offlineActive || (now >= hostAt - 2 && now <= hostAt + 30)) return;
       if (!lossArmed || restarted) throw new Error("Unexpected browser transport failure.");
-      lostAt = (performance.now() - began) / 1000;
+      lostAt = now;
       const leased = await page.evaluate(async keys => {
         for (const candidate of keys) {
           const row = await window.edgeCapacity.local.get(window.edgeCapacity.scope, candidate);
@@ -237,7 +201,7 @@ try {
       clockOffset = 120_000; await openBrowser(false); restarted = true;
       const persisted = await page.evaluate(async key => (await window.edgeCapacity.local.get(window.edgeCapacity.scope, key)).pendingId, lostKey);
       if (persisted !== lostMutation) throw new Error("Browser restart changed the leased mutation identity.");
-      continue;
+      return;
     }
     for (const key of synced.acknowledged) {
       const row = pending.get(key); if (!row) throw new Error("Acknowledged browser key was not offered.");
@@ -247,14 +211,72 @@ try {
       if (acknowledgedAt > 10 && !faultAffected(row.offeredAt, acknowledgedAt))
         ackTimes.push(performance.now() - row.began);
     }
-    if (!firstOfflineRecovered && elapsed >= offlineOne + offlineLength)
-      { recoveries.push(elapsed - (offlineOne + offlineLength)); firstOfflineRecovered = true; }
-    if (!secondOfflineRecovered && elapsed >= offlineTwo + offlineLength)
-      { recoveries.push(elapsed - (offlineTwo + offlineLength)); secondOfflineRecovered = true; }
-    if (!hostRecovered && elapsed >= hostAt + 2)
-      { recoveries.push(elapsed - hostAt); hostRecovered = true; }
+    const now = (performance.now() - began) / 1000;
+    if (!firstOfflineRecovered && now >= offlineOne + offlineLength)
+      { recoveries.push(now - (offlineOne + offlineLength)); firstOfflineRecovered = true; }
+    if (!secondOfflineRecovered && now >= offlineTwo + offlineLength)
+      { recoveries.push(now - (offlineTwo + offlineLength)); secondOfflineRecovered = true; }
+    if (!hostRecovered && now >= hostAt + 2)
+      { recoveries.push(now - hostAt); hostRecovered = true; }
+  }
+  function startSync(elapsed) {
+    if (syncJob || syncFailure) return;
+    lastSyncStart = elapsed;
+    syncJob = runSync(elapsed).catch(error => { syncFailure = error; }).finally(() => { syncJob = null; });
+  }
+  while (next < plannedSlots && (performance.now() - began) / 1000 < seconds) {
+    if (syncFailure) throw syncFailure;
+    const elapsed = (performance.now() - began) / 1000;
+    const due = next * .2;
+    if (due > elapsed) { await new Promise(resolve => setTimeout(resolve, Math.min(20, (due - elapsed) * 1000))); continue; }
+    const current = Math.floor(elapsed / .2);
+    if (current > next) { skipped += current - next; scheduleSkipped += current - next; next = current; }
+    const key = "doc-" + String(next % 256).padStart(3, "0");
+    const injectedOffline = (elapsed >= offlineOne && elapsed < offlineOne + offlineLength) ||
+      (elapsed >= offlineTwo && elapsed < offlineTwo + offlineLength);
+    if (injectedOffline && !offlineActive) { await context.setOffline(true); offlineActive = true; }
+    if (!injectedOffline && offlineActive) { await context.setOffline(false); offlineActive = false; }
+    const offerStarted = performance.now();
+    const payload = await page.evaluate(() => {
+      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+      const random = crypto.getRandomValues(new Uint8Array(4088));
+      let text = '{"v":"'; for (const value of random) text += alphabet[value & 63]; return text + '"}';
+    });
+    const offeredResult = await page.evaluate(async ({ key, payload, alreadyTracked }) => {
+      const { local, scope } = window.edgeCapacity;
+      if (alreadyTracked) return { skipped: true };
+      const cached = await local.get(scope, key);
+      if (cached.pendingId !== null) return { skipped: true };
+      const began = performance.now();
+      const mutation = await local.enqueueOrdered({ scope, documentId: key, expectedRevision: cached.revision,
+        kind: "upsert", payload });
+      return { skipped: false, mutation, enqueueMilliseconds: performance.now() - began };
+    }, { key, payload, alreadyTracked: pending.has(key) });
+    offerTimes.push(performance.now() - offerStarted);
+    if (offeredResult.skipped) { skipped++; pendingKeySkipped++; }
+    else {
+      offered++; enqueueTimes.push(offeredResult.enqueueMilliseconds);
+      pending.set(key, { id: offeredResult.mutation.id, began: performance.now(), offeredAt: elapsed,
+        mutation: offeredResult.mutation });
+      if (!firstMutation) firstMutation = offeredResult.mutation;
+      peakPending = Math.max(peakPending, pending.size);
+    }
+    next++;
+    if (injectedOffline) { await sample(elapsed); continue; }
+    if (elapsed >= lossAt && !lossArmed && pending.size) {
+      // The deliberate lost response closes and reopens this browser profile.
+      // Finish the prior pass and hold offers until that recovery completes.
+      await finishSync();
+      lossArmed = true;
+      await page.evaluate(() => { window.edgeDropNextResponse = true; });
+      startSync(elapsed);
+      await finishSync();
+    } else if (pending.size && !syncJob && (next % 5 === 0 || pending.size >= 5 || elapsed - lastSyncStart >= 1)) {
+      startSync(elapsed);
+    }
     await sample(elapsed);
   }
+  await finishSync();
   skipped += plannedSlots - next;
   scheduleSkipped += plannedSlots - next;
   const drainStart = performance.now();
@@ -303,6 +325,7 @@ try {
   await writeFile(reportPath, JSON.stringify(result, null, 2));
   process.stdout.write(`IndexedDB browser client: ${acknowledged} durable ordered writes, ${scheduleSkipped} schedule skips, ${pendingKeySkipped} pending-key skips, horizon ${final.horizon}, profile peak ${maximumPhysicalBytes} bytes.\n`);
 } finally {
+  if (syncJob) await syncJob;
   if (context) await context.close();
   await new Promise(resolve => server.close(resolve));
 }
