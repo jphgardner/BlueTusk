@@ -369,7 +369,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       {
         "kind": "code",
         "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing(options =>\n    {\n        options.WorkerCount = 4;\n        options.QueueCapacity = 1_024;\n        options.MaxPipelineCommands = 64;\n    })\n    .Build();\n\nawait using var command = dataSource.CreateCommand(\"SELECT $1::int4\");\ncommand.Parameters.Add(new BlueTuskParameter<int>(42));\nvar value = await command.ExecuteScalarAsync<int>();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing(options =&gt;\n    {\n        options.WorkerCount = <span class=\"hljs-number\">4</span>;\n        options.QueueCapacity = <span class=\"hljs-number\">1</span>_024;\n        options.MaxPipelineCommands = <span class=\"hljs-number\">64</span>;\n    })\n    .Build();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(<span class=\"hljs-string\">&quot;SELECT $1::int4&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">42</span>));\n<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">value</span> = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing(options =&gt;\n    {\n        options.WorkerCount = <span class=\"hljs-number\">4</span>;\n        options.QueueCapacity = <span class=\"hljs-number\">1_024</span>;\n        options.MaxPipelineCommands = <span class=\"hljs-number\">64</span>;\n    })\n    .Build();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(<span class=\"hljs-string\">&quot;SELECT $1::int4&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">42</span>));\n<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">value</span> = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n",
         "language": "csharp"
       },
       {
@@ -1364,7 +1364,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1122,
+    "order": 1123,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1402,7 +1402,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1123,
+    "order": 1124,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1450,7 +1450,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1138,
+    "order": 1139,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1627,7 +1627,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1170,
+    "order": 1171,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
@@ -1725,7 +1725,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       {
         "kind": "code",
         "code": "var relationByName = new BlueTuskRegClass(\"public.orders\");\nvar relationByOid = new BlueTuskRegClass(16_384);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> relationByName = <span class=\"hljs-keyword\">new</span> BlueTuskRegClass(<span class=\"hljs-string\">&quot;public.orders&quot;</span>);\n<span class=\"hljs-keyword\">var</span> relationByOid = <span class=\"hljs-keyword\">new</span> BlueTuskRegClass(<span class=\"hljs-number\">16</span>_384);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> relationByName = <span class=\"hljs-keyword\">new</span> BlueTuskRegClass(<span class=\"hljs-string\">&quot;public.orders&quot;</span>);\n<span class=\"hljs-keyword\">var</span> relationByOid = <span class=\"hljs-keyword\">new</span> BlueTuskRegClass(<span class=\"hljs-number\">16_384</span>);\n",
         "language": "csharp"
       },
       {

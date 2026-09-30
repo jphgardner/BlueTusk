@@ -282,7 +282,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       {
         "kind": "code",
         "code": "var source = new PostgreSqlConsistentSnapshotSource(\n    dataSource,\n    new PostgreSqlConsistentSnapshotOptions\n    {\n        Source = sourceIdentity,\n        PublicationNames = [\"application_publication\"],\n        Tables =\n        [\n            new PostgreSqlSnapshotTable(ordersRelation, [ordersIdOrdinal]),\n        ],\n        CopyPageRows = 2_048,\n        MaximumBatchRows = 512,\n        MaximumBatchBytes = 4 * 1024 * 1024,\n        MaximumParallelTables = 4,\n        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n    },\n    replication => CreateCheckpointBeforeFeedbackObserver(replication));\n\nawait new SnapshotThenStreamCoordinator(source).RunAsync(consumer, stoppingToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> source = <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotSource(\n    dataSource,\n    <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotOptions\n    {\n        Source = sourceIdentity,\n        PublicationNames = [<span class=\"hljs-string\">&quot;application_publication&quot;</span>],\n        Tables =\n        [\n            <span class=\"hljs-keyword\">new</span> PostgreSqlSnapshotTable(ordersRelation, [ordersIdOrdinal]),\n        ],\n        CopyPageRows = <span class=\"hljs-number\">2</span>_048,\n        MaximumBatchRows = <span class=\"hljs-number\">512</span>,\n        MaximumBatchBytes = <span class=\"hljs-number\">4</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n        MaximumParallelTables = <span class=\"hljs-number\">4</span>,\n        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n    },\n    replication =&gt; CreateCheckpointBeforeFeedbackObserver(replication));\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">new</span> SnapshotThenStreamCoordinator(source).RunAsync(consumer, stoppingToken);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> source = <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotSource(\n    dataSource,\n    <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotOptions\n    {\n        Source = sourceIdentity,\n        PublicationNames = [<span class=\"hljs-string\">&quot;application_publication&quot;</span>],\n        Tables =\n        [\n            <span class=\"hljs-keyword\">new</span> PostgreSqlSnapshotTable(ordersRelation, [ordersIdOrdinal]),\n        ],\n        CopyPageRows = <span class=\"hljs-number\">2_048</span>,\n        MaximumBatchRows = <span class=\"hljs-number\">512</span>,\n        MaximumBatchBytes = <span class=\"hljs-number\">4</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n        MaximumParallelTables = <span class=\"hljs-number\">4</span>,\n        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n    },\n    replication =&gt; CreateCheckpointBeforeFeedbackObserver(replication));\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">new</span> SnapshotThenStreamCoordinator(source).RunAsync(consumer, stoppingToken);\n",
         "language": "csharp"
       },
       {
@@ -1105,7 +1105,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       {
         "kind": "code",
         "code": "var arguments = plan.Bind(new Dictionary<string, object?>\n{\n    [\"accountId\"] = 42L,\n});\n\nawait using var session = plan.CreateIncrementalSession(\n    arguments,\n    new LiveSecurityScope(\"tenant:acme:user:17\", \"fraud-policy-v4\"),\n    new ContinuousGraphIncrementalOptions<FraudPath, long>\n    {\n        ResultOrdering = FraudPathOrdering.Instance,\n        KeyOrdering = Comparer<long>.Default,\n        MaximumAffectedKeys = 512,\n        RepairAfterTransactions = 1_000,\n    });\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> arguments = plan.Bind(<span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">object</span>?&gt;\n{\n    [<span class=\"hljs-string\">&quot;accountId&quot;</span>] = <span class=\"hljs-number\">42L</span>,\n});\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> session = plan.CreateIncrementalSession(\n    arguments,\n    <span class=\"hljs-keyword\">new</span> LiveSecurityScope(<span class=\"hljs-string\">&quot;tenant:acme:user:17&quot;</span>, <span class=\"hljs-string\">&quot;fraud-policy-v4&quot;</span>),\n    <span class=\"hljs-keyword\">new</span> ContinuousGraphIncrementalOptions&lt;FraudPath, <span class=\"hljs-built_in\">long</span>&gt;\n    {\n        ResultOrdering = FraudPathOrdering.Instance,\n        KeyOrdering = Comparer&lt;<span class=\"hljs-built_in\">long</span>&gt;.Default,\n        MaximumAffectedKeys = <span class=\"hljs-number\">512</span>,\n        RepairAfterTransactions = <span class=\"hljs-number\">1</span>_000,\n    });\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> arguments = plan.Bind(<span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">object</span>?&gt;\n{\n    [<span class=\"hljs-string\">&quot;accountId&quot;</span>] = <span class=\"hljs-number\">42L</span>,\n});\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> session = plan.CreateIncrementalSession(\n    arguments,\n    <span class=\"hljs-keyword\">new</span> LiveSecurityScope(<span class=\"hljs-string\">&quot;tenant:acme:user:17&quot;</span>, <span class=\"hljs-string\">&quot;fraud-policy-v4&quot;</span>),\n    <span class=\"hljs-keyword\">new</span> ContinuousGraphIncrementalOptions&lt;FraudPath, <span class=\"hljs-built_in\">long</span>&gt;\n    {\n        ResultOrdering = FraudPathOrdering.Instance,\n        KeyOrdering = Comparer&lt;<span class=\"hljs-built_in\">long</span>&gt;.Default,\n        MaximumAffectedKeys = <span class=\"hljs-number\">512</span>,\n        RepairAfterTransactions = <span class=\"hljs-number\">1_000</span>,\n    });\n",
         "language": "csharp"
       },
       {
@@ -1242,7 +1242,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       {
         "kind": "code",
         "code": "var store = new PostgreSqlManagedDeploymentStore(controlDataSource);\nawait store.InitializeAsync();\n\nvar quotas = new ManagedDeploymentQuotaSource(\n    store,\n    new Dictionary<string, ManagedTenantQuota>\n    {\n        [\"tenant-a\"] = new(\n            MaximumDeployments: 10,\n            MaximumReplicas: 100,\n            MaximumCpuMillicores: 100_000,\n            MaximumMemoryBytes: 512L * 1024 * 1024 * 1024,\n            MaximumStorageBytes: 10L * 1024 * 1024 * 1024 * 1024),\n    });\nvar controller = new ManagedDeploymentController(\n    store,\n    store,\n    quotas,\n    new ManagedInfrastructureProviderResolver([kubernetesProvider]),\n    owner: instanceIdentity);\n\nawait store.PutAsync(desired, expectedGeneration: 0);\nawait controller.ReconcileAsync(desired.DeploymentId);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> PostgreSqlManagedDeploymentStore(controlDataSource);\n<span class=\"hljs-keyword\">await</span> store.InitializeAsync();\n\n<span class=\"hljs-keyword\">var</span> quotas = <span class=\"hljs-keyword\">new</span> ManagedDeploymentQuotaSource(\n    store,\n    <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, ManagedTenantQuota&gt;\n    {\n        [<span class=\"hljs-string\">&quot;tenant-a&quot;</span>] = <span class=\"hljs-keyword\">new</span>(\n            MaximumDeployments: <span class=\"hljs-number\">10</span>,\n            MaximumReplicas: <span class=\"hljs-number\">100</span>,\n            MaximumCpuMillicores: <span class=\"hljs-number\">100</span>_000,\n            MaximumMemoryBytes: <span class=\"hljs-number\">512L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n            MaximumStorageBytes: <span class=\"hljs-number\">10L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>),\n    });\n<span class=\"hljs-keyword\">var</span> controller = <span class=\"hljs-keyword\">new</span> ManagedDeploymentController(\n    store,\n    store,\n    quotas,\n    <span class=\"hljs-keyword\">new</span> ManagedInfrastructureProviderResolver([kubernetesProvider]),\n    owner: instanceIdentity);\n\n<span class=\"hljs-keyword\">await</span> store.PutAsync(desired, expectedGeneration: <span class=\"hljs-number\">0</span>);\n<span class=\"hljs-keyword\">await</span> controller.ReconcileAsync(desired.DeploymentId);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> PostgreSqlManagedDeploymentStore(controlDataSource);\n<span class=\"hljs-keyword\">await</span> store.InitializeAsync();\n\n<span class=\"hljs-keyword\">var</span> quotas = <span class=\"hljs-keyword\">new</span> ManagedDeploymentQuotaSource(\n    store,\n    <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, ManagedTenantQuota&gt;\n    {\n        [<span class=\"hljs-string\">&quot;tenant-a&quot;</span>] = <span class=\"hljs-keyword\">new</span>(\n            MaximumDeployments: <span class=\"hljs-number\">10</span>,\n            MaximumReplicas: <span class=\"hljs-number\">100</span>,\n            MaximumCpuMillicores: <span class=\"hljs-number\">100_000</span>,\n            MaximumMemoryBytes: <span class=\"hljs-number\">512L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n            MaximumStorageBytes: <span class=\"hljs-number\">10L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>),\n    });\n<span class=\"hljs-keyword\">var</span> controller = <span class=\"hljs-keyword\">new</span> ManagedDeploymentController(\n    store,\n    store,\n    quotas,\n    <span class=\"hljs-keyword\">new</span> ManagedInfrastructureProviderResolver([kubernetesProvider]),\n    owner: instanceIdentity);\n\n<span class=\"hljs-keyword\">await</span> store.PutAsync(desired, expectedGeneration: <span class=\"hljs-number\">0</span>);\n<span class=\"hljs-keyword\">await</span> controller.ReconcileAsync(desired.DeploymentId);\n",
         "language": "csharp"
       },
       {
@@ -1627,7 +1627,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1127,
+    "order": 1128,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -1665,7 +1665,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1147,
+    "order": 1148,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -1697,7 +1697,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1148,
+    "order": 1149,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -1749,7 +1749,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1149,
+    "order": 1150,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -1791,7 +1791,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1150,
+    "order": 1151,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -1834,7 +1834,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1152,
+    "order": 1153,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -1867,7 +1867,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1154,
+    "order": 1155,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -1935,7 +1935,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1156,
+    "order": 1157,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -1986,7 +1986,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1157,
+    "order": 1158,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -2018,7 +2018,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1158,
+    "order": 1159,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -2067,7 +2067,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1161,
+    "order": 1162,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -2150,7 +2150,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1164,
+    "order": 1165,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -2183,7 +2183,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1165,
+    "order": 1166,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -2215,7 +2215,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1166,
+    "order": 1167,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -2312,7 +2312,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       {
         "kind": "code",
         "code": "var sandbox = new SandboxedSyncTransformStage(\n    new SyncTransformSandboxOptions\n    {\n        Name = \"public-orders\",\n        Version = \"v4\",\n        Instructions =\n        [\n            SyncSandboxInstruction.RequireEquals(\"kind\", \"\\\"order\\\"\"),\n            SyncSandboxInstruction.Copy(\"customer.name\", \"displayName\"),\n            SyncSandboxInstruction.Remove(\"customer.email\"),\n            SyncSandboxInstruction.Set(\"metadata.source\", \"\\\"cdc\\\"\"),\n            SyncSandboxInstruction.Route(\"tenant.id\"),\n            SyncSandboxInstruction.DropWhenEquals(\"status\", \"\\\"cancelled\\\"\"),\n        ],\n        MaximumDocumentBytes = 256 * 1024,\n        MaximumBatchBytes = 8 * 1024 * 1024,\n        MaximumOperationsPerBatch = 250_000,\n        MaximumExecutionTime = TimeSpan.FromSeconds(2),\n    });\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> sandbox = <span class=\"hljs-keyword\">new</span> SandboxedSyncTransformStage(\n    <span class=\"hljs-keyword\">new</span> SyncTransformSandboxOptions\n    {\n        Name = <span class=\"hljs-string\">&quot;public-orders&quot;</span>,\n        Version = <span class=\"hljs-string\">&quot;v4&quot;</span>,\n        Instructions =\n        [\n            SyncSandboxInstruction.RequireEquals(<span class=\"hljs-string\">&quot;kind&quot;</span>, <span class=\"hljs-string\">&quot;\\&quot;order\\&quot;&quot;</span>),\n            SyncSandboxInstruction.Copy(<span class=\"hljs-string\">&quot;customer.name&quot;</span>, <span class=\"hljs-string\">&quot;displayName&quot;</span>),\n            SyncSandboxInstruction.Remove(<span class=\"hljs-string\">&quot;customer.email&quot;</span>),\n            SyncSandboxInstruction.Set(<span class=\"hljs-string\">&quot;metadata.source&quot;</span>, <span class=\"hljs-string\">&quot;\\&quot;cdc\\&quot;&quot;</span>),\n            SyncSandboxInstruction.Route(<span class=\"hljs-string\">&quot;tenant.id&quot;</span>),\n            SyncSandboxInstruction.DropWhenEquals(<span class=\"hljs-string\">&quot;status&quot;</span>, <span class=\"hljs-string\">&quot;\\&quot;cancelled\\&quot;&quot;</span>),\n        ],\n        MaximumDocumentBytes = <span class=\"hljs-number\">256</span> * <span class=\"hljs-number\">1024</span>,\n        MaximumBatchBytes = <span class=\"hljs-number\">8</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n        MaximumOperationsPerBatch = <span class=\"hljs-number\">250</span>_000,\n        MaximumExecutionTime = TimeSpan.FromSeconds(<span class=\"hljs-number\">2</span>),\n    });\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> sandbox = <span class=\"hljs-keyword\">new</span> SandboxedSyncTransformStage(\n    <span class=\"hljs-keyword\">new</span> SyncTransformSandboxOptions\n    {\n        Name = <span class=\"hljs-string\">&quot;public-orders&quot;</span>,\n        Version = <span class=\"hljs-string\">&quot;v4&quot;</span>,\n        Instructions =\n        [\n            SyncSandboxInstruction.RequireEquals(<span class=\"hljs-string\">&quot;kind&quot;</span>, <span class=\"hljs-string\">&quot;\\&quot;order\\&quot;&quot;</span>),\n            SyncSandboxInstruction.Copy(<span class=\"hljs-string\">&quot;customer.name&quot;</span>, <span class=\"hljs-string\">&quot;displayName&quot;</span>),\n            SyncSandboxInstruction.Remove(<span class=\"hljs-string\">&quot;customer.email&quot;</span>),\n            SyncSandboxInstruction.Set(<span class=\"hljs-string\">&quot;metadata.source&quot;</span>, <span class=\"hljs-string\">&quot;\\&quot;cdc\\&quot;&quot;</span>),\n            SyncSandboxInstruction.Route(<span class=\"hljs-string\">&quot;tenant.id&quot;</span>),\n            SyncSandboxInstruction.DropWhenEquals(<span class=\"hljs-string\">&quot;status&quot;</span>, <span class=\"hljs-string\">&quot;\\&quot;cancelled\\&quot;&quot;</span>),\n        ],\n        MaximumDocumentBytes = <span class=\"hljs-number\">256</span> * <span class=\"hljs-number\">1024</span>,\n        MaximumBatchBytes = <span class=\"hljs-number\">8</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n        MaximumOperationsPerBatch = <span class=\"hljs-number\">250_000</span>,\n        MaximumExecutionTime = TimeSpan.FromSeconds(<span class=\"hljs-number\">2</span>),\n    });\n",
         "language": "csharp"
       },
       {
@@ -2352,7 +2352,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       {
         "kind": "code",
         "code": "var destination = new S3SyncDestination(new S3SyncOptions\n{\n    Client = amazonS3,\n    BucketName = \"company-data-lake\",\n    Prefix = \"bluetusk/orders/v1\",\n    ServerSideEncryption = ServerSideEncryptionMethod.AWSKMS,\n    KmsKeyId = configuration[\"DataLakeKmsKeyId\"],\n    MaxMutationCount = 100_000,\n    MaxParquetBytes = 64 * 1024 * 1024,\n});\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> destination = <span class=\"hljs-keyword\">new</span> S3SyncDestination(<span class=\"hljs-keyword\">new</span> S3SyncOptions\n{\n    Client = amazonS3,\n    BucketName = <span class=\"hljs-string\">&quot;company-data-lake&quot;</span>,\n    Prefix = <span class=\"hljs-string\">&quot;bluetusk/orders/v1&quot;</span>,\n    ServerSideEncryption = ServerSideEncryptionMethod.AWSKMS,\n    KmsKeyId = configuration[<span class=\"hljs-string\">&quot;DataLakeKmsKeyId&quot;</span>],\n    MaxMutationCount = <span class=\"hljs-number\">100</span>_000,\n    MaxParquetBytes = <span class=\"hljs-number\">64</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> destination = <span class=\"hljs-keyword\">new</span> S3SyncDestination(<span class=\"hljs-keyword\">new</span> S3SyncOptions\n{\n    Client = amazonS3,\n    BucketName = <span class=\"hljs-string\">&quot;company-data-lake&quot;</span>,\n    Prefix = <span class=\"hljs-string\">&quot;bluetusk/orders/v1&quot;</span>,\n    ServerSideEncryption = ServerSideEncryptionMethod.AWSKMS,\n    KmsKeyId = configuration[<span class=\"hljs-string\">&quot;DataLakeKmsKeyId&quot;</span>],\n    MaxMutationCount = <span class=\"hljs-number\">100_000</span>,\n    MaxParquetBytes = <span class=\"hljs-number\">64</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n});\n",
         "language": "csharp"
       },
       {
@@ -2396,7 +2396,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1168,
+    "order": 1169,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",

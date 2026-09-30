@@ -159,6 +159,7 @@
 /documentation/operations/operations-performance-leadership-1-1
 /documentation/operations/operations-production-readiness
 /documentation/operations/operations-provider-request-capture
+/documentation/operations/operations-v1-release-candidate
 /documentation/operations/operations-website-production
 /documentation/operations/postgresql19-programme
 /documentation/operations/projections-live

@@ -11,7 +11,7 @@
   },
   "ruleset": {
     "name": "main",
-    "enforcement": "active",
+    "enforcement": "absent",
     "requiredRuleTypes": [
       "deletion",
       "non_fast_forward",
@@ -19,9 +19,9 @@
       "required_status_checks"
     ],
     "pullRequest": {
-      "minimumApprovals": 1,
+      "minimumApprovals": 0,
       "dismissStaleReviewsOnPush": true,
-      "requireLastPushApproval": true,
+      "requireLastPushApproval": false,
       "requireReviewThreadResolution": true
     },
     "strictRequiredStatusChecksPolicy": true,
@@ -68,23 +68,25 @@
       "name": "v1-candidate-readiness",
       "workflow": ".github/workflows/v1-candidate-readiness.yml",
       "minimumConfiguredReviewers": 1,
-      "preventSelfReview": true,
+      "preventSelfReview": false,
       "canAdminsBypass": false,
       "requiredSecrets": [
         "V1_GOVERNANCE_TOKEN",
         "V1_APPROVAL_EVIDENCE_BASE64"
       ],
       "deploymentBranchPolicy": {
-        "protectedBranches": true,
-        "customBranchPolicies": false,
-        "requiredPatterns": []
+        "protectedBranches": false,
+        "customBranchPolicies": true,
+        "requiredPatterns": [
+          "main"
+        ]
       }
     },
     {
       "name": "package-prerelease",
       "workflow": ".github/workflows/release-product-family.yml",
       "minimumConfiguredReviewers": 1,
-      "preventSelfReview": true,
+      "preventSelfReview": false,
       "canAdminsBypass": false,
       "requiredSecrets": [
         "V1_GOVERNANCE_TOKEN",
@@ -113,7 +115,7 @@
       "name": "package-production",
       "workflow": ".github/workflows/release-product-family.yml",
       "minimumConfiguredReviewers": 1,
-      "preventSelfReview": true,
+      "preventSelfReview": false,
       "canAdminsBypass": false,
       "requiredSecrets": [
         "V1_GOVERNANCE_TOKEN",
@@ -138,5 +140,11 @@
         ]
       }
     }
-  ]
+  ],
+  "maintenancePolicy": {
+    "mode": "sole-maintainer",
+    "owner": "jphgardner",
+    "authorizedOn": "2026-09-30",
+    "reason": "Owner requested temporary ruleset removal and self-approval for V1 release."
+  }
 }
