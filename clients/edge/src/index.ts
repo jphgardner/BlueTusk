@@ -6,6 +6,7 @@ export interface EdgeRecord { readonly id: string; readonly revision: string; re
 export interface EdgeMutation { readonly scope: EdgeScope; readonly id: string; readonly documentId: string; readonly expectedRevision: string; readonly kind: "upsert" | "delete"; readonly payload: string }
 export interface EdgeLease { readonly mutation: EdgeMutation; readonly fence: number; readonly expiresAt: number }
 export interface EdgeOutcome { readonly kind: "applied" | "conflict"; readonly record: EdgeRecord | null }
+export interface EdgeAcknowledgement { readonly lease: EdgeLease; readonly outcome: EdgeOutcome }
 export interface EdgeCachedRecord extends EdgeRecord { readonly pendingId: string | null; readonly pendingStatus: "pending" | "leased" | "conflict" | null }
 export interface EdgePage { readonly items: readonly EdgeCachedRecord[]; readonly nextAfterId: string | null }
 export interface EdgeCheckpoint { readonly position: string; readonly ready: boolean }
@@ -42,6 +43,7 @@ interface Receipt { scope: EdgeScope; id: string; fingerprint: string; outcomeFi
 interface OrderedStream { scope: EdgeScope; streamId: string; nextSequence: string; horizon: string }
 interface OrderedOutbox extends EdgeMutation { ordinal: string; sequence: string; fingerprint: string; status: "pending" | "confirmed" }
 interface Totals { key: "totals"; cacheRows: number; cacheBytes: number; stagedRows: number; stagedBytes: number; pendingRows: number; pendingBytes: number; orderedOutboxRows: number; orderedOutboxBytes: number; receiptRows: number; scopes: number; sequence: number }
+interface PreparedAcknowledgement { lease: EdgeLease; mutation: EdgeMutation & { fingerprint: string }; outcome: EdgeOutcome; record: EdgeRecord | null; recordFingerprint: string | null; outcomeFingerprint: string }
 const stores = ["scopes", "records", "staging", "mutations", "receipts", "orderedStreams", "orderedOutbox", "metadata"] as const;
 const encoder = new TextEncoder();
 const maxInt64 = 9223372036854775807n;
@@ -415,20 +417,94 @@ export class IndexedDbEdgeStore {
       return { mutation: { scope: candidate.scope, id: candidate.id, documentId: candidate.documentId, expectedRevision: candidate.expectedRevision, kind: candidate.kind, payload: candidate.payload }, fence: candidate.fence, expiresAt: candidate.leaseUntil };
     });
   }
-  async acknowledge(lease: EdgeLease, input: EdgeOutcome): Promise<void> {
+  /** Claims an ordered prefix in one durable transaction; null asks the caller to use the ordinary claim path. */
+  async claimOrderedBatch(scopeInput: EdgeScope, maximum: number, leaseMilliseconds = 60_000): Promise<readonly EdgeLease[] | null> {
+    const scope = scopeCopy(scopeInput);
+    if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > 1000 ||
+        !Number.isSafeInteger(leaseMilliseconds) || leaseMilliseconds < 1000 || leaseMilliseconds > 3_600_000) throw new TypeError("Invalid bounded ordered claim.");
+    return await this.transact("readwrite", async tx => {
+      if ((await this.active(tx, scope)).snapshotId !== null) throw new EdgeScopeError();
+      const store = tx.objectStore("mutations"); const now = this.now();
+      const rows = (await request<Pending[]>(store.index("scope").getAll(IDBKeyRange.only(scopeKey(scope)))))
+        .filter(row => row.status !== "conflict").sort((a, b) => a.sequence - b.sequence);
+      const leases: EdgeLease[] = []; let bytes = 0;
+      for (const row of rows) {
+        if (leases.length === maximum || !parseOrderedMutationId(row.id) || row.status === "leased" && row.leaseUntil > now) break;
+        const size = encoder.encode(row.payload).byteLength;
+        if (bytes + size > this.limits.maxPendingBytes) break;
+        bytes += size;
+        row.status = "leased"; row.leaseUntil = now + leaseMilliseconds;
+        if (!Number.isSafeInteger(++row.fence)) throw new EdgeCapacityError();
+        store.put(row);
+        leases.push({ mutation: { scope: row.scope, id: row.id, documentId: row.documentId,
+          expectedRevision: row.expectedRevision, kind: row.kind, payload: row.payload }, fence: row.fence, expiresAt: row.leaseUntil });
+      }
+      return leases.length ? leases : rows.length ? null : [];
+    });
+  }
+  /** Releases only matching live fences, so stale retries cannot release a newer owner's lease. */
+  async releaseOrderedBatch(leases: readonly EdgeLease[]): Promise<void> {
+    if (!leases.length || leases.length > 1000) throw new TypeError("Invalid ordered release count.");
+    const prepared = await Promise.all(leases.map(async lease => await this.prepared(lease.mutation)));
+    const scope = prepared[0]!.scope; const seen = new Set<string>();
+    for (const mutation of prepared) {
+      if (!parseOrderedMutationId(mutation.id) || mutation.scope.tenant !== scope.tenant ||
+          mutation.scope.id !== scope.id || mutation.scope.epoch !== scope.epoch || seen.has(mutation.id)) throw new EdgeIdentityError();
+      seen.add(mutation.id);
+    }
+    await this.transact("readwrite", async tx => {
+      await this.active(tx, scope); const store = tx.objectStore("mutations");
+      for (let i = 0; i < leases.length; i++) {
+        const lease = leases[i]!; const mutation = prepared[i]!;
+        const row = await request<Pending | undefined>(store.get(identity(scope, mutation.id)));
+        if (row?.fingerprint === mutation.fingerprint && row.status === "leased" && row.fence === lease.fence) {
+          row.status = "pending"; row.leaseUntil = 0; store.put(row);
+        }
+      }
+    });
+  }
+  private async prepareAcknowledgement(lease: EdgeLease, input: EdgeOutcome): Promise<PreparedAcknowledgement> {
     const mutation = await this.prepared(lease.mutation); const record = input.record === null ? null : recordCopy(input.record);
     if (input.kind !== "applied" && input.kind !== "conflict" || record && record.id !== mutation.documentId || input.kind === "applied" && (!record || integer(record.revision) <= integer(mutation.expectedRevision) || record.deleted !== (mutation.kind === "delete"))) throw new EdgeRevisionError();
     if (record && encoder.encode(record.payload).byteLength > this.limits.maxRecordBytes) throw new EdgeCapacityError();
     const recordFingerprint = record ? await hash(JSON.stringify([record.deleted, record.payload])) : null;
     const outcomeFingerprint = await hash(JSON.stringify([input.kind, record?.revision ?? "0", recordFingerprint]));
+    return { lease, mutation, outcome: input, record, recordFingerprint, outcomeFingerprint };
+  }
+  async acknowledge(lease: EdgeLease, input: EdgeOutcome): Promise<void> {
+    const prepared = await this.prepareAcknowledgement(lease, input);
     await this.transact("readwrite", async tx => {
-      if ((await this.active(tx, mutation.scope)).snapshotId !== null) throw new EdgeScopeError();
+      if ((await this.active(tx, prepared.mutation.scope)).snapshotId !== null) throw new EdgeScopeError();
+      const totals = await this.totals(tx);
+      await this.acknowledgePrepared(tx, totals, prepared);
+      tx.objectStore("metadata").put(totals);
+    });
+  }
+  /** Atomically persists the successful remote prefix, including cache, receipts and confirmation outbox. */
+  async acknowledgeBatch(acknowledgements: readonly EdgeAcknowledgement[]): Promise<void> {
+    if (!acknowledgements.length || acknowledgements.length > 1000) throw new TypeError("Invalid acknowledgement count.");
+    const prepared = await Promise.all(acknowledgements.map(async item => await this.prepareAcknowledgement(item.lease, item.outcome)));
+    const scope = prepared[0]!.mutation.scope; const seen = new Set<string>();
+    for (const item of prepared) {
+      const mutation = item.mutation;
+      if (mutation.scope.tenant !== scope.tenant || mutation.scope.id !== scope.id ||
+          mutation.scope.epoch !== scope.epoch || seen.has(mutation.id)) throw new EdgeIdentityError();
+      seen.add(mutation.id);
+    }
+    await this.transact("readwrite", async tx => {
+      if ((await this.active(tx, scope)).snapshotId !== null) throw new EdgeScopeError();
+      const totals = await this.totals(tx);
+      for (const item of prepared) await this.acknowledgePrepared(tx, totals, item);
+      tx.objectStore("metadata").put(totals);
+    });
+  }
+  private async acknowledgePrepared(tx: IDBTransaction, totals: Totals, prepared: PreparedAcknowledgement): Promise<void> {
+      const { lease, mutation, outcome: input, record, recordFingerprint, outcomeFingerprint } = prepared;
       const id = identity(mutation.scope, mutation.id); const receipts = tx.objectStore("receipts");
       const receipt = await request<Receipt | undefined>(receipts.get(id));
       if (receipt) { if (receipt.fingerprint !== mutation.fingerprint || receipt.outcomeFingerprint !== outcomeFingerprint) throw new EdgeIdentityError(); return }
       const pending = await request<Pending | undefined>(tx.objectStore("mutations").get(id));
       if (!pending || pending.fingerprint !== mutation.fingerprint || pending.status !== "leased" || pending.fence !== lease.fence || pending.leaseUntil <= this.now()) throw new EdgeLeaseError();
-      const totals = await this.totals(tx);
       if (record) await this.writeRecord(tx, mutation.scope, record, recordFingerprint!, totals, null);
       else {
         const cached = await request<StoredRecord | undefined>(tx.objectStore("records").get(identity(mutation.scope, mutation.documentId)));
@@ -447,9 +523,7 @@ export class IndexedDbEdgeStore {
           tx.objectStore("orderedOutbox").put({ ...mutation, sequence: ordered.sequence, ordinal: ordinal(ordered.sequence), status: "pending" } satisfies OrderedOutbox);
         }
       }
-      tx.objectStore("metadata").put(totals);
-    });
-  }
+    }
   async resolveConflict(conflictedId: string, replacementInput: EdgeMutation): Promise<void> {
     const replacement = await this.prepared(replacementInput);
     if (replacement.id === conflictedId) throw new EdgeIdentityError();

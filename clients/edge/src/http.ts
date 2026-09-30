@@ -1,4 +1,4 @@
-import type { EdgeScope, EdgeRecord, EdgeMutation, EdgeOutcome, IndexedDbEdgeStore } from "./index.js";
+import type { EdgeScope, EdgeRecord, EdgeMutation, EdgeOutcome, EdgeAcknowledgement, IndexedDbEdgeStore } from "./index.js";
 import { parseOrderedMutationId } from "./ordered.js";
 
 export interface EdgeHttpOptions {
@@ -145,7 +145,25 @@ export async function synchronizeEdge(store: IndexedDbEdgeStore, remote: EdgeHtt
     await store.commitSnapshot(scope, snapshot.id);
   }
   await flushOrderedReceipts(store, remote, scope, pushes, options.signal);
-  for (let i = 0; i < pushes; i++) { options.signal?.throwIfAborted(); const lease = await store.claim(scope); if (!lease) break; await store.acknowledge(lease, await remote.applyMutation(lease.mutation, options.signal)) }
+  const claimed = await store.claimOrderedBatch(scope, pushes);
+  if (claimed !== null) {
+    const acknowledged: EdgeAcknowledgement[] = [];
+    try {
+      for (const lease of claimed) {
+        options.signal?.throwIfAborted();
+        acknowledged.push({ lease, outcome: await remote.applyMutation(lease.mutation, options.signal) });
+      }
+    } finally {
+      let committed = false;
+      try { if (acknowledged.length) await store.acknowledgeBatch(acknowledged); committed = true }
+      finally {
+        const unprocessed = committed ? claimed.slice(acknowledged.length) : claimed;
+        if (unprocessed.length) await store.releaseOrderedBatch(unprocessed);
+      }
+    }
+  } else {
+    for (let i = 0; i < pushes; i++) { options.signal?.throwIfAborted(); const lease = await store.claim(scope); if (!lease) break; await store.acknowledge(lease, await remote.applyMutation(lease.mutation, options.signal)) }
+  }
   await flushOrderedReceipts(store, remote, scope, pushes, options.signal);
   for (let i = 0; i < batches; i++) { options.signal?.throwIfAborted(); const checkpoint = await store.checkpoint(scope); const changes = await remote.readChanges(scope, checkpoint.position, undefined, options.signal); if (!changes) break; await store.applyChanges(scope, changes.fromPosition, changes.toPosition, changes.records) }
 }
