@@ -16,6 +16,10 @@ public sealed class BlueTuskAdHocJsonQueryTest(NonSharedFixture fixture)
     protected override string JsonColumnType
         => "jsonb";
 
+    [ConditionalFact]
+    public override Task Project_json_array_of_primitives_on_collection()
+        => base.Project_json_array_of_primitives_on_collection();
+
     protected override async Task Seed21006(Context21006 context)
     {
         await base.Seed21006(context);
