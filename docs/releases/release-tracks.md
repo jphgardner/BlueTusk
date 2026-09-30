@@ -108,10 +108,20 @@ These contributor commands test the readers with synthetic evidence only:
 
 Use a new output directory for each capture; existing evidence is not overwritten.
 `eng/v1.2-candidate-readiness.json` is a draft aggregation contract, explicitly
-marked as migration in progress. It is not a release verdict or a runnable CI
-aggregator. Its proposed seven-run scope excludes Graph and adds combined
-Live/Control Plane endurance. Remote workflow identity and the complete retained
-evidence must still be joined in the final gate.
+marked as migration in progress. `eng/build-core-candidate-envelope.ps1` now
+builds its schema 4 envelope from seven run records, fourteen canonical artifact
+roles and ten approval records. `eng/verify-core-candidate-bindings.ps1` verifies
+exact commit and producer bindings, file digests and sizes, root containment,
+approval schemas and approval ordering. Its self-test exercises a synthetic
+binding set and rejects malformed or stale substitutions; it is part of the
+build gate. The binding report explicitly leaves payload qualification, live
+GitHub identity and release approval unverified. The final remote aggregator and
+the missing Core evidence producers still need implementation.
+
+The proposed seven-run scope excludes Graph and adds combined Live/Control Plane
+endurance. Preserve the full downloaded payload trees beside the envelope:
+package, benchmark, website and endurance readers need those raw files before
+any candidate can be approved. Hashing report JSON alone cannot qualify them.
 
 The historical `v1-candidate-readiness.yml` aggregator and its V1 evidence schema
 still describe a six-family, PostgreSQL-19-GA-qualified 1.0 candidate. They are
