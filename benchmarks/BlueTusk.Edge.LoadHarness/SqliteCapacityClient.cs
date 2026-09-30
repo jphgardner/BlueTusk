@@ -16,7 +16,7 @@ internal sealed class SqliteCapacityClient : IDisposable
     private readonly int _payloadBytes;
     private readonly Random _random;
     private readonly MutableTimeProvider _clock;
-    private readonly LatencyCapture _enqueue = new(), _ack = new(), _syncPass = new();
+    private readonly LatencyCapture _enqueue = new(), _ack = new(), _syncPass = new(), _ackScan = new();
     private readonly EdgeLocalPhaseTimings _localPhases = new();
     private readonly Dictionary<string, (Guid Id, long Started, double OfferedAt)> _pending = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _pendingGate = new(1, 1);
@@ -153,6 +153,9 @@ internal sealed class SqliteCapacityClient : IDisposable
             $"horizon read {_localPhases.ReadHorizon.Snapshot().P95Milliseconds:F1}, " +
             $"horizon mark {_localPhases.AdvanceHorizon.Snapshot().P95Milliseconds:F1}, " +
             $"apply changes {_localPhases.ApplyChanges.Snapshot().P95Milliseconds:F1}.");
+        var ackScan = _ackScan.Snapshot();
+        Console.WriteLine($"SQLite client {_index} acknowledgement scans {ackScan.Samples} p50/p95/p99 " +
+            $"{ackScan.P50Milliseconds:F1}/{ackScan.P95Milliseconds:F1}/{ackScan.P99Milliseconds:F1} ms.");
     }
 
     internal async Task<ClientReport> ReportAsync(PostgreSqlEdgeServerStore server, CancellationToken token)
@@ -272,17 +275,30 @@ internal sealed class SqliteCapacityClient : IDisposable
     private async Task MarkAcknowledgedAsync(Stopwatch clock, double offlineOne, double offlineTwo,
         double offlineSeconds, double hostAt, CancellationToken token)
     {
-        KeyValuePair<string, (Guid Id, long Started, double OfferedAt)>[] pending;
+        var started = Stopwatch.GetTimestamp();
         await _pendingGate.WaitAsync(token).ConfigureAwait(false);
-        try { pending = _pending.ToArray(); }
-        finally { _pendingGate.Release(); }
-        foreach (var item in pending)
+        try
         {
-            await _pendingGate.WaitAsync(token).ConfigureAwait(false);
-            try
+            if (_pending.Count == 0) { return; }
+            // Read all pending identities in one consistent SQLite snapshot. A per-key
+            // GetAsync here adds one new connection and query for every offline write.
+            var builder = new SqliteConnectionStringBuilder { DataSource = _path, Mode = SqliteOpenMode.ReadOnly, Pooling = false };
+            await using var connection = new SqliteConnection(builder.ToString());
+            await connection.OpenAsync(token).ConfigureAwait(false);
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT mutation_id FROM mutations WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch";
+            command.Parameters.AddWithValue("tenant", _scope.Tenant);
+            command.Parameters.AddWithValue("scope", _scope.Id);
+            command.Parameters.AddWithValue("epoch", _scope.Epoch);
+            var stillPending = new HashSet<Guid>();
+            await using (var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false))
             {
-                var cached = await _local.GetAsync(_scope, item.Key, token).ConfigureAwait(false);
-                if (cached?.PendingMutationId is not null) { continue; }
+                while (await reader.ReadAsync(token).ConfigureAwait(false))
+                { stillPending.Add(Guid.ParseExact(reader.GetString(0), "N")); }
+            }
+            foreach (var item in _pending.ToArray())
+            {
+                if (stillPending.Contains(item.Value.Id)) { continue; }
                 _pending.Remove(item.Key); _acknowledged++;
                 if (item.Value.Id == _lostMutation)
                 {
@@ -294,7 +310,11 @@ internal sealed class SqliteCapacityClient : IDisposable
                         hostAt, _lostAt, _lostMutation != Guid.Empty))
                 { _ack.Add(Stopwatch.GetElapsedTime(item.Value.Started).TotalMilliseconds); }
             }
-            finally { _pendingGate.Release(); }
+        }
+        finally
+        {
+            _pendingGate.Release();
+            _ackScan.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
         }
     }
 
