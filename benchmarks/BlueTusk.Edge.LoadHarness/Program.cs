@@ -263,8 +263,7 @@ internal static class Program
                     var floor = Math.Max(0, await client.CheckpointAsync(token).ConfigureAwait(false) - FeedTail);
                     _ = await server.PruneChangesAsync(client.Scope, floor, 256, token).ConfigureAwait(false);
                 }
-                if (File.Exists(browserCheckpoint) && long.TryParse(await File.ReadAllTextAsync(browserCheckpoint, token).ConfigureAwait(false),
-                    NumberStyles.None, CultureInfo.InvariantCulture, out var position))
+                if (await BrowserCheckpointFile.ReadAsync(browserCheckpoint, token).ConfigureAwait(false) is { } position)
                 { _ = await server.PruneChangesAsync(Scope(7), Math.Max(0, position - FeedTail), 256, token).ConfigureAwait(false); }
                 samples.Add(await SampleAsync(source, schema, server, clock.Elapsed.TotalSeconds, token).ConfigureAwait(false));
             }
