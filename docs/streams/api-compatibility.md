@@ -17,3 +17,10 @@ cannot omit a frozen baseline.
 The candidate becomes the Streams 1.0 shipped baseline only after the format
 upgrade suites and the successful 72-hour release-endurance evidence pass. Until
 then, this is an engineering freeze rather than a claim that 1.0 was published.
+
+The published-source lineage proof adds `ChangeDeliveryTestFactory.CreateCommittedWithLineage`
+to the optional `BlueTusk.Streams.Testing` package. It creates a synthetic
+delivery carrying the database and publication OIDs used by protected consumers.
+Existing factory methods and their signatures remain unchanged, so this is a
+source- and binary-compatible addition. The Streams.Testing API baseline and
+freeze digest advance together; the runtime Streams public API is unchanged.
