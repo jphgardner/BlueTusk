@@ -16,7 +16,8 @@ internal sealed class SqliteCapacityClient : IDisposable
     private readonly int _payloadBytes;
     private readonly Random _random;
     private readonly MutableTimeProvider _clock;
-    private readonly LatencyCapture _enqueue = new(), _ack = new();
+    private readonly LatencyCapture _enqueue = new(), _ack = new(), _syncPass = new(), _ackScan = new();
+    private readonly EdgeLocalPhaseTimings _localPhases = new();
     private readonly Dictionary<string, (Guid Id, long Started, double OfferedAt)> _pending = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _pendingGate = new(1, 1);
     private readonly List<double> _recoveries = [];
@@ -38,7 +39,7 @@ internal sealed class SqliteCapacityClient : IDisposable
         _index = index; _scope = new EdgeScope(Tenant(index), "orders", 1); _path = path;
         _payloadBytes = payloadBytes; _clock = clock; _random = new Random(84273 + index);
         _local = local; _http = http; _remote = remote; _fault = fault;
-        _coordinator = new EdgeSynchronizationCoordinator(local, fault);
+        _coordinator = new EdgeSynchronizationCoordinator(new TimedEdgeLocalStore(local, _localPhases), fault);
     }
 
     internal static async Task<SqliteCapacityClient> OpenAsync(int index, string directory, Uri endpoint,
@@ -134,6 +135,27 @@ internal sealed class SqliteCapacityClient : IDisposable
             await Task.Delay(20, token).ConfigureAwait(false);
         }
         ObservePeak(ref _maximumFileBytes, PhysicalBytes());
+        var sync = _syncPass.Snapshot();
+        var confirm = _fault.Confirm.Snapshot();
+        var changes = _fault.Changes.Snapshot();
+        Console.WriteLine($"SQLite client {_index}: coordinator passes {sync.Samples} p50/p95/p99 " +
+            $"{sync.P50Milliseconds:F1}/{sync.P95Milliseconds:F1}/{sync.P99Milliseconds:F1} ms; " +
+            $"remote confirms {confirm.Samples} p50/p95/p99 " +
+            $"{confirm.P50Milliseconds:F1}/{confirm.P95Milliseconds:F1}/{confirm.P99Milliseconds:F1} ms; " +
+            $"change reads {changes.Samples} p50/p95/p99 " +
+            $"{changes.P50Milliseconds:F1}/{changes.P95Milliseconds:F1}/{changes.P99Milliseconds:F1} ms.");
+        Console.WriteLine($"SQLite client {_index} local phase p95 ms: " +
+            $"checkpoint {_localPhases.Checkpoint.Snapshot().P95Milliseconds:F1}, " +
+            $"claim {_localPhases.Claim.Snapshot().P95Milliseconds:F1}, " +
+            $"ack {_localPhases.Acknowledge.Snapshot().P95Milliseconds:F1}, " +
+            $"receipt read {_localPhases.ReadReceipt.Snapshot().P95Milliseconds:F1}, " +
+            $"receipt mark {_localPhases.ConfirmReceipt.Snapshot().P95Milliseconds:F1}, " +
+            $"horizon read {_localPhases.ReadHorizon.Snapshot().P95Milliseconds:F1}, " +
+            $"horizon mark {_localPhases.AdvanceHorizon.Snapshot().P95Milliseconds:F1}, " +
+            $"apply changes {_localPhases.ApplyChanges.Snapshot().P95Milliseconds:F1}.");
+        var ackScan = _ackScan.Snapshot();
+        Console.WriteLine($"SQLite client {_index} acknowledgement scans {ackScan.Samples} p50/p95/p99 " +
+            $"{ackScan.P50Milliseconds:F1}/{ackScan.P95Milliseconds:F1}/{ackScan.P99Milliseconds:F1} ms.");
     }
 
     internal async Task<ClientReport> ReportAsync(PostgreSqlEdgeServerStore server, CancellationToken token)
@@ -214,6 +236,7 @@ internal sealed class SqliteCapacityClient : IDisposable
     private async Task SynchronizeAsync(Stopwatch clock, double offlineOne, double offlineTwo,
         double offlineSeconds, double hostAt, CancellationToken token)
     {
+        var started = Stopwatch.GetTimestamp();
         try
         {
             await _coordinator.SynchronizeAsync(_scope, 16, 16, token).ConfigureAwait(false);
@@ -227,7 +250,7 @@ internal sealed class SqliteCapacityClient : IDisposable
             {
                 _local = new SqliteEdgeStore(Options(_path, _clock));
                 await _local.InitializeAsync(token).ConfigureAwait(false);
-                _coordinator = new EdgeSynchronizationCoordinator(_local, _fault);
+                _coordinator = new EdgeSynchronizationCoordinator(new TimedEdgeLocalStore(_local, _localPhases), _fault);
                 var lost = _pending.SingleOrDefault(item => item.Value.Id == _lostMutation);
                 var persisted = lost.Key is null ? null : await _local.GetAsync(_scope, lost.Key, token).ConfigureAwait(false);
                 if (persisted?.PendingMutationId != _lostMutation)
@@ -238,6 +261,7 @@ internal sealed class SqliteCapacityClient : IDisposable
         }
         catch (HttpRequestException) when (clock.Elapsed.TotalSeconds >= hostAt - 2 && clock.Elapsed.TotalSeconds <= hostAt + 30) { return; }
         catch (TaskCanceledException) when (clock.Elapsed.TotalSeconds >= hostAt - 2 && clock.Elapsed.TotalSeconds <= hostAt + 30) { return; }
+        finally { _syncPass.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds); }
         await MarkAcknowledgedAsync(clock, offlineOne, offlineTwo, offlineSeconds, hostAt, token).ConfigureAwait(false);
         var elapsed = clock.Elapsed.TotalSeconds;
         if (!_firstOfflineRecovered && elapsed >= offlineOne + offlineSeconds)
@@ -251,17 +275,30 @@ internal sealed class SqliteCapacityClient : IDisposable
     private async Task MarkAcknowledgedAsync(Stopwatch clock, double offlineOne, double offlineTwo,
         double offlineSeconds, double hostAt, CancellationToken token)
     {
-        KeyValuePair<string, (Guid Id, long Started, double OfferedAt)>[] pending;
+        var started = Stopwatch.GetTimestamp();
         await _pendingGate.WaitAsync(token).ConfigureAwait(false);
-        try { pending = _pending.ToArray(); }
-        finally { _pendingGate.Release(); }
-        foreach (var item in pending)
+        try
         {
-            await _pendingGate.WaitAsync(token).ConfigureAwait(false);
-            try
+            if (_pending.Count == 0) { return; }
+            // Read all pending identities in one consistent SQLite snapshot. A per-key
+            // GetAsync here adds one new connection and query for every offline write.
+            var builder = new SqliteConnectionStringBuilder { DataSource = _path, Mode = SqliteOpenMode.ReadOnly, Pooling = false };
+            await using var connection = new SqliteConnection(builder.ToString());
+            await connection.OpenAsync(token).ConfigureAwait(false);
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT mutation_id FROM mutations WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch";
+            command.Parameters.AddWithValue("tenant", _scope.Tenant);
+            command.Parameters.AddWithValue("scope", _scope.Id);
+            command.Parameters.AddWithValue("epoch", _scope.Epoch);
+            var stillPending = new HashSet<Guid>();
+            await using (var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false))
             {
-                var cached = await _local.GetAsync(_scope, item.Key, token).ConfigureAwait(false);
-                if (cached?.PendingMutationId is not null) { continue; }
+                while (await reader.ReadAsync(token).ConfigureAwait(false))
+                { stillPending.Add(Guid.ParseExact(reader.GetString(0), "N")); }
+            }
+            foreach (var item in _pending.ToArray())
+            {
+                if (stillPending.Contains(item.Value.Id)) { continue; }
                 _pending.Remove(item.Key); _acknowledged++;
                 if (item.Value.Id == _lostMutation)
                 {
@@ -273,7 +310,11 @@ internal sealed class SqliteCapacityClient : IDisposable
                         hostAt, _lostAt, _lostMutation != Guid.Empty))
                 { _ack.Add(Stopwatch.GetElapsedTime(item.Value.Started).TotalMilliseconds); }
             }
-            finally { _pendingGate.Release(); }
+        }
+        finally
+        {
+            _pendingGate.Release();
+            _ackScan.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
         }
     }
 
@@ -356,11 +397,19 @@ internal sealed class SqliteCapacityClient : IDisposable
         internal double LossAt { get; set; }
         internal LatencyCapture Apply { get; } = new();
         internal LatencyCapture Horizon { get; } = new();
+        internal LatencyCapture Confirm { get; } = new();
+        internal LatencyCapture Changes { get; } = new();
         public ValueTask<EdgeSnapshot> BeginSnapshotAsync(EdgeScope scope, CancellationToken token = default) => inner.BeginSnapshotAsync(scope, token);
         public IAsyncEnumerable<IReadOnlyList<EdgeRecord>> ReadSnapshotAsync(EdgeScope scope, EdgeSnapshot snapshot,
             CancellationToken token = default) => inner.ReadSnapshotAsync(scope, snapshot, token);
-        public ValueTask<EdgeChangeBatch?> ReadChangesAsync(EdgeScope scope, long after, int maximum,
-            CancellationToken token = default) => inner.ReadChangesAsync(scope, after, maximum, token);
+        public async ValueTask<EdgeChangeBatch?> ReadChangesAsync(EdgeScope scope, long after, int maximum,
+            CancellationToken token = default)
+        {
+            var started = Stopwatch.GetTimestamp();
+            var result = await inner.ReadChangesAsync(scope, after, maximum, token).ConfigureAwait(false);
+            Changes.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+            return result;
+        }
         public async ValueTask<EdgeMutationOutcome> ApplyMutationAsync(EdgeMutation mutation, CancellationToken token = default)
         {
             var started = Stopwatch.GetTimestamp();
@@ -370,8 +419,12 @@ internal sealed class SqliteCapacityClient : IDisposable
             { throw new LostResponseException(mutation.Id); }
             return outcome;
         }
-        public ValueTask FinalizeMutationReceiptAsync(EdgeMutation mutation, CancellationToken token = default) =>
-            inner.FinalizeMutationReceiptAsync(mutation, token);
+        public async ValueTask FinalizeMutationReceiptAsync(EdgeMutation mutation, CancellationToken token = default)
+        {
+            var started = Stopwatch.GetTimestamp();
+            await inner.FinalizeMutationReceiptAsync(mutation, token).ConfigureAwait(false);
+            Confirm.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        }
         public async ValueTask AdvanceOrderedReceiptHorizonAsync(EdgeScope scope, Guid through, int maximum = 1000,
             CancellationToken token = default)
         {
