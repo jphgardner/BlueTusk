@@ -34,6 +34,7 @@ let page;
 let clockOffset = 0;
 const pending = new Map();
 const enqueueTimes = [], ackTimes = [];
+const sampleStateTimes = [], samplePhysicalTimes = [], sampleCheckpointTimes = [];
 const applyBeforeRestart = [], horizonBeforeRestart = [];
 const recoveries = [];
 let offered = 0, skipped = 0, scheduleSkipped = 0, pendingKeySkipped = 0;
@@ -123,11 +124,17 @@ async function physicalBytes(path) {
 async function sample(elapsed) {
   if (elapsed - lastSample < 5 && lastSample !== 0) return;
   lastSample = elapsed;
+  let started = performance.now();
   const current = await state();
+  sampleStateTimes.push(performance.now() - started);
   peakPending = Math.max(peakPending, current.pending);
   peakOutbox = Math.max(peakOutbox, current.outbox);
+  started = performance.now();
   maximumPhysicalBytes = Math.max(maximumPhysicalBytes, await physicalBytes(profile));
+  samplePhysicalTimes.push(performance.now() - started);
+  started = performance.now();
   await writeFile(checkpointFile, current.checkpoint);
+  sampleCheckpointTimes.push(performance.now() - started);
 }
 
 async function synchronize(elapsed, pendingKeys) {
@@ -281,6 +288,8 @@ try {
     FinalLocalReceipts: final.receipts, FinalCheckpoint: Number(final.checkpoint),
     FinalOrderedSequence: Number(BigInt(final.nextSequence) - 1n), FinalHorizon: Number(final.horizon),
     MaximumPhysicalBytes: maximumPhysicalBytes, Enqueue: summary(enqueueTimes),
+    SampleState: summary(sampleStateTimes), SamplePhysical: summary(samplePhysicalTimes),
+    SampleCheckpoint: summary(sampleCheckpointTimes),
     HttpApply: summary([...applyBeforeRestart, ...verified.metrics.apply]), DurableAck: summary(ackTimes),
     Horizon: summary([...horizonBeforeRestart, ...verified.metrics.horizon]), FaultRecoverySeconds: recoveries,
     LostResponseRecovered: lostRecovered, ReclaimedRetryFenced: verified.fenced, ExactFinalCache: verified.exact
