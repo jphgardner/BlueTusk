@@ -192,9 +192,9 @@ try {
     }
     next++;
     if (injectedOffline) { await sample(elapsed); continue; }
-    // Batch ten offered writes into each bounded reconnect pass. The 200 ms
+    // Batch five offered writes into each bounded reconnect pass. The 200 ms
     // offer schedule remains independent of redundant empty remote polls.
-    if (next % 10 !== 0) { await sample(elapsed); continue; }
+    if (next % 5 !== 0) { await sample(elapsed); continue; }
     if (elapsed >= lossAt && !lossArmed) {
       lossArmed = true;
       await page.evaluate(() => { window.edgeDropNextResponse = true; });
