@@ -16,6 +16,10 @@ public sealed class BlueTuskComplexTypeQueryTest
         Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
+    [ConditionalTheory]
+    public override Task Same_complex_type_projected_twice_with_pushdown_as_part_of_another_projection(bool async)
+        => base.Same_complex_type_projected_twice_with_pushdown_as_part_of_another_projection(async);
+
     public sealed class BlueTuskComplexTypeQueryFixture : ComplexTypeQueryRelationalFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory
