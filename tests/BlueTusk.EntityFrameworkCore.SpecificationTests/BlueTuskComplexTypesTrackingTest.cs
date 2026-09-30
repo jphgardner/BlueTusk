@@ -14,6 +14,14 @@ public sealed class BlueTuskComplexTypesTrackingTest(
         fixture,
         testOutputHelper)
 {
+    [ConditionalTheory]
+    public override void Can_remove_from_complex_record_collection_with_nested_complex_collection(bool trackFromQuery)
+        => base.Can_remove_from_complex_record_collection_with_nested_complex_collection(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_remove_from_complex_record_field_collection_with_nested_complex_collection(bool trackFromQuery)
+        => base.Can_remove_from_complex_record_field_collection_with_nested_complex_collection(trackFromQuery);
+
     [ConditionalFact]
     public void JSON_mapped_complex_properties_have_value_reader_writers()
     {
