@@ -51,9 +51,10 @@ jobs:
           $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
           if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Jobs/Workflows fixture name is already in use or Docker is unavailable.' }
           $budgets = Get-Content eng/ecosystem-performance-budgets.json -Raw | ConvertFrom-Json
+          $fixturePassword = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24))
           docker run -d --name $name --label bluetusk.owner=ecosystem-performance --label "bluetusk.run=$env:GITHUB_RUN_ID" `
             --cpus 4 --memory 2g -p 127.0.0.1:55415:5432 `
-            -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=bluetusk_ecosystem $budgets.postgreSql15Image # ggignore
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$fixturePassword" -e POSTGRES_DB=bluetusk_ecosystem $budgets.postgreSql15Image
           if ($LASTEXITCODE -ne 0) { throw 'Dedicated Jobs/Workflows fixture did not start.' }
           $ready = $false
           for ($attempt = 0; $attempt -lt 150; $attempt++) {
