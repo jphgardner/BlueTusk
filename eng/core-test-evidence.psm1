@@ -4,7 +4,8 @@ Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1') -Force
 
 function Get-CoreTestPlan
 {
-    param([ValidateSet('Regression', 'Compatibility')][string] $Kind)
+    param([ValidateSet('Regression', 'Compatibility')][string] $Kind,
+        [ValidateSet(0, 15, 16, 17, 18)][int] $PostgreSqlMajor = 0)
     $projects = [Collections.Generic.List[object]]::new()
     function Add-Project([string] $Name, [string] $Filter = '')
     {
@@ -38,9 +39,16 @@ function Get-CoreTestPlan
         Add-Project 'BlueTusk.IntegrationTests' ($filters -join '|')
         Add-Project 'BlueTusk.Live.Tests' (($liveDatabase | ForEach-Object { "FullyQualifiedName~BlueTusk.Live.Tests.$_" }) -join '|')
         Add-Project 'BlueTusk.Sync.Tests' (($syncDatabase | ForEach-Object { "FullyQualifiedName~BlueTusk.Sync.Tests.$_" }) -join '|')
-        Add-Project 'BlueTusk.EntityFrameworkCore.Tests' (
+        $entityFrameworkFilter = (
             'FullyQualifiedName!~BlueTusk.EntityFrameworkCore.Tests.PropertyGraphQueryIntegrationTests&' +
             'FullyQualifiedName!~BlueTusk.EntityFrameworkCore.Tests.PropertyGraphMigrationIntegrationTests')
+        if ($PostgreSqlMajor -eq 15)
+        {
+            # PostgreSQL introduced these aggregates in 16. Keep this one test
+            # in every supported server shard rather than recording a PG15 skip.
+            $entityFrameworkFilter += '&FullyQualifiedName!=BlueTusk.EntityFrameworkCore.Tests.PostgreSqlAggregateTranslationTests.PostgreSQL_16_strict_unique_and_any_value_aggregates_execute'
+        }
+        Add-Project 'BlueTusk.EntityFrameworkCore.Tests' $entityFrameworkFilter
         Add-Project 'BlueTusk.EntityFrameworkCore.SpecificationTests'
     }
     return $projects.ToArray()
@@ -101,6 +109,14 @@ function Get-CoreTestAssemblyVersion
 function Get-CoreTrxSummary
 {
     param([string] $TrxPath, [string] $DiscoveryPath, [string] $Assembly)
+    function Test-RequiredNamespace([string] $Name)
+    {
+        if ($Name.StartsWith($Assembly + '.', [StringComparison]::Ordinal)) { return $true }
+        # The provider's inherited EF specification classes use the upstream
+        # namespaces. TRX definitions must still bind the exact provider DLL.
+        return $Assembly -ceq 'BlueTusk.EntityFrameworkCore.SpecificationTests' -and
+            $Name -cmatch '^Microsoft\.EntityFrameworkCore\.(?:(?:ModelBuilding|Query|Migrations)\.)?BlueTusk'
+    }
     $lines = @(Get-Content -LiteralPath $DiscoveryPath)
     $headers = @(0..($lines.Count - 1) | Where-Object { $lines[$_] -ceq 'The following Tests are available:' })
     if ($headers.Count -ne 1) { throw 'Test discovery must contain exactly one VSTest discovery header.' }
@@ -111,7 +127,7 @@ function Get-CoreTrxSummary
     $names = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     foreach ($name in $expected)
     {
-        if (-not $name.StartsWith($Assembly + '.', [StringComparison]::Ordinal) -or -not $names.Add($name))
+        if (-not (Test-RequiredNamespace $name) -or -not $names.Add($name))
         { throw 'Discovery must contain unique fully qualified tests from the required assembly.' }
     }
     if ($names.Count -eq 0) { throw 'An empty discovery cannot qualify a test suite.' }
@@ -152,7 +168,7 @@ function Get-CoreTrxSummary
         if ($method.Count -ne 1 -or $method[0].GetAttribute('codeBase').Replace('\', '/').Split('/')[-1] -cne "$Assembly.dll")
         { throw 'Test definitions must identify the required assembly.' }
         $methodName = $method[0].GetAttribute('className') + '.' + $method[0].GetAttribute('name')
-        if (-not $methodName.StartsWith($Assembly + '.', [StringComparison]::Ordinal) -or
+        if (-not (Test-RequiredNamespace $methodName) -or
             ($name -cne $methodName -and -not $name.StartsWith($methodName + '(', [StringComparison]::Ordinal)))
         { throw 'A test result does not identify its declared test method.' }
     }
@@ -223,7 +239,7 @@ function Get-CoreTestShardReport
         if (-not $compose.Contains("image: $($shard.postgreSql.imageReference)", [StringComparison]::Ordinal))
         { throw 'Compatibility fixture is not the canonical pinned Compose image.' }
     }
-    $plan = Get-CoreTestPlan $Kind
+    $plan = Get-CoreTestPlan $Kind $PostgreSqlMajor
     if ($shard.projects.Count -ne $plan.Count) { throw 'Core test shard lacks exact project coverage.' }
     $passed = 0
     foreach ($project in $plan)

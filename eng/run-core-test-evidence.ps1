@@ -11,7 +11,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'core-test-evidence.psm1') -Force
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
-$plan = Get-CoreTestPlan $Kind
+$plan = Get-CoreTestPlan $Kind $PostgreSqlMajor
 if ($ValidateOnly) { $plan; return }
 $architecture = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture
 $environment = if ($IsWindows) { 'windows-x64' } elseif ($IsLinux) { 'linux-x64' } else { throw 'Core evidence requires Windows or Linux.' }

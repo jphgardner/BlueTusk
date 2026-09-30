@@ -12,15 +12,15 @@ $rejected = 0
 
 function Save-Json([string] $Path, [object] $Value)
 { $Value | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $Path -Encoding utf8NoBOM }
-function New-Trx([string] $Assembly)
+function New-Trx([string] $Assembly, [string] $ClassName = "$Assembly.ReaderFixture")
 {
     $id = [Guid]::NewGuid().ToString('D')
     $document = [Xml.XmlDocument]::new()
     # Synthetic tests exercise the reader only; these files are not release evidence.
     $document.LoadXml(@"
 <TestRun xmlns="$namespace">
-  <Results><UnitTestResult testId="$id" testName="$Assembly.ReaderFixture.Passes" outcome="Passed" /></Results>
-  <TestDefinitions><UnitTest id="$id"><TestMethod codeBase="C:\build\$Assembly.dll" className="$Assembly.ReaderFixture" name="Passes" /></UnitTest></TestDefinitions>
+  <Results><UnitTestResult testId="$id" testName="$ClassName.Passes" outcome="Passed" /></Results>
+  <TestDefinitions><UnitTest id="$id"><TestMethod codeBase="C:\build\$Assembly.dll" className="$ClassName" name="Passes" /></UnitTest></TestDefinitions>
   <ResultSummary outcome="Completed"><Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" inProgress="0" pending="0" /></ResultSummary>
 </TestRun>
 "@)
@@ -36,14 +36,17 @@ function New-Fixture([string] $Kind)
         $shardRoot = Join-Path $root "runs/$id"
         $null = New-Item -ItemType Directory -Path $shardRoot
         $rows = @()
-        foreach ($project in Get-CoreTestPlan $Kind)
+        $major = if ($Kind -eq 'Compatibility') { [int]$id.Substring('postgresql-'.Length) } else { 0 }
+        foreach ($project in Get-CoreTestPlan $Kind $major)
         {
             $relative = "tests/$($project.name)"
             $directory = Join-Path $shardRoot $relative
             $null = New-Item -ItemType Directory -Path $directory
-            @('The following Tests are available:', "    $($project.name).ReaderFixture.Passes") |
+            $className = if ($project.name -ceq 'BlueTusk.EntityFrameworkCore.SpecificationTests')
+            { 'Microsoft.EntityFrameworkCore.BlueTuskReaderFixture' } else { "$($project.name).ReaderFixture" }
+            @('The following Tests are available:', "    $className.Passes") |
                 Set-Content -LiteralPath (Join-Path $directory 'discovery.log') -Encoding utf8NoBOM
-            (New-Trx $project.name).Save((Join-Path $directory 'tests.trx'))
+            (New-Trx $project.name $className).Save((Join-Path $directory 'tests.trx'))
             'Synthetic reader fixture, not a test execution.' | Set-Content -LiteralPath (Join-Path $directory 'test.log') -Encoding utf8NoBOM
             Copy-Item -LiteralPath (Join-Path $scratch 'reader-fixture.dll') -Destination (Join-Path $directory "$($project.name).dll")
             $rows += [pscustomobject]@{
