@@ -4,7 +4,7 @@ Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1') -Force
 
 function Get-CoreTestPlan
 {
-    param([ValidateSet('Regression', 'Compatibility')][string] $Kind,
+    param([ValidateSet('Regression', 'Compatibility', 'SyncConnectors')][string] $Kind,
         [ValidateSet(0, 15, 16, 17, 18)][int] $PostgreSqlMajor = 0)
     $projects = [Collections.Generic.List[object]]::new()
     function Add-Project([string] $Name, [string] $Filter = '')
@@ -25,6 +25,13 @@ function Get-CoreTestPlan
             'BlueTusk.ControlPlane.Kubernetes.Tests')) { Add-Project $name }
         Add-Project 'BlueTusk.Live.Tests' (($liveDatabase | ForEach-Object { "FullyQualifiedName!~BlueTusk.Live.Tests.$_" }) -join '&')
         Add-Project 'BlueTusk.Sync.Tests' (($syncDatabase | ForEach-Object { "FullyQualifiedName!~BlueTusk.Sync.Tests.$_" }) -join '&')
+    }
+    elseif ($Kind -eq 'SyncConnectors')
+    {
+        foreach ($name in @('BlueTusk.Sync.Tests', 'BlueTusk.Sync.DependencyInjection.Tests',
+            'BlueTusk.Sync.Testing.Tests', 'BlueTusk.Sync.Kafka.Tests', 'BlueTusk.Sync.Nats.Tests',
+            'BlueTusk.Sync.Redis.Tests', 'BlueTusk.Sync.OpenSearch.Tests', 'BlueTusk.Sync.S3.Tests',
+            'BlueTusk.Sync.Webhooks.Tests')) { Add-Project $name }
     }
     else
     {
@@ -190,14 +197,17 @@ function Get-CoreTrxSummary
 
 function Get-CoreTestShardReport
 {
-    param([string] $EvidencePath, [string] $ExpectedCommit, [ValidateSet('Regression', 'Compatibility')][string] $Kind,
+    param([string] $EvidencePath, [string] $ExpectedCommit, [ValidateSet('Regression', 'Compatibility', 'SyncConnectors')][string] $Kind,
         [string] $EnvironmentId, [int] $PostgreSqlMajor = 0)
     $root = Split-Path (Resolve-Path -LiteralPath $EvidencePath).Path -Parent
-    $path = Resolve-CoreEvidenceFile $root 'core-test-shard.json'
+    $name = if ($Kind -eq 'SyncConnectors') { 'sync-connector-validation.json' } else { 'core-test-shard.json' }
+    $path = Resolve-CoreEvidenceFile $root $name
     if ($path -cne (Resolve-Path -LiteralPath $EvidencePath).Path) { throw 'Core test shard manifest path must be canonical.' }
     $shard = Read-CoreEvidenceJson $path
-    Assert-CoreTestProperties $shard @('schemaVersion', 'scope', 'releaseVersion', 'sourceCommit', 'sourceTreeDirty',
-        'kind', 'environmentId', 'postgreSql', 'startedAtUtc', 'completedAtUtc', 'projects') 'Core test shard'
+    $properties = @('schemaVersion', 'scope', 'releaseVersion', 'sourceCommit', 'sourceTreeDirty',
+        'kind', 'environmentId', 'postgreSql', 'startedAtUtc', 'completedAtUtc', 'projects')
+    if ($Kind -eq 'SyncConnectors') { $properties += 'toolSourceCommit' }
+    Assert-CoreTestProperties $shard $properties 'Core test shard'
     if (($shard.schemaVersion -isnot [int] -and $shard.schemaVersion -isnot [long]) -or $shard.schemaVersion -ne 1 -or
         $shard.scope -cne 'Core' -or $shard.releaseVersion -cne '1.2.0' -or $ExpectedCommit -cnotmatch '^[0-9a-f]{40}$' -or
         $shard.sourceCommit -cne $ExpectedCommit -or $shard.sourceTreeDirty -isnot [bool] -or $shard.sourceTreeDirty -ne $false -or
@@ -214,6 +224,13 @@ function Get-CoreTestShardReport
     {
         if ($EnvironmentId -cnotin @('linux-x64', 'windows-x64') -or $PostgreSqlMajor -ne 0 -or $null -ne $shard.postgreSql)
         { throw 'Core regression requires a named x64 OS and no database fixture claim.' }
+    }
+    elseif ($Kind -eq 'SyncConnectors')
+    {
+        if ($EnvironmentId -cnotin @('linux-x64', 'windows-x64') -or $PostgreSqlMajor -ne 0 -or
+            $null -ne $shard.postgreSql -or $shard.toolSourceCommit -isnot [string] -or
+            $shard.toolSourceCommit -cnotmatch '^[0-9a-f]{40}$')
+        { throw 'Sync connector payloads require a named x64 OS, exact tool commit and no unverified fixture identity claim.' }
     }
     else
     {
@@ -242,6 +259,7 @@ function Get-CoreTestShardReport
     $plan = Get-CoreTestPlan $Kind $PostgreSqlMajor
     if ($shard.projects.Count -ne $plan.Count) { throw 'Core test shard lacks exact project coverage.' }
     $passed = 0
+    $prefix = if ($Kind -eq 'SyncConnectors') { 'connector-tests/' } else { '' }
     foreach ($project in $plan)
     {
         $rows = @($shard.projects | Where-Object { $_.name -ceq $project.name })
@@ -252,10 +270,10 @@ function Get-CoreTestShardReport
         { throw 'A test project or selection filter differs from the canonical Core capture plan.' }
         Assert-CoreTestInteger $row.discovered 'Discovered tests'
         Assert-CoreTestInteger $row.passed 'Passed tests'
-        $discovery = Get-CoreTestArtifact $root $row.discovery "tests/$($project.name)/discovery.log"
-        $trx = Get-CoreTestArtifact $root $row.trx "tests/$($project.name)/tests.trx"
-        $null = Get-CoreTestArtifact $root $row.log "tests/$($project.name)/test.log"
-        $assemblyPath = Get-CoreTestArtifact $root $row.assembly "tests/$($project.name)/$($project.name).dll"
+        $discovery = Get-CoreTestArtifact $root $row.discovery "${prefix}tests/$($project.name)/discovery.log"
+        $trx = Get-CoreTestArtifact $root $row.trx "${prefix}tests/$($project.name)/tests.trx"
+        $null = Get-CoreTestArtifact $root $row.log "${prefix}tests/$($project.name)/test.log"
+        $assemblyPath = Get-CoreTestArtifact $root $row.assembly "${prefix}tests/$($project.name)/$($project.name).dll"
         $productVersion = Get-CoreTestAssemblyVersion $assemblyPath
         if ($productVersion -cne "1.2.0+$ExpectedCommit")
         { throw "The retained test assembly identifies '$productVersion', not the exact 1.2 candidate commit." }
@@ -265,7 +283,9 @@ function Get-CoreTestShardReport
         $passed += $summary.Passed
     }
     return [pscustomobject]@{ Kind = $Kind; SourceCommit = $ExpectedCommit; EnvironmentId = $EnvironmentId;
-        PostgreSqlMajor = $PostgreSqlMajor; ProjectCount = $plan.Count; Passed = $passed; ReleaseApproved = $false }
+        PostgreSqlMajor = $PostgreSqlMajor; ProjectCount = $plan.Count; Passed = $passed;
+        RawTestPayloadsValidated = $true; FixtureIdentityValidated = $false; ExecutionAuthenticityValidated = $false;
+        RemoteIdentityValidated = $false; EnduranceValidated = $false; ReleaseApproved = $false }
 }
 
 function Get-CoreTestManifestReport

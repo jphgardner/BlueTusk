@@ -105,6 +105,11 @@ jobs:
           BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
           BLUETUSK_OPENSEARCH_URL: http://127.0.0.1:9200
         run: |
+          ./eng/run-core-test-evidence.ps1 -Kind SyncConnectors `
+            -ExpectedCommit '${{ github.sha }}' -OutputRoot 'artifacts/test-results/sync-endurance' -Build
+          ./eng/verify-sync-connector-evidence.ps1 `
+            -EvidencePath 'artifacts/test-results/sync-endurance/sync-connector-validation.json' `
+            -ExpectedCommit '${{ github.sha }}'
           ./eng/run-sync-endurance.ps1 `
             -Duration '1.00:00:00' `
             -MinimumCycles 100 `

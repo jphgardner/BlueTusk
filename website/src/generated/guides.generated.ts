@@ -2223,6 +2223,11 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 1
       },
       {
+        "id": "retained-connector-test-results",
+        "text": "Retained connector test results",
+        "level": 2
+      },
+      {
         "id": "local-smoke",
         "text": "Local smoke",
         "level": 2
@@ -2233,8 +2238,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 655,
-    "readMinutes": 3,
+    "wordCount": 925,
+    "readMinutes": 5,
     "searchText": "Sync release endurance Sync stable release requires a completed 24-hour run of the same real-destination recovery tests used by normal CI. The executable runner is `eng/run-sync-endurance.ps1`; the confirmed self-hosted workflow is `.github/workflows/sync-release-endurance.yml`. Each cycle runs the core pipeline, in-process hosting, shared conformance kit, and PostgreSQL, NATS JetStream, Redis, OpenSearch, Kafka, S3/Parquet, and signed-webhook suites. The Kafka suite runs against a real broker; webhook protocol/failure boundaries use a deterministic receiver. Those suites exercise snapshot restart, transaction redelivery, destination-instance restart, transform drift, durable quarantine, PostgreSQL rollback, JetStream deduplication, Redis preflight failure, OpenSearch partial-bulk recovery, reconciliation/repair, and zero-downtime alias cutover. Any project failure stops the run and writes a failed evidence report. The runner refuses to start unless all six service endpoints and the S3 test credentials are explicit and the launch repository has no tracked changes. It creates a detached Git worktree at the recorded source commit, restores and builds all nine test projects there, and runs every cycle only from that isolated workspace. Other repository builds and commits therefore cannot replace the binaries under test. The format-4 JSON report records requested and actual test duration, completed cycles, project runs, the slowest cycle, exact source commit and branch, isolated start/end commits and cleanliness, combined SHA-256 start/end hashes of every test artifact, artifact count, isolated-worktree cleanup, the launch repository state at completion, .NET SDK, host OS/architecture, processor count, exact project list, candidate package/provenance hashes, and the digest-pinned PostgreSQL, Redis, NATS, Kafka, MinIO and OpenSearch images. A report is successful only when `completed` is true, the requested duration and minimum cycle count pass, the detached source is un"
   },
   {

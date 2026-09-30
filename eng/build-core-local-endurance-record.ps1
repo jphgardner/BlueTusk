@@ -31,6 +31,9 @@ $provenancePath = Resolve-CoreEvidenceFile $root "$rolePrefix/candidate-sbom/bui
 $report = Read-CoreEvidenceJson $reportPath
 $reportHash = (Get-FileHash -LiteralPath $reportPath -Algorithm SHA256).Hash
 $provenanceHash = (Get-FileHash -LiteralPath $provenancePath -Algorithm SHA256).Hash
+$connectorHash = $null
+$captureStartedUtc = ([DateTimeOffset]$report.startedAt).UtcDateTime
+$captureCompletedUtc = ([DateTimeOffset]$report.completedAt).UtcDateTime
 $logPath = (Resolve-Path -LiteralPath $CaptureLogPath).Path
 if ((Get-Item -LiteralPath $logPath).PSIsContainer -or (Get-Item -LiteralPath $logPath).Length -le 0)
 { throw 'Retain the actual nonempty capture log before emitting a local record.' }
@@ -66,6 +69,17 @@ switch ($rolePrefix)
         & (Join-Path $PSScriptRoot 'verify-sync-endurance-report.ps1') @common -ReleaseTrack Core `
             -RequiredDuration '1.00:00:00' -MinimumCycles 100 -ExpectedPostgreSqlImage $contract.endurancePostgreSqlImage `
             -ExpectedDestinationImages $destinations
+        $connectorPath = Resolve-CoreEvidenceFile $root 'sync/sync-connector-validation.json'
+        $connectorHash = (Get-FileHash -LiteralPath $connectorPath -Algorithm SHA256).Hash
+        & (Join-Path $PSScriptRoot 'verify-sync-connector-evidence.ps1') -EvidencePath $connectorPath -ExpectedCommit $ExpectedCommit
+        $connector = Read-CoreEvidenceJson $connectorPath
+        # A separately retained exact-source functional run may precede or follow
+        # endurance. Bind the complete execution interval without changing the
+        # unchanged 24-hour report or claiming per-cycle TRX coverage.
+        $connectorStartedUtc = ([DateTimeOffset]$connector.startedAtUtc).UtcDateTime
+        $connectorCompletedUtc = ([DateTimeOffset]$connector.completedAtUtc).UtcDateTime
+        if ($connectorStartedUtc -lt $captureStartedUtc) { $captureStartedUtc = $connectorStartedUtc }
+        if ($connectorCompletedUtc -gt $captureCompletedUtc) { $captureCompletedUtc = $connectorCompletedUtc }
     }
     'live-control-plane' {
         & (Join-Path $PSScriptRoot 'verify-live-control-plane-endurance-report.ps1') @common `
@@ -75,7 +89,8 @@ switch ($rolePrefix)
 # Emit only after the unchanged release-duration payload reader passes. Raw
 # logs, failed captures and original report/provenance files remain untouched.
 if ((Get-FileHash -LiteralPath $reportPath -Algorithm SHA256).Hash -cne $reportHash -or
-    (Get-FileHash -LiteralPath $provenancePath -Algorithm SHA256).Hash -cne $provenanceHash)
+    (Get-FileHash -LiteralPath $provenancePath -Algorithm SHA256).Hash -cne $provenanceHash -or
+    ($null -ne $connectorHash -and (Get-FileHash -LiteralPath $connectorPath -Algorithm SHA256).Hash -cne $connectorHash))
 { throw 'Local endurance report or provenance changed during verification.' }
 $id = [Guid]::NewGuid().ToString('D')
 $directory = Join-Path $root "executions/$id"
@@ -96,8 +111,8 @@ $artifacts = @(foreach ($role in $contract.requiredArtifactRoles)
 })
 $manifest = [ordered]@{ schemaVersion = 1; kind = 'LocalDocker'; captureId = $id; producerFile = $ProducerFile
     scope = 'Core'; releaseVersion = '1.2.0'; sourceCommit = $ExpectedCommit; toolSourceCommit = $toolCommit
-    sourceTreeDirty = $false; startedUtc = ([DateTimeOffset]$report.startedAt).UtcDateTime.ToString('O')
-    completedUtc = ([DateTimeOffset]$report.completedAt).UtcDateTime.ToString('O'); exitCode = 0
+    sourceTreeDirty = $false; startedUtc = $captureStartedUtc.ToString('O')
+    completedUtc = $captureCompletedUtc.ToString('O'); exitCode = 0
     environment = @{ hostOs = $(if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { throw 'Unsupported local host.' })
         architecture = 'x64'; dockerOs = $dockerOs }
     containerImageDigests = @($images | Sort-Object)
