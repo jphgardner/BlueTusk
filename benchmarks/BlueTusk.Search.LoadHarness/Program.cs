@@ -18,7 +18,8 @@ internal sealed record TenantProgress(int Tenant, long WritesOffered, long Write
     long SelectiveReadsOffered, long SelectiveReadsAccepted, long SelectiveReadsRejected, long SelectiveReadsEmpty);
 internal sealed record CampaignReport(int FormatVersion, string CandidateSha, string SourceTreeSha256, string HarnessBinarySha256, string PostgreSqlImage,
     string PostgreSqlVersion, string OperatingSystem, string Runtime, DateTimeOffset StartedUtc, DateTimeOffset CompletedUtc,
-    string Workload, int DurationSeconds, int Tenants, int DocumentsPerTenant, int ContentBytes, int Writers, int Readers,
+    string Workload, int DurationSeconds, int Tenants, int DocumentsPerTenant, int ContentBytes,
+    int QueryLifetimeSeconds, int MaxActiveQueriesPerScope, int Writers, int Readers,
     int SeededDocuments, int WriteOfferIntervalMilliseconds, int ReadOfferIntervalMilliseconds,
     long WritesOffered, long WritesAccepted, long WritesRejected, long WriteScheduleSkipped,
     long ReadsOffered, long ReadsAccepted, long ReadsRejected, long ReadScheduleSkipped,
@@ -113,8 +114,8 @@ internal static class Program
         var options = new SearchStoreOptions
         {
             Schema = schema,
-            QueryLifetime = TimeSpan.FromSeconds(10),
-            MaxActiveQueriesPerScope = 128,
+            QueryLifetime = TimeSpan.FromSeconds(60),
+            MaxActiveQueriesPerScope = 512,
             MaxConcurrentIngestions = Tenants,
             MaxPageSize = 10,
             MaxCandidateCount = 64
@@ -357,7 +358,8 @@ internal static class Program
                     StringComparison.OrdinalIgnoreCase), "The executing harness binary changed during the run.");
                 var report = new CampaignReport(2, candidate, sourceHash, binaryHash, image, await ServerVersionAsync(source),
                     RuntimeInformation.OSDescription, RuntimeInformation.FrameworkDescription, started, DateTimeOffset.UtcNow,
-                    "eight-tenant-seeded-analyzed-high-entropy-fulltext-broad-selective", seconds, Tenants, documentsPerTenant, contentBytes,
+                    "eight-tenant-seeded-analyzed-60s-snapshot-high-entropy-fulltext-broad-selective", seconds, Tenants, documentsPerTenant, contentBytes,
+                    (int)options.QueryLifetime.TotalSeconds, options.MaxActiveQueriesPerScope,
                     Tenants, Readers, Tenants * documentsPerTenant, WriteIntervalMilliseconds, ReadIntervalMilliseconds,
                     progress.Sum(static item => item.WritesOffered), progress.Sum(static item => item.WritesAccepted),
                     progress.Sum(static item => item.WritesRejected), progress.Sum(static item => item.WriteScheduleSkipped),

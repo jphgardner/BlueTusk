@@ -335,7 +335,7 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
         ArgumentOutOfRangeException.ThrowIfGreaterThan(maxQueries, 10_000);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-        await LockSnapshotBudgetAsync(connection, transaction, cancellationToken, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await LockSnapshotBudgetAsync(connection, transaction, cancellationToken, TimeSpan.FromSeconds(3)).ConfigureAwait(false);
         var removed = await PruneQueriesAsync(connection, transaction, null, maxQueries, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return removed;

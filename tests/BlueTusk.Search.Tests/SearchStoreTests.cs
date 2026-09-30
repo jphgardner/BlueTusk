@@ -531,6 +531,26 @@ public sealed class SearchStoreTests
     });
 
     [Fact]
+    public Task Background_prune_waits_for_a_longer_bounded_budget_contention() => WithStoreAsync(async (store, source) =>
+    {
+        await using var connection = await source.OpenConnectionAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT pg_advisory_xact_lock(hashtextextended(@name, 0))";
+        var name = command.CreateParameter();
+        name.ParameterName = "name";
+        name.Value = "BlueTusk.Search.SnapshotBudget:" + store.Options.Schema;
+        command.Parameters.Add(name);
+        _ = await command.ExecuteScalarAsync();
+
+        var prune = store.PruneExpiredQueriesAsync(1).AsTask();
+        await Task.Delay(TimeSpan.FromMilliseconds(1200));
+        await transaction.CommitAsync();
+        Assert.Equal(0, await prune);
+    });
+
+    [Fact]
     public Task Page_and_ranking_byte_budgets_stop_payloads_before_they_leave_postgresql() => WithStoreAsync(async (store, source) =>
     {
         for (var i = 0; i < 3; i++)

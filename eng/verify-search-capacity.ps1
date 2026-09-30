@@ -84,7 +84,9 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     Require ($report.CandidateSha -ceq $head -and $report.SourceTreeSha256 -ceq $before.sourceTreeSha256 -and
         $report.HarnessBinarySha256 -ceq $manifest.HarnessBinarySha256) "$label is not bound to the exact candidate source and harness binary."
     Require ($report.Workload -ceq $budget.workload -and $report.PostgreSqlImage -ceq $budget.postgreSqlImage -and [string]$report.PostgreSqlVersion -match '^PostgreSQL 18\.') "$label has the wrong workload or PostgreSQL fixture."
-    foreach ($pair in @(@('Tenants','tenants'), @('DocumentsPerTenant','documentsPerTenant'), @('ContentBytes','contentBytes'), @('Writers','writers'), @('Readers','readers'))) {
+    foreach ($pair in @(@('Tenants','tenants'), @('DocumentsPerTenant','documentsPerTenant'), @('ContentBytes','contentBytes'),
+            @('QueryLifetimeSeconds','queryLifetimeSeconds'), @('MaxActiveQueriesPerScope','maxActiveQueriesPerScope'),
+            @('Writers','writers'), @('Readers','readers'))) {
         Require ($report.($pair[0]) -eq $budget.($pair[1])) "$label has the wrong $($pair[0]) workload size."
     }
     Require ($report.WriteOfferIntervalMilliseconds -eq $budget.writeOfferIntervalMilliseconds -and
