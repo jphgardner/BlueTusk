@@ -34,6 +34,7 @@ public sealed class ArchitectureDependencyTests
                     "BlueTusk.Extensions.Abstractions",
                     "BlueTusk.Protocol",
                     "BlueTusk.Security",
+                    "BlueTusk.Transport",
                     "BlueTusk.TypeSystem",
                 ],
             ["BlueTusk.Replication"] =

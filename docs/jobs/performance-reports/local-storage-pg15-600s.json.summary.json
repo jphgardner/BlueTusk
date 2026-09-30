@@ -1,0 +1,1232 @@
+{
+  "report": "docs\\jobs\\performance-reports\\local-storage-pg15-600s.json",
+  "startedAtUtc": "2026-09-27T20:19:18.7509914+00:00",
+  "sourceSha256": "FCD5BBD650CA0E429CB995DAD07E34F53C9146724D8FE1AE6B2B4EBBE29768E0",
+  "postgreSqlVersion": "PostgreSQL 15.19 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "measurementBoundary": "Dedicated fixture, shared development host; finite post-warmup campaign. Relation observations exclude measurement/business-effect tables. WAL/checkpoints are cluster scoped. Row estimates/statistics can lag. Late slope measures the final half after at least two initial observation periods. No indefinite plateau, hard disk bound, cross-format upgrade or production qualification is asserted.",
+  "fixtureSampleCount": 362,
+  "fixtureCpuPercentage": {
+    "minimum": 3.33,
+    "p50": 94.78,
+    "p95": 164.05,
+    "p99": 181.58,
+    "maximum": 188.56
+  },
+  "fixtureBlockIoReported": [
+    "0B / 0B"
+  ],
+  "products": [
+    {
+      "product": "Jobs",
+      "offeredSeconds": 600,
+      "verified": true,
+      "accepted": 36989,
+      "rejected": 93625,
+      "effects": 36989,
+      "completionsPerSecondIncludingDrain": 61.551434418138996,
+      "maximumOutstanding": 58,
+      "maximumRetainedPrimaryRows": 170,
+      "maximumRetainedDispatchJobs": 170,
+      "runtimePhysicalWindows": {
+        "automaticOnly": {
+          "samples": 109,
+          "firstSeconds": 0.0450692,
+          "lastSeconds": 118.9617038,
+          "firstBytes": 368640,
+          "lastBytes": 7716864,
+          "minimumBytes": 368640,
+          "maximumBytes": 7716864,
+          "leastSquaresMiBPerMinute": 3.1814471778481583,
+          "netGrowthBytes": 7348224
+        },
+        "maintenanceSettling": {
+          "samples": 172,
+          "firstSeconds": 120.2782025,
+          "lastSeconds": 299.7791245,
+          "firstBytes": 7856128,
+          "lastBytes": 4489216,
+          "minimumBytes": 4489216,
+          "maximumBytes": 7938048,
+          "leastSquaresMiBPerMinute": -1.0834386298441816,
+          "netGrowthBytes": -3366912
+        },
+        "lateMaintenance": {
+          "samples": 289,
+          "firstSeconds": 300.8859285,
+          "lastSeconds": 599.1004334,
+          "firstBytes": 4489216,
+          "lastBytes": 4112384,
+          "minimumBytes": 4112384,
+          "maximumBytes": 6062080,
+          "leastSquaresMiBPerMinute": -0.007473775484671744,
+          "netGrowthBytes": -376832
+        }
+      },
+      "relationReuse": [
+        {
+          "schema": "over_jobs_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "job_attempts",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 581632,
+            "lastBytes": 581632,
+            "minimumBytes": 581632,
+            "maximumBytes": 581632,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 180224,
+            "lastBytes": 180224,
+            "minimumBytes": 180224,
+            "maximumBytes": 180224,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 368640,
+            "lastBytes": 368640,
+            "minimumBytes": 368640,
+            "maximumBytes": 368640,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 10,
+          "peakEstimatedDeadRows": 3848
+        },
+        {
+          "schema": "over_jobs_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "jobs",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 3620864,
+            "lastBytes": 3244032,
+            "minimumBytes": 3244032,
+            "maximumBytes": 5193728,
+            "leastSquaresMiBPerMinute": -0.007841972513557388,
+            "netGrowthBytes": -376832
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 1974272,
+            "lastBytes": 1597440,
+            "minimumBytes": 1597440,
+            "maximumBytes": 3547136,
+            "leastSquaresMiBPerMinute": -0.007841972513557388,
+            "netGrowthBytes": -376832
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 1605632,
+            "lastBytes": 1605632,
+            "minimumBytes": 1605632,
+            "maximumBytes": 1605632,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 10,
+          "peakEstimatedDeadRows": 10561
+        },
+        {
+          "schema": "over_jobs_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "schedules",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 24576,
+            "lastBytes": 24576,
+            "minimumBytes": 24576,
+            "maximumBytes": 24576,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 0,
+            "lastBytes": 0,
+            "minimumBytes": 0,
+            "maximumBytes": 0,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_jobs_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "settings",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 57344,
+            "lastBytes": 57344,
+            "minimumBytes": 57344,
+            "maximumBytes": 57344,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 8192,
+            "lastBytes": 8192,
+            "minimumBytes": 8192,
+            "maximumBytes": 8192,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_wf_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "definitions",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 0,
+            "lastBytes": 0,
+            "minimumBytes": 0,
+            "maximumBytes": 0,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 8192,
+            "lastBytes": 8192,
+            "minimumBytes": 8192,
+            "maximumBytes": 8192,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_wf_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "history",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 0,
+            "lastBytes": 0,
+            "minimumBytes": 0,
+            "maximumBytes": 0,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 8192,
+            "lastBytes": 8192,
+            "minimumBytes": 8192,
+            "maximumBytes": 8192,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_wf_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "instances",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 57344,
+            "lastBytes": 57344,
+            "minimumBytes": 57344,
+            "maximumBytes": 57344,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 0,
+            "lastBytes": 0,
+            "minimumBytes": 0,
+            "maximumBytes": 0,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 49152,
+            "lastBytes": 49152,
+            "minimumBytes": 49152,
+            "maximumBytes": 49152,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_wf_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "nodes",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 24576,
+            "lastBytes": 24576,
+            "minimumBytes": 24576,
+            "maximumBytes": 24576,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 0,
+            "lastBytes": 0,
+            "minimumBytes": 0,
+            "maximumBytes": 0,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_wf_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "settings",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 65536,
+            "lastBytes": 65536,
+            "minimumBytes": 65536,
+            "maximumBytes": 65536,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 8192,
+            "lastBytes": 8192,
+            "minimumBytes": 8192,
+            "maximumBytes": 8192,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_wf_f388ced4633b44ebbca9297f3c67e29d",
+          "table": "signals",
+          "lateTotal": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 24576,
+            "lastBytes": 24576,
+            "minimumBytes": 24576,
+            "maximumBytes": 24576,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 0,
+            "lastBytes": 0,
+            "minimumBytes": 0,
+            "maximumBytes": 0,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 289,
+            "firstSeconds": 300.8859285,
+            "lastSeconds": 599.1004334,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        }
+      ],
+      "vacuumDurationMilliseconds": {
+        "minimum": 0.7502,
+        "p50": 1.4416,
+        "p95": 13.6542,
+        "p99": 37.3465,
+        "maximum": 39.124
+      },
+      "manualVacuumStatements": 160,
+      "observedWalInsertBytes": 248889240,
+      "observedWalMiBPerMinute": 23.773356187354985,
+      "statisticsWalBytesDelta": 246199226,
+      "statisticsWalFullPageImageDelta": 1621,
+      "timedCheckpointDelta": 2,
+      "requestedCheckpointDelta": 0,
+      "checkpointWriteMillisecondsDelta": 195055,
+      "checkpointSyncMillisecondsDelta": 1561,
+      "processCpuMillisecondsAtLastSample": 158281.25,
+      "processAverageSingleCorePercentage": 26.41981897788425,
+      "runtime": {
+        "AllocatedBytes": 3456570104,
+        "Gen0Collections": 226,
+        "Gen1Collections": 24,
+        "Gen2Collections": 4,
+        "PeakWorkingSetBytes": 109912064,
+        "PeakManagedBytes": 30502520,
+        "PeakPoolTotal": 23,
+        "PeakPoolBusy": 20,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 24,
+        "PeakDatabaseLockWaiters": 3,
+        "PeakDatabaseWaitingBackends": 23,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 32,
+          "Total": 23,
+          "Idle": 23,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 23,
+          "Reused": 321566,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 128021,
+            "Sum": 36989,
+            "Maximum": 4
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 36989,
+            "Sum": 4224.562140400003,
+            "Maximum": 0.5049562
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 36989,
+            "Sum": 36989,
+            "Maximum": 1
+          }
+        ]
+      },
+      "tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Accepted": 19032,
+          "Rejected": 93625,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 114.07,
+            "P50": 924.602,
+            "P95": 1244.935,
+            "P99": 2104.45,
+            "Maximum": 3049.222
+          },
+          "MaximumCompletionGapMilliseconds": 618.3760166168213
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Accepted": 5986,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 107.592,
+            "P50": 126.423,
+            "P95": 216.581,
+            "P99": 392.888,
+            "Maximum": 721.557
+          },
+          "MaximumCompletionGapMilliseconds": 489.2740249633789
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Accepted": 5986,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 106.2,
+            "P50": 126.685,
+            "P95": 218.83,
+            "P99": 398.719,
+            "Maximum": 855.231
+          },
+          "MaximumCompletionGapMilliseconds": 488.9700412750244
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Accepted": 5985,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 106.227,
+            "P50": 126.705,
+            "P95": 218.212,
+            "P99": 390.079,
+            "Maximum": 852.549
+          },
+          "MaximumCompletionGapMilliseconds": 489.12501335144043
+        }
+      ],
+      "finalRetainedPrimaryRows": 0,
+      "finalRetainedDispatchJobs": 0
+    },
+    {
+      "product": "Workflows",
+      "offeredSeconds": 600,
+      "verified": true,
+      "accepted": 10052,
+      "rejected": 77991,
+      "effects": 10052,
+      "completionsPerSecondIncludingDrain": 16.623234923702658,
+      "maximumOutstanding": 50,
+      "maximumRetainedPrimaryRows": 84,
+      "maximumRetainedDispatchJobs": 227,
+      "runtimePhysicalWindows": {
+        "automaticOnly": {
+          "samples": 114,
+          "firstSeconds": 0.0491876,
+          "lastSeconds": 119.2897911,
+          "firstBytes": 458752,
+          "lastBytes": 15859712,
+          "minimumBytes": 458752,
+          "maximumBytes": 15908864,
+          "leastSquaresMiBPerMinute": 6.186034045714275,
+          "netGrowthBytes": 15400960
+        },
+        "maintenanceSettling": {
+          "samples": 164,
+          "firstSeconds": 120.4220226,
+          "lastSeconds": 299.0378815,
+          "firstBytes": 16031744,
+          "lastBytes": 9306112,
+          "minimumBytes": 9306112,
+          "maximumBytes": 16031744,
+          "leastSquaresMiBPerMinute": -2.5284565561787455,
+          "netGrowthBytes": -6725632
+        },
+        "lateMaintenance": {
+          "samples": 275,
+          "firstSeconds": 300.1003722,
+          "lastSeconds": 598.8546938,
+          "firstBytes": 9306112,
+          "lastBytes": 10911744,
+          "minimumBytes": 9166848,
+          "maximumBytes": 11034624,
+          "leastSquaresMiBPerMinute": 0.018882275787085633,
+          "netGrowthBytes": 1605632
+        }
+      },
+      "relationReuse": [
+        {
+          "schema": "over_jobs_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "job_attempts",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 671744,
+            "lastBytes": 671744,
+            "minimumBytes": 671744,
+            "maximumBytes": 671744,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 172032,
+            "lastBytes": 172032,
+            "minimumBytes": 172032,
+            "maximumBytes": 172032,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 466944,
+            "lastBytes": 466944,
+            "minimumBytes": 466944,
+            "maximumBytes": 466944,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 9,
+          "peakEstimatedDeadRows": 4550
+        },
+        {
+          "schema": "over_jobs_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "jobs",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 1581056,
+            "lastBytes": 1712128,
+            "minimumBytes": 1556480,
+            "maximumBytes": 1736704,
+            "leastSquaresMiBPerMinute": -0.003803511361472976,
+            "netGrowthBytes": 131072
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 303104,
+            "lastBytes": 434176,
+            "minimumBytes": 278528,
+            "maximumBytes": 458752,
+            "leastSquaresMiBPerMinute": -0.003803511361472976,
+            "netGrowthBytes": 131072
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 1236992,
+            "lastBytes": 1236992,
+            "minimumBytes": 1236992,
+            "maximumBytes": 1236992,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 9,
+          "peakEstimatedDeadRows": 12878
+        },
+        {
+          "schema": "over_jobs_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "schedules",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 24576,
+            "lastBytes": 24576,
+            "minimumBytes": 24576,
+            "maximumBytes": 24576,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 0,
+            "lastBytes": 0,
+            "minimumBytes": 0,
+            "maximumBytes": 0,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_jobs_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "settings",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 57344,
+            "lastBytes": 57344,
+            "minimumBytes": 57344,
+            "maximumBytes": 57344,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 8192,
+            "lastBytes": 8192,
+            "minimumBytes": 8192,
+            "maximumBytes": 8192,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_wf_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "definitions",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 65536,
+            "lastBytes": 65536,
+            "minimumBytes": 65536,
+            "maximumBytes": 65536,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 8192,
+            "lastBytes": 8192,
+            "minimumBytes": 8192,
+            "maximumBytes": 8192,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_wf_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "history",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 3227648,
+            "lastBytes": 3481600,
+            "minimumBytes": 3162112,
+            "maximumBytes": 3571712,
+            "leastSquaresMiBPerMinute": 0.006659517563663156,
+            "netGrowthBytes": 253952
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 524288,
+            "lastBytes": 778240,
+            "minimumBytes": 458752,
+            "maximumBytes": 868352,
+            "leastSquaresMiBPerMinute": 0.006659517563663157,
+            "netGrowthBytes": 253952
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 2662400,
+            "lastBytes": 2662400,
+            "minimumBytes": 2662400,
+            "maximumBytes": 2662400,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 9,
+          "peakEstimatedDeadRows": 17488
+        },
+        {
+          "schema": "over_wf_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "instances",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 1646592,
+            "lastBytes": 2375680,
+            "minimumBytes": 1572864,
+            "maximumBytes": 2375680,
+            "leastSquaresMiBPerMinute": 0.013610013669328182,
+            "netGrowthBytes": 729088
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 1212416,
+            "lastBytes": 1941504,
+            "minimumBytes": 1138688,
+            "maximumBytes": 1941504,
+            "leastSquaresMiBPerMinute": 0.013610013669328182,
+            "netGrowthBytes": 729088
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 393216,
+            "lastBytes": 393216,
+            "minimumBytes": 393216,
+            "maximumBytes": 393216,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 9,
+          "peakEstimatedDeadRows": 3538
+        },
+        {
+          "schema": "over_wf_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "nodes",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 1482752,
+            "lastBytes": 1982464,
+            "minimumBytes": 1400832,
+            "maximumBytes": 2080768,
+            "leastSquaresMiBPerMinute": 0.004627542441261052,
+            "netGrowthBytes": 499712
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 950272,
+            "lastBytes": 1449984,
+            "minimumBytes": 868352,
+            "maximumBytes": 1548288,
+            "leastSquaresMiBPerMinute": 0.004627542441261052,
+            "netGrowthBytes": 499712
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 491520,
+            "lastBytes": 491520,
+            "minimumBytes": 491520,
+            "maximumBytes": 491520,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 9,
+          "peakEstimatedDeadRows": 20338
+        },
+        {
+          "schema": "over_wf_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "settings",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 65536,
+            "lastBytes": 65536,
+            "minimumBytes": 65536,
+            "maximumBytes": 65536,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 8192,
+            "lastBytes": 8192,
+            "minimumBytes": 8192,
+            "maximumBytes": 8192,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 16384,
+            "lastBytes": 16384,
+            "minimumBytes": 16384,
+            "maximumBytes": 16384,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 0,
+          "peakEstimatedDeadRows": 0
+        },
+        {
+          "schema": "over_wf_9bd3cc16301d49b3a8cf42c74b02a10e",
+          "table": "signals",
+          "lateTotal": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 483328,
+            "lastBytes": 475136,
+            "minimumBytes": 475136,
+            "maximumBytes": 483328,
+            "leastSquaresMiBPerMinute": -0.0022696228443361156,
+            "netGrowthBytes": -8192
+          },
+          "lateHeap": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 172032,
+            "lastBytes": 163840,
+            "minimumBytes": 163840,
+            "maximumBytes": 172032,
+            "leastSquaresMiBPerMinute": -0.0022696228443361156,
+            "netGrowthBytes": -8192
+          },
+          "lateIndexes": {
+            "samples": 275,
+            "firstSeconds": 300.1003722,
+            "lastSeconds": 598.8546938,
+            "firstBytes": 270336,
+            "lastBytes": 270336,
+            "minimumBytes": 270336,
+            "maximumBytes": 270336,
+            "leastSquaresMiBPerMinute": 0.0,
+            "netGrowthBytes": 0
+          },
+          "manualVacuumsObserved": 16,
+          "autovacuumsObserved": 9,
+          "peakEstimatedDeadRows": 2183
+        }
+      ],
+      "vacuumDurationMilliseconds": {
+        "minimum": 0.8776,
+        "p50": 4.8707,
+        "p95": 35.1895,
+        "p99": 59.0086,
+        "maximum": 74.8623
+      },
+      "manualVacuumStatements": 160,
+      "observedWalInsertBytes": 578097536,
+      "observedWalMiBPerMinute": 55.24165360063994,
+      "statisticsWalBytesDelta": 570385782,
+      "statisticsWalFullPageImageDelta": 1786,
+      "timedCheckpointDelta": 2,
+      "requestedCheckpointDelta": 0,
+      "checkpointWriteMillisecondsDelta": 266599,
+      "checkpointSyncMillisecondsDelta": 77,
+      "processCpuMillisecondsAtLastSample": 270828.125,
+      "processAverageSingleCorePercentage": 45.224347041763146,
+      "runtime": {
+        "AllocatedBytes": 7736899120,
+        "Gen0Collections": 488,
+        "Gen1Collections": 47,
+        "Gen2Collections": 4,
+        "PeakWorkingSetBytes": 125456384,
+        "PeakManagedBytes": 34050824,
+        "PeakPoolTotal": 27,
+        "PeakPoolBusy": 23,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 28,
+        "PeakDatabaseLockWaiters": 8,
+        "PeakDatabaseWaitingBackends": 27,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 32,
+          "Total": 27,
+          "Idle": 27,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 27,
+          "Reused": 350240,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 134174,
+            "Sum": 40208,
+            "Maximum": 3
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 40208,
+            "Sum": 3612.323613699977,
+            "Maximum": 1.7168853
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 40208,
+            "Sum": 40208,
+            "Maximum": 1
+          },
+          {
+            "Name": "bluetusk.workflows.activity.duration",
+            "Measurements": 40208,
+            "Sum": 3607.373141299975,
+            "Maximum": 1.7167531
+          },
+          {
+            "Name": "bluetusk.workflows.recovered_dispatches",
+            "Measurements": 2327,
+            "Sum": 0,
+            "Maximum": 0
+          }
+        ]
+      },
+      "tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Accepted": 6471,
+          "Rejected": 77991,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1068.994,
+            "P50": 2576.224,
+            "P95": 4359.969,
+            "P99": 8109.24,
+            "Maximum": 11774.503
+          },
+          "MaximumCompletionGapMilliseconds": 5120.83101272583
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Accepted": 1193,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 202.212,
+            "P50": 237.78,
+            "P95": 808.104,
+            "P99": 2522.801,
+            "Maximum": 3675.908
+          },
+          "MaximumCompletionGapMilliseconds": 1960.3040218353271
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Accepted": 1194,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 198.655,
+            "P50": 237.563,
+            "P95": 800.632,
+            "P99": 2464.258,
+            "Maximum": 3581.612
+          },
+          "MaximumCompletionGapMilliseconds": 2153.090000152588
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Accepted": 1194,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 202.151,
+            "P50": 236.637,
+            "P95": 810.892,
+            "P99": 2453.221,
+            "Maximum": 3736.794
+          },
+          "MaximumCompletionGapMilliseconds": 1958.686113357544
+        }
+      ],
+      "finalRetainedPrimaryRows": 0,
+      "finalRetainedDispatchJobs": 0
+    }
+  ],
+  "faults": [
+    {
+      "Name": "process-death-after-effect-before-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 931.4191,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "workflow-process-death-before-result",
+      "Passed": true,
+      "RecoveryMilliseconds": 1204.0545,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "ambiguous-commit-lost-server-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 14.6925,
+      "Attempts": 0,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": true,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "jobs-network-partition-and-heal",
+      "Passed": true,
+      "RecoveryMilliseconds": 94.4886,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 1,
+      "RejectedConnections": 16,
+      "PeakProxyConnections": 1,
+      "StoreFailureObservations": 16
+    },
+    {
+      "Name": "workflow-network-partition-and-heal",
+      "Passed": true,
+      "RecoveryMilliseconds": 218.9861,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 1,
+      "RejectedConnections": 31,
+      "PeakProxyConnections": 2,
+      "StoreFailureObservations": 16
+    }
+  ]
+}

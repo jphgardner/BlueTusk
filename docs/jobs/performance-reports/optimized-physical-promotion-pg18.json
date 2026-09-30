@@ -1,0 +1,3475 @@
+{
+  "ScriptSha256": "2625819A901E9AB00067F760D15AB1C2791CE21D635515776F09CD6126B9A8D3",
+  "Sources": [
+    {
+      "Sha256": "00BDA62F633B91C3605B42645CE69CF97FC593B2F65182756F90076A34EBB356",
+      "Path": "src/BlueTusk.Jobs.DependencyInjection/BlueTusk.Jobs.DependencyInjection.csproj"
+    },
+    {
+      "Sha256": "06863D122AD8A0BC06F5298C3252D131B59F4A7CB3E86415F85039736949AE6B",
+      "Path": "src/BlueTusk.Jobs.DependencyInjection/JobHealthServiceCollectionExtensions.cs"
+    },
+    {
+      "Sha256": "A720089C97C5CA5566D0825531E05A7225926B9873F7BE67D3160DAC3127E929",
+      "Path": "src/BlueTusk.Jobs.DependencyInjection/JobQueueHealthCheck.cs"
+    },
+    {
+      "Sha256": "5DD54EDD62D63038AF19B52137B820951EF6FF1680FCF15EC89814E7B7EB4216",
+      "Path": "src/BlueTusk.Jobs.DependencyInjection/JobReadiness.cs"
+    },
+    {
+      "Sha256": "050516743FC1AE3FB4205B73BFEE8A5EDB8EFE4DAB51EDD02F67B3CE27A0928F",
+      "Path": "src/BlueTusk.Jobs/BlueTusk.Jobs.csproj"
+    },
+    {
+      "Sha256": "F11D96E61AF3C5269C79E5174793DDFA52F3B31C2D9F4CE4A127962B24EFD48B",
+      "Path": "src/BlueTusk.Jobs/FencedJobTransactions.cs"
+    },
+    {
+      "Sha256": "73BEB4AFDC9C3CDD2E38324366F60E6D7DA90189E7B5BB73DDA72A3D6D998CF4",
+      "Path": "src/BlueTusk.Jobs/JobContracts.cs"
+    },
+    {
+      "Sha256": "7E56489680B82D52871F52D7E65B300D335EE53E4E718DBD52D992507A18C215",
+      "Path": "src/BlueTusk.Jobs/JobHealth.cs"
+    },
+    {
+      "Sha256": "41F290F651BD4EABBC81D80F503200447E9F4A2D03F29013EB907907188624AF",
+      "Path": "src/BlueTusk.Jobs/JobStoreOptions.cs"
+    },
+    {
+      "Sha256": "D3E56554ECB92EE51193F9CCB879400D8EBDCA2049DF362B2CD93707D22FA680",
+      "Path": "src/BlueTusk.Jobs/JobTelemetry.cs"
+    },
+    {
+      "Sha256": "96FA9312D9227E4600E0FDC12BA74CBDB05E94BE2BFAE3E9C8026A79B1AB7B73",
+      "Path": "src/BlueTusk.Jobs/JobWorker.cs"
+    },
+    {
+      "Sha256": "77E9984CB230D95460712C95BDC75CA8A575C2F86B4276BFF6EB1DEED946745F",
+      "Path": "src/BlueTusk.Jobs/PostgreSqlJobStore.cs"
+    },
+    {
+      "Sha256": "6555D7D735E51C9B085C9F56CB6CCE8A084E20C863DDB0FB371BFB0D3BF976A1",
+      "Path": "src/BlueTusk.Jobs/RecurringJobs.cs"
+    },
+    {
+      "Sha256": "9A7234EBC720FB84AF0B553810001B011A6532B41A4C3CC32C12C3DDD55B6035",
+      "Path": "src/BlueTusk.Workflows.DependencyInjection/BlueTusk.Workflows.DependencyInjection.csproj"
+    },
+    {
+      "Sha256": "75AE587C75CBD4B6AF2C91419B71DAF002C293862CC673442A3BDF51F012760D",
+      "Path": "src/BlueTusk.Workflows.DependencyInjection/WorkflowHealthServiceCollectionExtensions.cs"
+    },
+    {
+      "Sha256": "BDF4257C7CB31B12C0C19D46CE4939EFE8FC90D8FE70D6195BE567BF71D3AB0B",
+      "Path": "src/BlueTusk.Workflows.DependencyInjection/WorkflowReadiness.cs"
+    },
+    {
+      "Sha256": "935DBEFD4FEFE1B334ECAF971C28D29A3F68B71BFDD30A0A33C84C296D11C3F1",
+      "Path": "src/BlueTusk.Workflows.DependencyInjection/WorkflowScopeHealthCheck.cs"
+    },
+    {
+      "Sha256": "660675D9C92F4AB5AF78D4594F65955DF2DDFC5ECBA63C69F88E62D105948168",
+      "Path": "src/BlueTusk.Workflows/BlueTusk.Workflows.csproj"
+    },
+    {
+      "Sha256": "AC7F8844E10F80E5D6EC7F82461FDE767FBF54017623DDC11C359804AF2EA7BA",
+      "Path": "src/BlueTusk.Workflows/PostgreSqlWorkflowStore.cs"
+    },
+    {
+      "Sha256": "B17D687EFB412A727F6E34EC6AC5AB244C8DF45D6DD3295F23A4D1BDF68F2417",
+      "Path": "src/BlueTusk.Workflows/WorkflowContracts.cs"
+    },
+    {
+      "Sha256": "1DC7515A28324B40F9D1AF6A085E0A9C01B174B567204CFA334A613D030C2CE0",
+      "Path": "src/BlueTusk.Workflows/WorkflowControls.cs"
+    },
+    {
+      "Sha256": "0309C34211A6A69FE1657690AB3191E18D44037662E2BA5DCF376BBE7DBB65D8",
+      "Path": "src/BlueTusk.Workflows/WorkflowDefinitionValidation.cs"
+    },
+    {
+      "Sha256": "FA983AFC47AFF5CCDFE7C5846634234170BE573B3C8384FDDBABA49F71BB0B29",
+      "Path": "src/BlueTusk.Workflows/WorkflowExecution.cs"
+    },
+    {
+      "Sha256": "56EDF066DCAF262BAC0590499553348430E953E5FE89A03C2C18390F3F39C0B2",
+      "Path": "src/BlueTusk.Workflows/WorkflowHealth.cs"
+    },
+    {
+      "Sha256": "E7EC50AFAB1CFB449365CAAB10C58175F42F357380288C70F38F7053832CB884",
+      "Path": "src/BlueTusk.Workflows/WorkflowOptions.cs"
+    },
+    {
+      "Sha256": "3AB4F6DE3230CF6F19B2629E4E158A3C3CDAB8F233F33EBEFA0D8DD0D6697746",
+      "Path": "src/BlueTusk.Workflows/WorkflowReplay.cs"
+    },
+    {
+      "Sha256": "EFCFB1FB276C0CE47E6BA211E4853965A10E7C51F95DAD4754076020EFBB8244",
+      "Path": "src/BlueTusk.Workflows/WorkflowTransitions.cs"
+    },
+    {
+      "Sha256": "BF003BC409EB9CA03D60875246D1E6309E301C13AE8DCC630A6F499709ADC8FB",
+      "Path": "src/BlueTusk.Workflows/WorkflowWorker.cs"
+    },
+    {
+      "Sha256": "07478587F015764A31F973E8535B9B2578F81F5F884DE303CEAFB73FA420BA4A",
+      "Path": "tests/BlueTusk.Workflows.PhysicalRecoveryTests/BlueTusk.Workflows.PhysicalRecoveryTests.csproj"
+    },
+    {
+      "Sha256": "8223A4AE009399F1B757A267ADFFE333C5C777CA033D8146B2F833ED1A75C5A3",
+      "Path": "tests/BlueTusk.Workflows.PhysicalRecoveryTests/JobsWorkflowPhysicalRecoveryTests.cs"
+    },
+    {
+      "Sha256": "4BB6D1D801094111B1EE614583E899EC4F34405EE7DD2C56A4EB74CB53E2A936",
+      "Path": "tests/BlueTusk.Workflows.PhysicalRecoveryTests/PhysicalRecoveryFixture.cs"
+    }
+  ],
+  "Qualification": "Owned local synchronous PG18 primary hard-stop and physical standby promotion, existing public multihost routing, bounded Jobs/Workflows state/effect recovery; not async-loss, split-brain, rejoin, server-upgrade or production approval",
+  "InstalledRuntime": [
+    ".NET SDK:",
+    " Version:           10.0.303",
+    " Commit:            e730f1db75",
+    " Workload version:  10.0.300-manifests.25411c33",
+    " MSBuild version:   18.6.14+e730f1db7",
+    "",
+    "Runtime Environment:",
+    " OS Name:     Windows",
+    " OS Version:  10.0.26200",
+    " OS Platform: Windows",
+    " RID:         win-x64",
+    " Base Path:   C:\\Program Files\\dotnet\\sdk\\10.0.303\\",
+    "",
+    ".NET workloads installed:",
+    "There are no installed workloads to display.",
+    "Configured to use workload sets when installing new manifests.",
+    "No workload sets are installed. Run \"dotnet workload restore\" to install a workload set.",
+    "",
+    "Host:",
+    "  Version:      10.0.12",
+    "  Architecture: x64",
+    "  Commit:       95017c711e",
+    "",
+    ".NET SDKs installed:",
+    "  8.0.425 [C:\\Program Files\\dotnet\\sdk]",
+    "  9.0.121 [C:\\Program Files\\dotnet\\sdk]",
+    "  9.0.305 [C:\\Program Files\\dotnet\\sdk]",
+    "  10.0.112 [C:\\Program Files\\dotnet\\sdk]",
+    "  10.0.303 [C:\\Program Files\\dotnet\\sdk]",
+    "",
+    ".NET runtimes installed:",
+    "  Microsoft.AspNetCore.App 6.0.36 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]",
+    "  Microsoft.AspNetCore.App 8.0.20 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]",
+    "  Microsoft.AspNetCore.App 8.0.31 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]",
+    "  Microsoft.AspNetCore.App 9.0.9 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]",
+    "  Microsoft.AspNetCore.App 9.0.20 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]",
+    "  Microsoft.AspNetCore.App 10.0.11 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]",
+    "  Microsoft.AspNetCore.App 10.0.12 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]",
+    "  Microsoft.NETCore.App 6.0.36 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]",
+    "  Microsoft.NETCore.App 8.0.20 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]",
+    "  Microsoft.NETCore.App 8.0.31 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]",
+    "  Microsoft.NETCore.App 9.0.9 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]",
+    "  Microsoft.NETCore.App 9.0.20 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]",
+    "  Microsoft.NETCore.App 10.0.11 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]",
+    "  Microsoft.NETCore.App 10.0.12 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]",
+    "  Microsoft.WindowsDesktop.App 6.0.36 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]",
+    "  Microsoft.WindowsDesktop.App 8.0.20 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]",
+    "  Microsoft.WindowsDesktop.App 8.0.31 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]",
+    "  Microsoft.WindowsDesktop.App 9.0.9 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]",
+    "  Microsoft.WindowsDesktop.App 9.0.20 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]",
+    "  Microsoft.WindowsDesktop.App 10.0.11 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]",
+    "  Microsoft.WindowsDesktop.App 10.0.12 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]",
+    "",
+    "Other architectures found:",
+    "  x86   [C:\\Program Files (x86)\\dotnet]",
+    "    registered at [HKLM\\SOFTWARE\\dotnet\\Setup\\InstalledVersions\\x86\\InstallLocation]",
+    "",
+    "Environment variables:",
+    "  Not set",
+    "",
+    "global.json file:",
+    "  C:\\Users\\jphga\\.codex\\worktrees\\ecosystem-products\\BlueTusk\\global.json",
+    "",
+    "Learn more:",
+    "  https://aka.ms/dotnet/info",
+    "",
+    "Download .NET:",
+    "  https://aka.ms/dotnet/download"
+  ],
+  "Configuration": "Release",
+  "TimestampUtc": "2026-09-27T22:07:20.0527260+00:00",
+  "Campaign": "jobs-physical-9a6da2b28c544f5f9e60de3331e6718f",
+  "SourceProvenance": {
+    "After": {
+      "formatVersion": 1,
+      "capturedAtUtc": "2026-09-27T23:07:19.882189+01:00",
+      "commit": "3e2b1aa3fb85f85736df4e6fca6f668314f85c10",
+      "dirty": true,
+      "sourceTreeSha256": "f70f0ce491b552ea03beb3c19eb6d03cde6841c91b088c914c4a3495c2a69602",
+      "fileCount": 2397,
+      "sourceBytes": 42161496,
+      "productionQualified": false
+    },
+    "Before": {
+      "formatVersion": 1,
+      "capturedAtUtc": "2026-09-27T23:06:08.147826+01:00",
+      "commit": "3e2b1aa3fb85f85736df4e6fca6f668314f85c10",
+      "dirty": true,
+      "sourceTreeSha256": "f70f0ce491b552ea03beb3c19eb6d03cde6841c91b088c914c4a3495c2a69602",
+      "fileCount": 2397,
+      "sourceBytes": 42161496,
+      "productionQualified": false
+    },
+    "Unchanged": true
+  },
+  "ProductionQualified": false,
+  "Repetitions": 3,
+  "Runs": [
+    {
+      "BinariesAfter": {
+        "CapturedAtUtc": "2026-09-27T22:06:28.8717935+00:00",
+        "Files": [
+          {
+            "Bytes": 280576,
+            "Name": "BlueTusk.Client.dll",
+            "Sha256": "900CEA4BB30885F993A54CDFBC1C47E53745D7C7915D0D46C52D3F1C8A3C4683"
+          },
+          {
+            "Bytes": 564224,
+            "Name": "BlueTusk.Data.dll",
+            "Sha256": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+          },
+          {
+            "Bytes": 22528,
+            "Name": "BlueTusk.Diagnostics.dll",
+            "Sha256": "3E1254E58C0505D075D312E10D41AEF2B0A169B0F7625938A42B3D9117099DC0"
+          },
+          {
+            "Bytes": 7680,
+            "Name": "BlueTusk.Extensions.Abstractions.dll",
+            "Sha256": "A1820C8CD5D0C9FB7417D6D372EF8C1025238733D3BF913D924AF94DC0E56876"
+          },
+          {
+            "Bytes": 41472,
+            "Name": "BlueTusk.Jobs.DependencyInjection.dll",
+            "Sha256": "FC5FDFB8BF9F4BAFE113C0F1FEFF1379C3B0FF28D6DB2C411E4CB4675BA763EC"
+          },
+          {
+            "Bytes": 119808,
+            "Name": "BlueTusk.Jobs.dll",
+            "Sha256": "DE10BC420C5C95AE737C7085046DB5CEEB9767D93A31DB330F8C903B5A663A7E"
+          },
+          {
+            "Bytes": 99840,
+            "Name": "BlueTusk.Protocol.dll",
+            "Sha256": "AB491D252BDC0D4120EC82CD958387318F59D28349C50C1948136A7C3100B6BB"
+          },
+          {
+            "Bytes": 26112,
+            "Name": "BlueTusk.Security.dll",
+            "Sha256": "02AE8278F6E30DA878C2487395BA0AA0206F2FB9E435D30A4CE266F6E4DAD51E"
+          },
+          {
+            "Bytes": 35328,
+            "Name": "BlueTusk.Transport.dll",
+            "Sha256": "4022D4B32A7C2E3C6663A1AEA2D09285D856695794521C2678BC4B1F2104788D"
+          },
+          {
+            "Bytes": 259584,
+            "Name": "BlueTusk.TypeSystem.dll",
+            "Sha256": "23CBDCAC3E57AA919AEA620176AC670B8C7372FB8835A12060C79CCAFE8F08A4"
+          },
+          {
+            "Bytes": 49664,
+            "Name": "BlueTusk.Workflows.DependencyInjection.dll",
+            "Sha256": "45FB6C31475C2A84B14BDEC0B97A8020DA353131C1FF6668A8E1E7B7D3FCEB1F"
+          },
+          {
+            "Bytes": 226816,
+            "Name": "BlueTusk.Workflows.dll",
+            "Sha256": "7D5A70444A410C16ECFE9C2FDF4D4BCFFD1D3D18FC491273536E8728C4E96D29"
+          },
+          {
+            "Bytes": 40538,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.deps.json",
+            "Sha256": "2D53C9C15A076BC86A7433756A606FD9EF90A19DBE9F00872B3FA13F4A6FC30B"
+          },
+          {
+            "Bytes": 205312,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.dll",
+            "Sha256": "6A307D778EC3123FB9610466821548FA98D6E00BDDF2175DC21588FAF3C579BE"
+          },
+          {
+            "Bytes": 162816,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.exe",
+            "Sha256": "B6892540A8BEB8ED767FC63C6C9ACA1F75E709ED1B156BE3629E9EEF1C291AFF"
+          },
+          {
+            "Bytes": 390,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.runtimeconfig.json",
+            "Sha256": "A217D17BE0661ABF2717A26937C6E379C33542CB6F292FD3FC5A2D5113A9D6DC"
+          },
+          {
+            "Bytes": 386080,
+            "Name": "Microsoft.ApplicationInsights.dll",
+            "Sha256": "BF9A4B88C7F94267E1CC7ED0700C575D3EB3266FF25BCB76E4F40F1B0FBA022D"
+          },
+          {
+            "Bytes": 16000,
+            "Name": "Microsoft.Bcl.AsyncInterfaces.dll",
+            "Sha256": "5705D245072D3EB78400547B32147DBB6E2C8B02BA8BDA76729798F5EFDEAECB"
+          },
+          {
+            "Bytes": 28456,
+            "Name": "Microsoft.Extensions.Configuration.Abstractions.dll",
+            "Sha256": "CFDB91156D4D875BA6F540E53F96988E266AB24AB6F367150DB6EB9B645CFEB3"
+          },
+          {
+            "Bytes": 65832,
+            "Name": "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+            "Sha256": "43497D8F23B82159295933EFFE92C82447469B60CDBEFCCA4A62232E4EBBCA99"
+          },
+          {
+            "Bytes": 31056,
+            "Name": "Microsoft.Extensions.Diagnostics.Abstractions.dll",
+            "Sha256": "629FCC3E78969FBA52D7BF7AB21EAEA2A7711FA4E0B4B91BD37AD8B35816D60C"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll",
+            "Sha256": "463EA61F16835377CAFD51BF61C8F488448186029D0CB3E8B0B964D644E2BA63"
+          },
+          {
+            "Bytes": 55080,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.dll",
+            "Sha256": "4446F633A469BC693075BD30EB6F04D1AEBF05A309D9889712A76D125F28BE97"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.FileProviders.Abstractions.dll",
+            "Sha256": "C823EEA339AF2BECA2C3004BB077118D0DB6379F908E7324E59461EF2C08E4B6"
+          },
+          {
+            "Bytes": 54056,
+            "Name": "Microsoft.Extensions.Hosting.Abstractions.dll",
+            "Sha256": "97D564D9ADF28CDBC2E6AC36BA6BF242AE70EDC8B6C8841387370AAAF095DE7E"
+          },
+          {
+            "Bytes": 66856,
+            "Name": "Microsoft.Extensions.Logging.Abstractions.dll",
+            "Sha256": "CEC836C1DFF8E64701EE4FD3A710BD971FEF953C90A34B577D9F4363103E6C39"
+          },
+          {
+            "Bytes": 65320,
+            "Name": "Microsoft.Extensions.Options.dll",
+            "Sha256": "C734C6A9FECA3A2DF39597E028EFEA8EEA796E7E5DFC815DF8B5893384297728"
+          },
+          {
+            "Bytes": 44880,
+            "Name": "Microsoft.Extensions.Primitives.dll",
+            "Sha256": "1F9F027817B0F277F45CCEB0927C14E41CABFE6D52DAFB5AB6BF68895294814B"
+          },
+          {
+            "Bytes": 60448,
+            "Name": "Microsoft.Testing.Extensions.MSBuild.dll",
+            "Sha256": "F6EF5EF03B5C22F7900FB67FE741847E75CF3CE26F652106A27D8CFCC834BB7F"
+          },
+          {
+            "Bytes": 44576,
+            "Name": "Microsoft.Testing.Extensions.Telemetry.dll",
+            "Sha256": "548751AE749BCA1E823F1BC3698AC751A0DC0CA47C396A9D32B432BD828848DF"
+          },
+          {
+            "Bytes": 32800,
+            "Name": "Microsoft.Testing.Extensions.TrxReport.Abstractions.dll",
+            "Sha256": "ACAE6C525EAD26F77CEAB1B1D640FE7E8C07FEC2ACDFC78BF753B220A49EF3E6"
+          },
+          {
+            "Bytes": 1153568,
+            "Name": "Microsoft.Testing.Platform.dll",
+            "Sha256": "519744D3B6321320E366495FBED0D8C37F9B0E11207667EB89EB5C0C425A7462"
+          },
+          {
+            "Bytes": 574776,
+            "Name": "Microsoft.TestPlatform.CommunicationUtilities.dll",
+            "Sha256": "1589365D2F96AB62712F8B25A1EE3F95C05AC31D2CF678C0AFB35E4116AE8094"
+          },
+          {
+            "Bytes": 99128,
+            "Name": "Microsoft.TestPlatform.CoreUtilities.dll",
+            "Sha256": "C427143D3E9C40379F6AC0824DAC6823452648B8D992201F613A33B71553B98C"
+          },
+          {
+            "Bytes": 319840,
+            "Name": "Microsoft.TestPlatform.CrossPlatEngine.dll",
+            "Sha256": "C90FA6A6743F00FEEA16E11A3E57B23E08122AEC5CC4819ABA3BC02CFD29097E"
+          },
+          {
+            "Bytes": 53600,
+            "Name": "Microsoft.TestPlatform.PlatformAbstractions.dll",
+            "Sha256": "3F2162757211B9D53B4CEADC7A8F6F7E01829CF3FF6E0F7930DAB3864216477A"
+          },
+          {
+            "Bytes": 68920,
+            "Name": "Microsoft.TestPlatform.Utilities.dll",
+            "Sha256": "074A1C94033C1DAE75BB3DEF2338D41FD7C81B585AFB12F0C9EED34E7FF09170"
+          },
+          {
+            "Bytes": 17208,
+            "Name": "Microsoft.VisualStudio.CodeCoverage.Shim.dll",
+            "Sha256": "B476CB4BF276631F59341F1FA82E24BA84E990490CC0DC2D87D502E577A415BB"
+          },
+          {
+            "Bytes": 250680,
+            "Name": "Microsoft.VisualStudio.TestPlatform.Common.dll",
+            "Sha256": "1A84CE41079842EE99637E71A8FEC997F5462592F5E1AF340E3AEBB984752DEA"
+          },
+          {
+            "Bytes": 333624,
+            "Name": "Microsoft.VisualStudio.TestPlatform.ObjectModel.dll",
+            "Sha256": "D6BF5D6001CEEB0BE27352A09BDE296C31CEB77C907D60BD7B6EEA21A55026C7"
+          },
+          {
+            "Bytes": 49464,
+            "Name": "testhost.dll",
+            "Sha256": "4AFB3137E02311D597E908AE8043C1FDD98474BCD723C246B2CF46370F61AD46"
+          },
+          {
+            "Bytes": 163168,
+            "Name": "testhost.exe",
+            "Sha256": "905AD8E6FBE6C9F4D0CF25DC1D61DEAAA2CB56B98A67E19D5E19A4D293B2DEC6"
+          },
+          {
+            "Bytes": 21928,
+            "Name": "xunit.abstractions.dll",
+            "Sha256": "3166DC70323FB30CCF1CEDB0FE86F2AD122C46D254542342D90386EFC4C9285C"
+          },
+          {
+            "Bytes": 1253376,
+            "Name": "xunit.runner.visualstudio.testadapter.dll",
+            "Sha256": "384ABA4BAD96399A7FD2205A5A3517B643A16F4D7E843BD0B92E1E42F81FCE2A"
+          },
+          {
+            "Bytes": 214792,
+            "Name": "xunit.v3.assert.dll",
+            "Sha256": "483AEC8A5B7FAEA0A92D0AE4F11A3479045F8F5E3F551DFC4DAC6BEDEAAFA9CE"
+          },
+          {
+            "Bytes": 191752,
+            "Name": "xunit.v3.common.dll",
+            "Sha256": "E4175BC165D01B9828ACDC996776370ADF4F8D0A5865E75EC9DED17FB70258A9"
+          },
+          {
+            "Bytes": 498440,
+            "Name": "xunit.v3.core.dll",
+            "Sha256": "B3641E9E80CD8175E2D9995D6FA9750B8FB31740C87BA121E56CFE515F7F06CC"
+          },
+          {
+            "Bytes": 123144,
+            "Name": "xunit.v3.mtp-v1.dll",
+            "Sha256": "69903F4E48E5794350154D97BC911909974469780CD1931E23DA3AF419A1F2E7"
+          },
+          {
+            "Bytes": 978696,
+            "Name": "xunit.v3.runner.common.dll",
+            "Sha256": "8D9B157EBD8D9240D292ED922F5F26BA4011DE5FD07812CEAAC7BACCFC5E6BC4"
+          },
+          {
+            "Bytes": 75528,
+            "Name": "xunit.v3.runner.inproc.console.dll",
+            "Sha256": "360EF1613C7D4148A715B8495D9F7AD95E4126F75ED86DDA6CF81139C28B1431"
+          },
+          {
+            "Bytes": 174856,
+            "Name": "xunit.v3.runner.utility.netcore.dll",
+            "Sha256": "ABCE062185B0D72B665AAE07D76C681AFF1CD794525A34CFA1B3B0137AF76AFF"
+          }
+        ],
+        "Scope": "All executable, DLL, dependency and runtime configuration files present in the dedicated test output; includes Data/provider dependencies. The installed .NET SDK/runtime is identified separately, not hashed by this manifest."
+      },
+      "Metadata": {
+        "ImageDigest": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+        "BeforePrimarySettings": [
+          "fsync=on",
+          "full_page_writes=on",
+          "max_connections=100",
+          "synchronous_commit=remote_apply",
+          "synchronous_standby_names=FIRST 1 (bluetusk_jobs_recovery_standby)",
+          "wal_level=replica"
+        ],
+        "ImageInspect": {
+          "Id": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+          "RepoTags": [
+            "postgres:18-alpine"
+          ],
+          "RepoDigests": [
+            "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873"
+          ],
+          "Comment": "buildkit.dockerfile.v0",
+          "Created": "2026-09-17T21:29:50.207676277Z",
+          "Config": {
+            "ExposedPorts": {
+              "5432/tcp": {}
+            },
+            "Env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+              "GOSU_VERSION=1.19",
+              "LANG=en_US.utf8",
+              "PG_MAJOR=18",
+              "PG_VERSION=18.6",
+              "PG_SHA256=555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f",
+              "DOCKER_PG_LLVM_DEPS=llvm21-dev \t\tclang21",
+              "PGDATA=/var/lib/postgresql/18/docker"
+            ],
+            "Entrypoint": [
+              "docker-entrypoint.sh"
+            ],
+            "Cmd": [
+              "postgres"
+            ],
+            "Volumes": {
+              "/var/lib/postgresql": {}
+            },
+            "WorkingDir": "/",
+            "StopSignal": "SIGINT"
+          },
+          "Architecture": "amd64",
+          "Os": "linux",
+          "Size": 432729433,
+          "RootFS": {
+            "Type": "layers",
+            "Layers": [
+              "sha256:74d97c428c51a828f9051a7a40a53ff1fc99e54fc30323ce36760701b0b7f711",
+              "sha256:0c215ed2e2d3befa88ee4967365c3a0dafd92551ea50ce2632cd5c3e54de80df",
+              "sha256:afaa93afde1c6674beeb827cf0214759e7d6be6527ea301ac23c45883ccafab8",
+              "sha256:64da5ceddd11db95af72f22788a20d9167a14a49bcd786ea54e33f152824c426",
+              "sha256:c098e77d88f2829ea186b1b2e2f40d5858f19c09e9726fce61c38febe33c65af",
+              "sha256:139076bf0b4422f3219cb0cbae85dde24dd97ae0ef077036324265fa8e5e5a8d",
+              "sha256:68240e981e1a68580381069bf47f0b9b307f0c5449112cccdb24900412ef9cd0",
+              "sha256:0317a57309e527ae290973cc0c0c7977255d84dd00a9f3c8c6c7daf0c396e76c",
+              "sha256:66cdd92492be99d2bead50be69cdfa33cb789a19f69bb3038554b567b3e18636"
+            ]
+          },
+          "Metadata": {
+            "LastTagTime": "2026-09-27T10:08:01.139167349Z"
+          },
+          "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+            "size": 10293
+          },
+          "Identity": {
+            "Pull": [
+              {
+                "Repository": "docker.io/library/postgres"
+              }
+            ]
+          }
+        }
+      },
+      "BinariesBefore": {
+        "CapturedAtUtc": "2026-09-27T22:06:15.7499025+00:00",
+        "Files": [
+          {
+            "Bytes": 280576,
+            "Name": "BlueTusk.Client.dll",
+            "Sha256": "900CEA4BB30885F993A54CDFBC1C47E53745D7C7915D0D46C52D3F1C8A3C4683"
+          },
+          {
+            "Bytes": 564224,
+            "Name": "BlueTusk.Data.dll",
+            "Sha256": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+          },
+          {
+            "Bytes": 22528,
+            "Name": "BlueTusk.Diagnostics.dll",
+            "Sha256": "3E1254E58C0505D075D312E10D41AEF2B0A169B0F7625938A42B3D9117099DC0"
+          },
+          {
+            "Bytes": 7680,
+            "Name": "BlueTusk.Extensions.Abstractions.dll",
+            "Sha256": "A1820C8CD5D0C9FB7417D6D372EF8C1025238733D3BF913D924AF94DC0E56876"
+          },
+          {
+            "Bytes": 41472,
+            "Name": "BlueTusk.Jobs.DependencyInjection.dll",
+            "Sha256": "FC5FDFB8BF9F4BAFE113C0F1FEFF1379C3B0FF28D6DB2C411E4CB4675BA763EC"
+          },
+          {
+            "Bytes": 119808,
+            "Name": "BlueTusk.Jobs.dll",
+            "Sha256": "DE10BC420C5C95AE737C7085046DB5CEEB9767D93A31DB330F8C903B5A663A7E"
+          },
+          {
+            "Bytes": 99840,
+            "Name": "BlueTusk.Protocol.dll",
+            "Sha256": "AB491D252BDC0D4120EC82CD958387318F59D28349C50C1948136A7C3100B6BB"
+          },
+          {
+            "Bytes": 26112,
+            "Name": "BlueTusk.Security.dll",
+            "Sha256": "02AE8278F6E30DA878C2487395BA0AA0206F2FB9E435D30A4CE266F6E4DAD51E"
+          },
+          {
+            "Bytes": 35328,
+            "Name": "BlueTusk.Transport.dll",
+            "Sha256": "4022D4B32A7C2E3C6663A1AEA2D09285D856695794521C2678BC4B1F2104788D"
+          },
+          {
+            "Bytes": 259584,
+            "Name": "BlueTusk.TypeSystem.dll",
+            "Sha256": "23CBDCAC3E57AA919AEA620176AC670B8C7372FB8835A12060C79CCAFE8F08A4"
+          },
+          {
+            "Bytes": 49664,
+            "Name": "BlueTusk.Workflows.DependencyInjection.dll",
+            "Sha256": "45FB6C31475C2A84B14BDEC0B97A8020DA353131C1FF6668A8E1E7B7D3FCEB1F"
+          },
+          {
+            "Bytes": 226816,
+            "Name": "BlueTusk.Workflows.dll",
+            "Sha256": "7D5A70444A410C16ECFE9C2FDF4D4BCFFD1D3D18FC491273536E8728C4E96D29"
+          },
+          {
+            "Bytes": 40538,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.deps.json",
+            "Sha256": "2D53C9C15A076BC86A7433756A606FD9EF90A19DBE9F00872B3FA13F4A6FC30B"
+          },
+          {
+            "Bytes": 205312,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.dll",
+            "Sha256": "6A307D778EC3123FB9610466821548FA98D6E00BDDF2175DC21588FAF3C579BE"
+          },
+          {
+            "Bytes": 162816,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.exe",
+            "Sha256": "B6892540A8BEB8ED767FC63C6C9ACA1F75E709ED1B156BE3629E9EEF1C291AFF"
+          },
+          {
+            "Bytes": 390,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.runtimeconfig.json",
+            "Sha256": "A217D17BE0661ABF2717A26937C6E379C33542CB6F292FD3FC5A2D5113A9D6DC"
+          },
+          {
+            "Bytes": 386080,
+            "Name": "Microsoft.ApplicationInsights.dll",
+            "Sha256": "BF9A4B88C7F94267E1CC7ED0700C575D3EB3266FF25BCB76E4F40F1B0FBA022D"
+          },
+          {
+            "Bytes": 16000,
+            "Name": "Microsoft.Bcl.AsyncInterfaces.dll",
+            "Sha256": "5705D245072D3EB78400547B32147DBB6E2C8B02BA8BDA76729798F5EFDEAECB"
+          },
+          {
+            "Bytes": 28456,
+            "Name": "Microsoft.Extensions.Configuration.Abstractions.dll",
+            "Sha256": "CFDB91156D4D875BA6F540E53F96988E266AB24AB6F367150DB6EB9B645CFEB3"
+          },
+          {
+            "Bytes": 65832,
+            "Name": "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+            "Sha256": "43497D8F23B82159295933EFFE92C82447469B60CDBEFCCA4A62232E4EBBCA99"
+          },
+          {
+            "Bytes": 31056,
+            "Name": "Microsoft.Extensions.Diagnostics.Abstractions.dll",
+            "Sha256": "629FCC3E78969FBA52D7BF7AB21EAEA2A7711FA4E0B4B91BD37AD8B35816D60C"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll",
+            "Sha256": "463EA61F16835377CAFD51BF61C8F488448186029D0CB3E8B0B964D644E2BA63"
+          },
+          {
+            "Bytes": 55080,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.dll",
+            "Sha256": "4446F633A469BC693075BD30EB6F04D1AEBF05A309D9889712A76D125F28BE97"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.FileProviders.Abstractions.dll",
+            "Sha256": "C823EEA339AF2BECA2C3004BB077118D0DB6379F908E7324E59461EF2C08E4B6"
+          },
+          {
+            "Bytes": 54056,
+            "Name": "Microsoft.Extensions.Hosting.Abstractions.dll",
+            "Sha256": "97D564D9ADF28CDBC2E6AC36BA6BF242AE70EDC8B6C8841387370AAAF095DE7E"
+          },
+          {
+            "Bytes": 66856,
+            "Name": "Microsoft.Extensions.Logging.Abstractions.dll",
+            "Sha256": "CEC836C1DFF8E64701EE4FD3A710BD971FEF953C90A34B577D9F4363103E6C39"
+          },
+          {
+            "Bytes": 65320,
+            "Name": "Microsoft.Extensions.Options.dll",
+            "Sha256": "C734C6A9FECA3A2DF39597E028EFEA8EEA796E7E5DFC815DF8B5893384297728"
+          },
+          {
+            "Bytes": 44880,
+            "Name": "Microsoft.Extensions.Primitives.dll",
+            "Sha256": "1F9F027817B0F277F45CCEB0927C14E41CABFE6D52DAFB5AB6BF68895294814B"
+          },
+          {
+            "Bytes": 60448,
+            "Name": "Microsoft.Testing.Extensions.MSBuild.dll",
+            "Sha256": "F6EF5EF03B5C22F7900FB67FE741847E75CF3CE26F652106A27D8CFCC834BB7F"
+          },
+          {
+            "Bytes": 44576,
+            "Name": "Microsoft.Testing.Extensions.Telemetry.dll",
+            "Sha256": "548751AE749BCA1E823F1BC3698AC751A0DC0CA47C396A9D32B432BD828848DF"
+          },
+          {
+            "Bytes": 32800,
+            "Name": "Microsoft.Testing.Extensions.TrxReport.Abstractions.dll",
+            "Sha256": "ACAE6C525EAD26F77CEAB1B1D640FE7E8C07FEC2ACDFC78BF753B220A49EF3E6"
+          },
+          {
+            "Bytes": 1153568,
+            "Name": "Microsoft.Testing.Platform.dll",
+            "Sha256": "519744D3B6321320E366495FBED0D8C37F9B0E11207667EB89EB5C0C425A7462"
+          },
+          {
+            "Bytes": 574776,
+            "Name": "Microsoft.TestPlatform.CommunicationUtilities.dll",
+            "Sha256": "1589365D2F96AB62712F8B25A1EE3F95C05AC31D2CF678C0AFB35E4116AE8094"
+          },
+          {
+            "Bytes": 99128,
+            "Name": "Microsoft.TestPlatform.CoreUtilities.dll",
+            "Sha256": "C427143D3E9C40379F6AC0824DAC6823452648B8D992201F613A33B71553B98C"
+          },
+          {
+            "Bytes": 319840,
+            "Name": "Microsoft.TestPlatform.CrossPlatEngine.dll",
+            "Sha256": "C90FA6A6743F00FEEA16E11A3E57B23E08122AEC5CC4819ABA3BC02CFD29097E"
+          },
+          {
+            "Bytes": 53600,
+            "Name": "Microsoft.TestPlatform.PlatformAbstractions.dll",
+            "Sha256": "3F2162757211B9D53B4CEADC7A8F6F7E01829CF3FF6E0F7930DAB3864216477A"
+          },
+          {
+            "Bytes": 68920,
+            "Name": "Microsoft.TestPlatform.Utilities.dll",
+            "Sha256": "074A1C94033C1DAE75BB3DEF2338D41FD7C81B585AFB12F0C9EED34E7FF09170"
+          },
+          {
+            "Bytes": 17208,
+            "Name": "Microsoft.VisualStudio.CodeCoverage.Shim.dll",
+            "Sha256": "B476CB4BF276631F59341F1FA82E24BA84E990490CC0DC2D87D502E577A415BB"
+          },
+          {
+            "Bytes": 250680,
+            "Name": "Microsoft.VisualStudio.TestPlatform.Common.dll",
+            "Sha256": "1A84CE41079842EE99637E71A8FEC997F5462592F5E1AF340E3AEBB984752DEA"
+          },
+          {
+            "Bytes": 333624,
+            "Name": "Microsoft.VisualStudio.TestPlatform.ObjectModel.dll",
+            "Sha256": "D6BF5D6001CEEB0BE27352A09BDE296C31CEB77C907D60BD7B6EEA21A55026C7"
+          },
+          {
+            "Bytes": 49464,
+            "Name": "testhost.dll",
+            "Sha256": "4AFB3137E02311D597E908AE8043C1FDD98474BCD723C246B2CF46370F61AD46"
+          },
+          {
+            "Bytes": 163168,
+            "Name": "testhost.exe",
+            "Sha256": "905AD8E6FBE6C9F4D0CF25DC1D61DEAAA2CB56B98A67E19D5E19A4D293B2DEC6"
+          },
+          {
+            "Bytes": 21928,
+            "Name": "xunit.abstractions.dll",
+            "Sha256": "3166DC70323FB30CCF1CEDB0FE86F2AD122C46D254542342D90386EFC4C9285C"
+          },
+          {
+            "Bytes": 1253376,
+            "Name": "xunit.runner.visualstudio.testadapter.dll",
+            "Sha256": "384ABA4BAD96399A7FD2205A5A3517B643A16F4D7E843BD0B92E1E42F81FCE2A"
+          },
+          {
+            "Bytes": 214792,
+            "Name": "xunit.v3.assert.dll",
+            "Sha256": "483AEC8A5B7FAEA0A92D0AE4F11A3479045F8F5E3F551DFC4DAC6BEDEAAFA9CE"
+          },
+          {
+            "Bytes": 191752,
+            "Name": "xunit.v3.common.dll",
+            "Sha256": "E4175BC165D01B9828ACDC996776370ADF4F8D0A5865E75EC9DED17FB70258A9"
+          },
+          {
+            "Bytes": 498440,
+            "Name": "xunit.v3.core.dll",
+            "Sha256": "B3641E9E80CD8175E2D9995D6FA9750B8FB31740C87BA121E56CFE515F7F06CC"
+          },
+          {
+            "Bytes": 123144,
+            "Name": "xunit.v3.mtp-v1.dll",
+            "Sha256": "69903F4E48E5794350154D97BC911909974469780CD1931E23DA3AF419A1F2E7"
+          },
+          {
+            "Bytes": 978696,
+            "Name": "xunit.v3.runner.common.dll",
+            "Sha256": "8D9B157EBD8D9240D292ED922F5F26BA4011DE5FD07812CEAAC7BACCFC5E6BC4"
+          },
+          {
+            "Bytes": 75528,
+            "Name": "xunit.v3.runner.inproc.console.dll",
+            "Sha256": "360EF1613C7D4148A715B8495D9F7AD95E4126F75ED86DDA6CF81139C28B1431"
+          },
+          {
+            "Bytes": 174856,
+            "Name": "xunit.v3.runner.utility.netcore.dll",
+            "Sha256": "ABCE062185B0D72B665AAE07D76C681AFF1CD794525A34CFA1B3B0137AF76AFF"
+          }
+        ],
+        "Scope": "All executable, DLL, dependency and runtime configuration files present in the dedicated test output; includes Data/provider dependencies. The installed .NET SDK/runtime is identified separately, not hashed by this manifest."
+      },
+      "Repetition": 1,
+      "BinariesUnchanged": true,
+      "FixtureSamplePath": "artifacts/jobs-physical-recovery/optimized-physical-promotion-pg18.json.run1.fixture.jsonl",
+      "Report": {
+        "Fixture": "jobs-physical-9a6da2b28c544f5f9e60de3331e6718f-run1",
+        "Server": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+        "Image": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+        "SourceDurability": "Verified synchronous remote_apply before primary loss; promoted survivor uses local synchronous_commit=on with no replica",
+        "BeforeSystemIdentifier": "7690339816512557091",
+        "AfterSystemIdentifier": "7690339816512557091",
+        "BeforeTimeline": 1,
+        "AfterTimeline": 2,
+        "AcknowledgedJobs": 66,
+        "VerifiedJobs": 66,
+        "AcknowledgedBusinessAdmissions": 66,
+        "JobEffects": 66,
+        "WorkflowEffects": 12,
+        "PrimaryKillToPromotionMilliseconds": 9058.5943,
+        "PrimaryKillToFirstEffectReplayMilliseconds": 8959.7181,
+        "PrimaryKillToFirstRecoveredMilliseconds": 9305.778,
+        "PrimaryKillToDrainedMilliseconds": 9519.7701,
+        "UnchangedMultihostSource": true,
+        "NoCrossTenantReads": true,
+        "UnavailableHealthDuringOutage": true,
+        "HealthyAfterRecovery": true,
+        "Leases": [
+          {
+            "Product": "Jobs",
+            "Tenant": "physical-a",
+            "JobId": "b9fb341a-79bc-4d0b-af8a-1fb89f36b7d9",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Jobs",
+            "Tenant": "physical-b",
+            "JobId": "202ae964-584e-40b9-a454-85416cc743fe",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-a",
+            "JobId": "b319dd8c-614d-4d86-b96d-c1f6841fd85c",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-a",
+            "JobId": "9be7c642-44de-46f0-9ab9-154e3f5d6861",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-b",
+            "JobId": "f0195dd4-e18d-41ad-9268-900a96334a7d",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-b",
+            "JobId": "bb2795f5-b8c1-465e-8860-bdb28112045d",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          }
+        ],
+        "Workflows": [
+          {
+            "Tenant": "physical-a",
+            "Scenario": "signal",
+            "Id": "6c892daa-a15b-4364-959e-17f56f6ce79f",
+            "Status": "Succeeded",
+            "ProduceCalls": 1,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-a",
+            "Scenario": "replay",
+            "Id": "8d0d27d9-5cb9-4fce-82c9-12e03e049d37",
+            "Status": "Succeeded",
+            "ProduceCalls": 2,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-a",
+            "Scenario": "cancel",
+            "Id": "3aaafd6d-af0c-4141-b858-e48a8ad3c8e0",
+            "Status": "Canceled",
+            "ProduceCalls": 1,
+            "UndoCalls": 2,
+            "FinishCalls": 0,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-b",
+            "Scenario": "signal",
+            "Id": "20bef560-3f90-480a-b838-9294c6e2daa2",
+            "Status": "Succeeded",
+            "ProduceCalls": 1,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-b",
+            "Scenario": "replay",
+            "Id": "f22fef67-cf8e-4460-93ec-6e7da3d667e9",
+            "Status": "Succeeded",
+            "ProduceCalls": 2,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-b",
+            "Scenario": "cancel",
+            "Id": "33c12c5b-867b-4e62-82c1-1104c18b5471",
+            "Status": "Canceled",
+            "ProduceCalls": 1,
+            "UndoCalls": 2,
+            "FinishCalls": 0,
+            "ReplayMatches": true
+          }
+        ],
+        "Measurements": [
+          {
+            "Phase": "initialized",
+            "ElapsedMilliseconds": 414.5452,
+            "WalPosition": "0/30BC920",
+            "DatabaseBytes": 8410815,
+            "ProcessCpuMilliseconds": 656.25,
+            "WorkingSetBytes": 77012992,
+            "ManagedBytes": 18309088,
+            "TotalAllocatedBytes": 24882056,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 1,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "acknowledged-before-primary-loss",
+            "ElapsedMilliseconds": 1190.6,
+            "WalPosition": "0/30DB758",
+            "DatabaseBytes": 8722111,
+            "ProcessCpuMilliseconds": 1218.75,
+            "WorkingSetBytes": 88416256,
+            "ManagedBytes": 22293448,
+            "TotalAllocatedBytes": 28860008,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 7,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "read-only-outage-past-durable-deadlines",
+            "ElapsedMilliseconds": 9606.9949,
+            "WalPosition": "0/30DC108",
+            "DatabaseBytes": 8746687,
+            "ProcessCpuMilliseconds": 2625,
+            "WorkingSetBytes": 109309952,
+            "ManagedBytes": 15842248,
+            "TotalAllocatedBytes": 34122328,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "stale-capabilities-rejected-while-new-leases-running",
+            "ElapsedMilliseconds": 10487.4885,
+            "WalPosition": "0/3104FF8",
+            "DatabaseBytes": 8804031,
+            "ProcessCpuMilliseconds": 2781.25,
+            "WorkingSetBytes": 109891584,
+            "ManagedBytes": 19582912,
+            "TotalAllocatedBytes": 37858216,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 6,
+            "PoolBusy": 3,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "durable-recovery-drained",
+            "ElapsedMilliseconds": 10718.5041,
+            "WalPosition": "0/31147E8",
+            "DatabaseBytes": 8894143,
+            "ProcessCpuMilliseconds": 2937.5,
+            "WorkingSetBytes": 110243840,
+            "ManagedBytes": 22027472,
+            "TotalAllocatedBytes": 40300208,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "all-invariants-verified",
+            "ElapsedMilliseconds": 10995.4098,
+            "WalPosition": "0/3117A28",
+            "DatabaseBytes": 8894143,
+            "ProcessCpuMilliseconds": 3046.875,
+            "WorkingSetBytes": 110772224,
+            "ManagedBytes": 24649760,
+            "TotalAllocatedBytes": 42919928,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 1432.8717,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1265.625,
+            "WorkingSetBytes": 89411584,
+            "ManagedBytes": 22747224,
+            "TotalAllocatedBytes": 29313184,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 7,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 2425.1807,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1390.625,
+            "WorkingSetBytes": 94183424,
+            "ManagedBytes": 23998720,
+            "TotalAllocatedBytes": 30563264,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 3422.9112,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1812.5,
+            "WorkingSetBytes": 97312768,
+            "ManagedBytes": 24538088,
+            "TotalAllocatedBytes": 31102056,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 4435.7327,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2140.625,
+            "WorkingSetBytes": 102363136,
+            "ManagedBytes": 25039576,
+            "TotalAllocatedBytes": 31602944,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 5431.5459,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2187.5,
+            "WorkingSetBytes": 103145472,
+            "ManagedBytes": 25523976,
+            "TotalAllocatedBytes": 32086648,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 6422.8641,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2421.875,
+            "WorkingSetBytes": 103825408,
+            "ManagedBytes": 26016608,
+            "TotalAllocatedBytes": 32578656,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 7422.0679,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2562.5,
+            "WorkingSetBytes": 104333312,
+            "ManagedBytes": 26510896,
+            "TotalAllocatedBytes": 33072152,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 8422.2858,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2593.75,
+            "WorkingSetBytes": 109223936,
+            "ManagedBytes": 15250120,
+            "TotalAllocatedBytes": 33530968,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 9432.7008,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2625,
+            "WorkingSetBytes": 109309952,
+            "ManagedBytes": 15776768,
+            "TotalAllocatedBytes": 34056944,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 1,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 10435.204,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2781.25,
+            "WorkingSetBytes": 109883392,
+            "ManagedBytes": 18852520,
+            "TotalAllocatedBytes": 37128424,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 6,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "sampled-pool-high-water",
+            "ElapsedMilliseconds": 11001.1709,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 0,
+            "WorkingSetBytes": 0,
+            "ManagedBytes": 0,
+            "TotalAllocatedBytes": 0,
+            "Gen0": 0,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 4,
+            "PoolWaiting": 0
+          }
+        ],
+        "Operations": [
+          {
+            "Phase": "primary",
+            "Name": "job.fenced_effect",
+            "Observed": 3,
+            "P50Milliseconds": 12.7524,
+            "P95Milliseconds": 15.6064,
+            "P99Milliseconds": 15.6064,
+            "MaximumMilliseconds": 15.6064
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.enqueue_recheck",
+            "Observed": 66,
+            "P50Milliseconds": 2.8973,
+            "P95Milliseconds": 5.0072,
+            "P99Milliseconds": 5.8524,
+            "MaximumMilliseconds": 5.8524
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.fenced_effect",
+            "Observed": 65,
+            "P50Milliseconds": 5.0573,
+            "P95Milliseconds": 6.3538,
+            "P99Milliseconds": 9.571,
+            "MaximumMilliseconds": 9.571
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.health",
+            "Observed": 10,
+            "P50Milliseconds": 2.4172,
+            "P95Milliseconds": 6.2095,
+            "P99Milliseconds": 6.2095,
+            "MaximumMilliseconds": 6.2095
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.read",
+            "Observed": 67,
+            "P50Milliseconds": 1.9243,
+            "P95Milliseconds": 2.2898,
+            "P99Milliseconds": 8.1089,
+            "MaximumMilliseconds": 8.1089
+          },
+          {
+            "Phase": "promoted",
+            "Name": "workflow.read",
+            "Observed": 10,
+            "P50Milliseconds": 1.6355,
+            "P95Milliseconds": 2.7539,
+            "P99Milliseconds": 2.7539,
+            "MaximumMilliseconds": 2.7539
+          }
+        ],
+        "RecoveryConfiguration": "Connect timeout=1s per connection attempt; target=ReadWrite; no configured host-recheck interval (tested provider refreshes host state on checkout); pool maximum=8 per host/16 aggregate; Jobs concurrency=4/tenant; Workflows concurrency=3/tenant; pre-promotion noncritical handler gate; active attempt-two acknowledgement barrier for stale-owner probes; lease=5s; heartbeat=500ms; store backoff=100ms; poll=20ms; drain phase deadline=45s; scenario work deadline=180s with bounded cleanup; final exact Job verification concurrency=4",
+        "Qualification": "Owned local PostgreSQL physical-promotion rehearsal. One stopped primary and one promoted synchronous standby; no async-replication, split-brain, rejoin, server-upgrade, power-loss or production availability claim. Resource snapshots are process-cumulative and PostgreSQL statistics can lag."
+      },
+      "TrxPath": "artifacts/jobs-physical-recovery/jobs-physical-9a6da2b28c544f5f9e60de3331e6718f/run1/PhysicalRecovery.trx"
+    },
+    {
+      "BinariesAfter": {
+        "CapturedAtUtc": "2026-09-27T22:06:50.8486323+00:00",
+        "Files": [
+          {
+            "Bytes": 280576,
+            "Name": "BlueTusk.Client.dll",
+            "Sha256": "900CEA4BB30885F993A54CDFBC1C47E53745D7C7915D0D46C52D3F1C8A3C4683"
+          },
+          {
+            "Bytes": 564224,
+            "Name": "BlueTusk.Data.dll",
+            "Sha256": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+          },
+          {
+            "Bytes": 22528,
+            "Name": "BlueTusk.Diagnostics.dll",
+            "Sha256": "3E1254E58C0505D075D312E10D41AEF2B0A169B0F7625938A42B3D9117099DC0"
+          },
+          {
+            "Bytes": 7680,
+            "Name": "BlueTusk.Extensions.Abstractions.dll",
+            "Sha256": "A1820C8CD5D0C9FB7417D6D372EF8C1025238733D3BF913D924AF94DC0E56876"
+          },
+          {
+            "Bytes": 41472,
+            "Name": "BlueTusk.Jobs.DependencyInjection.dll",
+            "Sha256": "FC5FDFB8BF9F4BAFE113C0F1FEFF1379C3B0FF28D6DB2C411E4CB4675BA763EC"
+          },
+          {
+            "Bytes": 119808,
+            "Name": "BlueTusk.Jobs.dll",
+            "Sha256": "DE10BC420C5C95AE737C7085046DB5CEEB9767D93A31DB330F8C903B5A663A7E"
+          },
+          {
+            "Bytes": 99840,
+            "Name": "BlueTusk.Protocol.dll",
+            "Sha256": "AB491D252BDC0D4120EC82CD958387318F59D28349C50C1948136A7C3100B6BB"
+          },
+          {
+            "Bytes": 26112,
+            "Name": "BlueTusk.Security.dll",
+            "Sha256": "02AE8278F6E30DA878C2487395BA0AA0206F2FB9E435D30A4CE266F6E4DAD51E"
+          },
+          {
+            "Bytes": 35328,
+            "Name": "BlueTusk.Transport.dll",
+            "Sha256": "4022D4B32A7C2E3C6663A1AEA2D09285D856695794521C2678BC4B1F2104788D"
+          },
+          {
+            "Bytes": 259584,
+            "Name": "BlueTusk.TypeSystem.dll",
+            "Sha256": "23CBDCAC3E57AA919AEA620176AC670B8C7372FB8835A12060C79CCAFE8F08A4"
+          },
+          {
+            "Bytes": 49664,
+            "Name": "BlueTusk.Workflows.DependencyInjection.dll",
+            "Sha256": "45FB6C31475C2A84B14BDEC0B97A8020DA353131C1FF6668A8E1E7B7D3FCEB1F"
+          },
+          {
+            "Bytes": 226816,
+            "Name": "BlueTusk.Workflows.dll",
+            "Sha256": "7D5A70444A410C16ECFE9C2FDF4D4BCFFD1D3D18FC491273536E8728C4E96D29"
+          },
+          {
+            "Bytes": 40538,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.deps.json",
+            "Sha256": "2D53C9C15A076BC86A7433756A606FD9EF90A19DBE9F00872B3FA13F4A6FC30B"
+          },
+          {
+            "Bytes": 205312,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.dll",
+            "Sha256": "6A307D778EC3123FB9610466821548FA98D6E00BDDF2175DC21588FAF3C579BE"
+          },
+          {
+            "Bytes": 162816,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.exe",
+            "Sha256": "B6892540A8BEB8ED767FC63C6C9ACA1F75E709ED1B156BE3629E9EEF1C291AFF"
+          },
+          {
+            "Bytes": 390,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.runtimeconfig.json",
+            "Sha256": "A217D17BE0661ABF2717A26937C6E379C33542CB6F292FD3FC5A2D5113A9D6DC"
+          },
+          {
+            "Bytes": 386080,
+            "Name": "Microsoft.ApplicationInsights.dll",
+            "Sha256": "BF9A4B88C7F94267E1CC7ED0700C575D3EB3266FF25BCB76E4F40F1B0FBA022D"
+          },
+          {
+            "Bytes": 16000,
+            "Name": "Microsoft.Bcl.AsyncInterfaces.dll",
+            "Sha256": "5705D245072D3EB78400547B32147DBB6E2C8B02BA8BDA76729798F5EFDEAECB"
+          },
+          {
+            "Bytes": 28456,
+            "Name": "Microsoft.Extensions.Configuration.Abstractions.dll",
+            "Sha256": "CFDB91156D4D875BA6F540E53F96988E266AB24AB6F367150DB6EB9B645CFEB3"
+          },
+          {
+            "Bytes": 65832,
+            "Name": "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+            "Sha256": "43497D8F23B82159295933EFFE92C82447469B60CDBEFCCA4A62232E4EBBCA99"
+          },
+          {
+            "Bytes": 31056,
+            "Name": "Microsoft.Extensions.Diagnostics.Abstractions.dll",
+            "Sha256": "629FCC3E78969FBA52D7BF7AB21EAEA2A7711FA4E0B4B91BD37AD8B35816D60C"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll",
+            "Sha256": "463EA61F16835377CAFD51BF61C8F488448186029D0CB3E8B0B964D644E2BA63"
+          },
+          {
+            "Bytes": 55080,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.dll",
+            "Sha256": "4446F633A469BC693075BD30EB6F04D1AEBF05A309D9889712A76D125F28BE97"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.FileProviders.Abstractions.dll",
+            "Sha256": "C823EEA339AF2BECA2C3004BB077118D0DB6379F908E7324E59461EF2C08E4B6"
+          },
+          {
+            "Bytes": 54056,
+            "Name": "Microsoft.Extensions.Hosting.Abstractions.dll",
+            "Sha256": "97D564D9ADF28CDBC2E6AC36BA6BF242AE70EDC8B6C8841387370AAAF095DE7E"
+          },
+          {
+            "Bytes": 66856,
+            "Name": "Microsoft.Extensions.Logging.Abstractions.dll",
+            "Sha256": "CEC836C1DFF8E64701EE4FD3A710BD971FEF953C90A34B577D9F4363103E6C39"
+          },
+          {
+            "Bytes": 65320,
+            "Name": "Microsoft.Extensions.Options.dll",
+            "Sha256": "C734C6A9FECA3A2DF39597E028EFEA8EEA796E7E5DFC815DF8B5893384297728"
+          },
+          {
+            "Bytes": 44880,
+            "Name": "Microsoft.Extensions.Primitives.dll",
+            "Sha256": "1F9F027817B0F277F45CCEB0927C14E41CABFE6D52DAFB5AB6BF68895294814B"
+          },
+          {
+            "Bytes": 60448,
+            "Name": "Microsoft.Testing.Extensions.MSBuild.dll",
+            "Sha256": "F6EF5EF03B5C22F7900FB67FE741847E75CF3CE26F652106A27D8CFCC834BB7F"
+          },
+          {
+            "Bytes": 44576,
+            "Name": "Microsoft.Testing.Extensions.Telemetry.dll",
+            "Sha256": "548751AE749BCA1E823F1BC3698AC751A0DC0CA47C396A9D32B432BD828848DF"
+          },
+          {
+            "Bytes": 32800,
+            "Name": "Microsoft.Testing.Extensions.TrxReport.Abstractions.dll",
+            "Sha256": "ACAE6C525EAD26F77CEAB1B1D640FE7E8C07FEC2ACDFC78BF753B220A49EF3E6"
+          },
+          {
+            "Bytes": 1153568,
+            "Name": "Microsoft.Testing.Platform.dll",
+            "Sha256": "519744D3B6321320E366495FBED0D8C37F9B0E11207667EB89EB5C0C425A7462"
+          },
+          {
+            "Bytes": 574776,
+            "Name": "Microsoft.TestPlatform.CommunicationUtilities.dll",
+            "Sha256": "1589365D2F96AB62712F8B25A1EE3F95C05AC31D2CF678C0AFB35E4116AE8094"
+          },
+          {
+            "Bytes": 99128,
+            "Name": "Microsoft.TestPlatform.CoreUtilities.dll",
+            "Sha256": "C427143D3E9C40379F6AC0824DAC6823452648B8D992201F613A33B71553B98C"
+          },
+          {
+            "Bytes": 319840,
+            "Name": "Microsoft.TestPlatform.CrossPlatEngine.dll",
+            "Sha256": "C90FA6A6743F00FEEA16E11A3E57B23E08122AEC5CC4819ABA3BC02CFD29097E"
+          },
+          {
+            "Bytes": 53600,
+            "Name": "Microsoft.TestPlatform.PlatformAbstractions.dll",
+            "Sha256": "3F2162757211B9D53B4CEADC7A8F6F7E01829CF3FF6E0F7930DAB3864216477A"
+          },
+          {
+            "Bytes": 68920,
+            "Name": "Microsoft.TestPlatform.Utilities.dll",
+            "Sha256": "074A1C94033C1DAE75BB3DEF2338D41FD7C81B585AFB12F0C9EED34E7FF09170"
+          },
+          {
+            "Bytes": 17208,
+            "Name": "Microsoft.VisualStudio.CodeCoverage.Shim.dll",
+            "Sha256": "B476CB4BF276631F59341F1FA82E24BA84E990490CC0DC2D87D502E577A415BB"
+          },
+          {
+            "Bytes": 250680,
+            "Name": "Microsoft.VisualStudio.TestPlatform.Common.dll",
+            "Sha256": "1A84CE41079842EE99637E71A8FEC997F5462592F5E1AF340E3AEBB984752DEA"
+          },
+          {
+            "Bytes": 333624,
+            "Name": "Microsoft.VisualStudio.TestPlatform.ObjectModel.dll",
+            "Sha256": "D6BF5D6001CEEB0BE27352A09BDE296C31CEB77C907D60BD7B6EEA21A55026C7"
+          },
+          {
+            "Bytes": 49464,
+            "Name": "testhost.dll",
+            "Sha256": "4AFB3137E02311D597E908AE8043C1FDD98474BCD723C246B2CF46370F61AD46"
+          },
+          {
+            "Bytes": 163168,
+            "Name": "testhost.exe",
+            "Sha256": "905AD8E6FBE6C9F4D0CF25DC1D61DEAAA2CB56B98A67E19D5E19A4D293B2DEC6"
+          },
+          {
+            "Bytes": 21928,
+            "Name": "xunit.abstractions.dll",
+            "Sha256": "3166DC70323FB30CCF1CEDB0FE86F2AD122C46D254542342D90386EFC4C9285C"
+          },
+          {
+            "Bytes": 1253376,
+            "Name": "xunit.runner.visualstudio.testadapter.dll",
+            "Sha256": "384ABA4BAD96399A7FD2205A5A3517B643A16F4D7E843BD0B92E1E42F81FCE2A"
+          },
+          {
+            "Bytes": 214792,
+            "Name": "xunit.v3.assert.dll",
+            "Sha256": "483AEC8A5B7FAEA0A92D0AE4F11A3479045F8F5E3F551DFC4DAC6BEDEAAFA9CE"
+          },
+          {
+            "Bytes": 191752,
+            "Name": "xunit.v3.common.dll",
+            "Sha256": "E4175BC165D01B9828ACDC996776370ADF4F8D0A5865E75EC9DED17FB70258A9"
+          },
+          {
+            "Bytes": 498440,
+            "Name": "xunit.v3.core.dll",
+            "Sha256": "B3641E9E80CD8175E2D9995D6FA9750B8FB31740C87BA121E56CFE515F7F06CC"
+          },
+          {
+            "Bytes": 123144,
+            "Name": "xunit.v3.mtp-v1.dll",
+            "Sha256": "69903F4E48E5794350154D97BC911909974469780CD1931E23DA3AF419A1F2E7"
+          },
+          {
+            "Bytes": 978696,
+            "Name": "xunit.v3.runner.common.dll",
+            "Sha256": "8D9B157EBD8D9240D292ED922F5F26BA4011DE5FD07812CEAAC7BACCFC5E6BC4"
+          },
+          {
+            "Bytes": 75528,
+            "Name": "xunit.v3.runner.inproc.console.dll",
+            "Sha256": "360EF1613C7D4148A715B8495D9F7AD95E4126F75ED86DDA6CF81139C28B1431"
+          },
+          {
+            "Bytes": 174856,
+            "Name": "xunit.v3.runner.utility.netcore.dll",
+            "Sha256": "ABCE062185B0D72B665AAE07D76C681AFF1CD794525A34CFA1B3B0137AF76AFF"
+          }
+        ],
+        "Scope": "All executable, DLL, dependency and runtime configuration files present in the dedicated test output; includes Data/provider dependencies. The installed .NET SDK/runtime is identified separately, not hashed by this manifest."
+      },
+      "Metadata": {
+        "ImageDigest": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+        "BeforePrimarySettings": [
+          "fsync=on",
+          "full_page_writes=on",
+          "max_connections=100",
+          "synchronous_commit=remote_apply",
+          "synchronous_standby_names=FIRST 1 (bluetusk_jobs_recovery_standby)",
+          "wal_level=replica"
+        ],
+        "ImageInspect": {
+          "Id": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+          "RepoTags": [
+            "postgres:18-alpine"
+          ],
+          "RepoDigests": [
+            "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873"
+          ],
+          "Comment": "buildkit.dockerfile.v0",
+          "Created": "2026-09-17T21:29:50.207676277Z",
+          "Config": {
+            "ExposedPorts": {
+              "5432/tcp": {}
+            },
+            "Env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+              "GOSU_VERSION=1.19",
+              "LANG=en_US.utf8",
+              "PG_MAJOR=18",
+              "PG_VERSION=18.6",
+              "PG_SHA256=555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f",
+              "DOCKER_PG_LLVM_DEPS=llvm21-dev \t\tclang21",
+              "PGDATA=/var/lib/postgresql/18/docker"
+            ],
+            "Entrypoint": [
+              "docker-entrypoint.sh"
+            ],
+            "Cmd": [
+              "postgres"
+            ],
+            "Volumes": {
+              "/var/lib/postgresql": {}
+            },
+            "WorkingDir": "/",
+            "StopSignal": "SIGINT"
+          },
+          "Architecture": "amd64",
+          "Os": "linux",
+          "Size": 432729433,
+          "RootFS": {
+            "Type": "layers",
+            "Layers": [
+              "sha256:74d97c428c51a828f9051a7a40a53ff1fc99e54fc30323ce36760701b0b7f711",
+              "sha256:0c215ed2e2d3befa88ee4967365c3a0dafd92551ea50ce2632cd5c3e54de80df",
+              "sha256:afaa93afde1c6674beeb827cf0214759e7d6be6527ea301ac23c45883ccafab8",
+              "sha256:64da5ceddd11db95af72f22788a20d9167a14a49bcd786ea54e33f152824c426",
+              "sha256:c098e77d88f2829ea186b1b2e2f40d5858f19c09e9726fce61c38febe33c65af",
+              "sha256:139076bf0b4422f3219cb0cbae85dde24dd97ae0ef077036324265fa8e5e5a8d",
+              "sha256:68240e981e1a68580381069bf47f0b9b307f0c5449112cccdb24900412ef9cd0",
+              "sha256:0317a57309e527ae290973cc0c0c7977255d84dd00a9f3c8c6c7daf0c396e76c",
+              "sha256:66cdd92492be99d2bead50be69cdfa33cb789a19f69bb3038554b567b3e18636"
+            ]
+          },
+          "Metadata": {
+            "LastTagTime": "2026-09-27T10:08:01.139167349Z"
+          },
+          "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+            "size": 10293
+          },
+          "Identity": {
+            "Pull": [
+              {
+                "Repository": "docker.io/library/postgres"
+              }
+            ]
+          }
+        }
+      },
+      "BinariesBefore": {
+        "CapturedAtUtc": "2026-09-27T22:06:38.6589884+00:00",
+        "Files": [
+          {
+            "Bytes": 280576,
+            "Name": "BlueTusk.Client.dll",
+            "Sha256": "900CEA4BB30885F993A54CDFBC1C47E53745D7C7915D0D46C52D3F1C8A3C4683"
+          },
+          {
+            "Bytes": 564224,
+            "Name": "BlueTusk.Data.dll",
+            "Sha256": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+          },
+          {
+            "Bytes": 22528,
+            "Name": "BlueTusk.Diagnostics.dll",
+            "Sha256": "3E1254E58C0505D075D312E10D41AEF2B0A169B0F7625938A42B3D9117099DC0"
+          },
+          {
+            "Bytes": 7680,
+            "Name": "BlueTusk.Extensions.Abstractions.dll",
+            "Sha256": "A1820C8CD5D0C9FB7417D6D372EF8C1025238733D3BF913D924AF94DC0E56876"
+          },
+          {
+            "Bytes": 41472,
+            "Name": "BlueTusk.Jobs.DependencyInjection.dll",
+            "Sha256": "FC5FDFB8BF9F4BAFE113C0F1FEFF1379C3B0FF28D6DB2C411E4CB4675BA763EC"
+          },
+          {
+            "Bytes": 119808,
+            "Name": "BlueTusk.Jobs.dll",
+            "Sha256": "DE10BC420C5C95AE737C7085046DB5CEEB9767D93A31DB330F8C903B5A663A7E"
+          },
+          {
+            "Bytes": 99840,
+            "Name": "BlueTusk.Protocol.dll",
+            "Sha256": "AB491D252BDC0D4120EC82CD958387318F59D28349C50C1948136A7C3100B6BB"
+          },
+          {
+            "Bytes": 26112,
+            "Name": "BlueTusk.Security.dll",
+            "Sha256": "02AE8278F6E30DA878C2487395BA0AA0206F2FB9E435D30A4CE266F6E4DAD51E"
+          },
+          {
+            "Bytes": 35328,
+            "Name": "BlueTusk.Transport.dll",
+            "Sha256": "4022D4B32A7C2E3C6663A1AEA2D09285D856695794521C2678BC4B1F2104788D"
+          },
+          {
+            "Bytes": 259584,
+            "Name": "BlueTusk.TypeSystem.dll",
+            "Sha256": "23CBDCAC3E57AA919AEA620176AC670B8C7372FB8835A12060C79CCAFE8F08A4"
+          },
+          {
+            "Bytes": 49664,
+            "Name": "BlueTusk.Workflows.DependencyInjection.dll",
+            "Sha256": "45FB6C31475C2A84B14BDEC0B97A8020DA353131C1FF6668A8E1E7B7D3FCEB1F"
+          },
+          {
+            "Bytes": 226816,
+            "Name": "BlueTusk.Workflows.dll",
+            "Sha256": "7D5A70444A410C16ECFE9C2FDF4D4BCFFD1D3D18FC491273536E8728C4E96D29"
+          },
+          {
+            "Bytes": 40538,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.deps.json",
+            "Sha256": "2D53C9C15A076BC86A7433756A606FD9EF90A19DBE9F00872B3FA13F4A6FC30B"
+          },
+          {
+            "Bytes": 205312,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.dll",
+            "Sha256": "6A307D778EC3123FB9610466821548FA98D6E00BDDF2175DC21588FAF3C579BE"
+          },
+          {
+            "Bytes": 162816,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.exe",
+            "Sha256": "B6892540A8BEB8ED767FC63C6C9ACA1F75E709ED1B156BE3629E9EEF1C291AFF"
+          },
+          {
+            "Bytes": 390,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.runtimeconfig.json",
+            "Sha256": "A217D17BE0661ABF2717A26937C6E379C33542CB6F292FD3FC5A2D5113A9D6DC"
+          },
+          {
+            "Bytes": 386080,
+            "Name": "Microsoft.ApplicationInsights.dll",
+            "Sha256": "BF9A4B88C7F94267E1CC7ED0700C575D3EB3266FF25BCB76E4F40F1B0FBA022D"
+          },
+          {
+            "Bytes": 16000,
+            "Name": "Microsoft.Bcl.AsyncInterfaces.dll",
+            "Sha256": "5705D245072D3EB78400547B32147DBB6E2C8B02BA8BDA76729798F5EFDEAECB"
+          },
+          {
+            "Bytes": 28456,
+            "Name": "Microsoft.Extensions.Configuration.Abstractions.dll",
+            "Sha256": "CFDB91156D4D875BA6F540E53F96988E266AB24AB6F367150DB6EB9B645CFEB3"
+          },
+          {
+            "Bytes": 65832,
+            "Name": "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+            "Sha256": "43497D8F23B82159295933EFFE92C82447469B60CDBEFCCA4A62232E4EBBCA99"
+          },
+          {
+            "Bytes": 31056,
+            "Name": "Microsoft.Extensions.Diagnostics.Abstractions.dll",
+            "Sha256": "629FCC3E78969FBA52D7BF7AB21EAEA2A7711FA4E0B4B91BD37AD8B35816D60C"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll",
+            "Sha256": "463EA61F16835377CAFD51BF61C8F488448186029D0CB3E8B0B964D644E2BA63"
+          },
+          {
+            "Bytes": 55080,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.dll",
+            "Sha256": "4446F633A469BC693075BD30EB6F04D1AEBF05A309D9889712A76D125F28BE97"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.FileProviders.Abstractions.dll",
+            "Sha256": "C823EEA339AF2BECA2C3004BB077118D0DB6379F908E7324E59461EF2C08E4B6"
+          },
+          {
+            "Bytes": 54056,
+            "Name": "Microsoft.Extensions.Hosting.Abstractions.dll",
+            "Sha256": "97D564D9ADF28CDBC2E6AC36BA6BF242AE70EDC8B6C8841387370AAAF095DE7E"
+          },
+          {
+            "Bytes": 66856,
+            "Name": "Microsoft.Extensions.Logging.Abstractions.dll",
+            "Sha256": "CEC836C1DFF8E64701EE4FD3A710BD971FEF953C90A34B577D9F4363103E6C39"
+          },
+          {
+            "Bytes": 65320,
+            "Name": "Microsoft.Extensions.Options.dll",
+            "Sha256": "C734C6A9FECA3A2DF39597E028EFEA8EEA796E7E5DFC815DF8B5893384297728"
+          },
+          {
+            "Bytes": 44880,
+            "Name": "Microsoft.Extensions.Primitives.dll",
+            "Sha256": "1F9F027817B0F277F45CCEB0927C14E41CABFE6D52DAFB5AB6BF68895294814B"
+          },
+          {
+            "Bytes": 60448,
+            "Name": "Microsoft.Testing.Extensions.MSBuild.dll",
+            "Sha256": "F6EF5EF03B5C22F7900FB67FE741847E75CF3CE26F652106A27D8CFCC834BB7F"
+          },
+          {
+            "Bytes": 44576,
+            "Name": "Microsoft.Testing.Extensions.Telemetry.dll",
+            "Sha256": "548751AE749BCA1E823F1BC3698AC751A0DC0CA47C396A9D32B432BD828848DF"
+          },
+          {
+            "Bytes": 32800,
+            "Name": "Microsoft.Testing.Extensions.TrxReport.Abstractions.dll",
+            "Sha256": "ACAE6C525EAD26F77CEAB1B1D640FE7E8C07FEC2ACDFC78BF753B220A49EF3E6"
+          },
+          {
+            "Bytes": 1153568,
+            "Name": "Microsoft.Testing.Platform.dll",
+            "Sha256": "519744D3B6321320E366495FBED0D8C37F9B0E11207667EB89EB5C0C425A7462"
+          },
+          {
+            "Bytes": 574776,
+            "Name": "Microsoft.TestPlatform.CommunicationUtilities.dll",
+            "Sha256": "1589365D2F96AB62712F8B25A1EE3F95C05AC31D2CF678C0AFB35E4116AE8094"
+          },
+          {
+            "Bytes": 99128,
+            "Name": "Microsoft.TestPlatform.CoreUtilities.dll",
+            "Sha256": "C427143D3E9C40379F6AC0824DAC6823452648B8D992201F613A33B71553B98C"
+          },
+          {
+            "Bytes": 319840,
+            "Name": "Microsoft.TestPlatform.CrossPlatEngine.dll",
+            "Sha256": "C90FA6A6743F00FEEA16E11A3E57B23E08122AEC5CC4819ABA3BC02CFD29097E"
+          },
+          {
+            "Bytes": 53600,
+            "Name": "Microsoft.TestPlatform.PlatformAbstractions.dll",
+            "Sha256": "3F2162757211B9D53B4CEADC7A8F6F7E01829CF3FF6E0F7930DAB3864216477A"
+          },
+          {
+            "Bytes": 68920,
+            "Name": "Microsoft.TestPlatform.Utilities.dll",
+            "Sha256": "074A1C94033C1DAE75BB3DEF2338D41FD7C81B585AFB12F0C9EED34E7FF09170"
+          },
+          {
+            "Bytes": 17208,
+            "Name": "Microsoft.VisualStudio.CodeCoverage.Shim.dll",
+            "Sha256": "B476CB4BF276631F59341F1FA82E24BA84E990490CC0DC2D87D502E577A415BB"
+          },
+          {
+            "Bytes": 250680,
+            "Name": "Microsoft.VisualStudio.TestPlatform.Common.dll",
+            "Sha256": "1A84CE41079842EE99637E71A8FEC997F5462592F5E1AF340E3AEBB984752DEA"
+          },
+          {
+            "Bytes": 333624,
+            "Name": "Microsoft.VisualStudio.TestPlatform.ObjectModel.dll",
+            "Sha256": "D6BF5D6001CEEB0BE27352A09BDE296C31CEB77C907D60BD7B6EEA21A55026C7"
+          },
+          {
+            "Bytes": 49464,
+            "Name": "testhost.dll",
+            "Sha256": "4AFB3137E02311D597E908AE8043C1FDD98474BCD723C246B2CF46370F61AD46"
+          },
+          {
+            "Bytes": 163168,
+            "Name": "testhost.exe",
+            "Sha256": "905AD8E6FBE6C9F4D0CF25DC1D61DEAAA2CB56B98A67E19D5E19A4D293B2DEC6"
+          },
+          {
+            "Bytes": 21928,
+            "Name": "xunit.abstractions.dll",
+            "Sha256": "3166DC70323FB30CCF1CEDB0FE86F2AD122C46D254542342D90386EFC4C9285C"
+          },
+          {
+            "Bytes": 1253376,
+            "Name": "xunit.runner.visualstudio.testadapter.dll",
+            "Sha256": "384ABA4BAD96399A7FD2205A5A3517B643A16F4D7E843BD0B92E1E42F81FCE2A"
+          },
+          {
+            "Bytes": 214792,
+            "Name": "xunit.v3.assert.dll",
+            "Sha256": "483AEC8A5B7FAEA0A92D0AE4F11A3479045F8F5E3F551DFC4DAC6BEDEAAFA9CE"
+          },
+          {
+            "Bytes": 191752,
+            "Name": "xunit.v3.common.dll",
+            "Sha256": "E4175BC165D01B9828ACDC996776370ADF4F8D0A5865E75EC9DED17FB70258A9"
+          },
+          {
+            "Bytes": 498440,
+            "Name": "xunit.v3.core.dll",
+            "Sha256": "B3641E9E80CD8175E2D9995D6FA9750B8FB31740C87BA121E56CFE515F7F06CC"
+          },
+          {
+            "Bytes": 123144,
+            "Name": "xunit.v3.mtp-v1.dll",
+            "Sha256": "69903F4E48E5794350154D97BC911909974469780CD1931E23DA3AF419A1F2E7"
+          },
+          {
+            "Bytes": 978696,
+            "Name": "xunit.v3.runner.common.dll",
+            "Sha256": "8D9B157EBD8D9240D292ED922F5F26BA4011DE5FD07812CEAAC7BACCFC5E6BC4"
+          },
+          {
+            "Bytes": 75528,
+            "Name": "xunit.v3.runner.inproc.console.dll",
+            "Sha256": "360EF1613C7D4148A715B8495D9F7AD95E4126F75ED86DDA6CF81139C28B1431"
+          },
+          {
+            "Bytes": 174856,
+            "Name": "xunit.v3.runner.utility.netcore.dll",
+            "Sha256": "ABCE062185B0D72B665AAE07D76C681AFF1CD794525A34CFA1B3B0137AF76AFF"
+          }
+        ],
+        "Scope": "All executable, DLL, dependency and runtime configuration files present in the dedicated test output; includes Data/provider dependencies. The installed .NET SDK/runtime is identified separately, not hashed by this manifest."
+      },
+      "Repetition": 2,
+      "BinariesUnchanged": true,
+      "FixtureSamplePath": "artifacts/jobs-physical-recovery/optimized-physical-promotion-pg18.json.run2.fixture.jsonl",
+      "Report": {
+        "Fixture": "jobs-physical-9a6da2b28c544f5f9e60de3331e6718f-run2",
+        "Server": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+        "Image": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+        "SourceDurability": "Verified synchronous remote_apply before primary loss; promoted survivor uses local synchronous_commit=on with no replica",
+        "BeforeSystemIdentifier": "7690339919043268643",
+        "AfterSystemIdentifier": "7690339919043268643",
+        "BeforeTimeline": 1,
+        "AfterTimeline": 2,
+        "AcknowledgedJobs": 66,
+        "VerifiedJobs": 66,
+        "AcknowledgedBusinessAdmissions": 66,
+        "JobEffects": 66,
+        "WorkflowEffects": 12,
+        "PrimaryKillToPromotionMilliseconds": 8260.4833,
+        "PrimaryKillToFirstEffectReplayMilliseconds": 8089.6679,
+        "PrimaryKillToFirstRecoveredMilliseconds": 8338.3619,
+        "PrimaryKillToDrainedMilliseconds": 8543.0181,
+        "UnchangedMultihostSource": true,
+        "NoCrossTenantReads": true,
+        "UnavailableHealthDuringOutage": true,
+        "HealthyAfterRecovery": true,
+        "Leases": [
+          {
+            "Product": "Jobs",
+            "Tenant": "physical-a",
+            "JobId": "ecfedee7-3724-442e-9833-41d21198bfb3",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Jobs",
+            "Tenant": "physical-b",
+            "JobId": "2f72e9d9-b311-4f0e-97a3-b2ef2952adcd",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-a",
+            "JobId": "c2a471a2-dfd3-4bef-8b0a-dfe11b8dfbd0",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-a",
+            "JobId": "6217dd43-4cb7-4674-9fcc-67c91c6e9bdf",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-b",
+            "JobId": "75507f5c-435c-42ca-af72-20a8112d3f21",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-b",
+            "JobId": "a825006a-1565-4e75-98c4-6d1348da3c17",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          }
+        ],
+        "Workflows": [
+          {
+            "Tenant": "physical-a",
+            "Scenario": "signal",
+            "Id": "a70c6e1a-df68-4098-85d8-c7379844ea4a",
+            "Status": "Succeeded",
+            "ProduceCalls": 1,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-a",
+            "Scenario": "replay",
+            "Id": "82618954-469b-47ed-81cd-7c7d5a7da341",
+            "Status": "Succeeded",
+            "ProduceCalls": 2,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-a",
+            "Scenario": "cancel",
+            "Id": "c096a1c8-3a8f-4053-8e15-e78e4e45ef37",
+            "Status": "Canceled",
+            "ProduceCalls": 1,
+            "UndoCalls": 2,
+            "FinishCalls": 0,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-b",
+            "Scenario": "signal",
+            "Id": "ee94d8a6-c0e9-4ac7-8dc0-91d6dd3555a0",
+            "Status": "Succeeded",
+            "ProduceCalls": 1,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-b",
+            "Scenario": "replay",
+            "Id": "dd7895a3-1724-46c8-8589-7ef56aff3aef",
+            "Status": "Succeeded",
+            "ProduceCalls": 2,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-b",
+            "Scenario": "cancel",
+            "Id": "bbb02a1b-7ee5-4d92-a866-4266d462baee",
+            "Status": "Canceled",
+            "ProduceCalls": 1,
+            "UndoCalls": 2,
+            "FinishCalls": 0,
+            "ReplayMatches": true
+          }
+        ],
+        "Measurements": [
+          {
+            "Phase": "initialized",
+            "ElapsedMilliseconds": 426.0807,
+            "WalPosition": "0/30BC920",
+            "DatabaseBytes": 8410815,
+            "ProcessCpuMilliseconds": 609.375,
+            "WorkingSetBytes": 78209024,
+            "ManagedBytes": 18293736,
+            "TotalAllocatedBytes": 24866800,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 1,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "acknowledged-before-primary-loss",
+            "ElapsedMilliseconds": 1191.0016,
+            "WalPosition": "0/30DB780",
+            "DatabaseBytes": 8730303,
+            "ProcessCpuMilliseconds": 984.375,
+            "WorkingSetBytes": 90316800,
+            "ManagedBytes": 22334704,
+            "TotalAllocatedBytes": 28901576,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "read-only-outage-past-durable-deadlines",
+            "ElapsedMilliseconds": 8483.5563,
+            "WalPosition": "0/30DC0C0",
+            "DatabaseBytes": 8754879,
+            "ProcessCpuMilliseconds": 2109.375,
+            "WorkingSetBytes": 111820800,
+            "ManagedBytes": 15622504,
+            "TotalAllocatedBytes": 33880560,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 5,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "stale-capabilities-rejected-while-new-leases-running",
+            "ElapsedMilliseconds": 9521.1843,
+            "WalPosition": "0/30FA8F8",
+            "DatabaseBytes": 8763071,
+            "ProcessCpuMilliseconds": 2281.25,
+            "WorkingSetBytes": 112525312,
+            "ManagedBytes": 18434984,
+            "TotalAllocatedBytes": 36689416,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 4,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "durable-recovery-drained",
+            "ElapsedMilliseconds": 9741.9855,
+            "WalPosition": "0/311A820",
+            "DatabaseBytes": 8910527,
+            "ProcessCpuMilliseconds": 2390.625,
+            "WorkingSetBytes": 112836608,
+            "ManagedBytes": 21466848,
+            "TotalAllocatedBytes": 39718592,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "all-invariants-verified",
+            "ElapsedMilliseconds": 10015.7053,
+            "WalPosition": "0/311D938",
+            "DatabaseBytes": 8910527,
+            "ProcessCpuMilliseconds": 2562.5,
+            "WorkingSetBytes": 113389568,
+            "ManagedBytes": 24049816,
+            "TotalAllocatedBytes": 42298776,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 1437.4652,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1000,
+            "WorkingSetBytes": 91279360,
+            "ManagedBytes": 22813304,
+            "TotalAllocatedBytes": 29379648,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 2436.9027,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1250,
+            "WorkingSetBytes": 95821824,
+            "ManagedBytes": 24205128,
+            "TotalAllocatedBytes": 30769672,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 5,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 3446.0869,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1500,
+            "WorkingSetBytes": 98459648,
+            "ManagedBytes": 24734080,
+            "TotalAllocatedBytes": 31298120,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 5,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 4440.8455,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1968.75,
+            "WorkingSetBytes": 103493632,
+            "ManagedBytes": 25331872,
+            "TotalAllocatedBytes": 31895528,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 5,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 5436.4814,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2031.25,
+            "WorkingSetBytes": 105734144,
+            "ManagedBytes": 25829272,
+            "TotalAllocatedBytes": 32392496,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 5,
+            "PoolBusy": 1,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 6438.932,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2046.875,
+            "WorkingSetBytes": 106315776,
+            "ManagedBytes": 26314600,
+            "TotalAllocatedBytes": 32877152,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 5,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 7435.3139,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2093.75,
+            "WorkingSetBytes": 107196416,
+            "ManagedBytes": 26819232,
+            "TotalAllocatedBytes": 33380800,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 5,
+            "PoolBusy": 1,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 8447.6129,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2109.375,
+            "WorkingSetBytes": 111804416,
+            "ManagedBytes": 15597832,
+            "TotalAllocatedBytes": 33855960,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 5,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 9438.2141,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2281.25,
+            "WorkingSetBytes": 112463872,
+            "ManagedBytes": 17004576,
+            "TotalAllocatedBytes": 35260136,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 5,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "sampled-pool-high-water",
+            "ElapsedMilliseconds": 10021.2269,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 0,
+            "WorkingSetBytes": 0,
+            "ManagedBytes": 0,
+            "TotalAllocatedBytes": 0,
+            "Gen0": 0,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 7,
+            "PoolWaiting": 5
+          }
+        ],
+        "Operations": [
+          {
+            "Phase": "primary",
+            "Name": "job.fenced_effect",
+            "Observed": 4,
+            "P50Milliseconds": 5.0905,
+            "P95Milliseconds": 15.5462,
+            "P99Milliseconds": 15.5462,
+            "MaximumMilliseconds": 15.5462
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.enqueue_recheck",
+            "Observed": 66,
+            "P50Milliseconds": 2.7298,
+            "P95Milliseconds": 4.9954,
+            "P99Milliseconds": 5.4704,
+            "MaximumMilliseconds": 5.4704
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.fenced_effect",
+            "Observed": 64,
+            "P50Milliseconds": 5.5903,
+            "P95Milliseconds": 12.075,
+            "P99Milliseconds": 15.4277,
+            "MaximumMilliseconds": 15.4277
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.health",
+            "Observed": 8,
+            "P50Milliseconds": 2.977,
+            "P95Milliseconds": 9.6416,
+            "P99Milliseconds": 9.6416,
+            "MaximumMilliseconds": 9.6416
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.read",
+            "Observed": 67,
+            "P50Milliseconds": 1.7653,
+            "P95Milliseconds": 2.3168,
+            "P99Milliseconds": 6.7709,
+            "MaximumMilliseconds": 6.7709
+          },
+          {
+            "Phase": "promoted",
+            "Name": "workflow.read",
+            "Observed": 8,
+            "P50Milliseconds": 1.7839,
+            "P95Milliseconds": 3.112,
+            "P99Milliseconds": 3.112,
+            "MaximumMilliseconds": 3.112
+          }
+        ],
+        "RecoveryConfiguration": "Connect timeout=1s per connection attempt; target=ReadWrite; no configured host-recheck interval (tested provider refreshes host state on checkout); pool maximum=8 per host/16 aggregate; Jobs concurrency=4/tenant; Workflows concurrency=3/tenant; pre-promotion noncritical handler gate; active attempt-two acknowledgement barrier for stale-owner probes; lease=5s; heartbeat=500ms; store backoff=100ms; poll=20ms; drain phase deadline=45s; scenario work deadline=180s with bounded cleanup; final exact Job verification concurrency=4",
+        "Qualification": "Owned local PostgreSQL physical-promotion rehearsal. One stopped primary and one promoted synchronous standby; no async-replication, split-brain, rejoin, server-upgrade, power-loss or production availability claim. Resource snapshots are process-cumulative and PostgreSQL statistics can lag."
+      },
+      "TrxPath": "artifacts/jobs-physical-recovery/jobs-physical-9a6da2b28c544f5f9e60de3331e6718f/run2/PhysicalRecovery.trx"
+    },
+    {
+      "BinariesAfter": {
+        "CapturedAtUtc": "2026-09-27T22:07:14.2730992+00:00",
+        "Files": [
+          {
+            "Bytes": 280576,
+            "Name": "BlueTusk.Client.dll",
+            "Sha256": "900CEA4BB30885F993A54CDFBC1C47E53745D7C7915D0D46C52D3F1C8A3C4683"
+          },
+          {
+            "Bytes": 564224,
+            "Name": "BlueTusk.Data.dll",
+            "Sha256": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+          },
+          {
+            "Bytes": 22528,
+            "Name": "BlueTusk.Diagnostics.dll",
+            "Sha256": "3E1254E58C0505D075D312E10D41AEF2B0A169B0F7625938A42B3D9117099DC0"
+          },
+          {
+            "Bytes": 7680,
+            "Name": "BlueTusk.Extensions.Abstractions.dll",
+            "Sha256": "A1820C8CD5D0C9FB7417D6D372EF8C1025238733D3BF913D924AF94DC0E56876"
+          },
+          {
+            "Bytes": 41472,
+            "Name": "BlueTusk.Jobs.DependencyInjection.dll",
+            "Sha256": "FC5FDFB8BF9F4BAFE113C0F1FEFF1379C3B0FF28D6DB2C411E4CB4675BA763EC"
+          },
+          {
+            "Bytes": 119808,
+            "Name": "BlueTusk.Jobs.dll",
+            "Sha256": "DE10BC420C5C95AE737C7085046DB5CEEB9767D93A31DB330F8C903B5A663A7E"
+          },
+          {
+            "Bytes": 99840,
+            "Name": "BlueTusk.Protocol.dll",
+            "Sha256": "AB491D252BDC0D4120EC82CD958387318F59D28349C50C1948136A7C3100B6BB"
+          },
+          {
+            "Bytes": 26112,
+            "Name": "BlueTusk.Security.dll",
+            "Sha256": "02AE8278F6E30DA878C2487395BA0AA0206F2FB9E435D30A4CE266F6E4DAD51E"
+          },
+          {
+            "Bytes": 35328,
+            "Name": "BlueTusk.Transport.dll",
+            "Sha256": "4022D4B32A7C2E3C6663A1AEA2D09285D856695794521C2678BC4B1F2104788D"
+          },
+          {
+            "Bytes": 259584,
+            "Name": "BlueTusk.TypeSystem.dll",
+            "Sha256": "23CBDCAC3E57AA919AEA620176AC670B8C7372FB8835A12060C79CCAFE8F08A4"
+          },
+          {
+            "Bytes": 49664,
+            "Name": "BlueTusk.Workflows.DependencyInjection.dll",
+            "Sha256": "45FB6C31475C2A84B14BDEC0B97A8020DA353131C1FF6668A8E1E7B7D3FCEB1F"
+          },
+          {
+            "Bytes": 226816,
+            "Name": "BlueTusk.Workflows.dll",
+            "Sha256": "7D5A70444A410C16ECFE9C2FDF4D4BCFFD1D3D18FC491273536E8728C4E96D29"
+          },
+          {
+            "Bytes": 40538,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.deps.json",
+            "Sha256": "2D53C9C15A076BC86A7433756A606FD9EF90A19DBE9F00872B3FA13F4A6FC30B"
+          },
+          {
+            "Bytes": 205312,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.dll",
+            "Sha256": "6A307D778EC3123FB9610466821548FA98D6E00BDDF2175DC21588FAF3C579BE"
+          },
+          {
+            "Bytes": 162816,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.exe",
+            "Sha256": "B6892540A8BEB8ED767FC63C6C9ACA1F75E709ED1B156BE3629E9EEF1C291AFF"
+          },
+          {
+            "Bytes": 390,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.runtimeconfig.json",
+            "Sha256": "A217D17BE0661ABF2717A26937C6E379C33542CB6F292FD3FC5A2D5113A9D6DC"
+          },
+          {
+            "Bytes": 386080,
+            "Name": "Microsoft.ApplicationInsights.dll",
+            "Sha256": "BF9A4B88C7F94267E1CC7ED0700C575D3EB3266FF25BCB76E4F40F1B0FBA022D"
+          },
+          {
+            "Bytes": 16000,
+            "Name": "Microsoft.Bcl.AsyncInterfaces.dll",
+            "Sha256": "5705D245072D3EB78400547B32147DBB6E2C8B02BA8BDA76729798F5EFDEAECB"
+          },
+          {
+            "Bytes": 28456,
+            "Name": "Microsoft.Extensions.Configuration.Abstractions.dll",
+            "Sha256": "CFDB91156D4D875BA6F540E53F96988E266AB24AB6F367150DB6EB9B645CFEB3"
+          },
+          {
+            "Bytes": 65832,
+            "Name": "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+            "Sha256": "43497D8F23B82159295933EFFE92C82447469B60CDBEFCCA4A62232E4EBBCA99"
+          },
+          {
+            "Bytes": 31056,
+            "Name": "Microsoft.Extensions.Diagnostics.Abstractions.dll",
+            "Sha256": "629FCC3E78969FBA52D7BF7AB21EAEA2A7711FA4E0B4B91BD37AD8B35816D60C"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll",
+            "Sha256": "463EA61F16835377CAFD51BF61C8F488448186029D0CB3E8B0B964D644E2BA63"
+          },
+          {
+            "Bytes": 55080,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.dll",
+            "Sha256": "4446F633A469BC693075BD30EB6F04D1AEBF05A309D9889712A76D125F28BE97"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.FileProviders.Abstractions.dll",
+            "Sha256": "C823EEA339AF2BECA2C3004BB077118D0DB6379F908E7324E59461EF2C08E4B6"
+          },
+          {
+            "Bytes": 54056,
+            "Name": "Microsoft.Extensions.Hosting.Abstractions.dll",
+            "Sha256": "97D564D9ADF28CDBC2E6AC36BA6BF242AE70EDC8B6C8841387370AAAF095DE7E"
+          },
+          {
+            "Bytes": 66856,
+            "Name": "Microsoft.Extensions.Logging.Abstractions.dll",
+            "Sha256": "CEC836C1DFF8E64701EE4FD3A710BD971FEF953C90A34B577D9F4363103E6C39"
+          },
+          {
+            "Bytes": 65320,
+            "Name": "Microsoft.Extensions.Options.dll",
+            "Sha256": "C734C6A9FECA3A2DF39597E028EFEA8EEA796E7E5DFC815DF8B5893384297728"
+          },
+          {
+            "Bytes": 44880,
+            "Name": "Microsoft.Extensions.Primitives.dll",
+            "Sha256": "1F9F027817B0F277F45CCEB0927C14E41CABFE6D52DAFB5AB6BF68895294814B"
+          },
+          {
+            "Bytes": 60448,
+            "Name": "Microsoft.Testing.Extensions.MSBuild.dll",
+            "Sha256": "F6EF5EF03B5C22F7900FB67FE741847E75CF3CE26F652106A27D8CFCC834BB7F"
+          },
+          {
+            "Bytes": 44576,
+            "Name": "Microsoft.Testing.Extensions.Telemetry.dll",
+            "Sha256": "548751AE749BCA1E823F1BC3698AC751A0DC0CA47C396A9D32B432BD828848DF"
+          },
+          {
+            "Bytes": 32800,
+            "Name": "Microsoft.Testing.Extensions.TrxReport.Abstractions.dll",
+            "Sha256": "ACAE6C525EAD26F77CEAB1B1D640FE7E8C07FEC2ACDFC78BF753B220A49EF3E6"
+          },
+          {
+            "Bytes": 1153568,
+            "Name": "Microsoft.Testing.Platform.dll",
+            "Sha256": "519744D3B6321320E366495FBED0D8C37F9B0E11207667EB89EB5C0C425A7462"
+          },
+          {
+            "Bytes": 574776,
+            "Name": "Microsoft.TestPlatform.CommunicationUtilities.dll",
+            "Sha256": "1589365D2F96AB62712F8B25A1EE3F95C05AC31D2CF678C0AFB35E4116AE8094"
+          },
+          {
+            "Bytes": 99128,
+            "Name": "Microsoft.TestPlatform.CoreUtilities.dll",
+            "Sha256": "C427143D3E9C40379F6AC0824DAC6823452648B8D992201F613A33B71553B98C"
+          },
+          {
+            "Bytes": 319840,
+            "Name": "Microsoft.TestPlatform.CrossPlatEngine.dll",
+            "Sha256": "C90FA6A6743F00FEEA16E11A3E57B23E08122AEC5CC4819ABA3BC02CFD29097E"
+          },
+          {
+            "Bytes": 53600,
+            "Name": "Microsoft.TestPlatform.PlatformAbstractions.dll",
+            "Sha256": "3F2162757211B9D53B4CEADC7A8F6F7E01829CF3FF6E0F7930DAB3864216477A"
+          },
+          {
+            "Bytes": 68920,
+            "Name": "Microsoft.TestPlatform.Utilities.dll",
+            "Sha256": "074A1C94033C1DAE75BB3DEF2338D41FD7C81B585AFB12F0C9EED34E7FF09170"
+          },
+          {
+            "Bytes": 17208,
+            "Name": "Microsoft.VisualStudio.CodeCoverage.Shim.dll",
+            "Sha256": "B476CB4BF276631F59341F1FA82E24BA84E990490CC0DC2D87D502E577A415BB"
+          },
+          {
+            "Bytes": 250680,
+            "Name": "Microsoft.VisualStudio.TestPlatform.Common.dll",
+            "Sha256": "1A84CE41079842EE99637E71A8FEC997F5462592F5E1AF340E3AEBB984752DEA"
+          },
+          {
+            "Bytes": 333624,
+            "Name": "Microsoft.VisualStudio.TestPlatform.ObjectModel.dll",
+            "Sha256": "D6BF5D6001CEEB0BE27352A09BDE296C31CEB77C907D60BD7B6EEA21A55026C7"
+          },
+          {
+            "Bytes": 49464,
+            "Name": "testhost.dll",
+            "Sha256": "4AFB3137E02311D597E908AE8043C1FDD98474BCD723C246B2CF46370F61AD46"
+          },
+          {
+            "Bytes": 163168,
+            "Name": "testhost.exe",
+            "Sha256": "905AD8E6FBE6C9F4D0CF25DC1D61DEAAA2CB56B98A67E19D5E19A4D293B2DEC6"
+          },
+          {
+            "Bytes": 21928,
+            "Name": "xunit.abstractions.dll",
+            "Sha256": "3166DC70323FB30CCF1CEDB0FE86F2AD122C46D254542342D90386EFC4C9285C"
+          },
+          {
+            "Bytes": 1253376,
+            "Name": "xunit.runner.visualstudio.testadapter.dll",
+            "Sha256": "384ABA4BAD96399A7FD2205A5A3517B643A16F4D7E843BD0B92E1E42F81FCE2A"
+          },
+          {
+            "Bytes": 214792,
+            "Name": "xunit.v3.assert.dll",
+            "Sha256": "483AEC8A5B7FAEA0A92D0AE4F11A3479045F8F5E3F551DFC4DAC6BEDEAAFA9CE"
+          },
+          {
+            "Bytes": 191752,
+            "Name": "xunit.v3.common.dll",
+            "Sha256": "E4175BC165D01B9828ACDC996776370ADF4F8D0A5865E75EC9DED17FB70258A9"
+          },
+          {
+            "Bytes": 498440,
+            "Name": "xunit.v3.core.dll",
+            "Sha256": "B3641E9E80CD8175E2D9995D6FA9750B8FB31740C87BA121E56CFE515F7F06CC"
+          },
+          {
+            "Bytes": 123144,
+            "Name": "xunit.v3.mtp-v1.dll",
+            "Sha256": "69903F4E48E5794350154D97BC911909974469780CD1931E23DA3AF419A1F2E7"
+          },
+          {
+            "Bytes": 978696,
+            "Name": "xunit.v3.runner.common.dll",
+            "Sha256": "8D9B157EBD8D9240D292ED922F5F26BA4011DE5FD07812CEAAC7BACCFC5E6BC4"
+          },
+          {
+            "Bytes": 75528,
+            "Name": "xunit.v3.runner.inproc.console.dll",
+            "Sha256": "360EF1613C7D4148A715B8495D9F7AD95E4126F75ED86DDA6CF81139C28B1431"
+          },
+          {
+            "Bytes": 174856,
+            "Name": "xunit.v3.runner.utility.netcore.dll",
+            "Sha256": "ABCE062185B0D72B665AAE07D76C681AFF1CD794525A34CFA1B3B0137AF76AFF"
+          }
+        ],
+        "Scope": "All executable, DLL, dependency and runtime configuration files present in the dedicated test output; includes Data/provider dependencies. The installed .NET SDK/runtime is identified separately, not hashed by this manifest."
+      },
+      "Metadata": {
+        "ImageDigest": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+        "BeforePrimarySettings": [
+          "fsync=on",
+          "full_page_writes=on",
+          "max_connections=100",
+          "synchronous_commit=remote_apply",
+          "synchronous_standby_names=FIRST 1 (bluetusk_jobs_recovery_standby)",
+          "wal_level=replica"
+        ],
+        "ImageInspect": {
+          "Id": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+          "RepoTags": [
+            "postgres:18-alpine"
+          ],
+          "RepoDigests": [
+            "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873"
+          ],
+          "Comment": "buildkit.dockerfile.v0",
+          "Created": "2026-09-17T21:29:50.207676277Z",
+          "Config": {
+            "ExposedPorts": {
+              "5432/tcp": {}
+            },
+            "Env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+              "GOSU_VERSION=1.19",
+              "LANG=en_US.utf8",
+              "PG_MAJOR=18",
+              "PG_VERSION=18.6",
+              "PG_SHA256=555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f",
+              "DOCKER_PG_LLVM_DEPS=llvm21-dev \t\tclang21",
+              "PGDATA=/var/lib/postgresql/18/docker"
+            ],
+            "Entrypoint": [
+              "docker-entrypoint.sh"
+            ],
+            "Cmd": [
+              "postgres"
+            ],
+            "Volumes": {
+              "/var/lib/postgresql": {}
+            },
+            "WorkingDir": "/",
+            "StopSignal": "SIGINT"
+          },
+          "Architecture": "amd64",
+          "Os": "linux",
+          "Size": 432729433,
+          "RootFS": {
+            "Type": "layers",
+            "Layers": [
+              "sha256:74d97c428c51a828f9051a7a40a53ff1fc99e54fc30323ce36760701b0b7f711",
+              "sha256:0c215ed2e2d3befa88ee4967365c3a0dafd92551ea50ce2632cd5c3e54de80df",
+              "sha256:afaa93afde1c6674beeb827cf0214759e7d6be6527ea301ac23c45883ccafab8",
+              "sha256:64da5ceddd11db95af72f22788a20d9167a14a49bcd786ea54e33f152824c426",
+              "sha256:c098e77d88f2829ea186b1b2e2f40d5858f19c09e9726fce61c38febe33c65af",
+              "sha256:139076bf0b4422f3219cb0cbae85dde24dd97ae0ef077036324265fa8e5e5a8d",
+              "sha256:68240e981e1a68580381069bf47f0b9b307f0c5449112cccdb24900412ef9cd0",
+              "sha256:0317a57309e527ae290973cc0c0c7977255d84dd00a9f3c8c6c7daf0c396e76c",
+              "sha256:66cdd92492be99d2bead50be69cdfa33cb789a19f69bb3038554b567b3e18636"
+            ]
+          },
+          "Metadata": {
+            "LastTagTime": "2026-09-27T10:08:01.139167349Z"
+          },
+          "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+            "size": 10293
+          },
+          "Identity": {
+            "Pull": [
+              {
+                "Repository": "docker.io/library/postgres"
+              }
+            ]
+          }
+        }
+      },
+      "BinariesBefore": {
+        "CapturedAtUtc": "2026-09-27T22:07:01.3515793+00:00",
+        "Files": [
+          {
+            "Bytes": 280576,
+            "Name": "BlueTusk.Client.dll",
+            "Sha256": "900CEA4BB30885F993A54CDFBC1C47E53745D7C7915D0D46C52D3F1C8A3C4683"
+          },
+          {
+            "Bytes": 564224,
+            "Name": "BlueTusk.Data.dll",
+            "Sha256": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+          },
+          {
+            "Bytes": 22528,
+            "Name": "BlueTusk.Diagnostics.dll",
+            "Sha256": "3E1254E58C0505D075D312E10D41AEF2B0A169B0F7625938A42B3D9117099DC0"
+          },
+          {
+            "Bytes": 7680,
+            "Name": "BlueTusk.Extensions.Abstractions.dll",
+            "Sha256": "A1820C8CD5D0C9FB7417D6D372EF8C1025238733D3BF913D924AF94DC0E56876"
+          },
+          {
+            "Bytes": 41472,
+            "Name": "BlueTusk.Jobs.DependencyInjection.dll",
+            "Sha256": "FC5FDFB8BF9F4BAFE113C0F1FEFF1379C3B0FF28D6DB2C411E4CB4675BA763EC"
+          },
+          {
+            "Bytes": 119808,
+            "Name": "BlueTusk.Jobs.dll",
+            "Sha256": "DE10BC420C5C95AE737C7085046DB5CEEB9767D93A31DB330F8C903B5A663A7E"
+          },
+          {
+            "Bytes": 99840,
+            "Name": "BlueTusk.Protocol.dll",
+            "Sha256": "AB491D252BDC0D4120EC82CD958387318F59D28349C50C1948136A7C3100B6BB"
+          },
+          {
+            "Bytes": 26112,
+            "Name": "BlueTusk.Security.dll",
+            "Sha256": "02AE8278F6E30DA878C2487395BA0AA0206F2FB9E435D30A4CE266F6E4DAD51E"
+          },
+          {
+            "Bytes": 35328,
+            "Name": "BlueTusk.Transport.dll",
+            "Sha256": "4022D4B32A7C2E3C6663A1AEA2D09285D856695794521C2678BC4B1F2104788D"
+          },
+          {
+            "Bytes": 259584,
+            "Name": "BlueTusk.TypeSystem.dll",
+            "Sha256": "23CBDCAC3E57AA919AEA620176AC670B8C7372FB8835A12060C79CCAFE8F08A4"
+          },
+          {
+            "Bytes": 49664,
+            "Name": "BlueTusk.Workflows.DependencyInjection.dll",
+            "Sha256": "45FB6C31475C2A84B14BDEC0B97A8020DA353131C1FF6668A8E1E7B7D3FCEB1F"
+          },
+          {
+            "Bytes": 226816,
+            "Name": "BlueTusk.Workflows.dll",
+            "Sha256": "7D5A70444A410C16ECFE9C2FDF4D4BCFFD1D3D18FC491273536E8728C4E96D29"
+          },
+          {
+            "Bytes": 40538,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.deps.json",
+            "Sha256": "2D53C9C15A076BC86A7433756A606FD9EF90A19DBE9F00872B3FA13F4A6FC30B"
+          },
+          {
+            "Bytes": 205312,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.dll",
+            "Sha256": "6A307D778EC3123FB9610466821548FA98D6E00BDDF2175DC21588FAF3C579BE"
+          },
+          {
+            "Bytes": 162816,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.exe",
+            "Sha256": "B6892540A8BEB8ED767FC63C6C9ACA1F75E709ED1B156BE3629E9EEF1C291AFF"
+          },
+          {
+            "Bytes": 390,
+            "Name": "BlueTusk.Workflows.PhysicalRecoveryTests.runtimeconfig.json",
+            "Sha256": "A217D17BE0661ABF2717A26937C6E379C33542CB6F292FD3FC5A2D5113A9D6DC"
+          },
+          {
+            "Bytes": 386080,
+            "Name": "Microsoft.ApplicationInsights.dll",
+            "Sha256": "BF9A4B88C7F94267E1CC7ED0700C575D3EB3266FF25BCB76E4F40F1B0FBA022D"
+          },
+          {
+            "Bytes": 16000,
+            "Name": "Microsoft.Bcl.AsyncInterfaces.dll",
+            "Sha256": "5705D245072D3EB78400547B32147DBB6E2C8B02BA8BDA76729798F5EFDEAECB"
+          },
+          {
+            "Bytes": 28456,
+            "Name": "Microsoft.Extensions.Configuration.Abstractions.dll",
+            "Sha256": "CFDB91156D4D875BA6F540E53F96988E266AB24AB6F367150DB6EB9B645CFEB3"
+          },
+          {
+            "Bytes": 65832,
+            "Name": "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+            "Sha256": "43497D8F23B82159295933EFFE92C82447469B60CDBEFCCA4A62232E4EBBCA99"
+          },
+          {
+            "Bytes": 31056,
+            "Name": "Microsoft.Extensions.Diagnostics.Abstractions.dll",
+            "Sha256": "629FCC3E78969FBA52D7BF7AB21EAEA2A7711FA4E0B4B91BD37AD8B35816D60C"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll",
+            "Sha256": "463EA61F16835377CAFD51BF61C8F488448186029D0CB3E8B0B964D644E2BA63"
+          },
+          {
+            "Bytes": 55080,
+            "Name": "Microsoft.Extensions.Diagnostics.HealthChecks.dll",
+            "Sha256": "4446F633A469BC693075BD30EB6F04D1AEBF05A309D9889712A76D125F28BE97"
+          },
+          {
+            "Bytes": 23336,
+            "Name": "Microsoft.Extensions.FileProviders.Abstractions.dll",
+            "Sha256": "C823EEA339AF2BECA2C3004BB077118D0DB6379F908E7324E59461EF2C08E4B6"
+          },
+          {
+            "Bytes": 54056,
+            "Name": "Microsoft.Extensions.Hosting.Abstractions.dll",
+            "Sha256": "97D564D9ADF28CDBC2E6AC36BA6BF242AE70EDC8B6C8841387370AAAF095DE7E"
+          },
+          {
+            "Bytes": 66856,
+            "Name": "Microsoft.Extensions.Logging.Abstractions.dll",
+            "Sha256": "CEC836C1DFF8E64701EE4FD3A710BD971FEF953C90A34B577D9F4363103E6C39"
+          },
+          {
+            "Bytes": 65320,
+            "Name": "Microsoft.Extensions.Options.dll",
+            "Sha256": "C734C6A9FECA3A2DF39597E028EFEA8EEA796E7E5DFC815DF8B5893384297728"
+          },
+          {
+            "Bytes": 44880,
+            "Name": "Microsoft.Extensions.Primitives.dll",
+            "Sha256": "1F9F027817B0F277F45CCEB0927C14E41CABFE6D52DAFB5AB6BF68895294814B"
+          },
+          {
+            "Bytes": 60448,
+            "Name": "Microsoft.Testing.Extensions.MSBuild.dll",
+            "Sha256": "F6EF5EF03B5C22F7900FB67FE741847E75CF3CE26F652106A27D8CFCC834BB7F"
+          },
+          {
+            "Bytes": 44576,
+            "Name": "Microsoft.Testing.Extensions.Telemetry.dll",
+            "Sha256": "548751AE749BCA1E823F1BC3698AC751A0DC0CA47C396A9D32B432BD828848DF"
+          },
+          {
+            "Bytes": 32800,
+            "Name": "Microsoft.Testing.Extensions.TrxReport.Abstractions.dll",
+            "Sha256": "ACAE6C525EAD26F77CEAB1B1D640FE7E8C07FEC2ACDFC78BF753B220A49EF3E6"
+          },
+          {
+            "Bytes": 1153568,
+            "Name": "Microsoft.Testing.Platform.dll",
+            "Sha256": "519744D3B6321320E366495FBED0D8C37F9B0E11207667EB89EB5C0C425A7462"
+          },
+          {
+            "Bytes": 574776,
+            "Name": "Microsoft.TestPlatform.CommunicationUtilities.dll",
+            "Sha256": "1589365D2F96AB62712F8B25A1EE3F95C05AC31D2CF678C0AFB35E4116AE8094"
+          },
+          {
+            "Bytes": 99128,
+            "Name": "Microsoft.TestPlatform.CoreUtilities.dll",
+            "Sha256": "C427143D3E9C40379F6AC0824DAC6823452648B8D992201F613A33B71553B98C"
+          },
+          {
+            "Bytes": 319840,
+            "Name": "Microsoft.TestPlatform.CrossPlatEngine.dll",
+            "Sha256": "C90FA6A6743F00FEEA16E11A3E57B23E08122AEC5CC4819ABA3BC02CFD29097E"
+          },
+          {
+            "Bytes": 53600,
+            "Name": "Microsoft.TestPlatform.PlatformAbstractions.dll",
+            "Sha256": "3F2162757211B9D53B4CEADC7A8F6F7E01829CF3FF6E0F7930DAB3864216477A"
+          },
+          {
+            "Bytes": 68920,
+            "Name": "Microsoft.TestPlatform.Utilities.dll",
+            "Sha256": "074A1C94033C1DAE75BB3DEF2338D41FD7C81B585AFB12F0C9EED34E7FF09170"
+          },
+          {
+            "Bytes": 17208,
+            "Name": "Microsoft.VisualStudio.CodeCoverage.Shim.dll",
+            "Sha256": "B476CB4BF276631F59341F1FA82E24BA84E990490CC0DC2D87D502E577A415BB"
+          },
+          {
+            "Bytes": 250680,
+            "Name": "Microsoft.VisualStudio.TestPlatform.Common.dll",
+            "Sha256": "1A84CE41079842EE99637E71A8FEC997F5462592F5E1AF340E3AEBB984752DEA"
+          },
+          {
+            "Bytes": 333624,
+            "Name": "Microsoft.VisualStudio.TestPlatform.ObjectModel.dll",
+            "Sha256": "D6BF5D6001CEEB0BE27352A09BDE296C31CEB77C907D60BD7B6EEA21A55026C7"
+          },
+          {
+            "Bytes": 49464,
+            "Name": "testhost.dll",
+            "Sha256": "4AFB3137E02311D597E908AE8043C1FDD98474BCD723C246B2CF46370F61AD46"
+          },
+          {
+            "Bytes": 163168,
+            "Name": "testhost.exe",
+            "Sha256": "905AD8E6FBE6C9F4D0CF25DC1D61DEAAA2CB56B98A67E19D5E19A4D293B2DEC6"
+          },
+          {
+            "Bytes": 21928,
+            "Name": "xunit.abstractions.dll",
+            "Sha256": "3166DC70323FB30CCF1CEDB0FE86F2AD122C46D254542342D90386EFC4C9285C"
+          },
+          {
+            "Bytes": 1253376,
+            "Name": "xunit.runner.visualstudio.testadapter.dll",
+            "Sha256": "384ABA4BAD96399A7FD2205A5A3517B643A16F4D7E843BD0B92E1E42F81FCE2A"
+          },
+          {
+            "Bytes": 214792,
+            "Name": "xunit.v3.assert.dll",
+            "Sha256": "483AEC8A5B7FAEA0A92D0AE4F11A3479045F8F5E3F551DFC4DAC6BEDEAAFA9CE"
+          },
+          {
+            "Bytes": 191752,
+            "Name": "xunit.v3.common.dll",
+            "Sha256": "E4175BC165D01B9828ACDC996776370ADF4F8D0A5865E75EC9DED17FB70258A9"
+          },
+          {
+            "Bytes": 498440,
+            "Name": "xunit.v3.core.dll",
+            "Sha256": "B3641E9E80CD8175E2D9995D6FA9750B8FB31740C87BA121E56CFE515F7F06CC"
+          },
+          {
+            "Bytes": 123144,
+            "Name": "xunit.v3.mtp-v1.dll",
+            "Sha256": "69903F4E48E5794350154D97BC911909974469780CD1931E23DA3AF419A1F2E7"
+          },
+          {
+            "Bytes": 978696,
+            "Name": "xunit.v3.runner.common.dll",
+            "Sha256": "8D9B157EBD8D9240D292ED922F5F26BA4011DE5FD07812CEAAC7BACCFC5E6BC4"
+          },
+          {
+            "Bytes": 75528,
+            "Name": "xunit.v3.runner.inproc.console.dll",
+            "Sha256": "360EF1613C7D4148A715B8495D9F7AD95E4126F75ED86DDA6CF81139C28B1431"
+          },
+          {
+            "Bytes": 174856,
+            "Name": "xunit.v3.runner.utility.netcore.dll",
+            "Sha256": "ABCE062185B0D72B665AAE07D76C681AFF1CD794525A34CFA1B3B0137AF76AFF"
+          }
+        ],
+        "Scope": "All executable, DLL, dependency and runtime configuration files present in the dedicated test output; includes Data/provider dependencies. The installed .NET SDK/runtime is identified separately, not hashed by this manifest."
+      },
+      "Repetition": 3,
+      "BinariesUnchanged": true,
+      "FixtureSamplePath": "artifacts/jobs-physical-recovery/optimized-physical-promotion-pg18.json.run3.fixture.jsonl",
+      "Report": {
+        "Fixture": "jobs-physical-9a6da2b28c544f5f9e60de3331e6718f-run3",
+        "Server": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+        "Image": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+        "SourceDurability": "Verified synchronous remote_apply before primary loss; promoted survivor uses local synchronous_commit=on with no replica",
+        "BeforeSystemIdentifier": "7690340014890217507",
+        "AfterSystemIdentifier": "7690340014890217507",
+        "BeforeTimeline": 1,
+        "AfterTimeline": 2,
+        "AcknowledgedJobs": 66,
+        "VerifiedJobs": 66,
+        "AcknowledgedBusinessAdmissions": 66,
+        "JobEffects": 66,
+        "WorkflowEffects": 12,
+        "PrimaryKillToPromotionMilliseconds": 9022.667,
+        "PrimaryKillToFirstEffectReplayMilliseconds": 8913.4419,
+        "PrimaryKillToFirstRecoveredMilliseconds": 9102.153,
+        "PrimaryKillToDrainedMilliseconds": 9314.0843,
+        "UnchangedMultihostSource": true,
+        "NoCrossTenantReads": true,
+        "UnavailableHealthDuringOutage": true,
+        "HealthyAfterRecovery": true,
+        "Leases": [
+          {
+            "Product": "Jobs",
+            "Tenant": "physical-a",
+            "JobId": "0b79a3d9-1a0f-4c73-9bb1-28e8ac9ab059",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Jobs",
+            "Tenant": "physical-b",
+            "JobId": "0f9d2a08-800c-4fdb-bffd-280efba0d940",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-a",
+            "JobId": "e91cb2a2-4b9a-4fee-a5bf-b912d632f47f",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-a",
+            "JobId": "3e439305-76a2-4b55-8961-bcfa124b6a59",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-b",
+            "JobId": "8612207d-c95c-4206-9ba4-815df13910b4",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          },
+          {
+            "Product": "Workflows",
+            "Tenant": "physical-b",
+            "JobId": "dc38f30a-2122-43bd-94d3-305c2cd0e679",
+            "Attempt": 2,
+            "BeforeFence": 1,
+            "AfterFence": 2,
+            "StaleCompletionRejected": true,
+            "StaleEffectRejected": true
+          }
+        ],
+        "Workflows": [
+          {
+            "Tenant": "physical-a",
+            "Scenario": "signal",
+            "Id": "508d2396-abd9-4ce6-9e4e-6ec7539cc76c",
+            "Status": "Succeeded",
+            "ProduceCalls": 1,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-a",
+            "Scenario": "replay",
+            "Id": "c7afe69b-484f-42bf-b089-592272fc4f19",
+            "Status": "Succeeded",
+            "ProduceCalls": 2,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-a",
+            "Scenario": "cancel",
+            "Id": "0766e4ac-8598-481c-b92d-cbc2caf5307d",
+            "Status": "Canceled",
+            "ProduceCalls": 1,
+            "UndoCalls": 2,
+            "FinishCalls": 0,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-b",
+            "Scenario": "signal",
+            "Id": "7f8b0b73-217b-4f12-91b0-49519b37af28",
+            "Status": "Succeeded",
+            "ProduceCalls": 1,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-b",
+            "Scenario": "replay",
+            "Id": "fd9ed30d-56f7-4e50-b9bb-559b551a7704",
+            "Status": "Succeeded",
+            "ProduceCalls": 2,
+            "UndoCalls": 0,
+            "FinishCalls": 1,
+            "ReplayMatches": true
+          },
+          {
+            "Tenant": "physical-b",
+            "Scenario": "cancel",
+            "Id": "8dee09e7-3f8a-44e8-9c40-d8926f4c9439",
+            "Status": "Canceled",
+            "ProduceCalls": 1,
+            "UndoCalls": 2,
+            "FinishCalls": 0,
+            "ReplayMatches": true
+          }
+        ],
+        "Measurements": [
+          {
+            "Phase": "initialized",
+            "ElapsedMilliseconds": 443.8759,
+            "WalPosition": "0/30BC920",
+            "DatabaseBytes": 8410815,
+            "ProcessCpuMilliseconds": 734.375,
+            "WorkingSetBytes": 77381632,
+            "ManagedBytes": 18305056,
+            "TotalAllocatedBytes": 24867992,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 1,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "acknowledged-before-primary-loss",
+            "ElapsedMilliseconds": 1203.3627,
+            "WalPosition": "0/30DB2C0",
+            "DatabaseBytes": 8722111,
+            "ProcessCpuMilliseconds": 1187.5,
+            "WorkingSetBytes": 88563712,
+            "ManagedBytes": 22275184,
+            "TotalAllocatedBytes": 28832168,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 7,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "read-only-outage-past-durable-deadlines",
+            "ElapsedMilliseconds": 9563.6215,
+            "WalPosition": "0/30DBDA8",
+            "DatabaseBytes": 8746687,
+            "ProcessCpuMilliseconds": 2281.25,
+            "WorkingSetBytes": 109608960,
+            "ManagedBytes": 15948048,
+            "TotalAllocatedBytes": 34190536,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "stale-capabilities-rejected-while-new-leases-running",
+            "ElapsedMilliseconds": 10294.898,
+            "WalPosition": "0/30F9A18",
+            "DatabaseBytes": 8754879,
+            "ProcessCpuMilliseconds": 2468.75,
+            "WorkingSetBytes": 110149632,
+            "ManagedBytes": 18513904,
+            "TotalAllocatedBytes": 36753080,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 6,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "durable-recovery-drained",
+            "ElapsedMilliseconds": 10525.2096,
+            "WalPosition": "0/31144F0",
+            "DatabaseBytes": 8910527,
+            "ProcessCpuMilliseconds": 2640.625,
+            "WorkingSetBytes": 110379008,
+            "ManagedBytes": 21473920,
+            "TotalAllocatedBytes": 39710456,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "all-invariants-verified",
+            "ElapsedMilliseconds": 10818.4623,
+            "WalPosition": "0/31177E8",
+            "DatabaseBytes": 8910527,
+            "ProcessCpuMilliseconds": 2812.5,
+            "WorkingSetBytes": 110936064,
+            "ManagedBytes": 24097288,
+            "TotalAllocatedBytes": 42331088,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 1461.1024,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1234.375,
+            "WorkingSetBytes": 89587712,
+            "ManagedBytes": 22729136,
+            "TotalAllocatedBytes": 29285640,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 7,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 2459.2492,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1343.75,
+            "WorkingSetBytes": 94392320,
+            "ManagedBytes": 24092232,
+            "TotalAllocatedBytes": 30646864,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 3458.7162,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 1750,
+            "WorkingSetBytes": 97738752,
+            "ManagedBytes": 24638736,
+            "TotalAllocatedBytes": 31192912,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 3,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 4461.0781,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2015.625,
+            "WorkingSetBytes": 101900288,
+            "ManagedBytes": 25136608,
+            "TotalAllocatedBytes": 31690520,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 5460.0916,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2062.5,
+            "WorkingSetBytes": 103579648,
+            "ManagedBytes": 25630128,
+            "TotalAllocatedBytes": 32183632,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 6464.6491,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2109.375,
+            "WorkingSetBytes": 104271872,
+            "ManagedBytes": 26130952,
+            "TotalAllocatedBytes": 32683760,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 7462.5647,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2109.375,
+            "WorkingSetBytes": 104751104,
+            "ManagedBytes": 26616440,
+            "TotalAllocatedBytes": 33168504,
+            "Gen0": 1,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 8455.8254,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2250,
+            "WorkingSetBytes": 109547520,
+            "ManagedBytes": 15379776,
+            "TotalAllocatedBytes": 33623176,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 9465.7856,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2281.25,
+            "WorkingSetBytes": 109608960,
+            "ManagedBytes": 15898704,
+            "TotalAllocatedBytes": 34141336,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 4,
+            "PoolBusy": 0,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "process-sample",
+            "ElapsedMilliseconds": 10451.7671,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 2609.375,
+            "WorkingSetBytes": 110379008,
+            "ManagedBytes": 20974144,
+            "TotalAllocatedBytes": 39211400,
+            "Gen0": 2,
+            "Gen1": 1,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 2,
+            "PoolWaiting": 0
+          },
+          {
+            "Phase": "sampled-pool-high-water",
+            "ElapsedMilliseconds": 10824.2053,
+            "WalPosition": "",
+            "DatabaseBytes": 0,
+            "ProcessCpuMilliseconds": 0,
+            "WorkingSetBytes": 0,
+            "ManagedBytes": 0,
+            "TotalAllocatedBytes": 0,
+            "Gen0": 0,
+            "Gen1": 0,
+            "Gen2": 0,
+            "PoolTotal": 8,
+            "PoolBusy": 4,
+            "PoolWaiting": 0
+          }
+        ],
+        "Operations": [
+          {
+            "Phase": "primary",
+            "Name": "job.fenced_effect",
+            "Observed": 4,
+            "P50Milliseconds": 7.0188,
+            "P95Milliseconds": 13.4063,
+            "P99Milliseconds": 13.4063,
+            "MaximumMilliseconds": 13.4063
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.enqueue_recheck",
+            "Observed": 66,
+            "P50Milliseconds": 2.857,
+            "P95Milliseconds": 5.3157,
+            "P99Milliseconds": 5.4387,
+            "MaximumMilliseconds": 5.4387
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.fenced_effect",
+            "Observed": 64,
+            "P50Milliseconds": 6.0496,
+            "P95Milliseconds": 14.3201,
+            "P99Milliseconds": 14.9623,
+            "MaximumMilliseconds": 14.9623
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.health",
+            "Observed": 8,
+            "P50Milliseconds": 2.8463,
+            "P95Milliseconds": 11.0905,
+            "P99Milliseconds": 11.0905,
+            "MaximumMilliseconds": 11.0905
+          },
+          {
+            "Phase": "promoted",
+            "Name": "job.read",
+            "Observed": 67,
+            "P50Milliseconds": 1.9221,
+            "P95Milliseconds": 2.4934,
+            "P99Milliseconds": 8.3452,
+            "MaximumMilliseconds": 8.3452
+          },
+          {
+            "Phase": "promoted",
+            "Name": "workflow.read",
+            "Observed": 8,
+            "P50Milliseconds": 1.7321,
+            "P95Milliseconds": 4.0372,
+            "P99Milliseconds": 4.0372,
+            "MaximumMilliseconds": 4.0372
+          }
+        ],
+        "RecoveryConfiguration": "Connect timeout=1s per connection attempt; target=ReadWrite; no configured host-recheck interval (tested provider refreshes host state on checkout); pool maximum=8 per host/16 aggregate; Jobs concurrency=4/tenant; Workflows concurrency=3/tenant; pre-promotion noncritical handler gate; active attempt-two acknowledgement barrier for stale-owner probes; lease=5s; heartbeat=500ms; store backoff=100ms; poll=20ms; drain phase deadline=45s; scenario work deadline=180s with bounded cleanup; final exact Job verification concurrency=4",
+        "Qualification": "Owned local PostgreSQL physical-promotion rehearsal. One stopped primary and one promoted synchronous standby; no async-replication, split-brain, rejoin, server-upgrade, power-loss or production availability claim. Resource snapshots are process-cumulative and PostgreSQL statistics can lag."
+      },
+      "TrxPath": "artifacts/jobs-physical-recovery/jobs-physical-9a6da2b28c544f5f9e60de3331e6718f/run3/PhysicalRecovery.trx"
+    }
+  ]
+}

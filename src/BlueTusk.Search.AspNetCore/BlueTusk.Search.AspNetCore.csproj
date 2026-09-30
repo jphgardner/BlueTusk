@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Search</BlueTuskProductFamily>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Bounded fixed-scope PostgreSQL Search readiness checks for ASP.NET hosts.</Description>
+    <PackageTags>postgresql;search;aspnetcore;health</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Search.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\BlueTusk.Search\BlueTusk.Search.csproj" />
+    <Compile Include="..\BlueTusk.Documents.AspNetCore\BoundedHealthProbe.cs" Link="BoundedHealthProbe.cs" />
+  </ItemGroup>
+</Project>

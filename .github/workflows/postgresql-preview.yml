@@ -31,7 +31,7 @@ jobs:
       - name: Validate historical preview compatibility
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
-        run: dotnet test BlueTusk.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/historical-postgres19
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/historical-postgres19
       - name: Retain historical preview results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

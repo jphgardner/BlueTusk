@@ -10,11 +10,17 @@ internal static class ProviderRequestCaptureSelfTests
     {
         var efProbe = new ProviderRequestCapture.Options
         {
-            Provider = "bluetusk", Feature = "ef-update", Concurrency = 1,
-            WarmupSeconds = 1, MeasurementSeconds = 2, MaximumSamplesPerWorker = 1000,
-            RequireTls = false, SourceCommit = new string('a', 40),
+            Provider = "bluetusk",
+            Feature = "ef-update",
+            Concurrency = 1,
+            WarmupSeconds = 1,
+            MeasurementSeconds = 2,
+            MaximumSamplesPerWorker = 1000,
+            RequireTls = false,
+            SourceCommit = new string('a', 40),
             PostgreSqlImage = "postgres:19beta3-alpine@sha256:" + new string('b', 64),
-            OutputPath = "not-written.json", Diagnostic = true,
+            OutputPath = "not-written.json",
+            Diagnostic = true,
         };
         EfBatchCapture.Validate(efProbe, 100, null);
         EfBatchCapture.Validate(efProbe, 1000, 1000);

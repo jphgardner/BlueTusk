@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "qualification": "manual-exact-candidate-jobs-capacity",
+  "repetitions": 2,
+  "referenceProcessor": "AMD Ryzen 7 5800X",
+  "postgreSql15Image": "postgres:15-alpine@sha256:f7d23353e1b15400d22ebe31189f4d314b87a4c129cc400c8c2d8d4ca127bf81",
+  "jobsWorkflows": {
+    "secondsPerProduct": 1800,
+    "payloadMode": "SeededHighEntropy",
+    "minimumCompletionsPerSecond": { "Jobs": 20 },
+    "maximumHotDurableP99Milliseconds": { "Jobs": 10000 },
+    "maximumColdDurableP99Milliseconds": { "Jobs": 3000 },
+    "maximumClusterWalBytesPerAccepted": { "Jobs": 65536 },
+    "maximumRuntimeRelationBytes": { "Jobs": 67108864 },
+    "maximumLateGrowthBytesPerMinute": { "Jobs": 2097152 }
+  }
+}

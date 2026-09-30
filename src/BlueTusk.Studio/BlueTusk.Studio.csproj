@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Studio</BlueTuskProductFamily>
+    <Description>Authorized PostgreSQL developer workspace with bounded read-only queries, explain plans, schema contracts, and audited execution.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Studio.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\BlueTusk.Schema\BlueTusk.Schema.csproj" />
+    <ProjectReference Include="..\BlueTusk.Sql\BlueTusk.Sql.csproj" />
+    <EmbeddedResource Include="Assets\*" />
+  </ItemGroup>
+</Project>

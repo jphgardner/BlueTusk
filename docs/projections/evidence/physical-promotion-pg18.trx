@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="4743697d-8545-45f9-8f85-19a1be08c8a1" name="jphga@HACKITRON 2026-09-27 21:42:31" runUser="HACKITRON\jphga" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-27T21:42:31.0253311+01:00" queuing="2026-09-27T21:42:31.0253313+01:00" start="2026-09-27T21:42:25.8296887+01:00" finish="2026-09-27T21:42:31.0313883+01:00" />
+  <TestSettings name="default" id="221f5841-cb0b-4fa7-896f-6aeab165d3ed">
+    <Deployment runDeploymentRoot="jphga_HACKITRON_2026-09-27_21_42_31" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="256294cf-506d-4212-a1e0-f1fa29f5a0f1" testId="6a522c95-8dce-3df2-9d96-9bb152052f4a" testName="BlueTusk.Projections.Tests.ProjectionPhysicalRecoveryTests.SynchronousPhysicalPromotionPreservesAcknowledgedEffectsFencesOldOwnersAndRequiresFreshSnapshotRecoveryThenControlledDdlRebuild" computerName="HACKITRON" duration="00:00:03.7716095" startTime="2026-09-27T21:42:27.1437747+01:00" endTime="2026-09-27T21:42:30.9256948+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="256294cf-506d-4212-a1e0-f1fa29f5a0f1">
+      <Output>
+        <StdOut>{&#xD;
+  "Scenario": "synchronous-physical-standby-promotion-and-controlled-ddl-rebuild",&#xD;
+  "PostgreSqlMajor": 18,&#xD;
+  "PostgreSqlImage": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",&#xD;
+  "BeforeTimeline": 1,&#xD;
+  "AfterTimeline": 2,&#xD;
+  "SameSystemIdentifier": true,&#xD;
+  "SourceCommitDurability": "remote_apply with verified synchronous physical standby; primary killed before promotion",&#xD;
+  "AcknowledgedBusinessCommits": 8,&#xD;
+  "PreservedOutboxEvents": 16,&#xD;
+  "ExactlyOnceWalInboxEffects": 16,&#xD;
+  "RecoveredReplayEffects": 8,&#xD;
+  "OldLiveFence": 1,&#xD;
+  "NewLiveFence": 2,&#xD;
+  "OldCheckpointPreserved": true,&#xD;
+  "StaleLiveAppendRejected": true,&#xD;
+  "StaleProjectionReacquisitionRejected": true,&#xD;
+  "ChangedTimelineBindingRejected": true,&#xD;
+  "RecoveryCutovers": 2,&#xD;
+  "TenantFirstTotal": 10,&#xD;
+  "TenantAnotherTotal": 999,&#xD;
+  "LogicalSlotsCopied": false,&#xD;
+  "RecoveryTransparent": false,&#xD;
+  "ControlledDdlBeforeFreshSnapshot": true,&#xD;
+  "PromotionAndRecoveryElapsedMilliseconds": 2426.795,&#xD;
+  "TotalElapsedMilliseconds": 3705.8177&#xD;
+}</StdOut>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="BlueTusk.Projections.Tests.ProjectionPhysicalRecoveryTests.SynchronousPhysicalPromotionPreservesAcknowledgedEffectsFencesOldOwnersAndRequiresFreshSnapshotRecoveryThenControlledDdlRebuild" storage="c:\users\jphga\.codex\worktrees\ecosystem-products\bluetusk\tests\bluetusk.projections.physicalrecoverytests\bin\release\net10.0\bluetusk.projections.physicalrecoverytests.dll" id="6a522c95-8dce-3df2-9d96-9bb152052f4a">
+      <Execution id="256294cf-506d-4212-a1e0-f1fa29f5a0f1" />
+      <TestMethod codeBase="C:\Users\jphga\.codex\worktrees\ecosystem-products\BlueTusk\tests\BlueTusk.Projections.PhysicalRecoveryTests\bin\Release\net10.0\BlueTusk.Projections.PhysicalRecoveryTests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BlueTusk.Projections.Tests.ProjectionPhysicalRecoveryTests" name="SynchronousPhysicalPromotionPreservesAcknowledgedEffectsFencesOldOwnersAndRequiresFreshSnapshotRecoveryThenControlledDdlRebuild" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="6a522c95-8dce-3df2-9d96-9bb152052f4a" executionId="256294cf-506d-4212-a1e0-f1fa29f5a0f1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.29]   Discovering: BlueTusk.Projections.PhysicalRecoveryTests&#xD;
+[xUnit.net 00:00:00.53]   Discovered:  BlueTusk.Projections.PhysicalRecoveryTests&#xD;
+[xUnit.net 00:00:00.75]   Starting:    BlueTusk.Projections.PhysicalRecoveryTests&#xD;
+[xUnit.net 00:00:04.61]   Finished:    BlueTusk.Projections.PhysicalRecoveryTests (ID = 'e915c760ef77731ecc454fd7d12cea925e998ef8e9ed65be5ce1c9adf620283a')&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

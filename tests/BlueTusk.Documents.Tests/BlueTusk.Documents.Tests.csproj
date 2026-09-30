@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Documents</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Documents.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\src\BlueTusk.Documents.AspNetCore\BlueTusk.Documents.AspNetCore.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\BlueTusk.Documents\BlueTusk.Documents.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Documents.Streams\BlueTusk.Documents.Streams.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Documents.Live\BlueTusk.Documents.Live.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.DependencyInjection\BlueTusk.Live.DependencyInjection.csproj" />
+  </ItemGroup>
+</Project>

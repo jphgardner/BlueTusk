@@ -1,0 +1,422 @@
+{
+  "StartedUtc": "2026-09-27T22:03:59.5014556+00:00",
+  "Profile": "BenchmarkDotNet 0.15.8 ShortRun in-process; three warmup and three measured iterations; all three payload sizes",
+  "HostScope": "Named quiet repository CPU phase on Windows Ryzen 7 5800X/.NET10.0.12; operating system/background activity uncontrolled",
+  "BaselineDirectory": "C:\\Users\\jphga\\.codex\\worktrees\\ecosystem-products\\BlueTusk\\artifacts\\documents-load\\final-pg18-600s\\baseline-bin",
+  "OptimizedDirectory": "C:\\Users\\jphga\\.codex\\worktrees\\ecosystem-products\\BlueTusk\\artifacts\\documents-load\\allocation-pair\\optimized-bin",
+  "BaselineBinaryHashes": [
+    {
+      "Name": "BenchmarkDotNet.Annotations.dll",
+      "Sha256": "4B5D273032CAE7C8FC97E16713B8D4F1EE3A2AA28A0E2BD0695232FB9DD7D558"
+    },
+    {
+      "Name": "BenchmarkDotNet.dll",
+      "Sha256": "D460626B2E1A9FA2F786E09E6C85CDF4D7B73DECA636450A0E23892C8CE6192B"
+    },
+    {
+      "Name": "BlueTusk.Client.dll",
+      "Sha256": "900CEA4BB30885F993A54CDFBC1C47E53745D7C7915D0D46C52D3F1C8A3C4683"
+    },
+    {
+      "Name": "BlueTusk.Client.pdb",
+      "Sha256": "945AA6FBDEB400C9AD3CA537A402CFBE37AE905939EE09F3CCA868BA629413AA"
+    },
+    {
+      "Name": "BlueTusk.Data.dll",
+      "Sha256": "6987820540B53F8DBEA9D15B32826B1F135BEADB686F385A889365B34D79EF22"
+    },
+    {
+      "Name": "BlueTusk.Data.pdb",
+      "Sha256": "BAAF09146F93CC94170120B1871B01855B538681D471AC1FE116A82DF8449AA4"
+    },
+    {
+      "Name": "BlueTusk.Diagnostics.dll",
+      "Sha256": "3E1254E58C0505D075D312E10D41AEF2B0A169B0F7625938A42B3D9117099DC0"
+    },
+    {
+      "Name": "BlueTusk.Diagnostics.pdb",
+      "Sha256": "5B3411C66E0E55E531F1980361FED67F1928B3C7312AE63EDF085FF44FBBF61A"
+    },
+    {
+      "Name": "BlueTusk.Documents.dll",
+      "Sha256": "592C14C8BC951E230DB15E6A4BDBF20A651DC8148B9F5DF4548984255BFF5075"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.deps.json",
+      "Sha256": "29B42D774C0AEEFCFCA7105BBC9AB1AEBA2DBD37471325CAEC6193631C25FC2B"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.dll",
+      "Sha256": "0B101A89D8B18739FF61A455E8B151E697EE51076656B1F74DAB51E1430518DA"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.exe",
+      "Sha256": "0ABE922F5D005F487654C8F9555E004B35A2F78C2D99D5BF0FCD654658E84107"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.pdb",
+      "Sha256": "884393B96FC5EACE4E7C1F6E7D78266BB0CA4E8502F9A20C0E13AE7F60323B17"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.runtimeconfig.json",
+      "Sha256": "C230A317A54DD960BCBEB5F347F52E18DC665A26F7EFDA2159FCED9A5AC7E097"
+    },
+    {
+      "Name": "BlueTusk.Documents.pdb",
+      "Sha256": "A5700F1E65573755D3D5E11783B60122ED121AAC8D1CEB0540B40F303CD1F115"
+    },
+    {
+      "Name": "BlueTusk.Extensions.Abstractions.dll",
+      "Sha256": "A1820C8CD5D0C9FB7417D6D372EF8C1025238733D3BF913D924AF94DC0E56876"
+    },
+    {
+      "Name": "BlueTusk.Extensions.Abstractions.pdb",
+      "Sha256": "27CC1EF22316151C43E1A7C22DD9202F5747CAAEA4299F276CF890CBE8047068"
+    },
+    {
+      "Name": "BlueTusk.Protocol.dll",
+      "Sha256": "AB491D252BDC0D4120EC82CD958387318F59D28349C50C1948136A7C3100B6BB"
+    },
+    {
+      "Name": "BlueTusk.Protocol.pdb",
+      "Sha256": "4D65311D3408F2ECE0D4A7F6EEEC8AB5610B0EB0F838C4B08511CBDDE273B276"
+    },
+    {
+      "Name": "BlueTusk.Security.dll",
+      "Sha256": "02AE8278F6E30DA878C2487395BA0AA0206F2FB9E435D30A4CE266F6E4DAD51E"
+    },
+    {
+      "Name": "BlueTusk.Security.pdb",
+      "Sha256": "03D2B6A10CB640ED9429A8DC54AB55896B9087FFA3CA0B7CED0F2B0F40E41CDB"
+    },
+    {
+      "Name": "BlueTusk.Transport.dll",
+      "Sha256": "4022D4B32A7C2E3C6663A1AEA2D09285D856695794521C2678BC4B1F2104788D"
+    },
+    {
+      "Name": "BlueTusk.Transport.pdb",
+      "Sha256": "D2443074A8C0CE92562037714AF5412D78C9001EBD5675A0E596526471E2E6E5"
+    },
+    {
+      "Name": "BlueTusk.TypeSystem.dll",
+      "Sha256": "23CBDCAC3E57AA919AEA620176AC670B8C7372FB8835A12060C79CCAFE8F08A4"
+    },
+    {
+      "Name": "BlueTusk.TypeSystem.pdb",
+      "Sha256": "4EFC76A1E3973A8C961A83EB0BF343D3F37173388CE1DE838FF6D81085E944E3"
+    },
+    {
+      "Name": "CommandLine.dll",
+      "Sha256": "8A55501CD1A1590A4BD93A17C6FDD2C01A0ED5BFF1AEA9036BDC78D98C9A3FAD"
+    },
+    {
+      "Name": "Dia2Lib.dll",
+      "Sha256": "6C4CAC68010FE032218EFE5E9FCF46EEF9F77BFAA5F3BD33F03C5FF77D5A8FAC"
+    },
+    {
+      "Name": "Gee.External.Capstone.dll",
+      "Sha256": "6DFDA67784598DE9677173B89D0692593935F1A4024D36040C95DEA48C1B5965"
+    },
+    {
+      "Name": "Iced.dll",
+      "Sha256": "F058C01321B4CDFC9B9151879E88E59571C8D0BA176FBCF95BC936A8F3D073ED"
+    },
+    {
+      "Name": "Microsoft.CodeAnalysis.CSharp.dll",
+      "Sha256": "53302ACCA07700E9BB10DCF21034435D6E0454C8EEBF2481164EC13E520004C9"
+    },
+    {
+      "Name": "Microsoft.CodeAnalysis.dll",
+      "Sha256": "395736B2D0E02BE77BEDC3847B269DA7A93BF8E49CD3431A4A8E68D2C52D5846"
+    },
+    {
+      "Name": "Microsoft.Diagnostics.FastSerialization.dll",
+      "Sha256": "83E89BAF0BBECCA8CFA194CFF13365F716849E22EFC374B669206F26998A019F"
+    },
+    {
+      "Name": "Microsoft.Diagnostics.NETCore.Client.dll",
+      "Sha256": "BAED2D25CA5BC53A3447C237D5572C92EAC1FD842807B3E72602A711749B1B22"
+    },
+    {
+      "Name": "Microsoft.Diagnostics.Runtime.dll",
+      "Sha256": "06F9910C8A37F8D4D758538E6DD307DE58BCFB3BB13E83658142C08087A25382"
+    },
+    {
+      "Name": "Microsoft.Diagnostics.Tracing.TraceEvent.dll",
+      "Sha256": "401E948DAC99D0F9756EF96D5A8B8E4736E19E9F82CE8CDD744495951E3A94BB"
+    },
+    {
+      "Name": "Microsoft.DotNet.PlatformAbstractions.dll",
+      "Sha256": "B1F4AD169FB192747F5D2D3111C01DB4257E3EC1F7F18F301F7FC4BE3B869FF3"
+    },
+    {
+      "Name": "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+      "Sha256": "9CCD830351AA28BC683D4F8D1CEFD9E724161F972D25BFB64EEE5BF55C48C5E3"
+    },
+    {
+      "Name": "Microsoft.Extensions.DependencyInjection.dll",
+      "Sha256": "2AA8182B5356A8CC5C35FC3641A87E814857D8D9BE399AC78F260343754D09E0"
+    },
+    {
+      "Name": "Microsoft.Extensions.Logging.Abstractions.dll",
+      "Sha256": "D575C9D1543CA726CE14DBDFFD103E93EA527CD46BB28316DA1F4122DBC55D56"
+    },
+    {
+      "Name": "Microsoft.Extensions.Logging.dll",
+      "Sha256": "183650081B551DFAD967A7CBF79946A229CB79458B8D04A12DB7C44B03BB9AB7"
+    },
+    {
+      "Name": "Microsoft.Extensions.Options.dll",
+      "Sha256": "786112CB2F6646EF1170219A8C0BB813C9F14A6781E67C6266414F55A679565D"
+    },
+    {
+      "Name": "Microsoft.Extensions.Primitives.dll",
+      "Sha256": "8CE9A85927EC7507B11FFE90080E7A811D51304A9E8B1DA20C350159BA403902"
+    },
+    {
+      "Name": "Perfolizer.dll",
+      "Sha256": "22A4A336DB943465CBDFC8D0A8E23E89DF3024D39F1C5954D97554B3DA39E300"
+    },
+    {
+      "Name": "Pragmastat.dll",
+      "Sha256": "E9B3FC36000E7FE3FB11D3EA6A65F3C9C7B17E03C9F5034306437D65972E8C51"
+    },
+    {
+      "Name": "System.CodeDom.dll",
+      "Sha256": "8D0CF191C86FEEA81C9875652C06E454ABE8DBFF66BEA9E4CB5F8AA2DC02F32A"
+    },
+    {
+      "Name": "System.Management.dll",
+      "Sha256": "0BE24B09DA5ABAD0B20EFCB58FAB14B0DEDC79B09D4FBDCB894BE268105A2195"
+    },
+    {
+      "Name": "TraceReloggerLib.dll",
+      "Sha256": "6830C0F1D3F3C17719181E73DD5CFA8CCBB3F3C575329D2120576545103467B5"
+    }
+  ],
+  "OptimizedBinaryHashes": [
+    {
+      "Name": "BenchmarkDotNet.Annotations.dll",
+      "Sha256": "4B5D273032CAE7C8FC97E16713B8D4F1EE3A2AA28A0E2BD0695232FB9DD7D558"
+    },
+    {
+      "Name": "BenchmarkDotNet.dll",
+      "Sha256": "D460626B2E1A9FA2F786E09E6C85CDF4D7B73DECA636450A0E23892C8CE6192B"
+    },
+    {
+      "Name": "BlueTusk.Client.dll",
+      "Sha256": "900CEA4BB30885F993A54CDFBC1C47E53745D7C7915D0D46C52D3F1C8A3C4683"
+    },
+    {
+      "Name": "BlueTusk.Client.pdb",
+      "Sha256": "945AA6FBDEB400C9AD3CA537A402CFBE37AE905939EE09F3CCA868BA629413AA"
+    },
+    {
+      "Name": "BlueTusk.Data.dll",
+      "Sha256": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+    },
+    {
+      "Name": "BlueTusk.Data.pdb",
+      "Sha256": "C390636C61DAF1ADB898751B579FF58FFD8EBE5B9CD6E4231A68AA94E83353CF"
+    },
+    {
+      "Name": "BlueTusk.Diagnostics.dll",
+      "Sha256": "3E1254E58C0505D075D312E10D41AEF2B0A169B0F7625938A42B3D9117099DC0"
+    },
+    {
+      "Name": "BlueTusk.Diagnostics.pdb",
+      "Sha256": "5B3411C66E0E55E531F1980361FED67F1928B3C7312AE63EDF085FF44FBBF61A"
+    },
+    {
+      "Name": "BlueTusk.Documents.dll",
+      "Sha256": "8AAA7912591EE0CDA86BC23A2E8ACCA296D9DB799F58B3F8A74A201D8BA3C31E"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.deps.json",
+      "Sha256": "29B42D774C0AEEFCFCA7105BBC9AB1AEBA2DBD37471325CAEC6193631C25FC2B"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.dll",
+      "Sha256": "F46A55ABB54111268EDD560F460F3807AA1A50B83B7DBB8C36C31DBF6DE43AAE"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.exe",
+      "Sha256": "0ABE922F5D005F487654C8F9555E004B35A2F78C2D99D5BF0FCD654658E84107"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.pdb",
+      "Sha256": "523EE115425A4770F976C59931D1CDBEB89A8F898DB13A829989B692AAF7193E"
+    },
+    {
+      "Name": "BlueTusk.Documents.LoadHarness.runtimeconfig.json",
+      "Sha256": "C230A317A54DD960BCBEB5F347F52E18DC665A26F7EFDA2159FCED9A5AC7E097"
+    },
+    {
+      "Name": "BlueTusk.Documents.pdb",
+      "Sha256": "175F35F20EA19AAE1CD363F6E0D4725A4E9AE633A1B72C12A3BCB7E5E0DE6E6B"
+    },
+    {
+      "Name": "BlueTusk.Extensions.Abstractions.dll",
+      "Sha256": "A1820C8CD5D0C9FB7417D6D372EF8C1025238733D3BF913D924AF94DC0E56876"
+    },
+    {
+      "Name": "BlueTusk.Extensions.Abstractions.pdb",
+      "Sha256": "27CC1EF22316151C43E1A7C22DD9202F5747CAAEA4299F276CF890CBE8047068"
+    },
+    {
+      "Name": "BlueTusk.Protocol.dll",
+      "Sha256": "AB491D252BDC0D4120EC82CD958387318F59D28349C50C1948136A7C3100B6BB"
+    },
+    {
+      "Name": "BlueTusk.Protocol.pdb",
+      "Sha256": "4D65311D3408F2ECE0D4A7F6EEEC8AB5610B0EB0F838C4B08511CBDDE273B276"
+    },
+    {
+      "Name": "BlueTusk.Security.dll",
+      "Sha256": "02AE8278F6E30DA878C2487395BA0AA0206F2FB9E435D30A4CE266F6E4DAD51E"
+    },
+    {
+      "Name": "BlueTusk.Security.pdb",
+      "Sha256": "03D2B6A10CB640ED9429A8DC54AB55896B9087FFA3CA0B7CED0F2B0F40E41CDB"
+    },
+    {
+      "Name": "BlueTusk.Transport.dll",
+      "Sha256": "4022D4B32A7C2E3C6663A1AEA2D09285D856695794521C2678BC4B1F2104788D"
+    },
+    {
+      "Name": "BlueTusk.Transport.pdb",
+      "Sha256": "D2443074A8C0CE92562037714AF5412D78C9001EBD5675A0E596526471E2E6E5"
+    },
+    {
+      "Name": "BlueTusk.TypeSystem.dll",
+      "Sha256": "23CBDCAC3E57AA919AEA620176AC670B8C7372FB8835A12060C79CCAFE8F08A4"
+    },
+    {
+      "Name": "BlueTusk.TypeSystem.pdb",
+      "Sha256": "4EFC76A1E3973A8C961A83EB0BF343D3F37173388CE1DE838FF6D81085E944E3"
+    },
+    {
+      "Name": "CommandLine.dll",
+      "Sha256": "8A55501CD1A1590A4BD93A17C6FDD2C01A0ED5BFF1AEA9036BDC78D98C9A3FAD"
+    },
+    {
+      "Name": "Dia2Lib.dll",
+      "Sha256": "6C4CAC68010FE032218EFE5E9FCF46EEF9F77BFAA5F3BD33F03C5FF77D5A8FAC"
+    },
+    {
+      "Name": "Gee.External.Capstone.dll",
+      "Sha256": "6DFDA67784598DE9677173B89D0692593935F1A4024D36040C95DEA48C1B5965"
+    },
+    {
+      "Name": "Iced.dll",
+      "Sha256": "F058C01321B4CDFC9B9151879E88E59571C8D0BA176FBCF95BC936A8F3D073ED"
+    },
+    {
+      "Name": "Microsoft.CodeAnalysis.CSharp.dll",
+      "Sha256": "53302ACCA07700E9BB10DCF21034435D6E0454C8EEBF2481164EC13E520004C9"
+    },
+    {
+      "Name": "Microsoft.CodeAnalysis.dll",
+      "Sha256": "395736B2D0E02BE77BEDC3847B269DA7A93BF8E49CD3431A4A8E68D2C52D5846"
+    },
+    {
+      "Name": "Microsoft.Diagnostics.FastSerialization.dll",
+      "Sha256": "83E89BAF0BBECCA8CFA194CFF13365F716849E22EFC374B669206F26998A019F"
+    },
+    {
+      "Name": "Microsoft.Diagnostics.NETCore.Client.dll",
+      "Sha256": "BAED2D25CA5BC53A3447C237D5572C92EAC1FD842807B3E72602A711749B1B22"
+    },
+    {
+      "Name": "Microsoft.Diagnostics.Runtime.dll",
+      "Sha256": "06F9910C8A37F8D4D758538E6DD307DE58BCFB3BB13E83658142C08087A25382"
+    },
+    {
+      "Name": "Microsoft.Diagnostics.Tracing.TraceEvent.dll",
+      "Sha256": "401E948DAC99D0F9756EF96D5A8B8E4736E19E9F82CE8CDD744495951E3A94BB"
+    },
+    {
+      "Name": "Microsoft.DotNet.PlatformAbstractions.dll",
+      "Sha256": "B1F4AD169FB192747F5D2D3111C01DB4257E3EC1F7F18F301F7FC4BE3B869FF3"
+    },
+    {
+      "Name": "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+      "Sha256": "9CCD830351AA28BC683D4F8D1CEFD9E724161F972D25BFB64EEE5BF55C48C5E3"
+    },
+    {
+      "Name": "Microsoft.Extensions.DependencyInjection.dll",
+      "Sha256": "2AA8182B5356A8CC5C35FC3641A87E814857D8D9BE399AC78F260343754D09E0"
+    },
+    {
+      "Name": "Microsoft.Extensions.Logging.Abstractions.dll",
+      "Sha256": "D575C9D1543CA726CE14DBDFFD103E93EA527CD46BB28316DA1F4122DBC55D56"
+    },
+    {
+      "Name": "Microsoft.Extensions.Logging.dll",
+      "Sha256": "183650081B551DFAD967A7CBF79946A229CB79458B8D04A12DB7C44B03BB9AB7"
+    },
+    {
+      "Name": "Microsoft.Extensions.Options.dll",
+      "Sha256": "786112CB2F6646EF1170219A8C0BB813C9F14A6781E67C6266414F55A679565D"
+    },
+    {
+      "Name": "Microsoft.Extensions.Primitives.dll",
+      "Sha256": "8CE9A85927EC7507B11FFE90080E7A811D51304A9E8B1DA20C350159BA403902"
+    },
+    {
+      "Name": "Perfolizer.dll",
+      "Sha256": "22A4A336DB943465CBDFC8D0A8E23E89DF3024D39F1C5954D97554B3DA39E300"
+    },
+    {
+      "Name": "Pragmastat.dll",
+      "Sha256": "E9B3FC36000E7FE3FB11D3EA6A65F3C9C7B17E03C9F5034306437D65972E8C51"
+    },
+    {
+      "Name": "System.CodeDom.dll",
+      "Sha256": "8D0CF191C86FEEA81C9875652C06E454ABE8DBFF66BEA9E4CB5F8AA2DC02F32A"
+    },
+    {
+      "Name": "System.Management.dll",
+      "Sha256": "0BE24B09DA5ABAD0B20EFCB58FAB14B0DEDC79B09D4FBDCB894BE268105A2195"
+    },
+    {
+      "Name": "TraceReloggerLib.dll",
+      "Sha256": "6830C0F1D3F3C17719181E73DD5CFA8CCBB3F3C575329D2120576545103467B5"
+    }
+  ],
+  "OptimizedSourceHashes": [
+    {
+      "Path": "src/BlueTusk.Documents/DocumentSession.cs",
+      "Sha256": "5E46264BDE3208EF74C182C446EFCB9952B62A3F3DF0A49EF115F37125F0367C"
+    },
+    {
+      "Path": "benchmarks/BlueTusk.Documents.LoadHarness/DocumentStagingBenchmarks.cs",
+      "Sha256": "8409D80F732105D90A0A915459E4668450E824357D8DDB75D20BE4923301678C"
+    },
+    {
+      "Path": "benchmarks/BlueTusk.Documents.LoadHarness/Program.cs",
+      "Sha256": "C716329F9A72363B4FEDD68D9A796D6FC8F0A9B0CAA9E229DC73AC001C79D88D"
+    },
+    {
+      "Path": "benchmarks/BlueTusk.Documents.LoadHarness/BlueTusk.Documents.LoadHarness.csproj",
+      "Sha256": "E787150F98F8A6342A7B04CE534F7FFB8FFE9B728D8BF5B0741F70B6BD065B17"
+    },
+    {
+      "Path": "Directory.Build.props",
+      "Sha256": "A608F6225B0A1966F7B9BF1603CDA5828D69A7C6332ECEC4A3CBB52945AD7689"
+    },
+    {
+      "Path": "Directory.Build.targets",
+      "Sha256": "302CF64E034D1EC14FD3237B509DEBC462926E68EB426199A95940839FF343EA"
+    },
+    {
+      "Path": "Directory.Packages.props",
+      "Sha256": "910DCB1ADC7004760671FA3CC26236D2EC1F7E1A44A396CC45BAA2B6DC23705F"
+    },
+    {
+      "Path": "global.json",
+      "Sha256": "49307341EA4847E81FE8D8BAE523ABB7AE411D6D2B940535E90FC090F17ADD1F"
+    }
+  ],
+  "Limits": "Exact retained executable dependencies, no provider restore/build and no database IO. Serialized controls are unchanged. Report allocations separately from short-run timing confidence intervals; no production or database-throughput qualification."
+}

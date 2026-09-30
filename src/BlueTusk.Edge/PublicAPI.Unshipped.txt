@@ -1,0 +1,200 @@
+#nullable enable
+const BlueTusk.Edge.EdgeOrderedMutationId.MaxSequence = 1152921504606846975 -> long
+BlueTusk.Edge.EdgeCachedDocument
+BlueTusk.Edge.EdgeCachedDocument.<Clone>$() -> BlueTusk.Edge.EdgeCachedDocument!
+BlueTusk.Edge.EdgeCachedDocument.Deconstruct(out string! Id, out long ServerRevision, out System.ReadOnlyMemory<byte> Payload, out bool Deleted, out System.Guid? PendingMutationId, out BlueTusk.Edge.EdgeMutationStatus? PendingStatus) -> void
+BlueTusk.Edge.EdgeCachedDocument.Deleted.get -> bool
+BlueTusk.Edge.EdgeCachedDocument.Deleted.init -> void
+BlueTusk.Edge.EdgeCachedDocument.EdgeCachedDocument(string! Id, long ServerRevision, System.ReadOnlyMemory<byte> Payload, bool Deleted, System.Guid? PendingMutationId, BlueTusk.Edge.EdgeMutationStatus? PendingStatus) -> void
+BlueTusk.Edge.EdgeCachedDocument.Equals(BlueTusk.Edge.EdgeCachedDocument? other) -> bool
+BlueTusk.Edge.EdgeCachedDocument.Id.get -> string!
+BlueTusk.Edge.EdgeCachedDocument.Id.init -> void
+BlueTusk.Edge.EdgeCachedDocument.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Edge.EdgeCachedDocument.Payload.init -> void
+BlueTusk.Edge.EdgeCachedDocument.PendingMutationId.get -> System.Guid?
+BlueTusk.Edge.EdgeCachedDocument.PendingMutationId.init -> void
+BlueTusk.Edge.EdgeCachedDocument.PendingStatus.get -> BlueTusk.Edge.EdgeMutationStatus?
+BlueTusk.Edge.EdgeCachedDocument.PendingStatus.init -> void
+BlueTusk.Edge.EdgeCachedDocument.ServerRevision.get -> long
+BlueTusk.Edge.EdgeCachedDocument.ServerRevision.init -> void
+BlueTusk.Edge.EdgeCachePage
+BlueTusk.Edge.EdgeCachePage.<Clone>$() -> BlueTusk.Edge.EdgeCachePage!
+BlueTusk.Edge.EdgeCachePage.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeCachedDocument!>! Items, out string? NextAfterId) -> void
+BlueTusk.Edge.EdgeCachePage.EdgeCachePage(System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeCachedDocument!>! Items, string? NextAfterId) -> void
+BlueTusk.Edge.EdgeCachePage.Equals(BlueTusk.Edge.EdgeCachePage? other) -> bool
+BlueTusk.Edge.EdgeCachePage.Items.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeCachedDocument!>!
+BlueTusk.Edge.EdgeCachePage.Items.init -> void
+BlueTusk.Edge.EdgeCachePage.NextAfterId.get -> string?
+BlueTusk.Edge.EdgeCachePage.NextAfterId.init -> void
+BlueTusk.Edge.EdgeCapacityException
+BlueTusk.Edge.EdgeCapacityException.EdgeCapacityException(string! message) -> void
+BlueTusk.Edge.EdgeChangeBatch
+BlueTusk.Edge.EdgeChangeBatch.<Clone>$() -> BlueTusk.Edge.EdgeChangeBatch!
+BlueTusk.Edge.EdgeChangeBatch.Deconstruct(out long FromPosition, out long ToPosition, out System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>! Records) -> void
+BlueTusk.Edge.EdgeChangeBatch.EdgeChangeBatch(long FromPosition, long ToPosition, System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>! Records) -> void
+BlueTusk.Edge.EdgeChangeBatch.Equals(BlueTusk.Edge.EdgeChangeBatch? other) -> bool
+BlueTusk.Edge.EdgeChangeBatch.FromPosition.get -> long
+BlueTusk.Edge.EdgeChangeBatch.FromPosition.init -> void
+BlueTusk.Edge.EdgeChangeBatch.Records.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>!
+BlueTusk.Edge.EdgeChangeBatch.Records.init -> void
+BlueTusk.Edge.EdgeChangeBatch.ToPosition.get -> long
+BlueTusk.Edge.EdgeChangeBatch.ToPosition.init -> void
+BlueTusk.Edge.EdgeCheckpoint
+BlueTusk.Edge.EdgeCheckpoint.<Clone>$() -> BlueTusk.Edge.EdgeCheckpoint!
+BlueTusk.Edge.EdgeCheckpoint.Deconstruct(out long Position, out bool SnapshotReady) -> void
+BlueTusk.Edge.EdgeCheckpoint.EdgeCheckpoint(long Position, bool SnapshotReady) -> void
+BlueTusk.Edge.EdgeCheckpoint.Equals(BlueTusk.Edge.EdgeCheckpoint? other) -> bool
+BlueTusk.Edge.EdgeCheckpoint.Position.get -> long
+BlueTusk.Edge.EdgeCheckpoint.Position.init -> void
+BlueTusk.Edge.EdgeCheckpoint.SnapshotReady.get -> bool
+BlueTusk.Edge.EdgeCheckpoint.SnapshotReady.init -> void
+BlueTusk.Edge.EdgeCheckpointMismatchException
+BlueTusk.Edge.EdgeCheckpointMismatchException.EdgeCheckpointMismatchException() -> void
+BlueTusk.Edge.EdgeEpochChangePolicy
+BlueTusk.Edge.EdgeEpochChangePolicy.DiscardPending = 1 -> BlueTusk.Edge.EdgeEpochChangePolicy
+BlueTusk.Edge.EdgeEpochChangePolicy.RejectIfPending = 0 -> BlueTusk.Edge.EdgeEpochChangePolicy
+BlueTusk.Edge.EdgeLeaseLostException
+BlueTusk.Edge.EdgeLeaseLostException.EdgeLeaseLostException() -> void
+BlueTusk.Edge.EdgeMutation
+BlueTusk.Edge.EdgeMutation.DocumentId.get -> string!
+BlueTusk.Edge.EdgeMutation.EdgeMutation(BlueTusk.Edge.EdgeScope! scope, System.Guid id, string! documentId, long expectedRevision, BlueTusk.Edge.EdgeMutationKind kind, System.ReadOnlyMemory<byte> payload) -> void
+BlueTusk.Edge.EdgeMutation.ExpectedRevision.get -> long
+BlueTusk.Edge.EdgeMutation.Fingerprint.get -> string!
+BlueTusk.Edge.EdgeMutation.Id.get -> System.Guid
+BlueTusk.Edge.EdgeMutation.Kind.get -> BlueTusk.Edge.EdgeMutationKind
+BlueTusk.Edge.EdgeMutation.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Edge.EdgeMutation.Scope.get -> BlueTusk.Edge.EdgeScope!
+BlueTusk.Edge.EdgeMutationIdentityException
+BlueTusk.Edge.EdgeMutationIdentityException.EdgeMutationIdentityException() -> void
+BlueTusk.Edge.EdgeMutationKind
+BlueTusk.Edge.EdgeMutationKind.Delete = 1 -> BlueTusk.Edge.EdgeMutationKind
+BlueTusk.Edge.EdgeMutationKind.Upsert = 0 -> BlueTusk.Edge.EdgeMutationKind
+BlueTusk.Edge.EdgeOrderedMutationId
+BlueTusk.Edge.EdgeMutationLease
+BlueTusk.Edge.EdgeMutationLease.<Clone>$() -> BlueTusk.Edge.EdgeMutationLease!
+BlueTusk.Edge.EdgeMutationLease.Deconstruct(out BlueTusk.Edge.EdgeMutation! Mutation, out long Fence, out System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Edge.EdgeMutationLease.EdgeMutationLease(BlueTusk.Edge.EdgeMutation! Mutation, long Fence, System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Edge.EdgeMutationLease.Equals(BlueTusk.Edge.EdgeMutationLease? other) -> bool
+BlueTusk.Edge.EdgeMutationLease.ExpiresAt.get -> System.DateTimeOffset
+BlueTusk.Edge.EdgeMutationLease.ExpiresAt.init -> void
+BlueTusk.Edge.EdgeMutationLease.Fence.get -> long
+BlueTusk.Edge.EdgeMutationLease.Fence.init -> void
+BlueTusk.Edge.EdgeMutationLease.Mutation.get -> BlueTusk.Edge.EdgeMutation!
+BlueTusk.Edge.EdgeMutationLease.Mutation.init -> void
+BlueTusk.Edge.EdgeMutationOutcome
+BlueTusk.Edge.EdgeMutationOutcome.<Clone>$() -> BlueTusk.Edge.EdgeMutationOutcome!
+BlueTusk.Edge.EdgeMutationOutcome.Deconstruct(out BlueTusk.Edge.EdgeMutationOutcomeKind Kind, out BlueTusk.Edge.EdgeRecord? ServerRecord) -> void
+BlueTusk.Edge.EdgeMutationOutcome.EdgeMutationOutcome(BlueTusk.Edge.EdgeMutationOutcomeKind Kind, BlueTusk.Edge.EdgeRecord? ServerRecord) -> void
+BlueTusk.Edge.EdgeMutationOutcome.Equals(BlueTusk.Edge.EdgeMutationOutcome? other) -> bool
+BlueTusk.Edge.EdgeMutationOutcome.Kind.get -> BlueTusk.Edge.EdgeMutationOutcomeKind
+BlueTusk.Edge.EdgeMutationOutcome.Kind.init -> void
+BlueTusk.Edge.EdgeMutationOutcome.ServerRecord.get -> BlueTusk.Edge.EdgeRecord?
+BlueTusk.Edge.EdgeMutationOutcome.ServerRecord.init -> void
+BlueTusk.Edge.EdgeMutationOutcomeKind
+BlueTusk.Edge.EdgeMutationOutcomeKind.Applied = 0 -> BlueTusk.Edge.EdgeMutationOutcomeKind
+BlueTusk.Edge.EdgeMutationOutcomeKind.Conflict = 1 -> BlueTusk.Edge.EdgeMutationOutcomeKind
+BlueTusk.Edge.EdgeMutationStatus
+BlueTusk.Edge.EdgeMutationStatus.Conflict = 2 -> BlueTusk.Edge.EdgeMutationStatus
+BlueTusk.Edge.EdgeMutationStatus.Leased = 1 -> BlueTusk.Edge.EdgeMutationStatus
+BlueTusk.Edge.EdgeMutationStatus.Pending = 0 -> BlueTusk.Edge.EdgeMutationStatus
+BlueTusk.Edge.EdgeRecord
+BlueTusk.Edge.EdgeRecord.Deleted.get -> bool
+BlueTusk.Edge.EdgeRecord.EdgeRecord(string! id, long revision, System.ReadOnlyMemory<byte> payload, bool deleted = false) -> void
+BlueTusk.Edge.EdgeRecord.Id.get -> string!
+BlueTusk.Edge.EdgeRecord.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Edge.EdgeRecord.Revision.get -> long
+BlueTusk.Edge.EdgeRevisionConflictException
+BlueTusk.Edge.EdgeRevisionConflictException.EdgeRevisionConflictException() -> void
+BlueTusk.Edge.EdgeScope
+BlueTusk.Edge.EdgeScope.<Clone>$() -> BlueTusk.Edge.EdgeScope!
+BlueTusk.Edge.EdgeScope.EdgeScope(string! tenant, string! id, long epoch) -> void
+BlueTusk.Edge.EdgeScope.Epoch.get -> long
+BlueTusk.Edge.EdgeScope.Equals(BlueTusk.Edge.EdgeScope? other) -> bool
+BlueTusk.Edge.EdgeScope.Id.get -> string!
+BlueTusk.Edge.EdgeScope.Tenant.get -> string!
+BlueTusk.Edge.EdgeScopeMismatchException
+BlueTusk.Edge.EdgeScopeMismatchException.EdgeScopeMismatchException() -> void
+BlueTusk.Edge.EdgeSnapshot
+BlueTusk.Edge.EdgeSnapshot.<Clone>$() -> BlueTusk.Edge.EdgeSnapshot!
+BlueTusk.Edge.EdgeSnapshot.Deconstruct(out System.Guid Id, out long Position) -> void
+BlueTusk.Edge.EdgeSnapshot.EdgeSnapshot(System.Guid Id, long Position) -> void
+BlueTusk.Edge.EdgeSnapshot.Equals(BlueTusk.Edge.EdgeSnapshot? other) -> bool
+BlueTusk.Edge.EdgeSnapshot.Id.get -> System.Guid
+BlueTusk.Edge.EdgeSnapshot.Id.init -> void
+BlueTusk.Edge.EdgeSnapshot.Position.get -> long
+BlueTusk.Edge.EdgeSnapshot.Position.init -> void
+BlueTusk.Edge.EdgeSynchronizationCoordinator
+BlueTusk.Edge.EdgeSynchronizationCoordinator.EdgeSynchronizationCoordinator(BlueTusk.Edge.IEdgeLocalStore! store, BlueTusk.Edge.IEdgeRemoteTransport! transport) -> void
+BlueTusk.Edge.EdgeSynchronizationCoordinator.SynchronizeAsync(BlueTusk.Edge.EdgeScope! scope, int maxPushes = 32, int maxChangeBatches = 32, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.EdgeValidation
+BlueTusk.Edge.IEdgeLocalStore
+BlueTusk.Edge.IEdgeOrderedLocalStore
+BlueTusk.Edge.IEdgeOrderedLocalStore.EnqueueOrderedAsync(BlueTusk.Edge.EdgeScope! scope, string! documentId, long expectedRevision, BlueTusk.Edge.EdgeMutationKind kind, System.ReadOnlyMemory<byte> payload, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutation!>
+BlueTusk.Edge.IEdgeOrderedLocalStore.MarkOrderedReceiptConfirmedAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeOrderedLocalStore.MarkOrderedReceiptHorizonAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid throughMutationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeOrderedLocalStore.ReadConfirmedOrderedHorizonAsync(BlueTusk.Edge.EdgeScope! scope, int maxReceipts = 1000, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Guid?>
+BlueTusk.Edge.IEdgeOrderedLocalStore.ReadNextUnconfirmedOrderedReceiptAsync(BlueTusk.Edge.EdgeScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutation?>
+BlueTusk.Edge.IEdgeOrderedReceiptTransport
+BlueTusk.Edge.IEdgeOrderedReceiptTransport.AdvanceOrderedReceiptHorizonAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid throughMutationId, int maxReceipts = 1000, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeOrderedReceiptTransport.FinalizeMutationReceiptAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeLocalStore.AcknowledgeAsync(BlueTusk.Edge.EdgeMutationLease! lease, BlueTusk.Edge.EdgeMutationOutcome! outcome, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeLocalStore.ActivateScopeAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeEpochChangePolicy policy = BlueTusk.Edge.EdgeEpochChangePolicy.RejectIfPending, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeLocalStore.ApplyChangesAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeChangeBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeLocalStore.ApplySnapshotBatchAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid snapshotId, System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>! records, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeLocalStore.BeginSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeSnapshot! snapshot, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeLocalStore.ClaimAsync(BlueTusk.Edge.EdgeScope! scope, System.TimeSpan leaseDuration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutationLease?>
+BlueTusk.Edge.IEdgeLocalStore.CommitSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid snapshotId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeLocalStore.EnqueueAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeLocalStore.GetAsync(BlueTusk.Edge.EdgeScope! scope, string! id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeCachedDocument?>
+BlueTusk.Edge.IEdgeLocalStore.GetCheckpointAsync(BlueTusk.Edge.EdgeScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeCheckpoint!>
+BlueTusk.Edge.IEdgeLocalStore.ReadPageAsync(BlueTusk.Edge.EdgeScope! scope, int pageSize = 100, string? afterId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeCachePage!>
+BlueTusk.Edge.IEdgeRemoteTransport
+BlueTusk.Edge.IEdgeRemoteTransport.ApplyMutationAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutationOutcome!>
+BlueTusk.Edge.IEdgeRemoteTransport.BeginSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeSnapshot!>
+BlueTusk.Edge.IEdgeRemoteTransport.ReadChangesAsync(BlueTusk.Edge.EdgeScope! scope, long afterPosition, int maxRecords, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeChangeBatch?>
+BlueTusk.Edge.IEdgeRemoteTransport.ReadSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeSnapshot! snapshot, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>!>!
+override BlueTusk.Edge.EdgeCachedDocument.Equals(object? obj) -> bool
+override BlueTusk.Edge.EdgeCachedDocument.GetHashCode() -> int
+override BlueTusk.Edge.EdgeCachedDocument.ToString() -> string!
+override BlueTusk.Edge.EdgeCachePage.Equals(object? obj) -> bool
+override BlueTusk.Edge.EdgeCachePage.GetHashCode() -> int
+override BlueTusk.Edge.EdgeCachePage.ToString() -> string!
+override BlueTusk.Edge.EdgeChangeBatch.Equals(object? obj) -> bool
+override BlueTusk.Edge.EdgeChangeBatch.GetHashCode() -> int
+override BlueTusk.Edge.EdgeChangeBatch.ToString() -> string!
+override BlueTusk.Edge.EdgeCheckpoint.Equals(object? obj) -> bool
+override BlueTusk.Edge.EdgeCheckpoint.GetHashCode() -> int
+override BlueTusk.Edge.EdgeCheckpoint.ToString() -> string!
+override BlueTusk.Edge.EdgeMutationLease.Equals(object? obj) -> bool
+override BlueTusk.Edge.EdgeMutationLease.GetHashCode() -> int
+override BlueTusk.Edge.EdgeMutationLease.ToString() -> string!
+override BlueTusk.Edge.EdgeMutationOutcome.Equals(object? obj) -> bool
+override BlueTusk.Edge.EdgeMutationOutcome.GetHashCode() -> int
+override BlueTusk.Edge.EdgeMutationOutcome.ToString() -> string!
+override BlueTusk.Edge.EdgeScope.Equals(object? obj) -> bool
+override BlueTusk.Edge.EdgeScope.GetHashCode() -> int
+override BlueTusk.Edge.EdgeScope.ToString() -> string!
+override BlueTusk.Edge.EdgeSnapshot.Equals(object? obj) -> bool
+override BlueTusk.Edge.EdgeSnapshot.GetHashCode() -> int
+override BlueTusk.Edge.EdgeSnapshot.ToString() -> string!
+static BlueTusk.Edge.EdgeCachedDocument.operator !=(BlueTusk.Edge.EdgeCachedDocument? left, BlueTusk.Edge.EdgeCachedDocument? right) -> bool
+static BlueTusk.Edge.EdgeCachedDocument.operator ==(BlueTusk.Edge.EdgeCachedDocument? left, BlueTusk.Edge.EdgeCachedDocument? right) -> bool
+static BlueTusk.Edge.EdgeCachePage.operator !=(BlueTusk.Edge.EdgeCachePage? left, BlueTusk.Edge.EdgeCachePage? right) -> bool
+static BlueTusk.Edge.EdgeCachePage.operator ==(BlueTusk.Edge.EdgeCachePage? left, BlueTusk.Edge.EdgeCachePage? right) -> bool
+static BlueTusk.Edge.EdgeChangeBatch.operator !=(BlueTusk.Edge.EdgeChangeBatch? left, BlueTusk.Edge.EdgeChangeBatch? right) -> bool
+static BlueTusk.Edge.EdgeChangeBatch.operator ==(BlueTusk.Edge.EdgeChangeBatch? left, BlueTusk.Edge.EdgeChangeBatch? right) -> bool
+static BlueTusk.Edge.EdgeCheckpoint.operator !=(BlueTusk.Edge.EdgeCheckpoint? left, BlueTusk.Edge.EdgeCheckpoint? right) -> bool
+static BlueTusk.Edge.EdgeCheckpoint.operator ==(BlueTusk.Edge.EdgeCheckpoint? left, BlueTusk.Edge.EdgeCheckpoint? right) -> bool
+static BlueTusk.Edge.EdgeMutationLease.operator !=(BlueTusk.Edge.EdgeMutationLease? left, BlueTusk.Edge.EdgeMutationLease? right) -> bool
+static BlueTusk.Edge.EdgeMutationLease.operator ==(BlueTusk.Edge.EdgeMutationLease? left, BlueTusk.Edge.EdgeMutationLease? right) -> bool
+static BlueTusk.Edge.EdgeMutationOutcome.operator !=(BlueTusk.Edge.EdgeMutationOutcome? left, BlueTusk.Edge.EdgeMutationOutcome? right) -> bool
+static BlueTusk.Edge.EdgeMutationOutcome.operator ==(BlueTusk.Edge.EdgeMutationOutcome? left, BlueTusk.Edge.EdgeMutationOutcome? right) -> bool
+static BlueTusk.Edge.EdgeScope.operator !=(BlueTusk.Edge.EdgeScope? left, BlueTusk.Edge.EdgeScope? right) -> bool
+static BlueTusk.Edge.EdgeScope.operator ==(BlueTusk.Edge.EdgeScope? left, BlueTusk.Edge.EdgeScope? right) -> bool
+static BlueTusk.Edge.EdgeSnapshot.operator !=(BlueTusk.Edge.EdgeSnapshot? left, BlueTusk.Edge.EdgeSnapshot? right) -> bool
+static BlueTusk.Edge.EdgeSnapshot.operator ==(BlueTusk.Edge.EdgeSnapshot? left, BlueTusk.Edge.EdgeSnapshot? right) -> bool
+static BlueTusk.Edge.EdgeOrderedMutationId.Create(string! streamId, long sequence) -> System.Guid
+static BlueTusk.Edge.EdgeOrderedMutationId.NewStreamId() -> string!
+static BlueTusk.Edge.EdgeOrderedMutationId.TryParse(System.Guid id, out string! streamId, out long sequence) -> bool
+static BlueTusk.Edge.EdgeValidation.JsonObject(System.ReadOnlyMemory<byte> payload) -> void
+static BlueTusk.Edge.EdgeValidation.Key(string! value, string! parameterName, int maxBytes) -> void

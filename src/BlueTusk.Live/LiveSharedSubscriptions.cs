@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Channels;
 
 namespace BlueTusk.Live;
@@ -178,6 +180,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     private readonly LiveQuerySession<T, TKey> _session;
     private readonly ILiveReplayStore _replayStore;
     private readonly LiveSharedSubscriptionOptions _options;
+    private readonly JsonTypeInfo<LiveResultEvent<T, TKey>>? _eventTypeInfo;
     private readonly Dictionary<Guid, Subscriber> _subscribers = [];
     private readonly object _subscribersGate = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -199,6 +202,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     private long _replayBytesAppended;
     private string? _lastDisconnectCode;
     private int _started;
+    private bool _startSequenceInitialized;
     private int _disposed;
 
     public LiveSharedSubscription(
@@ -223,6 +227,18 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     }
 
     public LiveSubscriptionIdentity Identity => _session.Identity;
+
+    /// <summary>Uses application-supplied JSON metadata for trimming and native AOT replay serialization.</summary>
+    internal LiveSharedSubscription(
+        LiveQuerySession<T, TKey> session,
+        ILiveReplayStore replayStore,
+        JsonTypeInfo<LiveResultEvent<T, TKey>> eventTypeInfo,
+        LiveSharedSubscriptionOptions? options)
+        : this(session, replayStore, options)
+    {
+        ArgumentNullException.ThrowIfNull(eventTypeInfo);
+        _eventTypeInfo = eventTypeInfo;
+    }
 
     public LiveSharedSubscriptionStatus Status => new(
         Identity,
@@ -256,7 +272,14 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 throw new InvalidOperationException("A shared Live subscription can be started only once.");
             }
 
-            _ = await _session.StartPersistedAsync(PersistAsync, cancellationToken).ConfigureAwait(false);
+            if (!_startSequenceInitialized)
+            {
+                var replayHead = await _replayStore.ReadAsync(Identity, 0, 1, cancellationToken).ConfigureAwait(false);
+                Interlocked.Exchange(ref _persistedSequence, replayHead.LastSequence);
+                _startSequenceInitialized = true;
+            }
+            _ = await _session.StartPersistedAsync(PersistAsync, cancellationToken,
+                checked(_persistedSequence + 1), _persistedSequence == 0 ? null : LiveResetReason.ServerRestart).ConfigureAwait(false);
             _ = AcceptPersistedEvents();
             Volatile.Write(ref _started, 1);
         }
@@ -280,6 +303,27 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 return recovered;
             }
 
+            var replayEvents = AcceptPersistedEvents();
+            Publish(replayEvents);
+            return recovered + replayEvents.Length;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <summary>Persists and publishes an authoritative reset through the normal replay/fan-out boundary.</summary>
+    public async ValueTask<int> ResetAsync(LiveResetReason reason, CancellationToken cancellationToken = default)
+    {
+        if (!Enum.IsDefined(reason)) { throw new ArgumentOutOfRangeException(nameof(reason)); }
+        ThrowIfDisposed();
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            EnsureStarted();
+            var recovered = await RecoverPendingAsync(cancellationToken).ConfigureAwait(false);
+            _ = await _session.ResetPersistedAsync(reason, PersistAsync, cancellationToken).ConfigureAwait(false);
             var replayEvents = AcceptPersistedEvents();
             Publish(replayEvents);
             return recovered + replayEvents.Length;
@@ -480,7 +524,19 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
             var serialized = new LiveReplayEvent[batch.Events.Count];
             for (var index = 0; index < serialized.Length; index++)
             {
-                serialized[index] = LiveReplayJsonSerializer.Serialize(batch.Events[index]);
+                if (_eventTypeInfo is not null)
+                {
+                    serialized[index] = new LiveReplayEvent(batch.Events[index].Sequence, batch.Events[index].Kind,
+                        LiveReplayJsonSerializer.ContentType, JsonSerializer.SerializeToUtf8Bytes(batch.Events[index], _eventTypeInfo));
+                }
+                else if (RuntimeFeature.IsDynamicCodeSupported)
+                {
+                    serialized[index] = LiveReplayJsonSerializer.Serialize(batch.Events[index]);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Native AOT Live subscriptions require source-generated replay JSON metadata.");
+                }
             }
 
             _pendingReplayBatch = batch;
@@ -790,4 +846,12 @@ public sealed class LiveSubscriptionQuotaException : LiveSubscriptionException
         : base(message)
     {
     }
+}
+
+public static class LiveSharedSubscriptions
+{
+    public static LiveSharedSubscription<T, TKey> CreateWithJsonMetadata<T, TKey>(
+        LiveQuerySession<T, TKey> session, ILiveReplayStore replayStore,
+        JsonTypeInfo<LiveResultEvent<T, TKey>> eventTypeInfo, LiveSharedSubscriptionOptions? options = null)
+        where TKey : notnull => new(session, replayStore, eventTypeInfo, options);
 }

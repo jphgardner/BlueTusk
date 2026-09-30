@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph')]
+    [ValidateSet('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph',
+        'Events', 'Jobs', 'Documents', 'Projections', 'Search', 'Schema', 'Sql', 'Studio', 'Edge', 'Workflows')]
     [string] $Family,
 
     [string] $Configuration = 'Release',
@@ -86,6 +87,13 @@ $publicationChannel = [string]$publication.channel
 if ($publicationChannel -notin @('stable', 'preview'))
 {
     throw "Product family '$Family' has unsupported publication channel '$publicationChannel'."
+}
+
+if ($Family -in @('Events', 'Jobs', 'Documents', 'Schema', 'Projections',
+    'Search', 'Sql', 'Studio', 'Edge', 'Workflows'))
+{
+    & (Join-Path $PSScriptRoot 'verify-expansion-release-policy.ps1') -Family $Family |
+        Out-Null
 }
 
 $tagPrefix = [string]$publication.tagPrefix
@@ -327,7 +335,7 @@ if ($ValidateOnly)
         $blockedReleaseDependencies -join ','
     }
 
-    $mode = if ($Prerelease) { "prerelease/$familyVersion" } elseif ($Candidate) { 'candidate' } else { 'stable' }
+    $mode = if ($Prerelease) { "prerelease/$familyVersion" } elseif ($Candidate) { 'candidate' } else { $publicationChannel }
     Write-Output "Validated $Family release train with $($projects.Count) registered project(s) and $($npmPackages.Count) npm package(s); mode=$mode; publicationEnabled=$publicationEnabled; channel=$publicationChannel; releaseDependencies=$dependencySummary; blockedDependencies=$blockedSummary; exactCommitWorkflows=$($requiredWorkflowEvidence.Count)."
     return
 }

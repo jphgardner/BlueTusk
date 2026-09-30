@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Schema</BlueTuskProductFamily>
+    <Description>Consistent PostgreSQL catalogue snapshots, canonical schema contracts, and consumer compatibility analysis.</Description>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Schema.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Client\BlueTusk.Client.csproj" />
+    <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+  </ItemGroup>
+</Project>

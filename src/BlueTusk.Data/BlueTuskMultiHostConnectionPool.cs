@@ -1,5 +1,8 @@
+using System.Net.Sockets;
+using BlueTusk.Client;
 using BlueTusk.Diagnostics;
 using BlueTusk.Security;
+using BlueTusk.Transport;
 
 namespace BlueTusk.Data;
 
@@ -8,16 +11,21 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
     private readonly PoolEntry[] _entries;
     private readonly BlueTuskTargetSessionAttributes _target;
     private readonly BlueTuskLoadBalanceHosts _loadBalanceHosts;
+    private readonly TimeProvider _timeProvider;
+    private static readonly TimeSpan FailedHostRecheckInterval = TimeSpan.FromSeconds(10);
     private int _disposed;
 
     internal BlueTuskMultiHostConnectionPool(
         BlueTuskConnectionStringBuilder settings,
-        BlueTuskClientConfiguration? clientConfiguration = null)
+        BlueTuskClientConfiguration? clientConfiguration = null,
+        TimeProvider? timeProvider = null,
+        Func<BlueTuskConnectionStringBuilder, BlueTuskConnectionPool>? poolFactory = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         settings.Validate();
         _target = settings.TargetSessionAttributes;
         _loadBalanceHosts = settings.LoadBalanceHosts;
+        _timeProvider = timeProvider ?? TimeProvider.System;
         _entries = settings.HostEndpoints
             .Select(endpoint =>
             {
@@ -30,7 +38,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                 };
                 return new PoolEntry(
                     endpoint,
-                    new BlueTuskConnectionPool(
+                    poolFactory?.Invoke(hostSettings) ?? new BlueTuskConnectionPool(
                         hostSettings,
                         clientConfiguration: clientConfiguration));
             })
@@ -59,16 +67,22 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
     internal override IReadOnlyDictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics> HostStatistics =>
         _entries.ToDictionary(static entry => entry.Endpoint, static entry => entry.Pool.Statistics);
 
-    internal override BlueTuskPooledSession Rent()
+    internal override BlueTuskPooledSession Rent() => RentCore(waitForProbe: true);
+
+    private BlueTuskPooledSession RentCore(bool waitForProbe)
     {
         ThrowIfDisposed();
-        var entries = GetOrderedEntries();
+        var entries = GetOrderedEntries(out var firstEndpoint);
         var failures = new List<Exception>();
         BlueTuskPooledSession? fallback = null;
         var sawSaturatedPool = false;
+        Task? pendingProbe = null;
         for (var index = 0; index < entries.Length; index++)
         {
             var entry = entries[index];
+            if ((sawSaturatedPool || fallback is not null) && entry.IsCooling(_timeProvider, _timeProvider.GetTimestamp())) { continue; }
+            if (!entry.TryBeginProbe(out var probe, out var pending))
+            { pendingProbe ??= pending; continue; }
             RecordRetry(index, entry.Endpoint);
             try
             {
@@ -80,81 +94,11 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                 }
 
                 var selection = SelectLease(lease);
+                entry.MarkHealthy();
                 if (selection == LeaseSelection.Accept)
                 {
                     ReturnFallback(fallback);
-                    RecordFailover(entries[0].Endpoint, lease.Session.Endpoint);
-                    return lease;
-                }
-
-                if (selection == LeaseSelection.Fallback && fallback is null)
-                {
-                    fallback = lease;
-                }
-                else
-                {
-                    failures.Add(new BlueTuskHostPoolSelectionException(
-                        entry.Endpoint,
-                        _target,
-                        lease.Session.IsPrimary,
-                        lease.Session.IsReadOnly));
-                    lease.Owner.Return(lease);
-                }
-            }
-            catch (BlueTuskAuthenticationException)
-            {
-                ReturnFallback(fallback);
-                throw;
-            }
-            catch (Exception exception) when (exception is not OutOfMemoryException)
-            {
-                failures.Add(new BlueTuskHostPoolException(entry.Endpoint, exception));
-            }
-        }
-
-        if (fallback is not null)
-        {
-            RecordFailover(entries[0].Endpoint, fallback.Session.Endpoint);
-            return fallback;
-        }
-
-        if (sawSaturatedPool)
-        {
-            return RentFromSaturatedPools(entries, failures);
-        }
-
-        throw CreatePoolException(failures);
-    }
-
-    internal override async ValueTask<BlueTuskPooledSession> RentAsync(
-        CancellationToken cancellationToken)
-    {
-        ThrowIfDisposed();
-        var entries = GetOrderedEntries();
-        var failures = new List<Exception>();
-        BlueTuskPooledSession? fallback = null;
-        var sawSaturatedPool = false;
-        for (var index = 0; index < entries.Length; index++)
-        {
-            var entry = entries[index];
-            RecordRetry(index, entry.Endpoint);
-            cancellationToken.ThrowIfCancellationRequested();
-            try
-            {
-                var lease = await entry.Pool.TryRentAsync(cancellationToken).ConfigureAwait(false);
-                if (lease is null)
-                {
-                    sawSaturatedPool = true;
-                    continue;
-                }
-
-                var selection = await SelectLeaseAsync(
-                    lease,
-                    cancellationToken).ConfigureAwait(false);
-                if (selection == LeaseSelection.Accept)
-                {
-                    ReturnFallback(fallback);
-                    RecordFailover(entries[0].Endpoint, lease.Session.Endpoint);
+                    RecordFailover(firstEndpoint, lease.Session.Endpoint);
                     return lease;
                 }
 
@@ -184,13 +128,110 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
+                MarkUnavailable(entry, exception);
                 failures.Add(new BlueTuskHostPoolException(entry.Endpoint, exception));
             }
+            finally { entry.EndProbe(probe); }
         }
 
         if (fallback is not null)
         {
-            RecordFailover(entries[0].Endpoint, fallback.Session.Endpoint);
+            RecordFailover(firstEndpoint, fallback.Session.Endpoint);
+            return fallback;
+        }
+
+        if (sawSaturatedPool)
+        {
+            return RentFromSaturatedPools(entries, failures, firstEndpoint, waitForProbe);
+        }
+
+        if (pendingProbe is not null && waitForProbe)
+        {
+            pendingProbe.GetAwaiter().GetResult();
+            return RentCore(waitForProbe: false);
+        }
+
+        if (pendingProbe is not null && failures.Count == 0)
+        { failures.Add(new InvalidOperationException("A host availability probe is already in progress.")); }
+
+        throw CreatePoolException(failures);
+    }
+
+    internal override ValueTask<BlueTuskPooledSession> RentAsync(
+        CancellationToken cancellationToken) => RentAsyncCore(waitForProbe: true, cancellationToken);
+
+    private async ValueTask<BlueTuskPooledSession> RentAsyncCore(
+        bool waitForProbe, CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        var entries = GetOrderedEntries(out var firstEndpoint);
+        var failures = new List<Exception>();
+        BlueTuskPooledSession? fallback = null;
+        var sawSaturatedPool = false;
+        Task? pendingProbe = null;
+        for (var index = 0; index < entries.Length; index++)
+        {
+            var entry = entries[index];
+            cancellationToken.ThrowIfCancellationRequested();
+            if ((sawSaturatedPool || fallback is not null) && entry.IsCooling(_timeProvider, _timeProvider.GetTimestamp())) { continue; }
+            if (!entry.TryBeginProbe(out var probe, out var pending))
+            { pendingProbe ??= pending; continue; }
+            RecordRetry(index, entry.Endpoint);
+            try
+            {
+                var lease = await entry.Pool.TryRentAsync(cancellationToken).ConfigureAwait(false);
+                if (lease is null)
+                {
+                    sawSaturatedPool = true;
+                    continue;
+                }
+
+                var selection = await SelectLeaseAsync(
+                    lease,
+                    cancellationToken).ConfigureAwait(false);
+                entry.MarkHealthy();
+                if (selection == LeaseSelection.Accept)
+                {
+                    ReturnFallback(fallback);
+                    RecordFailover(firstEndpoint, lease.Session.Endpoint);
+                    return lease;
+                }
+
+                if (selection == LeaseSelection.Fallback && fallback is null)
+                {
+                    fallback = lease;
+                }
+                else
+                {
+                    failures.Add(new BlueTuskHostPoolSelectionException(
+                        entry.Endpoint,
+                        _target,
+                        lease.Session.IsPrimary,
+                        lease.Session.IsReadOnly));
+                    lease.Owner.Return(lease);
+                }
+            }
+            catch (BlueTuskAuthenticationException)
+            {
+                ReturnFallback(fallback);
+                throw;
+            }
+            catch (OperationCanceledException)
+            {
+                ReturnFallback(fallback);
+                throw;
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                MarkUnavailable(entry, exception);
+                failures.Add(new BlueTuskHostPoolException(entry.Endpoint, exception));
+            }
+            finally { entry.EndProbe(probe); }
+        }
+
+        if (fallback is not null)
+        {
+            RecordFailover(firstEndpoint, fallback.Session.Endpoint);
             return fallback;
         }
 
@@ -199,8 +240,19 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
             return await RentFromSaturatedPoolsAsync(
                 entries,
                 failures,
+                firstEndpoint,
+                waitForProbe,
                 cancellationToken).ConfigureAwait(false);
         }
+
+        if (pendingProbe is not null && waitForProbe)
+        {
+            await pendingProbe.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return await RentAsyncCore(waitForProbe: false, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (pendingProbe is not null && failures.Count == 0)
+        { failures.Add(new InvalidOperationException("A host availability probe is already in progress.")); }
 
         throw CreatePoolException(failures);
     }
@@ -235,6 +287,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         foreach (var entry in _entries)
         {
             entry.Pool.Clear();
+            entry.MarkHealthy();
         }
     }
 
@@ -244,6 +297,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         foreach (var entry in _entries)
         {
             await entry.Pool.ClearAsync().ConfigureAwait(false);
+            entry.MarkHealthy();
         }
     }
 
@@ -276,12 +330,19 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
     private async ValueTask<BlueTuskPooledSession> RentFromSaturatedPoolsAsync(
         IReadOnlyList<PoolEntry> entries,
         List<Exception> failures,
+        BlueTuskHostEndpoint firstEndpoint,
+        bool waitForProbe,
         CancellationToken cancellationToken)
     {
         BlueTuskPooledSession? fallback = null;
+        Task? pendingProbe = null;
         for (var index = 0; index < entries.Count; index++)
         {
             var entry = entries[index];
+            cancellationToken.ThrowIfCancellationRequested();
+            if (fallback is not null && entry.IsCooling(_timeProvider, _timeProvider.GetTimestamp())) { continue; }
+            if (!entry.TryBeginProbe(out var probe, out var pending))
+            { pendingProbe ??= pending; continue; }
             RecordRetry(index, entry.Endpoint);
             try
             {
@@ -289,10 +350,11 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                 var selection = await SelectLeaseAsync(
                     lease,
                     cancellationToken).ConfigureAwait(false);
+                entry.MarkHealthy();
                 if (selection == LeaseSelection.Accept)
                 {
                     ReturnFallback(fallback);
-                    RecordFailover(entries[0].Endpoint, lease.Session.Endpoint);
+                    RecordFailover(firstEndpoint, lease.Session.Endpoint);
                     return lease;
                 }
 
@@ -309,6 +371,11 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                         lease.Session.IsReadOnly));
                     lease.Owner.Return(lease);
                 }
+            }
+            catch (BlueTuskAuthenticationException)
+            {
+                ReturnFallback(fallback);
+                throw;
             }
             catch (OperationCanceledException)
             {
@@ -317,36 +384,54 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
+                MarkUnavailable(entry, exception);
                 failures.Add(new BlueTuskHostPoolException(entry.Endpoint, exception));
             }
+            finally { entry.EndProbe(probe); }
         }
 
         if (fallback is not null)
         {
-            RecordFailover(entries[0].Endpoint, fallback.Session.Endpoint);
+            RecordFailover(firstEndpoint, fallback.Session.Endpoint);
             return fallback;
         }
+
+        if (pendingProbe is not null && waitForProbe)
+        {
+            await pendingProbe.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return await RentAsyncCore(waitForProbe: false, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (pendingProbe is not null && failures.Count == 0)
+        { failures.Add(new InvalidOperationException("A host availability probe is already in progress.")); }
 
         throw CreatePoolException(failures);
     }
 
     private BlueTuskPooledSession RentFromSaturatedPools(
         IReadOnlyList<PoolEntry> entries,
-        List<Exception> failures)
+        List<Exception> failures,
+        BlueTuskHostEndpoint firstEndpoint,
+        bool waitForProbe)
     {
         BlueTuskPooledSession? fallback = null;
+        Task? pendingProbe = null;
         for (var index = 0; index < entries.Count; index++)
         {
             var entry = entries[index];
+            if (fallback is not null && entry.IsCooling(_timeProvider, _timeProvider.GetTimestamp())) { continue; }
+            if (!entry.TryBeginProbe(out var probe, out var pending))
+            { pendingProbe ??= pending; continue; }
             RecordRetry(index, entry.Endpoint);
             try
             {
                 var lease = entry.Pool.Rent();
                 var selection = SelectLease(lease);
+                entry.MarkHealthy();
                 if (selection == LeaseSelection.Accept)
                 {
                     ReturnFallback(fallback);
-                    RecordFailover(entries[0].Endpoint, lease.Session.Endpoint);
+                    RecordFailover(firstEndpoint, lease.Session.Endpoint);
                     return lease;
                 }
 
@@ -364,17 +449,38 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                     lease.Owner.Return(lease);
                 }
             }
+            catch (BlueTuskAuthenticationException)
+            {
+                ReturnFallback(fallback);
+                throw;
+            }
+            catch (OperationCanceledException)
+            {
+                ReturnFallback(fallback);
+                throw;
+            }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
+                MarkUnavailable(entry, exception);
                 failures.Add(new BlueTuskHostPoolException(entry.Endpoint, exception));
             }
+            finally { entry.EndProbe(probe); }
         }
 
         if (fallback is not null)
         {
-            RecordFailover(entries[0].Endpoint, fallback.Session.Endpoint);
+            RecordFailover(firstEndpoint, fallback.Session.Endpoint);
             return fallback;
         }
+
+        if (pendingProbe is not null && waitForProbe)
+        {
+            pendingProbe.GetAwaiter().GetResult();
+            return RentCore(waitForProbe: false);
+        }
+
+        if (pendingProbe is not null && failures.Count == 0)
+        { failures.Add(new InvalidOperationException("A host availability probe is already in progress.")); }
 
         throw CreatePoolException(failures);
     }
@@ -471,15 +577,64 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                 : LeaseSelection.Reject;
     }
 
-    private PoolEntry[] GetOrderedEntries()
+    private PoolEntry[] GetOrderedEntries(out BlueTuskHostEndpoint firstEndpoint)
     {
-        var entries = _entries.ToArray();
+        var entries = _loadBalanceHosts == BlueTuskLoadBalanceHosts.Random ? _entries.ToArray() : _entries;
         if (_loadBalanceHosts == BlueTuskLoadBalanceHosts.Random)
         {
             Random.Shared.Shuffle(entries);
         }
 
-        return entries;
+        firstEndpoint = entries[0].Endpoint;
+        var now = _timeProvider.GetTimestamp();
+        var hasCooling = false;
+        foreach (var entry in entries)
+        { if (entry.IsCooling(_timeProvider, now)) { hasCooling = true; break; } }
+        if (!hasCooling) { return entries; }
+        var ordered = new PoolEntry[entries.Length];
+        var available = 0;
+        var deferred = entries.Length - 1;
+        foreach (var entry in entries)
+        {
+            if (entry.IsCooling(_timeProvider, now)) { ordered[deferred--] = entry; }
+            else { ordered[available++] = entry; }
+        }
+        Array.Reverse(ordered, available, ordered.Length - available);
+        return ordered;
+    }
+
+    private void MarkUnavailable(PoolEntry entry, Exception exception)
+    {
+        // Role mismatch, authentication rejection and caller cancellation are
+        // never evidence that an endpoint is unavailable.
+        if (IsAvailabilityFailure(exception))
+        { entry.MarkUnavailable(_timeProvider.GetTimestamp()); }
+    }
+
+    private static bool IsAvailabilityFailure(Exception exception)
+    {
+        var availability = false;
+        // Single-host startup wraps its failure in an aggregate. Follow only a
+        // bounded unambiguous cause chain, including normalized connect timeouts.
+        for (var depth = 0; depth < 16; depth++)
+        {
+            if (exception is BlueTuskAuthenticationException or OperationCanceledException or
+                System.Security.Authentication.AuthenticationException) { return false; }
+            if (exception is BlueTuskTransportException) { return true; }
+            if (exception is BlueTuskServerException server)
+            { return server.SqlState is "57P01" or "57P02" or "57P03" or "53300"; }
+            if (exception is BlueTuskException { SqlState: not null } database)
+            { return database.SqlState is "57P01" or "57P02" or "57P03" or "53300"; }
+            availability |= exception is IOException or SocketException or TimeoutException;
+            if (exception is AggregateException aggregate)
+            {
+                if (aggregate.InnerExceptions.Count != 1) { return false; }
+                exception = aggregate.InnerExceptions[0];
+            }
+            else if (exception.InnerException is { } inner) { exception = inner; }
+            else { return availability; }
+        }
+        return false;
     }
 
     private static bool MatchesTarget(
@@ -529,7 +684,35 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
 
     private sealed record PoolEntry(
         BlueTuskHostEndpoint Endpoint,
-        BlueTuskConnectionPool Pool);
+        BlueTuskConnectionPool Pool)
+    {
+        private long _unavailableSince = long.MinValue;
+        private TaskCompletionSource<bool>? _probe;
+        internal bool IsCooling(TimeProvider clock, long now)
+        {
+            var since = Volatile.Read(ref _unavailableSince);
+            return since != long.MinValue && clock.GetElapsedTime(since, now) < FailedHostRecheckInterval;
+        }
+        internal void MarkUnavailable(long now) => Volatile.Write(ref _unavailableSince, now);
+        internal void MarkHealthy() => Volatile.Write(ref _unavailableSince, long.MinValue);
+        internal bool TryBeginProbe(out TaskCompletionSource<bool>? probe, out Task? pending)
+        {
+            probe = null;
+            pending = null;
+            if (Volatile.Read(ref _unavailableSince) == long.MinValue) { return true; }
+            var candidate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var current = Interlocked.CompareExchange(ref _probe, candidate, null);
+            if (current is null) { probe = candidate; return true; }
+            pending = current.Task;
+            return false;
+        }
+        internal void EndProbe(TaskCompletionSource<bool>? probe)
+        {
+            if (probe is null) { return; }
+            _ = Interlocked.CompareExchange(ref _probe, null, probe);
+            probe.TrySetResult(true);
+        }
+    }
 
     private sealed class BlueTuskHostPoolException(
         BlueTuskHostEndpoint endpoint,

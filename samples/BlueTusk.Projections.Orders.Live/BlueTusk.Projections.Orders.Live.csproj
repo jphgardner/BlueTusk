@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Projections</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Projections.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.Projections.Live\BlueTusk.Projections.Live.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.DependencyInjection\BlueTusk.Live.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.ServerSentEvents\BlueTusk.Live.ServerSentEvents.csproj" />
+  </ItemGroup>
+</Project>

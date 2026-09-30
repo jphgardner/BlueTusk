@@ -31,6 +31,63 @@ public sealed class BlueTuskArrayCodecTests
         Assert.Equal(1, BinaryPrimitives.ReadInt32BigEndian(binary.AsSpan(16)));
     }
 
+    [Theory]
+    [InlineData(BlueTuskDataFormat.Binary)]
+    [InlineData(BlueTuskDataFormat.Text)]
+    public void Explicit_nullable_value_arrays_preserve_nulls_without_default_integer_substitution(BlueTuskDataFormat format)
+    {
+        var codec = new BlueTuskArrayCodec(BlueTuskBuiltInTypes.Int4, new BlueTuskInt32Codec());
+        int?[] expected = [int.MinValue, null, 0, null, int.MaxValue];
+        var bytes = Write(codec, expected, format);
+        var reader = new BlueTuskReader(bytes);
+        Assert.Equal(expected, codec.ReadNullableElements<int>(ref reader, format, Int4Array));
+        Assert.Equal(0, reader.Remaining);
+        var emptyReader = new BlueTuskReader(Write(codec, Array.Empty<int?>(), format));
+        Assert.Empty(codec.ReadNullableElements<int>(ref emptyReader, format, Int4Array));
+        Assert.Equal(0, emptyReader.Remaining);
+    }
+
+    [Theory]
+    [InlineData(0, -1)]
+    [InlineData(0, 2)]
+    [InlineData(4, 0)]
+    [InlineData(4, 2)]
+    [InlineData(8, 25)]
+    [InlineData(12, -1)]
+    [InlineData(12, int.MaxValue)]
+    [InlineData(16, 0)]
+    [InlineData(20, -2)]
+    [InlineData(20, int.MaxValue)]
+    public void Nullable_binary_array_headers_and_element_lengths_reject_before_unbounded_allocation(int offset, int value)
+    {
+        var codec = new BlueTuskArrayCodec(BlueTuskBuiltInTypes.Int4, new BlueTuskInt32Codec());
+        var bytes = Write(codec, new int?[] { null, 1 }, BlueTuskDataFormat.Binary);
+        BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(offset), value);
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            var reader = new BlueTuskReader(bytes);
+            _ = codec.ReadNullableElements<int>(ref reader, BlueTuskDataFormat.Binary, Int4Array);
+        });
+    }
+
+    [Fact]
+    public void Binary_array_with_zero_dimension_cannot_hide_an_unbounded_later_dimension()
+    {
+        var codec = new BlueTuskArrayCodec(BlueTuskBuiltInTypes.Int4, new BlueTuskInt32Codec());
+        var bytes = Convert.FromHexString(
+            "00000002" + // rank
+            "00000000" + // flags
+            "00000017" + // int4 OID
+            "0000000000000001" + // empty first dimension
+            "7FFFFFFF00000001"); // enormous later dimension
+
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            var reader = new BlueTuskReader(bytes);
+            _ = codec.Read(ref reader, BlueTuskDataFormat.Binary, Int4Array);
+        });
+    }
+
     [Fact]
     public void Multidimensional_arrays_preserve_shape_and_row_major_values()
     {

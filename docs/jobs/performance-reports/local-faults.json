@@ -1,0 +1,38 @@
+{
+  "StartedAt": "2026-09-27T19:46:15.0545702+00:00",
+  "Profile": "faults",
+  "OperatingSystem": "Microsoft Windows 10.0.26200",
+  "Framework": ".NET 10.0.12",
+  "ProcessArchitecture": "X64",
+  "LogicalProcessors": 16,
+  "PostgreSqlVersion": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "SourceSha256": "0AEB3B2DDDCD0535A70D0B6E6AE688C632028C15A14E647C62C17513EF306AD1",
+  "MeasurementLimitations": "Local bounded harness with instrumentation/collector overhead. WAL and pg_stat_database counters are cluster/database scoped and may include concurrent work; snapshots may lag. RSS and waits are sampled every 100 ms. Durable latency includes backlog enqueue time. No production qualification or comparative performance leadership is established.",
+  "Cases": [],
+  "Faults": [
+    {
+      "Name": "process-death-after-effect-before-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 937.3836,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false
+    },
+    {
+      "Name": "workflow-process-death-before-result",
+      "Passed": true,
+      "RecoveryMilliseconds": 1167.4011,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false
+    },
+    {
+      "Name": "ambiguous-commit-lost-server-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 15.4385,
+      "Attempts": 0,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": true
+    }
+  ]
+}

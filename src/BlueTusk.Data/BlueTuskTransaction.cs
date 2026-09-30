@@ -104,6 +104,7 @@ public sealed class BlueTuskTransaction : DbTransaction
         CancellationToken cancellationToken)
     {
         var connection = GetActiveConnection();
+        cancellationToken.ThrowIfCancellationRequested();
         if (!IsServerStarted)
         {
             MarkCompleted();
@@ -119,9 +120,14 @@ public sealed class BlueTuskTransaction : DbTransaction
         {
             throw new BlueTuskException(exception);
         }
+        catch
+        {
+            RetireFailedConnection(connection);
+            throw;
+        }
         finally
         {
-            if (connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
+            if (connection.HasOpenSession && connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
             {
                 MarkCompleted();
             }
@@ -145,12 +151,32 @@ public sealed class BlueTuskTransaction : DbTransaction
         {
             throw new BlueTuskException(exception);
         }
+        catch
+        {
+            RetireFailedConnection(connection);
+            throw;
+        }
         finally
         {
-            if (connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
+            if (connection.HasOpenSession && connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
             {
                 MarkCompleted();
             }
+        }
+    }
+
+    private void RetireFailedConnection(BlueTuskConnection connection)
+    {
+        // A response failure leaves the COMMIT outcome unknown. Never reuse that physical
+        // session or issue another transaction command during disposal.
+        try
+        {
+            connection.AbortPhysicalSession();
+        }
+        finally
+        {
+            MarkCompleted();
+            connection.Close();
         }
     }
 

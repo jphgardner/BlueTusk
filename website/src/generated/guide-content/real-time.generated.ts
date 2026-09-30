@@ -1354,7 +1354,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1071,
+    "order": 1092,
     "title": "Live public API compatibility",
     "sourcePath": "docs/live/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/api-compatibility.md",
@@ -1387,7 +1387,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1072,
+    "order": 1093,
     "title": "Live format compatibility",
     "sourcePath": "docs/live/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/format-compatibility.md",
@@ -1419,7 +1419,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "live",
       "reference"
     ],
-    "order": 1073,
+    "order": 1094,
     "title": "BlueTusk Live",
     "sourcePath": "docs/live/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/reference.md",
@@ -1537,7 +1537,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1074,
+    "order": 1095,
     "title": "BlueTusk Live 0.1.0-preview.1",
     "sourcePath": "docs/live/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-0.1.0-preview.1.md",
@@ -1593,7 +1593,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1075,
+    "order": 1096,
     "title": "BlueTusk Live 1.0.0 release record",
     "sourcePath": "docs/live/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-1.0.0.md",
@@ -1627,7 +1627,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1100,
+    "order": 1126,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -1665,7 +1665,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1115,
+    "order": 1146,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -1676,13 +1676,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 147,
+    "wordCount": 205,
     "readMinutes": 1,
-    "searchText": "Streams public API compatibility The current Streams 1.0 candidate surface is locked by two independent gates: Roslyn PublicApiAnalyzers reject undeclared additions and incompatible removals in every Streams package; and `eng/streams-api-freeze.json` records a platform-independent SHA-256 digest for every Streams public API baseline. This makes an API edit deliberate and reviewable even when it is technically additive. To change the candidate, first update the implementation and its API baseline, document source and binary compatibility, run the full Streams test and package matrices, and then update the freeze manifest in the same commit. The compatibility test also scans the source tree so a new Streams package cannot omit a frozen baseline. The candidate becomes the Streams 1.0 shipped baseline only after the format upgrade suites and the successful 72-hour release-endurance evidence pass. Until then, this is an engineering freeze rather than a claim that 1.0 was published.",
+    "searchText": "Streams public API compatibility The current Streams 1.0 candidate surface is locked by two independent gates: Roslyn PublicApiAnalyzers reject undeclared additions and incompatible removals in every Streams package; and `eng/streams-api-freeze.json` records a platform-independent SHA-256 digest for every Streams public API baseline. This makes an API edit deliberate and reviewable even when it is technically additive. To change the candidate, first update the implementation and its API baseline, document source and binary compatibility, run the full Streams test and package matrices, and then update the freeze manifest in the same commit. The compatibility test also scans the source tree so a new Streams package cannot omit a frozen baseline. The candidate becomes the Streams 1.0 shipped baseline only after the format upgrade suites and the successful 72-hour release-endurance evidence pass. Until then, this is an engineering freeze rather than a claim that 1.0 was published. The published-source lineage proof adds `ChangeDeliveryTestFactory.CreateCommittedWithLineage` to the optional `BlueTusk.Streams.Testing` package. It creates a synthetic delivery carrying the database and publication OIDs used by protected consumers. Existing factory methods and their signatures remain unchanged, so this is a source- and binary-compatible addition. The Streams.Testing API baseline and freeze digest advance together; the runtime Streams public API is unchanged.",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Streams public API compatibility</h1>\n<p>The current Streams 1.0 candidate surface is locked by two independent gates:</p>\n<ul>\n<li>Roslyn PublicApiAnalyzers reject undeclared additions and incompatible\nremovals in every Streams package; and</li>\n<li><code>eng/streams-api-freeze.json</code> records a platform-independent SHA-256 digest\nfor every Streams public API baseline.</li>\n</ul>\n<p>This makes an API edit deliberate and reviewable even when it is technically\nadditive. To change the candidate, first update the implementation and its API\nbaseline, document source and binary compatibility, run the full Streams test\nand package matrices, and then update the freeze manifest in the same commit.\nThe compatibility test also scans the source tree so a new Streams package\ncannot omit a frozen baseline.</p>\n<p>The candidate becomes the Streams 1.0 shipped baseline only after the format\nupgrade suites and the successful 72-hour release-endurance evidence pass. Until\nthen, this is an engineering freeze rather than a claim that 1.0 was published.</p>\n"
+        "html": "<h1>Streams public API compatibility</h1>\n<p>The current Streams 1.0 candidate surface is locked by two independent gates:</p>\n<ul>\n<li>Roslyn PublicApiAnalyzers reject undeclared additions and incompatible\nremovals in every Streams package; and</li>\n<li><code>eng/streams-api-freeze.json</code> records a platform-independent SHA-256 digest\nfor every Streams public API baseline.</li>\n</ul>\n<p>This makes an API edit deliberate and reviewable even when it is technically\nadditive. To change the candidate, first update the implementation and its API\nbaseline, document source and binary compatibility, run the full Streams test\nand package matrices, and then update the freeze manifest in the same commit.\nThe compatibility test also scans the source tree so a new Streams package\ncannot omit a frozen baseline.</p>\n<p>The candidate becomes the Streams 1.0 shipped baseline only after the format\nupgrade suites and the successful 72-hour release-endurance evidence pass. Until\nthen, this is an engineering freeze rather than a claim that 1.0 was published.</p>\n<p>The published-source lineage proof adds <code>ChangeDeliveryTestFactory.CreateCommittedWithLineage</code>\nto the optional <code>BlueTusk.Streams.Testing</code> package. It creates a synthetic\ndelivery carrying the database and publication OIDs used by protected consumers.\nExisting factory methods and their signatures remain unchanged, so this is a\nsource- and binary-compatible addition. The Streams.Testing API baseline and\nfreeze digest advance together; the runtime Streams public API is unchanged.</p>\n"
       }
     ]
   },
@@ -1697,7 +1697,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1116,
+    "order": 1147,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -1749,7 +1749,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1117,
+    "order": 1148,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -1791,7 +1791,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1118,
+    "order": 1149,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -1834,7 +1834,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1120,
+    "order": 1151,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -1867,7 +1867,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1122,
+    "order": 1153,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -1935,7 +1935,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1124,
+    "order": 1155,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -1986,7 +1986,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1125,
+    "order": 1156,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -2018,7 +2018,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1126,
+    "order": 1157,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -2067,7 +2067,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1129,
+    "order": 1160,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -2150,7 +2150,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1131,
+    "order": 1163,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -2183,7 +2183,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1132,
+    "order": 1164,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -2215,7 +2215,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1133,
+    "order": 1165,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -2396,7 +2396,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1135,
+    "order": 1167,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",

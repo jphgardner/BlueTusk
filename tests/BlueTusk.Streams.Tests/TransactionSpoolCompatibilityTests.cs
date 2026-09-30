@@ -17,8 +17,10 @@ public sealed class TransactionSpoolCompatibilityTests
             var protector = protectedRecords ? new TestProtector() : null;
             var spool = new FileTransactionSpool(new FileTransactionSpoolOptions
             {
-                DirectoryPath = directory, MaxStorageBytes = 16 * 1024 * 1024,
-                MaxRecordBytes = 8 * 1024 * 1024, Protector = protector,
+                DirectoryPath = directory,
+                MaxStorageBytes = 16 * 1024 * 1024,
+                MaxRecordBytes = 8 * 1024 * 1024,
+                Protector = protector,
             });
             var key = new TransactionSpoolKey("source-Δ", 913);
             var records = RecordLengths.Select(CreatePayload).ToArray();

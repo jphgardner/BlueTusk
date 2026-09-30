@@ -148,8 +148,11 @@ public sealed class BlueTuskEnumDomainCodecTests
     {
         var domain = new BlueTuskTypeDescriptor
         {
-            Id = new BlueTuskTypeId(90_300), Schema = "app", Name = "domain_array_element",
-            Kind = BlueTuskTypeKind.Domain, BaseType = BlueTuskBuiltInTypes.Int4.Id,
+            Id = new BlueTuskTypeId(90_300),
+            Schema = "app",
+            Name = "domain_array_element",
+            Kind = BlueTuskTypeKind.Domain,
+            BaseType = BlueTuskBuiltInTypes.Int4.Id,
         };
         IBlueTuskCodec baseCodec = directCustomCodec
             ? new DirectInt32Codec()
@@ -162,8 +165,11 @@ public sealed class BlueTuskEnumDomainCodecTests
         }
         var arrayType = new BlueTuskTypeDescriptor
         {
-            Id = new BlueTuskTypeId(90_302), Schema = "app", Name = "_domain_array_element",
-            Kind = BlueTuskTypeKind.Array, ElementType = domain.Id,
+            Id = new BlueTuskTypeId(90_302),
+            Schema = "app",
+            Name = "_domain_array_element",
+            Kind = BlueTuskTypeKind.Array,
+            ElementType = domain.Id,
         };
         var codec = new BlueTuskArrayCodec(domain, elementCodec);
         Assert.Equal(typeof(int[]), codec.ClrType);

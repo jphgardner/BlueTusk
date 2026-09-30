@@ -1,4 +1,6 @@
 #nullable enable
+static BlueTusk.Live.LiveSharedSubscriptions.CreateWithJsonMetadata<T, TKey>(BlueTusk.Live.LiveQuerySession<T, TKey>! session, BlueTusk.Live.ILiveReplayStore! replayStore, System.Text.Json.Serialization.Metadata.JsonTypeInfo<BlueTusk.Live.LiveResultEvent<T, TKey>!>! eventTypeInfo, BlueTusk.Live.LiveSharedSubscriptionOptions? options = null) -> BlueTusk.Live.LiveSharedSubscription<T, TKey>!
+BlueTusk.Live.LiveSharedSubscription<T, TKey>.ResetAsync(BlueTusk.Live.LiveResetReason reason, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
 ~override BlueTusk.Live.LiveInvalidationCursor.Equals(object obj) -> bool
 ~override BlueTusk.Live.LiveInvalidationCursor.ToString() -> string
 BlueTusk.Live.ILiveInvalidationLog
@@ -561,3 +563,5 @@ static BlueTusk.Live.LiveSubscriptionIdentity.operator !=(BlueTusk.Live.LiveSubs
 static BlueTusk.Live.LiveSubscriptionIdentity.operator ==(BlueTusk.Live.LiveSubscriptionIdentity? left, BlueTusk.Live.LiveSubscriptionIdentity? right) -> bool
 static BlueTusk.Live.LiveTableDependency.operator !=(BlueTusk.Live.LiveTableDependency? left, BlueTusk.Live.LiveTableDependency? right) -> bool
 static BlueTusk.Live.LiveTableDependency.operator ==(BlueTusk.Live.LiveTableDependency? left, BlueTusk.Live.LiveTableDependency? right) -> bool
+
+BlueTusk.Live.LiveSharedSubscriptions

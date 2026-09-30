@@ -1,0 +1,97 @@
+name: Ecosystem exact-candidate performance
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character commit SHA containing this gate
+        required: true
+        type: string
+      confirmation:
+        description: Type RUN-ECOSYSTEM-PERFORMANCE to start the multi-hour campaign
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ecosystem-performance-reference
+  cancel-in-progress: false
+
+jobs:
+  qualify:
+    name: Isolated Windows ecosystem capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 480
+    env:
+      EVIDENCE_ROOT: artifacts/ecosystem-performance/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify full clean candidate SHA and gate contract
+        shell: pwsh
+        run: |
+          if ($env:CONFIRMATION -cne 'RUN-ECOSYSTEM-PERFORMANCE') { throw 'The exact manual gate confirmation is required.' }
+          ./eng/verify-ecosystem-performance.ps1 -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Start dedicated digest-pinned PostgreSQL 15 for Jobs and Workflows
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-ecosystem-pg15'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Jobs/Workflows fixture name is already in use or Docker is unavailable.' }
+          $budgets = Get-Content eng/ecosystem-performance-budgets.json -Raw | ConvertFrom-Json
+          $fixturePassword = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24))
+          docker run -d --name $name --label bluetusk.owner=ecosystem-performance --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55415:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$fixturePassword" -e POSTGRES_DB=bluetusk_ecosystem $budgets.postgreSql15Image
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Jobs/Workflows fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_ecosystem *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Jobs/Workflows fixture did not become ready.' }
+
+      - name: Run repeated Jobs, Workflows, Projections and Documents qualification
+        shell: pwsh
+        run: ./eng/verify-ecosystem-performance.ps1 -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived evidence and every SHA-256 binding
+        shell: pwsh
+        run: ./eng/verify-ecosystem-performance.ps1 -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload raw campaigns and qualification manifest
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ecosystem-performance-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Remove only this run's Jobs and Workflows fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-ecosystem-pg15'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect dedicated fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'ecosystem-performance' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Jobs/Workflows fixture.' }

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Documents</BlueTuskProductFamily>
+    <Description>Transactional typed JSONB documents, optimistic sessions and bounded queries for PostgreSQL.</Description>
+    <PackageTags>postgresql;jsonb;documents;transactions;aot</PackageTags>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Documents.props" />
+</Project>

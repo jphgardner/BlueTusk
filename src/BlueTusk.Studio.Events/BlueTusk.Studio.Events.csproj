@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Studio</BlueTuskProductFamily>
+    <Description>Authorized bounded domain-event trace metadata for BlueTusk Studio.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Studio.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\BlueTusk.Studio\BlueTusk.Studio.csproj" />
+    <ProjectReference Include="..\BlueTusk.Events\BlueTusk.Events.csproj" />
+  </ItemGroup>
+</Project>

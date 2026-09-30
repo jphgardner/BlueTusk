@@ -138,22 +138,34 @@ internal static class ProviderRequestAnalysisSelfTests
                 {
                     var environment = JsonSerializer.SerializeToElement(new
                     {
-                        os = "windows", architecture = "x64", postgreSqlImage = Image,
-                        tlsActive = false, referenceAssembly = "10.0.3",
-                        harnessAssembly = "1.2.0+" + Commit, candidateAssembly = "1.2.0+" + Commit,
-                        runtime = "synthetic-test-only", poolSize, multiplexingConfigured = multiplexing,
+                        os = "windows",
+                        architecture = "x64",
+                        postgreSqlImage = Image,
+                        tlsActive = false,
+                        referenceAssembly = "10.0.3",
+                        harnessAssembly = "1.2.0+" + Commit,
+                        candidateAssembly = "1.2.0+" + Commit,
+                        runtime = "synthetic-test-only",
+                        poolSize,
+                        multiplexingConfigured = multiplexing,
                     });
                     var method = JsonSerializer.SerializeToElement(new
                     {
-                        frequency = 1_000_000, sampleBufferCapacityBytes = 1600, contentionProbe = true,
+                        frequency = 1_000_000,
+                        sampleBufferCapacityBytes = 1600,
+                        contentionProbe = true,
                     });
                     var blueHash = await SaveAsync(candidatePath, candidate with
                     {
-                        Feature = feature, Environment = environment, Method = method,
+                        Feature = feature,
+                        Environment = environment,
+                        Method = method,
                     });
                     var npgHash = await SaveAsync(referencePath, reference with
                     {
-                        Feature = feature, Environment = environment, Method = method,
+                        Feature = feature,
+                        Environment = environment,
+                        Method = method,
                     });
                     var key = $"windows|Provider|{feature}|c=2|variant=windows";
                     var contentionIndex = index with

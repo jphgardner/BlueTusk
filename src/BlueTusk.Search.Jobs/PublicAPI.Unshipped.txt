@@ -1,0 +1,79 @@
+#nullable enable
+BlueTusk.Search.Jobs.PostgreSqlEmbeddingCheckpointProvider
+BlueTusk.Search.Jobs.PostgreSqlEmbeddingCheckpointProvider.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.Jobs.PostgreSqlEmbeddingCheckpointProvider.EmbedAsync(System.Collections.Generic.IReadOnlyList<string!>! texts, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>!>
+BlueTusk.Search.Jobs.PostgreSqlEmbeddingCheckpointProvider.EmbedForScopeAsync(BlueTusk.Search.SearchScope! scope, System.Collections.Generic.IReadOnlyList<string!>! texts, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>!>
+BlueTusk.Search.Jobs.PostgreSqlEmbeddingCheckpointProvider.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.Jobs.PostgreSqlEmbeddingCheckpointProvider.ModelIdentity.get -> string!
+BlueTusk.Search.Jobs.PostgreSqlEmbeddingCheckpointProvider.Options.get -> BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions!
+BlueTusk.Search.Jobs.PostgreSqlEmbeddingCheckpointProvider.PostgreSqlEmbeddingCheckpointProvider(System.Data.Common.DbDataSource! source, BlueTusk.Search.ISearchEmbeddingProvider! provider, BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions? options = null, BlueTusk.Search.SearchDataSourceOwnership ownership = BlueTusk.Search.SearchDataSourceOwnership.Borrowed) -> void
+BlueTusk.Search.Jobs.PostgreSqlEmbeddingCheckpointProvider.PruneExpiredAsync(int maximumCount = 128, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.<Clone>$() -> BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions!
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.CommandTimeoutSeconds.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.CommandTimeoutSeconds.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.Dimensions.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.Dimensions.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.Equals(BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions? other) -> bool
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.LeaseDuration.get -> System.TimeSpan
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.LeaseDuration.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxActiveProviderBatches.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxActiveProviderBatches.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxActiveProviderBatchesPerTenant.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxActiveProviderBatchesPerTenant.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxBatchInputBytes.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxBatchInputBytes.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxBatchTexts.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxBatchTexts.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxConcurrentOperations.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxConcurrentOperations.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxModels.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxModels.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxRecords.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxRecords.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxReservedVectorBytes.get -> long
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxReservedVectorBytes.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxTextBytes.get -> int
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.MaxTextBytes.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.ProviderTimeout.get -> System.TimeSpan
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.ProviderTimeout.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.Retention.get -> System.TimeSpan
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.Retention.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.Schema.get -> string!
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.Schema.init -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.SearchEmbeddingCheckpointOptions() -> void
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOwnershipException
+BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOwnershipException.SearchEmbeddingCheckpointOwnershipException() -> void
+BlueTusk.Search.Jobs.SearchIngestionJobOptions
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.<Clone>$() -> BlueTusk.Search.Jobs.SearchIngestionJobOptions!
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.Equals(BlueTusk.Search.Jobs.SearchIngestionJobOptions? other) -> bool
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.IndexContract.get -> string!
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.IndexContract.init -> void
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.JobType.get -> string!
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.JobType.init -> void
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.MaximumAttempts.get -> int
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.MaximumAttempts.init -> void
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.MaxPayloadBytes.get -> int
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.MaxPayloadBytes.init -> void
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.Queue.get -> string!
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.Queue.init -> void
+BlueTusk.Search.Jobs.SearchIngestionJobOptions.SearchIngestionJobOptions() -> void
+BlueTusk.Search.Jobs.SearchIngestionJobs
+BlueTusk.Search.Jobs.SearchIngestionJobs.EnqueueDeleteInTransactionAsync(string! tenant, string! index, string! id, long version, BlueTusk.Data.BlueTuskTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Guid>
+BlueTusk.Search.Jobs.SearchIngestionJobs.EnqueueDeleteAsync(string! tenant, string! index, string! id, long version, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Guid>
+BlueTusk.Search.Jobs.SearchIngestionJobs.EnqueueUpsertInTransactionAsync(BlueTusk.Search.SearchDocument! document, BlueTusk.Data.BlueTuskTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Guid>
+BlueTusk.Search.Jobs.SearchIngestionJobs.EnqueueUpsertAsync(BlueTusk.Search.SearchDocument! document, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Guid>
+BlueTusk.Search.Jobs.SearchIngestionJobs.Options.get -> BlueTusk.Search.Jobs.SearchIngestionJobOptions!
+BlueTusk.Search.Jobs.SearchIngestionJobs.ProcessLeaseAsync(BlueTusk.Jobs.JobLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.Jobs.SearchIngestionJobs.RegisterHandlers(BlueTusk.Jobs.JobHandlerRegistry! registry) -> BlueTusk.Jobs.JobHandlerRegistry!
+BlueTusk.Search.Jobs.SearchIngestionJobs.SearchIngestionJobs(BlueTusk.Jobs.PostgreSqlJobStore! jobs, BlueTusk.Search.PostgreSqlSearchStore! search, BlueTusk.Search.Jobs.SearchIngestionJobOptions! options) -> void
+override BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.Equals(object? obj) -> bool
+override BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.GetHashCode() -> int
+override BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.ToString() -> string!
+override BlueTusk.Search.Jobs.SearchIngestionJobOptions.Equals(object? obj) -> bool
+override BlueTusk.Search.Jobs.SearchIngestionJobOptions.GetHashCode() -> int
+override BlueTusk.Search.Jobs.SearchIngestionJobOptions.ToString() -> string!
+static BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.operator !=(BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions? left, BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions? right) -> bool
+static BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions.operator ==(BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions? left, BlueTusk.Search.Jobs.SearchEmbeddingCheckpointOptions? right) -> bool
+static BlueTusk.Search.Jobs.SearchIngestionJobOptions.operator !=(BlueTusk.Search.Jobs.SearchIngestionJobOptions? left, BlueTusk.Search.Jobs.SearchIngestionJobOptions? right) -> bool
+static BlueTusk.Search.Jobs.SearchIngestionJobOptions.operator ==(BlueTusk.Search.Jobs.SearchIngestionJobOptions? left, BlueTusk.Search.Jobs.SearchIngestionJobOptions? right) -> bool

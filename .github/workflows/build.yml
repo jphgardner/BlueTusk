@@ -170,6 +170,16 @@ jobs:
           ./eng/test-live-control-plane-endurance-verifier.ps1
           ./eng/verify-v1.2-release-contract.ps1
           ./eng/test-release-track-verifier.ps1
+          'Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search',
+          'Sql', 'Studio', 'Edge', 'Workflows' |
+            ForEach-Object {
+              ./eng/pack-product-family.ps1 -Family $_ -ValidateOnly
+            }
+          ./eng/test-expansion-release-policy.ps1
+          ./eng/test-expansion-readiness-evidence.ps1
+          ./eng/test-jobs-release-capacity-contract.ps1
+          ./eng/test-jobs-release-failover-policy.ps1
+          ./eng/test-jobs-release-upgrade-policy.ps1
           ./eng/test-core-approval-evidence.ps1
           ./eng/test-core-endurance-evidence.ps1
           ./eng/test-core-workflow-evidence.ps1
@@ -181,7 +191,9 @@ jobs:
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test BlueTusk.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
+        # The original provider/core matrix has only the fixtures provisioned by this job.
+        # New ecosystem families run their fixture-specific matrix in ecosystem-build.yml.
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
 
       - name: Test individual-request performance capture machinery
         run: dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --provider-request-self-test
@@ -438,7 +450,9 @@ jobs:
         run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres${{ matrix.major }}
 
       - name: Run live provider matrix
-        run: dotnet test BlueTusk.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
 
       - name: Capture exact Core stable compatibility evidence
         if: github.event_name == 'workflow_dispatch'
@@ -929,7 +943,7 @@ jobs:
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5899;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
         run: >-
-          dotnet test BlueTusk.slnx
+          dotnet test BlueTusk.Core.slnx
           --configuration Release
           --no-restore
           --maxcpucount:1

@@ -1,0 +1,53 @@
+#nullable enable
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.<Clone>$() -> BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions!
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.Equals(BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions? other) -> bool
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumActiveAge.get -> System.TimeSpan?
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumActiveAge.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumCompensating.get -> int
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumCompensating.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumExpiredLeases.get -> int
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumExpiredLeases.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumObserved.get -> int
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumObserved.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumPendingJobs.get -> int
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumPendingJobs.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumRunning.get -> int
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.MaximumRunning.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.Timeout.get -> System.TimeSpan
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.Timeout.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.WorkflowHealthCheckOptions() -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthServiceCollectionExtensions
+BlueTusk.Workflows.DependencyInjection.WorkflowHealthTelemetry
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.<Clone>$() -> BlueTusk.Workflows.DependencyInjection.WorkflowReadiness!
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Code.get -> string!
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Code.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Deconstruct(out Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus Status, out string! Code, out BlueTusk.Workflows.WorkflowScopeHealth? Scope, out BlueTusk.Jobs.JobQueueHealth? Dispatch) -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Dispatch.get -> BlueTusk.Jobs.JobQueueHealth?
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Dispatch.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Equals(BlueTusk.Workflows.DependencyInjection.WorkflowReadiness? other) -> bool
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Scope.get -> BlueTusk.Workflows.WorkflowScopeHealth?
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Scope.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Status.get -> Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Status.init -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.WorkflowReadiness(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus Status, string! Code, BlueTusk.Workflows.WorkflowScopeHealth? Scope, BlueTusk.Jobs.JobQueueHealth? Dispatch) -> void
+BlueTusk.Workflows.DependencyInjection.WorkflowScopeHealthCheck
+BlueTusk.Workflows.DependencyInjection.WorkflowScopeHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+BlueTusk.Workflows.DependencyInjection.WorkflowScopeHealthCheck.ReadAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Workflows.DependencyInjection.WorkflowReadiness!>
+BlueTusk.Workflows.DependencyInjection.WorkflowScopeHealthCheck.WorkflowScopeHealthCheck(BlueTusk.Workflows.PostgreSqlWorkflowStore! store, BlueTusk.Jobs.JobScope! scope, BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions! options) -> void
+const BlueTusk.Workflows.DependencyInjection.WorkflowHealthTelemetry.InstrumentationName = "BlueTusk.Workflows.DependencyInjection" -> string!
+override BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.Equals(object? obj) -> bool
+override BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.GetHashCode() -> int
+override BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.ToString() -> string!
+override BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.Equals(object? obj) -> bool
+override BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.GetHashCode() -> int
+override BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.ToString() -> string!
+static BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.operator !=(BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions? left, BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions? right) -> bool
+static BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions.operator ==(BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions? left, BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions? right) -> bool
+static BlueTusk.Workflows.DependencyInjection.WorkflowHealthServiceCollectionExtensions.AddWorkflowsReadiness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! name, BlueTusk.Jobs.JobScope! scope, System.Func<System.IServiceProvider!, BlueTusk.Workflows.PostgreSqlWorkflowStore!>! storeFactory, BlueTusk.Workflows.DependencyInjection.WorkflowHealthCheckOptions! options) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static BlueTusk.Workflows.DependencyInjection.WorkflowHealthTelemetry.ActivitySource.get -> System.Diagnostics.ActivitySource!
+static BlueTusk.Workflows.DependencyInjection.WorkflowHealthTelemetry.Meter.get -> System.Diagnostics.Metrics.Meter!
+static BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.operator !=(BlueTusk.Workflows.DependencyInjection.WorkflowReadiness? left, BlueTusk.Workflows.DependencyInjection.WorkflowReadiness? right) -> bool
+static BlueTusk.Workflows.DependencyInjection.WorkflowReadiness.operator ==(BlueTusk.Workflows.DependencyInjection.WorkflowReadiness? left, BlueTusk.Workflows.DependencyInjection.WorkflowReadiness? right) -> bool
+static BlueTusk.Workflows.DependencyInjection.WorkflowScopeHealthCheck.JsonTypeInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<BlueTusk.Workflows.DependencyInjection.WorkflowReadiness!>!

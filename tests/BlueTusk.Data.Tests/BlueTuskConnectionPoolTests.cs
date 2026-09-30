@@ -1,12 +1,76 @@
-using BlueTusk.Client;
-using BlueTusk.Protocol;
 using System.Collections;
 using System.Reflection;
+using BlueTusk.Client;
+using BlueTusk.Protocol;
 
 namespace BlueTusk.Data.Tests;
 
 public sealed class BlueTuskConnectionPoolTests
 {
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public async Task Transaction_response_failure_retires_session_and_disposal_preserves_original_failure(
+        bool asynchronous,
+        bool commit)
+    {
+        var sessions = new List<FakePhysicalSession>();
+        await using var pool = CreatePool(maximumSize: 1, factory: _ =>
+        {
+            var session = new FakePhysicalSession();
+            sessions.Add(session);
+            return ValueTask.FromResult<IBlueTuskPhysicalSession>(session);
+        });
+        await using var connection = new BlueTuskConnection("Host=localhost;Username=test;Database=test", pool);
+        await connection.OpenAsync();
+        var session = Assert.Single(sessions);
+        var transaction = connection.BeginTransaction();
+        Assert.True(transaction.TryStartServerTransaction());
+        session.TransactionStatus = BlueTuskTransactionStatus.InTransaction;
+        var original = new IOException("The transaction acknowledgement was lost.");
+        session.TransactionFailure = original;
+
+        var observed = asynchronous
+            ? await Assert.ThrowsAsync<IOException>(() => commit ? transaction.CommitAsync() : transaction.RollbackAsync())
+            : Assert.Throws<IOException>(() => { if (commit) { transaction.Commit(); } else { transaction.Rollback(); } });
+        Assert.Same(original, observed);
+        Assert.Equal(System.Data.ConnectionState.Closed, connection.State);
+        Assert.True(session.Disposed);
+        Assert.True(transaction.IsCompleted);
+        Assert.Null(connection.CurrentTransaction);
+        await transaction.DisposeAsync();
+        Assert.Equal([commit ? "COMMIT" : "ROLLBACK"], session.Commands);
+        Assert.Equal(0, pool.Statistics.Busy);
+        Assert.Equal(0, pool.Statistics.Idle);
+
+        await connection.OpenAsync();
+        Assert.Equal(2, sessions.Count);
+        Assert.NotSame(session, sessions[1]);
+        Assert.Equal(System.Data.ConnectionState.Open, connection.State);
+    }
+
+    [Fact]
+    public async Task Transaction_pre_cancelled_completion_preserves_active_session_for_rollback()
+    {
+        var session = new FakePhysicalSession();
+        await using var pool = CreatePool(factory: _ => ValueTask.FromResult<IBlueTuskPhysicalSession>(session));
+        await using var connection = new BlueTuskConnection("Host=localhost;Username=test;Database=test", pool);
+        await connection.OpenAsync();
+        await using var transaction = connection.BeginTransaction();
+        Assert.True(transaction.TryStartServerTransaction());
+        session.TransactionStatus = BlueTuskTransactionStatus.InTransaction;
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => transaction.CommitAsync(cancellation.Token));
+        Assert.Empty(session.Commands);
+        Assert.False(transaction.IsCompleted);
+        Assert.Equal(System.Data.ConnectionState.Open, connection.State);
+        await transaction.RollbackAsync();
+        Assert.Equal(["ROLLBACK"], session.Commands);
+    }
+
     [Fact]
     public async Task Reuse_rolls_back_resets_and_reports_statistics()
     {
@@ -365,7 +429,8 @@ public sealed class BlueTuskConnectionPoolTests
                 var unexpectedLease = pool.Rent();
                 pool.Return(unexpectedLease);
             }));
-        }) { IsBackground = true }).ToArray();
+        })
+        { IsBackground = true }).ToArray();
         var asynchronousWaiters = Enumerable.Range(0, 8)
             .Select(_ => pool.RentAsync(CancellationToken.None).AsTask()).ToArray();
         try
@@ -644,6 +709,11 @@ public sealed class BlueTuskConnectionPoolTests
 
         public bool FailReset { get; set; }
 
+        public Exception? TransactionFailure { get; set; }
+
+        public BlueTuskQueryResult ExecuteSimpleQuery(string sql) =>
+            ExecuteSimpleQueryAsync(sql).AsTask().GetAwaiter().GetResult();
+
         public ValueTask RefreshHostStateAsync(CancellationToken cancellationToken = default) =>
             ValueTask.CompletedTask;
 
@@ -652,12 +722,27 @@ public sealed class BlueTuskConnectionPoolTests
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (sql.StartsWith("SELECT t.oid::text", StringComparison.Ordinal))
+            {
+                static BlueTuskFieldDescription[] Fields(int count) => Enumerable.Range(0, count)
+                    .Select(index => new BlueTuskFieldDescription($"field{index}", 0, 0, 25, -1, -1, 0)).ToArray();
+                return ValueTask.FromResult(new BlueTuskQueryResult([
+                    new BlueTuskResultSet(Fields(12), [], "SELECT 0"),
+                    new BlueTuskResultSet(Fields(2), [], "SELECT 0"),
+                    new BlueTuskResultSet(Fields(4), [], "SELECT 0"),
+                    new BlueTuskResultSet(Fields(2), [new BlueTuskDataRow(["C"u8.ToArray(), "2"u8.ToArray()])], "SELECT 1"),
+                ]));
+            }
             if (FailReset && sql == "DISCARD ALL")
             {
                 throw new IOException("Simulated health-validation failure.");
             }
 
             Commands.Add(sql);
+            if (TransactionFailure is { } failure && sql is "COMMIT" or "ROLLBACK")
+            {
+                throw failure;
+            }
             if (sql == "ROLLBACK")
             {
                 TransactionStatus = BlueTuskTransactionStatus.Idle;

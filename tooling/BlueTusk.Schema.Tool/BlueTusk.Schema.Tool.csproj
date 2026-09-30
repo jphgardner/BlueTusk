@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <BlueTuskProductFamily>Schema</BlueTuskProductFamily>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>bluetusk-schema</ToolCommandName>
+    <Description>Bounded PostgreSQL schema capture, canonical snapshot comparison and deployment drift checks.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Schema.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.Schema\BlueTusk.Schema.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <InternalsVisibleTo Include="BlueTusk.Schema.Tool.Tests" />
+  </ItemGroup>
+</Project>

@@ -1,6 +1,11 @@
 <Solution>
   <Folder Name="/Benchmarks/">
     <Project Path="benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj" />
+    <Project Path="benchmarks/BlueTusk.Documents.LoadHarness/BlueTusk.Documents.LoadHarness.csproj" />
+    <Project Path="benchmarks/BlueTusk.Ecosystem.Benchmarks/BlueTusk.Ecosystem.Benchmarks.csproj" />
+    <Project Path="benchmarks/BlueTusk.Projections.LoadHarness/BlueTusk.Projections.LoadHarness.csproj" />
+    <Project Path="benchmarks/BlueTusk.Search.LoadHarness/BlueTusk.Search.LoadHarness.csproj" />
+    <Project Path="benchmarks/BlueTusk.Workflows.LoadHarness/BlueTusk.Workflows.LoadHarness.csproj" />
   </Folder>
   <Folder Name="/ContinuousGraph/Core/">
     <Project Path="src/BlueTusk.ContinuousGraph/BlueTusk.ContinuousGraph.csproj" />
@@ -14,6 +19,43 @@
   </Folder>
   <Folder Name="/ContinuousGraph/Tests/">
     <Project Path="tests/BlueTusk.ContinuousGraph.Tests/BlueTusk.ContinuousGraph.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Documents/Core/">
+    <Project Path="src/BlueTusk.Documents.AspNetCore/BlueTusk.Documents.AspNetCore.csproj" />
+    <Project Path="src/BlueTusk.Documents.Live/BlueTusk.Documents.Live.csproj" />
+    <Project Path="src/BlueTusk.Documents.Streams/BlueTusk.Documents.Streams.csproj" />
+    <Project Path="src/BlueTusk.Documents/BlueTusk.Documents.csproj" />
+  </Folder>
+  <Folder Name="/Documents/Tests/">
+    <Project Path="tests/BlueTusk.Documents.Tests/BlueTusk.Documents.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Edge/Core/">
+    <Project Path="src/BlueTusk.Edge.AspNetCore/BlueTusk.Edge.AspNetCore.csproj" />
+    <Project Path="src/BlueTusk.Edge.Http/BlueTusk.Edge.Http.csproj" />
+    <Project Path="src/BlueTusk.Edge.Server/BlueTusk.Edge.Server.csproj" />
+    <Project Path="src/BlueTusk.Edge.Sqlite/BlueTusk.Edge.Sqlite.csproj" />
+    <Project Path="src/BlueTusk.Edge/BlueTusk.Edge.csproj" />
+  </Folder>
+  <Folder Name="/Edge/Tests/">
+    <Project Path="tests/BlueTusk.Edge.BrowserHttpSmoke/BlueTusk.Edge.BrowserHttpSmoke.csproj" />
+    <Project Path="tests/BlueTusk.Edge.NativeAotSmoke/BlueTusk.Edge.NativeAotSmoke.csproj" />
+    <Project Path="tests/BlueTusk.Edge.Tests/BlueTusk.Edge.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Events/Core/">
+    <Project Path="src/BlueTusk.Events.EntityFrameworkCore/BlueTusk.Events.EntityFrameworkCore.csproj" />
+    <Project Path="src/BlueTusk.Events.Streams/BlueTusk.Events.Streams.csproj" />
+    <Project Path="src/BlueTusk.Events/BlueTusk.Events.csproj" />
+  </Folder>
+  <Folder Name="/Events/Tests/">
+    <Project Path="tests/BlueTusk.Events.NativeAotSmoke/BlueTusk.Events.NativeAotSmoke.csproj" />
+    <Project Path="tests/BlueTusk.Events.Tests/BlueTusk.Events.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Jobs/Core/">
+    <Project Path="src/BlueTusk.Jobs.DependencyInjection/BlueTusk.Jobs.DependencyInjection.csproj" />
+    <Project Path="src/BlueTusk.Jobs/BlueTusk.Jobs.csproj" />
+  </Folder>
+  <Folder Name="/Jobs/Tests/">
+    <Project Path="tests/BlueTusk.Jobs.Tests/BlueTusk.Jobs.Tests.csproj" />
   </Folder>
   <Folder Name="/Live/Core/">
     <Project Path="src/BlueTusk.Live/BlueTusk.Live.csproj" />
@@ -47,6 +89,18 @@
   <Folder Name="/Operations/Tests/">
     <Project Path="tests/BlueTusk.ControlPlane.Kubernetes.Tests/BlueTusk.ControlPlane.Kubernetes.Tests.csproj" />
     <Project Path="tests/BlueTusk.ControlPlane.Tests/BlueTusk.ControlPlane.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Projections/Core/">
+    <Project Path="src/BlueTusk.Projections.Live/BlueTusk.Projections.Live.csproj" />
+    <Project Path="src/BlueTusk.Projections/BlueTusk.Projections.csproj" />
+  </Folder>
+  <Folder Name="/Projections/Samples/">
+    <Project Path="samples/BlueTusk.Projections.Orders.Live/BlueTusk.Projections.Orders.Live.csproj" />
+  </Folder>
+  <Folder Name="/Projections/Tests/">
+    <Project Path="tests/BlueTusk.Projections.NativeAotSmoke/BlueTusk.Projections.NativeAotSmoke.csproj" />
+    <Project Path="tests/BlueTusk.Projections.PhysicalRecoveryTests/BlueTusk.Projections.PhysicalRecoveryTests.csproj" />
+    <Project Path="tests/BlueTusk.Projections.Tests/BlueTusk.Projections.Tests.csproj" />
   </Folder>
   <Folder Name="/Provider/Core/">
     <Project Path="src/BlueTusk.Client/BlueTusk.Client.csproj" />
@@ -164,6 +218,39 @@
     <Project Path="tooling/BlueTusk.SchemaInspector/BlueTusk.SchemaInspector.csproj" />
     <Project Path="tooling/BlueTusk.Tool/BlueTusk.Tool.csproj" />
   </Folder>
+  <Folder Name="/Schema/Core/">
+    <Project Path="src/BlueTusk.Schema/BlueTusk.Schema.csproj" />
+  </Folder>
+  <Folder Name="/Schema/Tests/">
+    <Project Path="tests/BlueTusk.Schema.Tests/BlueTusk.Schema.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Schema.Tool.Tests/BlueTusk.Schema.Tool.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Schema/Tools/">
+    <Project Path="tooling/BlueTusk.Schema.Tool/BlueTusk.Schema.Tool.csproj" />
+  </Folder>
+  <Folder Name="/Search/Core/">
+    <Project Path="src/BlueTusk.Search.AspNetCore/BlueTusk.Search.AspNetCore.csproj" />
+    <Project Path="src/BlueTusk.Search.Jobs/BlueTusk.Search.Jobs.csproj" />
+    <Project Path="src/BlueTusk.Search.OpenSearch/BlueTusk.Search.OpenSearch.csproj" />
+    <Project Path="src/BlueTusk.Search.PgVector/BlueTusk.Search.PgVector.csproj" />
+    <Project Path="src/BlueTusk.Search/BlueTusk.Search.csproj" />
+  </Folder>
+  <Folder Name="/Search/Tests/">
+    <Project Path="tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Sql/Core/">
+    <Project Path="src/BlueTusk.Sql.SourceGeneration/BlueTusk.Sql.SourceGeneration.csproj" />
+    <Project Path="src/BlueTusk.Sql/BlueTusk.Sql.csproj" />
+  </Folder>
+  <Folder Name="/Sql/Tests/">
+    <Project Path="tests/BlueTusk.Sql.NativeAotSmoke/BlueTusk.Sql.NativeAotSmoke.csproj" />
+    <Project Path="tests/BlueTusk.Sql.SourceGeneration.Tests/BlueTusk.Sql.SourceGeneration.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Sql.Tests/BlueTusk.Sql.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Sql.Tool.Tests/BlueTusk.Sql.Tool.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Sql/Tools/">
+    <Project Path="tooling/BlueTusk.Sql.Tool/BlueTusk.Sql.Tool.csproj" />
+  </Folder>
   <Folder Name="/Streams/Core/">
     <Project Path="src/BlueTusk.Streams/BlueTusk.Streams.csproj" />
   </Folder>
@@ -193,6 +280,18 @@
   </Folder>
   <Folder Name="/Streams/Tooling/">
     <Project Path="tooling/BlueTusk.Streams.Tool/BlueTusk.Streams.Tool.csproj" />
+  </Folder>
+  <Folder Name="/Studio/Core/">
+    <Project Path="src/BlueTusk.Studio.ControlPlane/BlueTusk.Studio.ControlPlane.csproj" />
+    <Project Path="src/BlueTusk.Studio.Events/BlueTusk.Studio.Events.csproj" />
+    <Project Path="src/BlueTusk.Studio/BlueTusk.Studio.csproj" />
+  </Folder>
+  <Folder Name="/Studio/Tests/">
+    <Project Path="tests/BlueTusk.Studio.Tests/BlueTusk.Studio.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Studio.Tool.Tests/BlueTusk.Studio.Tool.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Studio/Tools/">
+    <Project Path="tooling/BlueTusk.Studio.Tool/BlueTusk.Studio.Tool.csproj" />
   </Folder>
   <Folder Name="/Sync/Core/">
     <Project Path="src/BlueTusk.Sync/BlueTusk.Sync.csproj" />
@@ -230,5 +329,16 @@
   </Folder>
   <Folder Name="/Tests/Stress/">
     <Project Path="tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj" />
+  </Folder>
+  <Folder Name="/Workflows/Core/">
+    <Project Path="src/BlueTusk.Workflows.DependencyInjection/BlueTusk.Workflows.DependencyInjection.csproj" />
+    <Project Path="src/BlueTusk.Workflows/BlueTusk.Workflows.csproj" />
+  </Folder>
+  <Folder Name="/Workflows/Tests/">
+    <Project Path="tests/BlueTusk.Workflows.AotSmoke/BlueTusk.Workflows.AotSmoke.csproj" />
+    <Project Path="tests/BlueTusk.Workflows.DependencyInjection.Tests/BlueTusk.Workflows.DependencyInjection.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Workflows.PhysicalRecoveryTests/BlueTusk.Workflows.PhysicalRecoveryTests.csproj" />
+    <Project Path="tests/BlueTusk.Workflows.PostCooldownTests/BlueTusk.Workflows.PostCooldownTests.csproj" />
+    <Project Path="tests/BlueTusk.Workflows.Tests/BlueTusk.Workflows.Tests.csproj" />
   </Folder>
 </Solution>

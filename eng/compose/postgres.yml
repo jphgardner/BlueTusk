@@ -100,7 +100,7 @@ services:
 
   pgvector18:
     <<: *postgres-common
-    image: pgvector/pgvector:pg18-trixie
+    image: pgvector/pgvector:pg18-trixie@sha256:2ba9ca5f2e7daa0f0e7723cba1ee9167bab54efd3640516a44ac1a928dd67e7a
     profiles: ["extension-tests"]
     ports: ["5518:5432"]
 

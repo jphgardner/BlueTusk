@@ -3,7 +3,7 @@
   "measurement": "non-comment PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt signatures",
   "families": {
     "Provider": {
-      "maximumSignatures": 8401,
+      "maximumSignatures": 8403,
       "baselineProjects": 28,
       "apiExemptProjects": [
         "src/BlueTusk.SourceGeneration/BlueTusk.SourceGeneration.csproj",
@@ -13,7 +13,7 @@
       ]
     },
     "Streams": {
-      "maximumSignatures": 1622,
+      "maximumSignatures": 1624,
       "baselineProjects": 9,
       "apiExemptProjects": [
         "tooling/BlueTusk.Streams.Tool/BlueTusk.Streams.Tool.csproj"
@@ -25,7 +25,7 @@
       "apiExemptProjects": []
     },
     "Live": {
-      "maximumSignatures": 784,
+      "maximumSignatures": 787,
       "baselineProjects": 9,
       "apiExemptProjects": []
     },
@@ -37,6 +37,63 @@
     "ContinuousGraph": {
       "maximumSignatures": 222,
       "baselineProjects": 2,
+      "apiExemptProjects": []
+    },
+    "Events": {
+      "maximumSignatures": 377,
+      "baselineProjects": 3,
+      "apiExemptProjects": []
+    },
+    "Jobs": {
+      "maximumSignatures": 347,
+      "baselineProjects": 2,
+      "apiExemptProjects": []
+    },
+    "Documents": {
+      "maximumSignatures": 312,
+      "baselineProjects": 4,
+      "apiExemptProjects": []
+    },
+    "Projections": {
+      "maximumSignatures": 490,
+      "baselineProjects": 2,
+      "apiExemptProjects": []
+    },
+    "Search": {
+      "maximumSignatures": 454,
+      "baselineProjects": 5,
+      "apiExemptProjects": []
+    },
+    "Schema": {
+      "maximumSignatures": 581,
+      "baselineProjects": 1,
+      "apiExemptProjects": [
+        "tooling/BlueTusk.Schema.Tool/BlueTusk.Schema.Tool.csproj"
+      ]
+    },
+    "Sql": {
+      "maximumSignatures": 34,
+      "baselineProjects": 1,
+      "apiExemptProjects": [
+        "src/BlueTusk.Sql.SourceGeneration/BlueTusk.Sql.SourceGeneration.csproj",
+        "tooling/BlueTusk.Sql.Tool/BlueTusk.Sql.Tool.csproj"
+      ]
+    },
+    "Studio": {
+      "maximumSignatures": 229,
+      "baselineProjects": 3,
+      "apiExemptProjects": [
+        "tooling/BlueTusk.Studio.Tool/BlueTusk.Studio.Tool.csproj"
+      ]
+    },
+    "Workflows": {
+      "maximumSignatures": 398,
+      "baselineProjects": 2,
+      "apiExemptProjects": []
+    },
+    "Edge": {
+      "maximumSignatures": 463,
+      "baselineProjects": 5,
       "apiExemptProjects": []
     }
   }

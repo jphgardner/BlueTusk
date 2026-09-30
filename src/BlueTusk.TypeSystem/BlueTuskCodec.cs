@@ -16,6 +16,12 @@ internal interface IBlueTuskArrayCodecFactory
     IBlueTuskCodec CreateArrayCodec(BlueTuskTypeDescriptor elementType);
 }
 
+internal interface IBlueTuskNullableArrayCodec
+{
+    TElement?[] ReadNullableElements<TElement>(ref BlueTuskReader reader, BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type) where TElement : struct;
+}
+
 internal interface IBlueTuskRangeCodecFactory
 {
     IBlueTuskCodec? CreateRangeCodec(
@@ -193,7 +199,7 @@ public abstract class BlueTuskCodec<T> :
         "IL3050",
         Justification =
             "Dynamic array construction is reached only when dynamic code is available; " +
-            "NativeAOT uses statically rooted one-dimensional arrays and rejects other shapes.")]
+            "NativeAOT uses statically rooted one- and two-dimensional arrays with standard lower bounds and rejects other shapes.")]
     Array IBlueTuskArrayFactory.CreateArray(
         ReadOnlySpan<int> lengths,
         ReadOnlySpan<int> lowerBounds)
@@ -210,6 +216,11 @@ public abstract class BlueTuskCodec<T> :
             return new T[lengths[0]];
         }
 
+        if (lengths.Length == 2 && !lowerBounds.ContainsAnyExcept(0))
+        {
+            return new T[lengths[0], lengths[1]];
+        }
+
         if (!RuntimeFeature.IsDynamicCodeSupported)
         {
             if (lowerBounds.ContainsAnyExcept(0))
@@ -220,8 +231,8 @@ public abstract class BlueTuskCodec<T> :
             }
 
             throw new NotSupportedException(
-                "NativeAOT supports one-dimensional PostgreSQL arrays. " +
-                "Multidimensional arrays require a JIT deployment.");
+                "NativeAOT supports one- and two-dimensional PostgreSQL arrays. " +
+                "Higher-dimensional arrays require a JIT deployment.");
         }
 
         return Array.CreateInstance(

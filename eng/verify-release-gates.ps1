@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph')]
+    [ValidateSet('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph',
+        'Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search', 'Sql', 'Studio', 'Edge', 'Workflows')]
     [string] $Family,
 
     [Parameter(Mandatory)]
@@ -125,8 +126,17 @@ if ($null -eq $publication -or $publication.enabled -ne $true)
     throw "Product family '$Family' is gated and cannot be published."
 }
 
-& (Join-Path $PSScriptRoot 'verify-release-track.ps1') `
-    -Family $Family -Channel ([string]$publication.channel)
+if ($Family -in @('Events', 'Jobs', 'Documents', 'Schema', 'Projections',
+    'Search', 'Sql', 'Studio', 'Edge', 'Workflows'))
+{
+    & (Join-Path $PSScriptRoot 'verify-expansion-release-policy.ps1') `
+        -Family $Family -RequireArmed | Out-Null
+}
+else
+{
+    & (Join-Path $PSScriptRoot 'verify-release-track.ps1') `
+        -Family $Family -Channel ([string]$publication.channel)
+}
 
 foreach ($dependency in @($definition.releaseDependencies))
 {
@@ -302,6 +312,7 @@ foreach ($requirement in @($publication.requiredWorkflowEvidence))
                 event = [string]$_.event
                 conclusion = [string]$_.conclusion
                 runId = [long]$_.id
+                runAttempt = [int]$_.run_attempt
                 url = [string]$_.html_url
             }
         })
@@ -330,6 +341,26 @@ foreach ($requirement in @($publication.requiredWorkflowEvidence))
     }
 
     $verifiedRuns.Add($successfulRun)
+}
+
+if ($Family -in @('Events', 'Jobs', 'Documents', 'Schema', 'Projections',
+    'Search', 'Sql', 'Studio', 'Edge', 'Workflows'))
+{
+    $readinessArguments = @{
+        Family = $Family
+        Commit = $Commit
+        Tag = $Tag
+        Version = $version
+        VerifiedRuns = @($verifiedRuns.ToArray())
+        Repository = $Repository
+        Token = $Token
+    }
+    if ($null -ne $fixtureRuns)
+    {
+        $readinessArguments.EvidencePath = [string]$fixture.readinessEvidencePath
+        $readinessArguments.ArtifactIndexPath = [string]$fixture.artifactIndexPath
+    }
+    & (Join-Path $PSScriptRoot 'verify-expansion-readiness-evidence.ps1') @readinessArguments | Out-Null
 }
 
 Write-Output (

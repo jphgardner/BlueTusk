@@ -105,6 +105,10 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
 {
     private readonly Func<CancellationToken, ValueTask> _acknowledge;
     private readonly Func<Exception?, CancellationToken, ValueTask> _nack;
+    private readonly string[]? _replicationPublicationNames;
+    private readonly uint? _replicationTimeline;
+    private readonly uint? _replicationDatabaseOid;
+    private readonly uint? _replicationPublicationOid;
     private readonly long _telemetryStarted;
     private int _state;
 
@@ -125,14 +129,66 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
         ChangeTransaction transaction,
         Func<CancellationToken, ValueTask> acknowledge,
         Func<Exception?, CancellationToken, ValueTask> nack)
+        : this(transaction, acknowledge, nack, null)
+    {
+    }
+
+    internal ChangeTransactionDelivery(
+        ChangeTransaction transaction,
+        Func<CancellationToken, ValueTask> acknowledge,
+        Func<Exception?, CancellationToken, ValueTask> nack,
+        IReadOnlyList<string>? replicationPublicationNames)
+        : this(transaction, acknowledge, nack, replicationPublicationNames, null)
+    {
+    }
+
+    internal ChangeTransactionDelivery(
+        ChangeTransaction transaction,
+        Func<CancellationToken, ValueTask> acknowledge,
+        Func<Exception?, CancellationToken, ValueTask> nack,
+        IReadOnlyList<string>? replicationPublicationNames,
+        uint? replicationTimeline)
+        : this(transaction, acknowledge, nack, replicationPublicationNames, replicationTimeline, null, null)
+    {
+    }
+
+    internal ChangeTransactionDelivery(
+        ChangeTransaction transaction,
+        Func<CancellationToken, ValueTask> acknowledge,
+        Func<Exception?, CancellationToken, ValueTask> nack,
+        IReadOnlyList<string>? replicationPublicationNames,
+        uint? replicationTimeline,
+        uint? replicationDatabaseOid,
+        uint? replicationPublicationOid)
     {
         Transaction = transaction;
         _acknowledge = acknowledge;
         _nack = nack;
+        _replicationPublicationNames = replicationPublicationNames?.ToArray();
+        _replicationTimeline = replicationTimeline;
+        _replicationDatabaseOid = replicationDatabaseOid;
+        _replicationPublicationOid = replicationPublicationOid;
         _telemetryStarted = BlueTuskStreamsDiagnostics.StartDelivery(transaction);
     }
 
     public ChangeTransaction Transaction { get; }
+
+    // Only the built-in replication source can supply this evidence in production.
+    // A caller-created delivery or generic decoded envelope has no publication binding.
+    internal bool HasSingleReplicationPublication(string publicationName) =>
+        _replicationPublicationNames is { Length: 1 } names &&
+        string.Equals(names[0], publicationName, StringComparison.Ordinal);
+
+    internal bool HasSingleReplicationPublicationOnTimeline(string publicationName, long timeline) =>
+        HasSingleReplicationPublication(publicationName) &&
+        _replicationTimeline.HasValue && _replicationTimeline.Value > 0 &&
+        _replicationTimeline.Value == timeline;
+
+    internal bool HasSingleReplicationPublicationOnLineage(string publicationName, long timeline,
+        uint databaseOid, uint publicationOid) =>
+        HasSingleReplicationPublicationOnTimeline(publicationName, timeline) &&
+        databaseOid != 0 && publicationOid != 0 &&
+        _replicationDatabaseOid == databaseOid && _replicationPublicationOid == publicationOid;
 
     public ChangeDeliveryState State => Volatile.Read(ref _state) switch
     {
@@ -238,6 +294,10 @@ public sealed class PgOutputChangeStream : IChangeStream
     private readonly IAsyncEnumerable<BlueTuskPgOutputEnvelope> _source;
     private readonly PgOutputTransactionAssembler _assembler;
     private readonly IChangeDeliveryObserver _observer;
+    private readonly string[]? _replicationPublicationNames;
+    private readonly uint? _replicationTimeline;
+    private readonly uint? _replicationDatabaseOid;
+    private readonly uint? _replicationPublicationOid;
     private int _started;
 
     public PgOutputChangeStream(
@@ -246,6 +306,20 @@ public sealed class PgOutputChangeStream : IChangeStream
         TransactionAssemblyOptions? options = null,
         ITransactionSpool? spool = null,
         IChangeDeliveryObserver? observer = null)
+        : this(source, sourceIdentity, options, spool, observer, null)
+    {
+    }
+
+    internal PgOutputChangeStream(
+        IAsyncEnumerable<BlueTuskPgOutputEnvelope> source,
+        ChangeSourceIdentity sourceIdentity,
+        TransactionAssemblyOptions? options,
+        ITransactionSpool? spool,
+        IChangeDeliveryObserver? observer,
+        IReadOnlyList<string>? replicationPublicationNames,
+        uint? replicationTimeline = null,
+        uint? replicationDatabaseOid = null,
+        uint? replicationPublicationOid = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(sourceIdentity);
@@ -253,6 +327,10 @@ public sealed class PgOutputChangeStream : IChangeStream
         effectiveOptions.Validate();
         _source = source;
         _observer = observer ?? NullChangeDeliveryObserver.Instance;
+        _replicationPublicationNames = replicationPublicationNames?.ToArray();
+        _replicationTimeline = replicationTimeline;
+        _replicationDatabaseOid = replicationDatabaseOid;
+        _replicationPublicationOid = replicationPublicationOid;
         _assembler = new PgOutputTransactionAssembler(
             sourceIdentity,
             effectiveOptions,
@@ -320,7 +398,11 @@ public sealed class PgOutputChangeStream : IChangeStream
             {
                 await _observer.NackAsync(assembled.Transaction, failure, cancellationToken).ConfigureAwait(false);
                 await assembled.ReleaseAsync().ConfigureAwait(false);
-            });
+            },
+            _replicationPublicationNames,
+            _replicationTimeline,
+            _replicationDatabaseOid,
+            _replicationPublicationOid);
 
     private sealed class NullChangeDeliveryObserver : IChangeDeliveryObserver
     {

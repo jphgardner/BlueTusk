@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Projections</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Projections.props" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <ProjectReference Include="..\..\src\BlueTusk.Projections\BlueTusk.Projections.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Events\BlueTusk.Events.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Projections.Live\BlueTusk.Projections.Live.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.Testing\BlueTusk.Live.Testing.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.DependencyInjection\BlueTusk.Live.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\samples\BlueTusk.Projections.Orders.Live\BlueTusk.Projections.Orders.Live.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

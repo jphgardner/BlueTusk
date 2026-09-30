@@ -1,0 +1,47 @@
+#nullable enable
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.<Clone>$() -> BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions!
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.Equals(BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions? other) -> bool
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.JobHealthCheckOptions() -> void
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.MaximumExpiredLeases.get -> int
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.MaximumExpiredLeases.init -> void
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.MaximumObserved.get -> int
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.MaximumObserved.init -> void
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.MaximumPending.get -> int
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.MaximumPending.init -> void
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.MaximumReadyAge.get -> System.TimeSpan
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.MaximumReadyAge.init -> void
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.Timeout.get -> System.TimeSpan
+BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.Timeout.init -> void
+BlueTusk.Jobs.DependencyInjection.JobHealthServiceCollectionExtensions
+BlueTusk.Jobs.DependencyInjection.JobHealthTelemetry
+BlueTusk.Jobs.DependencyInjection.JobQueueHealthCheck
+BlueTusk.Jobs.DependencyInjection.JobQueueHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+BlueTusk.Jobs.DependencyInjection.JobQueueHealthCheck.JobQueueHealthCheck(BlueTusk.Jobs.PostgreSqlJobStore! store, BlueTusk.Jobs.JobScope! scope, BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions! options) -> void
+BlueTusk.Jobs.DependencyInjection.JobQueueHealthCheck.ReadAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Jobs.DependencyInjection.JobReadiness!>
+BlueTusk.Jobs.DependencyInjection.JobReadiness
+BlueTusk.Jobs.DependencyInjection.JobReadiness.<Clone>$() -> BlueTusk.Jobs.DependencyInjection.JobReadiness!
+BlueTusk.Jobs.DependencyInjection.JobReadiness.Code.get -> string!
+BlueTusk.Jobs.DependencyInjection.JobReadiness.Code.init -> void
+BlueTusk.Jobs.DependencyInjection.JobReadiness.Deconstruct(out Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus Status, out string! Code, out BlueTusk.Jobs.JobQueueHealth? Queue) -> void
+BlueTusk.Jobs.DependencyInjection.JobReadiness.Equals(BlueTusk.Jobs.DependencyInjection.JobReadiness? other) -> bool
+BlueTusk.Jobs.DependencyInjection.JobReadiness.JobReadiness(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus Status, string! Code, BlueTusk.Jobs.JobQueueHealth? Queue) -> void
+BlueTusk.Jobs.DependencyInjection.JobReadiness.Queue.get -> BlueTusk.Jobs.JobQueueHealth?
+BlueTusk.Jobs.DependencyInjection.JobReadiness.Queue.init -> void
+BlueTusk.Jobs.DependencyInjection.JobReadiness.Status.get -> Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus
+BlueTusk.Jobs.DependencyInjection.JobReadiness.Status.init -> void
+const BlueTusk.Jobs.DependencyInjection.JobHealthTelemetry.InstrumentationName = "BlueTusk.Jobs.DependencyInjection" -> string!
+override BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.Equals(object? obj) -> bool
+override BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.GetHashCode() -> int
+override BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.ToString() -> string!
+override BlueTusk.Jobs.DependencyInjection.JobReadiness.Equals(object? obj) -> bool
+override BlueTusk.Jobs.DependencyInjection.JobReadiness.GetHashCode() -> int
+override BlueTusk.Jobs.DependencyInjection.JobReadiness.ToString() -> string!
+static BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.operator !=(BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions? left, BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions? right) -> bool
+static BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions.operator ==(BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions? left, BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions? right) -> bool
+static BlueTusk.Jobs.DependencyInjection.JobHealthServiceCollectionExtensions.AddJobsReadiness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! name, BlueTusk.Jobs.JobScope! scope, System.Func<System.IServiceProvider!, BlueTusk.Jobs.PostgreSqlJobStore!>! storeFactory, BlueTusk.Jobs.DependencyInjection.JobHealthCheckOptions! options) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static BlueTusk.Jobs.DependencyInjection.JobHealthTelemetry.ActivitySource.get -> System.Diagnostics.ActivitySource!
+static BlueTusk.Jobs.DependencyInjection.JobHealthTelemetry.Meter.get -> System.Diagnostics.Metrics.Meter!
+static BlueTusk.Jobs.DependencyInjection.JobQueueHealthCheck.JsonTypeInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<BlueTusk.Jobs.DependencyInjection.JobReadiness!>!
+static BlueTusk.Jobs.DependencyInjection.JobReadiness.operator !=(BlueTusk.Jobs.DependencyInjection.JobReadiness? left, BlueTusk.Jobs.DependencyInjection.JobReadiness? right) -> bool
+static BlueTusk.Jobs.DependencyInjection.JobReadiness.operator ==(BlueTusk.Jobs.DependencyInjection.JobReadiness? left, BlueTusk.Jobs.DependencyInjection.JobReadiness? right) -> bool

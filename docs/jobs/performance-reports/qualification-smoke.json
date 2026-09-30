@@ -1,0 +1,490 @@
+{
+  "StartedAt": "2026-09-27T19:59:41.9284704+00:00",
+  "Profile": "qualification",
+  "OperatingSystem": "Microsoft Windows 10.0.26200",
+  "Framework": ".NET 10.0.12",
+  "ProcessArchitecture": "X64",
+  "LogicalProcessors": 16,
+  "PostgreSqlVersion": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "SourceSha256": "5E5DFAF0C85AB4BA0EF789E6B88D57A9DEC8B259A6BBEB98E31CBB7AEF94AFEE",
+  "MeasurementLimitations": "Local bounded harness with instrumentation/collector overhead. WAL and pg_stat_database counters are cluster/database scoped and may include concurrent work; snapshots may lag. RSS and waits are sampled every 100 ms. Durable latency includes backlog enqueue time. No production qualification or comparative performance leadership is established.",
+  "Cases": [],
+  "Faults": [
+    {
+      "Name": "process-death-after-effect-before-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 935.6052,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "workflow-process-death-before-result",
+      "Passed": true,
+      "RecoveryMilliseconds": 1703.2653,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "ambiguous-commit-lost-server-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 297.529,
+      "Attempts": 0,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": true,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "jobs-network-partition-and-heal",
+      "Passed": true,
+      "RecoveryMilliseconds": 695.8087,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 1,
+      "RejectedConnections": 14,
+      "PeakProxyConnections": 2,
+      "StoreFailureObservations": 14
+    },
+    {
+      "Name": "workflow-network-partition-and-heal",
+      "Passed": true,
+      "RecoveryMilliseconds": 1253.3738,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 1,
+      "RejectedConnections": 29,
+      "PeakProxyConnections": 4,
+      "StoreFailureObservations": 16
+    }
+  ],
+  "Overload": [
+    {
+      "Product": "Jobs",
+      "OfferedDurationSeconds": 5,
+      "MaximumAccepted": 20000,
+      "AdmissionSlotsPerTenant": 32,
+      "ConcurrencyPerTenant": 4,
+      "HandlerDelayMilliseconds": 100,
+      "Accepted": 334,
+      "Rejected": 810,
+      "DurableEffects": 334,
+      "MaximumOutstanding": 40,
+      "PrunedPrimaryRows": 334,
+      "PrunedJobs": 334,
+      "AdmissionAndDrainSeconds": 5.9383241,
+      "CompletionsPerSecond": 56.24482503405296,
+      "Runtime": {
+        "AllocatedBytes": 33434776,
+        "Gen0Collections": 2,
+        "Gen1Collections": 1,
+        "Gen2Collections": 0,
+        "PeakWorkingSetBytes": 99446784,
+        "PeakManagedBytes": 21166056,
+        "PeakPoolTotal": 12,
+        "PeakPoolBusy": 10,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 12,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 11,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 32,
+          "Total": 11,
+          "Idle": 11,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 12,
+          "Reused": 3028,
+          "Discarded": 1
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 1285,
+            "Sum": 334,
+            "Maximum": 3
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 334,
+            "Sum": 37.29721890000002,
+            "Maximum": 0.1729764
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 334,
+            "Sum": 334,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 1001832368,
+        "Commits": 287534,
+        "Rollbacks": 4775,
+        "Inserts": 1282548,
+        "Updates": 211749,
+        "Deletes": 690696,
+        "Deadlocks": 0,
+        "BlocksRead": 3306,
+        "BlocksHit": 92587875,
+        "TempBytes": 0,
+        "RelationBytes": 294912
+      },
+      "After": {
+        "WalPosition": 1010189968,
+        "Commits": 294271,
+        "Rollbacks": 6592,
+        "Inserts": 1293246,
+        "Updates": 213746,
+        "Deletes": 697570,
+        "Deadlocks": 0,
+        "BlocksRead": 3336,
+        "BlocksHit": 92901466,
+        "TempBytes": 0,
+        "RelationBytes": 1728512
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Accepted": 187,
+          "Rejected": 810,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 146.239,
+            "P50": 943.084,
+            "P95": 1004.03,
+            "P99": 1032.951,
+            "Maximum": 1051.173
+          },
+          "MaximumCompletionGapMilliseconds": 147.37296104431152
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Accepted": 49,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 112.713,
+            "P50": 127.496,
+            "P95": 152.721,
+            "P99": 190.686,
+            "Maximum": 190.686
+          },
+          "MaximumCompletionGapMilliseconds": 167.36102104187012
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Accepted": 49,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 112.334,
+            "P50": 127.382,
+            "P95": 152.381,
+            "P99": 189.567,
+            "Maximum": 189.567
+          },
+          "MaximumCompletionGapMilliseconds": 158.15401077270508
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Accepted": 49,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 111.587,
+            "P50": 127.568,
+            "P95": 152.364,
+            "P99": 185.063,
+            "Maximum": 185.063
+          },
+          "MaximumCompletionGapMilliseconds": 159.69419479370117
+        }
+      ],
+      "StorageSamples": [
+        {
+          "ElapsedSeconds": 0.0868202,
+          "RetainedPrimaryRows": 3,
+          "ActivePrimaryRows": 3,
+          "RetainedJobs": 3,
+          "JobAttemptRows": 3,
+          "RuntimeRelationBytes": 335872
+        },
+        {
+          "ElapsedSeconds": 1.1144186,
+          "RetainedPrimaryRows": 90,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 90,
+          "JobAttemptRows": 64,
+          "RuntimeRelationBytes": 647168
+        },
+        {
+          "ElapsedSeconds": 2.1239642,
+          "RetainedPrimaryRows": 156,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 156,
+          "JobAttemptRows": 128,
+          "RuntimeRelationBytes": 1024000
+        },
+        {
+          "ElapsedSeconds": 3.1546953,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 38,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 132,
+          "RuntimeRelationBytes": 1253376
+        },
+        {
+          "ElapsedSeconds": 4.1848618,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 1392640
+        },
+        {
+          "ElapsedSeconds": 5.2134987,
+          "RetainedPrimaryRows": 144,
+          "ActivePrimaryRows": 23,
+          "RetainedJobs": 144,
+          "JobAttemptRows": 125,
+          "RuntimeRelationBytes": 1482752
+        },
+        {
+          "ElapsedSeconds": 5.9383241,
+          "RetainedPrimaryRows": 0,
+          "ActivePrimaryRows": 0,
+          "RetainedJobs": 0,
+          "JobAttemptRows": 0,
+          "RuntimeRelationBytes": 1490944
+        }
+      ],
+      "Verified": true
+    },
+    {
+      "Product": "Workflows",
+      "OfferedDurationSeconds": 5,
+      "MaximumAccepted": 20000,
+      "AdmissionSlotsPerTenant": 32,
+      "ConcurrencyPerTenant": 4,
+      "HandlerDelayMilliseconds": 100,
+      "Accepted": 95,
+      "Rejected": 662,
+      "DurableEffects": 95,
+      "MaximumOutstanding": 35,
+      "PrunedPrimaryRows": 95,
+      "PrunedJobs": 380,
+      "AdmissionAndDrainSeconds": 5.6617763,
+      "CompletionsPerSecond": 16.779186418933577,
+      "Runtime": {
+        "AllocatedBytes": 73491168,
+        "Gen0Collections": 4,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "PeakWorkingSetBytes": 110026752,
+        "PeakManagedBytes": 23185168,
+        "PeakPoolTotal": 15,
+        "PeakPoolBusy": 7,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 15,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 14,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 32,
+          "Total": 15,
+          "Idle": 15,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 15,
+          "Reused": 3373,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 1402,
+            "Sum": 380,
+            "Maximum": 2
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 380,
+            "Sum": 28.504201799999983,
+            "Maximum": 0.1636931
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 380,
+            "Sum": 380,
+            "Maximum": 1
+          },
+          {
+            "Name": "bluetusk.workflows.activity.duration",
+            "Measurements": 380,
+            "Sum": 28.454422800000007,
+            "Maximum": 0.1617616
+          },
+          {
+            "Name": "bluetusk.workflows.recovered_dispatches",
+            "Measurements": 24,
+            "Sum": 0,
+            "Maximum": 0
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 1010908088,
+        "Commits": 294688,
+        "Rollbacks": 6592,
+        "Inserts": 1293301,
+        "Updates": 213842,
+        "Deletes": 698693,
+        "Deadlocks": 0,
+        "BlocksRead": 3336,
+        "BlocksHit": 92923002,
+        "TempBytes": 0,
+        "RelationBytes": 311296
+      },
+      "After": {
+        "WalPosition": 1016431320,
+        "Commits": 300750,
+        "Rollbacks": 6592,
+        "Inserts": 1297232,
+        "Updates": 217573,
+        "Deletes": 701585,
+        "Deadlocks": 0,
+        "BlocksRead": 3358,
+        "BlocksHit": 93220811,
+        "TempBytes": 0,
+        "RelationBytes": 2318336
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Accepted": 68,
+          "Rejected": 662,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 661.583,
+            "P50": 2360.324,
+            "P95": 2554.771,
+            "P99": 2853.473,
+            "Maximum": 2853.473
+          },
+          "MaximumCompletionGapMilliseconds": 662.708044052124
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Accepted": 9,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 211.249,
+            "P50": 224.296,
+            "P95": 233.922,
+            "P99": 233.922,
+            "Maximum": 233.922
+          },
+          "MaximumCompletionGapMilliseconds": 514.9359703063965
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Accepted": 9,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 205.572,
+            "P50": 232.35,
+            "P95": 239.29,
+            "P99": 239.29,
+            "Maximum": 239.29
+          },
+          "MaximumCompletionGapMilliseconds": 527.2989273071289
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Accepted": 9,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 208.18,
+            "P50": 224.611,
+            "P95": 237.156,
+            "P99": 237.156,
+            "Maximum": 237.156
+          },
+          "MaximumCompletionGapMilliseconds": 531.2838554382324
+        }
+      ],
+      "StorageSamples": [
+        {
+          "ElapsedSeconds": 0.0560737,
+          "RetainedPrimaryRows": 0,
+          "ActivePrimaryRows": 0,
+          "RetainedJobs": 0,
+          "JobAttemptRows": 0,
+          "RuntimeRelationBytes": 368640
+        },
+        {
+          "ElapsedSeconds": 1.0825162,
+          "RetainedPrimaryRows": 38,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 99,
+          "JobAttemptRows": 51,
+          "RuntimeRelationBytes": 1007616
+        },
+        {
+          "ElapsedSeconds": 2.0976772,
+          "RetainedPrimaryRows": 46,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 145,
+          "JobAttemptRows": 110,
+          "RuntimeRelationBytes": 1384448
+        },
+        {
+          "ElapsedSeconds": 3.1327052,
+          "RetainedPrimaryRows": 71,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 208,
+          "JobAttemptRows": 164,
+          "RuntimeRelationBytes": 1761280
+        },
+        {
+          "ElapsedSeconds": 4.1696589,
+          "RetainedPrimaryRows": 77,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 203,
+          "JobAttemptRows": 164,
+          "RuntimeRelationBytes": 2072576
+        },
+        {
+          "ElapsedSeconds": 5.2157813,
+          "RetainedPrimaryRows": 51,
+          "ActivePrimaryRows": 29,
+          "RetainedJobs": 170,
+          "JobAttemptRows": 142,
+          "RuntimeRelationBytes": 2244608
+        },
+        {
+          "ElapsedSeconds": 5.6617763,
+          "RetainedPrimaryRows": 0,
+          "ActivePrimaryRows": 0,
+          "RetainedJobs": 0,
+          "JobAttemptRows": 0,
+          "RuntimeRelationBytes": 2260992
+        }
+      ],
+      "Verified": true
+    }
+  ]
+}

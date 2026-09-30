@@ -1,0 +1,347 @@
+#nullable enable
+BlueTusk.Workflows.PostgreSqlWorkflowStore
+BlueTusk.Workflows.PostgreSqlWorkflowStore.CancelAsync(BlueTusk.Workflows.WorkflowKey! key, bool compensate = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Workflows.PostgreSqlWorkflowStore.InspectAsync(BlueTusk.Jobs.JobScope! scope, int maximumObserved = 10000, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Workflows.WorkflowScopeHealth!>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.Jobs.get -> BlueTusk.Jobs.PostgreSqlJobStore!
+BlueTusk.Workflows.PostgreSqlWorkflowStore.MigrateAsync(BlueTusk.Workflows.WorkflowKey! key, int targetVersion, long expectedRevision, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.PostgreSqlWorkflowStore(BlueTusk.Data.BlueTuskDataSource! source, BlueTusk.Workflows.WorkflowOptions? options = null, BlueTusk.Jobs.JobStoreOptions? jobOptions = null) -> void
+BlueTusk.Workflows.PostgreSqlWorkflowStore.PruneAsync(BlueTusk.Jobs.JobScope! scope, System.TimeSpan retention, int maximumCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.ReadAsync(BlueTusk.Workflows.WorkflowKey! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Workflows.WorkflowSnapshot?>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.ReadHistoryAsync(BlueTusk.Workflows.WorkflowKey! key, long afterSequence, int maximumCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Workflows.WorkflowHistoryEntry!>!>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.ReadNodesAsync(BlueTusk.Workflows.WorkflowKey! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Workflows.WorkflowNodeSnapshot!>!>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.ReadNodesPageAsync(BlueTusk.Workflows.WorkflowKey! key, string? afterNodeId, int maximumCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Workflows.WorkflowNodeSnapshot!>!>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.ReconcileAsync(BlueTusk.Jobs.JobScope! scope, int maximumCount, BlueTusk.Workflows.WorkflowRecoveryCursor? after = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Workflows.WorkflowRecoveryResult!>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.RegisterDefinitionAsync(BlueTusk.Jobs.JobScope! scope, BlueTusk.Workflows.WorkflowDefinition! definition, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Workflows.PostgreSqlWorkflowStore.ReplayAsync(BlueTusk.Workflows.WorkflowKey! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Workflows.WorkflowReplayResult?>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.SignalAsync(BlueTusk.Workflows.WorkflowKey! key, string! name, string! identity, System.ReadOnlyMemory<byte> payload, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.StartAsync(BlueTusk.Workflows.WorkflowStartRequest! request) -> System.Threading.Tasks.ValueTask<BlueTusk.Workflows.WorkflowKey!>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.StartAsync(BlueTusk.Workflows.WorkflowStartRequest! request, BlueTusk.Data.BlueTuskTransaction! transaction, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<BlueTusk.Workflows.WorkflowKey!>
+BlueTusk.Workflows.PostgreSqlWorkflowStore.StartAsync(BlueTusk.Workflows.WorkflowStartRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<BlueTusk.Workflows.WorkflowKey!>
+BlueTusk.Workflows.TransactionalWorkflowActivity
+BlueTusk.Workflows.WorkflowActivityContext
+BlueTusk.Workflows.WorkflowActivityContext.<Clone>$() -> BlueTusk.Workflows.WorkflowActivityContext!
+BlueTusk.Workflows.WorkflowActivityContext.Activity.get -> string!
+BlueTusk.Workflows.WorkflowActivityContext.Activity.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.ActivityResult.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Workflows.WorkflowActivityContext.ActivityResult.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.Attempt.get -> int
+BlueTusk.Workflows.WorkflowActivityContext.Attempt.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.Deconstruct(out BlueTusk.Workflows.WorkflowKey! Workflow, out string! NodeId, out string! Activity, out bool IsCompensation, out int Attempt, out long FencingToken, out string! IdempotencyKey, out System.ReadOnlyMemory<byte> InitialInput, out System.Collections.Generic.IReadOnlyDictionary<string!, System.ReadOnlyMemory<byte>>! DependencyResults, out System.ReadOnlyMemory<byte> ActivityResult) -> void
+BlueTusk.Workflows.WorkflowActivityContext.DependencyResults.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.ReadOnlyMemory<byte>>!
+BlueTusk.Workflows.WorkflowActivityContext.DependencyResults.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.Equals(BlueTusk.Workflows.WorkflowActivityContext? other) -> bool
+BlueTusk.Workflows.WorkflowActivityContext.FencingToken.get -> long
+BlueTusk.Workflows.WorkflowActivityContext.FencingToken.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.IdempotencyKey.get -> string!
+BlueTusk.Workflows.WorkflowActivityContext.IdempotencyKey.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.InitialInput.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Workflows.WorkflowActivityContext.InitialInput.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.IsCompensation.get -> bool
+BlueTusk.Workflows.WorkflowActivityContext.IsCompensation.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.NodeId.get -> string!
+BlueTusk.Workflows.WorkflowActivityContext.NodeId.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.Workflow.get -> BlueTusk.Workflows.WorkflowKey!
+BlueTusk.Workflows.WorkflowActivityContext.Workflow.init -> void
+BlueTusk.Workflows.WorkflowActivityContext.WorkflowActivityContext(BlueTusk.Workflows.WorkflowKey! Workflow, string! NodeId, string! Activity, bool IsCompensation, int Attempt, long FencingToken, string! IdempotencyKey, System.ReadOnlyMemory<byte> InitialInput, System.Collections.Generic.IReadOnlyDictionary<string!, System.ReadOnlyMemory<byte>>! DependencyResults, System.ReadOnlyMemory<byte> ActivityResult) -> void
+BlueTusk.Workflows.WorkflowActivityRegistry
+BlueTusk.Workflows.WorkflowActivityRegistry.Register(string! activity, System.Func<BlueTusk.Workflows.WorkflowActivityContext!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>>>! handler) -> BlueTusk.Workflows.WorkflowActivityRegistry!
+BlueTusk.Workflows.WorkflowActivityRegistry.Register<TInput, TResult>(string! activity, System.Text.Json.Serialization.Metadata.JsonTypeInfo<TInput>! inputType, System.Text.Json.Serialization.Metadata.JsonTypeInfo<TResult>! resultType, System.Func<TInput, BlueTusk.Workflows.WorkflowActivityContext!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! handler) -> BlueTusk.Workflows.WorkflowActivityRegistry!
+BlueTusk.Workflows.WorkflowActivityRegistry.RegisterTransactional(string! activity, BlueTusk.Workflows.TransactionalWorkflowActivity! handler) -> BlueTusk.Workflows.WorkflowActivityRegistry!
+BlueTusk.Workflows.WorkflowActivityRegistry.WorkflowActivityRegistry() -> void
+BlueTusk.Workflows.WorkflowDefinition
+BlueTusk.Workflows.WorkflowDefinition.<Clone>$() -> BlueTusk.Workflows.WorkflowDefinition!
+BlueTusk.Workflows.WorkflowDefinition.Equals(BlueTusk.Workflows.WorkflowDefinition? other) -> bool
+BlueTusk.Workflows.WorkflowDefinition.Name.get -> string!
+BlueTusk.Workflows.WorkflowDefinition.Name.init -> void
+BlueTusk.Workflows.WorkflowDefinition.Nodes.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Workflows.WorkflowNode!>!
+BlueTusk.Workflows.WorkflowDefinition.Nodes.init -> void
+BlueTusk.Workflows.WorkflowDefinition.Version.get -> int
+BlueTusk.Workflows.WorkflowDefinition.Version.init -> void
+BlueTusk.Workflows.WorkflowDefinition.WorkflowDefinition() -> void
+BlueTusk.Workflows.WorkflowHistoryEntry
+BlueTusk.Workflows.WorkflowHistoryEntry.<Clone>$() -> BlueTusk.Workflows.WorkflowHistoryEntry!
+BlueTusk.Workflows.WorkflowHistoryEntry.Code.get -> string?
+BlueTusk.Workflows.WorkflowHistoryEntry.Code.init -> void
+BlueTusk.Workflows.WorkflowHistoryEntry.Deconstruct(out long Sequence, out System.DateTimeOffset Timestamp, out string! Event, out string? NodeId, out string? Code) -> void
+BlueTusk.Workflows.WorkflowHistoryEntry.Equals(BlueTusk.Workflows.WorkflowHistoryEntry? other) -> bool
+BlueTusk.Workflows.WorkflowHistoryEntry.Event.get -> string!
+BlueTusk.Workflows.WorkflowHistoryEntry.Event.init -> void
+BlueTusk.Workflows.WorkflowHistoryEntry.NodeId.get -> string?
+BlueTusk.Workflows.WorkflowHistoryEntry.NodeId.init -> void
+BlueTusk.Workflows.WorkflowHistoryEntry.Sequence.get -> long
+BlueTusk.Workflows.WorkflowHistoryEntry.Sequence.init -> void
+BlueTusk.Workflows.WorkflowHistoryEntry.Timestamp.get -> System.DateTimeOffset
+BlueTusk.Workflows.WorkflowHistoryEntry.Timestamp.init -> void
+BlueTusk.Workflows.WorkflowHistoryEntry.WorkflowHistoryEntry(long Sequence, System.DateTimeOffset Timestamp, string! Event, string? NodeId, string? Code) -> void
+BlueTusk.Workflows.WorkflowKey
+BlueTusk.Workflows.WorkflowKey.<Clone>$() -> BlueTusk.Workflows.WorkflowKey!
+BlueTusk.Workflows.WorkflowKey.Deconstruct(out BlueTusk.Jobs.JobScope! Scope, out System.Guid Id) -> void
+BlueTusk.Workflows.WorkflowKey.Equals(BlueTusk.Workflows.WorkflowKey? other) -> bool
+BlueTusk.Workflows.WorkflowKey.Id.get -> System.Guid
+BlueTusk.Workflows.WorkflowKey.Id.init -> void
+BlueTusk.Workflows.WorkflowKey.Scope.get -> BlueTusk.Jobs.JobScope!
+BlueTusk.Workflows.WorkflowKey.Scope.init -> void
+BlueTusk.Workflows.WorkflowKey.WorkflowKey(BlueTusk.Jobs.JobScope! Scope, System.Guid Id) -> void
+BlueTusk.Workflows.WorkflowNode
+BlueTusk.Workflows.WorkflowNode.<Clone>$() -> BlueTusk.Workflows.WorkflowNode!
+BlueTusk.Workflows.WorkflowNode.Activity.get -> string?
+BlueTusk.Workflows.WorkflowNode.Activity.init -> void
+BlueTusk.Workflows.WorkflowNode.Compensation.get -> string?
+BlueTusk.Workflows.WorkflowNode.Compensation.init -> void
+BlueTusk.Workflows.WorkflowNode.Delay.get -> System.TimeSpan
+BlueTusk.Workflows.WorkflowNode.Delay.init -> void
+BlueTusk.Workflows.WorkflowNode.DependsOn.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Workflows.WorkflowNode.DependsOn.init -> void
+BlueTusk.Workflows.WorkflowNode.Equals(BlueTusk.Workflows.WorkflowNode? other) -> bool
+BlueTusk.Workflows.WorkflowNode.Id.get -> string!
+BlueTusk.Workflows.WorkflowNode.Id.init -> void
+BlueTusk.Workflows.WorkflowNode.Kind.get -> BlueTusk.Workflows.WorkflowNodeKind
+BlueTusk.Workflows.WorkflowNode.Kind.init -> void
+BlueTusk.Workflows.WorkflowNode.MaximumAttempts.get -> int
+BlueTusk.Workflows.WorkflowNode.MaximumAttempts.init -> void
+BlueTusk.Workflows.WorkflowNode.Signal.get -> string?
+BlueTusk.Workflows.WorkflowNode.Signal.init -> void
+BlueTusk.Workflows.WorkflowNode.WorkflowNode() -> void
+BlueTusk.Workflows.WorkflowNodeKind
+BlueTusk.Workflows.WorkflowNodeKind.Activity = 0 -> BlueTusk.Workflows.WorkflowNodeKind
+BlueTusk.Workflows.WorkflowNodeKind.Join = 3 -> BlueTusk.Workflows.WorkflowNodeKind
+BlueTusk.Workflows.WorkflowNodeKind.Signal = 2 -> BlueTusk.Workflows.WorkflowNodeKind
+BlueTusk.Workflows.WorkflowNodeKind.Timer = 1 -> BlueTusk.Workflows.WorkflowNodeKind
+BlueTusk.Workflows.WorkflowNodeSnapshot
+BlueTusk.Workflows.WorkflowNodeSnapshot.<Clone>$() -> BlueTusk.Workflows.WorkflowNodeSnapshot!
+BlueTusk.Workflows.WorkflowNodeSnapshot.CompensationJobId.get -> System.Guid?
+BlueTusk.Workflows.WorkflowNodeSnapshot.CompensationJobId.init -> void
+BlueTusk.Workflows.WorkflowNodeSnapshot.Deconstruct(out string! Id, out BlueTusk.Workflows.WorkflowNodeStatus Status, out long FencingToken, out System.Guid? JobId, out System.Guid? CompensationJobId, out System.ReadOnlyMemory<byte> Result, out string? FailureCode) -> void
+BlueTusk.Workflows.WorkflowNodeSnapshot.Equals(BlueTusk.Workflows.WorkflowNodeSnapshot? other) -> bool
+BlueTusk.Workflows.WorkflowNodeSnapshot.FailureCode.get -> string?
+BlueTusk.Workflows.WorkflowNodeSnapshot.FailureCode.init -> void
+BlueTusk.Workflows.WorkflowNodeSnapshot.FencingToken.get -> long
+BlueTusk.Workflows.WorkflowNodeSnapshot.FencingToken.init -> void
+BlueTusk.Workflows.WorkflowNodeSnapshot.Id.get -> string!
+BlueTusk.Workflows.WorkflowNodeSnapshot.Id.init -> void
+BlueTusk.Workflows.WorkflowNodeSnapshot.JobId.get -> System.Guid?
+BlueTusk.Workflows.WorkflowNodeSnapshot.JobId.init -> void
+BlueTusk.Workflows.WorkflowNodeSnapshot.Result.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Workflows.WorkflowNodeSnapshot.Result.init -> void
+BlueTusk.Workflows.WorkflowNodeSnapshot.Status.get -> BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowNodeSnapshot.Status.init -> void
+BlueTusk.Workflows.WorkflowNodeSnapshot.WorkflowNodeSnapshot(string! Id, BlueTusk.Workflows.WorkflowNodeStatus Status, long FencingToken, System.Guid? JobId, System.Guid? CompensationJobId, System.ReadOnlyMemory<byte> Result, string? FailureCode) -> void
+BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowNodeStatus.Blocked = 0 -> BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowNodeStatus.Compensated = 7 -> BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowNodeStatus.Compensating = 6 -> BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowNodeStatus.Completed = 3 -> BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowNodeStatus.Failed = 4 -> BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowNodeStatus.Running = 2 -> BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowNodeStatus.Scheduled = 1 -> BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowNodeStatus.Skipped = 5 -> BlueTusk.Workflows.WorkflowNodeStatus
+BlueTusk.Workflows.WorkflowOptions
+BlueTusk.Workflows.WorkflowOptions.<Clone>$() -> BlueTusk.Workflows.WorkflowOptions!
+BlueTusk.Workflows.WorkflowOptions.CommandTimeoutSeconds.get -> int
+BlueTusk.Workflows.WorkflowOptions.CommandTimeoutSeconds.init -> void
+BlueTusk.Workflows.WorkflowOptions.Equals(BlueTusk.Workflows.WorkflowOptions? other) -> bool
+BlueTusk.Workflows.WorkflowOptions.MaximumActivityInputBytes.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumActivityInputBytes.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumBatchSize.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumBatchSize.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumDefinitionBytes.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumDefinitionBytes.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumDependenciesPerNode.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumDependenciesPerNode.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumHistoryEntries.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumHistoryEntries.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumInputBytes.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumInputBytes.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumNodeReadBytes.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumNodeReadBytes.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumNodes.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumNodes.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumResultBytes.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumResultBytes.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumSignalBytes.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumSignalBytes.init -> void
+BlueTusk.Workflows.WorkflowOptions.MaximumSignalsPerWorkflow.get -> int
+BlueTusk.Workflows.WorkflowOptions.MaximumSignalsPerWorkflow.init -> void
+BlueTusk.Workflows.WorkflowOptions.Schema.get -> string!
+BlueTusk.Workflows.WorkflowOptions.Schema.init -> void
+BlueTusk.Workflows.WorkflowOptions.WorkflowOptions() -> void
+BlueTusk.Workflows.WorkflowRecoveryCursor
+BlueTusk.Workflows.WorkflowRecoveryCursor.<Clone>$() -> BlueTusk.Workflows.WorkflowRecoveryCursor!
+BlueTusk.Workflows.WorkflowRecoveryCursor.Deconstruct(out System.Guid WorkflowId, out string! NodeId) -> void
+BlueTusk.Workflows.WorkflowRecoveryCursor.Equals(BlueTusk.Workflows.WorkflowRecoveryCursor? other) -> bool
+BlueTusk.Workflows.WorkflowRecoveryCursor.NodeId.get -> string!
+BlueTusk.Workflows.WorkflowRecoveryCursor.NodeId.init -> void
+BlueTusk.Workflows.WorkflowRecoveryCursor.WorkflowId.get -> System.Guid
+BlueTusk.Workflows.WorkflowRecoveryCursor.WorkflowId.init -> void
+BlueTusk.Workflows.WorkflowRecoveryCursor.WorkflowRecoveryCursor(System.Guid WorkflowId, string! NodeId) -> void
+BlueTusk.Workflows.WorkflowRecoveryResult
+BlueTusk.Workflows.WorkflowRecoveryResult.<Clone>$() -> BlueTusk.Workflows.WorkflowRecoveryResult!
+BlueTusk.Workflows.WorkflowRecoveryResult.Deconstruct(out int Inspected, out int Recovered, out BlueTusk.Workflows.WorkflowRecoveryCursor? NextCursor) -> void
+BlueTusk.Workflows.WorkflowRecoveryResult.Equals(BlueTusk.Workflows.WorkflowRecoveryResult? other) -> bool
+BlueTusk.Workflows.WorkflowRecoveryResult.Inspected.get -> int
+BlueTusk.Workflows.WorkflowRecoveryResult.Inspected.init -> void
+BlueTusk.Workflows.WorkflowRecoveryResult.NextCursor.get -> BlueTusk.Workflows.WorkflowRecoveryCursor?
+BlueTusk.Workflows.WorkflowRecoveryResult.NextCursor.init -> void
+BlueTusk.Workflows.WorkflowRecoveryResult.Recovered.get -> int
+BlueTusk.Workflows.WorkflowRecoveryResult.Recovered.init -> void
+BlueTusk.Workflows.WorkflowRecoveryResult.WorkflowRecoveryResult(int Inspected, int Recovered, BlueTusk.Workflows.WorkflowRecoveryCursor? NextCursor) -> void
+BlueTusk.Workflows.WorkflowReplayResult
+BlueTusk.Workflows.WorkflowReplayResult.<Clone>$() -> BlueTusk.Workflows.WorkflowReplayResult!
+BlueTusk.Workflows.WorkflowReplayResult.Deconstruct(out BlueTusk.Workflows.WorkflowKey! Key, out string! Definition, out int Version, out BlueTusk.Workflows.WorkflowStatus Status, out System.Collections.Generic.IReadOnlyDictionary<string!, BlueTusk.Workflows.WorkflowNodeStatus>! NodeStates, out bool MatchesPersistedState) -> void
+BlueTusk.Workflows.WorkflowReplayResult.Definition.get -> string!
+BlueTusk.Workflows.WorkflowReplayResult.Definition.init -> void
+BlueTusk.Workflows.WorkflowReplayResult.Equals(BlueTusk.Workflows.WorkflowReplayResult? other) -> bool
+BlueTusk.Workflows.WorkflowReplayResult.Key.get -> BlueTusk.Workflows.WorkflowKey!
+BlueTusk.Workflows.WorkflowReplayResult.Key.init -> void
+BlueTusk.Workflows.WorkflowReplayResult.MatchesPersistedState.get -> bool
+BlueTusk.Workflows.WorkflowReplayResult.MatchesPersistedState.init -> void
+BlueTusk.Workflows.WorkflowReplayResult.NodeStates.get -> System.Collections.Generic.IReadOnlyDictionary<string!, BlueTusk.Workflows.WorkflowNodeStatus>!
+BlueTusk.Workflows.WorkflowReplayResult.NodeStates.init -> void
+BlueTusk.Workflows.WorkflowReplayResult.Status.get -> BlueTusk.Workflows.WorkflowStatus
+BlueTusk.Workflows.WorkflowReplayResult.Status.init -> void
+BlueTusk.Workflows.WorkflowReplayResult.Version.get -> int
+BlueTusk.Workflows.WorkflowReplayResult.Version.init -> void
+BlueTusk.Workflows.WorkflowReplayResult.WorkflowReplayResult(BlueTusk.Workflows.WorkflowKey! Key, string! Definition, int Version, BlueTusk.Workflows.WorkflowStatus Status, System.Collections.Generic.IReadOnlyDictionary<string!, BlueTusk.Workflows.WorkflowNodeStatus>! NodeStates, bool MatchesPersistedState) -> void
+BlueTusk.Workflows.WorkflowScopeHealth
+BlueTusk.Workflows.WorkflowScopeHealth.<Clone>$() -> BlueTusk.Workflows.WorkflowScopeHealth!
+BlueTusk.Workflows.WorkflowScopeHealth.CompensatingCountCapped.get -> bool
+BlueTusk.Workflows.WorkflowScopeHealth.CompensatingCountCapped.init -> void
+BlueTusk.Workflows.WorkflowScopeHealth.CompensatingObserved.get -> int
+BlueTusk.Workflows.WorkflowScopeHealth.CompensatingObserved.init -> void
+BlueTusk.Workflows.WorkflowScopeHealth.Deconstruct(out int RunningObserved, out bool RunningCountCapped, out int CompensatingObserved, out bool CompensatingCountCapped, out System.TimeSpan? OldestActiveAge) -> void
+BlueTusk.Workflows.WorkflowScopeHealth.Equals(BlueTusk.Workflows.WorkflowScopeHealth? other) -> bool
+BlueTusk.Workflows.WorkflowScopeHealth.OldestActiveAge.get -> System.TimeSpan?
+BlueTusk.Workflows.WorkflowScopeHealth.OldestActiveAge.init -> void
+BlueTusk.Workflows.WorkflowScopeHealth.RunningCountCapped.get -> bool
+BlueTusk.Workflows.WorkflowScopeHealth.RunningCountCapped.init -> void
+BlueTusk.Workflows.WorkflowScopeHealth.RunningObserved.get -> int
+BlueTusk.Workflows.WorkflowScopeHealth.RunningObserved.init -> void
+BlueTusk.Workflows.WorkflowScopeHealth.WorkflowScopeHealth(int RunningObserved, bool RunningCountCapped, int CompensatingObserved, bool CompensatingCountCapped, System.TimeSpan? OldestActiveAge) -> void
+BlueTusk.Workflows.WorkflowSnapshot
+BlueTusk.Workflows.WorkflowSnapshot.<Clone>$() -> BlueTusk.Workflows.WorkflowSnapshot!
+BlueTusk.Workflows.WorkflowSnapshot.CompletedAt.get -> System.DateTimeOffset?
+BlueTusk.Workflows.WorkflowSnapshot.CompletedAt.init -> void
+BlueTusk.Workflows.WorkflowSnapshot.Deconstruct(out BlueTusk.Workflows.WorkflowKey! Key, out string! Definition, out int Version, out BlueTusk.Workflows.WorkflowStatus Status, out long Revision, out System.DateTimeOffset? CompletedAt, out string? FailureCode) -> void
+BlueTusk.Workflows.WorkflowSnapshot.Definition.get -> string!
+BlueTusk.Workflows.WorkflowSnapshot.Definition.init -> void
+BlueTusk.Workflows.WorkflowSnapshot.Equals(BlueTusk.Workflows.WorkflowSnapshot? other) -> bool
+BlueTusk.Workflows.WorkflowSnapshot.FailureCode.get -> string?
+BlueTusk.Workflows.WorkflowSnapshot.FailureCode.init -> void
+BlueTusk.Workflows.WorkflowSnapshot.Key.get -> BlueTusk.Workflows.WorkflowKey!
+BlueTusk.Workflows.WorkflowSnapshot.Key.init -> void
+BlueTusk.Workflows.WorkflowSnapshot.Revision.get -> long
+BlueTusk.Workflows.WorkflowSnapshot.Revision.init -> void
+BlueTusk.Workflows.WorkflowSnapshot.Status.get -> BlueTusk.Workflows.WorkflowStatus
+BlueTusk.Workflows.WorkflowSnapshot.Status.init -> void
+BlueTusk.Workflows.WorkflowSnapshot.Version.get -> int
+BlueTusk.Workflows.WorkflowSnapshot.Version.init -> void
+BlueTusk.Workflows.WorkflowSnapshot.WorkflowSnapshot(BlueTusk.Workflows.WorkflowKey! Key, string! Definition, int Version, BlueTusk.Workflows.WorkflowStatus Status, long Revision, System.DateTimeOffset? CompletedAt, string? FailureCode) -> void
+BlueTusk.Workflows.WorkflowStartRequest
+BlueTusk.Workflows.WorkflowStartRequest.<Clone>$() -> BlueTusk.Workflows.WorkflowStartRequest!
+BlueTusk.Workflows.WorkflowStartRequest.DeduplicationKey.get -> string?
+BlueTusk.Workflows.WorkflowStartRequest.DeduplicationKey.init -> void
+BlueTusk.Workflows.WorkflowStartRequest.Definition.get -> string!
+BlueTusk.Workflows.WorkflowStartRequest.Definition.init -> void
+BlueTusk.Workflows.WorkflowStartRequest.Equals(BlueTusk.Workflows.WorkflowStartRequest? other) -> bool
+BlueTusk.Workflows.WorkflowStartRequest.Input.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Workflows.WorkflowStartRequest.Input.init -> void
+BlueTusk.Workflows.WorkflowStartRequest.Scope.get -> BlueTusk.Jobs.JobScope!
+BlueTusk.Workflows.WorkflowStartRequest.Scope.init -> void
+BlueTusk.Workflows.WorkflowStartRequest.Version.get -> int
+BlueTusk.Workflows.WorkflowStartRequest.Version.init -> void
+BlueTusk.Workflows.WorkflowStartRequest.WorkflowStartRequest() -> void
+BlueTusk.Workflows.WorkflowStatus
+BlueTusk.Workflows.WorkflowStatus.Canceled = 4 -> BlueTusk.Workflows.WorkflowStatus
+BlueTusk.Workflows.WorkflowStatus.Compensating = 1 -> BlueTusk.Workflows.WorkflowStatus
+BlueTusk.Workflows.WorkflowStatus.Failed = 3 -> BlueTusk.Workflows.WorkflowStatus
+BlueTusk.Workflows.WorkflowStatus.Running = 0 -> BlueTusk.Workflows.WorkflowStatus
+BlueTusk.Workflows.WorkflowStatus.Succeeded = 2 -> BlueTusk.Workflows.WorkflowStatus
+BlueTusk.Workflows.WorkflowTelemetry
+BlueTusk.Workflows.WorkflowWorker
+BlueTusk.Workflows.WorkflowWorker.RunAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+BlueTusk.Workflows.WorkflowWorker.WorkflowWorker(BlueTusk.Workflows.PostgreSqlWorkflowStore! store, BlueTusk.Jobs.JobScope! scope, string! owner, BlueTusk.Workflows.WorkflowActivityRegistry! activities, BlueTusk.Workflows.WorkflowWorkerOptions? options = null) -> void
+BlueTusk.Workflows.WorkflowWorkerOptions
+BlueTusk.Workflows.WorkflowWorkerOptions.<Clone>$() -> BlueTusk.Workflows.WorkflowWorkerOptions!
+BlueTusk.Workflows.WorkflowWorkerOptions.Equals(BlueTusk.Workflows.WorkflowWorkerOptions? other) -> bool
+BlueTusk.Workflows.WorkflowWorkerOptions.Jobs.get -> BlueTusk.Jobs.JobWorkerOptions!
+BlueTusk.Workflows.WorkflowWorkerOptions.Jobs.init -> void
+BlueTusk.Workflows.WorkflowWorkerOptions.RecoveryBatchSize.get -> int
+BlueTusk.Workflows.WorkflowWorkerOptions.RecoveryBatchSize.init -> void
+BlueTusk.Workflows.WorkflowWorkerOptions.RecoveryInterval.get -> System.TimeSpan
+BlueTusk.Workflows.WorkflowWorkerOptions.RecoveryInterval.init -> void
+BlueTusk.Workflows.WorkflowWorkerOptions.WorkflowWorkerOptions() -> void
+const BlueTusk.Workflows.WorkflowTelemetry.InstrumentationName = "BlueTusk.Workflows" -> string!
+override BlueTusk.Workflows.WorkflowActivityContext.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowActivityContext.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowActivityContext.ToString() -> string!
+override BlueTusk.Workflows.WorkflowDefinition.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowDefinition.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowDefinition.ToString() -> string!
+override BlueTusk.Workflows.WorkflowHistoryEntry.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowHistoryEntry.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowHistoryEntry.ToString() -> string!
+override BlueTusk.Workflows.WorkflowKey.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowKey.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowKey.ToString() -> string!
+override BlueTusk.Workflows.WorkflowNode.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowNode.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowNode.ToString() -> string!
+override BlueTusk.Workflows.WorkflowNodeSnapshot.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowNodeSnapshot.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowNodeSnapshot.ToString() -> string!
+override BlueTusk.Workflows.WorkflowOptions.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowOptions.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowOptions.ToString() -> string!
+override BlueTusk.Workflows.WorkflowRecoveryCursor.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowRecoveryCursor.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowRecoveryCursor.ToString() -> string!
+override BlueTusk.Workflows.WorkflowRecoveryResult.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowRecoveryResult.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowRecoveryResult.ToString() -> string!
+override BlueTusk.Workflows.WorkflowReplayResult.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowReplayResult.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowReplayResult.ToString() -> string!
+override BlueTusk.Workflows.WorkflowScopeHealth.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowScopeHealth.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowScopeHealth.ToString() -> string!
+override BlueTusk.Workflows.WorkflowSnapshot.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowSnapshot.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowSnapshot.ToString() -> string!
+override BlueTusk.Workflows.WorkflowStartRequest.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowStartRequest.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowStartRequest.ToString() -> string!
+override BlueTusk.Workflows.WorkflowWorkerOptions.Equals(object? obj) -> bool
+override BlueTusk.Workflows.WorkflowWorkerOptions.GetHashCode() -> int
+override BlueTusk.Workflows.WorkflowWorkerOptions.ToString() -> string!
+static BlueTusk.Workflows.WorkflowActivityContext.operator !=(BlueTusk.Workflows.WorkflowActivityContext? left, BlueTusk.Workflows.WorkflowActivityContext? right) -> bool
+static BlueTusk.Workflows.WorkflowActivityContext.operator ==(BlueTusk.Workflows.WorkflowActivityContext? left, BlueTusk.Workflows.WorkflowActivityContext? right) -> bool
+static BlueTusk.Workflows.WorkflowDefinition.operator !=(BlueTusk.Workflows.WorkflowDefinition? left, BlueTusk.Workflows.WorkflowDefinition? right) -> bool
+static BlueTusk.Workflows.WorkflowDefinition.operator ==(BlueTusk.Workflows.WorkflowDefinition? left, BlueTusk.Workflows.WorkflowDefinition? right) -> bool
+static BlueTusk.Workflows.WorkflowHistoryEntry.operator !=(BlueTusk.Workflows.WorkflowHistoryEntry? left, BlueTusk.Workflows.WorkflowHistoryEntry? right) -> bool
+static BlueTusk.Workflows.WorkflowHistoryEntry.operator ==(BlueTusk.Workflows.WorkflowHistoryEntry? left, BlueTusk.Workflows.WorkflowHistoryEntry? right) -> bool
+static BlueTusk.Workflows.WorkflowKey.operator !=(BlueTusk.Workflows.WorkflowKey? left, BlueTusk.Workflows.WorkflowKey? right) -> bool
+static BlueTusk.Workflows.WorkflowKey.operator ==(BlueTusk.Workflows.WorkflowKey? left, BlueTusk.Workflows.WorkflowKey? right) -> bool
+static BlueTusk.Workflows.WorkflowNode.operator !=(BlueTusk.Workflows.WorkflowNode? left, BlueTusk.Workflows.WorkflowNode? right) -> bool
+static BlueTusk.Workflows.WorkflowNode.operator ==(BlueTusk.Workflows.WorkflowNode? left, BlueTusk.Workflows.WorkflowNode? right) -> bool
+static BlueTusk.Workflows.WorkflowNodeSnapshot.operator !=(BlueTusk.Workflows.WorkflowNodeSnapshot? left, BlueTusk.Workflows.WorkflowNodeSnapshot? right) -> bool
+static BlueTusk.Workflows.WorkflowNodeSnapshot.operator ==(BlueTusk.Workflows.WorkflowNodeSnapshot? left, BlueTusk.Workflows.WorkflowNodeSnapshot? right) -> bool
+static BlueTusk.Workflows.WorkflowOptions.operator !=(BlueTusk.Workflows.WorkflowOptions? left, BlueTusk.Workflows.WorkflowOptions? right) -> bool
+static BlueTusk.Workflows.WorkflowOptions.operator ==(BlueTusk.Workflows.WorkflowOptions? left, BlueTusk.Workflows.WorkflowOptions? right) -> bool
+static BlueTusk.Workflows.WorkflowRecoveryCursor.operator !=(BlueTusk.Workflows.WorkflowRecoveryCursor? left, BlueTusk.Workflows.WorkflowRecoveryCursor? right) -> bool
+static BlueTusk.Workflows.WorkflowRecoveryCursor.operator ==(BlueTusk.Workflows.WorkflowRecoveryCursor? left, BlueTusk.Workflows.WorkflowRecoveryCursor? right) -> bool
+static BlueTusk.Workflows.WorkflowRecoveryResult.operator !=(BlueTusk.Workflows.WorkflowRecoveryResult? left, BlueTusk.Workflows.WorkflowRecoveryResult? right) -> bool
+static BlueTusk.Workflows.WorkflowRecoveryResult.operator ==(BlueTusk.Workflows.WorkflowRecoveryResult? left, BlueTusk.Workflows.WorkflowRecoveryResult? right) -> bool
+static BlueTusk.Workflows.WorkflowReplayResult.operator !=(BlueTusk.Workflows.WorkflowReplayResult? left, BlueTusk.Workflows.WorkflowReplayResult? right) -> bool
+static BlueTusk.Workflows.WorkflowReplayResult.operator ==(BlueTusk.Workflows.WorkflowReplayResult? left, BlueTusk.Workflows.WorkflowReplayResult? right) -> bool
+static BlueTusk.Workflows.WorkflowScopeHealth.operator !=(BlueTusk.Workflows.WorkflowScopeHealth? left, BlueTusk.Workflows.WorkflowScopeHealth? right) -> bool
+static BlueTusk.Workflows.WorkflowScopeHealth.operator ==(BlueTusk.Workflows.WorkflowScopeHealth? left, BlueTusk.Workflows.WorkflowScopeHealth? right) -> bool
+static BlueTusk.Workflows.WorkflowSnapshot.operator !=(BlueTusk.Workflows.WorkflowSnapshot? left, BlueTusk.Workflows.WorkflowSnapshot? right) -> bool
+static BlueTusk.Workflows.WorkflowSnapshot.operator ==(BlueTusk.Workflows.WorkflowSnapshot? left, BlueTusk.Workflows.WorkflowSnapshot? right) -> bool
+static BlueTusk.Workflows.WorkflowStartRequest.operator !=(BlueTusk.Workflows.WorkflowStartRequest? left, BlueTusk.Workflows.WorkflowStartRequest? right) -> bool
+static BlueTusk.Workflows.WorkflowStartRequest.operator ==(BlueTusk.Workflows.WorkflowStartRequest? left, BlueTusk.Workflows.WorkflowStartRequest? right) -> bool
+static BlueTusk.Workflows.WorkflowTelemetry.ActivitySource.get -> System.Diagnostics.ActivitySource!
+static BlueTusk.Workflows.WorkflowTelemetry.Meter.get -> System.Diagnostics.Metrics.Meter!
+static BlueTusk.Workflows.WorkflowWorkerOptions.operator !=(BlueTusk.Workflows.WorkflowWorkerOptions? left, BlueTusk.Workflows.WorkflowWorkerOptions? right) -> bool
+static BlueTusk.Workflows.WorkflowWorkerOptions.operator ==(BlueTusk.Workflows.WorkflowWorkerOptions? left, BlueTusk.Workflows.WorkflowWorkerOptions? right) -> bool
+virtual BlueTusk.Workflows.TransactionalWorkflowActivity.Invoke(BlueTusk.Data.BlueTuskConnection! connection, BlueTusk.Data.BlueTuskTransaction! transaction, BlueTusk.Workflows.WorkflowActivityContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>>

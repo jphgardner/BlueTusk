@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="afe8fbed-053a-4c24-ab9a-39bc5d8ff8db" name="jphga@HACKITRON 2026-09-27 21:59:16" runUser="HACKITRON\jphga" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-27T21:59:16.8835116+01:00" queuing="2026-09-27T21:59:16.8835119+01:00" start="2026-09-27T21:59:15.0603586+01:00" finish="2026-09-27T21:59:19.4913334+01:00" />
+  <TestSettings name="default" id="f657851b-b753-4bb0-9e16-c5f598c3e12a">
+    <Deployment runDeploymentRoot="jphga_HACKITRON_2026-09-27_21_59_16" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="026c51cb-cf1b-4ae3-bc88-374ed0369844" testId="8a88641a-f327-ff36-7ce5-b38272fde97f" testName="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Verification_routed_to_another_database_fails_closed" computerName="HACKITRON" duration="00:00:00.3970441" startTime="2026-09-27T21:59:18.4419145+01:00" endTime="2026-09-27T21:59:18.8390215+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="026c51cb-cf1b-4ae3-bc88-374ed0369844" />
+    <UnitTestResult executionId="315591a5-a60e-4bef-a296-75ab0fc06095" testId="133b80c7-cd18-1131-fee4-b1fb2879a37f" testName="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Current_function_cache_and_publication_expansion_cannot_be_claimed_as_held_snapshot_metadata" computerName="HACKITRON" duration="00:00:00.2632812" startTime="2026-09-27T21:59:16.6691073+01:00" endTime="2026-09-27T21:59:16.9325114+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="315591a5-a60e-4bef-a296-75ab0fc06095" />
+    <UnitTestResult executionId="c0420457-1439-453f-898e-c070c02238a8" testId="71beac5d-4df7-98f8-e69a-bd2f3edbf0bc" testName="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Function_change_then_revert_still_changes_tuple_version" computerName="HACKITRON" duration="00:00:00.5700703" startTime="2026-09-27T21:59:16.0799859+01:00" endTime="2026-09-27T21:59:16.6601645+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c0420457-1439-453f-898e-c070c02238a8" />
+    <UnitTestResult executionId="1e516805-6312-4376-8386-3be9465e7791" testId="4ab7985a-ab1d-aa8d-4e52-02a5621e7474" testName="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Shared_role_rename_then_revert_is_attested_by_xmin_instead_of_matching_names" computerName="HACKITRON" duration="00:00:00.2921320" startTime="2026-09-27T21:59:18.1484277+01:00" endTime="2026-09-27T21:59:18.4406198+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1e516805-6312-4376-8386-3be9465e7791" />
+    <UnitTestResult executionId="20c36f80-0776-4258-953a-fc3c71f7d1a3" testId="95dc303f-1a71-75db-31a1-534905ba4e4b" testName="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Unchanged_catalogue_attests_and_preserves_borrowed_transaction_settings_and_ownership" computerName="HACKITRON" duration="00:00:00.2447655" startTime="2026-09-27T21:59:19.1588859+01:00" endTime="2026-09-27T21:59:19.4037096+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="20c36f80-0776-4258-953a-fc3c71f7d1a3" />
+    <UnitTestResult executionId="50b80b29-5591-4cfe-a1bc-31944a05ecaf" testId="98f92824-7b38-f462-10c7-61b805e036a1" testName="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Metadata_and_pool_wait_are_bounded_and_cancellation_does_not_own_the_caller" computerName="HACKITRON" duration="00:00:01.2135053" startTime="2026-09-27T21:59:16.9338843+01:00" endTime="2026-09-27T21:59:18.1474528+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="50b80b29-5591-4cfe-a1bc-31944a05ecaf" />
+    <UnitTestResult executionId="837fbfb1-8bb2-4a01-b4b9-2c11b548e5fe" testId="7a22a3f5-d37d-65ab-ab04-0dd273a10c51" testName="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Ordinary_login_requires_only_oid_xmin_grant_and_cannot_read_credential_columns" computerName="HACKITRON" duration="00:00:00.3167416" startTime="2026-09-27T21:59:18.8406784+01:00" endTime="2026-09-27T21:59:19.1574873+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="837fbfb1-8bb2-4a01-b4b9-2c11b548e5fe" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Verification_routed_to_another_database_fails_closed" storage="c:\users\jphga\.codex\worktrees\ecosystem-products\bluetusk\tests\bluetusk.schema.tests\bin\release\net10.0\bluetusk.schema.tests.dll" id="8a88641a-f327-ff36-7ce5-b38272fde97f">
+      <Execution id="026c51cb-cf1b-4ae3-bc88-374ed0369844" />
+      <TestMethod codeBase="C:\Users\jphga\.codex\worktrees\ecosystem-products\BlueTusk\tests\BlueTusk.Schema.Tests\bin\Release\net10.0\BlueTusk.Schema.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests" name="Verification_routed_to_another_database_fails_closed" />
+    </UnitTest>
+    <UnitTest name="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Metadata_and_pool_wait_are_bounded_and_cancellation_does_not_own_the_caller" storage="c:\users\jphga\.codex\worktrees\ecosystem-products\bluetusk\tests\bluetusk.schema.tests\bin\release\net10.0\bluetusk.schema.tests.dll" id="98f92824-7b38-f462-10c7-61b805e036a1">
+      <Execution id="50b80b29-5591-4cfe-a1bc-31944a05ecaf" />
+      <TestMethod codeBase="C:\Users\jphga\.codex\worktrees\ecosystem-products\BlueTusk\tests\BlueTusk.Schema.Tests\bin\Release\net10.0\BlueTusk.Schema.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests" name="Metadata_and_pool_wait_are_bounded_and_cancellation_does_not_own_the_caller" />
+    </UnitTest>
+    <UnitTest name="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Ordinary_login_requires_only_oid_xmin_grant_and_cannot_read_credential_columns" storage="c:\users\jphga\.codex\worktrees\ecosystem-products\bluetusk\tests\bluetusk.schema.tests\bin\release\net10.0\bluetusk.schema.tests.dll" id="7a22a3f5-d37d-65ab-ab04-0dd273a10c51">
+      <Execution id="837fbfb1-8bb2-4a01-b4b9-2c11b548e5fe" />
+      <TestMethod codeBase="C:\Users\jphga\.codex\worktrees\ecosystem-products\BlueTusk\tests\BlueTusk.Schema.Tests\bin\Release\net10.0\BlueTusk.Schema.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests" name="Ordinary_login_requires_only_oid_xmin_grant_and_cannot_read_credential_columns" />
+    </UnitTest>
+    <UnitTest name="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Shared_role_rename_then_revert_is_attested_by_xmin_instead_of_matching_names" storage="c:\users\jphga\.codex\worktrees\ecosystem-products\bluetusk\tests\bluetusk.schema.tests\bin\release\net10.0\bluetusk.schema.tests.dll" id="4ab7985a-ab1d-aa8d-4e52-02a5621e7474">
+      <Execution id="1e516805-6312-4376-8386-3be9465e7791" />
+      <TestMethod codeBase="C:\Users\jphga\.codex\worktrees\ecosystem-products\BlueTusk\tests\BlueTusk.Schema.Tests\bin\Release\net10.0\BlueTusk.Schema.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests" name="Shared_role_rename_then_revert_is_attested_by_xmin_instead_of_matching_names" />
+    </UnitTest>
+    <UnitTest name="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Current_function_cache_and_publication_expansion_cannot_be_claimed_as_held_snapshot_metadata" storage="c:\users\jphga\.codex\worktrees\ecosystem-products\bluetusk\tests\bluetusk.schema.tests\bin\release\net10.0\bluetusk.schema.tests.dll" id="133b80c7-cd18-1131-fee4-b1fb2879a37f">
+      <Execution id="315591a5-a60e-4bef-a296-75ab0fc06095" />
+      <TestMethod codeBase="C:\Users\jphga\.codex\worktrees\ecosystem-products\BlueTusk\tests\BlueTusk.Schema.Tests\bin\Release\net10.0\BlueTusk.Schema.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests" name="Current_function_cache_and_publication_expansion_cannot_be_claimed_as_held_snapshot_metadata" />
+    </UnitTest>
+    <UnitTest name="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Unchanged_catalogue_attests_and_preserves_borrowed_transaction_settings_and_ownership" storage="c:\users\jphga\.codex\worktrees\ecosystem-products\bluetusk\tests\bluetusk.schema.tests\bin\release\net10.0\bluetusk.schema.tests.dll" id="95dc303f-1a71-75db-31a1-534905ba4e4b">
+      <Execution id="20c36f80-0776-4258-953a-fc3c71f7d1a3" />
+      <TestMethod codeBase="C:\Users\jphga\.codex\worktrees\ecosystem-products\BlueTusk\tests\BlueTusk.Schema.Tests\bin\Release\net10.0\BlueTusk.Schema.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests" name="Unchanged_catalogue_attests_and_preserves_borrowed_transaction_settings_and_ownership" />
+    </UnitTest>
+    <UnitTest name="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests.Function_change_then_revert_still_changes_tuple_version" storage="c:\users\jphga\.codex\worktrees\ecosystem-products\bluetusk\tests\bluetusk.schema.tests\bin\release\net10.0\bluetusk.schema.tests.dll" id="71beac5d-4df7-98f8-e69a-bd2f3edbf0bc">
+      <Execution id="c0420457-1439-453f-898e-c070c02238a8" />
+      <TestMethod codeBase="C:\Users\jphga\.codex\worktrees\ecosystem-products\BlueTusk\tests\BlueTusk.Schema.Tests\bin\Release\net10.0\BlueTusk.Schema.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BlueTusk.Schema.Tests.PostgreSqlCatalogAttestationTests" name="Function_change_then_revert_still_changes_tuple_version" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="8a88641a-f327-ff36-7ce5-b38272fde97f" executionId="026c51cb-cf1b-4ae3-bc88-374ed0369844" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="133b80c7-cd18-1131-fee4-b1fb2879a37f" executionId="315591a5-a60e-4bef-a296-75ab0fc06095" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="71beac5d-4df7-98f8-e69a-bd2f3edbf0bc" executionId="c0420457-1439-453f-898e-c070c02238a8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4ab7985a-ab1d-aa8d-4e52-02a5621e7474" executionId="1e516805-6312-4376-8386-3be9465e7791" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="95dc303f-1a71-75db-31a1-534905ba4e4b" executionId="20c36f80-0776-4258-953a-fc3c71f7d1a3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="98f92824-7b38-f462-10c7-61b805e036a1" executionId="50b80b29-5591-4cfe-a1bc-31944a05ecaf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7a22a3f5-d37d-65ab-ab04-0dd273a10c51" executionId="837fbfb1-8bb2-4a01-b4b9-2c11b548e5fe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="7" executed="7" passed="7" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.20]   Discovering: BlueTusk.Schema.Tests&#xD;
+[xUnit.net 00:00:00.42]   Discovered:  BlueTusk.Schema.Tests&#xD;
+[xUnit.net 00:00:00.62]   Starting:    BlueTusk.Schema.Tests&#xD;
+[xUnit.net 00:00:04.02]   Finished:    BlueTusk.Schema.Tests (ID = '20fed4d8faf503007bc20cc0369cfbe21bfc9144052f73882e2066548ff40b2f')&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

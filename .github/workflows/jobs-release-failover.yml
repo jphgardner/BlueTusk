@@ -1,0 +1,71 @@
+name: Jobs exact-candidate release failover
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character commit SHA containing this Jobs gate
+        required: true
+        type: string
+      confirmation:
+        description: Type RUN-JOBS-RELEASE-FAILOVER for three physical promotions
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jobs-release-failover-reference
+  cancel-in-progress: false
+
+jobs:
+  qualify:
+    name: Isolated Windows Jobs physical promotion
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 120
+    env:
+      EVIDENCE_ROOT: artifacts/jobs-release-failover/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean exact candidate and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Jobs failover requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-JOBS-RELEASE-FAILOVER') { throw 'The exact manual Jobs failover confirmation is required.' }
+          ./eng/verify-jobs-release-failover.ps1 -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Repeat synchronous physical promotion on three fresh pairs
+        shell: pwsh
+        run: ./eng/verify-jobs-release-failover.ps1 -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Jobs effects, fences and hashes
+        shell: pwsh
+        run: ./eng/verify-jobs-release-failover.ps1 -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Jobs failover evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-jobs-failover-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: jobs-failover-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14

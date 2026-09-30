@@ -5,9 +5,9 @@
     "initialRawBytes": 950000,
     "initialBrotliBytes": 225280,
     "largestLazyBrotliBytes": 286720,
-    "totalDistributionBytes": 20971520
+    "totalDistributionBytes": 25165824
   },
-  "minimumPrerenderedRoutes": 135,
+  "minimumPrerenderedRoutes": 177,
   "requiredAssets": [
     "favicon.ico",
     "robots.txt",

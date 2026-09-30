@@ -117,12 +117,12 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
 
     internal ValueTask<LiveDiffBatch<T, TKey>> StartPersistedAsync(
         Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask> persist,
-        CancellationToken cancellationToken) =>
-        StartCoreAsync(persist, cancellationToken);
+        CancellationToken cancellationToken, long initialSequence = 1, LiveResetReason? resetReason = null) =>
+        StartCoreAsync(persist, cancellationToken, initialSequence, resetReason);
 
     private async ValueTask<LiveDiffBatch<T, TKey>> StartCoreAsync(
         Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask>? persist,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, long initialSequence = 1, LiveResetReason? resetReason = null)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -167,7 +167,13 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
                         rows,
                         _plan.KeySelector,
                         _plan.KeyComparer,
-                        sequence: 1);
+                        sequence: initialSequence);
+                    if (resetReason is { } reason)
+                    {
+                        var reset = new LiveResultEvent<T, TKey>(initialSequence, LiveEventKind.ResultReset, default, default,
+                            null, null, initial.Snapshot.Rows, initial.Snapshot.Keys, reason);
+                        initial = new LiveDiffBatch<T, TKey>(initial.Snapshot, [reset]);
+                    }
                     return await CommitChangeAsync(
                         new PendingChange(initial, through, StartsSession: true),
                         persist,

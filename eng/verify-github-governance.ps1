@@ -91,12 +91,22 @@ if ($configuration.ruleset.strictRequiredStatusChecksPolicy -ne $true)
 }
 
 $environments = @($configuration.environments)
-if ($environments.Count -ne 3 -or
+if ($environments.Count -notin @(3, 4) -or
     $environments.Count -ne @(
         $environments.name | Sort-Object -Unique
     ).Count)
 {
-    throw 'Exactly three uniquely named V1 deployment environments are required.'
+    throw 'The three V1 deployment environments and at most one expansion-readiness environment are required.'
+}
+$requiredEnvironmentNames = @('v1-candidate-readiness', 'package-prerelease',
+    'package-production')
+if ($environments.Count -eq 4)
+{
+    $requiredEnvironmentNames += 'expansion-candidate-readiness'
+}
+if (@(Compare-Object $requiredEnvironmentNames @($environments.name)).Count -ne 0)
+{
+    throw 'Deployment environment names must match the protected release contract.'
 }
 foreach ($environment in $environments)
 {

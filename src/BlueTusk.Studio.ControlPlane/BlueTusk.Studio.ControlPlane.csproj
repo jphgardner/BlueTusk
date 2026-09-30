@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Studio</BlueTuskProductFamily>
+    <Description>Principal-scoped Live inspection and audited quarantine replay for BlueTusk Studio.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Studio.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\BlueTusk.Studio\BlueTusk.Studio.csproj" />
+    <ProjectReference Include="..\BlueTusk.ControlPlane\BlueTusk.ControlPlane.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,21 @@
+#nullable enable
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheck
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheck.DocumentStoreHealthCheck(BlueTusk.Documents.DocumentStore! store, string! tenant, string! collection, BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions? options = null) -> void
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheck.Options.get -> BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions!
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckExtensions
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.<Clone>$() -> BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions!
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.DocumentStoreHealthCheckOptions() -> void
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.Equals(BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions? other) -> bool
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.MaxConcurrentProbes.get -> int
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.MaxConcurrentProbes.init -> void
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.Timeout.get -> System.TimeSpan
+BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.Timeout.init -> void
+const BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheck.MeterName = "BlueTusk.Documents.Health" -> string!
+override BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.Equals(object? obj) -> bool
+override BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.GetHashCode() -> int
+override BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.ToString() -> string!
+static BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckExtensions.AddBlueTuskDocuments(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, string! name, BlueTusk.Documents.DocumentStore! store, string! tenant, string! collection, BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions? options = null) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+static BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.operator !=(BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions? left, BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions? right) -> bool
+static BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions.operator ==(BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions? left, BlueTusk.Documents.AspNetCore.DocumentStoreHealthCheckOptions? right) -> bool

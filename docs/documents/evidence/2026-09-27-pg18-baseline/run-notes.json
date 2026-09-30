@@ -1,0 +1,29 @@
+{
+  "Scope": "Dirty working-tree Documents bounded workload; not immutable release or production qualification",
+  "SharedHostEvents": [
+    {
+      "ApproximateUtc": "2026-09-27T21:37:00Z",
+      "Event": "Root full-solution compilation after campaign/verification changes",
+      "Implication": "Latency, CPU and memory are shared-host observations; owned fixture correctness/WAL/storage evidence remains scoped as documented"
+    },
+    {
+      "Event": "A short diagnostic Projections physical backlog smoke may overlap early sweep setup",
+      "Implication": "No overlapping final heavy workload campaign; repeat isolated captures are still required"
+    }
+  ],
+  "BinaryBinding": "Raw harness report Environment.Assemblies contains SHA-256 identities captured before measurement; candidate-inputs.sha256 records the source inventory at start",
+  "OptimizedCandidate": "Not part of this baseline; runtime source remains frozen throughout capture",
+  "FixtureStartedUtc": "2026-09-27T21:32:07.6672949Z",
+  "CandidateInventoryCapturedUtc": "2026-09-27T21:32:10.9422197Z",
+  "SustainedPhaseStartedApproximateUtc": "2026-09-27T21:36:12Z",
+  "InvalidMeasurements": [
+    {
+      "Fields": [
+        "Runtime.PeakDatabaseClients",
+        "Runtime.PeakDatabaseLockWaiters"
+      ],
+      "Reason": "The workload supplied a 64-byte ASCII application_name. PostgreSQL truncates it to 63 bytes, so the observer exact-name predicate matched no backend. Raw zeros are invalid activity evidence; provider pool total/busy/waiter counts remain valid. The raw campaign JSON is preserved unchanged.",
+      "Correction": "A separate harness fix supplies a unique application name below 63 bytes, verifies SHOW application_name equality, and rejects zero observed clients. Its diagnostic run is separate from this baseline."
+    }
+  ]
+}

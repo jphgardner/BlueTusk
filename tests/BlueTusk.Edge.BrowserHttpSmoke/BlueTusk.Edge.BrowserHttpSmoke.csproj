@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Edge</BlueTuskProductFamily><IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Edge.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge.AspNetCore\BlueTusk.Edge.AspNetCore.csproj" />
+    <Compile Include="..\BlueTusk.Edge.NativeAotSmoke\EdgeSmokeHost.cs" Link="EdgeSmokeHost.cs" />
+  </ItemGroup>
+</Project>

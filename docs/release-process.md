@@ -23,7 +23,8 @@ approval remain the publication boundary.
 ## Current package RC train
 
 `eng/package-prerelease-train.json` defines the prepared immutable
-`1.2.0-rc.1` package train for all six families in stable dependency order.
+`1.2.0-rc.1` package train for all six historical families in dependency order.
+Its inclusion of Graph is prerelease packaging, not Graph stable qualification.
 This train is not public until the reviewed commit reaches `main` and the six
 exact RC tags publish successfully. RC packing uses version
 overrides and temporary npm artifact copies; it does not rewrite the stable
@@ -61,13 +62,21 @@ staging/production boundary are documented in the
 
 ## Candidate sequence
 
+The `1.2.0` stable track contains Provider, Streams, Sync, Live and Control
+Plane. Continuous Graph remains preview until a supported server supplies
+SQL/PGQ and the separate Graph qualification passes. PostgreSQL 19 GA alone
+cannot qualify Graph. The ten ecosystem additions have separate preview
+versions and [release qualification](ecosystem/release-qualification.md); none
+is armed for stable publication. The historical V1 aggregator is not a 1.2
+or expansion release verdict. The 1.2 core aggregator is still being migrated,
+so this sequence is a release plan, not permission to tag now.
+
 1. Finish code, documentation, API/format freezes, upgrades, package inspection,
-   security audit, live matrices, and performance gates.
-2. After PostgreSQL 19 GA, merge a reviewed final arming PR to `main`. Its
-   resulting SHA must contain exactly six stable `1.2.0` families, all armed
-   in dependency order, with no stable 1.2 release tags or stable 1.2 packages
-   published. The manifest-bound public RC remains separate evidence and
-   cannot satisfy the stable gate. That reviewed `main` SHA is the immutable
+   security audit, live matrices, and performance gates for the chosen track.
+2. Merge a reviewed final arming PR to `main` for the five core `1.2.0`
+   families in dependency order. Its resulting SHA must have no stable 1.2
+   tags or packages yet. The manifest-bound public RC remains separate evidence
+   and cannot satisfy the stable gate. That reviewed `main` SHA is the immutable
    candidate.
 3. Dispatch `build.yml` explicitly at that exact commit. A normal pull-request
    or branch-push run is not release evidence because the manual run includes
@@ -80,24 +89,23 @@ staging/production boundary are documented in the
 5. Dispatch `performance.yml` at that exact commit on the labelled reference
    runner and retain its integrity-bound complete benchmark evidence.
 6. Complete `streams-release-endurance.yml`,
-   `sync-release-endurance.yml`,
-   `live-control-plane-release-endurance.yml`, and
-   `continuous-graph-release-endurance.yml` at that commit. The four windows
-   are 72, 24, 24, and 24 hours respectively. ContinuousGraph additionally requires
-   at least 100,000 evaluations, 99.9% committed outcomes, P95 lifecycle at or
-   below one second, repair/restart/cancellation/disconnect evidence, and no
-   ordering or reconciliation errors.
-7. Complete the external acceptance records and run
-   the protected `v1-candidate-readiness.yml` aggregation workflow as described
-   in [V1 production readiness](operations/production-readiness.md). Every
-   family release requires this successful workflow at the exact commit.
+   `sync-release-endurance.yml`, and
+   `live-control-plane-release-endurance.yml` at that commit. Their windows are
+   72, 24 and 24 hours respectively. Graph's separate preview endurance cannot
+   substitute for a core gate.
+7. Complete the external acceptance records and the migrated protected 1.2
+   core candidate aggregator at that exact commit. Its current
+   `eng/v1.2-candidate-readiness.json` contract is marked migration-in-progress
+   and publication-disabled. The historical `v1-candidate-readiness.yml` does
+   not satisfy this step.
 8. Do not change the candidate commit after evidence succeeds. Any source,
    project, dependency, version, workflow, or release-policy change creates a
    new commit and invalidates the evidence.
-9. Create the exact tags sequentially on the verified commit:
+9. Only after the preceding gates pass, create the exact core tags
+   sequentially on the verified commit:
    `provider-v1.2.0`, `streams-v1.2.0`, `sync-v1.2.0`,
-   `live-v1.2.0`, `control-plane-v1.2.0`, then
-   `continuous-graph-v1.2.0`. After every tag, verify registry availability,
+   `live-v1.2.0`, then `control-plane-v1.2.0`.
+   After every tag, verify registry availability,
    hashes, provenance, installation, and dependency resolution before creating
    the next tag.
 
@@ -120,7 +128,7 @@ matching tag after `verify-release-gates.ps1` succeeds.
 The publish job downloads the artifact created by the verified job, records a
 GitHub build-provenance attestation, and runs in the `package-production`
 environment. That environment is configured with prevent-self-review and the
-six allowed release-tag patterns. Before the first candidate, add another
+declared exact release-tag patterns. Before the first candidate, add another
 eligible human reviewer; the repository currently has only its owner, so an
 owner-triggered deployment cannot self-approve. Configure NuGet trusted-
 publishing policies for `release-product-family.yml`, restricted to the
@@ -140,7 +148,7 @@ The exact live settings are not informal setup advice. They are declared in
 `main` ruleset, all 35 V1 status checks, fresh independent review after the
 last push, resolved review threads, the protected
 `v1-candidate-readiness` environment with administrator bypass disabled, and
-the six allowed production tag patterns. It also requires the dependency
+the declared production tag patterns. It also requires the dependency
 graph, vulnerability alerts, automated security fixes and private vulnerability
 reporting. A missing or
 unprotected environment, or a disabled repository security feature, makes both
@@ -154,8 +162,8 @@ NuGet, symbol, and npm archive set; safe archive paths; MIT metadata; repository
 commit provenance; correct internal dependency versions; portable PDBs; and
 compiled npm distributions without install lifecycle scripts. Duplicate NuGet
 publication is a release failure, and npm publication uses registry provenance.
-Dependency order is Provider, Streams, Sync, Live, Control Plane, then
-ContinuousGraph.
+Stable 1.2 core dependency order is Provider, Streams, Sync, Live, then
+Control Plane. Graph and the expansion families retain separate gates.
 
 Every external GitHub Action reference is pinned to a full commit.
 `security.yml` runs CodeQL and pull-request dependency review, while
@@ -166,7 +174,8 @@ npm artifact. It verifies those records before upload and includes the package
 set and SBOMs in the GitHub build-provenance attestation.
 
 An independent reviewer completes the
-[release review handoff](release-review-handoff.md) for the exact candidate
-before an administrator enables publication. The
+[release review handoff](release-review-handoff.md) for the exact armed
+candidate before any tag is created. Arming changes the commit SHA, so
+pre-arming reports cannot satisfy that handoff. The
 [V1 release-readiness record](v1-release-readiness.md) separates implemented
 hardening from the remaining exact-candidate and external evidence.

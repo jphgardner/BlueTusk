@@ -1,4 +1,6 @@
 #nullable enable
+BlueTusk.Data.BlueTuskDataReader.GetFieldByteLength(int ordinal) -> int?
+BlueTusk.Data.BlueTuskDataReader.GetPostgreSqlTypeOid(int ordinal) -> uint
 BlueTusk.Data.BlueTuskConnection.SupportsRepack.get -> bool?
 BlueTusk.Data.Maintenance.BlueTuskRepackExtensions
 BlueTusk.Data.Maintenance.BlueTuskRepackProgress

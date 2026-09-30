@@ -1,0 +1,390 @@
+#nullable enable
+BlueTusk.Projections.IProjectionDefinition
+BlueTusk.Projections.IProjectionDefinition.ApplySnapshotAsync(BlueTusk.Streams.ChangeSnapshotBatch! batch, BlueTusk.Projections.ProjectionWriteContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.IProjectionDefinition.ApplyTransactionAsync(BlueTusk.Streams.ChangeTransaction! transaction, BlueTusk.Projections.ProjectionWriteContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.IProjectionDefinition.Identity.get -> BlueTusk.Projections.ProjectionIdentity!
+BlueTusk.Projections.PostgreSqlProjectionLineage
+BlueTusk.Projections.PostgreSqlProjectionsOptions
+BlueTusk.Projections.PostgreSqlProjectionsOptions.CommandTimeoutSeconds.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.CommandTimeoutSeconds.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumChangesPerTransaction.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumChangesPerTransaction.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumDependenciesPerDocument.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumDependenciesPerDocument.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumDependencyPageSize.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumDependencyPageSize.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumDocumentBytes.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumDocumentBytes.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumInvalidationsPerTransaction.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumInvalidationsPerTransaction.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumResetBatchRows.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumResetBatchRows.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumSnapshotBatchRows.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumSnapshotBatchRows.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumTransactionBytes.get -> long
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumTransactionBytes.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumWriteBatchBytes.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumWriteBatchBytes.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumWriteBatchSize.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumWriteBatchSize.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumWriteOperationsPerTransaction.get -> int
+BlueTusk.Projections.PostgreSqlProjectionsOptions.MaximumWriteOperationsPerTransaction.init -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.PostgreSqlProjectionsOptions() -> void
+BlueTusk.Projections.PostgreSqlProjectionsOptions.Schema.get -> string!
+BlueTusk.Projections.PostgreSqlProjectionsOptions.Schema.init -> void
+BlueTusk.Projections.PostgreSqlProjectionStore
+BlueTusk.Projections.PostgreSqlProjectionStore.AcquireAsync(BlueTusk.Projections.ProjectionIdentity! identity, string! ownerId, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionLease?>
+BlueTusk.Projections.PostgreSqlProjectionStore.ApplyAsync(BlueTusk.Projections.ProjectionLease! lease, BlueTusk.Projections.IProjectionDefinition! definition, BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionApplyResult!>
+BlueTusk.Projections.PostgreSqlProjectionStore.ApplySnapshotAsync(BlueTusk.Projections.ProjectionLease! lease, BlueTusk.Projections.IProjectionDefinition! definition, BlueTusk.Streams.ChangeSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Projections.PostgreSqlProjectionStore.BeginRecoveryAsync(BlueTusk.Projections.ProjectionIdentity! candidate, int expectedActiveVersion, BlueTusk.Projections.ProjectionCutoverEvidence! freshCandidateEvidence, System.Guid recoveryId, string! reason, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionRecoveryTicket!>
+BlueTusk.Projections.PostgreSqlProjectionStore.BeginSnapshotResetAsync(BlueTusk.Projections.ProjectionLease! lease, BlueTusk.Streams.SnapshotStart! start, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionSnapshotResetProgress!>
+BlueTusk.Projections.PostgreSqlProjectionStore.CompleteRecoveryAsync(BlueTusk.Projections.ProjectionLease! candidateLease, System.Guid recoveryId, BlueTusk.Projections.ProjectionCutoverEvidence! freshCandidateEvidence, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.CompleteSnapshotAsync(BlueTusk.Projections.ProjectionLease! lease, BlueTusk.Streams.SnapshotComplete! complete, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.ContinueSnapshotResetAsync(BlueTusk.Projections.ProjectionLease! lease, BlueTusk.Streams.SnapshotStart! start, int maximumRows = 1024, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionSnapshotResetProgress!>
+BlueTusk.Projections.PostgreSqlProjectionStore.FenceForMaintenanceAsync(string! projectionName, int expectedActiveVersion, System.Guid maintenanceId, string! reason, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.PostgreSqlProjectionStore(System.Data.Common.DbDataSource! dataSource, BlueTusk.Projections.PostgreSqlProjectionsOptions? options = null) -> void
+BlueTusk.Projections.PostgreSqlProjectionStore.PromoteAsync(BlueTusk.Projections.ProjectionLease! lease, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber requiredPosition, int? expectedActiveVersion, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.PromoteWithLineageAsync(BlueTusk.Projections.ProjectionLease! lease, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber requiredPosition, int expectedActiveVersion, BlueTusk.Projections.ProjectionCutoverEvidence! freshCandidateEvidence, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.PruneRetiredAsync(BlueTusk.Projections.ProjectionIdentity! identity, int maximumRows = 1024, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionRetentionResult!>
+BlueTusk.Projections.PostgreSqlProjectionStore.ReadActiveAggregateAsync(string! projectionName, string! tenantId, string! groupKey, string! metric, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionPublishedAggregate!>
+BlueTusk.Projections.PostgreSqlProjectionStore.ReadActiveDocumentAsync(string! projectionName, string! tenantId, string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionDocument?>
+BlueTusk.Projections.PostgreSqlProjectionStore.ReadActivePageAsync(string! projectionName, string! tenantId, int maximumDocuments = 256, int maximumPayloadBytes = 8388608, BlueTusk.Projections.ProjectionPageCursor? after = null, string? afterKey = null, string? throughKey = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionDocumentPage!>
+BlueTusk.Projections.PostgreSqlProjectionStore.ReadActiveVersionAsync(string! projectionName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int?>
+BlueTusk.Projections.PostgreSqlProjectionStore.ReadPublicationAsync(string! projectionName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionPublication!>
+BlueTusk.Projections.PostgreSqlProjectionStore.ReadRecoveryAsync(string! projectionName, System.Guid recoveryId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionRecoveryTicket?>
+BlueTusk.Projections.PostgreSqlProjectionStore.ReadSnapshotResetAsync(BlueTusk.Projections.ProjectionIdentity! identity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.SnapshotStart?>
+BlueTusk.Projections.PostgreSqlProjectionStore.ReadStateAsync(BlueTusk.Projections.ProjectionIdentity! identity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionState!>
+BlueTusk.Projections.PostgreSqlProjectionStore.RegisterAsync(BlueTusk.Projections.ProjectionIdentity! identity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.RegisterWithLineageAsync(BlueTusk.Projections.ProjectionIdentity! identity, BlueTusk.Projections.ProjectionSourceLineage! lineage, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.RegisterPublishedRetentionTargetAsync(BlueTusk.Projections.ProjectionIdentity! identity, BlueTusk.Projections.ProjectionSourceLineage! sourceLineage, BlueTusk.Events.EventPublishedConsumerRegistration! registration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.ReleaseAsync(BlueTusk.Projections.ProjectionLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Projections.PostgreSqlProjectionStore.RenewAsync(BlueTusk.Projections.ProjectionLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Projections.PostgreSqlProjectionStore.RetireAsync(BlueTusk.Projections.ProjectionLease! lease, int expectedActiveVersion, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.PostgreSqlProjectionStore.StartSnapshotAsync(BlueTusk.Projections.ProjectionLease! lease, BlueTusk.Streams.SnapshotStart! start, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.ProjectionApplyResult
+BlueTusk.Projections.ProjectionApplyResult.<Clone>$() -> BlueTusk.Projections.ProjectionApplyResult!
+BlueTusk.Projections.ProjectionApplyResult.Checkpoint.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Projections.ProjectionApplyResult.Checkpoint.init -> void
+BlueTusk.Projections.ProjectionApplyResult.Deconstruct(out bool WasApplied, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Checkpoint, out long Generation) -> void
+BlueTusk.Projections.ProjectionApplyResult.Equals(BlueTusk.Projections.ProjectionApplyResult? other) -> bool
+BlueTusk.Projections.ProjectionApplyResult.Generation.get -> long
+BlueTusk.Projections.ProjectionApplyResult.Generation.init -> void
+BlueTusk.Projections.ProjectionApplyResult.ProjectionApplyResult(bool WasApplied, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Checkpoint, long Generation) -> void
+BlueTusk.Projections.ProjectionApplyResult.WasApplied.get -> bool
+BlueTusk.Projections.ProjectionApplyResult.WasApplied.init -> void
+BlueTusk.Projections.ProjectionBoundExceededException
+BlueTusk.Projections.ProjectionBoundExceededException.ProjectionBoundExceededException(string! message) -> void
+BlueTusk.Projections.ProjectionBuildPhase
+BlueTusk.Projections.ProjectionBuildPhase.CatchingUp = 2 -> BlueTusk.Projections.ProjectionBuildPhase
+BlueTusk.Projections.ProjectionBuildPhase.Empty = 0 -> BlueTusk.Projections.ProjectionBuildPhase
+BlueTusk.Projections.ProjectionBuildPhase.Resetting = 3 -> BlueTusk.Projections.ProjectionBuildPhase
+BlueTusk.Projections.ProjectionBuildPhase.Snapshot = 1 -> BlueTusk.Projections.ProjectionBuildPhase
+BlueTusk.Projections.ProjectionCutoverEvidence
+BlueTusk.Projections.ProjectionCutoverEvidence.BarrierPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Projections.ProjectionCutoverEvidence.Lineage.get -> BlueTusk.Projections.ProjectionSourceLineage!
+BlueTusk.Projections.ProjectionDependency
+BlueTusk.Projections.ProjectionDependency.<Clone>$() -> BlueTusk.Projections.ProjectionDependency!
+BlueTusk.Projections.ProjectionDependency.Equals(BlueTusk.Projections.ProjectionDependency? other) -> bool
+BlueTusk.Projections.ProjectionDependency.KeyId.get -> string!
+BlueTusk.Projections.ProjectionDependency.ProjectionDependency(string! tableId, string! keyId) -> void
+BlueTusk.Projections.ProjectionDependency.TableId.get -> string!
+BlueTusk.Projections.ProjectionDependencyPage
+BlueTusk.Projections.ProjectionDependencyPage.<Clone>$() -> BlueTusk.Projections.ProjectionDependencyPage!
+BlueTusk.Projections.ProjectionDependencyPage.ContinueAfter.get -> string?
+BlueTusk.Projections.ProjectionDependencyPage.ContinueAfter.init -> void
+BlueTusk.Projections.ProjectionDependencyPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! DocumentKeys, out string? ContinueAfter) -> void
+BlueTusk.Projections.ProjectionDependencyPage.DocumentKeys.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Projections.ProjectionDependencyPage.DocumentKeys.init -> void
+BlueTusk.Projections.ProjectionDependencyPage.Equals(BlueTusk.Projections.ProjectionDependencyPage? other) -> bool
+BlueTusk.Projections.ProjectionDependencyPage.ProjectionDependencyPage(System.Collections.Generic.IReadOnlyList<string!>! DocumentKeys, string? ContinueAfter) -> void
+BlueTusk.Projections.ProjectionDocument
+BlueTusk.Projections.ProjectionDocument.<Clone>$() -> BlueTusk.Projections.ProjectionDocument!
+BlueTusk.Projections.ProjectionDocument.Deconstruct(out string! TenantId, out string! Key, out System.ReadOnlyMemory<byte> Payload) -> void
+BlueTusk.Projections.ProjectionDocument.Equals(BlueTusk.Projections.ProjectionDocument? other) -> bool
+BlueTusk.Projections.ProjectionDocument.Key.get -> string!
+BlueTusk.Projections.ProjectionDocument.Key.init -> void
+BlueTusk.Projections.ProjectionDocument.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Projections.ProjectionDocument.Payload.init -> void
+BlueTusk.Projections.ProjectionDocument.ProjectionDocument(string! TenantId, string! Key, System.ReadOnlyMemory<byte> Payload) -> void
+BlueTusk.Projections.ProjectionDocument.TenantId.get -> string!
+BlueTusk.Projections.ProjectionDocument.TenantId.init -> void
+BlueTusk.Projections.ProjectionDocumentPage
+BlueTusk.Projections.ProjectionDocumentPage.<Clone>$() -> BlueTusk.Projections.ProjectionDocumentPage!
+BlueTusk.Projections.ProjectionDocumentPage.ContinueAfter.get -> BlueTusk.Projections.ProjectionPageCursor?
+BlueTusk.Projections.ProjectionDocumentPage.ContinueAfter.init -> void
+BlueTusk.Projections.ProjectionDocumentPage.Deconstruct(out BlueTusk.Projections.ProjectionPublication! Publication, out System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionDocument!>! Documents, out BlueTusk.Projections.ProjectionPageCursor? ContinueAfter) -> void
+BlueTusk.Projections.ProjectionDocumentPage.Documents.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionDocument!>!
+BlueTusk.Projections.ProjectionDocumentPage.Documents.init -> void
+BlueTusk.Projections.ProjectionDocumentPage.Equals(BlueTusk.Projections.ProjectionDocumentPage? other) -> bool
+BlueTusk.Projections.ProjectionDocumentPage.ProjectionDocumentPage(BlueTusk.Projections.ProjectionPublication! Publication, System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionDocument!>! Documents, BlueTusk.Projections.ProjectionPageCursor? ContinueAfter) -> void
+BlueTusk.Projections.ProjectionDocumentPage.Publication.get -> BlueTusk.Projections.ProjectionPublication!
+BlueTusk.Projections.ProjectionDocumentPage.Publication.init -> void
+BlueTusk.Projections.ProjectionDocumentWrite
+BlueTusk.Projections.ProjectionDocumentWrite.<Clone>$() -> BlueTusk.Projections.ProjectionDocumentWrite!
+BlueTusk.Projections.ProjectionDocumentWrite.Deconstruct(out string! TenantId, out string! Key, out System.ReadOnlyMemory<byte> Payload, out System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionDependency!>! Dependencies) -> void
+BlueTusk.Projections.ProjectionDocumentWrite.Dependencies.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionDependency!>!
+BlueTusk.Projections.ProjectionDocumentWrite.Dependencies.init -> void
+BlueTusk.Projections.ProjectionDocumentWrite.Equals(BlueTusk.Projections.ProjectionDocumentWrite? other) -> bool
+BlueTusk.Projections.ProjectionDocumentWrite.Key.get -> string!
+BlueTusk.Projections.ProjectionDocumentWrite.Key.init -> void
+BlueTusk.Projections.ProjectionDocumentWrite.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Projections.ProjectionDocumentWrite.Payload.init -> void
+BlueTusk.Projections.ProjectionDocumentWrite.ProjectionDocumentWrite(string! TenantId, string! Key, System.ReadOnlyMemory<byte> Payload, System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionDependency!>! Dependencies) -> void
+BlueTusk.Projections.ProjectionDocumentWrite.TenantId.get -> string!
+BlueTusk.Projections.ProjectionDocumentWrite.TenantId.init -> void
+BlueTusk.Projections.ProjectionFencedException
+BlueTusk.Projections.ProjectionFencedException.ProjectionFencedException() -> void
+BlueTusk.Projections.ProjectionIdentity
+BlueTusk.Projections.ProjectionIdentity.<Clone>$() -> BlueTusk.Projections.ProjectionIdentity!
+BlueTusk.Projections.ProjectionIdentity.DefinitionFingerprint.get -> string!
+BlueTusk.Projections.ProjectionIdentity.Equals(BlueTusk.Projections.ProjectionIdentity? other) -> bool
+BlueTusk.Projections.ProjectionIdentity.Name.get -> string!
+BlueTusk.Projections.ProjectionIdentity.ProjectionIdentity(string! name, int version, string! definitionFingerprint, BlueTusk.Streams.ChangeSourceIdentity! source) -> void
+BlueTusk.Projections.ProjectionIdentity.Source.get -> BlueTusk.Streams.ChangeSourceIdentity!
+BlueTusk.Projections.ProjectionIdentity.Version.get -> int
+BlueTusk.Projections.ProjectionLease
+BlueTusk.Projections.ProjectionLease.<Clone>$() -> BlueTusk.Projections.ProjectionLease!
+BlueTusk.Projections.ProjectionLease.Deconstruct(out BlueTusk.Projections.ProjectionIdentity! Identity, out string! OwnerId, out long FencingToken) -> void
+BlueTusk.Projections.ProjectionLease.Equals(BlueTusk.Projections.ProjectionLease? other) -> bool
+BlueTusk.Projections.ProjectionLease.FencingToken.get -> long
+BlueTusk.Projections.ProjectionLease.FencingToken.init -> void
+BlueTusk.Projections.ProjectionLease.Identity.get -> BlueTusk.Projections.ProjectionIdentity!
+BlueTusk.Projections.ProjectionLease.Identity.init -> void
+BlueTusk.Projections.ProjectionLease.OwnerId.get -> string!
+BlueTusk.Projections.ProjectionLease.OwnerId.init -> void
+BlueTusk.Projections.ProjectionLease.ProjectionLease(BlueTusk.Projections.ProjectionIdentity! Identity, string! OwnerId, long FencingToken) -> void
+BlueTusk.Projections.ProjectionPageCursor
+BlueTusk.Projections.ProjectionPageCursor.<Clone>$() -> BlueTusk.Projections.ProjectionPageCursor!
+BlueTusk.Projections.ProjectionPageCursor.AfterKey.get -> string!
+BlueTusk.Projections.ProjectionPageCursor.AfterKey.init -> void
+BlueTusk.Projections.ProjectionPageCursor.Deconstruct(out int Version, out long Revision, out string! AfterKey) -> void
+BlueTusk.Projections.ProjectionPageCursor.Equals(BlueTusk.Projections.ProjectionPageCursor? other) -> bool
+BlueTusk.Projections.ProjectionPageCursor.ProjectionPageCursor(int Version, long Revision, string! AfterKey) -> void
+BlueTusk.Projections.ProjectionPageCursor.Revision.get -> long
+BlueTusk.Projections.ProjectionPageCursor.Revision.init -> void
+BlueTusk.Projections.ProjectionPageCursor.Version.get -> int
+BlueTusk.Projections.ProjectionPageCursor.Version.init -> void
+BlueTusk.Projections.ProjectionPublication
+BlueTusk.Projections.ProjectionPublication.<Clone>$() -> BlueTusk.Projections.ProjectionPublication!
+BlueTusk.Projections.ProjectionPublication.Deconstruct(out int? Version, out long Revision) -> void
+BlueTusk.Projections.ProjectionPublication.Equals(BlueTusk.Projections.ProjectionPublication? other) -> bool
+BlueTusk.Projections.ProjectionPublication.ProjectionPublication(int? Version, long Revision) -> void
+BlueTusk.Projections.ProjectionPublication.Revision.get -> long
+BlueTusk.Projections.ProjectionPublication.Revision.init -> void
+BlueTusk.Projections.ProjectionPublication.Version.get -> int?
+BlueTusk.Projections.ProjectionPublication.Version.init -> void
+BlueTusk.Projections.ProjectionPublishedAggregate
+BlueTusk.Projections.ProjectionPublishedAggregate.<Clone>$() -> BlueTusk.Projections.ProjectionPublishedAggregate!
+BlueTusk.Projections.ProjectionPublishedAggregate.Deconstruct(out BlueTusk.Projections.ProjectionPublication! Publication, out decimal Value) -> void
+BlueTusk.Projections.ProjectionPublishedAggregate.Equals(BlueTusk.Projections.ProjectionPublishedAggregate? other) -> bool
+BlueTusk.Projections.ProjectionPublishedAggregate.ProjectionPublishedAggregate(BlueTusk.Projections.ProjectionPublication! Publication, decimal Value) -> void
+BlueTusk.Projections.ProjectionPublishedAggregate.Publication.get -> BlueTusk.Projections.ProjectionPublication!
+BlueTusk.Projections.ProjectionPublishedAggregate.Publication.init -> void
+BlueTusk.Projections.ProjectionPublishedAggregate.Value.get -> decimal
+BlueTusk.Projections.ProjectionPublishedAggregate.Value.init -> void
+BlueTusk.Projections.ProjectionRecoveryTicket
+BlueTusk.Projections.ProjectionRecoveryTicket.CandidateVersion.get -> int
+BlueTusk.Projections.ProjectionRecoveryTicket.IsComplete.get -> bool
+BlueTusk.Projections.ProjectionRecoveryTicket.MinimumSnapshotPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Projections.ProjectionRecoveryTicket.PreviousVersion.get -> int
+BlueTusk.Projections.ProjectionRecoveryTicket.ProjectionName.get -> string!
+BlueTusk.Projections.ProjectionRecoveryTicket.Reason.get -> string!
+BlueTusk.Projections.ProjectionRecoveryTicket.RecoveryId.get -> System.Guid
+BlueTusk.Projections.ProjectionRecoveryTicket.TargetLineageFingerprint.get -> string!
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.<Clone>$() -> BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions!
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.ConsumerGroup.get -> string!
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.ConsumerGroup.init -> void
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.Deconstruct(out System.Guid TargetIncarnation, out BlueTusk.Events.EventPublishedSourceIdentity! Source, out string! EventsSchema, out string! ConsumerGroup) -> void
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.Equals(BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions? other) -> bool
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.EventsSchema.get -> string!
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.EventsSchema.init -> void
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.ProjectionPublishedRetentionTargetOptions(System.Guid TargetIncarnation, BlueTusk.Events.EventPublishedSourceIdentity! Source, string! EventsSchema, string! ConsumerGroup) -> void
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.Source.get -> BlueTusk.Events.EventPublishedSourceIdentity!
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.Source.init -> void
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.TargetIncarnation.get -> System.Guid
+BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.TargetIncarnation.init -> void
+BlueTusk.Projections.ProjectionRetentionResult
+BlueTusk.Projections.ProjectionRetentionResult.<Clone>$() -> BlueTusk.Projections.ProjectionRetentionResult!
+BlueTusk.Projections.ProjectionRetentionResult.Deconstruct(out int DeletedRows, out bool HasRemainingRows) -> void
+BlueTusk.Projections.ProjectionRetentionResult.DeletedRows.get -> int
+BlueTusk.Projections.ProjectionRetentionResult.DeletedRows.init -> void
+BlueTusk.Projections.ProjectionRetentionResult.Equals(BlueTusk.Projections.ProjectionRetentionResult? other) -> bool
+BlueTusk.Projections.ProjectionRetentionResult.HasRemainingRows.get -> bool
+BlueTusk.Projections.ProjectionRetentionResult.HasRemainingRows.init -> void
+BlueTusk.Projections.ProjectionRetentionResult.ProjectionRetentionResult(int DeletedRows, bool HasRemainingRows) -> void
+BlueTusk.Projections.ProjectionRetiredException
+BlueTusk.Projections.ProjectionRetiredException.ProjectionRetiredException() -> void
+BlueTusk.Projections.ProjectionSnapshotResetProgress
+BlueTusk.Projections.ProjectionSnapshotResetProgress.<Clone>$() -> BlueTusk.Projections.ProjectionSnapshotResetProgress!
+BlueTusk.Projections.ProjectionSnapshotResetProgress.Deconstruct(out System.Guid Epoch, out int DeletedRows, out bool IsComplete) -> void
+BlueTusk.Projections.ProjectionSnapshotResetProgress.DeletedRows.get -> int
+BlueTusk.Projections.ProjectionSnapshotResetProgress.DeletedRows.init -> void
+BlueTusk.Projections.ProjectionSnapshotResetProgress.Epoch.get -> System.Guid
+BlueTusk.Projections.ProjectionSnapshotResetProgress.Epoch.init -> void
+BlueTusk.Projections.ProjectionSnapshotResetProgress.Equals(BlueTusk.Projections.ProjectionSnapshotResetProgress? other) -> bool
+BlueTusk.Projections.ProjectionSnapshotResetProgress.IsComplete.get -> bool
+BlueTusk.Projections.ProjectionSnapshotResetProgress.IsComplete.init -> void
+BlueTusk.Projections.ProjectionSnapshotResetProgress.ProjectionSnapshotResetProgress(System.Guid Epoch, int DeletedRows, bool IsComplete) -> void
+BlueTusk.Projections.ProjectionSourceBarrier
+BlueTusk.Projections.ProjectionSourceDelete
+BlueTusk.Projections.ProjectionSourceDelete.<Clone>$() -> BlueTusk.Projections.ProjectionSourceDelete!
+BlueTusk.Projections.ProjectionSourceDelete.Deconstruct(out string! TenantId, out BlueTusk.Projections.ProjectionDependency! SourceKey) -> void
+BlueTusk.Projections.ProjectionSourceDelete.Equals(BlueTusk.Projections.ProjectionSourceDelete? other) -> bool
+BlueTusk.Projections.ProjectionSourceDelete.ProjectionSourceDelete(string! TenantId, BlueTusk.Projections.ProjectionDependency! SourceKey) -> void
+BlueTusk.Projections.ProjectionSourceDelete.SourceKey.get -> BlueTusk.Projections.ProjectionDependency!
+BlueTusk.Projections.ProjectionSourceDelete.SourceKey.init -> void
+BlueTusk.Projections.ProjectionSourceDelete.TenantId.get -> string!
+BlueTusk.Projections.ProjectionSourceDelete.TenantId.init -> void
+BlueTusk.Projections.ProjectionSourceLineage
+BlueTusk.Projections.ProjectionSourceLineage.CapturedAt.get -> System.DateTimeOffset
+BlueTusk.Projections.ProjectionSourceLineage.DatabaseOid.get -> uint
+BlueTusk.Projections.ProjectionSourceLineage.Fingerprint.get -> string!
+BlueTusk.Projections.ProjectionSourceLineage.PublicationFingerprint.get -> string!
+BlueTusk.Projections.ProjectionSourceLineage.Source.get -> BlueTusk.Streams.ChangeSourceIdentity!
+BlueTusk.Projections.ProjectionSourceLineage.Tables.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Streams.ChangeTable!>!
+BlueTusk.Projections.ProjectionSourceLineage.Timeline.get -> uint
+BlueTusk.Projections.ProjectionSourceWrite
+BlueTusk.Projections.ProjectionSourceWrite.<Clone>$() -> BlueTusk.Projections.ProjectionSourceWrite!
+BlueTusk.Projections.ProjectionSourceWrite.Deconstruct(out string! TenantId, out BlueTusk.Projections.ProjectionDependency! SourceKey, out System.ReadOnlyMemory<byte> Payload) -> void
+BlueTusk.Projections.ProjectionSourceWrite.Equals(BlueTusk.Projections.ProjectionSourceWrite? other) -> bool
+BlueTusk.Projections.ProjectionSourceWrite.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Projections.ProjectionSourceWrite.Payload.init -> void
+BlueTusk.Projections.ProjectionSourceWrite.ProjectionSourceWrite(string! TenantId, BlueTusk.Projections.ProjectionDependency! SourceKey, System.ReadOnlyMemory<byte> Payload) -> void
+BlueTusk.Projections.ProjectionSourceWrite.SourceKey.get -> BlueTusk.Projections.ProjectionDependency!
+BlueTusk.Projections.ProjectionSourceWrite.SourceKey.init -> void
+BlueTusk.Projections.ProjectionSourceWrite.TenantId.get -> string!
+BlueTusk.Projections.ProjectionSourceWrite.TenantId.init -> void
+BlueTusk.Projections.ProjectionState
+BlueTusk.Projections.ProjectionState.<Clone>$() -> BlueTusk.Projections.ProjectionState!
+BlueTusk.Projections.ProjectionState.Checkpoint.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Projections.ProjectionState.Checkpoint.init -> void
+BlueTusk.Projections.ProjectionState.CompletedTables.get -> int
+BlueTusk.Projections.ProjectionState.CompletedTables.init -> void
+BlueTusk.Projections.ProjectionState.Deconstruct(out BlueTusk.Projections.ProjectionIdentity! Identity, out BlueTusk.Projections.ProjectionBuildPhase Phase, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Checkpoint, out System.Guid? SnapshotEpoch, out int ExpectedTables, out int CompletedTables, out long SnapshotRows, out long Generation) -> void
+BlueTusk.Projections.ProjectionState.Equals(BlueTusk.Projections.ProjectionState? other) -> bool
+BlueTusk.Projections.ProjectionState.ExpectedTables.get -> int
+BlueTusk.Projections.ProjectionState.ExpectedTables.init -> void
+BlueTusk.Projections.ProjectionState.Generation.get -> long
+BlueTusk.Projections.ProjectionState.Generation.init -> void
+BlueTusk.Projections.ProjectionState.Identity.get -> BlueTusk.Projections.ProjectionIdentity!
+BlueTusk.Projections.ProjectionState.Identity.init -> void
+BlueTusk.Projections.ProjectionState.Phase.get -> BlueTusk.Projections.ProjectionBuildPhase
+BlueTusk.Projections.ProjectionState.Phase.init -> void
+BlueTusk.Projections.ProjectionState.ProjectionState(BlueTusk.Projections.ProjectionIdentity! Identity, BlueTusk.Projections.ProjectionBuildPhase Phase, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Checkpoint, System.Guid? SnapshotEpoch, int ExpectedTables, int CompletedTables, long SnapshotRows, long Generation) -> void
+BlueTusk.Projections.ProjectionState.SnapshotEpoch.get -> System.Guid?
+BlueTusk.Projections.ProjectionState.SnapshotEpoch.init -> void
+BlueTusk.Projections.ProjectionState.SnapshotRows.get -> long
+BlueTusk.Projections.ProjectionState.SnapshotRows.init -> void
+BlueTusk.Projections.ProjectionWriteContext
+BlueTusk.Projections.ProjectionWriteContext.AddAggregateAsync(string! tenantId, string! groupKey, string! metric, decimal delta, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.ProjectionWriteContext.Connection.get -> System.Data.Common.DbConnection!
+BlueTusk.Projections.ProjectionWriteContext.DeleteAsync(string! tenantId, string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.ProjectionWriteContext.DeleteSourceAsync(string! tenantId, BlueTusk.Projections.ProjectionDependency! sourceKey, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.ProjectionWriteContext.DeleteSourcesAsync(System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionSourceDelete!>! sources, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.ProjectionWriteContext.ReadAggregateAsync(string! tenantId, string! groupKey, string! metric, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<decimal>
+BlueTusk.Projections.ProjectionWriteContext.ReadDependentsAsync(string! tenantId, BlueTusk.Projections.ProjectionDependency! dependency, string? afterDocumentKey = null, int maximumDocuments = 256, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionDependencyPage!>
+BlueTusk.Projections.ProjectionWriteContext.ReadSourceAsync(string! tenantId, BlueTusk.Projections.ProjectionDependency! sourceKey, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>?>
+BlueTusk.Projections.ProjectionWriteContext.Transaction.get -> System.Data.Common.DbTransaction!
+BlueTusk.Projections.ProjectionWriteContext.UpsertAsync(string! tenantId, string! key, System.ReadOnlyMemory<byte> payload, System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionDependency!>! dependencies, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.ProjectionWriteContext.UpsertJsonAsync<T>(string! tenantId, string! key, T value, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! jsonTypeInfo, System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionDependency!>! dependencies, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.ProjectionWriteContext.UpsertManyAsync(System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionDocumentWrite!>! documents, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.ProjectionWriteContext.UpsertSourceAsync(string! tenantId, BlueTusk.Projections.ProjectionDependency! sourceKey, System.ReadOnlyMemory<byte> payload, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.ProjectionWriteContext.UpsertSourcesAsync(System.Collections.Generic.IReadOnlyList<BlueTusk.Projections.ProjectionSourceWrite!>! sources, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.StreamsProjectionConsumer
+BlueTusk.Projections.StreamsProjectionConsumer.CompleteSnapshotAsync(BlueTusk.Streams.SnapshotComplete! complete, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.StreamsProjectionConsumer.ConsumeSnapshotBatchAsync(BlueTusk.Streams.ChangeSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.StreamsProjectionConsumer.ConsumeTransactionAsync(BlueTusk.Streams.ChangeTransactionDelivery! delivery, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.StreamsProjectionConsumer.ResetSnapshotAsync(BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.StreamsProjectionConsumer.StartSnapshotAsync(BlueTusk.Streams.SnapshotStart! start, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Projections.StreamsProjectionConsumer.StreamsProjectionConsumer(BlueTusk.Projections.PostgreSqlProjectionStore! store, BlueTusk.Projections.ProjectionLease! lease, BlueTusk.Projections.IProjectionDefinition! definition) -> void
+static BlueTusk.Projections.StreamsProjectionConsumer.CreateProtected(BlueTusk.Projections.PostgreSqlProjectionStore! store, BlueTusk.Projections.ProjectionLease! lease, BlueTusk.Projections.IProjectionDefinition! definition, BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions! protectedRetention) -> BlueTusk.Projections.StreamsProjectionConsumer!
+override BlueTusk.Projections.ProjectionApplyResult.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionApplyResult.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionApplyResult.ToString() -> string!
+override BlueTusk.Projections.ProjectionDependency.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionDependency.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionDependency.ToString() -> string!
+override BlueTusk.Projections.ProjectionDependencyPage.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionDependencyPage.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionDependencyPage.ToString() -> string!
+override BlueTusk.Projections.ProjectionDocument.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionDocument.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionDocument.ToString() -> string!
+override BlueTusk.Projections.ProjectionDocumentPage.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionDocumentPage.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionDocumentPage.ToString() -> string!
+override BlueTusk.Projections.ProjectionDocumentWrite.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionDocumentWrite.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionDocumentWrite.ToString() -> string!
+override BlueTusk.Projections.ProjectionIdentity.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionIdentity.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionIdentity.ToString() -> string!
+override BlueTusk.Projections.ProjectionLease.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionLease.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionLease.ToString() -> string!
+override BlueTusk.Projections.ProjectionPageCursor.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionPageCursor.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionPageCursor.ToString() -> string!
+override BlueTusk.Projections.ProjectionPublication.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionPublication.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionPublication.ToString() -> string!
+override BlueTusk.Projections.ProjectionPublishedAggregate.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionPublishedAggregate.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionPublishedAggregate.ToString() -> string!
+override BlueTusk.Projections.ProjectionRetentionResult.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionRetentionResult.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionRetentionResult.ToString() -> string!
+override BlueTusk.Projections.ProjectionSnapshotResetProgress.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionSnapshotResetProgress.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionSnapshotResetProgress.ToString() -> string!
+override BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.ToString() -> string!
+override BlueTusk.Projections.ProjectionSourceDelete.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionSourceDelete.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionSourceDelete.ToString() -> string!
+override BlueTusk.Projections.ProjectionSourceWrite.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionSourceWrite.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionSourceWrite.ToString() -> string!
+override BlueTusk.Projections.ProjectionState.Equals(object? obj) -> bool
+override BlueTusk.Projections.ProjectionState.GetHashCode() -> int
+override BlueTusk.Projections.ProjectionState.ToString() -> string!
+static BlueTusk.Projections.PostgreSqlProjectionLineage.CaptureAsync(BlueTusk.Data.BlueTuskDataSource! dataSource, BlueTusk.Streams.ChangeSourceIdentity! source, System.Collections.Generic.IReadOnlyList<string!>! publicationNames, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionSourceLineage!>
+static BlueTusk.Projections.PostgreSqlProjectionLineage.CaptureForCutoverAsync(BlueTusk.Data.BlueTuskDataSource! dataSource, BlueTusk.Streams.ChangeSourceIdentity! source, System.Collections.Generic.IReadOnlyList<string!>! publicationNames, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Projections.ProjectionCutoverEvidence!>
+static BlueTusk.Projections.ProjectionApplyResult.operator !=(BlueTusk.Projections.ProjectionApplyResult? left, BlueTusk.Projections.ProjectionApplyResult? right) -> bool
+static BlueTusk.Projections.ProjectionApplyResult.operator ==(BlueTusk.Projections.ProjectionApplyResult? left, BlueTusk.Projections.ProjectionApplyResult? right) -> bool
+static BlueTusk.Projections.ProjectionDependency.operator !=(BlueTusk.Projections.ProjectionDependency? left, BlueTusk.Projections.ProjectionDependency? right) -> bool
+static BlueTusk.Projections.ProjectionDependency.operator ==(BlueTusk.Projections.ProjectionDependency? left, BlueTusk.Projections.ProjectionDependency? right) -> bool
+static BlueTusk.Projections.ProjectionDependencyPage.operator !=(BlueTusk.Projections.ProjectionDependencyPage? left, BlueTusk.Projections.ProjectionDependencyPage? right) -> bool
+static BlueTusk.Projections.ProjectionDependencyPage.operator ==(BlueTusk.Projections.ProjectionDependencyPage? left, BlueTusk.Projections.ProjectionDependencyPage? right) -> bool
+static BlueTusk.Projections.ProjectionDocument.operator !=(BlueTusk.Projections.ProjectionDocument? left, BlueTusk.Projections.ProjectionDocument? right) -> bool
+static BlueTusk.Projections.ProjectionDocument.operator ==(BlueTusk.Projections.ProjectionDocument? left, BlueTusk.Projections.ProjectionDocument? right) -> bool
+static BlueTusk.Projections.ProjectionDocumentPage.operator !=(BlueTusk.Projections.ProjectionDocumentPage? left, BlueTusk.Projections.ProjectionDocumentPage? right) -> bool
+static BlueTusk.Projections.ProjectionDocumentPage.operator ==(BlueTusk.Projections.ProjectionDocumentPage? left, BlueTusk.Projections.ProjectionDocumentPage? right) -> bool
+static BlueTusk.Projections.ProjectionDocumentWrite.operator !=(BlueTusk.Projections.ProjectionDocumentWrite? left, BlueTusk.Projections.ProjectionDocumentWrite? right) -> bool
+static BlueTusk.Projections.ProjectionDocumentWrite.operator ==(BlueTusk.Projections.ProjectionDocumentWrite? left, BlueTusk.Projections.ProjectionDocumentWrite? right) -> bool
+static BlueTusk.Projections.ProjectionIdentity.operator !=(BlueTusk.Projections.ProjectionIdentity? left, BlueTusk.Projections.ProjectionIdentity? right) -> bool
+static BlueTusk.Projections.ProjectionIdentity.operator ==(BlueTusk.Projections.ProjectionIdentity? left, BlueTusk.Projections.ProjectionIdentity? right) -> bool
+static BlueTusk.Projections.ProjectionLease.operator !=(BlueTusk.Projections.ProjectionLease? left, BlueTusk.Projections.ProjectionLease? right) -> bool
+static BlueTusk.Projections.ProjectionLease.operator ==(BlueTusk.Projections.ProjectionLease? left, BlueTusk.Projections.ProjectionLease? right) -> bool
+static BlueTusk.Projections.ProjectionPageCursor.operator !=(BlueTusk.Projections.ProjectionPageCursor? left, BlueTusk.Projections.ProjectionPageCursor? right) -> bool
+static BlueTusk.Projections.ProjectionPageCursor.operator ==(BlueTusk.Projections.ProjectionPageCursor? left, BlueTusk.Projections.ProjectionPageCursor? right) -> bool
+static BlueTusk.Projections.ProjectionPublication.operator !=(BlueTusk.Projections.ProjectionPublication? left, BlueTusk.Projections.ProjectionPublication? right) -> bool
+static BlueTusk.Projections.ProjectionPublication.operator ==(BlueTusk.Projections.ProjectionPublication? left, BlueTusk.Projections.ProjectionPublication? right) -> bool
+static BlueTusk.Projections.ProjectionPublishedAggregate.operator !=(BlueTusk.Projections.ProjectionPublishedAggregate? left, BlueTusk.Projections.ProjectionPublishedAggregate? right) -> bool
+static BlueTusk.Projections.ProjectionPublishedAggregate.operator ==(BlueTusk.Projections.ProjectionPublishedAggregate? left, BlueTusk.Projections.ProjectionPublishedAggregate? right) -> bool
+static BlueTusk.Projections.ProjectionRetentionResult.operator !=(BlueTusk.Projections.ProjectionRetentionResult? left, BlueTusk.Projections.ProjectionRetentionResult? right) -> bool
+static BlueTusk.Projections.ProjectionRetentionResult.operator ==(BlueTusk.Projections.ProjectionRetentionResult? left, BlueTusk.Projections.ProjectionRetentionResult? right) -> bool
+static BlueTusk.Projections.ProjectionSnapshotResetProgress.operator !=(BlueTusk.Projections.ProjectionSnapshotResetProgress? left, BlueTusk.Projections.ProjectionSnapshotResetProgress? right) -> bool
+static BlueTusk.Projections.ProjectionSnapshotResetProgress.operator ==(BlueTusk.Projections.ProjectionSnapshotResetProgress? left, BlueTusk.Projections.ProjectionSnapshotResetProgress? right) -> bool
+static BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.operator !=(BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions? left, BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions? right) -> bool
+static BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions.operator ==(BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions? left, BlueTusk.Projections.ProjectionPublishedRetentionTargetOptions? right) -> bool
+static BlueTusk.Projections.ProjectionSourceBarrier.EmitAsync(System.Data.Common.DbDataSource! sourceDataSource, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.TypeSystem.BlueTuskLogSequenceNumber>
+static BlueTusk.Projections.ProjectionSourceDelete.operator !=(BlueTusk.Projections.ProjectionSourceDelete? left, BlueTusk.Projections.ProjectionSourceDelete? right) -> bool
+static BlueTusk.Projections.ProjectionSourceDelete.operator ==(BlueTusk.Projections.ProjectionSourceDelete? left, BlueTusk.Projections.ProjectionSourceDelete? right) -> bool
+static BlueTusk.Projections.ProjectionSourceWrite.operator !=(BlueTusk.Projections.ProjectionSourceWrite? left, BlueTusk.Projections.ProjectionSourceWrite? right) -> bool
+static BlueTusk.Projections.ProjectionSourceWrite.operator ==(BlueTusk.Projections.ProjectionSourceWrite? left, BlueTusk.Projections.ProjectionSourceWrite? right) -> bool
+static BlueTusk.Projections.ProjectionState.operator !=(BlueTusk.Projections.ProjectionState? left, BlueTusk.Projections.ProjectionState? right) -> bool
+static BlueTusk.Projections.ProjectionState.operator ==(BlueTusk.Projections.ProjectionState? left, BlueTusk.Projections.ProjectionState? right) -> bool

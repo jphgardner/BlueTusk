@@ -1,0 +1,36 @@
+{
+  "name": "@bluetusk/edge",
+  "version": "0.1.0-preview.1",
+  "description": "IndexedDB durable scoped offline cache and mutation queue for BlueTusk Edge.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jphgardner/BlueTusk.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test test/*.test.mjs",
+    "test:browser": "node test/browser.smoke.mjs",
+    "test:http-browser": "node test/http.browser.smoke.mjs"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.5",
+    "playwright": "^1.63.0",
+    "typescript": "^7.0.2"
+  }
+}

@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -177,7 +178,7 @@ public sealed class LiveQueryArguments
             else
             {
                 hash.AppendData([1]);
-                var encoded = JsonSerializer.SerializeToUtf8Bytes(value, targetType);
+                var encoded = SerializeScalar(value, targetType);
                 Append(hash, encoded);
             }
         }
@@ -190,6 +191,27 @@ public sealed class LiveQueryArguments
 
     private static void Append(IncrementalHash hash, string value) =>
         Append(hash, Encoding.UTF8.GetBytes(value));
+
+    private static byte[] SerializeScalar(object value, Type type)
+    {
+        if (RuntimeFeature.IsDynamicCodeSupported)
+        {
+            // Preserve the existing JIT canonical argument format for issued subscription identities.
+            return JsonSerializer.SerializeToUtf8Bytes(value, type);
+        }
+        if (type.IsEnum)
+        {
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer);
+            if (Type.GetTypeCode(type) == TypeCode.UInt64) { writer.WriteNumberValue(Convert.ToUInt64(value, CultureInfo.InvariantCulture)); }
+            else { writer.WriteNumberValue(Convert.ToInt64(value, CultureInfo.InvariantCulture)); }
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        var metadata = LiveScalarJson.Default.GetTypeInfo(type)
+            ?? throw new ArgumentException("The Live argument is not a supported scalar.", nameof(type));
+        return JsonSerializer.SerializeToUtf8Bytes(value, metadata);
+    }
 
     private static void Append(IncrementalHash hash, ReadOnlySpan<byte> value)
     {
@@ -338,7 +360,25 @@ public sealed class LiveQueryPlan<T, TKey>
             return string.Empty;
         }
 
-        return type.IsValueType ? Activator.CreateInstance(type) : null;
+        if (type.IsEnum) { return Enum.ToObject(type, 0); }
+        if (type == typeof(bool)) { return false; }
+        if (type == typeof(byte)) { return (byte)0; }
+        if (type == typeof(sbyte)) { return (sbyte)0; }
+        if (type == typeof(short)) { return (short)0; }
+        if (type == typeof(ushort)) { return (ushort)0; }
+        if (type == typeof(int)) { return 0; }
+        if (type == typeof(uint)) { return 0U; }
+        if (type == typeof(long)) { return 0L; }
+        if (type == typeof(ulong)) { return 0UL; }
+        if (type == typeof(float)) { return 0F; }
+        if (type == typeof(double)) { return 0D; }
+        if (type == typeof(decimal)) { return 0M; }
+        if (type == typeof(Guid)) { return Guid.Empty; }
+        if (type == typeof(DateOnly)) { return default(DateOnly); }
+        if (type == typeof(TimeOnly)) { return default(TimeOnly); }
+        if (type == typeof(DateTime)) { return default(DateTime); }
+        if (type == typeof(DateTimeOffset)) { return default(DateTimeOffset); }
+        throw new ArgumentException("The Live parameter is not a supported scalar.", nameof(parameter));
     }
 
 }

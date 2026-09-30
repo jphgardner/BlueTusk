@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework><BlueTuskProductFamily>Edge</BlueTuskProductFamily>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Bounded source-generated Edge HTTP wire codecs and scoped remote transport.</Description>
+    <PackageTags>offline;http;sync;json</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Edge.props" />
+  <ItemGroup><ProjectReference Include="..\BlueTusk.Edge\BlueTusk.Edge.csproj" /></ItemGroup>
+</Project>

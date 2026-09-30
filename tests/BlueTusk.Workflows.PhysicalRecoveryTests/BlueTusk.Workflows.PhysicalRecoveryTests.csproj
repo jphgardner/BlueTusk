@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Workflows</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Workflows.props" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <ProjectReference Include="..\..\src\BlueTusk.Jobs.DependencyInjection\BlueTusk.Jobs.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Workflows.DependencyInjection\BlueTusk.Workflows.DependencyInjection.csproj" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

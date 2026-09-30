@@ -105,7 +105,7 @@ public sealed class ReverseEngineeringTests
                 connectionString,
                 new DatabaseModelFactoryOptions([], ["ef_reverse"]));
 
-            Assert.Equal("bluetusk_tests", model.DatabaseName);
+            Assert.Equal(new BlueTuskConnectionStringBuilder(connectionString).Database, model.DatabaseName);
             Assert.Equal(3, model.Tables.Count);
             var parent = Assert.Single(model.Tables, table => table.Name == "parents");
             var child = Assert.Single(model.Tables, table => table.Name == "children");

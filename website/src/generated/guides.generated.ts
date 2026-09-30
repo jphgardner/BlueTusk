@@ -748,8 +748,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 295,
-    "readMinutes": 2,
+    "wordCount": 478,
+    "readMinutes": 3,
     "searchText": "Multi-host connections BlueTusk accepts PostgreSQL's keyword/value multi-host form. `Host` is a comma-separated ordered list; `Port` can contain one shared port or a positionally matching list. Hosts are attempted in configuration order by default. Set `Load Balance Hosts=random` to shuffle the host order for each new physical connection. Within one host, the transport resolves the name once, preserves the platform resolver's address order, and attempts every returned address under one shared connect deadline. This respects the operating system's IPv4/IPv6 routing preference while retaining deterministic fallback and ordered per-address socket diagnostics in the failed host's inner `BlueTuskTransportException`. `Target Session Attributes` accepts: `any` `primary` `standby` `prefer-primary` `prefer-standby` `read-write` `read-only` BlueTusk probes `pg_is_in_recovery()` and `transaction_read_only` after authentication when role selection is required. A strict target rejects incompatible servers; a preferred target retains the first healthy fallback while it searches the remaining hosts. Network and server-availability failures advance to the next host, while authentication rejection stops the sequence. This follows PostgreSQL's [multiple-host and target-session connection behavior](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS). `BlueTuskConnection.ConnectedEndpoint` reports the selected host and port. Failure messages identify attempted endpoints but never include passwords or authentication payloads. `BlueTuskDataSource` partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work to another acceptable endpoint. Targeted checkouts refresh the server role before acceptance, and each returned lease routes back t"
   },
   {
@@ -1282,7 +1282,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1095,
+    "order": 1121,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1314,7 +1314,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1096,
+    "order": 1122,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1350,7 +1350,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1111,
+    "order": 1137,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1411,7 +1411,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1137,
+    "order": 1169,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
@@ -1581,7 +1581,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "core",
       "reference"
     ],
-    "order": 1058,
+    "order": 1070,
     "title": "Entity Framework Core",
     "sourcePath": "docs/ef-core/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/reference.md",
@@ -2680,7 +2680,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1071,
+    "order": 1092,
     "title": "Live public API compatibility",
     "sourcePath": "docs/live/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/api-compatibility.md",
@@ -2707,7 +2707,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1072,
+    "order": 1093,
     "title": "Live format compatibility",
     "sourcePath": "docs/live/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/format-compatibility.md",
@@ -2733,7 +2733,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "live",
       "reference"
     ],
-    "order": 1073,
+    "order": 1094,
     "title": "BlueTusk Live",
     "sourcePath": "docs/live/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/reference.md",
@@ -2825,7 +2825,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1074,
+    "order": 1095,
     "title": "BlueTusk Live 0.1.0-preview.1",
     "sourcePath": "docs/live/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-0.1.0-preview.1.md",
@@ -2875,7 +2875,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1075,
+    "order": 1096,
     "title": "BlueTusk Live 1.0.0 release record",
     "sourcePath": "docs/live/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-1.0.0.md",
@@ -2903,7 +2903,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1100,
+    "order": 1126,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -2935,7 +2935,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1115,
+    "order": 1146,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -2946,9 +2946,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 147,
+    "wordCount": 205,
     "readMinutes": 1,
-    "searchText": "Streams public API compatibility The current Streams 1.0 candidate surface is locked by two independent gates: Roslyn PublicApiAnalyzers reject undeclared additions and incompatible removals in every Streams package; and `eng/streams-api-freeze.json` records a platform-independent SHA-256 digest for every Streams public API baseline. This makes an API edit deliberate and reviewable even when it is technically additive. To change the candidate, first update the implementation and its API baseline, document source and binary compatibility, run the full Streams test and package matrices, and then update the freeze manifest in the same commit. The compatibility test also scans the source tree so a new Streams package cannot omit a frozen baseline. The candidate becomes the Streams 1.0 shipped baseline only after the format upgrade suites and the successful 72-hour release-endurance evidence pass. Until then, this is an engineering freeze rather than a claim that 1.0 was published."
+    "searchText": "Streams public API compatibility The current Streams 1.0 candidate surface is locked by two independent gates: Roslyn PublicApiAnalyzers reject undeclared additions and incompatible removals in every Streams package; and `eng/streams-api-freeze.json` records a platform-independent SHA-256 digest for every Streams public API baseline. This makes an API edit deliberate and reviewable even when it is technically additive. To change the candidate, first update the implementation and its API baseline, document source and binary compatibility, run the full Streams test and package matrices, and then update the freeze manifest in the same commit. The compatibility test also scans the source tree so a new Streams package cannot omit a frozen baseline. The candidate becomes the Streams 1.0 shipped baseline only after the format upgrade suites and the successful 72-hour release-endurance evidence pass. Until then, this is an engineering freeze rather than a claim that 1.0 was published. The published-source lineage proof adds `ChangeDeliveryTestFactory.CreateCommittedWithLineage` to the optional `BlueTusk.Streams.Testing` package. It creates a synthetic delivery carrying the database and publication OIDs used by protected consumers. Existing factory methods and their signatures remain unchanged, so this is a source- and binary-compatible addition. The Streams.Testing API baseline and freeze digest advance together; the runtime Streams public API is unchanged."
   },
   {
     "category": "real-time",
@@ -2961,7 +2961,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1116,
+    "order": 1147,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -2987,7 +2987,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1117,
+    "order": 1148,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -3013,7 +3013,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1118,
+    "order": 1149,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -3040,7 +3040,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1120,
+    "order": 1151,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -3067,7 +3067,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1122,
+    "order": 1153,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -3109,7 +3109,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1124,
+    "order": 1155,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -3154,7 +3154,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1125,
+    "order": 1156,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -3180,7 +3180,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1126,
+    "order": 1157,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -3207,7 +3207,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1129,
+    "order": 1160,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -3254,7 +3254,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1131,
+    "order": 1163,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -3281,7 +3281,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1132,
+    "order": 1164,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -3307,7 +3307,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1133,
+    "order": 1165,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -3412,7 +3412,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1135,
+    "order": 1167,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
@@ -3490,7 +3490,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "extensions",
       "reference"
     ],
-    "order": 1061,
+    "order": 1075,
     "title": "Extension SDK",
     "sourcePath": "docs/extensions/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/reference.md",
@@ -3801,7 +3801,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1067,
+    "order": 1081,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
@@ -5894,13 +5894,556 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "documents",
+    "summary": "BlueTusk.Documents 0.1.0-preview.1 provides typed PostgreSQL JSONB documents and optimistic atomic write sessions. The core accepts DbDataSource, depends on neither Npgsql nor EF Core, and requires explicit JsonTypeIn…",
+    "keywords": [
+      "docs",
+      "documents",
+      "README"
+    ],
+    "order": 1057,
+    "title": "BlueTusk.Documents",
+    "sourcePath": "docs/documents/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-documents",
+        "text": "BlueTusk.Documents",
+        "level": 1
+      },
+      {
+        "id": "storage-and-concurrency",
+        "text": "Storage and concurrency",
+        "level": 2
+      },
+      {
+        "id": "explicit-large-content",
+        "text": "Explicit large content",
+        "level": 2
+      },
+      {
+        "id": "reads-patches-and-evolution",
+        "text": "Reads, patches and evolution",
+        "level": 2
+      },
+      {
+        "id": "indexes-and-deployment",
+        "text": "Indexes and deployment",
+        "level": 2
+      },
+      {
+        "id": "streams-and-live-integration",
+        "text": "Streams and Live integration",
+        "level": 2
+      },
+      {
+        "id": "operator-readiness",
+        "text": "Operator readiness",
+        "level": 2
+      },
+      {
+        "id": "verification-and-production-qualification",
+        "text": "Verification and production qualification",
+        "level": 2
+      }
+    ],
+    "wordCount": 2870,
+    "readMinutes": 14,
+    "searchText": "BlueTusk.Documents BlueTusk.Documents `0.1.0-preview.1` provides typed PostgreSQL JSONB documents and optimistic atomic write sessions. The core accepts `DbDataSource`, depends on neither Npgsql nor EF Core, and requires explicit `JsonTypeInfo<T>` metadata for serialization and deserialization. BlueTusk's native data source works directly. The application supplies its `OrderJsonContext` using System.Text.Json source generation. Every document must serialize to a JSON object. Schemas, collection names, identifiers and tenant identifiers are separate from type names; no reflection-based serializer fallback is available. Storage and concurrency The primary key is `(tenant, collection, id)`, using PostgreSQL `C` collation for stable key ordering. Every read and write includes all required tenant and collection predicates. This is an application isolation contract, not a database privilege boundary: configure PostgreSQL privileges or RLS separately when untrusted callers can execute SQL. A store borrows its data source by default. Pass `DocumentDataSourceOwnership.Owned` to transfer disposal responsibility. Store disposal invalidates its sessions. Sessions exclusively own the connection and transaction for each save. An application cannot attach an externally owned transaction to a session. Inserts use `ON CONFLICT DO NOTHING`, replacements and deletes use revision compare-and-swap, and every failed precondition raises `DocumentConcurrencyException`. The exception contains tenant, collection, ID, expected revision and the observed current revision (or null when missing). All staged operations roll back when any operation conflicts, including writes completed in an earlier batch. Failed sessions retain their pending writes so the application can inspect and clear them; success clears them. Revisions come from a non-cycling database sequence. Updates advance revisions and delete/reinsert cannot reuse a revision. Gaps caused by failed transactions are expected. Sequence val"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "documents-evidence-2026-09-27-allocation-pair",
+    "summary": "BenchmarkDotNet 0.15.8 ShortRun, in-process emit, one launch, three warmups and three measured iterations. The six cases used source-generated JSON and staged eight documents without database I/O. The original and opt…",
+    "keywords": [
+      "docs",
+      "documents",
+      "evidence",
+      "2026",
+      "09",
+      "27",
+      "allocation",
+      "pair",
+      "README"
+    ],
+    "order": 1058,
+    "title": "Retained-binary Documents allocation comparison",
+    "sourcePath": "docs/documents/evidence/2026-09-27-allocation-pair/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-27-allocation-pair/README.md",
+    "headings": [
+      {
+        "id": "retained-binary-documents-allocation-comparison",
+        "text": "Retained-binary Documents allocation comparison",
+        "level": 1
+      }
+    ],
+    "wordCount": 407,
+    "readMinutes": 2,
+    "searchText": "Retained-binary Documents allocation comparison BenchmarkDotNet 0.15.8 ShortRun, in-process emit, one launch, three warmups and three measured iterations. The six cases used source-generated JSON and staged eight documents without database I/O. The original and optimized executables were run from separate retained dependency directories; all 34 dependency DLL hashes in each directory were rechecked after measurement. No provider/project restore or compilation occurred in this quiet repository CPU phase. Windows Ryzen 7 5800X, .NET 10.0.12, x64 RyuJIT. Other operating-system activity was not controlled. Benchmark Source payload Baseline B/op Optimized B/op Saved B/op Saved StageEightDocuments 1 KiB 40,400 30,992 9,408 23.29% StageEightDocuments 64 KiB 3,418,218 2,850,288 567,930 16.61% StageEightDocuments 1 MiB 54,273,630 45,228,975 9,044,655 16.66% The unchanged SourceGeneratedSerialize control allocated exactly 1,176 / 71,032 / 1,130,740 B/op for 1 KiB / 64 KiB / 1 MiB in both runs. The implementation removes the completed UTF8 buffer copy in DocumentSession.Serialize, parses the stream-owned written memory while its stream is alive, then creates an owned string. The native smoke and all 30 Documents unit/live PostgreSQL tests passed after the change. Type bounds, invalid root rejection, and mixed large/small owned JSON roundtrips are exercised. Staging means do not establish a speed gain. At 1 MiB, baseline mean 28.200 ms (99.9% CI 20.816–35.585) and optimized mean 26.545 ms (CI 23.845–29.245) overlap. ShortRun has only three measured iterations per case. The same applies to the 1 KiB and 64 KiB mean intervals. None of these cases saves to PostgreSQL, predicts database throughput, resolves long write tails, or addresses physical TOAST growth. The old Documents DLL SHA-256 was `592C14C8BC951E230DB15E6A4BDBF20A651DC8148B9F5DF4548984255BFF5075`; the optimized DLL was `8AAA7912591EE0CDA86BC23A2E8ACCA296D9DB799F58B3F8A74A201D8BA3C31E`. Data also changed between the ret"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "documents-evidence-2026-09-27-maintenance-diagnostics",
+    "summary": "The updated Documents load harness was built in Release with zero warnings and run against four separate, labelled PostgreSQL 18 Docker fixtures on 27 September 2026. Every fixture used a unique database volume and ge…",
+    "keywords": [
+      "docs",
+      "documents",
+      "evidence",
+      "2026",
+      "09",
+      "27",
+      "maintenance",
+      "diagnostics",
+      "README"
+    ],
+    "order": 1059,
+    "title": "Documents TOAST maintenance profiler diagnostics",
+    "sourcePath": "docs/documents/evidence/2026-09-27-maintenance-diagnostics/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-27-maintenance-diagnostics/README.md",
+    "headings": [
+      {
+        "id": "documents-toast-maintenance-profiler-diagnostics",
+        "text": "Documents TOAST maintenance profiler diagnostics",
+        "level": 1
+      }
+    ],
+    "wordCount": 554,
+    "readMinutes": 3,
+    "searchText": "Documents TOAST maintenance profiler diagnostics The updated Documents load harness was built in Release with zero warnings and run against four separate, labelled PostgreSQL 18 Docker fixtures on 27 September 2026. Every fixture used a unique database volume and generated schema; each run ended with zero owned schemas and no labelled Documents container or volume. The two successful diagnostics each verified all 15 payload/tenant/concurrency cells and the sustained cell, including a hard-killed transaction child and exact acknowledged-write recovery. These are short functional and instrumentation checks, not a storage-performance comparison. Whole-tree candidate source changed during each run as other product work proceeded; the before/after scoped Documents, Data, TypeSystem and harness sources stayed unchanged according to each [binding report](maintenance-diagnostic-default/bindings.json). Profile, sustained cell Parent bytes after writes Direct TOAST bytes after writes Database bytes after writes Minimum observed filesystem free Idle observations [PackageDefaults](maintenance-diagnostic-default/documents-load.json) 55,984,128 55,812,096 64,403,135 1,005,507,047,424 2 [ToastVacuumFast](maintenance-diagnostic-tuned/documents-load.json) 226,320,384 226,148,352 234,714,815 1,005,454,245,888 2 The direct TOAST size is contained in the parent relation's `pg_total_relation_size`; these columns must not be added. The tuned fixture reported both actual parent and TOAST reloptions (`autovacuum_vacuum_scale_factor=0.01`, `autovacuum_vacuum_threshold=50`, `autovacuum_vacuum_cost_delay=0`, `autovacuum_vacuum_cost_limit=2000`). These are experimental settings applied only to a generated fixture table and its TOAST child. BlueTusk package and PostgreSQL defaults remain unchanged. The short diagnostics had different write counts and whole-tree activity, so their throughput, latency and byte totals do not establish a tuned benefit. The default fixture recorded one TOAST autovac"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "documents-evidence-2026-09-27-pg18-baseline",
+    "summary": "This bounded campaign verified all fifteen payload/tenant/concurrency cells, a 600-second mixed-write phase, and actual child-process recovery. It exposed substantial physical TOAST",
+    "keywords": [
+      "docs",
+      "documents",
+      "evidence",
+      "2026",
+      "09",
+      "27",
+      "pg18",
+      "baseline",
+      "README"
+    ],
+    "order": 1060,
+    "title": "Exploratory PostgreSQL 18 baseline, 27 September 2026",
+    "sourcePath": "docs/documents/evidence/2026-09-27-pg18-baseline/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-27-pg18-baseline/README.md",
+    "headings": [
+      {
+        "id": "exploratory-postgresql-18-baseline-27-september-2026",
+        "text": "Exploratory PostgreSQL 18 baseline, 27 September 2026",
+        "level": 1
+      },
+      {
+        "id": "measurement-defect-retained-in-the-raw-report",
+        "text": "Measurement defect retained in the raw report",
+        "level": 2
+      },
+      {
+        "id": "ten-second-requested-sweep-cells",
+        "text": "Ten-second requested sweep cells",
+        "level": 2
+      },
+      {
+        "id": "sustained-mixed-writes-and-storage-finding",
+        "text": "Sustained mixed writes and storage finding",
+        "level": 2
+      },
+      {
+        "id": "process-recovery-and-cleanup",
+        "text": "Process recovery and cleanup",
+        "level": 2
+      }
+    ],
+    "wordCount": 1084,
+    "readMinutes": 5,
+    "searchText": "Exploratory PostgreSQL 18 baseline, 27 September 2026 This bounded campaign verified all fifteen payload/tenant/concurrency cells, a 600-second mixed-write phase, and actual child-process recovery. It exposed substantial physical TOAST growth and long latency tails. It does **not** establish production qualification, stable physical storage, an immutable release candidate, or an isolated hardware performance result. The run used Windows 11 build 26200, a Ryzen 7 5800X with sixteen logical processors, .NET 10.0.12, and the pinned PostgreSQL 18.6 Alpine image recorded in the raw report. The dedicated loopback Docker fixture had four CPUs, 2 GiB memory, 128 MiB shared buffers, synchronous commit, full-page writes, I/O timing, and forty maximum connections. Application connections were capped at eight, with a separate two-connection observer. All payloads were synthetic seeded random base64. No customer payloads or credentials appear in these reports. Fixture setup began at 21:32:07 UTC; the sustained phase began at approximately 21:36:12 UTC; the final report completed at 21:46:17 UTC. A root solution compilation overlapped around 21:37 UTC and a short diagnostic Projections fixture may have overlapped early setup. Other agents changed twenty-three global candidate paths, while the recorded Documents, Data, TypeSystem, harness, and common build inputs had zero before/after changes. These conditions make CPU, allocation, memory and latency observations exploratory shared-host evidence. Scoped correctness, owned relation sizes and dedicated-fixture WAL observations remain useful within their stated measurement limits. [documents-load.json](documents-load.json) is unchanged raw output, SHA-256 `3AE336F6A42F8654C021246F8732E5D3FECDF65432087819D84789B8C6CC7D09`. [bindings.json](bindings.json) retains the global/scoped inventories and dependency hashes; [run-notes.json](run-notes.json) records contention and the invalid activity measurements. The runnable old dependency set "
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "documents-evidence-2026-09-28-attached-content-600s",
+    "summary": "The clean checkout of commit a837001a8d38cfca1817ee716d1dc7072ce68dd5 ran eng/run-documents-load.ps1 -CellSeconds 10 -SustainedSeconds 600 -IdleDrainSeconds 120 -StorageMode AttachedContent -NoBuild on 28 September 20…",
+    "keywords": [
+      "docs",
+      "documents",
+      "evidence",
+      "2026",
+      "09",
+      "28",
+      "attached",
+      "content",
+      "600s",
+      "README"
+    ],
+    "order": 1061,
+    "title": "Attached-content 600-second local capacity run",
+    "sourcePath": "docs/documents/evidence/2026-09-28-attached-content-600s/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-attached-content-600s/README.md",
+    "headings": [
+      {
+        "id": "attached-content-600-second-local-capacity-run",
+        "text": "Attached-content 600-second local capacity run",
+        "level": 1
+      }
+    ],
+    "wordCount": 450,
+    "readMinutes": 3,
+    "searchText": "Attached-content 600-second local capacity run The clean checkout of commit `a837001a8d38cfca1817ee716d1dc7072ce68dd5` ran `eng/run-documents-load.ps1 -CellSeconds 10 -SustainedSeconds 600 -IdleDrainSeconds 120 -StorageMode AttachedContent -NoBuild` on 28 September 2026. The dedicated, digest-pinned PostgreSQL 18 fixture ran on a shared Windows Ryzen 7 5800X development host. The 15 inline-JSONB sweep cells and the attached-content sustained scenario all passed exact-state checks. The runner then verified hard-killed writer recovery, source/binary bindings and owned-resource cleanup. [`documents-load.json`](documents-load.json) is the full raw report; [`bindings.json`](bindings.json) records the unchanged source fingerprint and measured assembly hashes. The [before](candidate-inputs.sha256) and [after](candidate-inputs-final.sha256) candidate-input inventories, [workload log](workload.log) and [cleanup record](owned-resource-cleanup.json) are retained with it. The sustained scenario kept 256 documents across eight tenants. Each had a distinct, stable 64 KiB content blob; the JSONB metadata changed through replacement, patch and delete/reinsert cycles. The verifier counted exactly 256 content rows and 256 links after the run, read and hashed every retained blob, checked revisions and hot-key increments, and found no orphan to collect. Measured signal Result Committed transitions / measured duration 1,326,904 / 600.102 s Transitions per second / save p99 2,211.1 / 100.352 ms Peak owned relations, including content TOAST and indexes 19,038,208 bytes Owned relations after writes / final-half endpoint growth 18,939,904 bytes / -6,663 bytes per minute Peak whole database / after 120-second idle drain 27,719,359 / 27,317,951 bytes Cluster WAL delta / bytes per transition 375,238,632 / 282.8 Database and owned-storage samples during writes / idle observations 120 / 24 Acknowledged recovery batches and documents / kill-to-verification 16 and 32 / 143 ms `eng/verify-documents"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "documents-evidence-2026-09-28-maintenance-pair",
+    "summary": "Two fresh, owned PostgreSQL 18.6 fixtures ran the same 15-cell payload/concurrency sweep, followed by 600 seconds of 64 KiB mixed document churn, 120 seconds idle, and a hard-killed writer recovery check. The second f…",
+    "keywords": [
+      "docs",
+      "documents",
+      "evidence",
+      "2026",
+      "09",
+      "28",
+      "maintenance",
+      "pair"
+    ],
+    "order": 1062,
+    "title": "Documents fixed-cardinality maintenance comparison, 28 September 2026",
+    "sourcePath": "docs/documents/evidence/2026-09-28-maintenance-pair.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-maintenance-pair.md",
+    "headings": [
+      {
+        "id": "documents-fixed-cardinality-maintenance-comparison-28-september-2026",
+        "text": "Documents fixed-cardinality maintenance comparison, 28 September 2026",
+        "level": 1
+      }
+    ],
+    "wordCount": 513,
+    "readMinutes": 3,
+    "searchText": "Documents fixed-cardinality maintenance comparison, 28 September 2026 Two fresh, owned PostgreSQL 18.6 fixtures ran the same 15-cell payload/concurrency sweep, followed by 600 seconds of 64 KiB mixed document churn, 120 seconds idle, and a hard-killed writer recovery check. The second fixture changed only the experimental table and TOAST autovacuum reloptions (`ToastVacuumFast`). Each fixture had four Docker CPUs, 2 GiB memory, an eight-connection application pool, a 24 GiB database stop guard, and an 8 GiB filesystem-free guard. The payloads contain seeded random base64 rather than repeated compressible text. Sustained result Package defaults Fast TOAST vacuum Verified logical transitions 271,228 230,476 Measured write window 608.81 s 600.16 s Transitions per second 445.5 384.0 Documents relation before writes 17.65 MB 17.65 MB Documents relation after writes 16.204 GB 9.060 GB Documents relation after 120 s idle 16.204 GB 9.060 GB TOAST relation after writes 16.204 GB 9.060 GB TOAST autovacuums after writes / idle 1 / 1 3 / 4 WAL bytes during writes 22.701 GB 24.821 GB Save p99, upper histogram bound 1,056.8 ms 1,286.1 ms Whole-operation p99, upper histogram bound 2,768.9 ms 4,358.1 ms Database observation timeouts 0 0 Maximum observation gap 11.91 s 11.95 s All 16 scenarios in each fixture passed logical state checks. The 32-tenant, 32-writer, 1 MiB cell is a notable counterexample to treating the tuning as a free capacity gain: its save p99 was 6.13 s with package defaults and 28.31 s with fast TOAST vacuum. In sustained churn, each of eight tenants continued to make progress. Both fixtures verified acknowledged two-document batches after hard-killing a blocked writer and found no partial batch. Each left zero owned schemas and removed its label-checked container and volume. The tuning reduced observed relation size in this run, but neither profile demonstrated a stable physical bound. Both relations grew after temporary flat intervals, and neither shrank during"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "documents-evidence",
+    "summary": "eng/run-documents-load.ps1 provisions a dedicated labelled PostgreSQL 18 fixture on loopback port 55818 with four Docker CPUs, a 2 GiB memory limit, trackiotiming=on and 40 server connections.",
+    "keywords": [
+      "docs",
+      "documents",
+      "evidence",
+      "README"
+    ],
+    "order": 1063,
+    "title": "Documents workload and process recovery",
+    "sourcePath": "docs/documents/evidence/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/README.md",
+    "headings": [
+      {
+        "id": "documents-workload-and-process-recovery",
+        "text": "Documents workload and process recovery",
+        "level": 1
+      }
+    ],
+    "wordCount": 1361,
+    "readMinutes": 7,
+    "searchText": "Documents workload and process recovery `eng/run-documents-load.ps1` provisions a dedicated labelled PostgreSQL 18 fixture on loopback port 55818 with four Docker CPUs, a 2 GiB memory limit, `track_io_timing=on` and 40 server connections. Its container/volume names are unique. Cleanup checks both ownership labels before removing either resource. It does not inject failures into the ordinary shared test databases. The runner restores its process environment and retains reports under ignored `artifacts/documents-load` by default. The [27 September PostgreSQL 18 baseline](2026-09-27-pg18-baseline/README.md) retains a 600-second completed campaign, actual hard-killed writer recovery, and its unresolved physical TOAST growth. Shared-host contention and invalid baseline database activity fields are disclosed; the raw baseline is not production qualification. The [separate corrected-activity diagnostic](2026-09-27-activity-diagnostic/run-notes.json) verified nonzero server client peaks equal to the provider's one/eight connection pool caps in all sixteen scenarios, plus hard-killed writer recovery and owned fixture cleanup. It is an instrumentation check; its short, shared-host timings are not an optimization comparison. The [retained-binary allocation pair](2026-09-27-allocation-pair/README.md) measures six BenchmarkDotNet staging and source-generated serialization cases on the original and optimized Documents executables. It supports a lower staging allocation claim, not a database throughput or latency improvement. The [TOAST maintenance profiler diagnostics](2026-09-27-maintenance-diagnostics/README.md) verify direct parent/TOAST observations, actual fixture-only vacuum settings, Docker filesystem headroom sampling, intentional resource-stop evidence and cleanup. They are too short and contended to establish whether tuning controls the sustained physical growth. The [28 September source-frozen 600-second comparison](2026-09-28-maintenance-pair.md) records successful de"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "ecosystem-implementation-programme",
+    "summary": "The requested outcome is ten complete ecosystem products, built for large production workloads and qualified with measured efficiency and recovery evidence. Code, a successful build, and a production qualification are…",
+    "keywords": [
+      "docs",
+      "ecosystem",
+      "implementation",
+      "programme"
+    ],
+    "order": 1064,
+    "title": "BlueTusk ecosystem expansion",
+    "sourcePath": "docs/ecosystem/implementation-programme.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/implementation-programme.md",
+    "headings": [
+      {
+        "id": "bluetusk-ecosystem-expansion",
+        "text": "BlueTusk ecosystem expansion",
+        "level": 1
+      },
+      {
+        "id": "product-requirements",
+        "text": "Product requirements",
+        "level": 2
+      },
+      {
+        "id": "shared-architecture",
+        "text": "Shared architecture",
+        "level": 2
+      },
+      {
+        "id": "verification-and-production-qualification",
+        "text": "Verification and production qualification",
+        "level": 2
+      },
+      {
+        "id": "work-sequence",
+        "text": "Work sequence",
+        "level": 2
+      }
+    ],
+    "wordCount": 807,
+    "readMinutes": 4,
+    "searchText": "BlueTusk ecosystem expansion The requested outcome is ten complete ecosystem products, built for large production workloads and qualified with measured efficiency and recovery evidence. Code, a successful build, and a production qualification are separate milestones. None of the new products is currently production qualified. Product requirements Product Required behavior Events Typed and versioned domain events; atomic business-write/outbox transactions; tenant and stream ordering; stable event identity; inbox deduplication atomic with consumer effects; bounded delivery and replay; consumer checkpoints; EF integration; event contract evolution. Jobs Durable transactional enqueue; delayed and recurring scheduling; bounded fair workers; database-clock leases and fencing; heartbeat, cancellation, retries and terminal failure; idempotency; bounded history and retention; typed handlers; operational controls. Documents Typed JSONB sessions and source-generated serialization; tenant isolation; revision-based concurrency; atomic multi-document saves; patching; bounded keyset queries; declarative indexes; document schema evolution; Streams and Live integration. Projections Durable multi-source read models; joined and aggregate projections; ordered transactional application with colocated checkpoints; versioned definitions; no-gap rebuilds and cutover; replay, reconciliation and repair; bounded dependencies; Live integration. Search PostgreSQL full-text, vector and hybrid retrieval; versioned ingestion and chunking; bounded embedding workers; tenant and permission filtering; stable rank/pagination; deletion propagation; ranking extensions; pgvector and OpenSearch adapters. Schema Consistent catalogue snapshots; canonical fingerprints; structural compatibility and consumer-impact checks; migration plans and safe deployment sequencing; drift checks; bounded discovery; declarative indexes and schema contract evolution. Sql Typed query methods generated from SQL files; schema-va"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "ecosystem-performance",
+    "summary": "ecosystem-performance.yml is a manually dispatched, exact-commit local capacity gate for Jobs, Workflows, Projections and Documents. Dispatch it with a full 40-character candidatesha that already contains this workflo…",
+    "keywords": [
+      "docs",
+      "ecosystem",
+      "performance"
+    ],
+    "order": 1065,
+    "title": "Ecosystem performance qualification",
+    "sourcePath": "docs/ecosystem/performance.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/performance.md",
+    "headings": [
+      {
+        "id": "ecosystem-performance-qualification",
+        "text": "Ecosystem performance qualification",
+        "level": 1
+      }
+    ],
+    "wordCount": 807,
+    "readMinutes": 4,
+    "searchText": "Ecosystem performance qualification `ecosystem-performance.yml` is a manually dispatched, exact-commit local capacity gate for Jobs, Workflows, Projections and Documents. Dispatch it with a full 40-character `candidate_sha` that already contains this workflow, the budget contract and verifier, and type `RUN-ECOSYSTEM-PERFORMANCE`. It requires a clean checkout on the dedicated Windows Ryzen 7 5800X benchmark runner, Docker in Linux-container mode, Python and .NET from `global.json`. The workflow has read-only repository permissions and performs no packaging, release or publication step. The gate runs **two independent campaigns** of each workload. Each Jobs/Workflows storage campaign offers 30 minutes per product with seeded high-entropy payloads. Projections runs separate 30-minute steady-load and overload profiles per repetition; Documents fixed-cardinality churn also runs for 30 minutes. The wall time is several hours because campaigns are sequential and include setup, drain, recovery and verification. Each harness uses a dedicated disposable PostgreSQL fixture. The gate checks each completed campaign immediately and rejects missing runs, wrong payload mode, failed logical/recovery checks, insufficient measurement time or sparse storage/service observations. A successful pass means only that this workload and runner met the explicit local thresholds below. It does not establish production capacity, indefinite storage bounds or performance leadership. Workload Minimum throughput Maximum p99 Storage ceiling Jobs 20 durable completions/s 10 s hot, 3 s cold 64 MiB runtime relations; 2 MiB/min late net growth; 64 KiB cluster WAL/accepted Workflows 5 durable completions/s 30 s hot, 12 s cold 128 MiB runtime relations; 4 MiB/min late net growth; 256 KiB cluster WAL/accepted Projections steady load 20 scheduled offers/s; 19 accepted/s; 18 inbox effects/s during offering; ≥99% admission and ≥95% inbox coverage by offer end 1 s commit, 2 s projection/inbox, 3 s Live coverag"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "ecosystem-progress",
+    "summary": "Working branch: codex/ecosystem-products. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent 0.1.0-preview.1 packages. Publication is disabled for all ten families.",
+    "keywords": [
+      "docs",
+      "ecosystem",
+      "progress"
+    ],
+    "order": 1066,
+    "title": "Ecosystem expansion evidence ledger",
+    "sourcePath": "docs/ecosystem/progress.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/progress.md",
+    "headings": [
+      {
+        "id": "ecosystem-expansion-evidence-ledger",
+        "text": "Ecosystem expansion evidence ledger",
+        "level": 1
+      },
+      {
+        "id": "current-local-gates",
+        "text": "Current local gates",
+        "level": 2
+      },
+      {
+        "id": "production-qualification-still-required",
+        "text": "Production qualification still required",
+        "level": 2
+      }
+    ],
+    "wordCount": 1419,
+    "readMinutes": 7,
+    "searchText": "Ecosystem expansion evidence ledger Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent `0.1.0-preview.1` packages. Publication is disabled for all ten families. Implemented paths and passing local gates are substantial, but no family is production qualified. The [expansion release contract](release-qualification.md) keeps their tagged publication path closed until product-specific evidence, governance and independent approval exist for an exact candidate. Family Implemented and directly exercised Material work still open Events Transactional outbox/inbox, typed routing, replay and Streams adapter; guarded local-only archive/prune with durable ID fence; 50 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign Published-outbox retention, large producer/consumer fleets, upgrades and disaster recovery Jobs Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion Representative multi-day retention/capacity and operations under repeated failure Documents Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits Projections Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; selective dependency reconciliation; 35 live PostgreSQL 17 tests, 100,000-effect exact-state campaign, 600-second overload and physical promotion Longer independent-host steady/overload load, retention/format upgrades and wider failure distributions Search Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution Scale limits,"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "ecosystem-release-qualification",
+    "summary": "Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and Workflows are implemented preview products at 0.1.0-preview.1. Their publication flags are disabled. The tagged release workflow recognizes t…",
+    "keywords": [
+      "docs",
+      "ecosystem",
+      "release",
+      "qualification"
+    ],
+    "order": 1067,
+    "title": "Expansion release qualification",
+    "sourcePath": "docs/ecosystem/release-qualification.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/release-qualification.md",
+    "headings": [
+      {
+        "id": "expansion-release-qualification",
+        "text": "Expansion release qualification",
+        "level": 1
+      }
+    ],
+    "wordCount": 865,
+    "readMinutes": 4,
+    "searchText": "Expansion release qualification Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and Workflows are implemented preview products at `0.1.0-preview.1`. Their publication flags are disabled. The tagged release workflow recognizes their names so a future qualified candidate can use the same package, SBOM, provenance and protected-publication machinery as the established families. Recognizing a tag is not authority to publish it. `eng/verify-expansion-release-policy.ps1` is the fail-closed source contract. It checks all ten preview entries while disabled. If a future candidate arms a family, it requires a stable version of at least `1.0.0`, the complete exact manual workflow set in its family manifest, a protected independent `expansion-candidate-readiness` environment, and the exact versioned tag pattern in the `package-production` governance contract. The tagged workflow also runs `verify-release-gates.ps1`, which requires successful manual runs whose `head_sha` equals the tag commit, a readiness artifact bound to the exact family, commit, tag, version and qualification artifact digests, and verifies that exact-version release dependencies are already public. The protected publish job checks the live repository and environment settings before any registry write. A source-only governance declaration cannot substitute for those live settings. Source policy checks neither run outcomes nor report contents. The release verifier checks workflow identity, event, conclusion, commit and the readiness artifact's references to the exact qualification runs and their retained artifact digests. The future qualification workflows and protected candidate aggregator must validate their own raw measurements before a successful run can count. Each family must have its own capacity, failover and durable-format upgrade qualification. The required workflow identities are fixed in `eng/expansion-release-policy.json`. Jobs needs a dedicated `jobs-release-capacity.yml` w"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "edge",
+    "summary": "BlueTusk.Edge 0.1.0-preview.1 supplies offline synchronization contracts and a bounded coordinator. BlueTusk.Edge.Sqlite provides a durable file cache and queued mutations. BlueTusk.Edge.Server supplies a PostgreSQL r…",
+    "keywords": [
+      "docs",
+      "edge",
+      "README"
+    ],
+    "order": 1068,
+    "title": "BlueTusk.Edge",
+    "sourcePath": "docs/edge/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-edge",
+        "text": "BlueTusk.Edge",
+        "level": 1
+      },
+      {
+        "id": "cache-snapshots-and-changes",
+        "text": "Cache, snapshots and changes",
+        "level": 2
+      },
+      {
+        "id": "durable-mutations-and-conflicts",
+        "text": "Durable mutations and conflicts",
+        "level": 2
+      },
+      {
+        "id": "durable-server-and-authenticated-transport",
+        "text": "Durable server and authenticated transport",
+        "level": 2
+      },
+      {
+        "id": "operator-health-and-telemetry",
+        "text": "Operator health and telemetry",
+        "level": 2
+      },
+      {
+        "id": "storage-and-bounds",
+        "text": "Storage and bounds",
+        "level": 2
+      },
+      {
+        "id": "verification-and-remaining-product-gates",
+        "text": "Verification and remaining product gates",
+        "level": 2
+      }
+    ],
+    "wordCount": 3633,
+    "readMinutes": 17,
+    "searchText": "BlueTusk.Edge BlueTusk.Edge `0.1.0-preview.1` supplies offline synchronization contracts and a bounded coordinator. BlueTusk.Edge.Sqlite provides a durable file cache and queued mutations. BlueTusk.Edge.Server supplies a PostgreSQL record repository with an atomic mutation inbox, consistent snapshots and a retained change feed. BlueTusk.Edge.Http and BlueTusk.Edge.AspNetCore connect that repository through authenticated HTTP. `@bluetusk/edge` supplies durable IndexedDB storage, an interoperable HTTP client and a bounded reconnect helper. The host obtains tenant, selective scope identity and increasing epoch from an authenticated server contract. A scope may represent a user, permission set and selection filter; changing any access boundary should rotate its epoch. The client cannot authorize its own arbitrary scope ID or epoch. Local persistence is not an authentication boundary or encryption mechanism; the host owns local file/browser profile access and logout/revocation handling. Cache, snapshots and changes SQLite keys include tenant, scope and epoch. IndexedDB uses the same composite identity. Activating a newer epoch atomically purges prior cached/staged state and receipts, resets its checkpoint, and invalidates older-epoch reads. Pending writes make rotation fail by default. The host must explicitly choose `DiscardPending`/`discard` after its pending-write policy is resolved; the library does not silently discard offline user changes. A host detecting authorization revocation must stop using the old scope while resolving that policy. Snapshots use stable identities, stage bounded batches separately from the active cache, and publish their full selective record set plus checkpoint in one transaction. Reopening/restarting does not expose partial snapshots, and repeating the same begin preserves staged batches. Completing a new snapshot removes records outside its authorized selection. SQLite and IndexedDB enforce separate active and staged limits, each defaultin"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "events-published-retention",
+    "summary": "ArchiveNextAsync can already copy a published stream's immutable events into an external archive. It never authorizes physical deletion. The current Events.Streams decoder rejects every outbox DELETE,",
+    "keywords": [
+      "docs",
+      "events",
+      "PUBLISHED",
+      "RETENTION"
+    ],
+    "order": 1072,
+    "title": "Published outbox retention: required protocol",
+    "sourcePath": "docs/events/PUBLISHED-RETENTION.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/PUBLISHED-RETENTION.md",
+    "headings": [
+      {
+        "id": "published-outbox-retention-required-protocol",
+        "text": "Published outbox retention: required protocol",
+        "level": 1
+      }
+    ],
+    "wordCount": 2107,
+    "readMinutes": 10,
+    "searchText": "Published outbox retention: required protocol `ArchiveNextAsync` can already copy a published stream's immutable events into an external archive. It never authorizes physical deletion. The current Events.Streams decoder rejects every outbox DELETE, and a Projections source may include the same outbox table in its publication. A source slot position only states how far that transport has acknowledged WAL; it does not prove that every target inbox, projection version, independent subscription or recovery candidate has committed the event effects. No source-only API can safely infer those remote obligations from the present contracts. Published pruning needs a distinct, opt-in protocol, with the following durable order: The Events schema v3 adds `published_retention_intents` and `PostgreSqlEventStore.PublishRetentionIntentAsync` as a **preparation stage only**. The method re-reads at most 256 archive segments (64 by default) and 64 MiB of total event payload while holding the stream and relation locks, verifies their contiguous sequence ranges, counts and immutable event digests, and hashes their manifest identities into a chained digest. It then inserts an append-only row into the same PostgreSQL transaction log as the outbox. The row records a unique epoch, source system identifier, database and OID, timeline, logical slot, publication and OID, and exact tenant/stream range. A prior intent must end at the caller's expected sequence and have the same lineage. The method checks the connected PostgreSQL control identity and logical slot, and refuses to emit a marker unless **every** publication currently containing the outbox also publishes complete, unfiltered inserts from the control relation. Deployment must add that relation to explicit outbox publications before using the API and **freeze publication DDL** throughout the protocol; a schema-wide or all-tables publication covers it automatically. Archive read latency extends the lock hold, so operators should use sma"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "events",
+    "summary": "BlueTusk.Events is an independent 0.1.0-preview.1 family targeting .NET 10. It records typed, versioned business intent in the same PostgreSQL transaction as business data, deduplicates database",
+    "keywords": [
+      "docs",
+      "events",
+      "README"
+    ],
+    "order": 1073,
+    "title": "BlueTusk.Events",
+    "sourcePath": "docs/events/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-events",
+        "text": "BlueTusk.Events",
+        "level": 1
+      },
+      {
+        "id": "transactional-publishing",
+        "text": "Transactional publishing",
+        "level": 2
+      },
+      {
+        "id": "ordering-and-scale",
+        "text": "Ordering and scale",
+        "level": 2
+      },
+      {
+        "id": "inbox-and-replay",
+        "text": "Inbox and replay",
+        "level": 2
+      },
+      {
+        "id": "streams-delivery-adapter",
+        "text": "Streams delivery adapter",
+        "level": 2
+      },
+      {
+        "id": "local-only-archive-and-retention",
+        "text": "Local-only archive and retention",
+        "level": 2
+      },
+      {
+        "id": "validation-and-remaining-release-gates",
+        "text": "Validation and remaining release gates",
+        "level": 2
+      }
+    ],
+    "wordCount": 2306,
+    "readMinutes": 11,
+    "searchText": "BlueTusk.Events BlueTusk.Events is an independent `0.1.0-preview.1` family targeting .NET 10. It records typed, versioned business intent in the same PostgreSQL transaction as business data, deduplicates database effects in a consumer inbox, and replays an ordered tenant stream with durable fenced checkpoints. The runtime uses ADO.NET and BlueTusk.Data. Npgsql and EF Core are not runtime dependencies of the core. Transactional publishing Define a stable contract name/version and generate JSON metadata for each historical wire version: Generate event identity and occurrence time once, outside a retry loop. A retry of the same tenant/event identity must contain identical stream, contract, timestamp (at PostgreSQL microsecond precision), and payload bytes. A conflicting identity fails. The tenant is part of identity: the same UUID in two tenants identifies two separate events. Cross-stream races for the same tenant/event identity can fail with PostgreSQL's unique constraint; roll back the transaction and correct the publisher. The optional `BlueTusk.Events.EntityFrameworkCore` adapter exposes `context.AppendEventsAsync(...)`. Begin an explicit relational transaction, save business changes, append events, then commit. The adapter requires that transaction; it does not start one, call SaveChanges, or commit on the caller's behalf. The caller owns the data source, connection and transaction lifetime. Call `InitializeAsync` during controlled deployment. Schema version 1 is installed transactionally under an advisory lock. Unknown versions are rejected. No hot path automatically migrates schemas. Ordering and scale There is no global sequence. The primary key is `(tenant_id, stream_id, sequence)`. Appending locks that stream's counter row until the application's transaction commits or rolls back. A later writer therefore cannot publish offset 2 before offset 1 commits, and rollback does not consume an offset. Unrelated streams can proceed concurrently. Choose an aggregate o"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "fuzzing",
     "summary": "BlueTusk fuzzes every externally controlled parser boundary used by the V1 product chain:",
     "keywords": [
       "docs",
       "fuzzing"
     ],
-    "order": 1062,
+    "order": 1076,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -5936,7 +6479,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1068,
+    "order": 1082,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -5977,7 +6520,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "improvement",
       "audit"
     ],
-    "order": 1069,
+    "order": 1083,
     "title": "BlueTusk improvement audit and action record",
     "sourcePath": "docs/improvement-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
@@ -6021,6 +6564,299 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "jobs",
+    "summary": "BlueTusk.Jobs is a PostgreSQL durable execution library built on BlueTusk.Data. The current package version is 0.1.0-preview.1, targeting .NET 10. It is an implemented preview; production qualification and performance…",
+    "keywords": [
+      "docs",
+      "jobs",
+      "README"
+    ],
+    "order": 1084,
+    "title": "BlueTusk.Jobs",
+    "sourcePath": "docs/jobs/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-jobs",
+        "text": "BlueTusk.Jobs",
+        "level": 1
+      },
+      {
+        "id": "usage",
+        "text": "Usage",
+        "level": 2
+      },
+      {
+        "id": "delivery-and-ownership",
+        "text": "Delivery and ownership",
+        "level": 2
+      },
+      {
+        "id": "bounds-and-scheduling",
+        "text": "Bounds and scheduling",
+        "level": 2
+      },
+      {
+        "id": "operations",
+        "text": "Operations",
+        "level": 2
+      },
+      {
+        "id": "verification",
+        "text": "Verification",
+        "level": 2
+      }
+    ],
+    "wordCount": 1395,
+    "readMinutes": 7,
+    "searchText": "BlueTusk.Jobs BlueTusk.Jobs is a PostgreSQL durable execution library built on BlueTusk.Data. The current package version is `0.1.0-preview.1`, targeting .NET 10. It is an implemented preview; production qualification and performance leadership are not established by the current test results. Usage The caller owns the data source. Store methods borrow and return pooled connections. Enqueue in a caller transaction borrows no second connection and never commits that transaction. A duplicate key returns the original identity only when type, bytes, and maximum-attempt contract match. A changed contract fails explicitly. The first enqueue establishes the availability deadline; repeated enqueue does not reschedule it. Keys are scoped by tenant and queue. Delivery and ownership Jobs are at least once. A handler can perform an external effect, lose its connection before acknowledging it, and execute again after recovery. External systems must enforce idempotency, or enforce a fence keyed by job identity. PostgreSQL acknowledgement fencing cannot undo an already performed external effect. A business effect performed in PostgreSQL should use its own atomic inbox/effect transaction. ExecuteFencedAsync guards colocated database effects and downstream enqueue. Its callback receives a borrowed BlueTusk connection and transaction, checks the database deadline before entering and again before commit, and rolls everything back on cancellation, failure or expiry. The typed handler context includes its lease capability. Keep callbacks short: their locked job row prevents heartbeat extension through the transaction. External effects cannot be rolled back and do not belong in that callback. Every claim increments a durable monotonic token. Heartbeat, success and failure require the tenant, queue, job identity, owner and token to match, and the lease deadline to remain in the future on the database clock. An expired owner cannot revive its lease even before another worker claims it. Canc"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "jobs-durable-format",
+    "summary": "Both products currently support durable schema format 1 only. There is no previous released Jobs/Workflows format, format-two migration or downgrade implementation. Definition versions inside a workflow are separate f…",
+    "keywords": [
+      "docs",
+      "jobs",
+      "durable",
+      "format"
+    ],
+    "order": 1085,
+    "title": "Durable-format support and rehearsal",
+    "sourcePath": "docs/jobs/durable-format.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
+    "headings": [
+      {
+        "id": "durable-format-support-and-rehearsal",
+        "text": "Durable-format support and rehearsal",
+        "level": 1
+      }
+    ],
+    "wordCount": 471,
+    "readMinutes": 3,
+    "searchText": "Durable-format support and rehearsal Both products currently support durable schema format **1** only. There is no previous released Jobs/Workflows format, format-two migration or downgrade implementation. Definition versions inside a workflow are separate from the store format; `MigrateAsync` does not migrate database storage formats. `InitializeAsync` is deployment work. It serializes schema setup, checks the persisted format and durable admission fingerprint/limits, and rejects a mismatch. Do not start workers when initialization fails. Jobs persists payload and history limits; Workflows persists its definition/input/result/signal/node/ history admission bounds. Operational batch, aggregate-read/claim and command deadline tuning may change within the same durable limits. An incompatible initializer does not automatically widen constraints or rewrite existing work. The live `JobDurableFormatTests` and `WorkflowDurableFormatTests` rehearse a format-one store reopening with different operational tuning, then restoring its initial configuration. They preserve queued identity/deduplication, failed-attempt history, fencing and completion. A workflow pauses after one committed activity, reopens, receives a signal, rolls its process configuration back, and resumes its timer/final activity without repeating the earlier activity; replay must match. The manual [Jobs binary upgrade gate](upgrade.md) is separate from these same-binary tests. It requires distinct old-preview and candidate Jobs DLLs, overlapping old/new processes and an old-binary rollback on unchanged format-one state. No passing cross-binary run has yet been retained. A separate live rehearsal exercises an actual supported definition boundary: version one commits an activity and waits for a signal, migrates quiescently to version two with an additional blocked node, reopens the store, then migrates back to version one at the current revision. The completed activity contract, result and original start/deduplic"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "jobs-failover",
+    "summary": "The manual Jobs release failover workflow wraps this rehearsal for one clean full candidate SHA. It requires three fresh synchronous pairs, verifies the exact Jobs effects and stale-owner",
+    "keywords": [
+      "docs",
+      "jobs",
+      "failover"
+    ],
+    "order": 1086,
+    "title": "Jobs and Workflows physical promotion rehearsal",
+    "sourcePath": "docs/jobs/failover.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
+    "headings": [
+      {
+        "id": "jobs-and-workflows-physical-promotion-rehearsal",
+        "text": "Jobs and Workflows physical promotion rehearsal",
+        "level": 1
+      },
+      {
+        "id": "lease-and-connection-selection-budget",
+        "text": "Lease and connection-selection budget",
+        "level": 2
+      },
+      {
+        "id": "retained-baseline-two-passes-one-failure",
+        "text": "Retained baseline: two passes, one failure",
+        "level": 2
+      },
+      {
+        "id": "frozen-optimized-provider-campaign-three-passes",
+        "text": "Frozen optimized-provider campaign: three passes",
+        "level": 2
+      },
+      {
+        "id": "separate-real-wire-post-cooldown-boundary",
+        "text": "Separate real-wire post-cooldown boundary",
+        "level": 2
+      }
+    ],
+    "wordCount": 2648,
+    "readMinutes": 13,
+    "searchText": "Jobs and Workflows physical promotion rehearsal The manual [Jobs release failover workflow](../../.github/workflows/jobs-release-failover.yml) wraps this rehearsal for one clean full candidate SHA. It requires three fresh synchronous pairs, verifies the exact Jobs effects and stale-owner fences against retained raw reports and binary hashes, then uploads a product-specific artifact only after independent archive verification. Adding the workflow does not supply a passing run. Credential replacement during promotion, prolonged silent network partitions, persistent storage loss, asynchronous replication, split brain, old-primary rejoin and independent-host operation remain separate release evidence. `eng/jobs-physical-recovery.ps1` creates fresh labelled PostgreSQL 18 primary and physical standby containers, private network and separate data volumes. Default loopback ports are 55625/55626, independent of the shared 55415–55418 fixtures and the Projections recovery lab. The image is pinned by digest. It takes a physical base backup and verifies streaming synchronous replication before running the dedicated `BlueTusk.Workflows.PhysicalRecoveryTests` project. Three repetitions each receive a new pair and durable state. Cleanup verifies both owner and fixture labels before removing any container, network or volume. Each C# rehearsal has a 180-second work deadline and finite admission: two tenant scopes, 66 Jobs and six workflows. It creates the real fixture explicitly; missing configuration fails. The project is outside the ordinary `*.Tests.csproj` selector so a normal PostgreSQL test run cannot silently treat an absent failover lab as a passing scenario. The wrapper rejects skipped tests, preserves per-run TRX and PostgreSQL logs under `artifacts/jobs-physical-recovery`, and retains compact raw JSON plus fixture CPU/memory/I/O samples next to the selected report. Worker/probe shutdown and schema cleanup have separate bounded deadlines. Failed runs retain partial logs; t"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "jobs-hosting",
+    "summary": "BlueTusk.Jobs.DependencyInjection and BlueTusk.Workflows.DependencyInjection are optional host adapters. The core stores remain independent of Microsoft hosting. Install the adapter for each product used by your host…",
+    "keywords": [
+      "docs",
+      "jobs",
+      "hosting"
+    ],
+    "order": 1087,
+    "title": "Scoped Jobs and Workflows host readiness",
+    "sourcePath": "docs/jobs/hosting.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
+    "headings": [
+      {
+        "id": "scoped-jobs-and-workflows-host-readiness",
+        "text": "Scoped Jobs and Workflows host readiness",
+        "level": 1
+      },
+      {
+        "id": "credential-rotation-rehearsal",
+        "text": "Credential rotation rehearsal",
+        "level": 2
+      },
+      {
+        "id": "local-verification-evidence",
+        "text": "Local verification evidence",
+        "level": 2
+      }
+    ],
+    "wordCount": 1088,
+    "readMinutes": 5,
+    "searchText": "Scoped Jobs and Workflows host readiness `BlueTusk.Jobs.DependencyInjection` and `BlueTusk.Workflows.DependencyInjection` are optional host adapters. The core stores remain independent of Microsoft hosting. Install the adapter for each product used by your host and register a trusted, fixed tenant and queue: The host supplies logging as usual. Factories resolve caller-owned singleton stores and must perform no I/O. Registration does not initialize schemas, start workers, or dispose the supplied source. Each registration resolves one keyed singleton check per host service provider. Distinct providers have independent checks. Names must be unique across the host, at most 64 characters; each adapter permits at most 128 registrations. The factory and options are explicit to make the operational tenant boundary reviewable. Never derive a scope, check name or store factory from an untrusted request. Authenticate health endpoints and authorize access to the configured scope. Returned counts and ages are operational data even though identity, payload, schema and connection settings are omitted. A public liveness endpoint should not expose these reports. Scope predicates enforce query separation; they are not a substitute for PostgreSQL grants or row-level security. A read-only health role needs schema `USAGE` and `SELECT` on Jobs `jobs` and Workflows `instances`. Neither check needs write permissions, definition reads, history scans or DDL. Configure row-level policies separately when the database role must also enforce a tenant boundary. Superusers and owners can bypass RLS. Counts are observed with a ceiling of 1–100,000 and carry saturation flags. Pressure thresholds may be zero but cannot exceed the observation ceiling. Saturation is `Degraded`, even when the reported count equals a threshold, because the true count may be larger. Jobs checks pending count, expired leases and database-clock age of ready work. Workflows checks running/compensating instances and the same "
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "jobs-maintenance",
+    "summary": "Jobs and Workflows bound admitted payloads, in-memory claims, attempt/history entries and individual pruning batches. Those bounds do not impose a physical database or WAL disk limit. The host owns admission/backlog q…",
+    "keywords": [
+      "docs",
+      "jobs",
+      "maintenance"
+    ],
+    "order": 1088,
+    "title": "Durable storage maintenance contract",
+    "sourcePath": "docs/jobs/maintenance.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
+    "headings": [
+      {
+        "id": "durable-storage-maintenance-contract",
+        "text": "Durable storage maintenance contract",
+        "level": 1
+      }
+    ],
+    "wordCount": 627,
+    "readMinutes": 3,
+    "searchText": "Durable storage maintenance contract Jobs and Workflows bound admitted payloads, in-memory claims, attempt/history entries and individual pruning batches. Those bounds do not impose a physical database or WAL disk limit. The host owns admission/backlog quotas and a regular retention loop for every tenant/queue; PostgreSQL operators own page reuse, autovacuum, transaction-age and WAL/disk budgets. Deleting rows is only the first stage of storage maintenance. Choose terminal retention longer than upstream retry/redelivery and external idempotency windows. Pruning releases deduplication identities, so a later redelivery can create new work. Workflows prune their completed instances and cascaded nodes/history/signals; their dispatch Jobs require their own pruning. Definitions and recurring schedules are durable configuration and have separate operator-managed lifetimes. Waiting signals/timers and permanently running instances need an explicit application lifetime/cancellation policy; terminal retention cannot delete them. Run bounded `PruneAsync` batches with a finite per-scope/time budget and reschedule scopes fairly. Observe returned counts, capped active counts and ready age, terminal age, durable throughput and rejected offers. Never increase admission indefinitely to conceal overload. A deleted row can remain physically needed by an older database snapshot. Check long transactions, replication slots and other vacuum blockers when live counts fall but dead rows or relation files grow. Standard vacuum makes dead table/index space reusable. It usually keeps files allocated; this is useful when subsequent work reuses those pages. A physical plateau therefore means a stable relation-byte range across repeated cleanup cycles under sustained arrivals, rather than zero retained rows or file shrinkage. Keep autovacuum enabled. Supplement or tune it based on measured churn and dead rows; the tested cadence below is a reference workload policy, not a universal setting. Postgr"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "jobs-performance",
+    "summary": "benchmarks/BlueTusk.Workflows.LoadHarness is a repeatable executable that measures the durable Jobs runtime and six-node Workflows DAG on a disposable PostgreSQL database. It verifies every admitted item reaches durab…",
+    "keywords": [
+      "docs",
+      "jobs",
+      "performance"
+    ],
+    "order": 1089,
+    "title": "Jobs and Workflows capacity and recovery harness",
+    "sourcePath": "docs/jobs/performance.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
+    "headings": [
+      {
+        "id": "jobs-and-workflows-capacity-and-recovery-harness",
+        "text": "Jobs and Workflows capacity and recovery harness",
+        "level": 1
+      },
+      {
+        "id": "run",
+        "text": "Run",
+        "level": 2
+      },
+      {
+        "id": "workloads-and-bounds",
+        "text": "Workloads and bounds",
+        "level": 2
+      },
+      {
+        "id": "measurements",
+        "text": "Measurements",
+        "level": 2
+      },
+      {
+        "id": "injected-failures",
+        "text": "Injected failures",
+        "level": 2
+      },
+      {
+        "id": "evidence-and-remaining-gates",
+        "text": "Evidence and remaining gates",
+        "level": 2
+      },
+      {
+        "id": "offered-overload-and-retention",
+        "text": "Offered overload and retention",
+        "level": 2
+      },
+      {
+        "id": "reference-operator-thresholds",
+        "text": "Reference operator thresholds",
+        "level": 2
+      },
+      {
+        "id": "network-partition-boundary",
+        "text": "Network partition boundary",
+        "level": 2
+      },
+      {
+        "id": "sustained-physical-storage-campaign",
+        "text": "Sustained physical storage campaign",
+        "level": 2
+      },
+      {
+        "id": "durable-format-rehearsal-boundary",
+        "text": "Durable-format rehearsal boundary",
+        "level": 2
+      },
+      {
+        "id": "ten-minute-physical-storage-result",
+        "text": "Ten-minute physical storage result",
+        "level": 2
+      }
+    ],
+    "wordCount": 4618,
+    "readMinutes": 21,
+    "searchText": "Jobs and Workflows capacity and recovery harness `benchmarks/BlueTusk.Workflows.LoadHarness` is a repeatable executable that measures the durable Jobs runtime and six-node Workflows DAG on a disposable PostgreSQL database. It verifies every admitted item reaches durable success, every tenant is delivered its own payload, there is one ledger effect per item, all workflow histories replay to the persisted state, both health inspections report a drained scope, and bounded pruning removes all expected terminal rows. Measurement failure exits nonzero. This is local engineering evidence; the production qualification gates remain open. Run Use a disposable database. The connection environment variable is inherited by the child process and is never included in command arguments or reports. Each scenario creates unique schemas and drops them in a `finally` block. The process-kill test kills only the child process created by this harness. The wire-fault proxy binds an ephemeral loopback port, accepts one faulted connection and one healthy pool replacement, forwards at most one MiB per protocol frame, and expires after 30 seconds. It requires `SSL Mode=Disable;Channel Binding=Disable` for this local fault test. Run from the repository root when invoking the executable directly. Build with `dotnet build ... -c Release -nr:false`, then use `dotnet run --project ... -c Release --no-build -- matrix`. `-nr:false` is a build option. The wrapper uses the appropriate build and application argument boundaries. Workloads and bounds The quick profile drains 512 Jobs with 1 KiB of padding beside 4,000 terminal rows, 64 Workflows with two parallel activities, join, buffered signal, 10 ms timer and transactional effect, then a three-second Jobs admission loop. The matrix varies Jobs padding through 64 B, 4 KiB and 64 KiB and per-tenant concurrency through two and eight; it uses four tenants and 10,000 retained terminal rows. It also runs a ten-to-one hot-tenant allocation and a pool of 12 c"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "jobs-upgrade",
+    "summary": "The manual Jobs upgrade workflow requires two immutable full commit SHAs: an earlier Jobs preview source commit reachable from the candidate and the exact candidate commit. It builds and archives",
+    "keywords": [
+      "docs",
+      "jobs",
+      "upgrade"
+    ],
+    "order": 1090,
+    "title": "Jobs binary upgrade and rollback gate",
+    "sourcePath": "docs/jobs/upgrade.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/upgrade.md",
+    "headings": [
+      {
+        "id": "jobs-binary-upgrade-and-rollback-gate",
+        "text": "Jobs binary upgrade and rollback gate",
+        "level": 1
+      }
+    ],
+    "wordCount": 340,
+    "readMinutes": 2,
+    "searchText": "Jobs binary upgrade and rollback gate The manual [Jobs upgrade workflow](../../.github/workflows/jobs-release-upgrade.yml) requires two immutable full commit SHAs: an earlier Jobs preview source commit reachable from the candidate and the exact candidate commit. It builds and archives both Jobs packages and separate probe executables from those source trees. The executed `BlueTusk.Jobs.dll` must match its archived package and **differ** between old and candidate. A same-binary configuration reopen does not satisfy this gate. The old process initializes a fresh format-one schema, persists a running lease, a failed attempt ready for retry, and pending work. While the old process remains alive and holds its lease, the candidate process opens the same store, confirms deduplication identities, completes the retry and pending work, and signals the old process to complete its held lease. The candidate verifies that completion. After both processes exit, the old binary reopens the store, checks all states and attempt histories, then admits and completes a new job. Each phase rejects a duplicate completion. The store header must remain format 1 with unchanged payload and history admission limits throughout. This is the only supported rollback boundary; there is no format migration or downgrade procedure. The successful artifact includes the old Git source archive, both package files, both executable snapshots, phase records and process logs, and a manifest of SHA-256 hashes. Its verifier ties the source trees, probe, packages, executable Jobs DLLs and exact effect counts to the candidate and old commits. A partial or failed run uses a separate artifact name and never satisfies release readiness. This workflow has not run and creates no qualification merely by existing. An earlier preview commit such as `14b212e` is reachable from this branch. The candidate's claim-ordering correction changes the Jobs assembly while preserving format one, so it provides a real cross-binary bo"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-application-platform-health",
     "summary": "BlueTusk's three Clean Architecture reference applications are production-shaped workloads, but Kubernetes desired state is not proof that a workload is actually running. A stale Pod object can continue to show Runnin…",
     "keywords": [
@@ -6030,7 +6866,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1077,
+    "order": 1098,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -6102,7 +6938,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1078,
+    "order": 1099,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -6185,7 +7021,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1080,
+    "order": 1101,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -6233,7 +7069,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1081,
+    "order": 1102,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -6284,7 +7120,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1083,
+    "order": 1104,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -6396,7 +7232,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1084,
+    "order": 1105,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -6445,7 +7281,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "1",
       "1"
     ],
-    "order": 1085,
+    "order": 1106,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -6502,7 +7338,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1088,
+    "order": 1109,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -6605,7 +7441,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1089,
+    "order": 1110,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -6667,7 +7503,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "website",
       "production"
     ],
-    "order": 1092,
+    "order": 1113,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -6708,7 +7544,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1094,
+    "order": 1115,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -6727,6 +7563,202 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "projections-live",
+    "summary": "BlueTusk.Projections.Live serves durable joined read models through the existing BlueTusk.Live session, replay, resume-token and transport APIs. It introduces no CDC client or network transport.",
+    "keywords": [
+      "docs",
+      "projections",
+      "LIVE"
+    ],
+    "order": 1116,
+    "title": "Published projections in Live",
+    "sourcePath": "docs/projections/LIVE.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
+    "headings": [
+      {
+        "id": "published-projections-in-live",
+        "text": "Published projections in Live",
+        "level": 1
+      },
+      {
+        "id": "atomic-invalidation-and-authorized-reads",
+        "text": "Atomic invalidation and authorized reads",
+        "level": 2
+      },
+      {
+        "id": "bounded-pages-and-filters",
+        "text": "Bounded pages and filters",
+        "level": 2
+      },
+      {
+        "id": "cutover-reconnect-and-restart",
+        "text": "Cutover, reconnect and restart",
+        "level": 2
+      },
+      {
+        "id": "deployable-example-and-evidence",
+        "text": "Deployable example and evidence",
+        "level": 2
+      }
+    ],
+    "wordCount": 1353,
+    "readMinutes": 7,
+    "searchText": "Published projections in Live `BlueTusk.Projections.Live` serves durable joined read models through the existing `BlueTusk.Live` session, replay, resume-token and transport APIs. It introduces no CDC client or network transport. Streams remains the source of committed table changes; the projection definition writes source mirrors, dependencies, exact aggregate deltas and read models alongside its checkpoint. Atomic invalidation and authorized reads The projection schema is version 5. `InitializeAsync` transactionally upgrades versions 1 through 4 under the existing deployment advisory lock. The published `heads` row carries a monotonic publication revision. Successful application to the active version increments that revision in the same transaction as the documents, aggregates and checkpoint. Promotion increments it atomically with the published version pointer. Rolled-back handlers, duplicate source deliveries and unpublished snapshot/rebuild writes cannot advance it. `ProjectionLiveInvalidationLog` coalesces this durable materialized commit marker into Live's cursor contract. Its work is O(1) per refresh, without an accumulating invalidation log or a second WAL slot. It deliberately invalidates all bounded subscriptions to one projection, across tenants; authoritative reads always use the subscription's authenticated tenant and immutable security scope. This can cause harmless cross-tenant reruns, but cannot disclose another tenant's rows. Publication revisions are serialized on the per-projection heads row; latency/lock behavior under concurrent rebuilds needs the production performance gates. The application's JSON context must register both `OrderView` and `LiveResultEvent<ProjectionLiveRow<OrderView>, string>`. The adapter always supplies this metadata. The additive `LiveSharedSubscriptions.CreateWithJsonMetadata` factory preserves the existing Live constructor. Native AOT subscriptions require the metadata factory; the legacy reflection serializer remains av"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "projections-load",
+    "summary": "benchmarks/BlueTusk.Projections.LoadHarness is a standalone Release executable. It uses public Data, Events, Events.Streams, Streams, Projections and Projections.Live APIs. It does not introduce another CDC",
+    "keywords": [
+      "docs",
+      "projections",
+      "LOAD"
+    ],
+    "order": 1117,
+    "title": "Workload and recovery qualification",
+    "sourcePath": "docs/projections/LOAD.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
+    "headings": [
+      {
+        "id": "workload-and-recovery-qualification",
+        "text": "Workload and recovery qualification",
+        "level": 1
+      },
+      {
+        "id": "workload-contract",
+        "text": "Workload contract",
+        "level": 2
+      },
+      {
+        "id": "reports-and-interpretation",
+        "text": "Reports and interpretation",
+        "level": 2
+      },
+      {
+        "id": "promotion-under-acknowledged-backlog",
+        "text": "Promotion under acknowledged backlog",
+        "level": 2
+      }
+    ],
+    "wordCount": 1884,
+    "readMinutes": 9,
+    "searchText": "Workload and recovery qualification `benchmarks/BlueTusk.Projections.LoadHarness` is a standalone Release executable. It uses public Data, Events, Events.Streams, Streams, Projections and Projections.Live APIs. It does not introduce another CDC transport, intercept provider writes or depend on Npgsql/EF. This harness and its reports do not confer production qualification. Run from the checkout using PowerShell 7, .NET 10, Python 3 and Docker: `-NoBuild` executes an already-built Release binary. Use it for measured runs after compilation has finished. `-OutputDirectory` must resolve inside the checkout because the candidate fingerprint tool enforces that boundary; use a unique ignored `artifacts/projections-load/<campaign>` path for CI. The runner captures the whole candidate before and after execution and fails the candidate gate if any nonignored source input changed. Raw scenario results remain diagnostic evidence in that case. A dirty but unchanged tree is a measured candidate, not an approved immutable release. The fixture runner pins PostgreSQL 18 to `postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873`. It provisions a fresh private network, labelled named volumes, and localhost ports 55718/55719; optional port parameters must name unused distinct unprivileged ports. Default container limits are 4 CPUs and 2 GiB RAM with 128 MiB shared buffers. The client process runs on the host. Cleanup checks both owner and unique fixture labels before deleting exact objects. The runner restores all prior process environment values. It never restarts/checkpoints/vacuums the shared compatibility fixtures. The physical trial's checkpoint is confined to its new promoted container and materializes timeline evidence. Workload contract Every offered operation has a stable identifier. One caller-owned SQL transaction inserts an operation ledger entry, changes an order amount or customer name, and appends one immutable Events outbox row. An exact retry "
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "projections",
+    "summary": "BlueTusk.Projections is an independent .NET 10 0.1.0-preview.1 family for versioned, durable application read models. Its PostgreSQL destination stores source mirrors, joined output documents,",
+    "keywords": [
+      "docs",
+      "projections",
+      "README"
+    ],
+    "order": 1118,
+    "title": "BlueTusk.Projections",
+    "sourcePath": "docs/projections/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-projections",
+        "text": "BlueTusk.Projections",
+        "level": 1
+      },
+      {
+        "id": "definition-and-destination-contract",
+        "text": "Definition and destination contract",
+        "level": 2
+      },
+      {
+        "id": "bounds-and-ordering",
+        "text": "Bounds and ordering",
+        "level": 2
+      },
+      {
+        "id": "consistent-bootstrap-and-rebuild",
+        "text": "Consistent bootstrap and rebuild",
+        "level": 2
+      },
+      {
+        "id": "published-live-reads-metrics-and-retirement",
+        "text": "Published Live reads, metrics and retirement",
+        "level": 2
+      },
+      {
+        "id": "verification-and-remaining-production-gates",
+        "text": "Verification and remaining production gates",
+        "level": 2
+      }
+    ],
+    "wordCount": 2079,
+    "readMinutes": 10,
+    "searchText": "BlueTusk.Projections BlueTusk.Projections is an independent .NET 10 `0.1.0-preview.1` family for versioned, durable application read models. Its PostgreSQL destination stores source mirrors, joined output documents, dependency indexes, decimal aggregates, snapshot coverage, and CDC checkpoints in one database. It consumes **BlueTusk.Streams** snapshot and committed-transaction contracts. It has no EF persistence interception or Sync connector dependency, and no Npgsql runtime dependency. Definition and destination contract Implement `IProjectionDefinition` with an explicit name, version, immutable definition fingerprint, and Streams source identity. A registered `(name, version)` cannot be rebound to different code semantics or a different source. Change the version whenever serialization, joins, aggregates, tenant resolution, keys, dependency semantics, or mappings change. The fingerprint must represent those semantics, not an arbitrary per-process value. The definition receives a bounded `ProjectionWriteContext` inside a destination transaction. It can: Store each source table's current committed row image with `UpsertSourceAsync`/`DeleteSourceAsync`, or bounded `UpsertSourcesAsync`/`DeleteSourcesAsync` bulk operations using one SQL command per batch. Read source mirrors to calculate joins from exactly the CDC history being applied. Write typed output using source-generated `JsonTypeInfo<T>`, or persist an explicit byte payload. Replace output and dependencies in bulk using `UpsertManyAsync`: three SQL commands for a bounded batch, independent of document count. Find affected joined outputs with indexed, tenant-scoped, ordinal keyset dependency pages. Apply exact decimal aggregate deltas with `AddAggregateAsync` and read them in the same transaction. Use its borrowed connection/transaction for application-specific relational state. Stage **all** source rows from a committed transaction before resolving joins. A transaction may update both parent and child tables, "
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "projections-recovery",
+    "summary": "Ordinary cutover rejects changes to bound catalogue/timeline lineage, including when the Streams source identity happens to be unchanged. PromoteWithLineageAsync permits a different slot only",
+    "keywords": [
+      "docs",
+      "projections",
+      "RECOVERY"
+    ],
+    "order": 1119,
+    "title": "Explicit source recovery and controlled DDL",
+    "sourcePath": "docs/projections/RECOVERY.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
+    "headings": [
+      {
+        "id": "explicit-source-recovery-and-controlled-ddl",
+        "text": "Explicit source recovery and controlled DDL",
+        "level": 1
+      },
+      {
+        "id": "reproducible-physical-promotion-evidence",
+        "text": "Reproducible physical promotion evidence",
+        "level": 2
+      }
+    ],
+    "wordCount": 956,
+    "readMinutes": 5,
+    "searchText": "Explicit source recovery and controlled DDL Ordinary cutover rejects changes to bound catalogue/timeline lineage, including when the Streams source identity happens to be unchanged. `PromoteWithLineageAsync` permits a different slot only within the same verified source history. Numeric LSNs cannot establish coverage across timelines, restores or independent systems. A logical slot created after this fixture's base backup was not present on the promoted physical standby; resuming its old checkpoint would not be a certified recovery. Raw Streams transactions do not carry a timeline attestation. A source reconnect must recapture and validate lineage before starting deliveries; the sample does this on every worker start. Arbitrary application code that fabricates/reinterprets a raw source identity cannot be certified by the destination store. This contract does not provide automatic source failover/reconnection. Schema version 6 adds durable operator recovery tickets and maintenance fences. These APIs deliberately make recovery explicit. They do **not** certify that the authoritative replacement source contains every previously acknowledged business write. That requires infrastructure evidence and an operator decision. The recorded reason should identify the incident/deployment and its authoritative source. For failover/restore recovery: Fence the former primary externally before promoting/routing to the replacement. A destination lease on one isolated primary cannot prevent writes to another split-brain primary. Confirm source durability and backup/replication coverage separately; this fixture uses synchronous `remote_apply`. Capture actual target lineage, register a **new empty version** with `RegisterWithLineageAsync`, and capture `ProjectionCutoverEvidence` from the target. Its barrier is emitted only after verifying the connected system/database/timeline. Use a fresh slot on the authoritative history. Call `BeginRecoveryAsync(candidate, expectedActiveVersion, evide"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "projections-evidence",
+    "summary": "workload-pg18-60s.json records a 60-second run of ProjectionsSustainedWorkloadTests against PostgreSQL 18.6 in Docker on the development Windows host. It measures one serial, bounded producer performing",
+    "keywords": [
+      "docs",
+      "projections",
+      "evidence",
+      "README"
+    ],
+    "order": 1120,
+    "title": "Local bounded workload evidence",
+    "sourcePath": "docs/projections/evidence/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
+    "headings": [
+      {
+        "id": "local-bounded-workload-evidence",
+        "text": "Local bounded workload evidence",
+        "level": 1
+      }
+    ],
+    "wordCount": 347,
+    "readMinutes": 2,
+    "searchText": "Local bounded workload evidence `workload-pg18-60s.json` records a 60-second run of `ProjectionsSustainedWorkloadTests` against PostgreSQL 18.6 in Docker on the development Windows host. It measures one serial, bounded producer performing a real SQL business write and Events outbox append in one transaction, real pgoutput projection apply, transactional Events inbox/replay, and owned durable Live refresh every 32 commits. Lease release/recovery, source redelivery and exact event retry occur during the run. Other compatibility tests and a sustained storage campaign on another PostgreSQL container shared host resources during this capture; this is reproducible local evidence, not isolated capacity, concurrency or production p99 certification. The run completed 1,149 business transactions, 1,180 source deliveries, 49 lease recoveries, 31 duplicate appends and 36 Live messages. Exact inbox count/sequence sum, checkpoint, published aggregate/document and publication revision invariants passed. The report includes per-stage latency, process allocation, working set, CPU, GC and commit-meter observations. Memory/CPU figures describe the test process; PostgreSQL server and Docker resource usage are not included. The workload creates/drops only its own generated schemas/publication/slot. Outstanding source work and client messages stay bounded. Test-process metric counts can include other tests when run concurrently; run this filter alone when comparing reports. Larger fan-out/backlog, partition concurrency, multiple independent sources, multi-node routing, disk pressure, crash/ambiguous commit and long endurance campaigns remain separate release requirements. `physical-promotion-pg18.json` and its matching TRX are a separate actual physical-recovery campaign, not a throughput measurement. `run-physical-recovery.ps1` provisions and label-checks its own PG18 pair, enables/validates synchronous `remote_apply`, hard-stops the primary, promotes the physical standby, and invokes a"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "provider-release-notes-1-0-0",
     "summary": "Status: published on 2026-08-23 from provider-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
     "keywords": [
@@ -6738,7 +7770,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1097,
+    "order": 1123,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -6764,7 +7796,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "process"
     ],
-    "order": 1102,
+    "order": 1128,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -6790,9 +7822,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1305,
-    "readMinutes": 6,
-    "searchText": "Release process BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish. `eng/product-families.json` schema 2 records, for every independently versioned family: whether publication is armed in an immutable candidate; whether the release channel is stable or preview; the one exact tag prefix; cross-family release dependencies; and the GitHub Actions workflows that must have succeeded for the exact release commit from an approved event. All six families are published at stable `1.0.0` without prerelease suffixes; the [V1 publication record](releases/1.0.0-publication-record.md) documents the owner exception used for that release. During preparation a publication policy may be disabled. In a final immutable candidate, `enabled=true` means the family is armed; it does not publish a package. Exact release tags and protected `package-production` approval remain the publication boundary. Current package RC train `eng/package-prerelease-train.json` defines the prepared immutable `1.2.0-rc.1` package train for all six families in stable dependency order. This train is not public until the reviewed commit reaches `main` and the six exact RC tags publish successfully. RC packing uses version overrides and temporary npm artifact copies; it does not rewrite the stable family manifests. Every internal NuGet/npm dependency must resolve to the same exact RC version. Exact `*-v1.2.0-rc.1` tags publish through the protected `package-prerelease` environment, and npm packages use the `rc` dist-tag, never `latest`. A correction is `rc.2`; an RC is never overwritten. The complete `1.1.0-rc.1` train was published on 2026-08-29 from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm packages passed public-availability and clean-consumer verification. The [release record](releases/1.1.0-rc.1.md) is the human-readable authority. This does not arm or authorize stable `1.1.0`. The separate `eng/prere"
+    "wordCount": 1410,
+    "readMinutes": 7,
+    "searchText": "Release process BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish. `eng/product-families.json` schema 2 records, for every independently versioned family: whether publication is armed in an immutable candidate; whether the release channel is stable or preview; the one exact tag prefix; cross-family release dependencies; and the GitHub Actions workflows that must have succeeded for the exact release commit from an approved event. All six families are published at stable `1.0.0` without prerelease suffixes; the [V1 publication record](releases/1.0.0-publication-record.md) documents the owner exception used for that release. During preparation a publication policy may be disabled. In a final immutable candidate, `enabled=true` means the family is armed; it does not publish a package. Exact release tags and protected `package-production` approval remain the publication boundary. Current package RC train `eng/package-prerelease-train.json` defines the prepared immutable `1.2.0-rc.1` package train for all six historical families in dependency order. Its inclusion of Graph is prerelease packaging, not Graph stable qualification. This train is not public until the reviewed commit reaches `main` and the six exact RC tags publish successfully. RC packing uses version overrides and temporary npm artifact copies; it does not rewrite the stable family manifests. Every internal NuGet/npm dependency must resolve to the same exact RC version. Exact `*-v1.2.0-rc.1` tags publish through the protected `package-prerelease` environment, and npm packages use the `rc` dist-tag, never `latest`. A correction is `rc.2`; an RC is never overwritten. The complete `1.1.0-rc.1` train was published on 2026-08-29 from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm packages passed public-availability and clean-consumer verification. The [release record](releases/1.1.0-rc.1.md) is the human-readab"
   },
   {
     "category": "operations",
@@ -6806,7 +7838,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1104,
+    "order": 1130,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -6851,7 +7883,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1105,
+    "order": 1131,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -6930,7 +7962,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1106,
+    "order": 1132,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -6969,7 +8001,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1108,
+    "order": 1134,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -7011,7 +8043,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1109,
+    "order": 1135,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -7040,6 +8072,238 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "schema",
+    "summary": "BlueTusk.Schema is a new preview product for consistent PostgreSQL relation contracts and consumer compatibility analysis. The caller owns the data source.",
+    "keywords": [
+      "docs",
+      "schema",
+      "README"
+    ],
+    "order": 1139,
+    "title": "BlueTusk Schema",
+    "sourcePath": "docs/schema/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-schema",
+        "text": "BlueTusk Schema",
+        "level": 1
+      },
+      {
+        "id": "command-line-snapshots-and-drift",
+        "text": "Command-line snapshots and drift",
+        "level": 2
+      },
+      {
+        "id": "expanded-catalogue-contracts",
+        "text": "Expanded catalogue contracts",
+        "level": 2
+      },
+      {
+        "id": "deployment-sequencing",
+        "text": "Deployment sequencing",
+        "level": 2
+      },
+      {
+        "id": "concurrent-index-additions",
+        "text": "Concurrent index additions",
+        "level": 2
+      }
+    ],
+    "wordCount": 2329,
+    "readMinutes": 11,
+    "searchText": "BlueTusk Schema `BlueTusk.Schema` is a new preview product for consistent PostgreSQL relation contracts and consumer compatibility analysis. The caller owns the data source. Relation discovery uses one read-only repeatable-read transaction and an explicit `pg_catalog` search path. Schema names are parameters. Row counts and total metadata bytes are bounded; crossing a limit fails instead of returning a silently partial snapshot. Command deadlines and cancellation apply to every discovery operation. Snapshot inputs are copied into immutable collections. PostgreSQL catalogue deparsers can consult newer caches during concurrent DDL; relation format 1 alone does not attest that boundary. Use the expanded catalogue capture below when validating a deployment contract under concurrent DDL. The canonical SHA-256 fingerprint excludes transient OIDs. It includes relation kind, column ordinals/types/nullability/defaults/generated and identity behavior, collation, keys and constraints, index definitions/validity, RLS flags and policies, and view/partition definitions. Collection order is normalized and fields are length delimited. Schema metadata can contain sensitive default or policy expressions; fingerprints do not encrypt it, and the library does not log those expressions. Caller-created PostgreSQL type strings are metadata labels; capture obtains authoritative type names from the database. `SchemaSnapshotSerializer` exports source-generated, versioned JSON and verifies the canonical fingerprint on import. It rejects future versions, malformed Unicode/identifiers/catalogue flags, null members, excessive strings, collection width and aggregate metadata before materializing an object graph. Constructors bound enumeration before sorting. Optional `SchemaSnapshotLimits` adjusts the document admission contract; serialized output remains capped at 64 MiB and can be given a smaller exact byte bound. Identifier validation uses PostgreSQL's standard 63-byte UTF-8 identifier limit. B"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "schema-catalogue-attestation",
+    "summary": "PostgreSQL catalogue rows in a held read-only repeatable-read transaction have a stable MVCC snapshot. Some metadata helpers also consult current catalogue caches. A live regression demonstrates that pggetfunctiondef…",
+    "keywords": [
+      "docs",
+      "schema",
+      "catalogue",
+      "attestation"
+    ],
+    "order": 1140,
+    "title": "Catalogue consistency attestation",
+    "sourcePath": "docs/schema/catalogue-attestation.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
+    "headings": [
+      {
+        "id": "catalogue-consistency-attestation",
+        "text": "Catalogue consistency attestation",
+        "level": 1
+      },
+      {
+        "id": "narrow-permissions",
+        "text": "Narrow permissions",
+        "level": 2
+      },
+      {
+        "id": "evidence",
+        "text": "Evidence",
+        "level": 2
+      }
+    ],
+    "wordCount": 856,
+    "readMinutes": 4,
+    "searchText": "Catalogue consistency attestation PostgreSQL catalogue rows in a held read-only repeatable-read transaction have a stable MVCC snapshot. Some metadata helpers also consult current catalogue caches. A live regression demonstrates that `pg_get_functiondef` can return a concurrently replaced body even though the held `pg_proc` row remains unchanged. Capture must not describe that mixture as a consistent snapshot. The internal `PostgreSqlCatalogConsistencyAttestation` complements snapshot-derived metadata. Before materialization it reads catalogue tuple-version tokens in the held transaction. After every result has been materialized, it opens a distinct connection and a fresh read-only repeatable-read transaction, then compares the tokens and server identity. An internal mismatch becomes the public `SchemaConcurrentDdlException` at the capture boundary. `CaptureAsync` makes at most three fresh capture attempts (the initial attempt plus two retries), with 75 ms and 150 ms retry delays, under one overall configured deadline. It retries only consistency mismatches. Permission failures, timeouts, cancellation, unsupported servers and configured admission limits remain distinct and are not retried. `CaptureInTransactionAsync` does not retry: the caller-owned transaction remains unchanged and uncommitted, and its owner must start a fresh transaction after a mismatch. The transient tokens contain catalogue kind, OID or composite row key, and tuple `xmin`. They never enter serialized contracts or canonical fingerprints. The conservative scope includes every row in `pg_class`, `pg_type`, `pg_enum`, `pg_constraint`, `pg_attribute`, `pg_index`, `pg_policy`, `pg_proc`, `pg_namespace`, `pg_publication`, `pg_publication_rel`, `pg_publication_namespace`, `pg_extension`, `pg_attrdef`, `pg_collation`, `pg_language`, `pg_rewrite`, `pg_inherits`, `pg_operator`, `pg_opclass`, `pg_opfamily`, `pg_am`, `pg_cast`, `pg_transform`, `pg_ts_config`, `pg_ts_dict`, `pg_database` and `pg_authid`. Dep"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "search",
+    "summary": "BlueTusk.Search 0.1.0-preview.1 provides versioned PostgreSQL full-text ingestion and retrieval with tenant and permission filtering. BlueTusk.Search.PgVector adds schema-qualified vector storage, cosine retrieval and…",
+    "keywords": [
+      "docs",
+      "search",
+      "README"
+    ],
+    "order": 1141,
+    "title": "BlueTusk.Search",
+    "sourcePath": "docs/search/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-search",
+        "text": "BlueTusk.Search",
+        "level": 1
+      },
+      {
+        "id": "durable-ingestion-and-deletion",
+        "text": "Durable ingestion and deletion",
+        "level": 2
+      },
+      {
+        "id": "durable-embedding-checkpoints",
+        "text": "Durable embedding checkpoints",
+        "level": 3
+      },
+      {
+        "id": "retrieval-ranking-and-pagination",
+        "text": "Retrieval, ranking and pagination",
+        "level": 2
+      },
+      {
+        "id": "opensearch-adapter",
+        "text": "OpenSearch adapter",
+        "level": 2
+      },
+      {
+        "id": "operator-readiness",
+        "text": "Operator readiness",
+        "level": 2
+      },
+      {
+        "id": "operations-and-evidence",
+        "text": "Operations and evidence",
+        "level": 2
+      }
+    ],
+    "wordCount": 3621,
+    "readMinutes": 17,
+    "searchText": "BlueTusk.Search BlueTusk.Search `0.1.0-preview.1` provides versioned PostgreSQL full-text ingestion and retrieval with tenant and permission filtering. BlueTusk.Search.PgVector adds schema-qualified vector storage, cosine retrieval and optional HNSW indexing. Both use `DbDataSource`; neither depends on Npgsql or EF Core. The adapter requires a separately installed pgvector extension, validated during initialization. The host must derive tenant, index and principals from authenticated authorization state. The library cannot authenticate supplied principal strings. Every ingestion identity, query candidate and result page is tenant/index scoped. Private documents are the default; an explicit public flag grants retrieval within the document's tenant and index only. Durable ingestion and deletion Each `(tenant,index,document)` retains its highest source version and payload fingerprint. Versions must be positive and monotonically increasing for that logical source identity. A higher version atomically replaces all chunks and metadata in one PostgreSQL transaction. Same-version identical replay is idempotent; conflicting payload at the same version raises `SearchVersionConflictException`. Lower versions are ignored. Deletions retain a durable tombstone and remove all chunks, so delayed older ingestion cannot resurrect a document. No tombstone expiration is automatic: purging fences requires an independently proven upstream replay floor. Titles, metadata and ACLs live once per document; chunks retain content, weighted full-text terms and optional embeddings. Chunk replacement and version advancement share the same commit boundary. Existing search snapshots recheck source version and deletion state, so removed or replaced documents are not returned from old snapshots. Deterministic chunking preserves UTF-16 surrogate pairs, includes configurable overlap and rejects content exceeding the configured maximum chunks. Empty content produces one chunk so the title remains searcha"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "search-capacity",
+    "summary": "eng/run-search-capacity.ps1 runs a dedicated PostgreSQL 18 Search campaign from a clean, full commit SHA. It provisions a digest-pinned, labelled Docker volume and container on loopback, with four CPUs and 2 GiB of me…",
+    "keywords": [
+      "docs",
+      "search",
+      "capacity"
+    ],
+    "order": 1142,
+    "title": "Search mixed ingestion and retrieval capacity campaign",
+    "sourcePath": "docs/search/capacity.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/capacity.md",
+    "headings": [
+      {
+        "id": "search-mixed-ingestion-and-retrieval-capacity-campaign",
+        "text": "Search mixed ingestion and retrieval capacity campaign",
+        "level": 1
+      },
+      {
+        "id": "current-diagnostic-findings",
+        "text": "Current diagnostic findings",
+        "level": 2
+      }
+    ],
+    "wordCount": 1426,
+    "readMinutes": 7,
+    "searchText": "Search mixed ingestion and retrieval capacity campaign `eng/run-search-capacity.ps1` runs a dedicated PostgreSQL 18 Search campaign from a **clean, full commit SHA**. It provisions a digest-pinned, labelled Docker volume and container on loopback, with four CPUs and 2 GiB of memory, then removes only its own fixture. The runner takes before/after whole-source fingerprints, snapshots the built executable and dependencies, checks the executable after each run, and hashes every archived raw artifact. It never publishes a package or marks the product production-qualified. The workload seeds 128 distinct 4 KiB documents in each of eight tenants, then explicitly analyzes the seeded document and chunk tables before the timed interval. This measures a prepared steady state; first-query behavior after bulk loading remains a separate operational gate. Content is deterministic high-entropy text with both a common term and a unique per-document term. Documents include public, `readers`-authorized and `restricted`-only ACLs. One writer per tenant offers an update every 200 ms while four readers each offer a scoped full-text query every 100 ms: nominally 40 writes and 40 reads per second. One quarter of planned read offers seek a public document's unique term; the rest seek the common term. Both tenants assigned to each reader receive selective queries. The campaign uses a 60-second query snapshot lifetime and a 512-snapshot per-scope cap; these are reported and checked against the budget. The earlier 10-second lifetime expired a first-page cursor during the 1,800-second load, while the production default is two minutes. The shorter campaign lifetime retains steady expiry churn without making a single unusually slow query invalidate its first page. The schedule uses a monotonic clock and skips missed slots instead of building an unbounded client queue. Every planned slot is counted as offered or skipped; every offered call is counted as accepted or explicitly rejected by bounded "
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "sql",
+    "summary": "New preview typed SQL tooling consists of BlueTusk.Sql and the incremental BlueTusk.Sql.SourceGeneration analyzer. Reference the generator as an analyzer with ReferenceOutputAssembly=\"false\" and add .sql files as Addi…",
+    "keywords": [
+      "docs",
+      "sql",
+      "README"
+    ],
+    "order": 1144,
+    "title": "BlueTusk Sql",
+    "sourcePath": "docs/sql/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-sql",
+        "text": "BlueTusk Sql",
+        "level": 1
+      }
+    ],
+    "wordCount": 1459,
+    "readMinutes": 7,
+    "searchText": "BlueTusk Sql New preview typed SQL tooling consists of `BlueTusk.Sql` and the incremental `BlueTusk.Sql.SourceGeneration` analyzer. Reference the generator as an analyzer with `ReferenceOutputAssembly=\"false\"` and add `.sql` files as `AdditionalFiles`. Generated code contains a typed `Arguments` record, a typed `Row` record and one immutable `Definition`. Positional parameter OIDs, result getters and nullable handling are emitted directly; there is no reflection-driven construction. Invalid/duplicate identifiers, types, bounds or directives fail compilation. Directives precede the SQL body, preserving application SQL literals. PostgreSQL validates read query grammar and actual result name/type contracts through a zero-row wrapper in a read-only transaction. Runtime execution checks the result contract and required nulls before constructing rows. Runtime execution wraps each admitted single read query in an outer limit of `MaximumRows + 1`, so PostgreSQL sends at most the declared rows plus one overflow sentinel even for a query without parameters. The original `ORDER BY`, `LIMIT`, and `OFFSET` remain inside the wrapper. BlueTusk SQL requests a non-sequential portal reader and rejects a connection configured to buffer entire readers before executing the query. SQL forms that PostgreSQL cannot use inside a derived table fail rather than running without the cap. Command time is also bounded. Each field defaults to one MiB and each result to 64 MiB of encoded PostgreSQL field data plus four length bytes per field. The BlueTusk reader exposes encoded field length without value decoding/copying, so limits are checked before the generated projector allocates strings/byte arrays. The non-sequential portal reader buffers one row before field admission, so a single oversized row can still allocate memory beyond these limits. Binary prefixes and text encodings count toward this budget; it is not a bound on every transport/CLR allocation. Execution requires BlueTuskDataReader f"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "studio",
+    "summary": "New preview ASP.NET Core developer workspace: an embedded SQL editor, schema browser, query-plan viewer, authorized event traces, Live inspection and audited quarantine replay. SQL/schema, Events and Control Plane int…",
+    "keywords": [
+      "docs",
+      "studio",
+      "README"
+    ],
+    "order": 1161,
+    "title": "BlueTusk Studio",
+    "sourcePath": "docs/studio/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-studio",
+        "text": "BlueTusk Studio",
+        "level": 1
+      },
+      {
+        "id": "operational-adapters",
+        "text": "Operational adapters",
+        "level": 2
+      },
+      {
+        "id": "local-verification",
+        "text": "Local verification",
+        "level": 2
+      }
+    ],
+    "wordCount": 2117,
+    "readMinutes": 10,
+    "searchText": "BlueTusk Studio New preview ASP.NET Core developer workspace: an embedded SQL editor, schema browser, query-plan viewer, authorized event traces, Live inspection and audited quarantine replay. SQL/schema, Events and Control Plane integrations are separate packages so the core workspace does not require either operational runtime. The scope resolver is required. It chooses the authenticated principal's least-privilege PostgreSQL data source/role, a stable non-sensitive `StudioDatabaseScope.AuditScopeId` identifying the selected database/tenant scope, and the schemas exposed in the browser. Schema visibility is not a SQL authorization boundary: PostgreSQL grants, RLS and function privileges must enforce that principal's actual query access. Studio does not borrow an unrestricted operator data source implicitly. The caller owns all resolved data sources. Durable audit is also required. This preview upgrade requires existing host resolvers to set `AuditScopeId` to an opaque value that is stable across replicas and restarts and distinct for different database/tenant scopes. Leaving it empty fails the query audit closed. `PostgreSqlStudioAuditSink` supplies a durable borrowed-data-source implementation. Provision its schema during deployment with `InitializeAsync`, using a deployment role, then register the configured sink instance before `AddBlueTuskStudio`: The runtime audit role needs SELECT on `studio_audit_version` and SELECT/INSERT on `studio_audit`; the database scope resolver must use a separate least-privilege role for user queries. The runtime role must not own the audit table or have permission to disable its insert trigger. Retries of an operation/outcome identity require identical actor, scope, fingerprint and row count; exact duplicates leave the stored tuple unchanged. Unknown durable versions reject initialization and append. Initialization upgrades known v1/v2 audit storage to v3 in one deployment transaction, marking v1 rows `legacy-unknown` because thei"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "v1-applications",
     "summary": "BlueTusk V1 is exercised by three independently deployable applications in applications/BlueTusk.Applications.slnx:",
     "keywords": [
@@ -7047,7 +8311,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1138,
+    "order": 1170,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -7089,7 +8353,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1139,
+    "order": 1171,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -7118,5 +8382,61 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "wordCount": 1420,
     "readMinutes": 7,
     "searchText": "V1 release readiness BlueTusk `1.0.0` was published on 2026-08-23 under the explicit repository-owner decision recorded in the [V1 publication record](releases/1.0.0-publication-record.md). Publication did not complete the external exact-candidate evidence below: independent approval, fuzz, reference performance, endurance, and PostgreSQL 19 GA remain open. The standard release process remains fail closed for later versions. On 2026-08-29, the coordinated `1.1.0-rc.1` train was published from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. Its 62 NuGet and three npm packages passed public availability and clean consumer verification. That updates package availability only; it does not close the stable endurance, PostgreSQL 19 GA, performance, security, or external-acceptance gates below. See the [1.1 RC release record](releases/1.1.0-rc.1.md). Implemented V1 hardening Nine bounded parser fuzzing targets, replayable corpus tests, CI/scheduled coverage-guided runs, finding archive/minimisation tools, and a machine-checked target/corpus/limit/workflow synchronization contract. An explicit ADO.NET compatibility contract covering PostgreSQL routines, parameter directions, transactions, reader behaviours, schema discovery, Dapper, dependency injection, health checks and documented exclusions. Exact public-API budgets for all six product families. Commit-pinned workflow actions, CodeQL, dependency review, NuGet advisory auditing, CycloneDX 1.6 and SPDX 2.3 SBOMs, artifact hashes and build provenance. A machine-checked intentional test-credential inventory covering 24 workflow/Compose occurrences by fingerprint, exact path, count and local-only context; unknown values, external-host use and release-workflow literals fail closed. External scanner disposition remains independently required. A canonical evidence-only package artifact for all six product families, with exact per-family archive reconstruction, package-content verification, SHA-256 inventory, SBOM/provenance b"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "workflows",
+    "summary": "Use the shared storage maintenance contract for workflow state and its dispatch Jobs. Durable-format support documents same-format restart/configuration rollback and the unsupported",
+    "keywords": [
+      "docs",
+      "workflows",
+      "README"
+    ],
+    "order": 1172,
+    "title": "BlueTusk.Workflows",
+    "sourcePath": "docs/workflows/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",
+    "headings": [
+      {
+        "id": "bluetusk-workflows",
+        "text": "BlueTusk.Workflows",
+        "level": 1
+      },
+      {
+        "id": "define-and-execute",
+        "text": "Define and execute",
+        "level": 2
+      },
+      {
+        "id": "durable-execution-contract",
+        "text": "Durable execution contract",
+        "level": 2
+      },
+      {
+        "id": "failure-cancellation-and-recovery",
+        "text": "Failure, cancellation and recovery",
+        "level": 2
+      },
+      {
+        "id": "history-replay-and-migration",
+        "text": "History, replay and migration",
+        "level": 2
+      },
+      {
+        "id": "bounds-and-operations",
+        "text": "Bounds and operations",
+        "level": 2
+      },
+      {
+        "id": "evidence-and-qualification",
+        "text": "Evidence and qualification",
+        "level": 2
+      }
+    ],
+    "wordCount": 1482,
+    "readMinutes": 7,
+    "searchText": "BlueTusk.Workflows Use the shared [storage maintenance contract](../jobs/maintenance.md) for workflow state and its dispatch Jobs. [Durable-format support](../jobs/durable-format.md) documents same-format restart/configuration rollback and the unsupported cross-format migration boundary. The optional `BlueTusk.Workflows.DependencyInjection` adapter provides trusted scope host readiness, redacted results, generated JSON and bounded telemetry. See the shared [hosting and credential rotation contract](../jobs/hosting.md). BlueTusk.Workflows executes immutable, versioned directed acyclic graphs in PostgreSQL. Activities, joins, timers, buffered signals, results, compensation, history and dispatch state survive worker restarts. Jobs supplies transactional dispatch, bounded workers, database-clock leases, retries and fencing. The package targets .NET 10 and is `0.1.0-preview.1`. Current implementation evidence does not establish qualification for massive production workloads. Define and execute The caller owns the data source. Workflow and Jobs tables must live in the same database. StartAsync also accepts a caller BlueTuskTransaction and an explicit cancellation token: instance, nodes, history and dispatch commit or roll back with business writes. A duplicate start key returns the original workflow only when the original definition version and input match. Compatible migration preserves that original identity. Durable execution contract Definitions are scoped by tenant, queue, name and integer version. Registration canonicalizes node/dependency ordering, checks immutable serialized bytes and SHA-256, and rejects duplicate/missing identities, cycles, invalid node fields and limits. Activity names should themselves be versioned. Changed contracts cannot replace a registered version. Ready branches dispatch independently. Joins require all dependencies complete. Dependency results are fetched in one query only after their aggregate byte budget passes. Timers use durable del"
   }
 ];

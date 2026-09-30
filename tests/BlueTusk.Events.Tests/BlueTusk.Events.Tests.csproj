@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Events</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Events.props" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <ProjectReference Include="..\..\src\BlueTusk.Events\BlueTusk.Events.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Events.EntityFrameworkCore\BlueTusk.Events.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Events.Streams\BlueTusk.Events.Streams.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>
