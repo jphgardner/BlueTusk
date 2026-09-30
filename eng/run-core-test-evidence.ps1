@@ -32,7 +32,9 @@ function Assert-Source
 function Get-Fixture
 {
     $connection = [Data.Common.DbConnectionStringBuilder]::new()
-    $connection.ConnectionString = $env:BLUETUSK_TEST_CONNECTION_STRING
+    # PowerShell adapts this IDictionary as a property bag. Invoke the CLR
+    # setter so ConnectionString is parsed rather than stored as a new key.
+    $connection.set_ConnectionString($env:BLUETUSK_TEST_CONNECTION_STRING)
     $hostPort = (& docker inspect --format '{{(index (index .NetworkSettings.Ports "5432/tcp") 0).HostPort}}' $PostgreSqlContainer).Trim()
     if ($LASTEXITCODE -ne 0 -or $hostPort -notmatch '^[0-9]+$' -or
         $connection['Host'] -notin @('localhost', '127.0.0.1') -or
