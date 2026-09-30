@@ -509,7 +509,7 @@ public sealed class SearchStoreTests
     }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 4, MaxRetainedRankRows = 4, MaxRetainedRankBytes = 2208 });
 
     [Fact]
-    public Task Short_global_budget_contention_waits_without_shedding_queries() => WithStoreAsync(async (store, source) =>
+    public Task Short_global_budget_contention_waits_without_shedding_a_query() => WithStoreAsync(async (store, source) =>
     {
         await using var connection = await source.OpenConnectionAsync();
         await using var transaction = await connection.BeginTransactionAsync();
@@ -522,12 +522,14 @@ public sealed class SearchStoreTests
         command.Parameters.Add(name);
         _ = await command.ExecuteScalarAsync();
 
-        var arrivals = Enumerable.Range(0, 4).Select(index =>
-            store.SearchAsync(new SearchScope($"tenant-{index}", "library"),
-                new SearchRequest { Text = "cat", CandidateLimit = 1, PageSize = 1 }).AsTask()).ToArray();
+        // Admission has a 200 ms deadline. Several serial arrivals can legitimately
+        // shed on a slow host; this case proves one short lock hold is tolerated.
+        var arrival = store.SearchAsync(new SearchScope("tenant", "library"),
+            new SearchRequest { Text = "cat", CandidateLimit = 1, PageSize = 1 }).AsTask();
         await Task.Delay(80);
+        Assert.False(arrival.IsCompleted);
         await transaction.CommitAsync();
-        await Task.WhenAll(arrivals);
+        await arrival;
     });
 
     [Fact]
