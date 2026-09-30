@@ -30,3 +30,11 @@ package hashes, stable image digest, complete duration and actual results.
 Streams requires 72 hours; Sync and Live/Control Plane each require 24 hours.
 Local capture does not claim a successful GitHub workflow identity or replace
 the remaining release evidence with a synthetic pass.
+
+The Docker Sync fixture builds MinIO from the official 7 September 2025 release
+binary with its published SHA-256, using `eng/build-minio-endurance-fixture.ps1`.
+It requires BuildKit and the containerd image store so the locally built image
+can run by manifest digest. Preserve its build metadata, binary checksum,
+image inspection and version alongside endurance reports. This replaces the
+unavailable upstream registry image for local Docker qualification; Kubernetes
+fixture manifests still require an accessible registry image before use.

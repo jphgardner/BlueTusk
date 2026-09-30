@@ -45,6 +45,12 @@ jobs:
       - name: Start digest-pinned PostgreSQL 18
         run: docker compose -f eng/compose/postgres.yml up -d --wait postgres18
 
+      - name: Build checksum-verified MinIO fixture
+        shell: pwsh
+        run: |
+          $image = ./eng/build-minio-endurance-fixture.ps1 -OutputDirectory artifacts/test-results/sync-endurance/minio-fixture
+          "BLUETUSK_MINIO_FIXTURE_IMAGE=$image" >> $env:GITHUB_ENV
+
       - name: Start Redis, NATS JetStream, Kafka, MinIO, and OpenSearch
         run: |
           docker run --detach --name bluetusk-sync-endurance-redis --publish 6379:6379 redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
@@ -68,7 +74,7 @@ jobs:
             --publish 9000:9000 \
             --env MINIO_ROOT_USER=bluetusk_endurance \
             --env MINIO_ROOT_PASSWORD=bluetusk_endurance_secret \
-            minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2 server /data
+            "$BLUETUSK_MINIO_FIXTURE_IMAGE" server /data
           docker run --detach --name bluetusk-sync-endurance-opensearch \
             --publish 9200:9200 \
             --env discovery.type=single-node \
@@ -109,7 +115,7 @@ jobs:
               'redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241',
               'nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66',
               'apache/kafka:4.1.1@sha256:7240ff4534bd23dac2f215ba03a2d0aa9d041b45b830804bbdec3b81c2bdf479',
-              'minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2',
+              $env:BLUETUSK_MINIO_FIXTURE_IMAGE,
               'opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9'
             ) `
             -Configuration Release
@@ -129,7 +135,7 @@ jobs:
               'redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241',
               'nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66',
               'apache/kafka:4.1.1@sha256:7240ff4534bd23dac2f215ba03a2d0aa9d041b45b830804bbdec3b81c2bdf479',
-              'minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2',
+              $env:BLUETUSK_MINIO_FIXTURE_IMAGE,
               'opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9'
             )
 

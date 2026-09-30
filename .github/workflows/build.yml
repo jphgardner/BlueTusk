@@ -450,6 +450,12 @@ jobs:
       - name: Start PostgreSQL
         run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres${{ matrix.major }}
 
+      - name: Prepare live tablespace fixture
+        run: |
+          docker compose -f eng/compose/postgres.yml exec -T --user root postgres${{ matrix.major }} mkdir -p /srv/postgresql/bluetusk_archive_space
+          docker compose -f eng/compose/postgres.yml exec -T --user root postgres${{ matrix.major }} chown postgres /srv/postgresql/bluetusk_archive_space
+          echo 'BLUETUSK_TEST_TABLESPACE_LOCATION=/srv/postgresql/bluetusk_archive_space' >> "$GITHUB_ENV"
+
       - name: Run live provider matrix
         run: dotnet test BlueTusk.Core.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
 
