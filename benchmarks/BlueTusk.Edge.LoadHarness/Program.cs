@@ -183,9 +183,12 @@ internal static class Program
         }
         catch (Exception error)
         {
+            var origin = new StackTrace(error, true).GetFrame(0);
             await File.WriteAllTextAsync(Path.Combine(runRoot, "failure.json"), JsonSerializer.Serialize(new
             {
                 Type = error.GetType().Name,
+                Origin = origin?.GetMethod()?.DeclaringType?.FullName,
+                Line = origin?.GetFileLineNumber(),
                 Stage = "edge-capacity-workload",
                 FailedUtc = DateTimeOffset.UtcNow,
                 ProductionQualified = false
