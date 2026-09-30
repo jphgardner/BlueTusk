@@ -30,6 +30,14 @@ function Minimum($Value, $Limit, [string]$Name) {
 function Maximum($Value, $Limit, [string]$Name) {
     Require ((Number $Value $Name) -le (Number $Limit "$Name budget")) "$Name exceeds its maximum $Limit."
 }
+function Instant($Value, [string]$Name) {
+    Require ($null -ne $Value) "$Name is missing."
+    if ($Value -is [DateTime]) {
+        return [DateTimeOffset]::new($Value.ToUniversalTime(), [TimeSpan]::Zero)
+    }
+    return [DateTimeOffset]::Parse([string]$Value, [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::RoundtripKind)
+}
 
 Require ($ExpectedCommit -match '^[0-9a-fA-F]{40}$') 'A full exact candidate SHA is required.'
 Require ($evidence.StartsWith($root + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) 'EvidenceDirectory must be inside the checkout.'
@@ -101,8 +109,8 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     $reportHash = Hash $reportPath
     Require (-not $reportHashes.ContainsKey($reportHash)) "$label duplicates another run's raw report."
     $reportHashes[$reportHash] = $true
-    $started = [DateTimeOffset]::Parse([string]$report.StartedUtc)
-    $completed = [DateTimeOffset]::Parse([string]$report.CompletedUtc)
+    $started = Instant $report.StartedUtc "$label start"
+    $completed = Instant $report.CompletedUtc "$label completion"
     Require ($started -gt $previousCompletion -and $completed -gt $started) "$label timestamps overlap or are invalid."
     $previousCompletion = $completed
     Require ($report.FormatVersion -eq 1 -and $report.Passed -eq $true -and $report.ProductionQualified -eq $false) "$label lacks successful raw correctness evidence."
