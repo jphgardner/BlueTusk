@@ -190,7 +190,7 @@ if ($ReleaseTrack -eq 'Core')
     foreach ($fixture in $coreFixtures) { Copy-Item -LiteralPath $fixture.FullName -Destination $scopedSource }
     $coverageArguments.BenchmarkSourcePath = $scopedSource
     $coverageArguments.MinimumFixtureCount = $coreFixtures.Count
-    $coverageArguments.MinimumBenchmarkCount = 1 # The coverage reader still requires every declared method.
+    $coverageArguments.MinimumBenchmarkCount = (@($coreFixtures | ForEach-Object { [regex]::Matches((Get-Content -LiteralPath $_.FullName -Raw), '\[Benchmark(?:\([^\]]*\))?\]').Count }) | Measure-Object -Sum).Sum
     foreach ($budgetKind in @('allocation', 'latency'))
     {
         $budget = Get-Content -LiteralPath (Join-Path $repositoryRoot "benchmarks/$budgetKind-budgets.json") -Raw | ConvertFrom-Json
