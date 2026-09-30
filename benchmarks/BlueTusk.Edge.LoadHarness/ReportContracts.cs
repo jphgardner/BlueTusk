@@ -6,7 +6,8 @@ internal sealed record LatencySummary(long Samples, double P50Milliseconds, doub
     double P99Milliseconds, double MaximumMilliseconds);
 internal sealed record PhysicalSample(double ElapsedSeconds, long OwnedRelationBytes, long DatabaseBytes,
     long WalInsertBytes, long ReceiptCount, long ReceiptBytes, long ChangeCount, long ChangeBytes);
-internal sealed record ClientReport(int Index, string Kind, string OrderedStreamId, long Offered, long Skipped, long Acknowledged,
+internal sealed record ClientReport(int Index, string Kind, string OrderedStreamId, long Offered, long Skipped,
+    long ScheduleSkipped, long PendingKeySkipped, long Acknowledged,
     long ExpectedConflicts, long UnexpectedConflicts, long PeakPending, long PeakOutbox,
     long FinalPending, long FinalOutbox, long FinalLocalReceipts, long FinalCheckpoint,
     long FinalOrderedSequence, long FinalHorizon, long MaximumPhysicalBytes,

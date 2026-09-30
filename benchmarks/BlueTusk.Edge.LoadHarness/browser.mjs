@@ -36,13 +36,20 @@ const pending = new Map();
 const enqueueTimes = [], ackTimes = [];
 const applyBeforeRestart = [], horizonBeforeRestart = [];
 const recoveries = [];
-let offered = 0, skipped = 0, acknowledged = 0, peakPending = 0, peakOutbox = 0, maximumPhysicalBytes = 0;
+let offered = 0, skipped = 0, scheduleSkipped = 0, pendingKeySkipped = 0;
+let acknowledged = 0, peakPending = 0, peakOutbox = 0, maximumPhysicalBytes = 0;
 let firstMutation = null, lostMutation = null, lostAt = 0, lostRecovered = false;
 let firstOfflineRecovered = false, secondOfflineRecovered = false, hostRecovered = false;
 let offlineActive = false, lossArmed = false, restarted = false;
 let lastSample = 0;
 const offlineLength = seconds >= 1800 ? 30 : Math.min(5, seconds / 12);
 const offlineOne = seconds / 3, lossAt = seconds / 2, offlineTwo = seconds * 2 / 3, hostAt = seconds * .75;
+const overlaps = (offeredAt, acknowledgedAt, start, end) => offeredAt <= end && acknowledgedAt >= start;
+const faultAffected = (offeredAt, acknowledgedAt) =>
+  overlaps(offeredAt, acknowledgedAt, offlineOne, offlineOne + offlineLength) ||
+  overlaps(offeredAt, acknowledgedAt, offlineTwo, offlineTwo + offlineLength) ||
+  overlaps(offeredAt, acknowledgedAt, hostAt - 2, hostAt + 30) ||
+  (lostMutation !== null && overlaps(offeredAt, acknowledgedAt, lostAt - 10, lostAt + 10));
 
 async function openBrowser(synchronizeInitial = true) {
   context = await chromium.launchPersistentContext(profile, { channel, headless: true });
@@ -155,7 +162,7 @@ try {
     const due = next * .2;
     if (due > elapsed) { await new Promise(resolve => setTimeout(resolve, Math.min(20, (due - elapsed) * 1000))); continue; }
     const current = Math.floor(elapsed / .2);
-    if (current > next) { skipped += current - next; next = current; }
+    if (current > next) { skipped += current - next; scheduleSkipped += current - next; next = current; }
     const key = "doc-" + String(next % 256).padStart(3, "0");
     const injectedOffline = (elapsed >= offlineOne && elapsed < offlineOne + offlineLength) ||
       (elapsed >= offlineTwo && elapsed < offlineTwo + offlineLength);
@@ -175,15 +182,19 @@ try {
         kind: "upsert", payload });
       return { skipped: false, mutation, enqueueMilliseconds: performance.now() - began };
     }, { key, payload });
-    if (offeredResult.skipped) skipped++;
+    if (offeredResult.skipped) { skipped++; pendingKeySkipped++; }
     else {
       offered++; enqueueTimes.push(offeredResult.enqueueMilliseconds);
-      pending.set(key, { id: offeredResult.mutation.id, began: performance.now(), mutation: offeredResult.mutation });
+      pending.set(key, { id: offeredResult.mutation.id, began: performance.now(), offeredAt: elapsed,
+        mutation: offeredResult.mutation });
       if (!firstMutation) firstMutation = offeredResult.mutation;
       peakPending = Math.max(peakPending, pending.size);
     }
     next++;
     if (injectedOffline) { await sample(elapsed); continue; }
+    // Batch five offered writes into each bounded reconnect pass. The 200 ms
+    // offer schedule remains independent of redundant empty remote polls.
+    if (next % 5 !== 0) { await sample(elapsed); continue; }
     if (elapsed >= lossAt && !lossArmed) {
       lossArmed = true;
       await page.evaluate(() => { window.edgeDropNextResponse = true; });
@@ -219,9 +230,7 @@ try {
       const row = pending.get(key); if (!row) throw new Error("Acknowledged browser key was not offered.");
       pending.delete(key); acknowledged++;
       if (row.id === lostMutation) { recoveries.push((performance.now() - began) / 1000 - lostAt); lostRecovered = true; }
-      if (elapsed > 10 && row.id !== lostMutation && Math.abs(elapsed - hostAt) > 10 &&
-          !(elapsed >= offlineOne && elapsed < offlineOne + offlineLength + 10) &&
-          !(elapsed >= offlineTwo && elapsed < offlineTwo + offlineLength + 10))
+      if (elapsed > 10 && !faultAffected(row.offeredAt, elapsed))
         ackTimes.push(performance.now() - row.began);
     }
     if (!firstOfflineRecovered && elapsed >= offlineOne + offlineLength)
@@ -233,6 +242,7 @@ try {
     await sample(elapsed);
   }
   skipped += plannedSlots - next;
+  scheduleSkipped += plannedSlots - next;
   const drainStart = performance.now();
   while (true) {
     const current = await state();
@@ -263,6 +273,7 @@ try {
   }, firstMutation);
   const result = {
     Index: 7, Kind: "IndexedDB", OrderedStreamId: final.streamId, Offered: offered, Skipped: skipped,
+    ScheduleSkipped: scheduleSkipped, PendingKeySkipped: pendingKeySkipped,
     Acknowledged: acknowledged, ExpectedConflicts: 0, UnexpectedConflicts: 0, PeakPending: peakPending,
     PeakOutbox: peakOutbox, FinalPending: final.pending, FinalOutbox: final.outbox,
     FinalLocalReceipts: final.receipts, FinalCheckpoint: Number(final.checkpoint),
@@ -273,7 +284,7 @@ try {
     LostResponseRecovered: lostRecovered, ReclaimedRetryFenced: verified.fenced, ExactFinalCache: verified.exact
   };
   await writeFile(reportPath, JSON.stringify(result, null, 2));
-  process.stdout.write(`IndexedDB browser client: ${acknowledged} durable ordered writes, horizon ${final.horizon}, profile peak ${maximumPhysicalBytes} bytes.\n`);
+  process.stdout.write(`IndexedDB browser client: ${acknowledged} durable ordered writes, ${scheduleSkipped} schedule skips, ${pendingKeySkipped} pending-key skips, horizon ${final.horizon}, profile peak ${maximumPhysicalBytes} bytes.\n`);
 } finally {
   if (context) await context.close();
   await new Promise(resolve => server.close(resolve));
