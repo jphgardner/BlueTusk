@@ -113,7 +113,7 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
     $completed = Instant $report.CompletedUtc "$label completion"
     Require ($started -gt $previousCompletion -and $completed -gt $started) "$label timestamps overlap or are invalid."
     $previousCompletion = $completed
-    Require ($report.FormatVersion -eq 1 -and $report.Passed -eq $true -and $report.ProductionQualified -eq $false) "$label lacks successful raw correctness evidence."
+    Require ($report.FormatVersion -eq 2 -and $report.Passed -eq $true -and $report.ProductionQualified -eq $false) "$label lacks successful raw correctness evidence."
     Require ($report.CandidateSha -ceq $head -and $report.SourceTreeSha256 -ceq $before.sourceTreeSha256 -and
         $report.HarnessBinarySha256 -ceq $manifest.HarnessBinarySha256 -and
         $report.BrowserBundleSha256 -ceq (Hash $assetPath)) "$label is not bound to its measured binaries and source."
@@ -138,6 +138,8 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
         $planned = $client.Offered + $client.Skipped
         $expectedSlots = [long]([long]$report.DurationSeconds * 1000 / [long]$budget.offerIntervalMilliseconds)
         Require ($planned -eq $expectedSlots) "$label client $index offered and skipped slots differ from the fixed schedule."
+        Require ($client.ScheduleSkipped -ge 0 -and $client.PendingKeySkipped -ge 0 -and
+            $client.ScheduleSkipped + $client.PendingKeySkipped -eq $client.Skipped) "$label client $index skipped-slot causes differ from the total."
         Maximum ($client.Skipped / [double]$planned) $budget.maximumSkippedFraction "$label client $index skipped fraction"
         Require ($client.Offered -gt 0 -and $client.Acknowledged -eq $client.Offered -and
             $client.ExpectedConflicts -eq 0 -and $client.UnexpectedConflicts -eq 0 -and
@@ -158,6 +160,7 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
             Minimum $latency.P99Milliseconds 0.001 "$label client $index $($pair[0]) p99"
             Maximum $latency.P99Milliseconds $budget.($pair[1]) "$label client $index $($pair[0]) p99"
         }
+        Minimum ($client.DurableAck.Samples / [double]$client.Acknowledged) $budget.minimumDurableAckSampleFraction "$label client $index steady acknowledgement coverage"
         Require (@($client.FaultRecoverySeconds).Count -eq 4) "$label client $index omitted an injected fault recovery."
         foreach ($recovery in $client.FaultRecoverySeconds) {
             Minimum $recovery 0 "$label client $index recovery seconds"

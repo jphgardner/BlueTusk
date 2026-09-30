@@ -163,7 +163,7 @@ internal static class Program
                     all.All(client => effects.ByTenant.TryGetValue(Tenant(client.Index), out var count) && count == client.Acknowledged);
                 var feed = await ExactFeedAsync(source, server, schema, all, token).ConfigureAwait(false);
                 var lagging = await VerifyLaggingReaderAsync(server, host!.Endpoint, token).ConfigureAwait(false);
-                var report = new CapacityReport(1, candidate, sourceHash, binaryHash, browserHash, image,
+                var report = new CapacityReport(2, candidate, sourceHash, binaryHash, browserHash, image,
                     await ServerVersionAsync(source, token).ConfigureAwait(false), "eight-scope-ordered-offline-http",
                     started, DateTimeOffset.UtcNow, seconds, measured.Elapsed.TotalSeconds, drainSeconds,
                     Clients * RecordsPerScope, all.ToArray(), effects.Total, exactBusiness, feed, true, lagging,
@@ -183,9 +183,12 @@ internal static class Program
         }
         catch (Exception error)
         {
+            var origin = new StackTrace(error, true).GetFrame(0);
             await File.WriteAllTextAsync(Path.Combine(runRoot, "failure.json"), JsonSerializer.Serialize(new
             {
                 Type = error.GetType().Name,
+                Origin = origin?.GetMethod()?.DeclaringType?.FullName,
+                Line = origin?.GetFileLineNumber(),
                 Stage = "edge-capacity-workload",
                 FailedUtc = DateTimeOffset.UtcNow,
                 ProductionQualified = false

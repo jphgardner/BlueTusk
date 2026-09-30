@@ -8,7 +8,7 @@ using Microsoft.Data.Sqlite;
 
 namespace BlueTusk.Edge.LoadHarness;
 
-internal sealed class SqliteCapacityClient
+internal sealed class SqliteCapacityClient : IDisposable
 {
     private readonly EdgeScope _scope;
     private readonly string _path;
@@ -17,7 +17,8 @@ internal sealed class SqliteCapacityClient
     private readonly Random _random;
     private readonly MutableTimeProvider _clock;
     private readonly LatencyCapture _enqueue = new(), _ack = new();
-    private readonly Dictionary<string, (Guid Id, long Started)> _pending = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, (Guid Id, long Started, double OfferedAt)> _pending = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim _pendingGate = new(1, 1);
     private readonly List<double> _recoveries = [];
     private SqliteEdgeStore _local;
     private readonly HttpClient _http;
@@ -29,7 +30,7 @@ internal sealed class SqliteCapacityClient
     private double _lostAt;
     private bool _lostRecovered;
     private bool _firstOfflineRecovered, _secondOfflineRecovered, _hostRecovered;
-    private long _offered, _skipped, _acknowledged, _peakPending, _peakOutbox, _maximumFileBytes;
+    private long _offered, _skipped, _scheduleSkipped, _pendingKeySkipped, _acknowledged, _peakPending, _peakOutbox, _maximumFileBytes;
 
     private SqliteCapacityClient(int index, string path, int payloadBytes, MutableTimeProvider clock,
         SqliteEdgeStore local, HttpClient http, HttpEdgeRemoteTransport remote, FaultTransport fault)
@@ -71,37 +72,59 @@ internal sealed class SqliteCapacityClient
         _fault.LossAt = lossAt; _fault.Clock = clock;
         var plannedSlots = (long)seconds * 1000 / 200;
         long next = 0;
-        while (next < plannedSlots && clock.Elapsed.TotalSeconds < seconds)
+        using var syncCancellation = CancellationTokenSource.CreateLinkedTokenSource(token);
+        var synchronizer = SynchronizeWhileOfferingAsync(clock, seconds, offlineOne, offlineTwo,
+            offlineSeconds, hostAt, syncCancellation.Token);
+        try
         {
-            token.ThrowIfCancellationRequested();
-            var elapsed = clock.Elapsed.TotalSeconds;
-            var due = next * interval.TotalSeconds;
-            if (due > elapsed)
+            while (next < plannedSlots && clock.Elapsed.TotalSeconds < seconds)
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(Math.Min((due - elapsed) * 1000, 20)), token).ConfigureAwait(false);
-                continue;
+                if (synchronizer.IsFaulted) { await synchronizer.ConfigureAwait(false); }
+                token.ThrowIfCancellationRequested();
+                var elapsed = clock.Elapsed.TotalSeconds;
+                var due = next * interval.TotalSeconds;
+                if (due > elapsed)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Min((due - elapsed) * 1000, 20)), token).ConfigureAwait(false);
+                    continue;
+                }
+                var current = (long)Math.Floor(elapsed / interval.TotalSeconds);
+                if (current > next) { _skipped += current - next; _scheduleSkipped += current - next; next = current; }
+                var key = "doc-" + (next % 256).ToString("D3", CultureInfo.InvariantCulture);
+                await _pendingGate.WaitAsync(token).ConfigureAwait(false);
+                try
+                {
+                    var cached = await _local.GetAsync(_scope, key, token).ConfigureAwait(false)
+                        ?? throw new InvalidOperationException("The seeded local record is missing.");
+                    if (cached.PendingMutationId is not null || _pending.ContainsKey(key)) { _skipped++; _pendingKeySkipped++; }
+                    else
+                    {
+                        var offeredAt = clock.Elapsed.TotalSeconds;
+                        var began = Stopwatch.GetTimestamp();
+                        var mutation = await _local.EnqueueOrderedAsync(_scope, key, cached.ServerRevision, EdgeMutationKind.Upsert,
+                            Payload(_payloadBytes), token).ConfigureAwait(false);
+                        _enqueue.Add(Stopwatch.GetElapsedTime(began).TotalMilliseconds);
+                        _pending.Add(key, (mutation.Id, began, offeredAt)); _offered++;
+                        _firstMutation ??= mutation;
+                        ObservePeak(ref _peakPending, _pending.Count);
+                    }
+                }
+                finally { _pendingGate.Release(); }
+                next++;
             }
-            var current = (long)Math.Floor(elapsed / interval.TotalSeconds);
-            if (current > next) { _skipped += current - next; next = current; }
-            var key = "doc-" + (next % 256).ToString("D3", CultureInfo.InvariantCulture);
-            var cached = await _local.GetAsync(_scope, key, token).ConfigureAwait(false)
-                ?? throw new InvalidOperationException("The seeded local record is missing.");
-            if (cached.PendingMutationId is not null) { _skipped++; }
-            else
+            await synchronizer.ConfigureAwait(false);
+        }
+        finally
+        {
+            if (!synchronizer.IsCompleted)
             {
-                var began = Stopwatch.GetTimestamp();
-                var mutation = await _local.EnqueueOrderedAsync(_scope, key, cached.ServerRevision, EdgeMutationKind.Upsert,
-                    Payload(_payloadBytes), token).ConfigureAwait(false);
-                _enqueue.Add(Stopwatch.GetElapsedTime(began).TotalMilliseconds);
-                _pending.Add(key, (mutation.Id, began)); _offered++;
-                _firstMutation ??= mutation;
-                _peakPending = Math.Max(_peakPending, _pending.Count);
+                syncCancellation.Cancel();
+                try { await synchronizer.ConfigureAwait(false); }
+                catch (OperationCanceledException) when (syncCancellation.IsCancellationRequested) { }
             }
-            next++;
-            if (Offline(clock.Elapsed.TotalSeconds, offlineOne, offlineTwo, offlineSeconds)) { continue; }
-            await SynchronizeAsync(clock, offlineOne, offlineTwo, offlineSeconds, hostAt, token).ConfigureAwait(false);
         }
         _skipped += plannedSlots - next;
+        _scheduleSkipped += plannedSlots - next;
         var drainStarted = Stopwatch.GetTimestamp();
         while (_pending.Count > 0 || await _local.ReadNextUnconfirmedOrderedReceiptAsync(_scope, token).ConfigureAwait(false) is not null ||
             await _local.ReadConfirmedOrderedHorizonAsync(_scope, 64, token).ConfigureAwait(false) is not null)
@@ -110,7 +133,7 @@ internal sealed class SqliteCapacityClient
             await SynchronizeAsync(clock, offlineOne, offlineTwo, offlineSeconds, hostAt, token).ConfigureAwait(false);
             await Task.Delay(20, token).ConfigureAwait(false);
         }
-        _maximumFileBytes = Math.Max(_maximumFileBytes, PhysicalBytes());
+        ObservePeak(ref _maximumFileBytes, PhysicalBytes());
     }
 
     internal async Task<ClientReport> ReportAsync(PostgreSqlEdgeServerStore server, CancellationToken token)
@@ -136,7 +159,8 @@ internal sealed class SqliteCapacityClient
             { exact = false; break; }
         }
         var checkpoint = await _local.GetCheckpointAsync(_scope, token).ConfigureAwait(false);
-        return new(_index, "SQLite", state.StreamId, _offered, _skipped, _acknowledged, 0, 0, _peakPending,
+        return new(_index, "SQLite", state.StreamId, _offered, _skipped, _scheduleSkipped, _pendingKeySkipped,
+            _acknowledged, 0, 0, _peakPending,
             _peakOutbox, state.Pending, state.Outbox, state.Receipts, checkpoint.Position,
             state.NextSequence - 1, state.Horizon, _maximumFileBytes, _enqueue.Snapshot(), _fault.Apply.Snapshot(),
             _ack.Snapshot(), _fault.Horizon.Snapshot(), _recoveries.ToArray(), _lostRecovered, fenced, exact);
@@ -145,12 +169,47 @@ internal sealed class SqliteCapacityClient
     internal async Task SampleAsync(CancellationToken token)
     {
         var state = await LocalStateAsync(token).ConfigureAwait(false);
-        _peakPending = Math.Max(_peakPending, state.Pending);
-        _peakOutbox = Math.Max(_peakOutbox, state.Outbox);
-        _maximumFileBytes = Math.Max(_maximumFileBytes, PhysicalBytes());
+        ObservePeak(ref _peakPending, state.Pending);
+        ObservePeak(ref _peakOutbox, state.Outbox);
+        ObservePeak(ref _maximumFileBytes, PhysicalBytes());
     }
 
-    internal void Dispose() { _remote.Dispose(); _http.Dispose(); }
+    public void Dispose() { _pendingGate.Dispose(); _remote.Dispose(); _http.Dispose(); }
+
+    private static void ObservePeak(ref long peak, long value)
+    {
+        long observed;
+        do
+        {
+            observed = Volatile.Read(ref peak);
+            if (value <= observed) { return; }
+        }
+        while (Interlocked.CompareExchange(ref peak, value, observed) != observed);
+    }
+
+    private async Task SynchronizeWhileOfferingAsync(Stopwatch clock, int seconds, double offlineOne,
+        double offlineTwo, double offlineSeconds, double hostAt, CancellationToken token)
+    {
+        var lastPass = 0.0;
+        while (clock.Elapsed.TotalSeconds < seconds)
+        {
+            token.ThrowIfCancellationRequested();
+            var elapsed = clock.Elapsed.TotalSeconds;
+            if (!Offline(elapsed, offlineOne, offlineTwo, offlineSeconds))
+            {
+                await _pendingGate.WaitAsync(token).ConfigureAwait(false);
+                bool pending;
+                try { pending = _pending.Count > 0; }
+                finally { _pendingGate.Release(); }
+                if (pending || elapsed - lastPass >= 1)
+                {
+                    await SynchronizeAsync(clock, offlineOne, offlineTwo, offlineSeconds, hostAt, token).ConfigureAwait(false);
+                    lastPass = clock.Elapsed.TotalSeconds;
+                }
+            }
+            await Task.Delay(20, token).ConfigureAwait(false);
+        }
+    }
 
     private async Task SynchronizeAsync(Stopwatch clock, double offlineOne, double offlineTwo,
         double offlineSeconds, double hostAt, CancellationToken token)
@@ -163,12 +222,18 @@ internal sealed class SqliteCapacityClient
         {
             _lostMutation = error.MutationId; _lostAt = clock.Elapsed.TotalSeconds;
             _clock.Advance(TimeSpan.FromMinutes(2));
-            _local = new SqliteEdgeStore(Options(_path, _clock));
-            await _local.InitializeAsync(token).ConfigureAwait(false);
-            _coordinator = new EdgeSynchronizationCoordinator(_local, _fault);
-            var persisted = await _local.ReadNextUnconfirmedOrderedReceiptAsync(_scope, token).ConfigureAwait(false);
-            if (!_pending.Values.Any(value => value.Id == _lostMutation) || persisted is not null)
-            { throw new InvalidOperationException("Lost response was not a durable leased mutation."); }
+            await _pendingGate.WaitAsync(token).ConfigureAwait(false);
+            try
+            {
+                _local = new SqliteEdgeStore(Options(_path, _clock));
+                await _local.InitializeAsync(token).ConfigureAwait(false);
+                _coordinator = new EdgeSynchronizationCoordinator(_local, _fault);
+                var lost = _pending.SingleOrDefault(item => item.Value.Id == _lostMutation);
+                var persisted = lost.Key is null ? null : await _local.GetAsync(_scope, lost.Key, token).ConfigureAwait(false);
+                if (persisted?.PendingMutationId != _lostMutation)
+                { throw new InvalidOperationException("Lost response was not a durable leased mutation."); }
+            }
+            finally { _pendingGate.Release(); }
             return;
         }
         catch (HttpRequestException) when (clock.Elapsed.TotalSeconds >= hostAt - 2 && clock.Elapsed.TotalSeconds <= hostAt + 30) { return; }
@@ -186,20 +251,29 @@ internal sealed class SqliteCapacityClient
     private async Task MarkAcknowledgedAsync(Stopwatch clock, double offlineOne, double offlineTwo,
         double offlineSeconds, double hostAt, CancellationToken token)
     {
-        foreach (var item in _pending.ToArray())
+        KeyValuePair<string, (Guid Id, long Started, double OfferedAt)>[] pending;
+        await _pendingGate.WaitAsync(token).ConfigureAwait(false);
+        try { pending = _pending.ToArray(); }
+        finally { _pendingGate.Release(); }
+        foreach (var item in pending)
         {
-            var cached = await _local.GetAsync(_scope, item.Key, token).ConfigureAwait(false);
-            if (cached?.PendingMutationId is not null) { continue; }
-            _pending.Remove(item.Key); _acknowledged++;
-            if (item.Value.Id == _lostMutation)
+            await _pendingGate.WaitAsync(token).ConfigureAwait(false);
+            try
             {
-                _recoveries.Add(clock.Elapsed.TotalSeconds - _lostAt);
-                _lostRecovered = true;
+                var cached = await _local.GetAsync(_scope, item.Key, token).ConfigureAwait(false);
+                if (cached?.PendingMutationId is not null) { continue; }
+                _pending.Remove(item.Key); _acknowledged++;
+                if (item.Value.Id == _lostMutation)
+                {
+                    _recoveries.Add(clock.Elapsed.TotalSeconds - _lostAt);
+                    _lostRecovered = true;
+                }
+                var now = clock.Elapsed.TotalSeconds;
+                if (!OverlapsFault(item.Value.OfferedAt, now, offlineOne, offlineTwo, offlineSeconds,
+                        hostAt, _lostAt, _lostMutation != Guid.Empty))
+                { _ack.Add(Stopwatch.GetElapsedTime(item.Value.Started).TotalMilliseconds); }
             }
-            var now = clock.Elapsed.TotalSeconds;
-            if (!Offline(now, offlineOne, offlineTwo, offlineSeconds) &&
-                Math.Abs(now - hostAt) > 10 && Math.Abs(now - _lostAt) > 10)
-            { _ack.Add(Stopwatch.GetElapsedTime(item.Value.Started).TotalMilliseconds); }
+            finally { _pendingGate.Release(); }
         }
     }
 
@@ -243,6 +317,14 @@ internal sealed class SqliteCapacityClient
     private static string Tenant(int index) => "tenant-" + index.ToString("D2", CultureInfo.InvariantCulture);
     private static bool Offline(double elapsed, double first, double second, double duration) =>
         (elapsed >= first && elapsed < first + duration) || (elapsed >= second && elapsed < second + duration);
+    private static bool OverlapsFault(double offered, double acknowledged, double first, double second,
+        double duration, double hostAt, double lostAt, bool lost) =>
+        Overlaps(offered, acknowledged, first, first + duration) ||
+        Overlaps(offered, acknowledged, second, second + duration) ||
+        Overlaps(offered, acknowledged, hostAt - 2, hostAt + 30) ||
+        (lost && Overlaps(offered, acknowledged, lostAt - 10, lostAt + 10));
+    private static bool Overlaps(double offered, double acknowledged, double start, double end) =>
+        offered <= end && acknowledged >= start;
     private static SqliteEdgeOptions Options(string path, TimeProvider clock) => new()
     {
         DatabasePath = path,

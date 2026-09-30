@@ -15,6 +15,7 @@
   "maximumEnqueueP99Milliseconds": 250,
   "maximumHttpApplyP99Milliseconds": 2000,
   "maximumDurableAckP99Milliseconds": 5000,
+  "minimumDurableAckSampleFraction": 0.90,
   "maximumHorizonP99Milliseconds": 1000,
   "maximumFaultRecoverySeconds": 120,
   "maximumDrainSeconds": 120,
