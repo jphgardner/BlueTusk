@@ -124,11 +124,13 @@ try {
             Require ((Test-Path -LiteralPath $live -PathType Leaf) -and (Hash $live) -ceq $entry.Sha256) "An Edge binary changed before run $run."
         }
         AssertPortFree $PostgreSqlPort; AssertPortFree $HttpPort
+        $fixturePassword = [Convert]::ToHexString(
+            [Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
         try {
             InvokeDocker @('volume','create','--label','bluetusk.owner=edge-capacity','--label',"bluetusk.fixture=$fixture",$volume) | Out-Null
             InvokeDocker @('run','-d','--name',$container,'--label','bluetusk.owner=edge-capacity','--label',"bluetusk.fixture=$fixture",
                 '--cpus','4','--memory','2g','-p',"127.0.0.1:${PostgreSqlPort}:5432",'-v',"${volume}:/var/lib/postgresql/data",
-                '-e','PGDATA=/var/lib/postgresql/data/pgdata','-e','POSTGRES_PASSWORD=postgres','-e','POSTGRES_DB=edge_load', # ggignore
+                '-e','PGDATA=/var/lib/postgresql/data/pgdata','-e',"POSTGRES_PASSWORD=$fixturePassword",'-e','POSTGRES_DB=edge_load',
                 $budget.postgreSqlImage,'postgres','-c','track_io_timing=on','-c','max_connections=100') | Out-Null
             $ready = $false
             for ($attempt = 0; $attempt -lt 150; $attempt++) {
@@ -137,7 +139,7 @@ try {
                 Start-Sleep -Milliseconds 200
             }
             Require $ready 'The owned Edge PostgreSQL fixture did not become ready.'
-            $env:BLUETUSK_EDGE_LOAD_CONNECTION_STRING = "Host=127.0.0.1;Port=$PostgreSqlPort;Username=postgres;Password=postgres;Database=edge_load;SSL Mode=Disable;Channel Binding=Disable" # ggignore
+            $env:BLUETUSK_EDGE_LOAD_CONNECTION_STRING = "Host=127.0.0.1;Port=$PostgreSqlPort;Username=postgres;Password=$fixturePassword;Database=edge_load;SSL Mode=Disable;Channel Binding=Disable"
             & dotnet $dll $Seconds $HttpPort (Join-Path $runRoot 'edge-ordered.json') $root 2>&1 |
                 Tee-Object -FilePath (Join-Path $runRoot 'workload.log')
             Require ($LASTEXITCODE -eq 0) "Edge ordered run $run failed; bounded partial evidence is retained."

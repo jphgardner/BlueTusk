@@ -5,7 +5,8 @@ harness and locked browser client, snapshots every executable dependency and the
 modules, then runs two fresh digest-pinned PostgreSQL 18 fixtures. Each fixture has four Docker
 CPUs, 2 GiB of memory and its own database volume. A real Kestrel endpoint serves seven SQLite
 clients and one persistent-profile Chromium-family IndexedDB client. The runner labels and removes
-only its own PostgreSQL container and volume. It retains raw JSON, workload logs, local SQLite
+only its own PostgreSQL container and volume and generates a fresh random database credential per
+fixture. It retains raw JSON, workload logs, local SQLite
 files, browser profile, source captures, binary snapshots and SHA-256 manifest under `artifacts/`.
 
 The eight isolated tenant scopes each begin with 256 distinct 4 KiB records and an empty ordered
