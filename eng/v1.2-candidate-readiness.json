@@ -2,6 +2,13 @@
   "schemaVersion": 1,
   "status": "aggregation-migration-in-progress",
   "candidateEvidenceSchemaVersion": 4,
+  "localCandidateEvidenceSchemaVersion": 5,
+  "localEligibleProducers": [
+    "core-performance-evidence.yml",
+    "streams-release-endurance.yml",
+    "sync-release-endurance.yml",
+    "live-control-plane-release-endurance.yml"
+  ],
   "releaseVersion": "1.2.0",
   "scope": "Core",
   "requiredWorkflows": [

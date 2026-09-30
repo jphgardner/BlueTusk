@@ -53,11 +53,11 @@ function Verify-Fixture([string] $Root)
         -ExpectedCommit $commit -CandidateCommitUtc $commitUtc
 }
 
-function Reject-Fixture([string] $Name, [scriptblock] $Change, [string] $ExpectedError)
+function Reject-Fixture([string] $Name, [scriptblock] $Change, [string] $ExpectedError, [string] $FixtureRoot = $baseRoot)
 {
     $root = Join-Path $scratch $Name
     $null = New-Item -ItemType Directory -Path $root
-    Get-ChildItem -LiteralPath $baseRoot -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $root -Recurse }
+    Get-ChildItem -LiteralPath $FixtureRoot -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $root -Recurse }
     $path = Join-Path $root 'candidate.json'
     $envelope = Read-CoreEvidenceJson $path
     & $Change $envelope $root
@@ -170,10 +170,89 @@ try
     )
     foreach ($case in $cases) { Reject-Fixture $case.Name $case.Change $case.Error }
 
+    # A distinct schema preserves local identities instead of inventing GitHub
+    # workflow IDs. These fixtures exercise bindings only, never qualification.
+    $localRoot = Join-Path $scratch 'local-positive'
+    $null = New-Item -ItemType Directory -Path $localRoot
+    Get-ChildItem -LiteralPath $baseRoot -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $localRoot -Recurse }
+    Remove-Item -LiteralPath (Join-Path $localRoot 'candidate.json')
+    $localRecords = @(for ($index = 0; $index -lt $runs.Count; $index++)
+    {
+        $producer = $runs[$index].workflowFile
+        if ($index -lt 3)
+        { [ordered]@{ kind = 'GitHubActions'; producerFile = $producer; run = $runs[$index] }; continue }
+        $id = '00000000-0000-0000-0000-' + ($index + 1).ToString('000000000000')
+        $logPath = "executions/$id/capture.log"
+        $null = [IO.Directory]::CreateDirectory((Join-Path $localRoot "executions/$id"))
+        'SYNTHETIC reader fixture, not a captured run or release evidence.' |
+            Set-Content -LiteralPath (Join-Path $localRoot $logPath) -Encoding utf8NoBOM
+        $log = [ordered]@{ path = $logPath; sha256 = ''; bytes = 0 }
+        Refresh-Binding $log $localRoot
+        $produced = @(foreach ($role in $contract.requiredArtifactRoles)
+        {
+            $binding = $contract.artifactBindings.PSObject.Properties[$role].Value
+            if ($binding.workflowFile -cne $producer) { continue }
+            $file = [ordered]@{ path = $binding.path; sha256 = ''; bytes = 0 }
+            Refresh-Binding $file $localRoot
+            [ordered]@{ role = $role; file = $file }
+        })
+        $manifest = [ordered]@{ schemaVersion = 1; kind = 'LocalDocker'; captureId = $id; producerFile = $producer
+            scope = 'Core'; releaseVersion = '1.2.0'; sourceCommit = $commit; toolSourceCommit = $commit
+            sourceTreeDirty = $false; startedUtc = '2026-01-01T00:00:01Z'; completedUtc = "2026-01-01T00:00:0$($index + 1)Z"
+            exitCode = 0; environment = @{ hostOs = 'windows'; architecture = 'x64'; dockerOs = 'linux' }
+            containerImageDigests = @($contract.endurancePostgreSqlImage); logs = @($log); artifacts = @($produced) }
+        $manifestPath = "executions/$id/local-run.json"
+        Write-FixtureJson (Join-Path $localRoot $manifestPath) $manifest
+        $file = [ordered]@{ path = $manifestPath; sha256 = ''; bytes = 0 }
+        Refresh-Binding $file $localRoot
+        [ordered]@{ kind = 'LocalDocker'; producerFile = $producer; capture = @{ id = $id; manifest = $file } }
+    })
+    Write-FixtureJson (Join-Path $localRoot 'producer-runs.json') $localRecords
+    $localReport = & $builder -EvidenceRoot $localRoot -ExpectedCommit $commit -CandidateCommitUtc $commitUtc -UseLocalExecution
+    if ($localReport.GitHubRunCount -ne 3 -or $localReport.LocalRunCount -ne 4 -or
+        $localReport.WorkflowCount -ne 3 -or $localReport.ProducerCount -ne 7 -or $localReport.ReleaseApproved -ne $false -or
+        $localReport.AllPayloadsValidated -ne $false -or $localReport.RemoteIdentityValidated -ne $false)
+    { throw 'Hybrid bindings must retain distinct identities and cannot claim release qualification.' }
+    function Edit-LocalManifest([object] $Envelope, [string] $Root, [scriptblock] $Change)
+    {
+        $record = $Envelope.producerRuns[3].capture.manifest
+        $path = Join-Path $Root $record.path
+        $manifest = Read-CoreEvidenceJson $path
+        & $Change $manifest
+        Write-FixtureJson $path $manifest
+        Refresh-Binding $record $Root
+    }
+    $localCases = @(
+        @{ Name = 'local-fake-github-id'; Error = 'schema mismatch'; Change = {param($e,$r) $e.producerRuns[3] | Add-Member runId 1} },
+        @{ Name = 'local-fake-github-url'; Error = 'schema mismatch'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m | Add-Member url 'https://github.com/jphgardner/BlueTusk/actions/runs/1'}} },
+        @{ Name = 'local-numeric-id'; Error = 'UUID'; Change = {param($e,$r) $e.producerRuns[3].capture.id = 123} },
+        @{ Name = 'local-unknown-kind'; Error = 'Unknown'; Change = {param($e,$r) $e.producerRuns[3].kind = 'GitHubLocal'} },
+        @{ Name = 'local-required-security'; Error = 'cannot replace'; Change = {param($e,$r) $e.producerRuns[1] = $e.producerRuns[3] | ConvertTo-Json -Depth 20 | ConvertFrom-Json; $e.producerRuns[1].producerFile = 'security.yml'} },
+        @{ Name = 'local-failed-run'; Error = 'successful execution'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.exitCode = 1}} },
+        @{ Name = 'local-dirty-source'; Error = 'clean tree'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.sourceTreeDirty = $true}} },
+        @{ Name = 'local-wrong-source'; Error = 'actual source'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.sourceCommit = ('1' * 40)}} },
+        @{ Name = 'local-numeric-source'; Error = 'actual source'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.sourceCommit = 0}} },
+        @{ Name = 'local-missing-tool-source'; Error = 'actual source'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.toolSourceCommit = ''}} },
+        @{ Name = 'local-zero-duration'; Error = 'follow'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.completedUtc = $m.startedUtc}} },
+        @{ Name = 'local-future-completion'; Error = 'future'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.completedUtc = [DateTimeOffset]::UtcNow.AddDays(1).UtcDateTime.ToString('O')}} },
+        @{ Name = 'local-unpinned-image'; Error = 'immutable'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.containerImageDigests = @('postgres:18-alpine')}} },
+        @{ Name = 'local-without-log'; Error = 'retain logs'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.logs = @()}} },
+        @{ Name = 'local-changed-log'; Error = 'artifact content'; Change = {param($e,$r) $m = Read-CoreEvidenceJson (Join-Path $r $e.producerRuns[3].capture.manifest.path); Add-Content -LiteralPath (Join-Path $r $m.logs[0].path) 'tampered'} },
+        @{ Name = 'local-changed-manifest'; Error = 'artifact content'; Change = {param($e,$r) Add-Content -LiteralPath (Join-Path $r $e.producerRuns[3].capture.manifest.path) ' '} },
+        @{ Name = 'local-without-produced-artifact'; Error = 'exactly its producer'; Change = {param($e,$r) Edit-LocalManifest $e $r {param($m) $m.artifacts = @()}} },
+        @{ Name = 'local-wrong-execution-binding'; Error = 'execution identity'; Change = {param($e,$r) $e.artifacts[3].executionId = 'github:1:1'} },
+        @{ Name = 'local-stale-producer-artifact'; Error = 'artifact content'; Change = {param($e,$r) Edit-Payload $e $r performanceManifest {param($p) $p | Add-Member changed 'after capture'}} },
+        @{ Name = 'local-remote-automatic-run'; Error = 'manual'; Change = {param($e,$r) $e.producerRuns[0].run.event = 'push'} },
+        @{ Name = 'local-duplicate-remote-identity'; Error = 'duplicated'; Change = {param($e,$r) $e.producerRuns[1].run.runId = 1; $e.producerRuns[1].run.url = $e.producerRuns[0].run.url} }
+    )
+    foreach ($case in $localCases) { Reject-Fixture $case.Name $case.Change $case.Error $localRoot }
+
     $contractCases = @(
         @{ Name = 'ready-status'; Error = 'unqualified-publication'; Change = {param($c) $c.status = 'ready'} },
         @{ Name = 'enabled-publication'; Error = 'disabled-publication'; Change = {param($c) $c.publicationEnabled = $true} },
         @{ Name = 'preview-family'; Error = 'family scope'; Change = {param($c) $c.coreFamilies[4] = 'ContinuousGraph'} },
+        @{ Name = 'local-build-substitution'; Error = 'local execution contract'; Change = {param($c) $c.localEligibleProducers[0] = 'build.yml'} },
+        @{ Name = 'local-schema-text'; Error = 'local execution contract'; Change = {param($c) $c.localCandidateEvidenceSchemaVersion = '5'} },
         @{ Name = 'shortened-endurance'; Error = 'durations'; Change = {param($c) $c.minimums.streamsEnduranceHours = 1} },
         @{ Name = 'unpinned-endurance-image'; Error = 'digest-pinned'; Change = {param($c) $c.endurancePostgreSqlImage = 'postgres:18-alpine'} }
     )
@@ -217,7 +296,7 @@ try
         $rejected++
     }
     finally { Remove-Item -LiteralPath $link -Force }
-    Write-Output "Core candidate binding self-test passed: synthetic 7-run/14-artifact/10-approval join and $rejected rejected mutations. No payload qualification, remote identity, workflow execution or publication is certified."
+    Write-Output "Core candidate binding self-test passed: synthetic remote and hybrid 7-producer/14-artifact/10-approval joins and $rejected rejected mutations. No payload qualification, execution authenticity, workflow execution or publication is certified."
 }
 finally
 {

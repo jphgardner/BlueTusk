@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory)][string] $EvidenceRoot,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][DateTimeOffset] $CandidateCommitUtc,
-    [ValidatePattern('^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')][string] $ExpectedRepository = 'jphgardner/BlueTusk'
+    [ValidatePattern('^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')][string] $ExpectedRepository = 'jphgardner/BlueTusk',
+    [switch] $UseLocalExecution
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -16,8 +17,14 @@ if (-not $root.StartsWith($artifactsPrefix, [StringComparison]::OrdinalIgnoreCas
 $output = Join-Path $root 'candidate.json'
 if (Test-Path -LiteralPath $output) { throw 'Candidate envelope already exists; choose a new capture directory.' }
 $contract = Get-CoreCandidateContract
-$runsFile = Resolve-CoreEvidenceFile $root 'workflow-runs.json'
+$runsFile = Resolve-CoreEvidenceFile $root $(if ($UseLocalExecution) { 'producer-runs.json' } else { 'workflow-runs.json' })
 $runs = Read-CoreEvidenceJson $runsFile -Array
+if ($UseLocalExecution)
+{
+    Import-Module (Join-Path $PSScriptRoot 'core-execution-evidence.psm1')
+    $executionReport = Get-CoreExecutionBindingReport -Records $runs -EvidenceRoot $root -ExpectedCommit $ExpectedCommit `
+        -CandidateCommitUtc $CandidateCommitUtc -ExpectedRepository $ExpectedRepository
+}
 $artifacts = @(foreach ($role in $contract.requiredArtifactRoles)
 {
     $binding = $contract.artifactBindings.PSObject.Properties[$role].Value
@@ -25,12 +32,19 @@ $artifacts = @(foreach ($role in $contract.requiredArtifactRoles)
     $runId = $null
     if ($null -ne $binding.workflowFile)
     {
-        $matches = @($runs | Where-Object workflowFile -ceq $binding.workflowFile)
-        if ($matches.Count -ne 1) { throw "Missing or duplicated producer workflow for '$role'." }
-        $runId = $matches[0].runId
+        if ($UseLocalExecution) { $runId = $executionReport.Bindings[$binding.workflowFile].Identifier }
+        else
+        {
+            $matches = @($runs | Where-Object workflowFile -ceq $binding.workflowFile)
+            if ($matches.Count -ne 1) { throw "Missing or duplicated producer workflow for '$role'." }
+            $runId = $matches[0].runId
+        }
     }
-    [ordered]@{ role = $role; path = $binding.path; sha256 = (Get-FileHash $path -Algorithm SHA256).Hash.ToLowerInvariant()
-        bytes = (Get-Item -LiteralPath $path).Length; workflowFile = $binding.workflowFile; runId = $runId }
+    $record = [ordered]@{ role = $role; path = $binding.path; sha256 = (Get-FileHash $path -Algorithm SHA256).Hash.ToLowerInvariant()
+        bytes = (Get-Item -LiteralPath $path).Length }
+    if ($UseLocalExecution) { $record.producerFile = $binding.workflowFile; $record.executionId = $runId }
+    else { $record.workflowFile = $binding.workflowFile; $record.runId = $runId }
+    $record
 })
 $approvalContract = Read-CoreEvidenceJson (Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json')
 $approvals = @(foreach ($id in $approvalContract.gates.id)
@@ -40,8 +54,11 @@ $approvals = @(foreach ($id in $approvalContract.gates.id)
     [ordered]@{ id = $id; path = $relativePath; sha256 = (Get-FileHash $path -Algorithm SHA256).Hash.ToLowerInvariant()
         bytes = (Get-Item -LiteralPath $path).Length }
 })
-$evidence = [ordered]@{ schemaVersion = 4; candidateCommit = $ExpectedCommit; scope = 'Core'; releaseVersion = '1.2.0'
-    workflowRuns = @($runs); artifacts = $artifacts; approvals = $approvals }
+$evidence = [ordered]@{ schemaVersion = $(if ($UseLocalExecution) { 5 } else { 4 })
+    candidateCommit = $ExpectedCommit; scope = 'Core'; releaseVersion = '1.2.0' }
+if ($UseLocalExecution) { $evidence.producerRuns = @($runs) } else { $evidence.workflowRuns = @($runs) }
+$evidence.artifacts = $artifacts
+$evidence.approvals = $approvals
 # Validate before retaining anything that could be confused with a qualified bundle.
 # A private temporary envelope lets the existing workflow reader consume the same
 # records as the in-memory join. It is removed after validation, never published.

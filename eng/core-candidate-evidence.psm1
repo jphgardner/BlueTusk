@@ -95,6 +95,7 @@ function Get-CoreCandidateContract
         'liveControlPlaneReport', 'liveControlPlaneProvenance', 'syncConnectorReport', 'disturbanceReport')
     $workflows = @('build.yml', 'security.yml', 'fuzzing.yml', 'core-performance-evidence.yml',
         'streams-release-endurance.yml', 'sync-release-endurance.yml', 'live-control-plane-release-endurance.yml')
+    $localProducers = @($workflows | Select-Object -Skip 3)
     if ($contract.schemaVersion -ne 1 -or $contract.candidateEvidenceSchemaVersion -ne 4 -or
         $contract.releaseVersion -isnot [string] -or $contract.releaseVersion -cne '1.2.0' -or
         $contract.scope -isnot [string] -or $contract.scope -cne 'Core' -or
@@ -104,6 +105,11 @@ function Get-CoreCandidateContract
         @($contract.requiredWorkflows).Count -ne $workflows.Count -or
         @(Compare-Object $workflows @($contract.requiredWorkflows) -CaseSensitive).Count -ne 0)
     { throw 'Core candidate contract identity, exact role/workflow coverage or disabled-publication boundary changed.' }
+    if (($contract.localCandidateEvidenceSchemaVersion -isnot [int] -and $contract.localCandidateEvidenceSchemaVersion -isnot [long]) -or
+        $contract.localCandidateEvidenceSchemaVersion -ne 5 -or
+        @($contract.localEligibleProducers).Count -ne $localProducers.Count -or
+        @(Compare-Object $localProducers @($contract.localEligibleProducers) -CaseSensitive).Count -ne 0)
+    { throw 'Core local execution contract must retain schema 5 and exactly the four eligible producers.' }
     Assert-CoreEvidenceProperties $contract.artifactBindings $expectedRoles 'Artifact binding contract'
     $paths = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($role in $expectedRoles)
@@ -146,25 +152,39 @@ function Get-CoreCandidateBindingReport
     $envelopeHash = (Get-FileHash -LiteralPath $EvidencePath -Algorithm SHA256).Hash
     $Evidence = Read-CoreEvidenceJson $EvidencePath
     $contract = Get-CoreCandidateContract $ConfigurationPath
+    $localExecution = $Evidence.schemaVersion -ceq 5
+    $executionProperty = if ($localExecution) { 'producerRuns' } else { 'workflowRuns' }
     Assert-CoreEvidenceProperties $Evidence @('schemaVersion', 'candidateCommit', 'scope',
-        'releaseVersion', 'workflowRuns', 'artifacts', 'approvals') 'Core candidate envelope'
+        'releaseVersion', $executionProperty, 'artifacts', 'approvals') 'Core candidate envelope'
     if (($Evidence.schemaVersion -isnot [int] -and $Evidence.schemaVersion -isnot [long]) -or
-        $Evidence.schemaVersion -ne 4 -or $Evidence.scope -isnot [string] -or $Evidence.scope -cne 'Core' -or
+        $Evidence.schemaVersion -notin @(4, 5) -or $Evidence.scope -isnot [string] -or $Evidence.scope -cne 'Core' -or
         $Evidence.releaseVersion -isnot [string] -or $Evidence.releaseVersion -cne '1.2.0' -or
         $Evidence.candidateCommit -isnot [string] -or $Evidence.candidateCommit -cne $ExpectedCommit)
     { throw 'Core candidate envelope schema, scope, version or exact commit is invalid.' }
-    if ($Evidence.workflowRuns -isnot [array] -or $Evidence.artifacts -isnot [array] -or $Evidence.approvals -isnot [array])
+    if ($Evidence.PSObject.Properties[$executionProperty].Value -isnot [array] -or
+        $Evidence.artifacts -isnot [array] -or $Evidence.approvals -isnot [array])
     { throw 'Workflow, artifact and approval collections must be JSON arrays.' }
-    foreach ($run in $Evidence.workflowRuns)
-    {
-        Assert-CoreEvidenceInteger $run.runId 'Workflow run ID'
-        Assert-CoreEvidenceInteger $run.runAttempt 'Workflow run attempt'
-    }
-    $workflowReport = & (Join-Path $PSScriptRoot 'verify-v1-workflow-evidence.ps1') `
-        -EvidencePath $EvidencePath -ExpectedCommit $ExpectedCommit -CandidateCommitUtc $CandidateCommitUtc `
-        -ConfigurationPath $ConfigurationPath -ExpectedRepository $ExpectedRepository
     $runs = @{}
-    foreach ($run in $Evidence.workflowRuns) { $runs[$run.workflowFile] = $run.runId }
+    if ($localExecution)
+    {
+        Import-Module (Join-Path $PSScriptRoot 'core-execution-evidence.psm1')
+        $workflowReport = Get-CoreExecutionBindingReport -Records $Evidence.producerRuns -EvidenceRoot $EvidenceRoot `
+            -ExpectedCommit $ExpectedCommit -CandidateCommitUtc $CandidateCommitUtc -ExpectedRepository $ExpectedRepository
+        foreach ($producer in $contract.requiredWorkflows)
+        { $runs[$producer] = $workflowReport.Bindings[$producer].Identifier }
+    }
+    else
+    {
+        foreach ($run in $Evidence.workflowRuns)
+        {
+            Assert-CoreEvidenceInteger $run.runId 'Workflow run ID'
+            Assert-CoreEvidenceInteger $run.runAttempt 'Workflow run attempt'
+        }
+        $workflowReport = & (Join-Path $PSScriptRoot 'verify-v1-workflow-evidence.ps1') `
+            -EvidencePath $EvidencePath -ExpectedCommit $ExpectedCommit -CandidateCommitUtc $CandidateCommitUtc `
+            -ConfigurationPath $ConfigurationPath -ExpectedRepository $ExpectedRepository
+        foreach ($run in $Evidence.workflowRuns) { $runs[$run.workflowFile] = $run.runId }
+    }
     if ($Evidence.artifacts.Count -ne $contract.requiredArtifactRoles.Count)
     { throw 'Core candidate must bind exactly all fourteen required artifact roles.' }
     $files = @{}
@@ -174,21 +194,41 @@ function Get-CoreCandidateBindingReport
         $matches = @($Evidence.artifacts | Where-Object { $_.role -ceq $role })
         if ($matches.Count -ne 1) { throw "Core candidate role '$role' must occur exactly once." }
         $record = $matches[0]
-        Assert-CoreEvidenceProperties $record @('role', 'path', 'sha256', 'bytes', 'workflowFile', 'runId') "$role record"
+        $producerProperty = if ($localExecution) { 'producerFile' } else { 'workflowFile' }
+        $identityProperty = if ($localExecution) { 'executionId' } else { 'runId' }
+        Assert-CoreEvidenceProperties $record @('role', 'path', 'sha256', 'bytes', $producerProperty, $identityProperty) "$role record"
         $binding = $contract.artifactBindings.PSObject.Properties[$role].Value
+        $producerFile = $record.PSObject.Properties[$producerProperty].Value
+        $executionId = $record.PSObject.Properties[$identityProperty].Value
         if ($record.role -isnot [string] -or $record.path -isnot [string] -or
-            ($null -ne $binding.workflowFile -and $record.workflowFile -isnot [string]) -or
-            $record.path -cne $binding.path -or $record.workflowFile -cne $binding.workflowFile)
+            ($null -ne $binding.workflowFile -and $producerFile -isnot [string]) -or
+            $record.path -cne $binding.path -or $producerFile -cne $binding.workflowFile)
         { throw "Role '$role' must use its canonical path and producer workflow." }
         if ($null -eq $binding.workflowFile)
         {
-            if ($null -ne $record.runId) { throw 'Protected disturbance handoff must not invent a workflow run.' }
+            if ($null -ne $executionId) { throw 'Protected disturbance handoff must not invent an execution identity.' }
         }
         else
         {
-            Assert-CoreEvidenceInteger $record.runId "$role producer run ID"
-            if ($record.runId -ne $runs[$binding.workflowFile])
-            { throw "Role '$role' is bound to a different producer run ID." }
+            if ($localExecution)
+            {
+                if ($executionId -isnot [string] -or $executionId -cne $runs[$binding.workflowFile])
+                { throw "Role '$role' is bound to a different producer execution identity." }
+                $localArtifacts = $workflowReport.Bindings[$binding.workflowFile].Artifacts
+                if ($null -ne $localArtifacts)
+                {
+                    $localArtifact = $localArtifacts[$role]
+                    if ($record.path -cne $localArtifact.path -or $record.sha256 -cne $localArtifact.sha256 -or
+                        $record.bytes -ne $localArtifact.bytes)
+                    { throw "Role '$role' differs from its retained local producer artifact binding." }
+                }
+            }
+            else
+            {
+                Assert-CoreEvidenceInteger $executionId "$role producer run ID"
+                if ($executionId -ne $runs[$binding.workflowFile])
+                { throw "Role '$role' is bound to a different producer run ID." }
+            }
         }
         Assert-CoreEvidenceInteger $record.bytes "$role bytes"
         if ($record.sha256 -isnot [string] -or $record.sha256 -cnotmatch '^[0-9a-f]{64}$')
@@ -239,11 +279,17 @@ function Get-CoreCandidateBindingReport
     { throw 'Candidate envelope changed during verification.' }
     return [pscustomobject]@{
         Stage = 'CoreEvidenceBindings'; CandidateCommit = $ExpectedCommit; ReleaseVersion = '1.2.0'
-        WorkflowCount = $workflowReport.RunCount; ArtifactCount = $files.Count; ApprovalCount = $ids.Count
+        ProducerCount = $workflowReport.RunCount
+        WorkflowCount = $(if ($localExecution) { $workflowReport.GitHubRunCount } else { $workflowReport.RunCount })
+        ArtifactCount = $files.Count; ApprovalCount = $ids.Count
         ApprovalPayloadsValidated = $true; AllPayloadsValidated = $false; RemoteIdentityValidated = $false
-        ReleaseApproved = $false; LatestWorkflowCompletedUtc = $workflowReport.LatestCompletedUtc
+        ExecutionAuthenticityValidated = $false
+        ReleaseApproved = $false; LatestProducerCompletedUtc = $workflowReport.LatestCompletedUtc
+        GitHubRunCount = $(if ($localExecution) { $workflowReport.GitHubRunCount } else { $workflowReport.RunCount })
+        LocalRunCount = $(if ($localExecution) { $workflowReport.LocalRunCount } else { 0 })
     }
 }
 
 Export-ModuleMember -Function Read-CoreEvidenceJson, Resolve-CoreEvidenceFile,
+    Assert-CoreEvidenceProperties, Assert-CoreEvidenceInteger,
     Get-CoreCandidateContract, Get-CoreCandidateBindingReport

@@ -12,4 +12,4 @@ $path = (Resolve-Path -LiteralPath $EvidencePath).Path
 $report = Get-CoreCandidateBindingReport -EvidencePath $path -ExpectedCommit $ExpectedCommit `
     -CandidateCommitUtc $CandidateCommitUtc -ExpectedRepository $ExpectedRepository
 Write-Output $report
-Write-Information 'Core evidence bindings and approval schemas verified. Payload qualification and remote identity are NOT verified; this is NOT release approval.' -InformationAction Continue
+Write-Information 'Core evidence bindings and approval schemas verified. Payload qualification and execution authenticity are NOT verified; this is NOT release approval.' -InformationAction Continue
