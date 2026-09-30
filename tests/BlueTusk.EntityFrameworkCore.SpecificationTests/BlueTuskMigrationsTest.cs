@@ -28,6 +28,14 @@ public sealed class BlueTuskMigrationsTest
     public override Task Add_required_primitve_collection_with_custom_default_value_sql_to_existing_table()
         => Add_required_primitve_collection_with_custom_default_value_sql_to_existing_table_core("ARRAY[3,2,1]");
 
+    [ConditionalFact]
+    public override Task Add_required_primitive_collection_with_custom_converter_to_existing_table()
+        => base.Add_required_primitive_collection_with_custom_converter_to_existing_table();
+
+    [ConditionalFact]
+    public override Task Add_required_primitve_collection_with_custom_converter_to_existing_table()
+        => base.Add_required_primitve_collection_with_custom_converter_to_existing_table();
+
     public override Task Create_table_with_computed_column(bool? stored)
         => AssertGeneratedColumnMigration(
             () => base.Create_table_with_computed_column(stored), stored == false ? 180000 : 0);

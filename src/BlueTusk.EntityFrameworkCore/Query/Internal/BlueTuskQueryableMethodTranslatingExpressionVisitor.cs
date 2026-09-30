@@ -606,14 +606,18 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             columnStoreTypes,
             withOrdinality: true);
 
+        var ordinalityTypeMapping = _typeMappingSource.FindMapping(typeof(int))!;
 #pragma warning disable EF1001 // Provider implementation of EF's JSON collection expansion seam.
         var selectExpression = CreateSelect(
             jsonQueryExpression,
             jsonToRecordset,
             "ordinality",
             typeof(int),
-            _typeMappingSource.FindMapping(typeof(int))!);
+            ordinalityTypeMapping);
 #pragma warning restore EF1001
+        selectExpression.AppendOrdering(new OrderingExpression(
+            new ColumnExpression("ordinality", tableAlias, typeof(int), ordinalityTypeMapping, nullable: false),
+            ascending: true));
 
         return new ShapedQueryExpression(
             selectExpression,
