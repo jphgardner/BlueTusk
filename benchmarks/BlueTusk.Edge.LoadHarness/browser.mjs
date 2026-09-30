@@ -43,8 +43,6 @@ let firstMutation = null, lostMutation = null, lostAt = 0, lostRecovered = false
 let firstOfflineRecovered = false, secondOfflineRecovered = false, hostRecovered = false;
 let offlineActive = false, lossArmed = false, restarted = false;
 let lastSample = 0;
-let physicalScan = Promise.resolve();
-let physicalScanError = null;
 const offlineLength = seconds >= 1800 ? 30 : Math.min(5, seconds / 12);
 const offlineOne = seconds / 3, lossAt = seconds / 2, offlineTwo = seconds * 2 / 3, hostAt = seconds * .75;
 const overlaps = (offeredAt, acknowledgedAt, start, end) => offeredAt <= end && acknowledgedAt >= start;
@@ -125,28 +123,18 @@ async function physicalBytes(path) {
 
 async function sample(elapsed) {
   if (elapsed - lastSample < 5 && lastSample !== 0) return;
-  if (physicalScanError) throw physicalScanError;
   lastSample = elapsed;
   let started = performance.now();
   const current = await state();
   sampleStateTimes.push(performance.now() - started);
   peakPending = Math.max(peakPending, current.pending);
   peakOutbox = Math.max(peakOutbox, current.outbox);
-  // Profile traversal is observation, not part of the 200 ms offer path.
-  // Serialize scans so samples cannot race with one another or browser restart.
-  physicalScan = physicalScan.then(async () => {
-    const scanStarted = performance.now();
-    maximumPhysicalBytes = Math.max(maximumPhysicalBytes, await physicalBytes(profile));
-    samplePhysicalTimes.push(performance.now() - scanStarted);
-  }).catch(error => { physicalScanError ??= error; });
+  started = performance.now();
+  maximumPhysicalBytes = Math.max(maximumPhysicalBytes, await physicalBytes(profile));
+  samplePhysicalTimes.push(performance.now() - started);
   started = performance.now();
   await writeFile(checkpointFile, current.checkpoint);
   sampleCheckpointTimes.push(performance.now() - started);
-}
-
-async function flushPhysicalScan() {
-  await physicalScan;
-  if (physicalScanError) throw physicalScanError;
 }
 
 async function synchronize(elapsed, pendingKeys) {
@@ -240,7 +228,6 @@ try {
       lostMutation = leased;
       const metrics = await page.evaluate(() => window.edgeCapacity.metrics);
       applyBeforeRestart.push(...metrics.apply); horizonBeforeRestart.push(...metrics.horizon);
-      await flushPhysicalScan();
       await context.close(); context = undefined; page = undefined;
       clockOffset = 120_000; await openBrowser(false); restarted = true;
       const persisted = await page.evaluate(async key => (await window.edgeCapacity.local.get(window.edgeCapacity.scope, key)).pendingId, lostKey);
@@ -280,7 +267,6 @@ try {
     await new Promise(resolve => setTimeout(resolve, 20));
   }
   await sample((performance.now() - began) / 1000);
-  await flushPhysicalScan();
   const final = await state();
   const verified = await page.evaluate(async first => {
     const { local, remote, scope } = window.edgeCapacity;
@@ -311,7 +297,6 @@ try {
   await writeFile(reportPath, JSON.stringify(result, null, 2));
   process.stdout.write(`IndexedDB browser client: ${acknowledged} durable ordered writes, ${scheduleSkipped} schedule skips, ${pendingKeySkipped} pending-key skips, horizon ${final.horizon}, profile peak ${maximumPhysicalBytes} bytes.\n`);
 } finally {
-  await physicalScan;
   if (context) await context.close();
   await new Promise(resolve => server.close(resolve));
 }
