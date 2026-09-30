@@ -127,6 +127,8 @@ BlueTusk.Edge.EdgeSynchronizationCoordinator
 BlueTusk.Edge.EdgeSynchronizationCoordinator.EdgeSynchronizationCoordinator(BlueTusk.Edge.IEdgeLocalStore! store, BlueTusk.Edge.IEdgeRemoteTransport! transport) -> void
 BlueTusk.Edge.EdgeSynchronizationCoordinator.SynchronizeAsync(BlueTusk.Edge.EdgeScope! scope, int maxPushes = 32, int maxChangeBatches = 32, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Edge.EdgeValidation
+BlueTusk.Edge.IEdgeChainedLocalStore
+BlueTusk.Edge.IEdgeChainedLocalStore.AcknowledgeAndClaimNextAsync(BlueTusk.Edge.EdgeMutationLease! lease, BlueTusk.Edge.EdgeMutationOutcome! outcome, System.TimeSpan leaseDuration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutationLease?>
 BlueTusk.Edge.IEdgeLocalStore
 BlueTusk.Edge.IEdgeOrderedLocalStore
 BlueTusk.Edge.IEdgeOrderedLocalStore.EnqueueOrderedAsync(BlueTusk.Edge.EdgeScope! scope, string! documentId, long expectedRevision, BlueTusk.Edge.EdgeMutationKind kind, System.ReadOnlyMemory<byte> payload, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutation!>

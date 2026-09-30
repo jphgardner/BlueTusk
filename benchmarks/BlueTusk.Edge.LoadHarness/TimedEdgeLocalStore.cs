@@ -16,7 +16,7 @@ internal sealed class EdgeLocalPhaseTimings
 }
 
 internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseTimings timings,
-    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedLocalStore
+    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedLocalStore, IEdgeChainedLocalStore
 {
     public ValueTask ActivateScopeAsync(EdgeScope scope, EdgeEpochChangePolicy policy = EdgeEpochChangePolicy.RejectIfPending,
         CancellationToken cancellationToken = default) => inner.ActivateScopeAsync(scope, policy, cancellationToken);
@@ -59,6 +59,17 @@ internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseT
         var committed = Stopwatch.GetTimestamp();
         timings.Acknowledge.Add(Stopwatch.GetElapsedTime(started, committed).TotalMilliseconds);
         await onDurableAcknowledgement(lease.Mutation, committed, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<EdgeMutationLease?> AcknowledgeAndClaimNextAsync(EdgeMutationLease lease,
+        EdgeMutationOutcome outcome, TimeSpan leaseDuration, CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        var next = await inner.AcknowledgeAndClaimNextAsync(lease, outcome, leaseDuration, cancellationToken).ConfigureAwait(false);
+        var committed = Stopwatch.GetTimestamp();
+        timings.Acknowledge.Add(Stopwatch.GetElapsedTime(started, committed).TotalMilliseconds);
+        await onDurableAcknowledgement(lease.Mutation, committed, cancellationToken).ConfigureAwait(false);
+        return next;
     }
 
     public ValueTask BeginSnapshotAsync(EdgeScope scope, EdgeSnapshot snapshot, CancellationToken cancellationToken = default) =>

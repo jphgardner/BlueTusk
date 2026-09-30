@@ -118,6 +118,13 @@ public interface IEdgeLocalStore
     ValueTask ApplyChangesAsync(EdgeScope scope, EdgeChangeBatch batch, CancellationToken cancellationToken = default);
 }
 
+/// <summary>Optional atomic acknowledgement and next-claim transition for durable local stores.</summary>
+public interface IEdgeChainedLocalStore : IEdgeLocalStore
+{
+    ValueTask<EdgeMutationLease?> AcknowledgeAndClaimNextAsync(EdgeMutationLease lease, EdgeMutationOutcome outcome,
+        TimeSpan leaseDuration, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Host-owned authenticated transport. Server mutation identity receipts must commit atomically with business effects.</summary>
 public interface IEdgeRemoteTransport
 {
@@ -175,16 +182,26 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
         if (store is IEdgeOrderedLocalStore orderedLocal && transport is IEdgeOrderedReceiptTransport orderedRemote)
         { await FlushOrderedReceiptsAsync(orderedLocal, orderedRemote, scope, maxPushes, cancellationToken).ConfigureAwait(false); }
 
+        EdgeMutationLease? nextLease = null;
         for (var i = 0; i < maxPushes; i++)
         {
-            var lease = await store.ClaimAsync(scope, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
+            var lease = nextLease ?? await store.ClaimAsync(scope, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
             if (lease is null)
             {
                 break;
             }
 
             var outcome = await transport.ApplyMutationAsync(lease.Mutation, cancellationToken).ConfigureAwait(false);
-            await store.AcknowledgeAsync(lease, outcome, cancellationToken).ConfigureAwait(false);
+            if (store is IEdgeChainedLocalStore chained && i + 1 < maxPushes)
+            {
+                nextLease = await chained.AcknowledgeAndClaimNextAsync(lease, outcome, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
+                if (nextLease is null) { break; }
+            }
+            else
+            {
+                await store.AcknowledgeAsync(lease, outcome, cancellationToken).ConfigureAwait(false);
+                nextLease = null;
+            }
         }
 
         if (store is IEdgeOrderedLocalStore orderedAfterPush && transport is IEdgeOrderedReceiptTransport remoteAfterPush)

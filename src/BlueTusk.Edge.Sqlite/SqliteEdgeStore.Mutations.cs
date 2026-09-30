@@ -29,15 +29,19 @@ public sealed partial class SqliteEdgeStore
 
     public async ValueTask<EdgeMutationLease?> ClaimAsync(EdgeScope scope, TimeSpan leaseDuration, CancellationToken cancellationToken = default)
     {
-        if (leaseDuration < TimeSpan.FromSeconds(1) || leaseDuration > TimeSpan.FromHours(1))
-        {
-            throw new ArgumentOutOfRangeException(nameof(leaseDuration));
-        }
-
-        var now = Options.TimeProvider.GetUtcNow();
-        var expiry = now + leaseDuration;
+        ValidateLeaseDuration(leaseDuration);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         using var transaction = connection.BeginTransaction(deferred: false);
+        var lease = await ClaimInTransactionAsync(connection, transaction, scope, leaseDuration, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return lease;
+    }
+
+    private async ValueTask<EdgeMutationLease?> ClaimInTransactionAsync(SqliteConnection connection, SqliteTransaction transaction,
+        EdgeScope scope, TimeSpan leaseDuration, CancellationToken cancellationToken)
+    {
+        var now = Options.TimeProvider.GetUtcNow();
+        var expiry = now + leaseDuration;
         _ = await CheckScopeAsync(connection, transaction, scope, cancellationToken).ConfigureAwait(false);
         await CheckNoSnapshotAsync(connection, transaction, scope, cancellationToken).ConfigureAwait(false);
         EdgeMutation? mutation = null;
@@ -65,7 +69,6 @@ public sealed partial class SqliteEdgeStore
 
         if (mutation is null)
         {
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return null;
         }
 
@@ -77,12 +80,42 @@ public sealed partial class SqliteEdgeStore
             _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return new EdgeMutationLease(mutation, fence, expiry);
+    }
+
+    private static void ValidateLeaseDuration(TimeSpan leaseDuration)
+    {
+        if (leaseDuration < TimeSpan.FromSeconds(1) || leaseDuration > TimeSpan.FromHours(1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(leaseDuration));
+        }
     }
 
     /// <summary>Atomically commits cache, queue and identity receipt. A stale owner cannot acknowledge a replacement lease.</summary>
     public async ValueTask AcknowledgeAsync(EdgeMutationLease lease, EdgeMutationOutcome outcome, CancellationToken cancellationToken = default)
+    {
+        var outcomeFingerprint = ValidateAcknowledgement(lease, outcome);
+        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
+        using var transaction = connection.BeginTransaction(deferred: false);
+        await AcknowledgeInTransactionAsync(connection, transaction, lease, outcome, outcomeFingerprint, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Commits the current outcome and leases the next mutation in one durable local transition.</summary>
+    public async ValueTask<EdgeMutationLease?> AcknowledgeAndClaimNextAsync(EdgeMutationLease lease,
+        EdgeMutationOutcome outcome, TimeSpan leaseDuration, CancellationToken cancellationToken = default)
+    {
+        var outcomeFingerprint = ValidateAcknowledgement(lease, outcome);
+        ValidateLeaseDuration(leaseDuration);
+        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
+        using var transaction = connection.BeginTransaction(deferred: false);
+        await AcknowledgeInTransactionAsync(connection, transaction, lease, outcome, outcomeFingerprint, cancellationToken).ConfigureAwait(false);
+        var next = await ClaimInTransactionAsync(connection, transaction, lease.Mutation.Scope, leaseDuration, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return next;
+    }
+
+    private string ValidateAcknowledgement(EdgeMutationLease lease, EdgeMutationOutcome outcome)
     {
         ArgumentNullException.ThrowIfNull(lease);
         ArgumentNullException.ThrowIfNull(outcome);
@@ -104,9 +137,12 @@ public sealed partial class SqliteEdgeStore
             ValidateRecords([outcome.ServerRecord]);
         }
 
-        var outcomeFingerprint = OutcomeFingerprint(outcome);
-        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
-        using var transaction = connection.BeginTransaction(deferred: false);
+        return OutcomeFingerprint(outcome);
+    }
+
+    private async ValueTask AcknowledgeInTransactionAsync(SqliteConnection connection, SqliteTransaction transaction,
+        EdgeMutationLease lease, EdgeMutationOutcome outcome, string outcomeFingerprint, CancellationToken cancellationToken)
+    {
         _ = await CheckScopeAsync(connection, transaction, lease.Mutation.Scope, cancellationToken).ConfigureAwait(false);
         await CheckNoSnapshotAsync(connection, transaction, lease.Mutation.Scope, cancellationToken).ConfigureAwait(false);
         await using (var receipt = Command(connection, transaction, "SELECT fingerprint,outcome_fingerprint FROM receipts WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch AND mutation_id=@mutation"))
@@ -179,7 +215,6 @@ public sealed partial class SqliteEdgeStore
         await StageOrderedConfirmationAsync(connection, transaction, lease.Mutation, cancellationToken).ConfigureAwait(false);
 
         await CheckCacheBudgetAsync(connection, transaction, cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Retires an explicit conflict and stages a new identity atomically. The caller chooses merge content and current expected revision.</summary>

@@ -122,6 +122,46 @@ public sealed class SqliteEdgeStoreTests
     });
 
     [Fact]
+    public Task Chained_acknowledgement_and_next_claim_commit_atomically() => WithReadyStoreAsync(async (store, options) =>
+    {
+        var first = await store.EnqueueOrderedAsync(Scope, "first", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        var second = await store.EnqueueOrderedAsync(Scope, "second", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        var lease = (await store.ClaimAsync(Scope, TimeSpan.FromMinutes(1)))!;
+        Assert.Equal(first.Id, lease.Mutation.Id);
+        var outcome = new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record("first", 1, "server"));
+
+        await using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = options.DatabasePath, Pooling = false }.ToString());
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "CREATE TRIGGER fail_next_claim BEFORE UPDATE OF status ON mutations WHEN NEW.document_id='second' BEGIN SELECT RAISE(ABORT,'injected claim failure'); END";
+        _ = await command.ExecuteNonQueryAsync();
+        await Assert.ThrowsAsync<SqliteException>(async () => await store.AcknowledgeAndClaimNextAsync(lease, outcome, TimeSpan.FromMinutes(1)));
+        Assert.Equal(first.Id, (await store.GetAsync(Scope, "first"))!.PendingMutationId);
+        Assert.Null(await store.ReadNextUnconfirmedOrderedReceiptAsync(Scope));
+
+        command.CommandText = "DROP TRIGGER fail_next_claim"; _ = await command.ExecuteNonQueryAsync();
+        var reopened = new SqliteEdgeStore(options);
+        var next = (await reopened.AcknowledgeAndClaimNextAsync(lease, outcome, TimeSpan.FromMinutes(1)))!;
+        Assert.Equal(second.Id, next.Mutation.Id);
+        Assert.Null((await reopened.GetAsync(Scope, "first"))!.PendingMutationId);
+        Assert.Equal(first.Id, (await reopened.ReadNextUnconfirmedOrderedReceiptAsync(Scope))!.Id);
+        Assert.Null(await store.ClaimAsync(Scope, TimeSpan.FromMinutes(1)));
+        await reopened.AcknowledgeAsync(next, new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record("second", 1, "server")));
+    });
+
+    [Fact]
+    public Task Coordinator_does_not_claim_beyond_its_push_limit() => WithReadyStoreAsync(async (store, unusedOptions) =>
+    {
+        await store.EnqueueAsync(Mutation("first", 0, "offline"));
+        await store.EnqueueAsync(Mutation("second", 0, "offline"));
+        var remote = new SuccessfulTransport();
+        await new EdgeSynchronizationCoordinator(store, remote).SynchronizeAsync(Scope, maxPushes: 1);
+        Assert.Equal(1, remote.Applies);
+        var remaining = (await store.ClaimAsync(Scope, TimeSpan.FromMinutes(1)))!;
+        Assert.Equal("second", remaining.Mutation.DocumentId);
+    });
+
+    [Fact]
     public Task Ordered_coordinator_retries_a_lost_horizon_response_without_reconfirming_after_reopen() => WithReadyStoreAsync(async (store, options) =>
     {
         var mutation = await store.EnqueueOrderedAsync(Scope, "automatic", 0, EdgeMutationKind.Upsert, Payload("offline"));
@@ -439,5 +479,18 @@ public sealed class SqliteEdgeStoreTests
         { Confirmations++; return ValueTask.CompletedTask; }
         public ValueTask AdvanceOrderedReceiptHorizonAsync(EdgeScope scope, Guid throughMutationId, int maxReceipts = 1000, CancellationToken cancellationToken = default)
         { if (++HorizonAttempts == 1) { throw new IOException("Injected lost horizon response."); } return ValueTask.CompletedTask; }
+    }
+
+    private sealed class SuccessfulTransport : IEdgeRemoteTransport
+    {
+        public int Applies { get; private set; }
+        public ValueTask<EdgeSnapshot> BeginSnapshotAsync(EdgeScope scope, CancellationToken cancellationToken = default) => throw new InvalidOperationException("The local snapshot is ready.");
+        public IAsyncEnumerable<IReadOnlyList<EdgeRecord>> ReadSnapshotAsync(EdgeScope scope, EdgeSnapshot snapshot, CancellationToken cancellationToken = default) => throw new InvalidOperationException("The local snapshot is ready.");
+        public ValueTask<EdgeChangeBatch?> ReadChangesAsync(EdgeScope scope, long afterPosition, int maxRecords, CancellationToken cancellationToken = default) => ValueTask.FromResult<EdgeChangeBatch?>(null);
+        public ValueTask<EdgeMutationOutcome> ApplyMutationAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
+        {
+            Applies++;
+            return ValueTask.FromResult(new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record(mutation.DocumentId, 1, "server")));
+        }
     }
 }
