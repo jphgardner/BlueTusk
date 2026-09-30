@@ -207,10 +207,12 @@ internal sealed class SqliteCapacityClient : IDisposable
             if (!Offline(elapsed, offlineOne, offlineTwo, offlineSeconds))
             {
                 await _pendingGate.WaitAsync(token).ConfigureAwait(false);
-                bool pending;
-                try { pending = _pending.Count > 0; }
+                int pending;
+                try { pending = _pending.Count; }
                 finally { _pendingGate.Release(); }
-                if (pending || elapsed - lastPass >= 1)
+                // Avoid a round trip for every single offered write while preserving
+                // a bounded acknowledgement delay for a partially filled batch.
+                if (pending >= 5 || elapsed - lastPass >= .8)
                 {
                     await SynchronizeAsync(clock, offlineOne, offlineTwo, offlineSeconds, hostAt, token).ConfigureAwait(false);
                     lastPass = clock.Elapsed.TotalSeconds;
