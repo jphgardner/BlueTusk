@@ -172,8 +172,9 @@ internal sealed class SqliteCapacityClient
             _local = new SqliteEdgeStore(Options(_path, _clock));
             await _local.InitializeAsync(token).ConfigureAwait(false);
             _coordinator = new EdgeSynchronizationCoordinator(_local, _fault);
-            var persisted = await _local.ReadNextUnconfirmedOrderedReceiptAsync(_scope, token).ConfigureAwait(false);
-            if (!_pending.Values.Any(value => value.Id == _lostMutation) || persisted is not null)
+            var lost = _pending.SingleOrDefault(item => item.Value.Id == _lostMutation);
+            var persisted = lost.Key is null ? null : await _local.GetAsync(_scope, lost.Key, token).ConfigureAwait(false);
+            if (persisted?.PendingMutationId != _lostMutation)
             { throw new InvalidOperationException("Lost response was not a durable leased mutation."); }
             return;
         }
