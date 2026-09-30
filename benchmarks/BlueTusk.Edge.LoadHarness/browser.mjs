@@ -33,7 +33,7 @@ let context;
 let page;
 let clockOffset = 0;
 const pending = new Map();
-const enqueueTimes = [], ackTimes = [];
+const enqueueTimes = [], offerTimes = [], syncTimes = [], ackTimes = [];
 const sampleStateTimes = [], samplePhysicalTimes = [], sampleCheckpointTimes = [];
 const applyBeforeRestart = [], horizonBeforeRestart = [];
 const recoveries = [];
@@ -138,17 +138,20 @@ async function sample(elapsed) {
 }
 
 async function synchronize(elapsed, pendingKeys) {
-  return await page.evaluate(async ({ pendingKeys }) => {
-    const { local, remote, scope, synchronizeEdge } = window.edgeCapacity;
-    try { await synchronizeEdge(local, remote, scope, { maxPushes: 16, maxChangeBatches: 16 }); }
-    catch (error) {
-      if (error instanceof TypeError && error.message === "Failed to fetch") return { failure: "fetch", acknowledged: [] };
-      throw error;
-    }
-    const acknowledged = [];
-    for (const key of pendingKeys) if ((await local.get(scope, key)).pendingId === null) acknowledged.push(key);
-    return { failure: null, acknowledged };
-  }, { pendingKeys });
+  const started = performance.now();
+  try {
+    return await page.evaluate(async ({ pendingKeys }) => {
+      const { local, remote, scope, synchronizeEdge } = window.edgeCapacity;
+      try { await synchronizeEdge(local, remote, scope, { maxPushes: 16, maxChangeBatches: 16 }); }
+      catch (error) {
+        if (error instanceof TypeError && error.message === "Failed to fetch") return { failure: "fetch", acknowledged: [] };
+        throw error;
+      }
+      const acknowledged = [];
+      for (const key of pendingKeys) if ((await local.get(scope, key)).pendingId === null) acknowledged.push(key);
+      return { failure: null, acknowledged };
+    }, { pendingKeys });
+  } finally { if (elapsed < seconds) syncTimes.push(performance.now() - started); }
 }
 
 try {
@@ -175,6 +178,7 @@ try {
       (elapsed >= offlineTwo && elapsed < offlineTwo + offlineLength);
     if (injectedOffline && !offlineActive) { await context.setOffline(true); offlineActive = true; }
     if (!injectedOffline && offlineActive) { await context.setOffline(false); offlineActive = false; }
+    const offerStarted = performance.now();
     const payload = await page.evaluate(() => {
       const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
       const random = crypto.getRandomValues(new Uint8Array(4088));
@@ -189,6 +193,7 @@ try {
         kind: "upsert", payload });
       return { skipped: false, mutation, enqueueMilliseconds: performance.now() - began };
     }, { key, payload });
+    offerTimes.push(performance.now() - offerStarted);
     if (offeredResult.skipped) { skipped++; pendingKeySkipped++; }
     else {
       offered++; enqueueTimes.push(offeredResult.enqueueMilliseconds);
@@ -288,6 +293,7 @@ try {
     FinalLocalReceipts: final.receipts, FinalCheckpoint: Number(final.checkpoint),
     FinalOrderedSequence: Number(BigInt(final.nextSequence) - 1n), FinalHorizon: Number(final.horizon),
     MaximumPhysicalBytes: maximumPhysicalBytes, Enqueue: summary(enqueueTimes),
+    OfferOperation: summary(offerTimes), SyncPass: summary(syncTimes),
     SampleState: summary(sampleStateTimes), SamplePhysical: summary(samplePhysicalTimes),
     SampleCheckpoint: summary(sampleCheckpointTimes),
     HttpApply: summary([...applyBeforeRestart, ...verified.metrics.apply]), DurableAck: summary(ackTimes),
