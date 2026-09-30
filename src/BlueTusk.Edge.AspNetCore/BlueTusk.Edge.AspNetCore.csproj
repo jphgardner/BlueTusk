@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework><BlueTuskProductFamily>Edge</BlueTuskProductFamily>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Authorization-policy protected Edge snapshot, resume feed and atomic mutation endpoints.</Description>
+    <PackageTags>offline;aspnetcore;sync;authorization</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Edge.props" />
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\BlueTusk.Edge.Server\BlueTusk.Edge.Server.csproj" />
+    <ProjectReference Include="..\BlueTusk.Edge.Http\BlueTusk.Edge.Http.csproj" />
+  </ItemGroup>
+</Project>

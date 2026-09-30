@@ -47,6 +47,11 @@ function Get-ExpectedArea
         return 'Benchmarks'
     }
 
+    if ($ProjectPath -match '^(src|tests|tooling|samples)/BlueTusk\.(Events|Jobs|Documents|Projections|Search|Schema|Sql|Studio|Edge|Workflows)(\.|/)')
+    {
+        return $Matches[2]
+    }
+
     if ($ProjectPath -match '^(src|tests|samples)/BlueTusk\.ContinuousGraph' -or
         $ProjectPath -match '^samples/BlueTusk\.Samples\.ContinuousGraph')
     {
@@ -59,7 +64,8 @@ function Get-ExpectedArea
     }
 
     if ($ProjectPath -match '^src/BlueTusk\.(ControlPlane|Dashboard)' -or
-        $ProjectPath -match '^tests/BlueTusk\.ControlPlane')
+        $ProjectPath -match '^tests/BlueTusk\.ControlPlane' -or
+        $ProjectPath -match '^samples/BlueTusk\.Samples\.Dashboard')
     {
         return 'Operations'
     }
@@ -98,7 +104,7 @@ if (-not (Test-Ordered -Values $folderNames))
 }
 
 $folderPattern =
-    '^/(Benchmarks|ContinuousGraph|Live|Operations|Provider|Streams|Sync|Tests)' +
+    '^/(Benchmarks|ContinuousGraph|Live|Operations|Provider|Streams|Sync|Tests|Events|Jobs|Documents|Projections|Search|Schema|Sql|Studio|Edge|Workflows)' +
     '(/[A-Za-z][A-Za-z0-9]*)*/$'
 $genericFolders = @('/src/', '/tests/', '/extensions/', '/samples/', '/tooling/')
 $registeredProjects = [Collections.Generic.List[string]]::new()
@@ -257,7 +263,10 @@ $diskProjects = @(
 ) | Where-Object {
     -not $_.StartsWith(
         'templates/BlueTusk.Extension/content/',
-        [StringComparison]::Ordinal)
+        [StringComparison]::Ordinal) -and
+    # BenchmarkDotNet and SDK builds create projects below ignored output trees.
+    # These are generated artifacts rather than repository registration inputs.
+    $_ -cnotmatch '(?:^|/)(?:bin|obj)/'
 }
 
 $registeredSet = [Collections.Generic.HashSet[string]]::new(

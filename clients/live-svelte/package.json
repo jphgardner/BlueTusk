@@ -1,0 +1,37 @@
+{
+  "name": "@bluetusk/live-svelte",
+  "version": "1.2.0",
+  "description": "Svelte stores integration for BlueTusk Live.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jphgardner/BlueTusk.git",
+    "directory": "clients/live-svelte"
+  },
+  "homepage": "https://github.com/jphgardner/BlueTusk#readme",
+  "bugs": {
+    "url": "https://github.com/jphgardner/BlueTusk/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@bluetusk/live": "1.2.0"
+  },
+  "peerDependencies": {
+    "svelte": ">=5 <6"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -30,3 +30,49 @@ Console.WriteLine(insert.RecordsAffected);
 Set `Transaction` to enlist the complete protocol cycle in the connection's active transaction. `Timeout`, cancellation tokens, `Cancel()`, and `CancelAsync()` use PostgreSQL's cancellation channel and drain through `ReadyForQuery` before the connection can be reused.
 
 `PrepareAsync` creates one named server statement per batch command. Later executions bind all of those statements in one cycle, and changing command text or PostgreSQL parameter OIDs rebuilds the prepared set. Batches created by a data source own a temporary pooled connection for each execution and therefore cannot be explicitly prepared.
+
+## Several statements in one command
+
+The 1.2 candidate also supports ordinary parameterized, semicolon-separated
+statements in a buffered `BlueTuskCommand`. This is the path used by EF's
+automatic write batches:
+
+```csharp
+await using var command = new BlueTuskCommand(
+    "SELECT @id::int4; SELECT @id::int4 + 1;", connection);
+command.Parameters.Add(new BlueTuskParameter<int>(41) { ParameterName = "id" });
+
+await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+await reader.ReadAsync(cancellationToken);
+Console.WriteLine(reader.GetInt32(0)); // 41
+await reader.NextResultAsync(cancellationToken);
+await reader.ReadAsync(cancellationToken);
+Console.WriteLine(reader.GetInt32(0)); // 42
+```
+
+Named parameters are rebound separately for each statement. Positional `$1`,
+`$2`, etc. retain their ordinals in the parent command's parameter collection.
+Do not mix named and positional placeholders. Quoted strings, quoted
+identifiers, dollar-quoted bodies and SQL comments can contain semicolons
+without creating a new statement. Supply data through parameters, not string
+interpolation.
+
+The driver uses separate Parse/Bind/Execute messages and one final Sync, with
+results in statement order. Text-format results avoid replaying a write batch
+to retry an unsupported binary output type. Asynchronous buffered execution
+reuses row storage, released when the reader is disposed; scalar and non-query
+executions release their buffers after consuming their result. Dispose readers
+promptly, including when reading only the first result.
+
+Without an explicit transaction, a PostgreSQL statement error rolls back the
+implicit transaction containing the batch. Inside an explicit transaction,
+handle the failure and roll back to a savepoint or roll back the transaction
+before continuing. Cancellation drains the response when synchronization can
+be recovered; transport failures can instead require discarding the session.
+Do not blindly retry writes with an unknown commit outcome.
+
+Use `BlueTuskBatch` for explicit multi-statement preparation. Do not use
+`CommandBehavior.SequentialAccess` with a multi-statement `BlueTuskCommand`;
+use separate commands for streaming readers. Multiplexed data-source commands
+with several statements use buffered dispatch rather than the single-statement
+pipeline.

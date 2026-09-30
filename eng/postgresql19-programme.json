@@ -2,9 +2,11 @@
   "schemaVersion": 1,
   "majorVersion": 19,
   "officialDocumentationUrl": "https://www.postgresql.org/docs/19/",
-  "currentOfficialMilestone": "19beta3",
-  "currentDocumentationMarker": "PostgreSQL 19beta3 Documentation",
-  "targetGeneralAvailability": "September 2026",
+  "currentOfficialMilestone": "19beta4",
+  "currentDocumentationMarker": "PostgreSQL 19beta4 Documentation",
+  "lastVerifiedMilestone": "19beta3",
+  "targetGeneralAvailability": "October 2026",
+  "sqlPgqStatus": "removed-in-19beta4-future-version-unassigned",
   "milestones": [
     {
       "version": "19beta2",
@@ -21,6 +23,15 @@
       "status": "verified",
       "image": "postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc",
       "evidence": "docs/postgresql19-programme.md"
+    },
+    {
+      "version": "19beta4",
+      "channel": "beta",
+      "released": "2026-09-24",
+      "status": "pending",
+      "image": null,
+      "evidence": null,
+      "announcement": "https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/"
     }
   ],
   "requiredFutureCadence": [
@@ -28,6 +39,12 @@
     "every release candidate",
     "19.0 general availability"
   ],
+  "requiredFeatureEvidence": {
+    "nativeRepackApi": "src/BlueTusk.Data/Maintenance/BlueTuskRepack.cs",
+    "nativeRepackUnitTests": "tests/BlueTusk.Data.Tests/BlueTuskRepackTests.cs",
+    "nativeRepackIntegrationTests": "tests/BlueTusk.IntegrationTests/BlueTuskRepackIntegrationTests.cs",
+    "nativeRepackGuide": "docs/ado-net/repack.md"
+  },
   "generalAvailability": {
     "status": "pending",
     "version": null,
@@ -35,5 +52,5 @@
     "evidence": null,
     "sourceCommit": null
   },
-  "typedSubsetRecord": "docs/graph/README.md"
+  "typedSubsetRecord": "docs/graph/reference.md"
 }

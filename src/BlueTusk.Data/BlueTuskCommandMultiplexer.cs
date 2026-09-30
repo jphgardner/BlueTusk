@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using System.Threading.Tasks.Sources;
@@ -59,7 +60,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
     internal ValueTask<BlueTuskQueryResult> ExecuteAsync(
         BlueTuskCommand command,
         CancellationToken cancellationToken)
-        => EnqueueAsync(new MultiplexedCommandRequest<BlueTuskQueryResult>(
+        => EnqueueAsync(MultiplexedCommandRequest<BlueTuskQueryResult>.Rent(
             command,
             scalar: false,
             cancellationToken), cancellationToken);
@@ -67,7 +68,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
     internal ValueTask<BlueTuskScalarQueryResult> ExecuteScalarAsync(
         BlueTuskCommand command,
         CancellationToken cancellationToken)
-        => EnqueueAsync(new MultiplexedCommandRequest<BlueTuskScalarQueryResult>(
+        => EnqueueAsync(MultiplexedCommandRequest<BlueTuskScalarQueryResult>.Rent(
             command,
             scalar: true,
             cancellationToken), cancellationToken);
@@ -79,7 +80,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         if (Volatile.Read(ref _disposed) != 0)
         {
             request.RecordQueueWait();
-            request.Dispose();
+            request.Abandon();
             BlueTuskDiagnostics.RecordMultiplexingAdmission("closed");
             throw new ObjectDisposedException(nameof(BlueTuskDataSource));
         }
@@ -87,7 +88,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         if (cancellationToken.IsCancellationRequested)
         {
             request.RecordQueueWait();
-            request.Dispose();
+            request.Abandon();
             BlueTuskDiagnostics.RecordMultiplexingAdmission("canceled");
             cancellationToken.ThrowIfCancellationRequested();
         }
@@ -101,9 +102,15 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
             return request.AsValueTask();
         }
 
+        // A pending Channel write may retain the request until its cancellation or
+        // admission continuation has fully unwound. Do not recycle that request:
+        // reusing it while the channel still owns a reference can publish a later
+        // command through the earlier write operation.
+        request.DisablePooling();
         return CompleteEnqueueAsync(writing, request);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<T> CompleteEnqueueAsync<T>(
         ValueTask writing,
         MultiplexedCommandRequest<T> request)
@@ -116,7 +123,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         {
             DecrementQueued();
             request.RecordQueueWait();
-            request.Dispose();
+            request.Abandon();
             BlueTuskDiagnostics.RecordMultiplexingAdmission("canceled");
             throw;
         }
@@ -124,7 +131,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         {
             DecrementQueued();
             request.RecordQueueWait();
-            request.Dispose();
+            request.Abandon();
             BlueTuskDiagnostics.RecordMultiplexingAdmission("closed");
             throw new ObjectDisposedException(nameof(BlueTuskDataSource), exception);
         }
@@ -163,7 +170,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
     private async Task WorkerAsync(int workerIndex)
     {
         BlueTuskConnection? connection = null;
-        var buffers = new PipelineWorkerBuffers(_options.MaxPipelineCommands);
+        var buffers = new PipelineWorkerBuffers(this, _options.MaxPipelineCommands);
         var processedOnLease = 0;
         try
         {
@@ -204,7 +211,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         }
     }
 
-    private async Task<LeaseExecutionResult> ExecuteLeaseAsync(
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<LeaseExecutionResult> ExecuteLeaseAsync(
         BlueTuskConnection? connection,
         int workerIndex,
         int commandLimit,
@@ -246,18 +254,20 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                     }
                     catch (OperationCanceledException) when (_shutdown.IsCancellationRequested)
                     {
-                        request.TrySetException(
-                            new ObjectDisposedException(nameof(BlueTuskDataSource)));
                         Interlocked.Increment(ref _canceled);
                         RecordOutcome("canceled");
+                        request.TrySetException(
+                            new ObjectDisposedException(nameof(BlueTuskDataSource)));
+                        request.ReleaseExecution();
                         processed++;
                         continue;
                     }
                     catch (Exception exception)
                     {
-                        request.TrySetException(exception);
                         Interlocked.Increment(ref _faulted);
                         RecordOutcome("faulted");
+                        request.TrySetException(exception);
+                        request.ReleaseExecution();
                         processed++;
                         continue;
                     }
@@ -314,6 +324,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                     new ObjectDisposedException(nameof(BlueTuskDataSource)));
                 Interlocked.Increment(ref _canceled);
                 RecordOutcome("canceled");
+                pending.ReleaseExecution();
             }
 
         }
@@ -321,7 +332,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         return new LeaseExecutionResult(connection, processed);
     }
 
-    private async Task ExecuteSingleAsync(
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+    private async ValueTask ExecuteSingleAsync(
         BlueTuskConnection connection,
         IMultiplexedCommandRequest request)
     {
@@ -334,6 +346,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
             var result = await request.Command.ExecuteDispatchedAsync(
                         connection,
                         execution.Token).ConfigureAwait(false);
+            Interlocked.Increment(ref _completed);
+            RecordOutcome("completed");
             request.TrySetResult(
                 request.Scalar
                     ? new MultiplexedCommandResult(
@@ -342,35 +356,35 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                     : new MultiplexedCommandResult(
                         result,
                         ScalarResult: default));
-            Interlocked.Increment(ref _completed);
-            RecordOutcome("completed");
         }
         catch (OperationCanceledException) when (request.CancellationToken.IsCancellationRequested)
         {
-            request.TrySetCanceled(request.CancellationToken);
             Interlocked.Increment(ref _canceled);
             RecordOutcome("canceled");
+            request.TrySetCanceled(request.CancellationToken);
         }
         catch (OperationCanceledException) when (_shutdown.IsCancellationRequested)
         {
-            request.TrySetException(
-                new ObjectDisposedException(nameof(BlueTuskDataSource)));
             Interlocked.Increment(ref _canceled);
             RecordOutcome("canceled");
+            request.TrySetException(
+                new ObjectDisposedException(nameof(BlueTuskDataSource)));
         }
         catch (Exception exception)
         {
-            request.TrySetException(exception);
             Interlocked.Increment(ref _faulted);
             RecordOutcome("faulted");
+            request.TrySetException(exception);
         }
         finally
         {
             EndExecuting();
+            request.ReleaseExecution();
         }
     }
 
-    private async Task ExecutePipelineAsync(
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+    private async ValueTask ExecutePipelineAsync(
         BlueTuskConnection connection,
         PipelineWorkerBuffers buffers,
         int requestCount)
@@ -411,9 +425,10 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 }
                 catch (Exception exception)
                 {
-                    request.TrySetException(exception);
                     Interlocked.Increment(ref _faulted);
                     RecordOutcome("faulted");
+                    request.TrySetException(exception);
+                    request.ReleaseExecution();
                 }
             }
 
@@ -437,6 +452,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                         buffers.CancellationTokens,
                         0,
                         activeCount);
+            Exception? cleanupException = null;
+            buffers.ActiveConnection = connection;
             try
             {
                 Interlocked.Increment(ref _pipelineFlushes);
@@ -445,60 +462,10 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 await connection.Session.ExecuteMultiplexedPipelineAsync(
                     commands,
                     groupCancellationTokens,
-                    index => activeRequests[index].Command
-                        .SetMultiplexedPipelineActiveConnection(connection),
-                    index => activeRequests[index].Command
-                        .CompleteMultiplexedPipelineExecution(),
-                    CompleteOutcome,
+                    buffers.GroupStarting,
+                    buffers.GroupCompleted,
+                    buffers.OutcomeCompleted,
                     _shutdown.Token).ConfigureAwait(false);
-
-                void CompleteOutcome(
-                    int index,
-                    BlueTuskMultiplexedPipelineOutcome outcome)
-                {
-                    var request = activeRequests[index];
-                    var scope = buffers.Scopes[index];
-                    if (outcome.Cancellation is not null)
-                    {
-                        if (request.CancellationToken.IsCancellationRequested)
-                        {
-                            request.TrySetCanceled(request.CancellationToken);
-                        }
-                        else if (scope?.TimedOut == true)
-                        {
-                            request.TrySetException(
-                                new TimeoutException(
-                                    $"The command exceeded its {request.Command.CommandTimeout}-second timeout.",
-                                    outcome.Cancellation));
-                        }
-                        else
-                        {
-                            request.TrySetException(
-                                new ObjectDisposedException(nameof(BlueTuskDataSource)));
-                        }
-
-                        Interlocked.Increment(ref _canceled);
-                        RecordOutcome("canceled");
-                        return;
-                    }
-
-                    if (outcome.Error is not null)
-                    {
-                        request.TrySetException(
-                            request.Command.TranslateMultiplexedPipelineError(outcome.Error));
-                        Interlocked.Increment(ref _faulted);
-                        RecordOutcome("faulted");
-                    }
-                    else
-                    {
-                        request.TrySetResult(
-                            new MultiplexedCommandResult(
-                                outcome.Result,
-                                outcome.ScalarResult));
-                        Interlocked.Increment(ref _completed);
-                        RecordOutcome("completed");
-                    }
-                }
             }
             catch (Exception exception)
             {
@@ -515,14 +482,34 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
             {
                 for (var index = 0; index < activeCount; index++)
                 {
-                    activeRequests[index].Command.CompleteMultiplexedPipelineExecution();
-                    buffers.Scopes[index]?.Dispose();
-                    EndExecuting();
+                    var request = activeRequests[index];
+                    try
+                    {
+                        // The session clears the active connection before publishing
+                        // each outcome. Do not clear it again after the caller may
+                        // have reused this command on a different worker.
+                        buffers.Scopes[index]?.Dispose();
+                    }
+                    catch (Exception exception)
+                    {
+                        cleanupException ??= exception;
+                    }
+                    finally
+                    {
+                        EndExecuting();
+                        request.ReleaseExecution();
+                    }
                 }
+            }
+
+            if (cleanupException is not null)
+            {
+                throw cleanupException;
             }
         }
         finally
         {
+            buffers.ActiveConnection = null;
             for (var index = 0; index < requestCount; index++)
             {
                 buffers.Requests[index] = null!;
@@ -530,6 +517,49 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 buffers.Scopes[index] = null;
                 buffers.CancellationTokens[index] = default;
             }
+        }
+    }
+
+    private void CompletePipelineOutcome(
+        PipelineWorkerBuffers buffers,
+        int index,
+        BlueTuskMultiplexedPipelineOutcome outcome)
+    {
+        var request = buffers.Requests[index];
+        var scope = buffers.Scopes[index];
+        if (outcome.Cancellation is not null)
+        {
+            Interlocked.Increment(ref _canceled);
+            RecordOutcome("canceled");
+            if (request.CancellationToken.IsCancellationRequested)
+            {
+                request.TrySetCanceled(request.CancellationToken);
+            }
+            else if (scope?.TimedOut == true)
+            {
+                request.TrySetException(
+                    new TimeoutException(
+                        $"The command exceeded its {request.Command.CommandTimeout}-second timeout.",
+                        outcome.Cancellation));
+            }
+            else
+            {
+                request.TrySetException(new ObjectDisposedException(nameof(BlueTuskDataSource)));
+            }
+            return;
+        }
+
+        if (outcome.Error is not null)
+        {
+            Interlocked.Increment(ref _faulted);
+            RecordOutcome("faulted");
+            request.TrySetException(request.Command.TranslateMultiplexedPipelineError(outcome.Error));
+        }
+        else
+        {
+            Interlocked.Increment(ref _completed);
+            RecordOutcome("completed");
+            request.TrySetResult(new MultiplexedCommandResult(outcome.Result, outcome.ScalarResult));
         }
     }
 
@@ -544,6 +574,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 new ObjectDisposedException(nameof(BlueTuskDataSource)));
             Interlocked.Increment(ref _canceled);
             RecordOutcome("canceled");
+            request.ReleaseExecution();
         }
     }
 
@@ -635,6 +666,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
         bool TryBeginExecution();
 
+        void ReleaseExecution();
+
         void RecordQueueWait();
     }
 
@@ -643,37 +676,70 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         IDisposable,
         IValueTaskSource<T>
     {
-        private readonly CancellationTokenRegistration _cancellationRegistration;
+        private const int MaximumPooledRequests = 1024;
+        private static readonly ConcurrentQueue<MultiplexedCommandRequest<T>> Pool = new();
+        private static int _pooledRequests;
+        private CancellationTokenRegistration _cancellationRegistration;
         private ManualResetValueTaskSourceCore<T> _completion;
         private int _completionState;
-        private long _queuedAt = BlueTuskDiagnostics.GetMultiplexingQueueTimestamp();
+        private int _completionPublishing;
+        private int _consumed;
+        private int _executionReleased;
+        private int _poolEligible;
+        private long _queuedAt;
+        private int _returned;
         private int _state;
 
-        internal MultiplexedCommandRequest(
+        private MultiplexedCommandRequest()
+        {
+            _completion.RunContinuationsAsynchronously = false;
+        }
+
+        internal static MultiplexedCommandRequest<T> Rent(
             BlueTuskCommand command,
             bool scalar,
             CancellationToken cancellationToken)
         {
-            Command = command;
-            Scalar = scalar;
-            CancellationToken = cancellationToken;
-            _completion.RunContinuationsAsynchronously = true;
+            if (!Pool.TryDequeue(out var request))
+            {
+                request = new MultiplexedCommandRequest<T>();
+            }
+            else
+            {
+                Interlocked.Decrement(ref _pooledRequests);
+            }
+
+            request.Command = command;
+            request.Scalar = scalar;
+            request.CancellationToken = cancellationToken;
+            request._completionState = 0;
+            request._completionPublishing = 0;
+            request._consumed = 0;
+            request._executionReleased = 0;
+            request._poolEligible = 1;
+            request._queuedAt = BlueTuskDiagnostics.GetMultiplexingQueueTimestamp();
+            request._returned = 0;
+            request._state = 0;
             if (cancellationToken.CanBeCanceled)
             {
-                _cancellationRegistration = cancellationToken.UnsafeRegister(
+                request._cancellationRegistration = cancellationToken.UnsafeRegister(
                     static state => ((MultiplexedCommandRequest<T>)state!).CancelQueued(),
-                    this);
+                    request);
             }
+
+            return request;
         }
 
-        public BlueTuskCommand Command { get; }
+        public BlueTuskCommand Command { get; private set; } = null!;
 
-        public bool Scalar { get; }
+        public bool Scalar { get; private set; }
 
-        public CancellationToken CancellationToken { get; }
+        public CancellationToken CancellationToken { get; private set; }
 
         internal ValueTask<T> AsValueTask() =>
             new(this, _completion.Version);
+
+        internal void DisablePooling() => Volatile.Write(ref _poolEligible, 0);
 
         public bool TrySetResult(MultiplexedCommandResult result)
         {
@@ -687,12 +753,12 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 var queryResult = result.QueryResult
                     ?? throw new InvalidOperationException(
                         "The multiplexed command did not produce a query result.");
-                _completion.SetResult(Unsafe.As<BlueTuskQueryResult, T>(ref queryResult));
+                PublishResult(Unsafe.As<BlueTuskQueryResult, T>(ref queryResult));
             }
             else
             {
                 var scalarResult = result.ScalarResult;
-                _completion.SetResult(Unsafe.As<BlueTuskScalarQueryResult, T>(ref scalarResult));
+                PublishResult(Unsafe.As<BlueTuskScalarQueryResult, T>(ref scalarResult));
             }
 
             return true;
@@ -705,7 +771,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 return false;
             }
 
-            _completion.SetException(exception);
+            PublishException(exception);
             return true;
         }
 
@@ -718,6 +784,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
             {
                 RecordQueueWait();
                 Dispose();
+                ReleaseExecution();
                 return false;
             }
 
@@ -742,8 +809,30 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
         public void Dispose() => _cancellationRegistration.Dispose();
 
-        public T GetResult(short token) =>
-            _completion.GetResult(token);
+        internal void Abandon()
+        {
+            Volatile.Write(ref _consumed, 1);
+            ReleaseExecution();
+        }
+
+        public void ReleaseExecution()
+        {
+            Volatile.Write(ref _executionReleased, 1);
+            TryReturnToPool();
+        }
+
+        public T GetResult(short token)
+        {
+            try
+            {
+                return _completion.GetResult(token);
+            }
+            finally
+            {
+                Volatile.Write(ref _consumed, 1);
+                TryReturnToPool();
+            }
+        }
 
         public ValueTaskSourceStatus GetStatus(short token) =>
             _completion.GetStatus(token);
@@ -754,6 +843,79 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
             short token,
             ValueTaskSourceOnCompletedFlags flags) =>
             _completion.OnCompleted(continuation, state, token, flags);
+
+        private void PublishResult(T result)
+        {
+            Volatile.Write(ref _completionPublishing, 1);
+            try
+            {
+                _completion.SetResult(result);
+            }
+            finally
+            {
+                FinishPublishing();
+            }
+        }
+
+        private void PublishException(Exception exception)
+        {
+            Volatile.Write(ref _completionPublishing, 1);
+            try
+            {
+                _completion.SetException(exception);
+            }
+            finally
+            {
+                FinishPublishing();
+            }
+        }
+
+        private void FinishPublishing()
+        {
+            Volatile.Write(ref _completionPublishing, 0);
+            TryReturnToPool();
+        }
+
+        private void TryReturnToPool()
+        {
+            if (Volatile.Read(ref _consumed) != 0 &&
+                Volatile.Read(ref _executionReleased) != 0 &&
+                Volatile.Read(ref _completionPublishing) == 0)
+            {
+                ReturnToPool();
+            }
+        }
+
+        private void ReturnToPool()
+        {
+            if (Interlocked.Exchange(ref _returned, 1) != 0)
+            {
+                return;
+            }
+
+            _cancellationRegistration.Unregister();
+            _cancellationRegistration = default;
+            Command = null!;
+            Scalar = false;
+            CancellationToken = default;
+            _queuedAt = 0;
+
+            if (Volatile.Read(ref _poolEligible) == 0)
+            {
+                return;
+            }
+
+            _completion.Reset();
+
+            if (Interlocked.Increment(ref _pooledRequests) <= MaximumPooledRequests)
+            {
+                Pool.Enqueue(this);
+            }
+            else
+            {
+                Interlocked.Decrement(ref _pooledRequests);
+            }
+        }
     }
 
     private readonly record struct MultiplexedCommandResult(
@@ -766,13 +928,36 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
     private sealed class PipelineWorkerBuffers
     {
-        internal PipelineWorkerBuffers(int capacity)
+        private readonly BlueTuskCommandMultiplexer _owner;
+
+        internal PipelineWorkerBuffers(BlueTuskCommandMultiplexer owner, int capacity)
         {
+            _owner = owner;
             Requests = new IMultiplexedCommandRequest[capacity];
             Commands = new BlueTuskMultiplexedPipelineCommand[capacity];
             Scopes = new PipelineCancellationScope?[capacity];
             CancellationTokens = new CancellationToken[capacity];
+            GroupStarting = StartGroup;
+            GroupCompleted = CompleteGroup;
+            OutcomeCompleted = CompleteOutcome;
         }
+
+        internal BlueTuskConnection? ActiveConnection { get; set; }
+
+        internal Action<int> GroupStarting { get; }
+
+        internal Action<int> GroupCompleted { get; }
+
+        internal Action<int, BlueTuskMultiplexedPipelineOutcome> OutcomeCompleted { get; }
+
+        private void StartGroup(int index) =>
+            Requests[index].Command.SetMultiplexedPipelineActiveConnection(ActiveConnection!);
+
+        private void CompleteGroup(int index) =>
+            Requests[index].Command.CompleteMultiplexedPipelineExecution();
+
+        private void CompleteOutcome(int index, BlueTuskMultiplexedPipelineOutcome outcome) =>
+            _owner.CompletePipelineOutcome(this, index, outcome);
 
         internal IMultiplexedCommandRequest[] Requests { get; }
 
@@ -781,6 +966,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         internal PipelineCancellationScope?[] Scopes { get; }
 
         internal CancellationToken[] CancellationTokens { get; }
+
     }
 
     private sealed class PipelineCancellationScope : IDisposable
@@ -849,6 +1035,7 @@ internal static class BlueTuskMultiplexingClassifier
         "PREPARE",
         "RELEASE",
         "RESET",
+        "REPACK",
         "ROLLBACK",
         "SAVEPOINT",
         "SET",

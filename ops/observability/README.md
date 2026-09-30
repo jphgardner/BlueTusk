@@ -14,6 +14,13 @@ It contains:
 - `grafana/bluetusk-v1.json`: a Grafana dashboard covering Provider, Streams,
   Sync, Live, Continuous Graph and Control Plane.
 
+The dashboard includes separate Streams spool completion P95 and failure-rate
+panels. They group the bounded `flush`, `close` and `rename` measurements;
+high flush latency should be correlated with host/storage telemetry, not hidden
+by disabling durable flushing. Missing metric series are not treated as proof
+of success. See the [spool timing boundaries](../../docs/streams/hosting-observability.md#investigating-slow-transaction-spooling)
+before interpreting these panels as end-to-end transaction latency.
+
 Set `BLUETUSK_TRACES_ENDPOINT` to the TLS endpoint of the organisation's trace
 backend before starting the Collector. Keep ports 4317, 4318, 8889 and 13133 on
 an internal observability network or protect them with the platform's

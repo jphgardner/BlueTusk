@@ -167,6 +167,38 @@
       ],
       "title": "Firing BlueTusk alerts",
       "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "Successful spool completion steps. Flush includes buffered write plus durable filesystem flush; these timings exclude replay and downstream acknowledgement.",
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "id": 11,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, bluetusk_streams_spool_operation) (rate(bluetusk_streams_spool_operation_duration_seconds_bucket{bluetusk_streams_spool_outcome=\"success\"}[$__rate_interval])))",
+          "legendFormat": "{{bluetusk_streams_spool_operation}} P95",
+          "refId": "A"
+        }
+      ],
+      "title": "Streams spool completion P95 by step",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "Failed flush, close or rename attempts per second. Missing data means no observed series; it is not proof of successful spooling.",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "id": 12,
+      "targets": [
+        {
+          "expr": "sum by (bluetusk_streams_spool_operation) (rate(bluetusk_streams_spool_operation_duration_seconds_count{bluetusk_streams_spool_outcome=\"failure\"}[$__rate_interval]))",
+          "legendFormat": "{{bluetusk_streams_spool_operation}} failures / second",
+          "refId": "A"
+        }
+      ],
+      "title": "Streams spool completion failures",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -190,5 +222,5 @@
   "timezone": "browser",
   "title": "BlueTusk V1 Production",
   "uid": "bluetusk-v1-production",
-  "version": 1
+  "version": 2
 }

@@ -69,6 +69,12 @@ internal interface IProviderDataSource
     ValueTask ClearPoolAsync();
 }
 
+/// <summary>Current DML completion metadata after reading to the statement's end, not the batch total.</summary>
+internal interface IProviderUpdateResult
+{
+    int CurrentStatementRowsAffected { get; }
+}
+
 internal sealed record DatabaseLifecycleSettings(
     string TargetDatabase,
     string AdminConnectionString);

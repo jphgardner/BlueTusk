@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Documents</BlueTuskProductFamily>
+    <Description>Authenticated tenant document query plans and revision-aware diffs for BlueTusk Live.</Description>
+    <PackageTags>postgresql;documents;live;jsonb</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Documents.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Documents\BlueTusk.Documents.csproj" />
+    <ProjectReference Include="..\BlueTusk.Live\BlueTusk.Live.csproj" />
+  </ItemGroup>
+</Project>

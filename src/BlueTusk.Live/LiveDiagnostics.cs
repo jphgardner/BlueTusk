@@ -89,14 +89,14 @@ internal static class LiveDiagnostics
         var tags = QueryTags(queryName, outcome);
         if (started != 0 && AuthoritativeQueryDuration.Enabled)
         {
-            AuthoritativeQueryDuration.Record(
+            Record(AuthoritativeQueryDuration,
                 Stopwatch.GetElapsedTime(started).TotalSeconds,
                 tags);
         }
 
         if (rowCount >= 0 && AuthoritativeQueryRows.Enabled)
         {
-            AuthoritativeQueryRows.Record(rowCount, tags);
+            Record(AuthoritativeQueryRows, rowCount, tags);
         }
     }
 
@@ -109,14 +109,14 @@ internal static class LiveDiagnostics
         var tags = QueryTags(queryName, outcome);
         if (started != 0 && RefreshDuration.Enabled)
         {
-            RefreshDuration.Record(
+            Record(RefreshDuration,
                 Stopwatch.GetElapsedTime(started).TotalSeconds,
                 tags);
         }
 
         if (eventCount >= 0 && RefreshEvents.Enabled)
         {
-            RefreshEvents.Record(eventCount, tags);
+            Record(RefreshEvents, eventCount, tags);
         }
     }
 
@@ -124,11 +124,11 @@ internal static class LiveDiagnostics
     {
         if (Connections.Enabled)
         {
-            Connections.Add(
+            Add(Connections,
                 1,
-                new KeyValuePair<string, object?>(
+                new TagList { new KeyValuePair<string, object?>(
                     "bluetusk.live.connection.outcome",
-                    outcome.ToString().ToLowerInvariant()));
+                    outcome.ToString().ToLowerInvariant()) });
         }
     }
 
@@ -136,7 +136,7 @@ internal static class LiveDiagnostics
     {
         if (delta != 0 && ActiveClients.Enabled)
         {
-            ActiveClients.Add(delta);
+            Add(ActiveClients, delta, default);
         }
     }
 
@@ -144,7 +144,7 @@ internal static class LiveDiagnostics
     {
         if (deliveries > 0 && FanOutDeliveries.Enabled)
         {
-            FanOutDeliveries.Add(deliveries);
+            Add(FanOutDeliveries, deliveries, default);
         }
     }
 
@@ -155,12 +155,12 @@ internal static class LiveDiagnostics
             operation);
         if (events > 0 && ReplayEvents.Enabled)
         {
-            ReplayEvents.Add(events, tag);
+            Add(ReplayEvents, events, new TagList { tag });
         }
 
         if (bytes > 0 && ReplayBytes.Enabled)
         {
-            ReplayBytes.Add(bytes, tag);
+            Add(ReplayBytes, bytes, new TagList { tag });
         }
     }
 
@@ -168,11 +168,11 @@ internal static class LiveDiagnostics
     {
         if (SlowClientDisconnects.Enabled)
         {
-            SlowClientDisconnects.Add(
+            Add(SlowClientDisconnects,
                 1,
-                new KeyValuePair<string, object?>(
+                new TagList { new KeyValuePair<string, object?>(
                     "bluetusk.live.slow_client.policy",
-                    policy.ToString().ToLowerInvariant()));
+                    policy.ToString().ToLowerInvariant()) });
         }
     }
 
@@ -180,11 +180,53 @@ internal static class LiveDiagnostics
     {
         if (ResumeValidations.Enabled)
         {
-            ResumeValidations.Add(
+            Add(ResumeValidations,
                 1,
-                new KeyValuePair<string, object?>(
+                new TagList { new KeyValuePair<string, object?>(
                     "bluetusk.live.resume.outcome",
-                    outcome.ToString().ToLowerInvariant()));
+                    outcome.ToString().ToLowerInvariant()) });
+        }
+    }
+
+    // A user-supplied MeterListener runs synchronously. Its exceptions must not
+    // become a durability boundary or prevent fan-out/gate release. These
+    // wrappers use value-type tags and no capturing delegates on the hot path.
+    private static void Record<T>(Histogram<T> instrument, T value, in TagList tags)
+        where T : struct
+    {
+        try
+        {
+            instrument.Record(value, tags);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // Measurement callbacks are not part of Live's commit protocol.
+        }
+    }
+
+    private static void Add<T>(Counter<T> instrument, T value, in TagList tags)
+        where T : struct
+    {
+        try
+        {
+            instrument.Add(value, tags);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // Measurement callbacks are not part of Live's commit protocol.
+        }
+    }
+
+    private static void Add<T>(UpDownCounter<T> instrument, T value, in TagList tags)
+        where T : struct
+    {
+        try
+        {
+            instrument.Add(value, tags);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // Measurement callbacks are not part of Live's commit protocol.
         }
     }
 

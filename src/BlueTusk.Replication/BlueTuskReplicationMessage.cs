@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace BlueTusk.Replication;
 
 /// <summary>A message received from a PostgreSQL WAL sender.</summary>
@@ -13,11 +15,15 @@ public sealed record BlueTuskXLogData(
     private bool _ownsData;
 
     /// <summary>The position immediately after this message's data.</summary>
-    public BlueTuskLogSequenceNumber WalEnd =>
-        WalStart + checked((ulong)Data.Length);
+    public BlueTuskLogSequenceNumber WalEnd
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => WalStart + checked((ulong)Data.Length);
+    }
 
     internal bool OwnsData => _ownsData;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal BlueTuskXLogData MarkDataOwned()
     {
         _ownsData = true;

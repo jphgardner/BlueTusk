@@ -15,19 +15,27 @@ operational disturbance recoveries, exact-SHA fuzz and reference performance,
 independent review, two pilots covering all six families, the 28-day website
 field window, backup/restore and rollback rehearsal, and maintainer sign-off.
 
+The coordinated `1.1.0-rc.1` package train was published on 2026-08-29 from
+exact commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm
+packages passed registry availability and clean consumer verification. Stable
+`1.1.0` keeps the remaining hardening path above; public RC availability does
+not mark those gates complete.
+
 The three-application V1 RC suite, exact prerelease manifest and pack
 verification, GHCR image-evidence workflow, Kubernetes/Helm platform, fluent
 property-graph migration API, and local browser/PostgreSQL acceptance are
-implemented. Public RC publication and homelab rollout remain open external
-operations requiring protected credentials, operators, Secrets, and the
-reviewed immutable `main` commit. See the
+implemented. Package RC publication is complete. The application-image and
+homelab rollout remain separate external operations requiring healthy
+infrastructure, protected credentials, operators, Secrets, and exact image
+evidence. See the
 [V1 application suite](v1-applications.md).
 
 ## Real-time platform release trains
 
 - [x] V1 RC application suite: Orders, Service Topology, and Fraud package-only consumers with migrations, workers, browser clients, tests, images, Helm, SLOs, and runbooks
 - [x] V1 RC release tooling: exact six-family prerelease manifest, dependency verification, protected prerelease tags, image SBOM/provenance evidence, and fail-closed mutation tests
-- [ ] V1 RC external gate: merge the reviewed applications PR, publish sequential immutable RC packages/images, provision staging prerequisites, and archive the verified homelab rollout
+- [x] V1 RC package gate: merge the release work, publish sequential immutable `1.1.0-rc.1` packages, and verify all public registries plus clean consumers
+- [ ] V1 RC application gate: publish exact application images, provision staging prerequisites, and archive the verified homelab rollout
 
 - [x] Phase 0: accepted delivery, checkpoint, snapshot, spool, relay, Live security, and Sync connector decisions
 - [x] Phase 0: independent Provider, Streams, Sync, Live, Control Plane, and Continuous Graph version properties and release workflow

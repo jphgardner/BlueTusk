@@ -24,6 +24,7 @@ The live acceptance suite is
 | Dapper | Supported | Parameter binding, command execution and POCO materialisation are covered by live acceptance tests. |
 | Dependency injection | Supported | `BlueTusk.Data.DependencyInjection` registers one shared `BlueTuskDataSource` as both its concrete type and `DbDataSource`. |
 | Readiness health check | Supported | The DI integration registers a `bluetusk` check tagged `bluetusk` and `ready`; it opens a connection and executes `SELECT 1`. |
+| PostgreSQL 19 native `REPACK` | Supported on PostgreSQL 19+ | Typed sync/async execution, every documented command shape, safe identifier quoting, non-multiplexed routing, cancellation, and `pg_stat_progress_repack` monitoring. PostgreSQL 19 GA certification remains a release gate while 19 is in beta. |
 
 ## Host registration
 

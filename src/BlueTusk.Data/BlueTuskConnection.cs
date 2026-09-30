@@ -126,6 +126,12 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     /// </summary>
     public bool? SupportsSqlPgq => PhysicalSession?.Capabilities.SupportsSqlPgq;
 
+    /// <summary>
+    /// Gets whether the current physical session supports PostgreSQL's native <c>REPACK</c>
+    /// command, or <see langword="null"/> while no physical session is open.
+    /// </summary>
+    public bool? SupportsRepack => PhysicalSession?.Capabilities.SupportsRepack;
+
     public override ConnectionState State => _state;
 
     public override int ConnectionTimeout => checked((int)_settings.Timeout.TotalSeconds);
@@ -1475,16 +1481,9 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         CancellationToken cancellationToken = default)
     {
         EnsureCopyAvailable();
+        cancellationToken.ThrowIfCancellationRequested();
         await CompletePendingPoolResetAsync(cancellationToken).ConfigureAwait(false);
         var beginStatement = PrepareCommandTransaction(CurrentTransaction);
-        if (cancellationToken.CanBeCanceled)
-        {
-            return await BeginCancelableBinaryImportAsync(
-                copyCommand,
-                beginStatement,
-                cancellationToken).ConfigureAwait(false);
-        }
-
         BlueTuskCopyInOperation? operation = null;
         try
         {
@@ -1502,63 +1501,24 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             operation = null;
             return importer;
         }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
+        }
         catch
+        {
+            if (!HasOpenSession)
+            {
+                Close();
+            }
+            throw;
+        }
+        finally
         {
             if (operation is not null)
             {
                 await operation.DisposeAsync().ConfigureAwait(false);
             }
-
-            throw;
-        }
-    }
-
-    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
-    private async ValueTask<BlueTuskBinaryImporter> BeginCancelableBinaryImportAsync(
-        string copyCommand,
-        string? beginStatement,
-        CancellationToken cancellationToken)
-    {
-        var pipe = new BlueTuskCopyPipe();
-        var started = new TaskCompletionSource<BlueTuskCopyResponse>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        var copyTask = CopyFromCoreAsync(
-            copyCommand,
-            pipe,
-            response => started.TrySetResult(response),
-            beginStatement,
-            CancellationToken.None).AsTask();
-        var response = await AwaitCopyStartAsync(
-            started.Task,
-            copyTask,
-            pipe,
-            cancellationToken).ConfigureAwait(false);
-        try
-        {
-            ValidateBinaryCopyResponse(response);
-            var importer = new BlueTuskBinaryImporter(
-                pipe,
-                copyTask,
-                TypeRegistry,
-                response.ColumnFormats.Count);
-            await importer.InitializeAsync(cancellationToken).ConfigureAwait(false);
-            return importer;
-        }
-        catch
-        {
-            pipe.CompleteWriting(
-                new IOException("Binary COPY import could not be initialized."));
-            try
-            {
-                _ = await copyTask.ConfigureAwait(false);
-            }
-            catch
-            {
-                // The initialization exception remains authoritative.
-            }
-
-            await pipe.DisposeAsync().ConfigureAwait(false);
-            throw;
         }
     }
 
@@ -1645,6 +1605,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskRawCopyResult> CopyFromCoreAsync(
         string copyCommand,
         Stream source,
@@ -2423,50 +2384,6 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
                 .ToArray(),
             rowsAffected,
             result.BytesTransferred);
-    }
-
-    private async ValueTask<BlueTuskCopyResponse> AwaitCopyStartAsync(
-        Task<BlueTuskCopyResponse> started,
-        Task<BlueTuskRawCopyResult> copyTask,
-        BlueTuskCopyPipe pipe,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var completed = await Task.WhenAny(started, copyTask)
-                .WaitAsync(cancellationToken).ConfigureAwait(false);
-            if (ReferenceEquals(completed, copyTask))
-            {
-                _ = await copyTask.ConfigureAwait(false);
-                if (started.IsCompletedSuccessfully)
-                {
-                    return await started.ConfigureAwait(false);
-                }
-
-                throw new BlueTuskException(
-                    "PostgreSQL completed COPY without entering COPY mode.");
-            }
-
-            return await started.ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            pipe.CompleteWriting(
-                new OperationCanceledException(
-                    "Binary COPY initialization was cancelled.",
-                    cancellationToken));
-            await Session.CancelAsync(CancellationToken.None).ConfigureAwait(false);
-            try
-            {
-                _ = await copyTask.ConfigureAwait(false);
-            }
-            catch
-            {
-                // The caller's cancellation remains authoritative.
-            }
-
-            throw;
-        }
     }
 
     private static void ValidateBinaryCopyResponse(BlueTuskCopyResponse response)

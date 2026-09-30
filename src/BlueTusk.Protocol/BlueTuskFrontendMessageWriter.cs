@@ -230,17 +230,29 @@ public static class BlueTuskFrontendMessageWriter
         var sqlLength = Encoding.UTF8.GetByteCount(sql);
         var length = checked(
             sizeof(int) + statementLength + 1 + sqlLength + 1 + sizeof(short) + (sizeof(int) * parameterTypeOids.Count));
-        WriteByte(output, (byte)'P');
-        WriteInt32(output, length);
-        WriteUtf8(output, statementName, statementLength);
-        WriteByte(output, 0);
-        WriteUtf8(output, sql, sqlLength);
-        WriteByte(output, 0);
-        WriteInt16(output, checked((short)parameterTypeOids.Count));
+        var messageLength = checked(1 + length);
+        var destination = output.GetSpan(messageLength)[..messageLength];
+        var offset = 0;
+        destination[offset++] = (byte)'P';
+        BinaryPrimitives.WriteInt32BigEndian(destination[offset..], length);
+        offset += sizeof(int);
+        offset += Encoding.UTF8.GetBytes(statementName, destination[offset..]);
+        destination[offset++] = 0;
+        offset += Encoding.UTF8.GetBytes(sql, destination[offset..]);
+        destination[offset++] = 0;
+        BinaryPrimitives.WriteInt16BigEndian(
+            destination[offset..],
+            checked((short)parameterTypeOids.Count));
+        offset += sizeof(short);
         for (var index = 0; index < parameterTypeOids.Count; index++)
         {
-            WriteInt32(output, unchecked((int)parameterTypeOids.GetTypeOid(index)));
+            BinaryPrimitives.WriteInt32BigEndian(
+                destination[offset..],
+                unchecked((int)parameterTypeOids.GetTypeOid(index)));
+            offset += sizeof(int);
         }
+
+        output.Advance(offset);
     }
 
     private readonly struct TypeOidListSource(
@@ -515,11 +527,15 @@ public static class BlueTuskFrontendMessageWriter
         ArgumentNullException.ThrowIfNull(output);
         ValidateCString(name, parameterName);
         var nameLength = Encoding.UTF8.GetByteCount(name);
-        WriteByte(output, (byte)'D');
-        WriteInt32(output, checked(sizeof(int) + 1 + nameLength + 1));
-        WriteByte(output, targetType);
-        WriteUtf8(output, name, nameLength);
-        WriteByte(output, 0);
+        var length = checked(sizeof(int) + 1 + nameLength + 1);
+        var messageLength = checked(1 + length);
+        var destination = output.GetSpan(messageLength)[..messageLength];
+        destination[0] = (byte)'D';
+        BinaryPrimitives.WriteInt32BigEndian(destination[1..], length);
+        destination[5] = targetType;
+        var offset = 6 + Encoding.UTF8.GetBytes(name, destination[6..]);
+        destination[offset++] = 0;
+        output.Advance(offset);
     }
 
     private static void WriteClose(
@@ -531,11 +547,15 @@ public static class BlueTuskFrontendMessageWriter
         ArgumentNullException.ThrowIfNull(output);
         ValidateCString(name, parameterName);
         var nameLength = Encoding.UTF8.GetByteCount(name);
-        WriteByte(output, (byte)'C');
-        WriteInt32(output, checked(sizeof(int) + 1 + nameLength + 1));
-        WriteByte(output, targetType);
-        WriteUtf8(output, name, nameLength);
-        WriteByte(output, 0);
+        var length = checked(sizeof(int) + 1 + nameLength + 1);
+        var messageLength = checked(1 + length);
+        var destination = output.GetSpan(messageLength)[..messageLength];
+        destination[0] = (byte)'C';
+        BinaryPrimitives.WriteInt32BigEndian(destination[1..], length);
+        destination[5] = targetType;
+        var offset = 6 + Encoding.UTF8.GetBytes(name, destination[6..]);
+        destination[offset++] = 0;
+        output.Advance(offset);
     }
 
     public static void WriteExecute(IBufferWriter<byte> output, string portalName, int maximumRows = 0)
@@ -544,25 +564,34 @@ public static class BlueTuskFrontendMessageWriter
         ValidateCString(portalName, nameof(portalName));
         ArgumentOutOfRangeException.ThrowIfNegative(maximumRows);
         var portalLength = Encoding.UTF8.GetByteCount(portalName);
-        WriteByte(output, (byte)'E');
-        WriteInt32(output, checked(sizeof(int) + portalLength + 1 + sizeof(int)));
-        WriteUtf8(output, portalName, portalLength);
-        WriteByte(output, 0);
-        WriteInt32(output, maximumRows);
+        var length = checked(sizeof(int) + portalLength + 1 + sizeof(int));
+        var messageLength = checked(1 + length);
+        var destination = output.GetSpan(messageLength)[..messageLength];
+        destination[0] = (byte)'E';
+        BinaryPrimitives.WriteInt32BigEndian(destination[1..], length);
+        var offset = 5 + Encoding.UTF8.GetBytes(portalName, destination[5..]);
+        destination[offset++] = 0;
+        BinaryPrimitives.WriteInt32BigEndian(destination[offset..], maximumRows);
+        offset += sizeof(int);
+        output.Advance(offset);
     }
 
     public static void WriteSync(IBufferWriter<byte> output)
     {
         ArgumentNullException.ThrowIfNull(output);
-        WriteByte(output, (byte)'S');
-        WriteInt32(output, sizeof(int));
+        var destination = output.GetSpan(5);
+        destination[0] = (byte)'S';
+        BinaryPrimitives.WriteInt32BigEndian(destination[1..], sizeof(int));
+        output.Advance(5);
     }
 
     public static void WriteFlush(IBufferWriter<byte> output)
     {
         ArgumentNullException.ThrowIfNull(output);
-        WriteByte(output, (byte)'H');
-        WriteInt32(output, sizeof(int));
+        var destination = output.GetSpan(5);
+        destination[0] = (byte)'H';
+        BinaryPrimitives.WriteInt32BigEndian(destination[1..], sizeof(int));
+        output.Advance(5);
     }
 
     public static void WriteCopyData(

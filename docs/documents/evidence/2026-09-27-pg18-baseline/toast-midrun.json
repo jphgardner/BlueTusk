@@ -1,0 +1,1 @@
+[{"schema": "docs_load_dc5875037f5b409d8e0596813e15c241", "relation": "documents", "table_bytes": 7660847104, "toast_bytes": 7660593152, "toast_dead_estimate": 3693888, "toast_live_estimate": 8844, "toast_last_autovacuum": null, "toast_autovacuum_count": 0, "document_autovacuum_count": 3}]

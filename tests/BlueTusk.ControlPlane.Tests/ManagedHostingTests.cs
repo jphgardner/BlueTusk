@@ -119,6 +119,48 @@ public sealed class ManagedHostingTests
     }
 
     [Fact]
+    public async Task Fleet_inventory_is_stably_ordered_and_excludes_secret_material()
+    {
+        var store = new InMemoryManagedDeploymentStore();
+        await store.PutAsync(
+            Spec() with
+            {
+                DeploymentId = "zeta",
+                Workloads =
+                [
+                    Workload(ManagedWorkloadKind.Streams) with
+                    {
+                        SecretReferences = [new ManagedSecretReference("kubernetes", "secret-name")],
+                        Settings = new Dictionary<string, string>
+                        {
+                            ["sensitive-setting"] = "sensitive-value",
+                        },
+                    },
+                ],
+            },
+            expectedGeneration: 0);
+        await store.PutAsync(
+            Spec() with { DeploymentId = "alpha" },
+            expectedGeneration: 0);
+        var query = new ManagedDeploymentFleetQueryService(store);
+
+        var overview = await query.GetFleetOverviewAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(["alpha", "zeta"], overview.Deployments.Select(static item => item.DeploymentId));
+        var zeta = overview.Deployments[1];
+        Assert.Equal([ManagedWorkloadKind.Streams], zeta.WorkloadKinds);
+        Assert.Equal(2, zeta.Replicas);
+        Assert.DoesNotContain(
+            "secret-name",
+            System.Text.Json.JsonSerializer.Serialize(zeta),
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "sensitive-value",
+            System.Text.Json.JsonSerializer.Serialize(zeta),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Store_enforces_generation_CAS_and_copies_mutable_inputs()
     {
         var store = new InMemoryManagedDeploymentStore();
@@ -274,6 +316,54 @@ public sealed class ManagedHostingTests
     }
 
     [Fact]
+    public async Task Fleet_operation_handler_updates_desired_state_and_runs_fenced_recovery()
+    {
+        var store = new InMemoryManagedDeploymentStore();
+        var provider = new RecordingProvider();
+        await store.PutAsync(Spec(), expectedGeneration: 0);
+        var controller = Controller(store, provider);
+        _ = await controller.ReconcileAsync("orders");
+        var rebuilds = new RecordingRebuildHandler();
+        var handler = new ManagedDeploymentControlPlaneOperationHandler(
+            store,
+            controller,
+            rebuilds);
+
+        await handler.ExecuteAsync(new ControlPlaneOperationRequest(
+            Guid.NewGuid(),
+            ControlPlaneOperationKind.PauseDeployment,
+            "deployment:orders",
+            "PauseDeployment:deployment:orders",
+            "Maintenance"));
+        var paused = await store.GetAsync("orders");
+        Assert.NotNull(paused);
+        Assert.True(paused.Spec.Paused);
+        Assert.Equal(2, paused.Spec.Generation);
+        Assert.Equal(ManagedDeploymentState.Paused, paused.Status.State);
+
+        await handler.ExecuteAsync(new ControlPlaneOperationRequest(
+            Guid.NewGuid(),
+            ControlPlaneOperationKind.ResumeDeployment,
+            "deployment:orders",
+            "ResumeDeployment:deployment:orders",
+            "Maintenance complete"));
+        var resumed = await store.GetAsync("orders");
+        Assert.NotNull(resumed);
+        Assert.False(resumed.Spec.Paused);
+        Assert.Equal(3, resumed.Spec.Generation);
+        Assert.Equal(ManagedDeploymentState.Ready, resumed.Status.State);
+
+        await handler.ExecuteAsync(new ControlPlaneOperationRequest(
+            Guid.NewGuid(),
+            ControlPlaneOperationKind.RebuildDeployment,
+            "deployment:orders",
+            "RebuildDeployment:deployment:orders",
+            "Repair drift"));
+        Assert.Equal(1, rebuilds.Count);
+        Assert.Equal("orders", rebuilds.LastDeploymentId);
+    }
+
+    [Fact]
     public async Task Lease_tokens_increase_after_release_and_stale_release_is_rejected()
     {
         var store = new InMemoryManagedDeploymentStore();
@@ -407,6 +497,23 @@ public sealed class ManagedHostingTests
             cancellationToken.ThrowIfCancellationRequested();
             DeleteCount++;
             FencingTokens.Add(fencingToken);
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class RecordingRebuildHandler : IManagedDeploymentRebuildHandler
+    {
+        public int Count { get; private set; }
+
+        public string? LastDeploymentId { get; private set; }
+
+        public ValueTask RebuildAsync(
+            ManagedDeployment deployment,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Count++;
+            LastDeploymentId = deployment.Spec.DeploymentId;
             return ValueTask.CompletedTask;
         }
     }

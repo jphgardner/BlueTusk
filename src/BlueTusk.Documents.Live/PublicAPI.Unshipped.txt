@@ -1,0 +1,3 @@
+#nullable enable
+BlueTusk.Documents.Live.DocumentLiveQuery
+static BlueTusk.Documents.Live.DocumentLiveQuery.Create<T>(BlueTusk.Documents.DocumentStore! store, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, string! name, string! databaseIdentity, string! version, System.Func<BlueTusk.Live.LiveSecurityScope!, string!>! authenticatedTenant, int maximumResults = 100, System.Text.Json.JsonElement? contains = null, string? afterId = null) -> BlueTusk.Live.LiveQueryPlan<BlueTusk.Documents.StoredDocument<T>!, string!>!

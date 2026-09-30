@@ -177,7 +177,7 @@ public static class BlueTuskBackendMessageDecoder
         if (count < 1 || count != expectedFieldCount)
         {
             throw new BlueTuskProtocolException(
-                "DataRow field count does not match its row description.");
+                $"DataRow field count {count} does not match its row description field count {expectedFieldCount}.");
         }
 
         ValidateCollectionCount(count, reader.Remaining, sizeof(int), "DataRow field");

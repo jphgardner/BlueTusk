@@ -2,6 +2,8 @@ namespace BlueTusk.Data.LargeObjects;
 
 internal interface IBlueTuskLargeObjectOperations
 {
+    bool SupportsDirectBufferReads => false;
+
     byte[] Read(int count) =>
         throw new NotSupportedException("This large-object implementation does not provide synchronous I/O.");
 

@@ -21,7 +21,7 @@ namespace BlueTusk.Data;
     "Usage",
     "CA2201:Do not raise reserved exception types",
     Justification = "ADO.NET readers conventionally use IndexOutOfRangeException for missing columns.")]
-public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
+public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator, Internal.IProviderUpdateResult
 {
     private static readonly Encoding StrictUtf8 = new UTF8Encoding(false, true);
     private static readonly long PostgreSqlEpochTicks =
@@ -99,6 +99,25 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
     public override bool IsClosed => Volatile.Read(ref _closed) != 0;
 
     public override int RecordsAffected => GetRecordsAffected();
+
+    int Internal.IProviderUpdateResult.CurrentStatementRowsAffected
+    {
+        get
+        {
+            EnsureOpen();
+            var tag = _portal?.CommandTag ?? CurrentResultSet?.CommandTag;
+            if (tag is not null &&
+                (tag.StartsWith("INSERT ", StringComparison.Ordinal) ||
+                 tag.StartsWith("UPDATE ", StringComparison.Ordinal) ||
+                 tag.StartsWith("DELETE ", StringComparison.Ordinal) ||
+                 tag.StartsWith("MERGE ", StringComparison.Ordinal)) &&
+                BlueTuskCommandTagParser.TryGetRecordsAffected(tag, out var count))
+            {
+                return count;
+            }
+            throw new InvalidOperationException("The current result has no completed DML command count.");
+        }
+    }
 
     public override int Depth => 0;
 
@@ -327,6 +346,9 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
     public override string GetDataTypeName(int ordinal) =>
         BlueTuskValueDecoder.GetDataTypeName(GetResolvedField(ordinal));
 
+    /// <summary>Returns the unsigned PostgreSQL RowDescription type OID for a column.</summary>
+    public uint GetPostgreSqlTypeOid(int ordinal) => GetField(ordinal).TypeOid;
+
     [return: DynamicallyAccessedMembers(
         DynamicallyAccessedMemberTypes.PublicFields |
         DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -358,6 +380,23 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
     }
 
     public override bool IsDBNull(int ordinal) => ReadRawValue(ValidateOrdinal(ordinal)) is null;
+
+    /// <summary>
+    /// Returns the encoded PostgreSQL field size without decoding or copying the value,
+    /// or null for SQL NULL. The size includes any binary-format prefix and is not a
+    /// character count. Sequential readers require the same ascending ordinal access
+    /// discipline as other field operations.
+    /// </summary>
+    public int? GetFieldByteLength(int ordinal)
+    {
+        ordinal = ValidateOrdinal(ordinal);
+        if (_portal is not null && _sequentialAccess)
+        {
+            var row = GetStreamingRow();
+            return row.IsDBNull(ordinal) ? null : row.GetFieldLength(ordinal);
+        }
+        return ReadRawValue(ordinal)?.Length;
+    }
 
     public override async Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellationToken)
     {
@@ -850,7 +889,9 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
                 column.ColumnSize is { } size ? size : DBNull.Value;
             row[SchemaTableColumn.DataType] = column.DataType ?? typeof(object);
             row[SchemaTableColumn.ProviderType] =
-                column is BlueTuskDbColumn blueTusk ? checked((int)blueTusk.TypeOid) : 0;
+                column is BlueTuskDbColumn blueTusk
+                    ? blueTusk.TypeOid <= int.MaxValue ? (object)(int)blueTusk.TypeOid : DBNull.Value
+                    : 0;
             row[SchemaTableColumn.IsLong] = column.ColumnSize is null;
             row[SchemaTableColumn.AllowDBNull] = column.AllowDBNull ?? true;
             row[SchemaTableOptionalColumn.IsReadOnly] = column.IsReadOnly ?? true;
@@ -1128,6 +1169,25 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         if (resolved.Type is not null && resolved.Codec is IBlueTuskCodec<T>)
         {
             return BlueTuskValueDecoder.DecodeTyped<T>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskNullableArrayCodec)
+        {
+            if (typeof(T) == typeof(int?[]))
+            {
+                var value = BlueTuskValueDecoder.DecodeNullableArray<int>(resolved, raw);
+                return Unsafe.As<int?[], T>(ref value);
+            }
+            if (typeof(T) == typeof(short?[]))
+            {
+                var value = BlueTuskValueDecoder.DecodeNullableArray<short>(resolved, raw);
+                return Unsafe.As<short?[], T>(ref value);
+            }
+            if (typeof(T) == typeof(long?[]))
+            {
+                var value = BlueTuskValueDecoder.DecodeNullableArray<long>(resolved, raw);
+                return Unsafe.As<long?[], T>(ref value);
+            }
         }
 
         if (typeof(T) == typeof(decimal) &&

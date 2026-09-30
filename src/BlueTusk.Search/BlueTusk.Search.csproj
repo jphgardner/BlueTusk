@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Search</BlueTuskProductFamily>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Versioned tenant and permission scoped PostgreSQL full-text and hybrid search.</Description>
+    <PackageTags>postgresql;search;fulltext;hybrid;permissions</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Search.props" />
+</Project>

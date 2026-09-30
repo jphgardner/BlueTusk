@@ -1,15 +1,48 @@
 # BlueTusk Streams
 
-BlueTusk Streams is the transaction-preserving application CDC layer above
-`BlueTusk.Replication.PgOutput`. The published stable `1.0.0` family
-contains the transaction kernel, typed core mappings, no-gap snapshot
-bootstrap, hosted consumers, health/telemetry, snapshot/transaction consumer
-lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and
-PostgreSQL durable relay fan-out. Candidate packages can be reproduced, but
-publication is disabled until the immutable Streams V1 candidate completes its
-full manual build and 72-hour endurance evidence.
+BlueTusk Streams turns PostgreSQL logical replication into complete committed
+transactions an application can process and acknowledge. It handles large
+transaction spooling, source identity, checkpoints, leases, restart, and a
+no-gap initial snapshot.
 
-## Implemented kernel
+Use Streams when application code needs a reliable change feed. Use the lower
+level [replication API](../replication/README.md) only when you need raw protocol
+messages.
+
+## Run the sample
+
+The sample creates a hosted snapshot-then-stream consumer and prints each
+committed transaction:
+
+```powershell
+$env:BLUETUSK_STREAMS_SOURCE = "Host=localhost;Database=app;Username=replicator;Password=local-only;SSL Mode=Disable;Channel Binding=Disable"
+$env:BlueTusk__Streams__Slot = "orders_sample"
+$env:BlueTusk__Streams__Publications__0 = "app_changes"
+dotnet run --project samples/BlueTusk.Samples.Streams
+```
+
+Create the PostgreSQL publication and replication role first. The TLS-disabled
+connection is for an isolated local database only.
+
+## The processing rule
+
+```csharp
+await foreach (var delivery in changes.ReadTransactionsAsync())
+{
+    await ApplyTheCompleteTransactionAsync(delivery.Transaction);
+    await SaveCheckpointAsync(delivery.Transaction.CommitEndPosition);
+    await delivery.AcknowledgeAsync();
+}
+```
+
+Do not acknowledge before the downstream effect and checkpoint are durable. A
+crash can redeliver the last unconfirmed transaction, so the downstream write
+must use stable change identities or an atomic checkpoint.
+
+For a new data set, use [snapshot and catch-up](snapshot-bootstrap.md) rather
+than combining an unrelated table export with a later WAL position.
+
+## What Streams provides
 
 - immutable source, relation, column, row, transaction, change, and stable change-ID models;
 - explicit value, database-null, not-published, unavailable-old-value, unchanged-TOAST, and decoding-failure column states;
@@ -128,6 +161,8 @@ See the [snapshot-then-stream sample](sample.md) for a runnable hosted consumer 
 
 See the [1.0.0 release record](release-notes-1.0.0.md) for the package list,
 guarantees, evidence gate, and support boundary.
+See the coordinated [1.1.0-rc.1 release record](../releases/1.1.0-rc.1.md) for
+the public RC version, exact commit, registry verification, and stable gate.
 
 ## Performance baseline
 

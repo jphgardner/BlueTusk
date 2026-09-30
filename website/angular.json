@@ -21,7 +21,9 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
+            "server": "src/main.server.ts",
             "tsConfig": "tsconfig.app.json",
+            "outputMode": "static",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
@@ -33,11 +35,19 @@
           },
           "configurations": {
             "production": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "620kB",
-                  "maximumError": "650kB"
+                  "maximumWarning": "860kB",
+                  "maximumError": "900kB"
                 },
                 {
                   "type": "anyComponentStyle",

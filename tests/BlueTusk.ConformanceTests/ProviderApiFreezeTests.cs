@@ -20,6 +20,16 @@ public sealed class ProviderApiFreezeTests
         Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
         Assert.Equal("1.0.0-candidate", root.GetProperty("baseline").GetString());
         Assert.Equal("utf8-lf", root.GetProperty("normalization").GetString());
+        var reviewedAdditions = root.GetProperty("reviewedAdditions")
+            .EnumerateArray()
+            .ToDictionary(
+                item => item.GetProperty("path").GetString()!,
+                item => new
+                {
+                    Release = item.GetProperty("release").GetString()!,
+                    Digest = item.GetProperty("sha256").GetString()!,
+                },
+                StringComparer.Ordinal);
 
         var registered = root.GetProperty("files")
             .EnumerateArray()
@@ -50,8 +60,35 @@ public sealed class ProviderApiFreezeTests
             var unshippedPath = Path.Combine(
                 Path.GetDirectoryName(shippedPath)!,
                 "PublicAPI.Unshipped.txt");
-            Assert.Equal("#nullable enable\n", Normalize(File.ReadAllText(unshippedPath)));
+            var unshippedContents = Normalize(File.ReadAllText(unshippedPath));
+            var unshippedRelative = Path.GetRelativePath(repositoryRoot, unshippedPath)
+                .Replace('\\', '/');
+            if (string.Equals(unshippedContents, "#nullable enable\n", StringComparison.Ordinal))
+            {
+                Assert.DoesNotContain(unshippedRelative, reviewedAdditions.Keys);
+                continue;
+            }
+
+            var addition = Assert.Contains(unshippedRelative, reviewedAdditions);
+            Assert.Equal("1.2.0", addition.Release);
+            var unshippedDigest = Convert.ToHexString(
+                    SHA256.HashData(Encoding.UTF8.GetBytes(unshippedContents)))
+                .ToLowerInvariant();
+            Assert.Equal(addition.Digest, unshippedDigest);
         }
+
+        Assert.Equal(
+            reviewedAdditions.Keys.Order(StringComparer.Ordinal),
+            discovered
+                .Select(path => Path.Combine(
+                    Path.GetDirectoryName(path)!,
+                    "PublicAPI.Unshipped.txt")
+                    .Replace('\\', '/'))
+                .Where(path => !string.Equals(
+                    Normalize(File.ReadAllText(Path.Combine(repositoryRoot, path))),
+                    "#nullable enable\n",
+                    StringComparison.Ordinal))
+                .Order(StringComparer.Ordinal));
     }
 
     private static bool IsProviderApiBaseline(string path)

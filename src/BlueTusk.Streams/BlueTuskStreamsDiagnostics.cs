@@ -29,6 +29,34 @@ public static class BlueTuskStreamsDiagnostics
         Meter.CreateCounter<long>("bluetusk.streams.delivery.settlement.failures", "{failure}");
     private static readonly Histogram<double> DeliveryDuration =
         Meter.CreateHistogram<double>("bluetusk.streams.delivery.duration", "s");
+    private static readonly Histogram<double> SpoolOperationDuration =
+        Meter.CreateHistogram<double>("bluetusk.streams.spool.operation.duration", "s",
+            "Time spent in spool completion flush, close and rename operations, including failed attempts.");
+
+    internal static long StartSpoolOperation() =>
+        SpoolOperationDuration.Enabled ? Stopwatch.GetTimestamp() : 0;
+
+    internal static void RecordSpoolOperation(string operation, long started, bool succeeded)
+    {
+        if (started != 0 && SpoolOperationDuration.Enabled)
+        {
+            var tags = new TagList
+            {
+                { "bluetusk.streams.spool.operation", operation },
+                { "bluetusk.streams.spool.outcome", succeeded ? "success" : "failure" },
+            };
+            try
+            {
+                SpoolOperationDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds, tags);
+            }
+            catch (Exception)
+            {
+                // A user-supplied metrics callback must not turn a completed
+                // durable flush/rename into a failed transaction or hide an I/O
+                // exception. Only observer dispatch is isolated here.
+            }
+        }
+    }
 
     internal static void RecordTransaction(ChangeTransaction transaction)
     {

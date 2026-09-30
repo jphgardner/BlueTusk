@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Data;
+using System.Runtime.InteropServices;
 using System.Text;
 using BlueTusk.TypeSystem;
 
@@ -318,6 +319,8 @@ public sealed class BlueTuskParameterEncoderTests
         Assert.Equal(91_100U, encoded.TypeOid);
         Assert.Equal(1, encoded.FormatCode);
         Assert.Equal(1024, encoded.Value!.Value.Length);
+        Assert.True(MemoryMarshal.TryGetArray(encoded.Value.Value, out var segment));
+        Assert.Equal(encoded.Value.Value.Length, segment.Array!.Length);
         Assert.All(encoded.Value.Value.ToArray(), item => Assert.Equal((byte)'x', item));
     }
 

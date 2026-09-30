@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "minimumInstrumentCount": 62,
+  "minimumInstrumentCount": 105,
   "cardinalityClasses": {
     "none": "No attributes create additional time series.",
     "bounded": "Every attribute value comes from a closed enum or fixed operation set.",
@@ -52,7 +52,8 @@
         { "name": "bluetusk.streams.deliveries.active", "type": "UpDownCounter", "unit": "{delivery}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled"] },
         { "name": "bluetusk.streams.deliveries.settled", "type": "Counter", "unit": "{delivery}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.outcome"] },
         { "name": "bluetusk.streams.delivery.settlement.failures", "type": "Counter", "unit": "{failure}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.operation"] },
-        { "name": "bluetusk.streams.delivery.duration", "type": "Histogram", "unit": "s", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.outcome"] }
+        { "name": "bluetusk.streams.delivery.duration", "type": "Histogram", "unit": "s", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.outcome"] },
+        { "name": "bluetusk.streams.spool.operation.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["bluetusk.streams.spool.operation", "bluetusk.streams.spool.outcome"] }
       ]
     },
     {
@@ -103,6 +104,108 @@
         { "name": "bluetusk.control_plane.operations.active", "type": "UpDownCounter", "unit": "{operation}", "cardinality": "bounded", "tags": ["bluetusk.control_plane.operation"] },
         { "name": "bluetusk.control_plane.operations", "type": "Counter", "unit": "{operation}", "cardinality": "bounded", "tags": ["bluetusk.control_plane.operation", "bluetusk.control_plane.outcome"] },
         { "name": "bluetusk.control_plane.operation.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["bluetusk.control_plane.operation", "bluetusk.control_plane.outcome"] }
+      ]
+    },
+    {
+      "name": "BlueTusk.Documents.Health",
+      "sourceFile": "src/BlueTusk.Documents.AspNetCore/DocumentStoreHealthCheck.cs",
+      "instruments": [
+        {"name": "bluetusk.documents.health.probes", "type": "Counter", "unit": "{probe}", "cardinality": "bounded", "tags": ["status"]},
+        {"name": "bluetusk.documents.health.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["status"]}
+      ]
+    },
+    {
+      "name": "BlueTusk.Edge.Server.Health",
+      "sourceFile": "src/BlueTusk.Edge.AspNetCore/EdgeServerHealthCheck.cs",
+      "instruments": [
+        {"name": "bluetusk.edge.health.probes", "type": "Counter", "unit": "{probe}", "cardinality": "bounded", "tags": ["status"]},
+        {"name": "bluetusk.edge.health.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["status"]}
+      ]
+    },
+    {
+      "name": "BlueTusk.Events",
+      "sourceFile": "src/BlueTusk.Events/EventsDiagnostics.cs",
+      "instruments": [
+        {"name": "bluetusk.events.append.prepared", "type": "Counter", "unit": "{event}", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.events.append.duplicates", "type": "Counter", "unit": "{event}", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.events.inbox.attempts", "type": "Counter", "unit": "{event}", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.events.replay.committed", "type": "Counter", "unit": "{event}", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.events.replay.remaining", "type": "Histogram", "unit": "{event}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.events.replay.fenced", "type": "Counter", "unit": "{attempt}", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.events.replay.observed_remaining", "type": "Histogram", "unit": "{event}", "cardinality": "none", "tags": []}
+      ]
+    },
+    {
+      "name": "BlueTusk.Jobs",
+      "sourceFile": "src/BlueTusk.Jobs/JobTelemetry.cs",
+      "instruments": [
+        {"name": "bluetusk.jobs.claimed", "type": "Counter", "unit": "{job}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.jobs.succeeded", "type": "Counter", "unit": "{job}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.jobs.failed_attempts", "type": "Counter", "unit": "{attempt}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.jobs.fenced_operations", "type": "Counter", "unit": "{operation}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.jobs.store_failures", "type": "Counter", "unit": "{failure}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.jobs.handler.duration", "type": "Histogram", "unit": "s", "cardinality": "none", "tags": []}
+      ]
+    },
+    {
+      "name": "BlueTusk.Jobs.DependencyInjection",
+      "sourceFile": "src/BlueTusk.Jobs.DependencyInjection/JobQueueHealthCheck.cs",
+      "instruments": [
+        {"name": "bluetusk.jobs.health.probes", "type": "Counter", "unit": "{probe}", "cardinality": "bounded", "tags": ["status"]},
+        {"name": "bluetusk.jobs.health.duration", "type": "Histogram", "unit": "s", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.jobs.health.pending_observed", "type": "Histogram", "unit": "{job}", "cardinality": "none", "tags": []}
+      ]
+    },
+    {
+      "name": "BlueTusk.Projections",
+      "sourceFile": "src/BlueTusk.Projections/ProjectionsDiagnostics.cs",
+      "instruments": [
+        {"name": "bluetusk.projections.commits", "type": "Counter", "unit": "{transaction}", "cardinality": "bounded", "tags": ["operation"]},
+        {"name": "bluetusk.projections.fenced", "type": "Counter", "unit": "{attempt}", "cardinality": "bounded", "tags": ["operation"]},
+        {"name": "bluetusk.projections.bound_exceeded", "type": "Counter", "unit": "{attempt}", "cardinality": "bounded", "tags": ["operation"]},
+        {"name": "bluetusk.projections.apply.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.projections.output.writes", "type": "Histogram", "unit": "{row}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.projections.invalidations", "type": "Histogram", "unit": "{document}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.projections.output.bytes", "type": "Histogram", "unit": "By", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.projections.retired.rows_pruned", "type": "Counter", "unit": "{row}", "cardinality": "bounded", "tags": ["operation"]},
+        {"name": "bluetusk.projections.reset.rows_deleted", "type": "Counter", "unit": "{row}", "cardinality": "bounded", "tags": ["operation"]}
+      ]
+    },
+    {
+      "name": "BlueTusk.Projections.Live",
+      "sourceFile": "src/BlueTusk.Projections.Live/ProjectionLiveDiagnostics.cs",
+      "instruments": [
+        {"name": "bluetusk.projections.live.publisher.acquisitions", "type": "Counter", "unit": "{attempt}", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.projections.live.publisher.fenced", "type": "Counter", "unit": "{attempt}", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.projections.live.replay.committed", "type": "Counter", "unit": "{event}", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.projections.live.replay.duplicates", "type": "Counter", "unit": "{event}", "cardinality": "bounded", "tags": ["outcome"]},
+        {"name": "bluetusk.projections.live.replay.pruned", "type": "Counter", "unit": "{event}", "cardinality": "bounded", "tags": ["outcome"]}
+      ]
+    },
+    {
+      "name": "BlueTusk.Search.Health",
+      "sourceFile": "src/BlueTusk.Search.AspNetCore/SearchStoreHealthCheck.cs",
+      "instruments": [
+        {"name": "bluetusk.search.health.probes", "type": "Counter", "unit": "{probe}", "cardinality": "bounded", "tags": ["status"]},
+        {"name": "bluetusk.search.health.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["status"]}
+      ]
+    },
+    {
+      "name": "BlueTusk.Workflows",
+      "sourceFile": "src/BlueTusk.Workflows/WorkflowWorker.cs",
+      "instruments": [
+        {"name": "bluetusk.workflows.recovery_failures", "type": "Counter", "unit": "{failure}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.workflows.recovered_dispatches", "type": "Counter", "unit": "{dispatch}", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.workflows.activity.duration", "type": "Histogram", "unit": "s", "cardinality": "none", "tags": []}
+      ]
+    },
+    {
+      "name": "BlueTusk.Workflows.DependencyInjection",
+      "sourceFile": "src/BlueTusk.Workflows.DependencyInjection/WorkflowScopeHealthCheck.cs",
+      "instruments": [
+        {"name": "bluetusk.workflows.health.probes", "type": "Counter", "unit": "{probe}", "cardinality": "bounded", "tags": ["status"]},
+        {"name": "bluetusk.workflows.health.duration", "type": "Histogram", "unit": "s", "cardinality": "none", "tags": []},
+        {"name": "bluetusk.workflows.health.running_observed", "type": "Histogram", "unit": "{workflow}", "cardinality": "none", "tags": []}
       ]
     }
   ]

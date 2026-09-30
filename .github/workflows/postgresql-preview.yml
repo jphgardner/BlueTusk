@@ -1,0 +1,84 @@
+name: Historical PostgreSQL 19 preview compatibility
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type TEST-HISTORICAL-PG19-PREVIEW (not a stable release gate)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  historical-preview:
+    if: inputs.confirmation == 'TEST-HISTORICAL-PG19-PREVIEW'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Verify historical preview fixture identity
+        shell: pwsh
+        run: ./eng/verify-postgresql19-programme.ps1
+      - name: Restore locked dependencies
+        run: dotnet restore BlueTusk.slnx --locked-mode
+      - name: Start historical PostgreSQL 19 Beta 3 fixture
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+      - name: Validate historical preview compatibility
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/historical-postgres19
+      - name: Retain historical preview results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: historical-postgres19-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/test-results/historical-postgres19
+          if-no-files-found: error
+          retention-days: 90
+      - name: Stop historical fixture
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml stop postgres19
+
+  graph-application-preview:
+    name: Historical Graph application integration (not core qualification)
+    if: inputs.confirmation == 'TEST-HISTORICAL-PG19-PREVIEW'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Build exact local RC feed
+        shell: pwsh
+        run: ./eng/build-prerelease-packages.ps1
+      - name: Restore Graph application package consumers from the exact candidate
+        shell: pwsh
+        run: |
+          dotnet restore applications/BlueTusk.Applications.slnx `
+            --configfile eng/nuget/applications-candidate.config `
+            --packages artifacts/application-nuget-cache `
+            --force-evaluate --no-http-cache
+          ./eng/verify-application-candidate-restore.ps1
+      - name: Test both retained Graph applications on the qualified historical fixture
+        shell: pwsh
+        run: >-
+          ./eng/test-applications-postgresql.ps1
+          -ReleaseTrack ContinuousGraphPreview
+          -OutputRoot artifacts/application-postgresql-graph-preview
+      - name: Retain Graph application preview evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: historical-graph-applications-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/application-postgresql-graph-preview
+          if-no-files-found: error
+          retention-days: 90

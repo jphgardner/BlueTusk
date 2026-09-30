@@ -14,7 +14,10 @@ param(
 
     [string] $CandidateProvenancePath,
 
-    [string] $ExpectedPostgreSqlImage
+    [string] $ExpectedPostgreSqlImage,
+
+    [ValidateSet('Legacy', 'Core')]
+    [string] $ReleaseTrack = 'Legacy'
 )
 
 Set-StrictMode -Version Latest
@@ -70,8 +73,12 @@ if ($RequiredDuration -ge $releaseDuration)
     {
         $failures.Add('The release report has no candidate-package provenance.')
     }
-    if ([string]$report.postgresqlImage -notmatch
-        '^postgres:19[^@\s]+@sha256:[0-9a-f]{64}$')
+    $imagePattern = if ($ReleaseTrack -eq 'Core')
+    {
+        '^postgres:(?:15|16|17|18)(?:\.\d+)?-alpine@sha256:[0-9a-f]{64}$'
+    }
+    else { '^postgres:19[^@\s]+@sha256:[0-9a-f]{64}$' }
+    if ([string]$report.postgresqlImage -notmatch $imagePattern)
     {
         $failures.Add('The release report has no digest-pinned PostgreSQL image.')
     }

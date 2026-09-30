@@ -4,9 +4,16 @@ public sealed record BlueTuskDashboardOptions
 {
     public string RoutePrefix { get; set; } = "/bluetusk";
 
+    public string BrandLabel { get; set; } = "Control plane";
+
+    public string? DataProvenanceNotice { get; set; }
+
     public string ReadAuthorizationPolicy { get; set; } = "BlueTusk.ControlPlane.Read";
 
     public string MutationAuthorizationPolicy { get; set; } = "BlueTusk.ControlPlane.Mutate";
+
+    public string GraphExecutionAuthorizationPolicy { get; set; } =
+        "BlueTusk.ControlPlane.GraphExecute";
 
     public string ViewerRole { get; set; } = "BlueTuskViewer";
 
@@ -14,14 +21,19 @@ public sealed record BlueTuskDashboardOptions
 
     public string AdministratorRole { get; set; } = "BlueTuskAdministrator";
 
+    public string GraphExecutorRole { get; set; } = "BlueTuskOperator";
+
     internal void Validate()
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(RoutePrefix);
+        ArgumentException.ThrowIfNullOrWhiteSpace(BrandLabel);
         ArgumentException.ThrowIfNullOrWhiteSpace(ReadAuthorizationPolicy);
         ArgumentException.ThrowIfNullOrWhiteSpace(MutationAuthorizationPolicy);
+        ArgumentException.ThrowIfNullOrWhiteSpace(GraphExecutionAuthorizationPolicy);
         ArgumentException.ThrowIfNullOrWhiteSpace(ViewerRole);
         ArgumentException.ThrowIfNullOrWhiteSpace(OperatorRole);
         ArgumentException.ThrowIfNullOrWhiteSpace(AdministratorRole);
+        ArgumentException.ThrowIfNullOrWhiteSpace(GraphExecutorRole);
         if (!RoutePrefix.StartsWith('/') ||
             RoutePrefix.Length > 1 && RoutePrefix.EndsWith('/') ||
             RoutePrefix.Any(character =>

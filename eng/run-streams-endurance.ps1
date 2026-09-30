@@ -105,11 +105,12 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sourceCommit))
     throw 'Streams endurance could not resolve the source commit.'
 }
 
-$sourceBranch = (& git -C $RepositoryRoot branch --show-current).Trim()
+$sourceBranchOutput = @(& git -C $RepositoryRoot branch --show-current)
 if ($LASTEXITCODE -ne 0)
 {
     throw 'Streams endurance could not resolve the source branch.'
 }
+$sourceBranch = ($sourceBranchOutput -join [Environment]::NewLine).Trim()
 
 $trackedStatus = (& git -C $RepositoryRoot status --porcelain --untracked-files=no)
 if ($LASTEXITCODE -ne 0)

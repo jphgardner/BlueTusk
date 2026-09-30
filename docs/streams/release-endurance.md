@@ -1,6 +1,6 @@
 # Streams release endurance
 
-Streams 1.0 requires a completed 72-hour fault-injected PostgreSQL relay run.
+Streams stable release requires a completed 72-hour fault-injected PostgreSQL relay run.
 The executable runner is `eng/run-streams-endurance.ps1`; the dedicated
 workflow is `.github/workflows/streams-release-endurance.yml`.
 
@@ -37,6 +37,13 @@ fault-injection counters, the 64 MiB storage ceiling, zero final retained
 storage, clean isolated source, immutable Release artifacts, and worktree
 cleanup.
 
+For the five-family 1.2 core track, the release workflow uses digest-pinned
+PostgreSQL 18 and passes `-ReleaseTrack Core` to this reader. The default
+`Legacy` reader retains historical PostgreSQL 19 evidence rules; it must not be
+used to reinterpret a new core run. PostgreSQL 19 and Graph preview are separate
+from this core gate. Kubernetes core runs use `postgresql-core` with separate
+storage; existing Graph preview storage is not downgraded.
+
 The native report does not by itself claim the complete production disturbance
 matrix. During the same 72-hour observation window, operators must also record
 process death, network interruption, controlled storage exhaustion, credential
@@ -50,7 +57,7 @@ content-addressed and verified with the Sync records by the
 The endurance case is skipped unless `BLUETUSK_RELAY_ENDURANCE_DURATION` is explicitly set. A short run exercises the same code path without claiming the release gate:
 
 ```powershell
-$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
+$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
 ./eng/run-streams-endurance.ps1 `
   -Duration '00:00:15' `
   -MinimumTransactions 260 `
@@ -62,6 +69,7 @@ Validate the smoke with the same fail-closed reader:
 
 ```powershell
 ./eng/verify-streams-endurance-report.ps1 `
+  -ReleaseTrack Core `
   -ReportPath 'artifacts/test-results/streams-relay-endurance-smoke/report.json' `
   -RequiredDuration '00:00:15' `
   -MinimumTransactions 260 `

@@ -31,22 +31,22 @@ x-postgres-common: &postgres-common
 services:
   postgres15:
     <<: *postgres-common
-    image: postgres:15-alpine
+    image: postgres:15-alpine@sha256:f7d23353e1b15400d22ebe31189f4d314b87a4c129cc400c8c2d8d4ca127bf81
     ports: ["5415:5432"]
 
   postgres16:
     <<: *postgres-common
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
     ports: ["5416:5432"]
 
   postgres17:
     <<: *postgres-common
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
     ports: ["5417:5432"]
 
   postgres18:
     <<: *postgres-common
-    image: postgres:18-alpine
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
     ports: ["5418:5432"]
 
   oauth18:
@@ -100,7 +100,7 @@ services:
 
   pgvector18:
     <<: *postgres-common
-    image: pgvector/pgvector:pg18-trixie
+    image: pgvector/pgvector:pg18-trixie@sha256:2ba9ca5f2e7daa0f0e7723cba1ee9167bab54efd3640516a44ac1a928dd67e7a
     profiles: ["extension-tests"]
     ports: ["5518:5432"]
 

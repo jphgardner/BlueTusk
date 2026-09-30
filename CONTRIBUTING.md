@@ -4,6 +4,12 @@ BlueTusk treats PostgreSQL documentation, protocol specifications, catalogues, a
 
 ## Development workflow
 
+Start with [the contributor setup and focused commands](docs/contributing/development.md).
+Run `./eng/dev.ps1` to check your tools, then
+`./eng/dev.ps1 -Task Check -Family Live` (or the family you are changing) to
+validate the relevant code and repository contracts. Database checks are
+explicit through `-RequireDatabase`, and every run retains its test results.
+
 1. Create or reference an issue that states the PostgreSQL behaviour being implemented.
 2. Keep dependencies flowing in the direction documented in `docs/architecture/overview.md`.
 3. Keep every project in the product-oriented solution hierarchy documented in

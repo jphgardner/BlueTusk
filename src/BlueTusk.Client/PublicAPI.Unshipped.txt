@@ -1,1 +1,3 @@
 #nullable enable
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsRepack.get -> bool
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsRepack.init -> void

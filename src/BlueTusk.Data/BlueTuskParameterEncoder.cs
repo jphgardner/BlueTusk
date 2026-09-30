@@ -611,6 +611,11 @@ internal static class BlueTuskParameterEncoder
                 $"The {type.QualifiedName} codec selected unsupported wire format {format}.");
         }
 
+        if (!rentBuffer)
+        {
+            return EncodeRegisteredOwned(typeOid, type, codec, value, format);
+        }
+
         var length = Math.Max(256, reusableBuffer?.Length ?? 0);
         while (true)
         {
@@ -627,6 +632,47 @@ internal static class BlueTuskParameterEncoder
             catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
             {
                 length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+            }
+        }
+    }
+
+    private static BlueTuskExtendedQueryParameter EncodeRegisteredOwned(
+        uint typeOid,
+        BlueTuskTypeDescriptor type,
+        IBlueTuskCodec codec,
+        object value,
+        BlueTuskDataFormat format)
+    {
+        var length = 256;
+        byte[]? temporary = null;
+        try
+        {
+            while (true)
+            {
+                temporary = ArrayPool<byte>.Shared.Rent(length);
+                try
+                {
+                    var writer = new BlueTuskWriter(temporary);
+                    codec.Write(ref writer, value, format, type);
+                    var owned = temporary.AsSpan(0, writer.WrittenCount).ToArray();
+                    return new BlueTuskExtendedQueryParameter(
+                        typeOid,
+                        (short)format,
+                        owned);
+                }
+                catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
+                {
+                    ArrayPool<byte>.Shared.Return(temporary, clearArray: true);
+                    temporary = null;
+                    length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+                }
+            }
+        }
+        finally
+        {
+            if (temporary is not null)
+            {
+                ArrayPool<byte>.Shared.Return(temporary, clearArray: true);
             }
         }
     }

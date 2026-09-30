@@ -14,6 +14,8 @@ internal sealed class BlueTuskLargeObjectOperations :
     private readonly BlueTuskCommand _readCommand;
     private readonly BlueTuskParameter<int> _readCountParameter;
 
+    public bool SupportsDirectBufferReads => true;
+
     public BlueTuskLargeObjectOperations(
         BlueTuskConnection connection,
         BlueTuskTransaction transaction,

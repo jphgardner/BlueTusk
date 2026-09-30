@@ -8,6 +8,7 @@ $repositoryRoot = (Resolve-Path -LiteralPath (Split-Path $PSScriptRoot -Parent))
 $workflowNames = @(
     'streams-release-endurance.yml',
     'sync-release-endurance.yml',
+    'live-control-plane-release-endurance.yml',
     'continuous-graph-release-endurance.yml'
 )
 
@@ -46,6 +47,58 @@ foreach ($workflowName in $workflowNames)
     }
 }
 
+$runnerNames = @(
+    'run-streams-endurance.ps1',
+    'run-sync-endurance.ps1',
+    'run-live-control-plane-endurance.ps1',
+    'run-continuous-graph-endurance.ps1'
+)
+$unsafeDetachedHeadPattern =
+    '\(\[string\]\(& git -C \$RepositoryRoot branch --show-current\)\)\.Trim\(\)'
+$safeDetachedHeadPattern =
+    '(?s)\$sourceBranchOutput\s*=\s*@\(& git -C \$RepositoryRoot branch --show-current\).*?' +
+    '\$sourceBranch\s*=\s*\(\$sourceBranchOutput -join \[Environment\]::NewLine\)\.Trim\(\)'
+
+foreach ($runnerName in $runnerNames)
+{
+    $runnerPath = Join-Path $repositoryRoot "eng/$runnerName"
+    $source = Get-Content -LiteralPath $runnerPath -Raw
+    if ($source -match $unsafeDetachedHeadPattern -or
+        $source -notmatch $safeDetachedHeadPattern)
+    {
+        throw (
+            "Endurance runner '$runnerName' must preserve an empty branch " +
+            'name when the exact candidate is checked out at detached HEAD.')
+    }
+}
+
+$deploymentPath = Join-Path $repositoryRoot 'eng/deploy-kubernetes-endurance.ps1'
+$deploymentSource = Get-Content -LiteralPath $deploymentPath -Raw
+$requiredDownloaderMarkers = @(
+    '$relativeOutput = [IO.Path]::GetRelativePath(',
+    'Push-Location $repositoryRoot',
+    'runAsNonRoot: true',
+    'runAsUser: 1654',
+    'type: RuntimeDefault',
+    '--ignore-not-found --wait=true'
+)
+foreach ($marker in $requiredDownloaderMarkers)
+{
+    if (-not $deploymentSource.Contains($marker, [StringComparison]::Ordinal))
+    {
+        throw (
+            "Kubernetes evidence downloader is missing required marker '$marker'.")
+    }
+}
+if ($deploymentSource -match
+    'kubectl cp\s+"\$namespace/evidence-reader:/evidence/endurance/\."\s+\$fullOutput')
+{
+    throw (
+        'Kubernetes evidence download must not pass a Windows drive-qualified ' +
+        'destination directly to kubectl cp.')
+}
+
 Write-Output (
-    'Endurance workflow SBOM contract passed: Streams, Sync, and ContinuousGraph ' +
-    'restore the complete locked dependency graph before no-restore inventory.')
+    'Endurance workflow contract passed: Streams, Sync, Live/Control Plane, ' +
+    'and ContinuousGraph restore the complete locked dependency graph, accept ' +
+    'detached exact-SHA checkouts, and retain cross-platform evidence downloads.')

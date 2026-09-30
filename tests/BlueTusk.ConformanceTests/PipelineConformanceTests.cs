@@ -31,8 +31,10 @@ public sealed class PipelineConformanceTests
             });
 
         Assert.False(session.Capabilities.SupportsSqlPgq);
+        Assert.True(session.Capabilities.SupportsRepack);
         await session.ProbeOptionalCapabilitiesAsync();
         Assert.True(session.Capabilities.SupportsSqlPgq);
+        Assert.True(session.Capabilities.SupportsRepack);
         await serverTask;
     }
 
@@ -88,6 +90,7 @@ public sealed class PipelineConformanceTests
         Assert.Equal(new Version(19, 0), session.Capabilities.ServerVersion);
         Assert.True(session.Capabilities.SupportsPipelineMode);
         Assert.False(session.Capabilities.SupportsSqlPgq);
+        Assert.True(session.Capabilities.SupportsRepack);
         await serverTask;
     }
 

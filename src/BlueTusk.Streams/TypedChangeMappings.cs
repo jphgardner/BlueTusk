@@ -1,9 +1,11 @@
 using System.Buffers.Binary;
 using System.Buffers.Text;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -144,7 +146,7 @@ public sealed record ChangePropertyMapping(
     string ColumnName,
     uint? ExpectedTypeOid);
 
-public sealed class ChangeEntityMappingBuilder<T>
+public sealed class ChangeEntityMappingBuilder<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>
     where T : class, new()
 {
     private readonly Dictionary<string, PropertyBinding<T>> _bindings =
@@ -340,6 +342,7 @@ public sealed class ChangeEntityMapping<T>
     private readonly ReadOnlyCollection<ChangePropertyMapping> _properties;
     private readonly ReadOnlyCollection<string> _keyColumns;
     private readonly ChangeMappingPolicy _policy;
+    private ChangeTable _validatedTable;
 
     internal ChangeEntityMapping(
         ChangeTable table,
@@ -348,6 +351,7 @@ public sealed class ChangeEntityMapping<T>
         ChangeMappingPolicy policy)
     {
         Table = table;
+        _validatedTable = table;
         SchemaFingerprint = ChangeSchemaFingerprint.Create(table);
         _bindings = Array.AsReadOnly(bindings);
         _properties = Array.AsReadOnly(bindings.Select(binding => binding.Metadata).ToArray());
@@ -456,6 +460,14 @@ public sealed class ChangeEntityMapping<T>
 
     private void EnsureTable(ChangeTable actual)
     {
+        // ChangeTable owns immutable relation metadata. Rows normally share one
+        // relation instance, so validate each new instance once, not every row.
+        // Keep only one extra reference: reconnect/schema churn cannot grow a cache.
+        if (ReferenceEquals(actual, Table) || ReferenceEquals(actual, Volatile.Read(ref _validatedTable)))
+        {
+            return;
+        }
+
         if (!IsMappedTable(actual))
         {
             throw new ArgumentException(
@@ -466,6 +478,7 @@ public sealed class ChangeEntityMapping<T>
         var fingerprint = ChangeSchemaFingerprint.Create(actual);
         if (string.Equals(SchemaFingerprint, fingerprint, StringComparison.Ordinal))
         {
+            Volatile.Write(ref _validatedTable, actual);
             return;
         }
 
@@ -574,14 +587,67 @@ internal abstract class PropertyBinding<T>
 
     public static PropertyBinding<T> CreateDefault(PropertyInfo property, string columnName)
     {
-        var bindingType = typeof(PropertyBinding<,>).MakeGenericType(typeof(T), property.PropertyType);
-        return (PropertyBinding<T>)Activator.CreateInstance(
-            bindingType,
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-            binder: null,
-            [property, columnName, null, null],
-            culture: null)!;
+        // Keep the known default scalar bindings statically reachable for AOT.
+        // A typed decoder/setter also lets the JIT eliminate transient value-type
+        // boxing; routing every value through object adds an allocation per column.
+        var type = property.PropertyType;
+        if (type == typeof(string)) { return Bind<string>(); }
+        if (type == typeof(byte[])) { return Bind<byte[]>(); }
+        if (type == typeof(bool)) { return Bind<bool>(); }
+        if (type == typeof(short)) { return Bind<short>(); }
+        if (type == typeof(int)) { return Bind<int>(); }
+        if (type == typeof(long)) { return Bind<long>(); }
+        if (type == typeof(float)) { return Bind<float>(); }
+        if (type == typeof(double)) { return Bind<double>(); }
+        if (type == typeof(decimal)) { return Bind<decimal>(); }
+        if (type == typeof(Guid)) { return Bind<Guid>(); }
+        if (type == typeof(DateTime)) { return Bind<DateTime>(); }
+        if (type == typeof(DateTimeOffset)) { return Bind<DateTimeOffset>(); }
+        if (type == typeof(bool?)) { return Bind<bool?>(); }
+        if (type == typeof(short?)) { return Bind<short?>(); }
+        if (type == typeof(int?)) { return Bind<int?>(); }
+        if (type == typeof(long?)) { return Bind<long?>(); }
+        if (type == typeof(float?)) { return Bind<float?>(); }
+        if (type == typeof(double?)) { return Bind<double?>(); }
+        if (type == typeof(decimal?)) { return Bind<decimal?>(); }
+        if (type == typeof(Guid?)) { return Bind<Guid?>(); }
+        if (type == typeof(DateTime?)) { return Bind<DateTime?>(); }
+        if (type == typeof(DateTimeOffset?)) { return Bind<DateTimeOffset?>(); }
+        // Application enum types are not known ahead of time. Their default
+        // parser returns a boxed enum already, so retain the metadata-based path.
+        return new DefaultPropertyBinding<T>(property, columnName);
+
+        PropertyBinding<T> Bind<TValue>() =>
+            new PropertyBinding<T, TValue>(property, columnName, expectedTypeOid: null, decoder: null);
     }
+}
+
+internal sealed class DefaultPropertyBinding<T> : PropertyBinding<T>
+    where T : class, new()
+{
+    private readonly Action<T, object?> _setter;
+    private readonly Type _propertyType;
+    private readonly Type _decodeType;
+    private readonly bool _acceptsNull;
+
+    public DefaultPropertyBinding(PropertyInfo property, string columnName)
+        : base(property, columnName, expectedTypeOid: null)
+    {
+        _propertyType = property.PropertyType;
+        var underlying = Nullable.GetUnderlyingType(_propertyType);
+        _decodeType = underlying ?? _propertyType;
+        _acceptsNull = !_propertyType.IsValueType || underlying is not null;
+        var target = Expression.Parameter(typeof(T), "target");
+        var value = Expression.Parameter(typeof(object), "value");
+        // Cache the conversion and setter once without constructing unknown
+        // generic types at runtime. Common scalar types use typed bindings above.
+        _setter = Expression.Lambda<Action<T, object?>>(
+            Expression.Assign(Expression.Property(target, property), Expression.Convert(value, _propertyType)),
+            target, value).Compile(preferInterpretation: !RuntimeFeature.IsDynamicCodeSupported);
+    }
+
+    public override void Set(T target, ChangeColumn column, ChangeColumnValue value) =>
+        _setter(target, ChangeValueDecoders.DecodeDefault(_propertyType, _decodeType, _acceptsNull, column, value));
 }
 
 internal sealed class PropertyBinding<T, TProperty> : PropertyBinding<T>
@@ -602,7 +668,7 @@ internal sealed class PropertyBinding<T, TProperty> : PropertyBinding<T>
         _setter = Expression.Lambda<Action<T, TProperty>>(
             Expression.Assign(Expression.Property(target, property), value),
             target,
-            value).Compile();
+            value).Compile(preferInterpretation: !RuntimeFeature.IsDynamicCodeSupported);
         _decoder = decoder ?? ChangeValueDecoders.Decode<TProperty>;
     }
 
@@ -612,6 +678,28 @@ internal sealed class PropertyBinding<T, TProperty> : PropertyBinding<T>
 
 public static class ChangeValueDecoders
 {
+    internal static object? DecodeDefault(Type propertyType, Type decodeType, bool acceptsNull,
+        ChangeColumn column, ChangeColumnValue value)
+    {
+        ArgumentNullException.ThrowIfNull(column);
+        ArgumentNullException.ThrowIfNull(value);
+        if (value.State == ChangeColumnState.DatabaseNull)
+        {
+            return acceptsNull ? null : throw new InvalidOperationException(
+                $"Database null cannot be assigned to non-nullable {propertyType.FullName}.");
+        }
+        if (value.State != ChangeColumnState.Value)
+        {
+            throw new InvalidOperationException($"Column state {value.State} does not contain a decodable value.");
+        }
+        return value.Encoding switch
+        {
+            ChangeValueEncoding.Text => DecodeText(decodeType, value.Data.Span),
+            ChangeValueEncoding.Binary => DecodeBinary(decodeType, value.Data.Span),
+            _ => throw new InvalidOperationException("A value must declare text or binary encoding."),
+        };
+    }
+
     public static T Decode<T>(ChangeColumn column, ChangeColumnValue value)
     {
         ArgumentNullException.ThrowIfNull(column);

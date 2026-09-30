@@ -13,13 +13,21 @@ BlueTusk V1 is exercised by three independently deployable applications in
   ContinuousGraph evaluation, Streams, the framework-neutral Live client, and
   immutable case evidence.
 
-The applications consume exact `1.0.0-rc.1` NuGet and npm packages. They have
+The current applications consume exact `1.1.0-rc.1` NuGet and npm packages.
+The original 2026-08-18 evidence below remains an immutable historical record
+of the `1.0.0-rc.1` train; it is not the current deployment baseline. They have
 no project reference to BlueTusk production source. Each backend is split into
 Domain, Application, Infrastructure, API, and Worker projects, and each has a
 browser client, Dockerfiles, a Helm deployment, seed data, SLOs, and an
 operator runbook. The shared BFF implements OIDC sessions, secure cookies,
 CSRF protection, CSP, rate limiting, tenant/role enforcement, RFC 9457 errors,
 health endpoints, and OpenTelemetry.
+
+Order Operations also includes a fully supported Angular client used by the
+`bluetusk-production` starter. It exercises the same BFF, CSRF, idempotency,
+Live delivery, and package-only boundary as the React client. Deployable V1
+image evidence continues to cover one reviewed UI per application; the starter
+client has its own build and template-generation gates.
 
 Before RC publication, the application build uses
 `eng/nuget/applications-candidate.config` and an isolated package cache. NuGet
@@ -33,7 +41,7 @@ published from an unpublished or locally substituted package set.
 
 ## Local RC verification
 
-The 2026-08-18 working-tree verification restored the application solution
+The historical 2026-08-18 working-tree verification restored the application solution
 from locally packed exact `1.0.0-rc.1` artifacts and produced:
 
 | Gate | Result |

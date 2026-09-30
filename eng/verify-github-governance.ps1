@@ -7,6 +7,8 @@ param(
 
     [string] $Repository,
 
+    [string] $ConfigurationPath = (Join-Path $PSScriptRoot 'v1-github-governance.json'),
+
     [string] $Token
 )
 
@@ -14,12 +16,29 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $RepositoryRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
-$configurationPath = Join-Path $PSScriptRoot 'v1-github-governance.json'
-$configuration = Get-Content -LiteralPath $configurationPath -Raw |
+$configuration = Get-Content -LiteralPath $ConfigurationPath -Raw |
     ConvertFrom-Json
 if ([int]$configuration.schemaVersion -ne 1)
 {
     throw "Expected GitHub governance schema 1; found '$($configuration.schemaVersion)'."
+}
+
+$soleMaintainer = $null -ne $configuration.PSObject.Properties['maintenancePolicy'] -and
+    [string]$configuration.maintenancePolicy.mode -eq 'sole-maintainer'
+if ($null -ne $configuration.PSObject.Properties['maintenancePolicy'] -and -not $soleMaintainer)
+{
+    throw 'Unknown governance maintenance policy.'
+}
+if ($soleMaintainer -and
+    ([string]$configuration.maintenancePolicy.owner -ne ([string]$configuration.repository).Split('/')[0] -or
+     [string]$configuration.ruleset.enforcement -ne 'absent' -or
+     [string]::IsNullOrWhiteSpace([string]$configuration.maintenancePolicy.authorizedOn)))
+{
+    throw 'Sole-maintainer governance requires the repository owner, recorded authorization, and absent ruleset policy.'
+}
+if (-not $soleMaintainer -and [string]$configuration.ruleset.enforcement -ne 'active')
+{
+    throw 'Governed mode requires an active ruleset.'
 }
 
 $Repository = if ([string]::IsNullOrWhiteSpace($Repository))
@@ -78,10 +97,10 @@ if ($requiredStatusChecks.Count -lt 1 -or
 }
 
 $pullRequest = $configuration.ruleset.pullRequest
-if ([int]$pullRequest.minimumApprovals -lt 1 -or
+if (-not $soleMaintainer -and ([int]$pullRequest.minimumApprovals -lt 1 -or
     $pullRequest.dismissStaleReviewsOnPush -ne $true -or
     $pullRequest.requireLastPushApproval -ne $true -or
-    $pullRequest.requireReviewThreadResolution -ne $true)
+    $pullRequest.requireReviewThreadResolution -ne $true))
 {
     throw 'V1 governance requires an independent fresh approval and resolved review threads.'
 }
@@ -91,17 +110,27 @@ if ($configuration.ruleset.strictRequiredStatusChecksPolicy -ne $true)
 }
 
 $environments = @($configuration.environments)
-if ($environments.Count -ne 3 -or
+if ($environments.Count -notin @(3, 4) -or
     $environments.Count -ne @(
         $environments.name | Sort-Object -Unique
     ).Count)
 {
-    throw 'Exactly three uniquely named V1 deployment environments are required.'
+    throw 'The three V1 deployment environments and at most one expansion-readiness environment are required.'
+}
+$requiredEnvironmentNames = @('v1-candidate-readiness', 'package-prerelease',
+    'package-production')
+if ($environments.Count -eq 4)
+{
+    $requiredEnvironmentNames += 'expansion-candidate-readiness'
+}
+if (@(Compare-Object $requiredEnvironmentNames @($environments.name)).Count -ne 0)
+{
+    throw 'Deployment environment names must match the protected release contract.'
 }
 foreach ($environment in $environments)
 {
     if ([int]$environment.minimumConfiguredReviewers -lt 1 -or
-        $environment.preventSelfReview -ne $true -or
+        $environment.preventSelfReview -ne (-not $soleMaintainer) -or
         $environment.canAdminsBypass -ne $false)
     {
         throw (
@@ -133,7 +162,7 @@ foreach ($environment in $environments)
     $patterns = @($branchPolicy.requiredPatterns | ForEach-Object { [string]$_ })
     if ($branchPolicy.customBranchPolicies -eq $true -and
         ($patterns.Count -lt 1 -or
-         $patterns.Count -ne ($patterns | Sort-Object -Unique).Count))
+         $patterns.Count -ne @($patterns | Sort-Object -Unique).Count))
     {
         throw "Environment '$($environment.name)' must declare unique deployment patterns."
     }
@@ -171,7 +200,7 @@ foreach ($environment in $environments)
 
 $releaseWorkflowPath = Join-Path $RepositoryRoot '.github/workflows/release-product-family.yml'
 $releaseWorkflow = Get-Content -LiteralPath $releaseWorkflowPath -Raw
-$nugetLoginAction = 'NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544'
+$nugetLoginAction = 'NuGet/login@8d196754b4036150537f80ac539e15c2f1028841'
 $nugetLoginCount = [regex]::Matches(
     $releaseWorkflow,
     [regex]::Escape($nugetLoginAction)).Count
@@ -201,7 +230,7 @@ if ($Mode -eq 'Source')
 {
 Write-Output (
     "Verified source governance for $($requiredStatusChecks.Count) required checks, " +
-    "$($environments.Count) non-bypassable self-review-protected environments, " +
+    "$($environments.Count) owner-reviewed environments (sole-maintainer: $soleMaintainer), " +
     "$requiredEnvironmentSecretBindings required secret bindings, protected branch " +
         "'$($configuration.protectedBranch)', and mandatory repository security features. " +
         'Remote repository settings remain a candidate gate.')
@@ -277,6 +306,16 @@ if ($privateVulnerabilityReporting.enabled -ne $true)
     throw 'Private vulnerability reporting is disabled.'
 }
 
+if ($soleMaintainer)
+{
+    if (@($rulesets | Where-Object enforcement -eq 'active').Count -ne 0)
+    {
+        throw 'An active ruleset conflicts with the authorized sole-maintainer policy.'
+    }
+    $ruleset = [pscustomobject]@{ name = 'absent (authorized sole-maintainer policy)' }
+}
+else
+{
 $rulesetSummary = @($rulesets | Where-Object {
     if ($null -eq $_ -or
         $null -eq $_.PSObject.Properties['name'] -or
@@ -338,6 +377,7 @@ if ($missingContexts.Count -ne 0)
 {
     throw "Ruleset '$($ruleset.name)' is missing required checks: $($missingContexts -join ', ')."
 }
+}
 
 $environmentSecretFailures = [Collections.Generic.List[string]]::new()
 foreach ($environment in $environments)
@@ -351,7 +391,7 @@ foreach ($environment in $environments)
     if ($reviewRule.Count -ne 1 -or
         @($reviewRule[0].reviewers).Count -lt
             [int]$environment.minimumConfiguredReviewers -or
-        $reviewRule[0].prevent_self_review -ne $true -or
+        $reviewRule[0].prevent_self_review -ne [bool]$environment.preventSelfReview -or
         $remoteEnvironment.can_admins_bypass -ne
             [bool]$environment.canAdminsBypass)
     {
@@ -418,6 +458,6 @@ if ($environmentSecretFailures.Count -ne 0)
 Write-Output (
     "Verified live GitHub governance for '$Repository': ruleset '$($ruleset.name)', " +
     "$($requiredStatusChecks.Count) required checks, and $($environments.Count) " +
-    "non-bypassable self-review-protected deployment environments with " +
+    "owner-reviewed deployment environments (sole-maintainer: $soleMaintainer) with " +
     "$requiredEnvironmentSecretBindings " +
     'required secret bindings, dependency controls, and vulnerability protections enabled.')

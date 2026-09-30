@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: "17 3 * * 1"
   workflow_dispatch:
+    inputs:
+      include_legacy_all_family_packages:
+        description: Also retain historical six-family package evidence (not core release qualification)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,16 +30,17 @@ jobs:
         with:
           node-version: 24
 
+      - name: Build exact local RC feed
+        shell: pwsh
+        run: ./eng/build-prerelease-packages.ps1
+
       - name: Verify application and deployment contracts
         shell: pwsh
         run: |
           ./eng/verify-applications.ps1
           ./eng/test-application-image-evidence-verifier.ps1
           ./eng/test-prerelease-release-verifier.ps1
-
-      - name: Build exact local RC feed
-        shell: pwsh
-        run: ./eng/build-prerelease-packages.ps1
+          ./eng/test-application-postgresql-tracks.ps1
 
       - name: Restore, format, build, and test applications
         shell: pwsh
@@ -47,11 +53,20 @@ jobs:
           ./eng/verify-application-candidate-restore.ps1
           dotnet format applications/BlueTusk.Applications.slnx --no-restore --verify-no-changes
           dotnet build applications/BlueTusk.Applications.slnx -c Release --no-restore
-          dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore
+          dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore --filter 'ReleaseTrack!=ContinuousGraphPreview'
 
-      - name: Test applications against digest-pinned PostgreSQL 19 Beta 3
+      - name: Test core applications against digest-pinned stable PostgreSQL
         shell: pwsh
-        run: ./eng/test-applications-postgresql.ps1
+        run: ./eng/test-applications-postgresql.ps1 -ReleaseTrack Core -OutputRoot artifacts/application-postgresql-core
+
+      - name: Retain core application integration results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-application-postgresql-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/application-postgresql-core
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Build all browser clients from local RC npm artifacts
         shell: pwsh
@@ -144,26 +159,92 @@ jobs:
           ./eng/test-prerelease-release-verifier.ps1 `
             -PrereleaseTrainPath ./eng/package-prerelease-train.json
           ./eng/test-v1-approval-evidence-verifier.ps1
+          ./eng/test-allocation-budget-verifier.ps1
           ./eng/test-latency-budget-verifier.ps1
           ./eng/test-multiplexing-performance-verifier.ps1
           ./eng/test-provider-performance-verifier.ps1
           ./eng/test-v1-performance-gate-contract.ps1
+          ./eng/test-sole-maintainer-governance.ps1
           ./eng/verify-performance-leadership-contract.ps1
           ./eng/test-performance-leadership-evidence-verifier.ps1
           ./eng/test-endurance-workflow-sbom-contract.ps1
+          ./eng/test-live-control-plane-endurance-verifier.ps1
+          ./eng/verify-v1.2-release-contract.ps1
+          ./eng/test-release-track-verifier.ps1
+          'Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search',
+          'Sql', 'Studio', 'Edge', 'Workflows' |
+            ForEach-Object {
+              ./eng/pack-product-family.ps1 -Family $_ -ValidateOnly
+            }
+          ./eng/test-expansion-release-policy.ps1
+          ./eng/test-expansion-readiness-evidence.ps1
+          ./eng/test-jobs-release-capacity-contract.ps1
+          ./eng/test-jobs-release-failover-policy.ps1
+          ./eng/test-jobs-release-upgrade-policy.ps1
+          ./eng/test-core-approval-evidence.ps1
+          ./eng/test-core-endurance-evidence.ps1
+          ./eng/test-core-workflow-evidence.ps1
+          ./eng/test-core-endurance-contract.ps1
+          ./eng/test-core-candidate-bindings.ps1
+          ./eng/test-core-test-evidence.ps1
 
       - name: Build
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test BlueTusk.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
+        # The original provider/core matrix has only the fixtures provisioned by this job.
+        # New ecosystem families run their fixture-specific matrix in ecosystem-build.yml.
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
 
-      - name: Verify V1 engineering production readiness
+      - name: Test individual-request performance capture machinery
+        run: dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --provider-request-self-test
+
+      - name: Verify core release-track policy
         shell: pwsh
-        run: ./eng/verify-v1-production-readiness.ps1
+        run: ./eng/verify-release-track.ps1
 
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
+
+      - name: Capture exact Core unit regression evidence
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: >-
+          ./eng/run-core-test-evidence.ps1
+          -Kind Regression
+          -OutputRoot artifacts/core-regression/${{ matrix.os }}
+          -ExpectedCommit ${{ github.sha }}
+
+      - name: Retain raw Core unit regression evidence
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-test-regression-${{ matrix.os }}-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-regression/${{ matrix.os }}
+          if-no-files-found: error
+          retention-days: 90
+
+  browser-clients:
+    name: Browser client contracts (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Restore locked client and framework test dependencies
+        run: npm ci --ignore-scripts
+      - name: Build and test all five clients (no missing-test allowance)
+        run: npm run check:clients
+      - name: Audit client dependency closure
+        run: npm audit --audit-level=moderate
 
   website:
     name: Angular website and complete documentation
@@ -205,8 +286,8 @@ jobs:
           include-hidden-files: true
 
   candidate-packages:
-    name: Immutable all-family V1 package evidence
-    if: github.event_name == 'workflow_dispatch'
+    name: Historical all-family package evidence
+    if: github.event_name == 'workflow_dispatch' && inputs.include_legacy_all_family_packages
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
@@ -237,6 +318,49 @@ jobs:
             artifacts/v1-candidate-packages/package-manifest.json
             artifacts/v1-candidate-packages/packages
             artifacts/v1-candidate-packages/sbom
+          if-no-files-found: error
+          retention-days: 90
+
+  core-candidate-packages:
+    name: Immutable five-family core package evidence
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Build and verify five-family core package evidence
+        shell: pwsh
+        run: >-
+          ./eng/build-v1-candidate-packages.ps1
+          -ReleaseTrack Core
+          -OutputRoot artifacts/v1.2-core-packages
+          -Commit ${{ github.sha }}
+
+      - name: Verify stable core package reader and integrity guards
+        shell: pwsh
+        run: >-
+          ./eng/test-core-package-evidence.ps1
+          -EvidenceRoot artifacts/v1.2-core-packages
+          -ExpectedCommit ${{ github.sha }}
+
+      - name: Archive immutable core package evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v1.2-core-packages-${{ github.sha }}
+          path: |
+            artifacts/v1.2-core-packages/package-manifest.json
+            artifacts/v1.2-core-packages/packages
+            artifacts/v1.2-core-packages/sbom
           if-no-files-found: error
           retention-days: 90
 
@@ -310,7 +434,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        major: [15, 16, 17, 18, 19]
+        major: [15, 16, 17, 18]
+    env:
+      BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -324,10 +450,34 @@ jobs:
       - name: Start PostgreSQL
         run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres${{ matrix.major }}
 
+      - name: Prepare live tablespace fixture
+        run: |
+          docker compose -f eng/compose/postgres.yml exec -T --user root postgres${{ matrix.major }} mkdir -p /srv/postgresql/bluetusk_archive_space
+          docker compose -f eng/compose/postgres.yml exec -T --user root postgres${{ matrix.major }} chown postgres /srv/postgresql/bluetusk_archive_space
+          echo 'BLUETUSK_TEST_TABLESPACE_LOCATION=/srv/postgresql/bluetusk_archive_space' >> "$GITHUB_ENV"
+
       - name: Run live provider matrix
-        env:
-          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
-        run: dotnet test BlueTusk.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+
+      - name: Capture exact Core stable compatibility evidence
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          $container = (& docker compose -f eng/compose/postgres.yml --profile preview ps --quiet postgres${{ matrix.major }}).Trim()
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($container)) { throw 'Stable PostgreSQL fixture is missing.' }
+          ./eng/run-core-test-evidence.ps1 -Kind Compatibility `
+            -OutputRoot artifacts/core-compatibility/postgresql-${{ matrix.major }} `
+            -ExpectedCommit ${{ github.sha }} `
+            -PostgreSqlMajor ${{ matrix.major }} -PostgreSqlContainer $container
+
+      - name: Retain raw Core stable compatibility evidence
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-test-compatibility-postgresql-${{ matrix.major }}-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-compatibility/postgresql-${{ matrix.major }}
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Capture PostgreSQL logs on failure
         if: failure()
@@ -336,6 +486,94 @@ jobs:
       - name: Stop PostgreSQL
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  core-test-evidence:
+    name: Aggregate immutable Core regression and stable compatibility payloads
+    if: github.event_name == 'workflow_dispatch'
+    needs: [build-and-test, postgresql-integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-regression-ubuntu-latest-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/regression/runs/linux-x64
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-regression-windows-latest-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/regression/runs/windows-x64
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-15-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-15
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-16-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-16
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-17-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-17
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-18-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-18
+      - name: Verify every raw test payload and build complete Core manifests
+        shell: pwsh
+        run: |
+          ./eng/build-core-test-manifest.ps1 -Kind Regression `
+            -EvidenceRoot artifacts/core-test-evidence/regression -ExpectedCommit ${{ github.sha }}
+          ./eng/build-core-test-manifest.ps1 -Kind Compatibility `
+            -EvidenceRoot artifacts/core-test-evidence/compatibility -ExpectedCommit ${{ github.sha }}
+      - name: Retain complete immutable Core test matrices
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v1.2-core-test-evidence-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence
+          if-no-files-found: error
+          retention-days: 90
+
+  postgresql19-provider-compatibility:
+    # Keep the existing protected status context. This is real provider preview
+    # compatibility, not Graph runtime qualification or PostgreSQL 19 GA evidence.
+    name: PostgreSQL 19 live matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Verify the recorded historical preview fixture
+        shell: pwsh
+        run: ./eng/verify-postgresql19-programme.ps1
+      - name: Restore locked provider integration dependencies
+        run: dotnet restore tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj --locked-mode
+      - name: Start historical PostgreSQL 19 provider fixture
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+      - name: Test provider preview compatibility without Graph runtime tests
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release --no-restore --maxcpucount:1
+          --filter 'FullyQualifiedName!~BlueTuskSqlPgqIntegrationTests'
+          --logger trx --results-directory artifacts/test-results/postgres19-provider
+      - name: Retain provider preview results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: historical-postgres19-provider-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/test-results/postgres19-provider
+          if-no-files-found: error
+          retention-days: 90
+      - name: Stop only the historical provider fixture
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml stop postgres19
 
   redis-streams-integration:
     name: Redis Streams state-store conformance
@@ -710,7 +948,7 @@ jobs:
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5899;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
         run: >-
-          dotnet test BlueTusk.slnx
+          dotnet test BlueTusk.Core.slnx
           --configuration Release
           --no-restore
           --maxcpucount:1

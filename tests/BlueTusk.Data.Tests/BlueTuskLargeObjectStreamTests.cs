@@ -54,6 +54,50 @@ public sealed class BlueTuskLargeObjectStreamTests
     }
 
     [Fact]
+    public async Task Small_reads_use_bounded_read_ahead_and_preserve_logical_position()
+    {
+        var payload = Enumerable.Range(0, 256 * 1024)
+            .Select(static value => (byte)value)
+            .ToArray();
+        using var operations = new FakeLargeObjectOperations(payload);
+        await using var stream = new BlueTuskLargeObjectStream(
+            42,
+            FileAccess.Read,
+            payload.Length,
+            position: 0,
+            operations);
+        var first = new byte[4096];
+        var second = new byte[4096];
+
+        Assert.Equal(first.Length, await stream.ReadAsync(first));
+        Assert.Equal(second.Length, await stream.ReadAsync(second));
+
+        Assert.Equal([BlueTuskLargeObjectStream.MaximumTransferSize], operations.ReadSizes);
+        Assert.Equal(8192, stream.Position);
+        Assert.Equal(payload.AsSpan(0, first.Length).ToArray(), first);
+        Assert.Equal(payload.AsSpan(first.Length, second.Length).ToArray(), second);
+    }
+
+    [Fact]
+    public async Task Writing_after_read_ahead_resumes_at_the_logical_position()
+    {
+        using var operations = new FakeLargeObjectOperations("abcdef"u8.ToArray());
+        await using var stream = new BlueTuskLargeObjectStream(
+            42,
+            FileAccess.ReadWrite,
+            operations.Length,
+            position: 0,
+            operations);
+        var prefix = new byte[3];
+
+        Assert.Equal(3, await stream.ReadAsync(prefix));
+        await stream.WriteAsync("XY"u8.ToArray());
+
+        Assert.Equal(5, stream.Position);
+        Assert.Equal("abcXYf", Encoding.UTF8.GetString(operations.ToArray()));
+    }
+
+    [Fact]
     public async Task Chunks_large_writes_without_short_write_acceptance()
     {
         using var operations = new FakeLargeObjectOperations([]);
@@ -174,8 +218,11 @@ public sealed class BlueTuskLargeObjectStreamTests
 
         public List<int> WriteSizes { get; } = [];
 
+        public List<int> ReadSizes { get; } = [];
+
         public byte[] Read(int count)
         {
+            ReadSizes.Add(count);
             if (FailRead)
             {
                 throw new IOException("Simulated large-object read failure.");
@@ -189,6 +236,7 @@ public sealed class BlueTuskLargeObjectStreamTests
         public ValueTask<byte[]> ReadAsync(int count, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            ReadSizes.Add(count);
             if (FailRead)
             {
                 throw new IOException("Simulated large-object read failure.");

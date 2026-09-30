@@ -1,0 +1,330 @@
+#nullable enable
+BlueTusk.Events.EventAppendReceipt
+BlueTusk.Events.EventAppendReceipt.<Clone>$() -> BlueTusk.Events.EventAppendReceipt!
+BlueTusk.Events.EventAppendReceipt.Deconstruct(out System.Guid EventId, out long Sequence, out bool WasAlreadyStored) -> void
+BlueTusk.Events.EventAppendReceipt.Equals(BlueTusk.Events.EventAppendReceipt? other) -> bool
+BlueTusk.Events.EventAppendReceipt.EventAppendReceipt(System.Guid EventId, long Sequence, bool WasAlreadyStored) -> void
+BlueTusk.Events.EventAppendReceipt.EventId.get -> System.Guid
+BlueTusk.Events.EventAppendReceipt.EventId.init -> void
+BlueTusk.Events.EventAppendReceipt.Sequence.get -> long
+BlueTusk.Events.EventAppendReceipt.Sequence.init -> void
+BlueTusk.Events.EventAppendReceipt.WasAlreadyStored.get -> bool
+BlueTusk.Events.EventAppendReceipt.WasAlreadyStored.init -> void
+BlueTusk.Events.EventArchiveProgress
+BlueTusk.Events.EventArchiveProgress.<Clone>$() -> BlueTusk.Events.EventArchiveProgress!
+BlueTusk.Events.EventArchiveProgress.ArchivedEvents.get -> int
+BlueTusk.Events.EventArchiveProgress.ArchivedEvents.init -> void
+BlueTusk.Events.EventArchiveProgress.ArchivedThrough.get -> long
+BlueTusk.Events.EventArchiveProgress.ArchivedThrough.init -> void
+BlueTusk.Events.EventArchiveProgress.ArchiveId.get -> string?
+BlueTusk.Events.EventArchiveProgress.ArchiveId.init -> void
+BlueTusk.Events.EventArchiveProgress.Deconstruct(out int ArchivedEvents, out long ArchivedThrough, out string? ArchiveId) -> void
+BlueTusk.Events.EventArchiveProgress.Equals(BlueTusk.Events.EventArchiveProgress? other) -> bool
+BlueTusk.Events.EventArchiveProgress.EventArchiveProgress(int ArchivedEvents, long ArchivedThrough, string? ArchiveId) -> void
+BlueTusk.Events.EventContract<T>
+BlueTusk.Events.EventContract<T>.Create(System.Guid eventId, T value, System.DateTimeOffset occurredAt) -> BlueTusk.Events.EventWrite!
+BlueTusk.Events.EventContract<T>.Deserialize(BlueTusk.Events.StoredEvent! value) -> T?
+BlueTusk.Events.EventContract<T>.EventContract(string! name, int version, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! jsonTypeInfo) -> void
+BlueTusk.Events.EventContract<T>.JsonTypeInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>!
+BlueTusk.Events.EventContract<T>.Name.get -> string!
+BlueTusk.Events.EventContract<T>.Version.get -> int
+BlueTusk.Events.EventHistoryUnavailableException
+BlueTusk.Events.EventHistoryUnavailableException.EventHistoryUnavailableException(BlueTusk.Events.EventStreamKey! stream, long retainedThrough) -> void
+BlueTusk.Events.EventHistoryUnavailableException.RetainedThrough.get -> long
+BlueTusk.Events.EventHistoryUnavailableException.Stream.get -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.EventIdentityConflictException
+BlueTusk.Events.EventIdentityConflictException.EventId.get -> System.Guid
+BlueTusk.Events.EventIdentityConflictException.EventIdentityConflictException(System.Guid eventId) -> void
+BlueTusk.Events.EventLocalRetentionCertification
+BlueTusk.Events.EventLocalRetentionCertification.ChangeReference.get -> string!
+BlueTusk.Events.EventLocalRetentionCertification.EventLocalRetentionCertification(BlueTusk.Events.EventStreamKey! stream, string! operatorId, string! changeReference, bool confirmedNoExternalReaders) -> void
+BlueTusk.Events.EventLocalRetentionCertification.OperatorId.get -> string!
+BlueTusk.Events.EventLocalRetentionCertification.Stream.get -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.EventPruneProgress
+BlueTusk.Events.EventPruneProgress.<Clone>$() -> BlueTusk.Events.EventPruneProgress!
+BlueTusk.Events.EventPruneProgress.Deconstruct(out int DeletedEvents, out bool HasRemainingEvents) -> void
+BlueTusk.Events.EventPruneProgress.DeletedEvents.get -> int
+BlueTusk.Events.EventPruneProgress.DeletedEvents.init -> void
+BlueTusk.Events.EventPruneProgress.Equals(BlueTusk.Events.EventPruneProgress? other) -> bool
+BlueTusk.Events.EventPruneProgress.EventPruneProgress(int DeletedEvents, bool HasRemainingEvents) -> void
+BlueTusk.Events.EventPruneProgress.HasRemainingEvents.get -> bool
+BlueTusk.Events.EventPruneProgress.HasRemainingEvents.init -> void
+BlueTusk.Events.EventPublishedConsumerRegistration
+BlueTusk.Events.EventPublishedConsumerRegistration.<Clone>$() -> BlueTusk.Events.EventPublishedConsumerRegistration!
+BlueTusk.Events.EventPublishedConsumerRegistration.ConsumerGroup.get -> string!
+BlueTusk.Events.EventPublishedConsumerRegistration.ConsumerGroup.init -> void
+BlueTusk.Events.EventPublishedConsumerRegistration.Deconstruct(out BlueTusk.Events.EventStreamKey! Stream, out string! ConsumerGroup, out System.Guid TargetIncarnation, out long MembershipRevision, out BlueTusk.Events.EventPublishedSourceIdentity! Source, out uint SourceDatabaseOid, out uint SourcePublicationOid) -> void
+BlueTusk.Events.EventPublishedConsumerRegistration.Equals(BlueTusk.Events.EventPublishedConsumerRegistration? other) -> bool
+BlueTusk.Events.EventPublishedConsumerRegistration.EventPublishedConsumerRegistration(BlueTusk.Events.EventStreamKey! Stream, string! ConsumerGroup, System.Guid TargetIncarnation, long MembershipRevision, BlueTusk.Events.EventPublishedSourceIdentity! Source, uint SourceDatabaseOid, uint SourcePublicationOid) -> void
+BlueTusk.Events.EventPublishedConsumerRegistration.MembershipRevision.get -> long
+BlueTusk.Events.EventPublishedConsumerRegistration.MembershipRevision.init -> void
+BlueTusk.Events.EventPublishedConsumerRegistration.Source.get -> BlueTusk.Events.EventPublishedSourceIdentity!
+BlueTusk.Events.EventPublishedConsumerRegistration.Source.init -> void
+BlueTusk.Events.EventPublishedConsumerRegistration.SourceDatabaseOid.get -> uint
+BlueTusk.Events.EventPublishedConsumerRegistration.SourceDatabaseOid.init -> void
+BlueTusk.Events.EventPublishedConsumerRegistration.SourcePublicationOid.get -> uint
+BlueTusk.Events.EventPublishedConsumerRegistration.SourcePublicationOid.init -> void
+BlueTusk.Events.EventPublishedConsumerRegistration.Stream.get -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.EventPublishedConsumerRegistration.Stream.init -> void
+BlueTusk.Events.EventPublishedConsumerRegistration.TargetIncarnation.get -> System.Guid
+BlueTusk.Events.EventPublishedConsumerRegistration.TargetIncarnation.init -> void
+BlueTusk.Events.EventPublishedRetentionIntent
+BlueTusk.Events.EventPublishedRetentionIntent.<Clone>$() -> BlueTusk.Events.EventPublishedRetentionIntent!
+BlueTusk.Events.EventPublishedRetentionIntent.ArchiveManifestSha256.get -> string!
+BlueTusk.Events.EventPublishedRetentionIntent.ArchiveManifestSha256.init -> void
+BlueTusk.Events.EventPublishedRetentionIntent.Deconstruct(out System.Guid Epoch, out BlueTusk.Events.EventStreamKey! Stream, out long FirstSequence, out long ThroughSequence, out string! ArchiveManifestSha256, out BlueTusk.Events.EventPublishedSourceIdentity! Source, out long MembershipRevision) -> void
+BlueTusk.Events.EventPublishedRetentionIntent.Epoch.get -> System.Guid
+BlueTusk.Events.EventPublishedRetentionIntent.Epoch.init -> void
+BlueTusk.Events.EventPublishedRetentionIntent.Equals(BlueTusk.Events.EventPublishedRetentionIntent? other) -> bool
+BlueTusk.Events.EventPublishedRetentionIntent.EventPublishedRetentionIntent(System.Guid Epoch, BlueTusk.Events.EventStreamKey! Stream, long FirstSequence, long ThroughSequence, string! ArchiveManifestSha256, BlueTusk.Events.EventPublishedSourceIdentity! Source, long MembershipRevision) -> void
+BlueTusk.Events.EventPublishedRetentionIntent.FirstSequence.get -> long
+BlueTusk.Events.EventPublishedRetentionIntent.FirstSequence.init -> void
+BlueTusk.Events.EventPublishedRetentionIntent.MembershipRevision.get -> long
+BlueTusk.Events.EventPublishedRetentionIntent.MembershipRevision.init -> void
+BlueTusk.Events.EventPublishedRetentionIntent.Source.get -> BlueTusk.Events.EventPublishedSourceIdentity!
+BlueTusk.Events.EventPublishedRetentionIntent.Source.init -> void
+BlueTusk.Events.EventPublishedRetentionIntent.Stream.get -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.EventPublishedRetentionIntent.Stream.init -> void
+BlueTusk.Events.EventPublishedRetentionIntent.ThroughSequence.get -> long
+BlueTusk.Events.EventPublishedRetentionIntent.ThroughSequence.init -> void
+BlueTusk.Events.EventPublishedRetentionObservation
+BlueTusk.Events.EventPublishedRetentionObservation.MarkerCommitEndPosition.get -> ulong
+BlueTusk.Events.EventPublishedRetentionObservation.MembershipRevision.get -> long
+BlueTusk.Events.EventPublishedRetentionObservation.ObservationId.get -> System.Guid
+BlueTusk.Events.EventPublishedRetentionObservation.RetentionEpoch.get -> System.Guid
+BlueTusk.Events.EventPublishedRetentionObservation.TargetCount.get -> int
+BlueTusk.Events.EventPublishedRetentionRemoteKind
+BlueTusk.Events.EventPublishedRetentionRemoteKind.Events = 0 -> BlueTusk.Events.EventPublishedRetentionRemoteKind
+BlueTusk.Events.EventPublishedRetentionRemoteKind.Projection = 1 -> BlueTusk.Events.EventPublishedRetentionRemoteKind
+BlueTusk.Events.EventPublishedRetentionRemoteTarget
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.ConsumerGroup.get -> string!
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.DataSource.get -> System.Data.Common.DbDataSource!
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.EndpointKey.get -> string!
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.EventPublishedRetentionRemoteTarget(string! consumerGroup, System.Guid targetIncarnation, string! endpointKey, System.Data.Common.DbDataSource! dataSource, string! schema, string! transportSchema, BlueTusk.Events.EventPublishedRetentionRemoteKind kind, string? projection = null, int? projectionVersion = null) -> void
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.Kind.get -> BlueTusk.Events.EventPublishedRetentionRemoteKind
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.Projection.get -> string?
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.ProjectionVersion.get -> int?
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.Schema.get -> string!
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.TargetIncarnation.get -> System.Guid
+BlueTusk.Events.EventPublishedRetentionRemoteTarget.TransportSchema.get -> string!
+BlueTusk.Events.EventPublishedSourceIdentity
+BlueTusk.Events.EventPublishedSourceIdentity.<Clone>$() -> BlueTusk.Events.EventPublishedSourceIdentity!
+BlueTusk.Events.EventPublishedSourceIdentity.DatabaseName.get -> string!
+BlueTusk.Events.EventPublishedSourceIdentity.DatabaseName.init -> void
+BlueTusk.Events.EventPublishedSourceIdentity.Deconstruct(out string! SystemIdentifier, out string! DatabaseName, out long Timeline, out string! SlotName, out string! PublicationName) -> void
+BlueTusk.Events.EventPublishedSourceIdentity.Equals(BlueTusk.Events.EventPublishedSourceIdentity? other) -> bool
+BlueTusk.Events.EventPublishedSourceIdentity.EventPublishedSourceIdentity(string! SystemIdentifier, string! DatabaseName, long Timeline, string! SlotName, string! PublicationName) -> void
+BlueTusk.Events.EventPublishedSourceIdentity.PublicationName.get -> string!
+BlueTusk.Events.EventPublishedSourceIdentity.PublicationName.init -> void
+BlueTusk.Events.EventPublishedSourceIdentity.SlotName.get -> string!
+BlueTusk.Events.EventPublishedSourceIdentity.SlotName.init -> void
+BlueTusk.Events.EventPublishedSourceIdentity.SystemIdentifier.get -> string!
+BlueTusk.Events.EventPublishedSourceIdentity.SystemIdentifier.init -> void
+BlueTusk.Events.EventPublishedSourceIdentity.Timeline.get -> long
+BlueTusk.Events.EventPublishedSourceIdentity.Timeline.init -> void
+BlueTusk.Events.EventReplayFencedException
+BlueTusk.Events.EventReplayFencedException.EventReplayFencedException() -> void
+BlueTusk.Events.EventReplayLease
+BlueTusk.Events.EventReplayLease.<Clone>$() -> BlueTusk.Events.EventReplayLease!
+BlueTusk.Events.EventReplayLease.ConsumerId.get -> string!
+BlueTusk.Events.EventReplayLease.ConsumerId.init -> void
+BlueTusk.Events.EventReplayLease.Deconstruct(out string! ConsumerId, out BlueTusk.Events.EventStreamKey! Stream, out string! OwnerId, out long FencingToken) -> void
+BlueTusk.Events.EventReplayLease.Equals(BlueTusk.Events.EventReplayLease? other) -> bool
+BlueTusk.Events.EventReplayLease.EventReplayLease(string! ConsumerId, BlueTusk.Events.EventStreamKey! Stream, string! OwnerId, long FencingToken) -> void
+BlueTusk.Events.EventReplayLease.FencingToken.get -> long
+BlueTusk.Events.EventReplayLease.FencingToken.init -> void
+BlueTusk.Events.EventReplayLease.OwnerId.get -> string!
+BlueTusk.Events.EventReplayLease.OwnerId.init -> void
+BlueTusk.Events.EventReplayLease.Stream.get -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.EventReplayLease.Stream.init -> void
+BlueTusk.Events.EventReplayResult
+BlueTusk.Events.EventReplayResult.<Clone>$() -> BlueTusk.Events.EventReplayResult!
+BlueTusk.Events.EventReplayResult.Checkpoint.get -> long
+BlueTusk.Events.EventReplayResult.Checkpoint.init -> void
+BlueTusk.Events.EventReplayResult.Deconstruct(out int HandledCount, out long Checkpoint, out bool ReachedEnd) -> void
+BlueTusk.Events.EventReplayResult.Equals(BlueTusk.Events.EventReplayResult? other) -> bool
+BlueTusk.Events.EventReplayResult.EventReplayResult(int HandledCount, long Checkpoint, bool ReachedEnd) -> void
+BlueTusk.Events.EventReplayResult.HandledCount.get -> int
+BlueTusk.Events.EventReplayResult.HandledCount.init -> void
+BlueTusk.Events.EventReplayResult.ReachedEnd.get -> bool
+BlueTusk.Events.EventReplayResult.ReachedEnd.init -> void
+BlueTusk.Events.EventReplayStatus
+BlueTusk.Events.EventReplayStatus.Checkpoint.get -> long
+BlueTusk.Events.EventReplayStatus.ConsumerId.get -> string!
+BlueTusk.Events.EventReplayStatus.FencingToken.get -> long
+BlueTusk.Events.EventReplayStatus.IsLeaseActive.get -> bool
+BlueTusk.Events.EventReplayStatus.LeaseExpiresAt.get -> System.DateTimeOffset?
+BlueTusk.Events.EventReplayStatus.ObservedAt.get -> System.DateTimeOffset
+BlueTusk.Events.EventReplayStatus.OwnerId.get -> string?
+BlueTusk.Events.EventReplayStatus.RemainingEvents.get -> long
+BlueTusk.Events.EventReplayStatus.ReplayExists.get -> bool
+BlueTusk.Events.EventReplayStatus.Stream.get -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.EventReplayStatus.StreamExists.get -> bool
+BlueTusk.Events.EventReplayStatus.StreamHead.get -> long
+BlueTusk.Events.EventRetentionAssessment
+BlueTusk.Events.EventRetentionAssessment.AdditionalPublicationsOmitted.get -> bool
+BlueTusk.Events.EventRetentionAssessment.Blockers.get -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionAssessment.ExpectedRetainedThrough.get -> long
+BlueTusk.Events.EventRetentionAssessment.PublicationNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Events.EventRetentionAssessment.RequestedThrough.get -> long
+BlueTusk.Events.EventRetentionAssessment.Status.get -> BlueTusk.Events.EventRetentionStatus!
+BlueTusk.Events.EventRetentionAssessment.Stream.get -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.ArchiveIncomplete = 32 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.BeyondStreamHead = 16 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.FloorChanged = 4 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.FloorNotForward = 8 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.LocalRetentionDisabled = 1 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.None = 0 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.OutboxContractChanged = 256 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.OutboxPublished = 128 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.ReplayCheckpointBehind = 64 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionBlocker.StreamMissing = 2 -> BlueTusk.Events.EventRetentionBlocker
+BlueTusk.Events.EventRetentionStatus
+BlueTusk.Events.EventRetentionStatus.<Clone>$() -> BlueTusk.Events.EventRetentionStatus!
+BlueTusk.Events.EventRetentionStatus.ArchivedThrough.get -> long
+BlueTusk.Events.EventRetentionStatus.ArchivedThrough.init -> void
+BlueTusk.Events.EventRetentionStatus.Deconstruct(out long StreamHead, out long ArchivedThrough, out long RetainedThrough, out bool LocalRetentionEnabled) -> void
+BlueTusk.Events.EventRetentionStatus.Equals(BlueTusk.Events.EventRetentionStatus? other) -> bool
+BlueTusk.Events.EventRetentionStatus.EventRetentionStatus(long StreamHead, long ArchivedThrough, long RetainedThrough, bool LocalRetentionEnabled) -> void
+BlueTusk.Events.EventRetentionStatus.LocalRetentionEnabled.get -> bool
+BlueTusk.Events.EventRetentionStatus.LocalRetentionEnabled.init -> void
+BlueTusk.Events.EventRetentionStatus.RetainedThrough.get -> long
+BlueTusk.Events.EventRetentionStatus.RetainedThrough.init -> void
+BlueTusk.Events.EventRetentionStatus.StreamHead.get -> long
+BlueTusk.Events.EventRetentionStatus.StreamHead.init -> void
+BlueTusk.Events.EventRouter
+BlueTusk.Events.EventRouter.HandleAsync(BlueTusk.Events.StoredEvent! value, System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Events.EventRouterBuilder
+BlueTusk.Events.EventRouterBuilder.Build() -> BlueTusk.Events.EventRouter!
+BlueTusk.Events.EventRouterBuilder.EventRouterBuilder() -> void
+BlueTusk.Events.EventRouterBuilder.Register<T>(BlueTusk.Events.EventContract<T>! contract, BlueTusk.Events.TypedEventTransactionHandler<T>! handler) -> BlueTusk.Events.EventRouterBuilder!
+BlueTusk.Events.EventStreamKey
+BlueTusk.Events.EventStreamKey.<Clone>$() -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.EventStreamKey.Equals(BlueTusk.Events.EventStreamKey? other) -> bool
+BlueTusk.Events.EventStreamKey.EventStreamKey(string! tenantId, string! streamId) -> void
+BlueTusk.Events.EventStreamKey.StreamId.get -> string!
+BlueTusk.Events.EventStreamKey.TenantId.get -> string!
+BlueTusk.Events.EventTransactionHandler
+BlueTusk.Events.EventWrite
+BlueTusk.Events.EventWrite.EventId.get -> System.Guid
+BlueTusk.Events.EventWrite.EventType.get -> string!
+BlueTusk.Events.EventWrite.EventWrite(System.Guid eventId, string! eventType, int version, System.DateTimeOffset occurredAt, System.ReadOnlySpan<byte> payload) -> void
+BlueTusk.Events.EventWrite.OccurredAt.get -> System.DateTimeOffset
+BlueTusk.Events.EventWrite.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Events.EventWrite.Version.get -> int
+BlueTusk.Events.IEventArchiveStore
+BlueTusk.Events.IEventArchiveStore.ReadAsync(string! archiveId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Events.StoredEvent!>!>
+BlueTusk.Events.IEventArchiveStore.WriteAsync(BlueTusk.Events.EventStreamKey! stream, System.Collections.Generic.IReadOnlyList<BlueTusk.Events.StoredEvent!>! events, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string!>
+BlueTusk.Events.PostgreSqlEventsOptions
+BlueTusk.Events.PostgreSqlEventsOptions.CommandTimeoutSeconds.get -> int
+BlueTusk.Events.PostgreSqlEventsOptions.CommandTimeoutSeconds.init -> void
+BlueTusk.Events.PostgreSqlEventsOptions.EnableLocalOnlyRetention.get -> bool
+BlueTusk.Events.PostgreSqlEventsOptions.EnableLocalOnlyRetention.init -> void
+BlueTusk.Events.PostgreSqlEventsOptions.MaximumAppendBytes.get -> int
+BlueTusk.Events.PostgreSqlEventsOptions.MaximumAppendBytes.init -> void
+BlueTusk.Events.PostgreSqlEventsOptions.MaximumAppendEvents.get -> int
+BlueTusk.Events.PostgreSqlEventsOptions.MaximumAppendEvents.init -> void
+BlueTusk.Events.PostgreSqlEventsOptions.MaximumEventBytes.get -> int
+BlueTusk.Events.PostgreSqlEventsOptions.MaximumEventBytes.init -> void
+BlueTusk.Events.PostgreSqlEventsOptions.PostgreSqlEventsOptions() -> void
+BlueTusk.Events.PostgreSqlEventsOptions.Schema.get -> string!
+BlueTusk.Events.PostgreSqlEventsOptions.Schema.init -> void
+BlueTusk.Events.PostgreSqlEventStore
+BlueTusk.Events.PostgreSqlEventStore.AcquireReplayAsync(string! consumerId, BlueTusk.Events.EventStreamKey! stream, string! ownerId, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventReplayLease?>
+BlueTusk.Events.PostgreSqlEventStore.AssessLocalRetentionAsync(BlueTusk.Events.EventStreamKey! stream, long throughSequence, long expectedRetainedThrough, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventRetentionAssessment!>
+BlueTusk.Events.PostgreSqlEventStore.AdvanceLocalRetentionAsync(BlueTusk.Events.EventStreamKey! stream, long throughSequence, long expectedRetainedThrough, BlueTusk.Events.EventLocalRetentionCertification! certification, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventRetentionStatus!>
+BlueTusk.Events.PostgreSqlEventStore.AppendAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, BlueTusk.Events.EventStreamKey! stream, System.Collections.Generic.IReadOnlyList<BlueTusk.Events.EventWrite!>! events, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Events.EventAppendReceipt!>!>
+BlueTusk.Events.PostgreSqlEventStore.ArchiveNextAsync(BlueTusk.Events.EventStreamKey! stream, BlueTusk.Events.IEventArchiveStore! archive, int maximumEvents = 256, int maximumPayloadBytes = 8388608, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventArchiveProgress!>
+BlueTusk.Events.PostgreSqlEventStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Events.PostgreSqlEventStore.PostgreSqlEventStore(System.Data.Common.DbDataSource! dataSource, BlueTusk.Events.PostgreSqlEventsOptions? options = null) -> void
+BlueTusk.Events.PostgreSqlEventStore.ProcessInboxAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, string! consumerId, BlueTusk.Events.StoredEvent! value, BlueTusk.Events.EventTransactionHandler! handler, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Events.PostgreSqlEventStore.ObservePublishedRetentionIntentAsync(System.Guid retentionEpoch, System.Collections.Generic.IReadOnlyList<BlueTusk.Events.EventPublishedRetentionRemoteTarget!>! targets, int maximumTargets = 64, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventPublishedRetentionObservation!>
+BlueTusk.Events.PostgreSqlEventStore.PublishRetentionIntentAsync(BlueTusk.Events.EventStreamKey! stream, BlueTusk.Events.IEventArchiveStore! archive, BlueTusk.Events.EventPublishedSourceIdentity! source, long throughSequence, long expectedPreviousThrough = 0, int maximumSegments = 64, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventPublishedRetentionIntent!>
+BlueTusk.Events.PostgreSqlEventStore.PruneRetainedAsync(BlueTusk.Events.EventStreamKey! stream, int maximumEvents = 1024, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventPruneProgress!>
+BlueTusk.Events.PostgreSqlEventStore.ReadAsync(BlueTusk.Events.EventStreamKey! stream, long afterSequence = 0, int maximumEvents = 256, int maximumPayloadBytes = 8388608, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Events.StoredEvent!>!>
+BlueTusk.Events.PostgreSqlEventStore.ReadCheckpointAsync(string! consumerId, BlueTusk.Events.EventStreamKey! stream, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
+BlueTusk.Events.PostgreSqlEventStore.ReadReplayStatusAsync(string! consumerId, BlueTusk.Events.EventStreamKey! stream, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventReplayStatus!>
+BlueTusk.Events.PostgreSqlEventStore.ReadRetentionStatusAsync(BlueTusk.Events.EventStreamKey! stream, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventRetentionStatus!>
+BlueTusk.Events.PostgreSqlEventStore.RegisterPublishedRetentionConsumerAsync(BlueTusk.Events.EventStreamKey! stream, string! consumerGroup, System.Guid targetIncarnation, BlueTusk.Events.EventPublishedSourceIdentity! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventPublishedConsumerRegistration!>
+BlueTusk.Events.PostgreSqlEventStore.RegisterPublishedRetentionTargetAsync(BlueTusk.Events.EventPublishedConsumerRegistration! registration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Events.PostgreSqlEventStore.ReleaseReplayAsync(BlueTusk.Events.EventReplayLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Events.PostgreSqlEventStore.RenewReplayAsync(BlueTusk.Events.EventReplayLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Events.PostgreSqlEventStore.ReplayAsync(BlueTusk.Events.EventReplayLease! lease, BlueTusk.Events.EventTransactionHandler! handler, int maximumEvents = 256, int maximumPayloadBytes = 8388608, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Events.EventReplayResult!>
+BlueTusk.Events.StoredEvent
+BlueTusk.Events.StoredEvent.<Clone>$() -> BlueTusk.Events.StoredEvent!
+BlueTusk.Events.StoredEvent.Deconstruct(out BlueTusk.Events.EventStreamKey! Stream, out long Sequence, out System.Guid EventId, out string! EventType, out int Version, out System.DateTimeOffset OccurredAt, out System.ReadOnlyMemory<byte> Payload) -> void
+BlueTusk.Events.StoredEvent.Equals(BlueTusk.Events.StoredEvent? other) -> bool
+BlueTusk.Events.StoredEvent.EventId.get -> System.Guid
+BlueTusk.Events.StoredEvent.EventId.init -> void
+BlueTusk.Events.StoredEvent.EventType.get -> string!
+BlueTusk.Events.StoredEvent.EventType.init -> void
+BlueTusk.Events.StoredEvent.OccurredAt.get -> System.DateTimeOffset
+BlueTusk.Events.StoredEvent.OccurredAt.init -> void
+BlueTusk.Events.StoredEvent.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Events.StoredEvent.Payload.init -> void
+BlueTusk.Events.StoredEvent.Sequence.get -> long
+BlueTusk.Events.StoredEvent.Sequence.init -> void
+BlueTusk.Events.StoredEvent.StoredEvent(BlueTusk.Events.EventStreamKey! Stream, long Sequence, System.Guid EventId, string! EventType, int Version, System.DateTimeOffset OccurredAt, System.ReadOnlyMemory<byte> Payload) -> void
+BlueTusk.Events.StoredEvent.Stream.get -> BlueTusk.Events.EventStreamKey!
+BlueTusk.Events.StoredEvent.Stream.init -> void
+BlueTusk.Events.StoredEvent.Version.get -> int
+BlueTusk.Events.StoredEvent.Version.init -> void
+BlueTusk.Events.TypedEventTransactionHandler<T>
+override BlueTusk.Events.EventAppendReceipt.Equals(object? obj) -> bool
+override BlueTusk.Events.EventAppendReceipt.GetHashCode() -> int
+override BlueTusk.Events.EventAppendReceipt.ToString() -> string!
+override BlueTusk.Events.EventArchiveProgress.Equals(object? obj) -> bool
+override BlueTusk.Events.EventArchiveProgress.GetHashCode() -> int
+override BlueTusk.Events.EventArchiveProgress.ToString() -> string!
+override BlueTusk.Events.EventPruneProgress.Equals(object? obj) -> bool
+override BlueTusk.Events.EventPruneProgress.GetHashCode() -> int
+override BlueTusk.Events.EventPruneProgress.ToString() -> string!
+override BlueTusk.Events.EventPublishedConsumerRegistration.Equals(object? obj) -> bool
+override BlueTusk.Events.EventPublishedConsumerRegistration.GetHashCode() -> int
+override BlueTusk.Events.EventPublishedConsumerRegistration.ToString() -> string!
+override BlueTusk.Events.EventPublishedRetentionIntent.Equals(object? obj) -> bool
+override BlueTusk.Events.EventPublishedRetentionIntent.GetHashCode() -> int
+override BlueTusk.Events.EventPublishedRetentionIntent.ToString() -> string!
+override BlueTusk.Events.EventPublishedSourceIdentity.Equals(object? obj) -> bool
+override BlueTusk.Events.EventPublishedSourceIdentity.GetHashCode() -> int
+override BlueTusk.Events.EventPublishedSourceIdentity.ToString() -> string!
+override BlueTusk.Events.EventReplayLease.Equals(object? obj) -> bool
+override BlueTusk.Events.EventReplayLease.GetHashCode() -> int
+override BlueTusk.Events.EventReplayLease.ToString() -> string!
+override BlueTusk.Events.EventReplayResult.Equals(object? obj) -> bool
+override BlueTusk.Events.EventReplayResult.GetHashCode() -> int
+override BlueTusk.Events.EventReplayResult.ToString() -> string!
+override BlueTusk.Events.EventRetentionStatus.Equals(object? obj) -> bool
+override BlueTusk.Events.EventRetentionStatus.GetHashCode() -> int
+override BlueTusk.Events.EventRetentionStatus.ToString() -> string!
+override BlueTusk.Events.EventStreamKey.Equals(object? obj) -> bool
+override BlueTusk.Events.EventStreamKey.GetHashCode() -> int
+override BlueTusk.Events.EventStreamKey.ToString() -> string!
+override BlueTusk.Events.StoredEvent.Equals(object? obj) -> bool
+override BlueTusk.Events.StoredEvent.GetHashCode() -> int
+override BlueTusk.Events.StoredEvent.ToString() -> string!
+static BlueTusk.Events.EventAppendReceipt.operator !=(BlueTusk.Events.EventAppendReceipt? left, BlueTusk.Events.EventAppendReceipt? right) -> bool
+static BlueTusk.Events.EventAppendReceipt.operator ==(BlueTusk.Events.EventAppendReceipt? left, BlueTusk.Events.EventAppendReceipt? right) -> bool
+static BlueTusk.Events.EventArchiveProgress.operator !=(BlueTusk.Events.EventArchiveProgress? left, BlueTusk.Events.EventArchiveProgress? right) -> bool
+static BlueTusk.Events.EventArchiveProgress.operator ==(BlueTusk.Events.EventArchiveProgress? left, BlueTusk.Events.EventArchiveProgress? right) -> bool
+static BlueTusk.Events.EventPruneProgress.operator !=(BlueTusk.Events.EventPruneProgress? left, BlueTusk.Events.EventPruneProgress? right) -> bool
+static BlueTusk.Events.EventPruneProgress.operator ==(BlueTusk.Events.EventPruneProgress? left, BlueTusk.Events.EventPruneProgress? right) -> bool
+static BlueTusk.Events.EventPublishedConsumerRegistration.operator !=(BlueTusk.Events.EventPublishedConsumerRegistration? left, BlueTusk.Events.EventPublishedConsumerRegistration? right) -> bool
+static BlueTusk.Events.EventPublishedConsumerRegistration.operator ==(BlueTusk.Events.EventPublishedConsumerRegistration? left, BlueTusk.Events.EventPublishedConsumerRegistration? right) -> bool
+static BlueTusk.Events.EventPublishedRetentionIntent.operator !=(BlueTusk.Events.EventPublishedRetentionIntent? left, BlueTusk.Events.EventPublishedRetentionIntent? right) -> bool
+static BlueTusk.Events.EventPublishedRetentionIntent.operator ==(BlueTusk.Events.EventPublishedRetentionIntent? left, BlueTusk.Events.EventPublishedRetentionIntent? right) -> bool
+static BlueTusk.Events.EventPublishedSourceIdentity.operator !=(BlueTusk.Events.EventPublishedSourceIdentity? left, BlueTusk.Events.EventPublishedSourceIdentity? right) -> bool
+static BlueTusk.Events.EventPublishedSourceIdentity.operator ==(BlueTusk.Events.EventPublishedSourceIdentity? left, BlueTusk.Events.EventPublishedSourceIdentity? right) -> bool
+static BlueTusk.Events.EventReplayLease.operator !=(BlueTusk.Events.EventReplayLease? left, BlueTusk.Events.EventReplayLease? right) -> bool
+static BlueTusk.Events.EventReplayLease.operator ==(BlueTusk.Events.EventReplayLease? left, BlueTusk.Events.EventReplayLease? right) -> bool
+static BlueTusk.Events.EventReplayResult.operator !=(BlueTusk.Events.EventReplayResult? left, BlueTusk.Events.EventReplayResult? right) -> bool
+static BlueTusk.Events.EventReplayResult.operator ==(BlueTusk.Events.EventReplayResult? left, BlueTusk.Events.EventReplayResult? right) -> bool
+static BlueTusk.Events.EventRetentionStatus.operator !=(BlueTusk.Events.EventRetentionStatus? left, BlueTusk.Events.EventRetentionStatus? right) -> bool
+static BlueTusk.Events.EventRetentionStatus.operator ==(BlueTusk.Events.EventRetentionStatus? left, BlueTusk.Events.EventRetentionStatus? right) -> bool
+static BlueTusk.Events.EventStreamKey.operator !=(BlueTusk.Events.EventStreamKey? left, BlueTusk.Events.EventStreamKey? right) -> bool
+static BlueTusk.Events.EventStreamKey.operator ==(BlueTusk.Events.EventStreamKey? left, BlueTusk.Events.EventStreamKey? right) -> bool
+static BlueTusk.Events.StoredEvent.operator !=(BlueTusk.Events.StoredEvent? left, BlueTusk.Events.StoredEvent? right) -> bool
+static BlueTusk.Events.StoredEvent.operator ==(BlueTusk.Events.StoredEvent? left, BlueTusk.Events.StoredEvent? right) -> bool
+virtual BlueTusk.Events.EventTransactionHandler.Invoke(BlueTusk.Events.StoredEvent! value, System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+virtual BlueTusk.Events.TypedEventTransactionHandler<T>.Invoke(T body, BlueTusk.Events.StoredEvent! envelope, System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask

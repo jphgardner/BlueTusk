@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackageId>BlueTusk.Production.Templates</PackageId>
+    <PackageType>Template</PackageType>
+    <Description>Production Clean Architecture application template for BlueTusk.</Description>
+    <PackageTags>dotnet-new;templates;postgresql;bluetusk;clean-architecture;production;kubernetes</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="content\**\*.cs" />
+    <None Remove="$(MSBuildThisFileDirectory)..\..\README.md" />
+    <Content Include="content\**\*"
+             Exclude="content\**\bin\**;content\**\obj\**"
+             Pack="true"
+             PackagePath="content\production\%(RecursiveDir)%(Filename)%(Extension)" />
+
+    <Content Include="..\..\applications\Directory.Build.props"
+             Pack="true"
+             PackagePath="content\production\applications\Directory.Build.props" />
+    <Content Include="..\..\applications\Directory.Packages.props"
+             Pack="true"
+             PackagePath="content\production\applications\Directory.Packages.props" />
+    <Content Include="..\..\applications\src\Shared\**\*"
+             Exclude="..\..\applications\src\Shared\**\bin\**;..\..\applications\src\Shared\**\obj\**"
+             Pack="true"
+             PackagePath="content\production\applications\src\Shared\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="..\..\applications\src\OrderOperations\**\*"
+             Exclude="..\..\applications\src\OrderOperations\**\bin\**;..\..\applications\src\OrderOperations\**\obj\**"
+             Pack="true"
+             PackagePath="content\production\applications\src\OrderOperations\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="..\..\applications\tests\BlueTusk.OrderOperations.Tests\**\*"
+             Exclude="..\..\applications\tests\BlueTusk.OrderOperations.Tests\**\bin\**;..\..\applications\tests\BlueTusk.OrderOperations.Tests\**\obj\**"
+             Pack="true"
+             PackagePath="content\production\applications\tests\BlueTusk.OrderOperations.Tests\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="..\..\applications\containers\**\*"
+             Pack="true"
+             PackagePath="content\production\applications\containers\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="..\..\applications\deploy\charts\bluetusk-application\**\*"
+             Pack="true"
+             PackagePath="content\production\applications\deploy\charts\bluetusk-application\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="..\..\applications\docs\order-operations-runbook.md"
+             Pack="true"
+             PackagePath="content\production\applications\docs\order-operations-runbook.md" />
+    <Content Include="..\..\applications\docs\service-level-objectives.md"
+             Pack="true"
+             PackagePath="content\production\applications\docs\service-level-objectives.md" />
+    <Content Include="..\..\applications\web\order-operations\**\*"
+             Exclude="..\..\applications\web\order-operations\node_modules\**;..\..\applications\web\order-operations\dist\**;..\..\applications\web\order-operations\playwright-report\**;..\..\applications\web\order-operations\test-results\**;..\..\applications\web\order-operations\**\*.tsbuildinfo"
+             Pack="true"
+             PackagePath="content\production\clients\react\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="..\..\applications\web\order-operations-angular\**\*"
+             Exclude="..\..\applications\web\order-operations-angular\node_modules\**;..\..\applications\web\order-operations-angular\dist\**;..\..\applications\web\order-operations-angular\playwright-report\**;..\..\applications\web\order-operations-angular\test-results\**"
+             Pack="true"
+             PackagePath="content\production\clients\angular\%(RecursiveDir)%(Filename)%(Extension)" />
+
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,2146 @@
+{
+  "StartedAt": "2026-09-27T19:42:04.6928318+00:00",
+  "Profile": "matrix",
+  "OperatingSystem": "Microsoft Windows 10.0.26200",
+  "Framework": ".NET 10.0.12",
+  "ProcessArchitecture": "X64",
+  "LogicalProcessors": 16,
+  "PostgreSqlVersion": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "SourceSha256": "78F819D72E6AC6BC5BD5346E8F5BECCD303890FAA20A13FF024BBF556422A5F9",
+  "MeasurementLimitations": "Local bounded harness with instrumentation/collector overhead. WAL and pg_stat_database counters are cluster/database scoped and may include concurrent work; snapshots may lag. RSS and waits are sampled every 100 ms. Durable latency includes backlog enqueue time. No production qualification or comparative performance leadership is established.",
+  "Cases": [
+    {
+      "Configuration": {
+        "Name": "jobs-p64-c2",
+        "Product": "Jobs",
+        "Count": 1000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 2,
+        "PaddingBytes": 64,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 1000,
+      "Completed": 1000,
+      "DurableEffects": 1000,
+      "ActualPayloadBytes": 142,
+      "EnqueueSeconds": 0.6561333,
+      "DrainSeconds": 2.615322,
+      "CompletedPerDrainSecond": 382.3620953748716,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 662.125,
+        "P50": 1557.461,
+        "P95": 2475.555,
+        "P99": 2550.054,
+        "Maximum": 2592.646
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 4.5162,
+        "P50": 7.4393,
+        "P95": 13.9095,
+        "P99": 19.2539,
+        "Maximum": 27.4396
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 662.125,
+            "P50": 1525.55,
+            "P95": 2442.358,
+            "P99": 2511.13,
+            "Maximum": 2525.175
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 676.945,
+            "P50": 1573.377,
+            "P95": 2509.316,
+            "P99": 2580.084,
+            "Maximum": 2592.646
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 678.079,
+            "P50": 1574.728,
+            "P95": 2486.037,
+            "P99": 2553.591,
+            "Maximum": 2564.678
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 663.801,
+            "P50": 1557.461,
+            "P95": 2473.52,
+            "P99": 2540.129,
+            "Maximum": 2551.218
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 46850648,
+        "Gen0Collections": 3,
+        "Gen1Collections": 2,
+        "Gen2Collections": 1,
+        "PeakWorkingSetBytes": 105693184,
+        "PeakManagedBytes": 22068048,
+        "PeakPoolTotal": 10,
+        "PeakPoolBusy": 8,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 10,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 9,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 10,
+          "Idle": 10,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 10,
+          "Reused": 4146,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 1008,
+            "Sum": 1000,
+            "Maximum": 2
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 1000,
+            "Sum": 8.512871700000012,
+            "Maximum": 0.0275193
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 1000,
+            "Sum": 1000,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 658567600,
+        "Commits": 74384,
+        "Rollbacks": 3388,
+        "Inserts": 893223,
+        "Updates": 108531,
+        "Deletes": 471696,
+        "Deadlocks": 0,
+        "BlocksRead": 2447,
+        "BlocksHit": 24342658,
+        "TempBytes": 0,
+        "RelationBytes": 3497984
+      },
+      "After": {
+        "WalPosition": 661687656,
+        "Commits": 81895,
+        "Rollbacks": 3388,
+        "Inserts": 906917,
+        "Updates": 111192,
+        "Deletes": 471696,
+        "Deadlocks": 0,
+        "BlocksRead": 2456,
+        "BlocksHit": 27104122,
+        "TempBytes": 0,
+        "RelationBytes": 4653056
+      },
+      "ObservedClusterWalBytes": 3120056,
+      "RelationGrowthBytes": 1155072,
+      "PrunedTerminalRows": 11000,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "jobs-p64-c8",
+        "Product": "Jobs",
+        "Count": 1000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 8,
+        "PaddingBytes": 64,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 1000,
+      "Completed": 1000,
+      "DurableEffects": 1000,
+      "ActualPayloadBytes": 142,
+      "EnqueueSeconds": 1.7977751,
+      "DrainSeconds": 9.194749,
+      "CompletedPerDrainSecond": 108.75772682864971,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 1836.706,
+        "P50": 9017.711,
+        "P95": 9561.564,
+        "P99": 9583.837,
+        "Maximum": 9603.992
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 6.3655,
+        "P50": 18.7156,
+        "P95": 274.4266,
+        "P99": 1897.3202,
+        "Maximum": 3070.8558
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1950.891,
+            "P50": 9031.536,
+            "P95": 9576.85,
+            "P99": 9596.881,
+            "Maximum": 9599.676
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1915.437,
+            "P50": 9014.625,
+            "P95": 9575.362,
+            "P99": 9589.689,
+            "Maximum": 9603.992
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1836.706,
+            "P50": 9029.791,
+            "P95": 9559.819,
+            "P99": 9574.765,
+            "Maximum": 9582.65
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1928.229,
+            "P50": 9003.754,
+            "P95": 9545.385,
+            "P99": 9563.547,
+            "Maximum": 9570.373
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 42082656,
+        "Gen0Collections": 2,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "PeakWorkingSetBytes": 105156608,
+        "PeakManagedBytes": 28705232,
+        "PeakPoolTotal": 35,
+        "PeakPoolBusy": 33,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 35,
+        "PeakDatabaseLockWaiters": 3,
+        "PeakDatabaseWaitingBackends": 34,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 35,
+          "Idle": 35,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 35,
+          "Reused": 3499,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 374,
+            "Sum": 1000,
+            "Maximum": 8
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 1000,
+            "Sum": 109.90196979999982,
+            "Maximum": 4.2175705
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 1000,
+            "Sum": 1000,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 669456808,
+        "Commits": 82904,
+        "Rollbacks": 3388,
+        "Inserts": 907160,
+        "Updates": 111608,
+        "Deletes": 483295,
+        "Deadlocks": 0,
+        "BlocksRead": 2460,
+        "BlocksHit": 27713360,
+        "TempBytes": 0,
+        "RelationBytes": 3416064
+      },
+      "After": {
+        "WalPosition": 674049576,
+        "Commits": 88628,
+        "Rollbacks": 3407,
+        "Inserts": 921632,
+        "Updates": 113870,
+        "Deletes": 484423,
+        "Deadlocks": 0,
+        "BlocksRead": 2469,
+        "BlocksHit": 28787908,
+        "TempBytes": 0,
+        "RelationBytes": 5169152
+      },
+      "ObservedClusterWalBytes": 4592768,
+      "RelationGrowthBytes": 1753088,
+      "PrunedTerminalRows": 11000,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "jobs-p4096-c2",
+        "Product": "Jobs",
+        "Count": 1000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 2,
+        "PaddingBytes": 4096,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 1000,
+      "Completed": 1000,
+      "DurableEffects": 1000,
+      "ActualPayloadBytes": 4174,
+      "EnqueueSeconds": 0.6835859,
+      "DrainSeconds": 2.6050715,
+      "CompletedPerDrainSecond": 383.866623238556,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 697.579,
+        "P50": 1628.871,
+        "P95": 2415.495,
+        "P99": 2535.511,
+        "Maximum": 2597.764
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 4.4068,
+        "P50": 7.3543,
+        "P95": 13.4281,
+        "P99": 16.8678,
+        "Maximum": 21.3475
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 704.85,
+            "P50": 1631.114,
+            "P95": 2439.26,
+            "P99": 2543.353,
+            "Maximum": 2571.305
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 715.492,
+            "P50": 1642.657,
+            "P95": 2473.861,
+            "P99": 2581.097,
+            "Maximum": 2597.764
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 701.182,
+            "P50": 1615.574,
+            "P95": 2371.526,
+            "P99": 2467.366,
+            "Maximum": 2493.824
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 697.579,
+            "P50": 1623.307,
+            "P95": 2392.677,
+            "P99": 2505.345,
+            "Maximum": 2525.838
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 66300224,
+        "Gen0Collections": 5,
+        "Gen1Collections": 4,
+        "Gen2Collections": 1,
+        "PeakWorkingSetBytes": 110985216,
+        "PeakManagedBytes": 31383488,
+        "PeakPoolTotal": 10,
+        "PeakPoolBusy": 8,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 10,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 8,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 10,
+          "Idle": 10,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 10,
+          "Reused": 4150,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 1012,
+            "Sum": 1000,
+            "Maximum": 2
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 1000,
+            "Sum": 8.366970800000002,
+            "Maximum": 0.0214374
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 1000,
+            "Sum": 1000,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 686832512,
+        "Commits": 91037,
+        "Rollbacks": 3419,
+        "Inserts": 929088,
+        "Updates": 115767,
+        "Deletes": 501832,
+        "Deadlocks": 0,
+        "BlocksRead": 2487,
+        "BlocksHit": 29586165,
+        "TempBytes": 0,
+        "RelationBytes": 3383296
+      },
+      "After": {
+        "WalPosition": 689986280,
+        "Commits": 98652,
+        "Rollbacks": 3419,
+        "Inserts": 942813,
+        "Updates": 118476,
+        "Deletes": 501832,
+        "Deadlocks": 0,
+        "BlocksRead": 2496,
+        "BlocksHit": 32381596,
+        "TempBytes": 0,
+        "RelationBytes": 4636672
+      },
+      "ObservedClusterWalBytes": 3153768,
+      "RelationGrowthBytes": 1253376,
+      "PrunedTerminalRows": 11000,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "jobs-p4096-c8",
+        "Product": "Jobs",
+        "Count": 1000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 8,
+        "PaddingBytes": 4096,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 1000,
+      "Completed": 1000,
+      "DurableEffects": 1000,
+      "ActualPayloadBytes": 4174,
+      "EnqueueSeconds": 0.6607643,
+      "DrainSeconds": 1.1267863,
+      "CompletedPerDrainSecond": 887.4797288536433,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 663.169,
+        "P50": 888.372,
+        "P95": 1064.202,
+        "P99": 1095.597,
+        "Maximum": 1113.012
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 5.364,
+        "P50": 9.5127,
+        "P95": 17.1913,
+        "P99": 39.9146,
+        "Maximum": 50.3172
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 663.169,
+            "P50": 890.426,
+            "P95": 1053.122,
+            "P99": 1076.681,
+            "Maximum": 1079.519
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 687.253,
+            "P50": 907.588,
+            "P95": 1064.733,
+            "P99": 1079.463,
+            "Maximum": 1082.683
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 687.762,
+            "P50": 857.445,
+            "P95": 1032.391,
+            "P99": 1057.779,
+            "Maximum": 1061.794
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 681.788,
+            "P50": 888.413,
+            "P95": 1089.154,
+            "P99": 1109.608,
+            "Maximum": 1113.012
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 59808680,
+        "Gen0Collections": 4,
+        "Gen1Collections": 1,
+        "Gen2Collections": 0,
+        "PeakWorkingSetBytes": 109568000,
+        "PeakManagedBytes": 26662448,
+        "PeakPoolTotal": 33,
+        "PeakPoolBusy": 26,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 33,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 31,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 33,
+          "Idle": 33,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 33,
+          "Reused": 3374,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 335,
+            "Sum": 1000,
+            "Maximum": 8
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 1000,
+            "Sum": 10.952650599999975,
+            "Maximum": 0.0504295
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 1000,
+            "Sum": 1000,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 697788152,
+        "Commits": 99564,
+        "Rollbacks": 3419,
+        "Inserts": 943025,
+        "Updates": 118844,
+        "Deletes": 513687,
+        "Deadlocks": 0,
+        "BlocksRead": 2500,
+        "BlocksHit": 32972246,
+        "TempBytes": 0,
+        "RelationBytes": 3489792
+      },
+      "After": {
+        "WalPosition": 700838704,
+        "Commits": 105759,
+        "Rollbacks": 3419,
+        "Inserts": 956733,
+        "Updates": 121434,
+        "Deletes": 513687,
+        "Deadlocks": 0,
+        "BlocksRead": 2509,
+        "BlocksHit": 34089545,
+        "TempBytes": 0,
+        "RelationBytes": 5062656
+      },
+      "ObservedClusterWalBytes": 3050552,
+      "RelationGrowthBytes": 1572864,
+      "PrunedTerminalRows": 11000,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "jobs-p65536-c2",
+        "Product": "Jobs",
+        "Count": 1000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 2,
+        "PaddingBytes": 65536,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 1000,
+      "Completed": 1000,
+      "DurableEffects": 1000,
+      "ActualPayloadBytes": 65614,
+      "EnqueueSeconds": 0.9554442,
+      "DrainSeconds": 2.7109272,
+      "CompletedPerDrainSecond": 368.87748221346556,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 952.108,
+        "P50": 1729.56,
+        "P95": 2544.964,
+        "P99": 2622.507,
+        "Maximum": 2660.836
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 4.3817,
+        "P50": 7.7797,
+        "P95": 13.6294,
+        "P99": 17.4813,
+        "Maximum": 23.3239
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 958.553,
+            "P50": 1744.497,
+            "P95": 2534.309,
+            "P99": 2614.795,
+            "Maximum": 2631.763
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 961.713,
+            "P50": 1725.751,
+            "P95": 2531.7,
+            "P99": 2612.527,
+            "Maximum": 2628.887
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 964.34,
+            "P50": 1724.918,
+            "P95": 2530.112,
+            "P99": 2600.613,
+            "Maximum": 2614.903
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 952.108,
+            "P50": 1726.632,
+            "P95": 2579.65,
+            "P99": 2651.632,
+            "Maximum": 2660.836
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 451249840,
+        "Gen0Collections": 44,
+        "Gen1Collections": 31,
+        "Gen2Collections": 25,
+        "PeakWorkingSetBytes": 115036160,
+        "PeakManagedBytes": 33868400,
+        "PeakPoolTotal": 10,
+        "PeakPoolBusy": 7,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 10,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 8,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 10,
+          "Idle": 10,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 10,
+          "Reused": 4155,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 1011,
+            "Sum": 1000,
+            "Maximum": 2
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 1000,
+            "Sum": 8.645493700000006,
+            "Maximum": 0.0235028
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 1000,
+            "Sum": 1000,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 708606304,
+        "Commits": 106584,
+        "Rollbacks": 3419,
+        "Inserts": 956962,
+        "Updates": 121921,
+        "Deletes": 525670,
+        "Deadlocks": 0,
+        "BlocksRead": 2513,
+        "BlocksHit": 34511648,
+        "TempBytes": 0,
+        "RelationBytes": 3424256
+      },
+      "After": {
+        "WalPosition": 713839776,
+        "Commits": 113726,
+        "Rollbacks": 3419,
+        "Inserts": 970527,
+        "Updates": 124407,
+        "Deletes": 525670,
+        "Deadlocks": 0,
+        "BlocksRead": 2522,
+        "BlocksHit": 37095448,
+        "TempBytes": 0,
+        "RelationBytes": 5709824
+      },
+      "ObservedClusterWalBytes": 5233472,
+      "RelationGrowthBytes": 2285568,
+      "PrunedTerminalRows": 11000,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "jobs-p65536-c8",
+        "Product": "Jobs",
+        "Count": 1000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 8,
+        "PaddingBytes": 65536,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 1000,
+      "Completed": 1000,
+      "DurableEffects": 1000,
+      "ActualPayloadBytes": 65614,
+      "EnqueueSeconds": 1.044912,
+      "DrainSeconds": 1.4822885,
+      "CompletedPerDrainSecond": 674.6325023772363,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 1042.862,
+        "P50": 1308.068,
+        "P95": 1417.915,
+        "P99": 1452.233,
+        "Maximum": 1465.551
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 4.9249,
+        "P50": 13.1171,
+        "P95": 22.7507,
+        "P99": 46.2095,
+        "Maximum": 67.7236
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1048.601,
+            "P50": 1365.316,
+            "P95": 1450.07,
+            "P99": 1461.746,
+            "Maximum": 1465.551
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1055.89,
+            "P50": 1313.806,
+            "P95": 1409.946,
+            "P99": 1426.051,
+            "Maximum": 1429.076
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1072.431,
+            "P50": 1337.392,
+            "P95": 1412.801,
+            "P99": 1429.19,
+            "Maximum": 1433.952
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1042.862,
+            "P50": 1282.678,
+            "P95": 1384.315,
+            "P99": 1397.844,
+            "Maximum": 1404.643
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 445443344,
+        "Gen0Collections": 39,
+        "Gen1Collections": 29,
+        "Gen2Collections": 19,
+        "PeakWorkingSetBytes": 117891072,
+        "PeakManagedBytes": 34997776,
+        "PeakPoolTotal": 33,
+        "PeakPoolBusy": 24,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 33,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 32,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 33,
+          "Idle": 33,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 33,
+          "Reused": 3394,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 339,
+            "Sum": 1000,
+            "Maximum": 8
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 1000,
+            "Sum": 14.570036999999992,
+            "Maximum": 0.0678995
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 1000,
+            "Sum": 1000,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 721623048,
+        "Commits": 115121,
+        "Rollbacks": 3419,
+        "Inserts": 970899,
+        "Updates": 124998,
+        "Deletes": 537141,
+        "Deadlocks": 0,
+        "BlocksRead": 2526,
+        "BlocksHit": 37914789,
+        "TempBytes": 0,
+        "RelationBytes": 3432448
+      },
+      "After": {
+        "WalPosition": 726834176,
+        "Commits": 120534,
+        "Rollbacks": 3419,
+        "Inserts": 984252,
+        "Updates": 127143,
+        "Deletes": 537141,
+        "Deadlocks": 0,
+        "BlocksRead": 2535,
+        "BlocksHit": 38920453,
+        "TempBytes": 0,
+        "RelationBytes": 6537216
+      },
+      "ObservedClusterWalBytes": 5211128,
+      "RelationGrowthBytes": 3104768,
+      "PrunedTerminalRows": 11000,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "jobs-hot-tenant",
+        "Product": "Jobs",
+        "Count": 2000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 4,
+        "PaddingBytes": 1024,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 2,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 10
+      },
+      "Produced": 2000,
+      "Completed": 2000,
+      "DurableEffects": 2000,
+      "ActualPayloadBytes": 1102,
+      "EnqueueSeconds": 1.3099872,
+      "DrainSeconds": 10.3241199,
+      "CompletedPerDrainSecond": 193.721113215665,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 1156.44,
+        "P50": 4743.003,
+        "P95": 9650.887,
+        "P99": 10172.347,
+        "Maximum": 10294.304
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 5.0781,
+        "P50": 9.7866,
+        "P95": 16.1017,
+        "P99": 22.2917,
+        "Maximum": 45.8835
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 1540,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1357.754,
+            "P50": 5922.52,
+            "P95": 9810.009,
+            "P99": 10200.39,
+            "Maximum": 10294.304
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 154,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1161.414,
+            "P50": 1291.841,
+            "P95": 1326.237,
+            "P99": 1342.449,
+            "Maximum": 1342.493
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 153,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1156.44,
+            "P50": 1287.236,
+            "P95": 1326.064,
+            "P99": 1343.002,
+            "Maximum": 1343.971
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 153,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1181.071,
+            "P50": 1300.264,
+            "P95": 1342.563,
+            "P99": 1359.665,
+            "Maximum": 1367.608
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 113229016,
+        "Gen0Collections": 7,
+        "Gen1Collections": 2,
+        "Gen2Collections": 0,
+        "PeakWorkingSetBytes": 113655808,
+        "PeakManagedBytes": 34804368,
+        "PeakPoolTotal": 16,
+        "PeakPoolBusy": 12,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 16,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 15,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 16,
+          "Idle": 16,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 16,
+          "Reused": 9613,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 3101,
+            "Sum": 2000,
+            "Maximum": 4
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 2000,
+            "Sum": 21.04259679999994,
+            "Maximum": 0.0460479
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 2000,
+            "Sum": 2000,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 734616736,
+        "Commits": 122181,
+        "Rollbacks": 3419,
+        "Inserts": 984836,
+        "Updates": 128075,
+        "Deletes": 549124,
+        "Deadlocks": 0,
+        "BlocksRead": 2539,
+        "BlocksHit": 39527371,
+        "TempBytes": 0,
+        "RelationBytes": 3432448
+      },
+      "After": {
+        "WalPosition": 746709608,
+        "Commits": 141148,
+        "Rollbacks": 3419,
+        "Inserts": 1001715,
+        "Updates": 134014,
+        "Deletes": 549124,
+        "Deadlocks": 0,
+        "BlocksRead": 2548,
+        "BlocksHit": 50157326,
+        "TempBytes": 0,
+        "RelationBytes": 8454144
+      },
+      "ObservedClusterWalBytes": 12092872,
+      "RelationGrowthBytes": 5021696,
+      "PrunedTerminalRows": 12000,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "jobs-pool-pressure",
+        "Product": "Jobs",
+        "Count": 1000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 8,
+        "PaddingBytes": 1024,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 2,
+        "PoolSize": 12,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 1000,
+      "Completed": 1000,
+      "DurableEffects": 1000,
+      "ActualPayloadBytes": 1102,
+      "EnqueueSeconds": 0.7384426,
+      "DrainSeconds": 1.4108294,
+      "CompletedPerDrainSecond": 708.802921175303,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 727.065,
+        "P50": 1043.211,
+        "P95": 1319.269,
+        "P99": 1357.008,
+        "Maximum": 1376.802
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 5.7736,
+        "P50": 12.9632,
+        "P95": 23.066,
+        "P99": 29.6648,
+        "Maximum": 36.5025
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 740.939,
+            "P50": 1066.406,
+            "P95": 1338.436,
+            "P99": 1351.456,
+            "Maximum": 1354.547
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 737.601,
+            "P50": 1025.353,
+            "P95": 1289.402,
+            "P99": 1313.496,
+            "Maximum": 1319.255
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 727.065,
+            "P50": 1017.487,
+            "P95": 1283.925,
+            "P99": 1306.456,
+            "Maximum": 1312.322
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 250,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 741.122,
+            "P50": 1071.032,
+            "P95": 1351.045,
+            "P99": 1373.473,
+            "Maximum": 1376.802
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 43782080,
+        "Gen0Collections": 3,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "PeakWorkingSetBytes": 118067200,
+        "PeakManagedBytes": 40901632,
+        "PeakPoolTotal": 12,
+        "PeakPoolBusy": 12,
+        "PeakPoolWaiting": 19,
+        "PeakDatabaseClientBackends": 12,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 11,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 12,
+          "Total": 12,
+          "Idle": 12,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 12,
+          "Reused": 3430,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 361,
+            "Sum": 1000,
+            "Maximum": 8
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 1000,
+            "Sum": 13.895770700000016,
+            "Maximum": 0.0365582
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 1000,
+            "Sum": 1000,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 754755632,
+        "Commits": 141664,
+        "Rollbacks": 3419,
+        "Inserts": 1001773,
+        "Updates": 134152,
+        "Deletes": 560495,
+        "Deadlocks": 0,
+        "BlocksRead": 2552,
+        "BlocksHit": 50663477,
+        "TempBytes": 0,
+        "RelationBytes": 3416064
+      },
+      "After": {
+        "WalPosition": 760794712,
+        "Commits": 147467,
+        "Rollbacks": 3419,
+        "Inserts": 1015265,
+        "Updates": 136520,
+        "Deletes": 560495,
+        "Deadlocks": 0,
+        "BlocksRead": 2561,
+        "BlocksHit": 51776585,
+        "TempBytes": 0,
+        "RelationBytes": 7184384
+      },
+      "ObservedClusterWalBytes": 6039080,
+      "RelationGrowthBytes": 3768320,
+      "PrunedTerminalRows": 11000,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "workflows-p256-c2",
+        "Product": "Workflows",
+        "Count": 128,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 2,
+        "PaddingBytes": 256,
+        "RetainedRows": 0,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 128,
+      "Completed": 128,
+      "DurableEffects": 128,
+      "ActualPayloadBytes": 334,
+      "EnqueueSeconds": 1.0527567,
+      "DrainSeconds": 2.4443646,
+      "CompletedPerDrainSecond": 52.365346806282496,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 2519.378,
+        "P50": 2698.103,
+        "P95": 2822.801,
+        "P99": 2855.651,
+        "Maximum": 2863.661
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 0.0208,
+        "P50": 1.3927,
+        "P95": 7.6306,
+        "P99": 12.9796,
+        "Maximum": 14.257
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 2519.378,
+            "P50": 2677.557,
+            "P95": 2815.647,
+            "P99": 2820.181,
+            "Maximum": 2820.181
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 2525.575,
+            "P50": 2692.045,
+            "P95": 2835.268,
+            "P99": 2839.986,
+            "Maximum": 2839.986
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 2550.382,
+            "P50": 2727.84,
+            "P95": 2855.651,
+            "P99": 2863.661,
+            "Maximum": 2863.661
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 2524.808,
+            "P50": 2696.161,
+            "P95": 2844.216,
+            "P99": 2850.047,
+            "Maximum": 2850.047
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 76679728,
+        "Gen0Collections": 5,
+        "Gen1Collections": 1,
+        "Gen2Collections": 0,
+        "PeakWorkingSetBytes": 132411392,
+        "PeakManagedBytes": 45027880,
+        "PeakPoolTotal": 14,
+        "PeakPoolBusy": 12,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 14,
+        "PeakDatabaseLockWaiters": 1,
+        "PeakDatabaseWaitingBackends": 13,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 13,
+          "Idle": 13,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 14,
+          "Reused": 2765,
+          "Discarded": 1
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 519,
+            "Sum": 512,
+            "Maximum": 2
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 512,
+            "Sum": 14.190915599999997,
+            "Maximum": 0.1143746
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 512,
+            "Sum": 512,
+            "Maximum": 1
+          },
+          {
+            "Name": "bluetusk.workflows.activity.duration",
+            "Measurements": 512,
+            "Sum": 14.116632799999978,
+            "Maximum": 0.1141799
+          },
+          {
+            "Name": "bluetusk.workflows.recovered_dispatches",
+            "Measurements": 12,
+            "Sum": 0,
+            "Maximum": 0
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 763339432,
+        "Commits": 148755,
+        "Rollbacks": 3419,
+        "Inserts": 1015710,
+        "Updates": 137229,
+        "Deletes": 572222,
+        "Deadlocks": 0,
+        "BlocksRead": 2565,
+        "BlocksHit": 52346669,
+        "TempBytes": 0,
+        "RelationBytes": 286720
+      },
+      "After": {
+        "WalPosition": 768090832,
+        "Commits": 153584,
+        "Rollbacks": 3419,
+        "Inserts": 1020501,
+        "Updates": 142221,
+        "Deletes": 572222,
+        "Deadlocks": 0,
+        "BlocksRead": 2584,
+        "BlocksHit": 52611990,
+        "TempBytes": 0,
+        "RelationBytes": 2129920
+      },
+      "ObservedClusterWalBytes": 4751400,
+      "RelationGrowthBytes": 1843200,
+      "PrunedTerminalRows": 128,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "workflows-p256-c8",
+        "Product": "Workflows",
+        "Count": 128,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 8,
+        "PaddingBytes": 256,
+        "RetainedRows": 0,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 128,
+      "Completed": 128,
+      "DurableEffects": 128,
+      "ActualPayloadBytes": 334,
+      "EnqueueSeconds": 0.8327637,
+      "DrainSeconds": 1.527463,
+      "CompletedPerDrainSecond": 83.7990838403287,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 1445.88,
+        "P50": 1660.995,
+        "P95": 1887.448,
+        "P99": 1949.521,
+        "Maximum": 1961.618
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 0.0595,
+        "P50": 2.0899,
+        "P95": 7.0196,
+        "P99": 10.8337,
+        "Maximum": 20.9982
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1507.273,
+            "P50": 1666.507,
+            "P95": 1911.876,
+            "P99": 1914.52,
+            "Maximum": 1914.52
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1524.803,
+            "P50": 1660.995,
+            "P95": 1889.37,
+            "P99": 1949.521,
+            "Maximum": 1949.521
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1445.88,
+            "P50": 1639.933,
+            "P95": 1830.461,
+            "P99": 1866.159,
+            "Maximum": 1866.159
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1516.043,
+            "P50": 1661.983,
+            "P95": 1906.777,
+            "P99": 1961.618,
+            "Maximum": 1961.618
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 75505016,
+        "Gen0Collections": 5,
+        "Gen1Collections": 2,
+        "Gen2Collections": 1,
+        "PeakWorkingSetBytes": 132689920,
+        "PeakManagedBytes": 44927264,
+        "PeakPoolTotal": 37,
+        "PeakPoolBusy": 35,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 37,
+        "PeakDatabaseLockWaiters": 8,
+        "PeakDatabaseWaitingBackends": 36,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 37,
+          "Idle": 37,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 37,
+          "Reused": 2443,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 395,
+            "Sum": 512,
+            "Maximum": 8
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 512,
+            "Sum": 34.552634399999995,
+            "Maximum": 0.1664538
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 512,
+            "Sum": 512,
+            "Maximum": 1
+          },
+          {
+            "Name": "bluetusk.workflows.activity.duration",
+            "Measurements": 512,
+            "Sum": 34.481869699999976,
+            "Maximum": 0.1662797
+          },
+          {
+            "Name": "bluetusk.workflows.recovered_dispatches",
+            "Measurements": 8,
+            "Sum": 0,
+            "Maximum": 0
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 769106768,
+        "Commits": 154607,
+        "Rollbacks": 3419,
+        "Inserts": 1020875,
+        "Updates": 142938,
+        "Deletes": 573157,
+        "Deadlocks": 0,
+        "BlocksRead": 2584,
+        "BlocksHit": 52662587,
+        "TempBytes": 0,
+        "RelationBytes": 286720
+      },
+      "After": {
+        "WalPosition": 774165504,
+        "Commits": 158525,
+        "Rollbacks": 3419,
+        "Inserts": 1025536,
+        "Updates": 147732,
+        "Deletes": 573158,
+        "Deadlocks": 0,
+        "BlocksRead": 2603,
+        "BlocksHit": 52909151,
+        "TempBytes": 0,
+        "RelationBytes": 3014656
+      },
+      "ObservedClusterWalBytes": 5058736,
+      "RelationGrowthBytes": 2727936,
+      "PrunedTerminalRows": 128,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "workflows-p4096-c2",
+        "Product": "Workflows",
+        "Count": 128,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 2,
+        "PaddingBytes": 4096,
+        "RetainedRows": 0,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 128,
+      "Completed": 128,
+      "DurableEffects": 128,
+      "ActualPayloadBytes": 4174,
+      "EnqueueSeconds": 0.8022781,
+      "DrainSeconds": 2.2766755,
+      "CompletedPerDrainSecond": 56.22232944484183,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 2258.677,
+        "P50": 2365.839,
+        "P95": 2445.669,
+        "P99": 2470.431,
+        "Maximum": 2471.275
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 0.017,
+        "P50": 1.4084,
+        "P95": 7.3723,
+        "P99": 11.1582,
+        "Maximum": 14.9625
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 2280.39,
+            "P50": 2374.339,
+            "P95": 2455.254,
+            "P99": 2471.275,
+            "Maximum": 2471.275
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 2259.837,
+            "P50": 2360.609,
+            "P95": 2444.292,
+            "P99": 2450.548,
+            "Maximum": 2450.548
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 2258.677,
+            "P50": 2362.938,
+            "P95": 2445.016,
+            "P99": 2455.193,
+            "Maximum": 2455.193
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 2266.781,
+            "P50": 2370.129,
+            "P95": 2461.273,
+            "P99": 2470.431,
+            "Maximum": 2470.431
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 93724432,
+        "Gen0Collections": 6,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "PeakWorkingSetBytes": 119283712,
+        "PeakManagedBytes": 30479472,
+        "PeakPoolTotal": 13,
+        "PeakPoolBusy": 9,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 13,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 12,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 13,
+          "Idle": 13,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 13,
+          "Reused": 2724,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 519,
+            "Sum": 512,
+            "Maximum": 2
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 512,
+            "Sum": 13.263842699999998,
+            "Maximum": 0.063347
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 512,
+            "Sum": 512,
+            "Maximum": 1
+          },
+          {
+            "Name": "bluetusk.workflows.activity.duration",
+            "Measurements": 512,
+            "Sum": 13.200883700000006,
+            "Maximum": 0.063259
+          },
+          {
+            "Name": "bluetusk.workflows.recovered_dispatches",
+            "Measurements": 12,
+            "Sum": 0,
+            "Maximum": 0
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 775171152,
+        "Commits": 159895,
+        "Rollbacks": 3419,
+        "Inserts": 1026100,
+        "Updates": 148817,
+        "Deletes": 577224,
+        "Deadlocks": 0,
+        "BlocksRead": 2603,
+        "BlocksHit": 52955316,
+        "TempBytes": 0,
+        "RelationBytes": 286720
+      },
+      "After": {
+        "WalPosition": 779301104,
+        "Commits": 165083,
+        "Rollbacks": 3419,
+        "Inserts": 1031111,
+        "Updates": 154209,
+        "Deletes": 577224,
+        "Deadlocks": 0,
+        "BlocksRead": 2622,
+        "BlocksHit": 53225257,
+        "TempBytes": 0,
+        "RelationBytes": 2039808
+      },
+      "ObservedClusterWalBytes": 4129952,
+      "RelationGrowthBytes": 1753088,
+      "PrunedTerminalRows": 128,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "workflows-p4096-c8",
+        "Product": "Workflows",
+        "Count": 128,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 8,
+        "PaddingBytes": 4096,
+        "RetainedRows": 0,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 0,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 1
+      },
+      "Produced": 128,
+      "Completed": 128,
+      "DurableEffects": 128,
+      "ActualPayloadBytes": 4174,
+      "EnqueueSeconds": 0.8411861,
+      "DrainSeconds": 1.4270151,
+      "CompletedPerDrainSecond": 89.69771938643116,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 1406.157,
+        "P50": 1658.367,
+        "P95": 1862.872,
+        "P99": 1913.03,
+        "Maximum": 1936.827
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 0.0314,
+        "P50": 1.9841,
+        "P95": 7.1269,
+        "P99": 12.5934,
+        "Maximum": 15.1544
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1406.157,
+            "P50": 1619.793,
+            "P95": 1837.919,
+            "P99": 1913.03,
+            "Maximum": 1913.03
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1440.443,
+            "P50": 1679.017,
+            "P95": 1909.153,
+            "P99": 1936.827,
+            "Maximum": 1936.827
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1431.154,
+            "P50": 1631.921,
+            "P95": 1857.17,
+            "P99": 1861.652,
+            "Maximum": 1861.652
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 32,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1432.008,
+            "P50": 1662.98,
+            "P95": 1887.783,
+            "P99": 1911.88,
+            "Maximum": 1911.88
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 92976872,
+        "Gen0Collections": 5,
+        "Gen1Collections": 1,
+        "Gen2Collections": 0,
+        "PeakWorkingSetBytes": 123129856,
+        "PeakManagedBytes": 34897080,
+        "PeakPoolTotal": 37,
+        "PeakPoolBusy": 33,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 37,
+        "PeakDatabaseLockWaiters": 9,
+        "PeakDatabaseWaitingBackends": 36,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 37,
+          "Idle": 37,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 37,
+          "Reused": 2412,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 387,
+            "Sum": 512,
+            "Maximum": 8
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 512,
+            "Sum": 33.30775439999999,
+            "Maximum": 0.2004332
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 512,
+            "Sum": 512,
+            "Maximum": 1
+          },
+          {
+            "Name": "bluetusk.workflows.activity.duration",
+            "Measurements": 512,
+            "Sum": 33.239007,
+            "Maximum": 0.2003551
+          },
+          {
+            "Name": "bluetusk.workflows.recovered_dispatches",
+            "Measurements": 8,
+            "Sum": 0,
+            "Maximum": 0
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 780299488,
+        "Commits": 165662,
+        "Rollbacks": 3419,
+        "Inserts": 1031265,
+        "Updates": 154526,
+        "Deletes": 578159,
+        "Deadlocks": 0,
+        "BlocksRead": 2622,
+        "BlocksHit": 53248944,
+        "TempBytes": 0,
+        "RelationBytes": 286720
+      },
+      "After": {
+        "WalPosition": 784513832,
+        "Commits": 169540,
+        "Rollbacks": 3419,
+        "Inserts": 1035864,
+        "Updates": 159146,
+        "Deletes": 578159,
+        "Deadlocks": 0,
+        "BlocksRead": 2641,
+        "BlocksHit": 53524239,
+        "TempBytes": 0,
+        "RelationBytes": 2695168
+      },
+      "ObservedClusterWalBytes": 4214344,
+      "RelationGrowthBytes": 2408448,
+      "PrunedTerminalRows": 128,
+      "Verified": true
+    },
+    {
+      "Configuration": {
+        "Name": "jobs-endurance",
+        "Product": "Jobs",
+        "Count": 200000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 4,
+        "PaddingBytes": 1024,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 10,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 4
+      },
+      "Produced": 2807,
+      "Completed": 2807,
+      "DurableEffects": 2807,
+      "ActualPayloadBytes": 1102,
+      "EnqueueSeconds": 10.0056556,
+      "DrainSeconds": 12.1207091,
+      "CompletedPerDrainSecond": 231.58711069140338,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 11.676,
+        "P50": 237.83,
+        "P95": 1888.889,
+        "P99": 2035.128,
+        "Maximum": 2087.451
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 4.5799,
+        "P50": 8.7096,
+        "P95": 16.4567,
+        "P99": 23.0779,
+        "Maximum": 41.9183
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 1604,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 18.771,
+            "P50": 1391.039,
+            "P95": 1917.115,
+            "P99": 2054.161,
+            "Maximum": 2087.451
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 401,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 12.426,
+            "P50": 25.845,
+            "P95": 43.604,
+            "P99": 54.424,
+            "Maximum": 68.708
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 401,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 14.121,
+            "P50": 25.751,
+            "P95": 39.946,
+            "P99": 54.822,
+            "Maximum": 69.23
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 401,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 11.676,
+            "P50": 24.953,
+            "P95": 39.466,
+            "P99": 59.78,
+            "Maximum": 76.774
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 181992176,
+        "Gen0Collections": 13,
+        "Gen1Collections": 2,
+        "Gen2Collections": 1,
+        "PeakWorkingSetBytes": 128450560,
+        "PeakManagedBytes": 36792840,
+        "PeakPoolTotal": 13,
+        "PeakPoolBusy": 9,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 13,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 12,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 13,
+          "Idle": 13,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 13,
+          "Reused": 13548,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 3574,
+            "Sum": 2807,
+            "Maximum": 3
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 2807,
+            "Sum": 27.284844700000015,
+            "Maximum": 0.0420755
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 2807,
+            "Sum": 2807,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 790715552,
+        "Commits": 170853,
+        "Rollbacks": 3419,
+        "Inserts": 1036430,
+        "Updates": 160235,
+        "Deletes": 579094,
+        "Deadlocks": 0,
+        "BlocksRead": 2641,
+        "BlocksHit": 53601531,
+        "TempBytes": 0,
+        "RelationBytes": 3375104
+      },
+      "After": {
+        "WalPosition": 807525528,
+        "Commits": 197253,
+        "Rollbacks": 3419,
+        "Inserts": 1055636,
+        "Updates": 168464,
+        "Deletes": 579094,
+        "Deadlocks": 0,
+        "BlocksRead": 2650,
+        "BlocksHit": 65090354,
+        "TempBytes": 0,
+        "RelationBytes": 10690560
+      },
+      "ObservedClusterWalBytes": 16809976,
+      "RelationGrowthBytes": 7315456,
+      "PrunedTerminalRows": 12807,
+      "Verified": true
+    }
+  ],
+  "Faults": [
+    {
+      "Name": "process-death-after-effect-before-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 945.9668,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false
+    },
+    {
+      "Name": "ambiguous-commit-lost-server-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 7.9387,
+      "Attempts": 0,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": true
+    }
+  ]
+}

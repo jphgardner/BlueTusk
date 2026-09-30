@@ -31,3 +31,30 @@ Core Streams exposes exporter-neutral .NET diagnostics through `BlueTuskStreamsD
 - transaction-size histograms.
 
 Tags contain stable source/table identities and never connection strings, credentials, row values, or logical-message content. Any OpenTelemetry-compatible .NET setup can subscribe to the activity source and meter; Streams does not force a particular exporter.
+
+### Investigating slow transaction spooling
+
+Subscribe to the `BlueTusk.Streams` meter and inspect
+`bluetusk.streams.spool.operation.duration` (seconds). It measures three separate
+completion steps:
+
+| `bluetusk.streams.spool.operation` | Measured boundary |
+|---|---|
+| `flush` | `FileStream.Flush(flushToDisk: true)`, including any buffered write |
+| `close` | Closing the completed writer stream |
+| `rename` | Moving the partial file to its ready name |
+
+The other tag, `bluetusk.streams.spool.outcome`, is `success` or `failure`.
+These are fixed values: no file paths, source IDs, transaction IDs or row data
+are included. Timers are inactive when no listener subscribes to the histogram.
+Only attempted steps are recorded; a flush failure does not produce a successful
+close or rename measurement.
+Exceptions raised while dispatching recorded measurements are isolated from
+transaction completion; genuine filesystem exceptions still propagate.
+
+This histogram is not total transaction latency: it excludes serialization,
+earlier writes, replay, downstream processing and acknowledgement. Compare it
+with delivery duration, runtime/GC counters and storage telemetry. High flush
+latency warrants investigating the storage device and host contention; it is
+not a reason to disable durable flushing. The spool format and acknowledgement
+guarantees do not change when metrics are enabled.

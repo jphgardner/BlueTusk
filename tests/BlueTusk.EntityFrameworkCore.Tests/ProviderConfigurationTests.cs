@@ -3,6 +3,7 @@ using BlueTusk.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -160,6 +161,31 @@ public sealed class ProviderConfigurationTests
         Assert.Contains(
             provider.GetServices<IDatabaseProvider>(),
             candidate => candidate.Name == BlueTuskEntityFrameworkCoreInfo.ProviderName);
+    }
+
+    [Fact]
+    public void Query_compilation_buffers_split_queries_without_buffering_single_queries()
+    {
+        var singleOptions = new DbContextOptionsBuilder<TestContext>()
+            .UseBlueTusk(ConnectionString)
+            .Options;
+        var splitOptions = new DbContextOptionsBuilder<TestContext>()
+            .UseBlueTusk(
+                ConnectionString,
+                provider => provider.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+            .Options;
+
+        using var singleContext = new TestContext(singleOptions);
+        using var splitContext = new TestContext(splitOptions);
+        var singleCompilation = Assert.IsAssignableFrom<RelationalQueryCompilationContext>(
+            singleContext.GetService<IQueryCompilationContextFactory>().Create(async: true));
+        var splitCompilation = Assert.IsAssignableFrom<RelationalQueryCompilationContext>(
+            splitContext.GetService<IQueryCompilationContextFactory>().Create(async: true));
+
+        Assert.Equal("BlueTuskQueryCompilationContext", singleCompilation.GetType().Name);
+        Assert.Equal("BlueTuskQueryCompilationContext", splitCompilation.GetType().Name);
+        Assert.False(singleCompilation.IsBuffering);
+        Assert.True(splitCompilation.IsBuffering);
     }
 
     private sealed class TestContext(DbContextOptions<TestContext> options) : DbContext(options);

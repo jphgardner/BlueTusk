@@ -28,6 +28,8 @@ public sealed class ContinuousGraphQueryCompilerTests
         Assert.True(first.LivePlan.Capabilities.HasFlag(LiveQueryCapabilities.BoundedTake));
         Assert.True(first.LivePlan.Capabilities.HasFlag(LiveQueryCapabilities.DeterministicOrdering));
         Assert.False(first.LivePlan.Capabilities.HasFlag(LiveQueryCapabilities.SingleTable));
+        Assert.True(first.MaintenanceCapabilities.HasFlag(
+            ContinuousGraphMaintenanceCapabilities.AuthoritativeDelta));
         Assert.Equal(2, probe.InvocationCount);
 
         var arguments = first.Bind(new Dictionary<string, object?> { ["sourceId"] = 11 });
@@ -36,6 +38,31 @@ public sealed class ContinuousGraphQueryCompilerTests
             new LiveSecurityScope("tenant:alpha", "policy-v1"),
             new NoChangesInvalidationLog());
         Assert.Equal(first.Fingerprint, session.Identity.QueryPlanFingerprint);
+    }
+
+    [Theory]
+    [InlineData(GraphPatternKind.BoundedPath, "1..3")]
+    [InlineData(GraphPatternKind.Undirected, "Undirected")]
+    public async Task Compiler_forces_authoritative_repair_for_broad_impact_patterns(
+        GraphPatternKind patternKind,
+        string impactEvidence)
+    {
+        var plan = await ContinuousGraphQueryCompiler.CompileAsync(
+            new GraphContextFactory(),
+            CreateDefinition(["people", "friendships"], patternKind: patternKind),
+            new SupportedProbe());
+        var directed = await ContinuousGraphQueryCompiler.CompileAsync(
+            new GraphContextFactory(),
+            CreateDefinition(["people", "friendships"]),
+            new SupportedProbe());
+
+        Assert.Equal(
+            ContinuousGraphMaintenanceCapabilities.AuthoritativeRepair,
+            plan.MaintenanceCapabilities);
+        Assert.Contains(
+            plan.ImpactPlan.PatternElements,
+            element => element.Contains(impactEvidence, StringComparison.Ordinal));
+        Assert.NotEqual(directed.Fingerprint, plan.Fingerprint);
     }
 
     [Fact]
@@ -81,7 +108,8 @@ public sealed class ContinuousGraphQueryCompilerTests
 
     private static ContinuousGraphQueryDefinition<GraphContext, FriendResult, int> CreateDefinition(
         string[] aliases,
-        QueryDefect defect = QueryDefect.None) =>
+        QueryDefect defect = QueryDefect.None,
+        GraphPatternKind patternKind = GraphPatternKind.Directed) =>
         new(
             "friends",
             "primary",
@@ -95,11 +123,23 @@ public sealed class ContinuousGraphQueryCompilerTests
             (context, arguments) =>
             {
                 var sourceId = arguments.Get<int>("sourceId");
-                var query = context.PropertyGraph("social", "graphs")
-                    .Match(pattern => pattern
+                var root = context.PropertyGraph("social", "graphs");
+                var match = patternKind switch
+                {
+                    GraphPatternKind.BoundedPath => root.Match(pattern => pattern
+                        .Vertex<Person>("source", person => person.Id == sourceId)
+                        .OutgoingPath<Friendship>("relationship", 1, 3)
+                        .Vertex<Person>("target")),
+                    GraphPatternKind.Undirected => root.Match(pattern => pattern
+                        .Vertex<Person>("source", person => person.Id == sourceId)
+                        .Undirected<Friendship>("relationship")
+                        .Vertex<Person>("target")),
+                    _ => root.Match(pattern => pattern
                         .Vertex<Person>("source", person => person.Id == sourceId)
                         .Outgoing<Friendship>("relationship")
-                        .Vertex<Person>("target"))
+                        .Vertex<Person>("target")),
+                };
+                var query = match
                     .Select<FriendResult>(projection => projection
                         .Property<Person, int>("source", person => person.Id, result => result.SourceId)
                         .Property<Person, int>("target", person => person.Id, result => result.TargetId)
@@ -125,6 +165,13 @@ public sealed class ContinuousGraphQueryCompilerTests
         MissingTake,
         MissingKeyOrder,
         Skip,
+    }
+
+    public enum GraphPatternKind
+    {
+        Directed,
+        BoundedPath,
+        Undirected,
     }
 
     private sealed class SupportedProbe : IContinuousGraphCapabilityProbe

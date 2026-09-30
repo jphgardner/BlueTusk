@@ -1,0 +1,2242 @@
+{
+  "StartedAt": "2026-09-27T20:00:43.9903963+00:00",
+  "Profile": "qualification",
+  "OperatingSystem": "Microsoft Windows 10.0.26200",
+  "Framework": ".NET 10.0.12",
+  "ProcessArchitecture": "X64",
+  "LogicalProcessors": 16,
+  "PostgreSqlVersion": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "SourceSha256": "5E5DFAF0C85AB4BA0EF789E6B88D57A9DEC8B259A6BBEB98E31CBB7AEF94AFEE",
+  "MeasurementLimitations": "Local bounded harness with instrumentation/collector overhead. WAL and pg_stat_database counters are cluster/database scoped and may include concurrent work; snapshots may lag. RSS and waits are sampled every 100 ms. Durable latency includes backlog enqueue time. No production qualification or comparative performance leadership is established.",
+  "Cases": [],
+  "Faults": [
+    {
+      "Name": "process-death-after-effect-before-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 949.8078,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "workflow-process-death-before-result",
+      "Passed": true,
+      "RecoveryMilliseconds": 1162.476,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "ambiguous-commit-lost-server-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 15.0308,
+      "Attempts": 0,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": true,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "jobs-network-partition-and-heal",
+      "Passed": true,
+      "RecoveryMilliseconds": 74.3059,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 1,
+      "RejectedConnections": 16,
+      "PeakProxyConnections": 1,
+      "StoreFailureObservations": 16
+    },
+    {
+      "Name": "workflow-network-partition-and-heal",
+      "Passed": true,
+      "RecoveryMilliseconds": 188.182,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 1,
+      "RejectedConnections": 31,
+      "PeakProxyConnections": 2,
+      "StoreFailureObservations": 16
+    }
+  ],
+  "Overload": [
+    {
+      "Product": "Jobs",
+      "OfferedDurationSeconds": 120,
+      "MaximumAccepted": 20000,
+      "AdmissionSlotsPerTenant": 32,
+      "ConcurrencyPerTenant": 4,
+      "HandlerDelayMilliseconds": 100,
+      "Accepted": 7308,
+      "Rejected": 18634,
+      "DurableEffects": 7308,
+      "MaximumOutstanding": 51,
+      "PrunedPrimaryRows": 7308,
+      "PrunedJobs": 7308,
+      "AdmissionAndDrainSeconds": 120.9851696,
+      "CompletionsPerSecond": 60.40409766057806,
+      "Runtime": {
+        "AllocatedBytes": 647903728,
+        "Gen0Collections": 43,
+        "Gen1Collections": 5,
+        "Gen2Collections": 1,
+        "PeakWorkingSetBytes": 101527552,
+        "PeakManagedBytes": 23442040,
+        "PeakPoolTotal": 21,
+        "PeakPoolBusy": 17,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 21,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 20,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 32,
+          "Total": 21,
+          "Idle": 21,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 21,
+          "Reused": 61966,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 24587,
+            "Sum": 7308,
+            "Maximum": 3
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 7308,
+            "Sum": 852.3441281999969,
+            "Maximum": 0.3096701
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 7308,
+            "Sum": 7308,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 1058411424,
+        "Commits": 307699,
+        "Rollbacks": 8868,
+        "Inserts": 1358878,
+        "Updates": 222426,
+        "Deletes": 741558,
+        "Deadlocks": 0,
+        "BlocksRead": 3501,
+        "BlocksHit": 94561600,
+        "TempBytes": 0,
+        "RelationBytes": 294912
+      },
+      "After": {
+        "WalPosition": 1125627560,
+        "Commits": 435128,
+        "Rollbacks": 9574,
+        "Inserts": 1403301,
+        "Updates": 245887,
+        "Deletes": 765798,
+        "Deadlocks": 0,
+        "BlocksRead": 3522,
+        "BlocksHit": 99312175,
+        "TempBytes": 0,
+        "RelationBytes": 10108928
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Accepted": 3711,
+          "Rejected": 18634,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 132.139,
+            "P50": 933.966,
+            "P95": 1483.258,
+            "P99": 2041.614,
+            "Maximum": 2442.896
+          },
+          "MaximumCompletionGapMilliseconds": 303.0540943145752
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Accepted": 1199,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 108.258,
+            "P50": 127.845,
+            "P95": 241.351,
+            "P99": 371.276,
+            "Maximum": 418.123
+          },
+          "MaximumCompletionGapMilliseconds": 307.8429698944092
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Accepted": 1199,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 108.084,
+            "P50": 127.755,
+            "P95": 239.864,
+            "P99": 377.573,
+            "Maximum": 446.358
+          },
+          "MaximumCompletionGapMilliseconds": 306.44702911376953
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Accepted": 1199,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 109.475,
+            "P50": 127.74,
+            "P95": 239.881,
+            "P99": 362.551,
+            "Maximum": 419.13
+          },
+          "MaximumCompletionGapMilliseconds": 307.5242042541504
+        }
+      ],
+      "StorageSamples": [
+        {
+          "ElapsedSeconds": 0.0592457,
+          "RetainedPrimaryRows": 2,
+          "ActivePrimaryRows": 2,
+          "RetainedJobs": 2,
+          "JobAttemptRows": 1,
+          "RuntimeRelationBytes": 335872
+        },
+        {
+          "ElapsedSeconds": 1.0802291,
+          "RetainedPrimaryRows": 94,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 94,
+          "JobAttemptRows": 66,
+          "RuntimeRelationBytes": 606208
+        },
+        {
+          "ElapsedSeconds": 2.094611,
+          "RetainedPrimaryRows": 156,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 156,
+          "JobAttemptRows": 128,
+          "RuntimeRelationBytes": 770048
+        },
+        {
+          "ElapsedSeconds": 3.1321131,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 950272
+        },
+        {
+          "ElapsedSeconds": 4.1547279,
+          "RetainedPrimaryRows": 165,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 165,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 1064960
+        },
+        {
+          "ElapsedSeconds": 5.1799598,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 1179648
+        },
+        {
+          "ElapsedSeconds": 6.2279401,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 1318912
+        },
+        {
+          "ElapsedSeconds": 7.2527424,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 38,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 1441792
+        },
+        {
+          "ElapsedSeconds": 8.2724546,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 1556480
+        },
+        {
+          "ElapsedSeconds": 9.292397,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 1679360
+        },
+        {
+          "ElapsedSeconds": 10.3105405,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 1802240
+        },
+        {
+          "ElapsedSeconds": 11.3311925,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 1949696
+        },
+        {
+          "ElapsedSeconds": 12.3693585,
+          "RetainedPrimaryRows": 166,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 166,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 2048000
+        },
+        {
+          "ElapsedSeconds": 13.3920045,
+          "RetainedPrimaryRows": 165,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 165,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 2170880
+        },
+        {
+          "ElapsedSeconds": 14.4240489,
+          "RetainedPrimaryRows": 160,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 160,
+          "JobAttemptRows": 132,
+          "RuntimeRelationBytes": 2326528
+        },
+        {
+          "ElapsedSeconds": 15.4534275,
+          "RetainedPrimaryRows": 166,
+          "ActivePrimaryRows": 38,
+          "RetainedJobs": 166,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 2457600
+        },
+        {
+          "ElapsedSeconds": 16.4708499,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 2580480
+        },
+        {
+          "ElapsedSeconds": 17.4898671,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 2711552
+        },
+        {
+          "ElapsedSeconds": 18.5139658,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 2850816
+        },
+        {
+          "ElapsedSeconds": 19.5457172,
+          "RetainedPrimaryRows": 157,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 157,
+          "JobAttemptRows": 127,
+          "RuntimeRelationBytes": 2965504
+        },
+        {
+          "ElapsedSeconds": 20.5621248,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 3096576
+        },
+        {
+          "ElapsedSeconds": 21.5858032,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 3244032
+        },
+        {
+          "ElapsedSeconds": 22.6009722,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 3375104
+        },
+        {
+          "ElapsedSeconds": 23.6177421,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 3497984
+        },
+        {
+          "ElapsedSeconds": 24.6456958,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 3653632
+        },
+        {
+          "ElapsedSeconds": 25.6638052,
+          "RetainedPrimaryRows": 160,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 160,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 3751936
+        },
+        {
+          "ElapsedSeconds": 26.6913153,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 3874816
+        },
+        {
+          "ElapsedSeconds": 27.7085626,
+          "RetainedPrimaryRows": 160,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 160,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 4005888
+        },
+        {
+          "ElapsedSeconds": 28.7344427,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 4128768
+        },
+        {
+          "ElapsedSeconds": 29.7627914,
+          "RetainedPrimaryRows": 165,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 165,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 4268032
+        },
+        {
+          "ElapsedSeconds": 30.7778529,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 4390912
+        },
+        {
+          "ElapsedSeconds": 31.7949239,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 4489216
+        },
+        {
+          "ElapsedSeconds": 32.8204264,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 4628480
+        },
+        {
+          "ElapsedSeconds": 33.8370195,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 4734976
+        },
+        {
+          "ElapsedSeconds": 34.8578063,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 4866048
+        },
+        {
+          "ElapsedSeconds": 35.8785328,
+          "RetainedPrimaryRows": 165,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 165,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 5005312
+        },
+        {
+          "ElapsedSeconds": 36.9005604,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 5120000
+        },
+        {
+          "ElapsedSeconds": 37.9739151,
+          "RetainedPrimaryRows": 157,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 157,
+          "JobAttemptRows": 132,
+          "RuntimeRelationBytes": 5242880
+        },
+        {
+          "ElapsedSeconds": 39.0360191,
+          "RetainedPrimaryRows": 145,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 145,
+          "JobAttemptRows": 119,
+          "RuntimeRelationBytes": 5349376
+        },
+        {
+          "ElapsedSeconds": 40.0960685,
+          "RetainedPrimaryRows": 154,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 154,
+          "JobAttemptRows": 127,
+          "RuntimeRelationBytes": 5480448
+        },
+        {
+          "ElapsedSeconds": 41.1543245,
+          "RetainedPrimaryRows": 154,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 154,
+          "JobAttemptRows": 125,
+          "RuntimeRelationBytes": 5570560
+        },
+        {
+          "ElapsedSeconds": 42.1754003,
+          "RetainedPrimaryRows": 159,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 159,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 5775360
+        },
+        {
+          "ElapsedSeconds": 43.2071144,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 5865472
+        },
+        {
+          "ElapsedSeconds": 44.2360861,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 6012928
+        },
+        {
+          "ElapsedSeconds": 45.2807878,
+          "RetainedPrimaryRows": 165,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 165,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 6119424
+        },
+        {
+          "ElapsedSeconds": 46.3532173,
+          "RetainedPrimaryRows": 155,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 155,
+          "JobAttemptRows": 126,
+          "RuntimeRelationBytes": 6242304
+        },
+        {
+          "ElapsedSeconds": 47.4192863,
+          "RetainedPrimaryRows": 149,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 149,
+          "JobAttemptRows": 121,
+          "RuntimeRelationBytes": 6332416
+        },
+        {
+          "ElapsedSeconds": 48.4585258,
+          "RetainedPrimaryRows": 157,
+          "ActivePrimaryRows": 38,
+          "RetainedJobs": 157,
+          "JobAttemptRows": 129,
+          "RuntimeRelationBytes": 6488064
+        },
+        {
+          "ElapsedSeconds": 49.4973605,
+          "RetainedPrimaryRows": 152,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 152,
+          "JobAttemptRows": 124,
+          "RuntimeRelationBytes": 6619136
+        },
+        {
+          "ElapsedSeconds": 50.533545,
+          "RetainedPrimaryRows": 150,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 150,
+          "JobAttemptRows": 121,
+          "RuntimeRelationBytes": 6742016
+        },
+        {
+          "ElapsedSeconds": 51.5941086,
+          "RetainedPrimaryRows": 156,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 156,
+          "JobAttemptRows": 128,
+          "RuntimeRelationBytes": 6742016
+        },
+        {
+          "ElapsedSeconds": 52.6282713,
+          "RetainedPrimaryRows": 158,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 158,
+          "JobAttemptRows": 131,
+          "RuntimeRelationBytes": 6766592
+        },
+        {
+          "ElapsedSeconds": 53.6563278,
+          "RetainedPrimaryRows": 159,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 159,
+          "JobAttemptRows": 131,
+          "RuntimeRelationBytes": 6774784
+        },
+        {
+          "ElapsedSeconds": 54.6781458,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 6791168
+        },
+        {
+          "ElapsedSeconds": 55.6953284,
+          "RetainedPrimaryRows": 159,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 159,
+          "JobAttemptRows": 132,
+          "RuntimeRelationBytes": 6791168
+        },
+        {
+          "ElapsedSeconds": 56.7309708,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 6807552
+        },
+        {
+          "ElapsedSeconds": 57.7468519,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 6815744
+        },
+        {
+          "ElapsedSeconds": 58.7650566,
+          "RetainedPrimaryRows": 167,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 167,
+          "JobAttemptRows": 139,
+          "RuntimeRelationBytes": 6832128
+        },
+        {
+          "ElapsedSeconds": 59.784292,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 6832128
+        },
+        {
+          "ElapsedSeconds": 60.8186269,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 6848512
+        },
+        {
+          "ElapsedSeconds": 61.8399727,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 132,
+          "RuntimeRelationBytes": 6864896
+        },
+        {
+          "ElapsedSeconds": 62.8602335,
+          "RetainedPrimaryRows": 165,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 165,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 6889472
+        },
+        {
+          "ElapsedSeconds": 63.8793848,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 6905856
+        },
+        {
+          "ElapsedSeconds": 64.9165732,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 6930432
+        },
+        {
+          "ElapsedSeconds": 65.9441711,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 6930432
+        },
+        {
+          "ElapsedSeconds": 66.9607266,
+          "RetainedPrimaryRows": 166,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 166,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 6946816
+        },
+        {
+          "ElapsedSeconds": 67.9802402,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 6963200
+        },
+        {
+          "ElapsedSeconds": 68.9949009,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 6979584
+        },
+        {
+          "ElapsedSeconds": 70.011021,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 6979584
+        },
+        {
+          "ElapsedSeconds": 71.0382369,
+          "RetainedPrimaryRows": 165,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 165,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 7004160
+        },
+        {
+          "ElapsedSeconds": 72.0537561,
+          "RetainedPrimaryRows": 167,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 167,
+          "JobAttemptRows": 139,
+          "RuntimeRelationBytes": 7012352
+        },
+        {
+          "ElapsedSeconds": 73.0891911,
+          "RetainedPrimaryRows": 166,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 166,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 7028736
+        },
+        {
+          "ElapsedSeconds": 74.1121943,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 7028736
+        },
+        {
+          "ElapsedSeconds": 75.1291533,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 7069696
+        },
+        {
+          "ElapsedSeconds": 76.1455266,
+          "RetainedPrimaryRows": 166,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 166,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 7077888
+        },
+        {
+          "ElapsedSeconds": 77.1715678,
+          "RetainedPrimaryRows": 166,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 166,
+          "JobAttemptRows": 140,
+          "RuntimeRelationBytes": 7094272
+        },
+        {
+          "ElapsedSeconds": 78.1951623,
+          "RetainedPrimaryRows": 164,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 7102464
+        },
+        {
+          "ElapsedSeconds": 79.2121483,
+          "RetainedPrimaryRows": 157,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 157,
+          "JobAttemptRows": 129,
+          "RuntimeRelationBytes": 7127040
+        },
+        {
+          "ElapsedSeconds": 80.2415332,
+          "RetainedPrimaryRows": 160,
+          "ActivePrimaryRows": 38,
+          "RetainedJobs": 160,
+          "JobAttemptRows": 129,
+          "RuntimeRelationBytes": 7127040
+        },
+        {
+          "ElapsedSeconds": 81.2723186,
+          "RetainedPrimaryRows": 160,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 160,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 7143424
+        },
+        {
+          "ElapsedSeconds": 82.2903104,
+          "RetainedPrimaryRows": 159,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 159,
+          "JobAttemptRows": 132,
+          "RuntimeRelationBytes": 7159808
+        },
+        {
+          "ElapsedSeconds": 83.45077,
+          "RetainedPrimaryRows": 151,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 151,
+          "JobAttemptRows": 125,
+          "RuntimeRelationBytes": 7176192
+        },
+        {
+          "ElapsedSeconds": 84.588144,
+          "RetainedPrimaryRows": 141,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 141,
+          "JobAttemptRows": 111,
+          "RuntimeRelationBytes": 7200768
+        },
+        {
+          "ElapsedSeconds": 85.791457,
+          "RetainedPrimaryRows": 134,
+          "ActivePrimaryRows": 38,
+          "RetainedJobs": 134,
+          "JobAttemptRows": 108,
+          "RuntimeRelationBytes": 7225344
+        },
+        {
+          "ElapsedSeconds": 86.8332458,
+          "RetainedPrimaryRows": 138,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 138,
+          "JobAttemptRows": 111,
+          "RuntimeRelationBytes": 7233536
+        },
+        {
+          "ElapsedSeconds": 87.8742823,
+          "RetainedPrimaryRows": 145,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 145,
+          "JobAttemptRows": 118,
+          "RuntimeRelationBytes": 7233536
+        },
+        {
+          "ElapsedSeconds": 88.9075015,
+          "RetainedPrimaryRows": 147,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 147,
+          "JobAttemptRows": 119,
+          "RuntimeRelationBytes": 7274496
+        },
+        {
+          "ElapsedSeconds": 89.9363588,
+          "RetainedPrimaryRows": 153,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 153,
+          "JobAttemptRows": 125,
+          "RuntimeRelationBytes": 7274496
+        },
+        {
+          "ElapsedSeconds": 90.9561824,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 7299072
+        },
+        {
+          "ElapsedSeconds": 91.9768396,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 7299072
+        },
+        {
+          "ElapsedSeconds": 93.004818,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 7323648
+        },
+        {
+          "ElapsedSeconds": 94.0317613,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 7323648
+        },
+        {
+          "ElapsedSeconds": 95.0559341,
+          "RetainedPrimaryRows": 162,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 7356416
+        },
+        {
+          "ElapsedSeconds": 96.1669424,
+          "RetainedPrimaryRows": 153,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 153,
+          "JobAttemptRows": 129,
+          "RuntimeRelationBytes": 7364608
+        },
+        {
+          "ElapsedSeconds": 97.2227965,
+          "RetainedPrimaryRows": 139,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 139,
+          "JobAttemptRows": 114,
+          "RuntimeRelationBytes": 7372800
+        },
+        {
+          "ElapsedSeconds": 98.4321442,
+          "RetainedPrimaryRows": 131,
+          "ActivePrimaryRows": 39,
+          "RetainedJobs": 131,
+          "JobAttemptRows": 104,
+          "RuntimeRelationBytes": 7389184
+        },
+        {
+          "ElapsedSeconds": 99.4714561,
+          "RetainedPrimaryRows": 127,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 127,
+          "JobAttemptRows": 99,
+          "RuntimeRelationBytes": 7413760
+        },
+        {
+          "ElapsedSeconds": 100.6527974,
+          "RetainedPrimaryRows": 140,
+          "ActivePrimaryRows": 40,
+          "RetainedJobs": 140,
+          "JobAttemptRows": 109,
+          "RuntimeRelationBytes": 7430144
+        },
+        {
+          "ElapsedSeconds": 101.8191287,
+          "RetainedPrimaryRows": 133,
+          "ActivePrimaryRows": 40,
+          "RetainedJobs": 133,
+          "JobAttemptRows": 105,
+          "RuntimeRelationBytes": 7430144
+        },
+        {
+          "ElapsedSeconds": 102.8413684,
+          "RetainedPrimaryRows": 143,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 143,
+          "JobAttemptRows": 113,
+          "RuntimeRelationBytes": 7471104
+        },
+        {
+          "ElapsedSeconds": 103.8624296,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 7471104
+        },
+        {
+          "ElapsedSeconds": 104.907065,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 7618560
+        },
+        {
+          "ElapsedSeconds": 105.9226546,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 7725056
+        },
+        {
+          "ElapsedSeconds": 106.9448102,
+          "RetainedPrimaryRows": 166,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 166,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 7888896
+        },
+        {
+          "ElapsedSeconds": 107.9628169,
+          "RetainedPrimaryRows": 166,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 166,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 7987200
+        },
+        {
+          "ElapsedSeconds": 108.9785455,
+          "RetainedPrimaryRows": 160,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 160,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 8142848
+        },
+        {
+          "ElapsedSeconds": 110.0164384,
+          "RetainedPrimaryRows": 157,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 157,
+          "JobAttemptRows": 130,
+          "RuntimeRelationBytes": 8241152
+        },
+        {
+          "ElapsedSeconds": 111.0436422,
+          "RetainedPrimaryRows": 163,
+          "ActivePrimaryRows": 38,
+          "RetainedJobs": 163,
+          "JobAttemptRows": 132,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 112.0612142,
+          "RetainedPrimaryRows": 160,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 160,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 113.149904,
+          "RetainedPrimaryRows": 161,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 131,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 114.1659512,
+          "RetainedPrimaryRows": 158,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 158,
+          "JobAttemptRows": 131,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 115.3924779,
+          "RetainedPrimaryRows": 151,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 151,
+          "JobAttemptRows": 123,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 116.460443,
+          "RetainedPrimaryRows": 141,
+          "ActivePrimaryRows": 38,
+          "RetainedJobs": 141,
+          "JobAttemptRows": 110,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 117.7266892,
+          "RetainedPrimaryRows": 143,
+          "ActivePrimaryRows": 40,
+          "RetainedJobs": 143,
+          "JobAttemptRows": 114,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 118.7965369,
+          "RetainedPrimaryRows": 134,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 134,
+          "JobAttemptRows": 108,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 119.9313961,
+          "RetainedPrimaryRows": 147,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 147,
+          "JobAttemptRows": 120,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 120.9583736,
+          "RetainedPrimaryRows": 96,
+          "ActivePrimaryRows": 0,
+          "RetainedJobs": 96,
+          "JobAttemptRows": 96,
+          "RuntimeRelationBytes": 8314880
+        },
+        {
+          "ElapsedSeconds": 120.9851696,
+          "RetainedPrimaryRows": 0,
+          "ActivePrimaryRows": 0,
+          "RetainedJobs": 0,
+          "JobAttemptRows": 0,
+          "RuntimeRelationBytes": 8314880
+        }
+      ],
+      "Verified": true
+    },
+    {
+      "Product": "Workflows",
+      "OfferedDurationSeconds": 120,
+      "MaximumAccepted": 20000,
+      "AdmissionSlotsPerTenant": 32,
+      "ConcurrencyPerTenant": 4,
+      "HandlerDelayMilliseconds": 100,
+      "Accepted": 1949,
+      "Rejected": 14078,
+      "DurableEffects": 1949,
+      "MaximumOutstanding": 41,
+      "PrunedPrimaryRows": 1949,
+      "PrunedJobs": 7796,
+      "AdmissionAndDrainSeconds": 121.0584464,
+      "CompletionsPerSecond": 16.09966142767218,
+      "Runtime": {
+        "AllocatedBytes": 1481983552,
+        "Gen0Collections": 94,
+        "Gen1Collections": 8,
+        "Gen2Collections": 1,
+        "PeakWorkingSetBytes": 111718400,
+        "PeakManagedBytes": 29486344,
+        "PeakPoolTotal": 23,
+        "PeakPoolBusy": 19,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 23,
+        "PeakDatabaseLockWaiters": 6,
+        "PeakDatabaseWaitingBackends": 22,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 32,
+          "Total": 23,
+          "Idle": 23,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 23,
+          "Reused": 68682,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 26157,
+            "Sum": 7796,
+            "Maximum": 3
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 7796,
+            "Sum": 716.6580787000016,
+            "Maximum": 0.7100683
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 7796,
+            "Sum": 7796,
+            "Maximum": 1
+          },
+          {
+            "Name": "bluetusk.workflows.activity.duration",
+            "Measurements": 7796,
+            "Sum": 715.6294208000003,
+            "Maximum": 0.7099199
+          },
+          {
+            "Name": "bluetusk.workflows.recovered_dispatches",
+            "Measurements": 469,
+            "Sum": 0,
+            "Maximum": 0
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 1127590184,
+        "Commits": 435709,
+        "Rollbacks": 9581,
+        "Inserts": 1407118,
+        "Updates": 246247,
+        "Deletes": 768811,
+        "Deadlocks": 0,
+        "BlocksRead": 3528,
+        "BlocksHit": 99408177,
+        "TempBytes": 0,
+        "RelationBytes": 311296
+      },
+      "After": {
+        "WalPosition": 1319641056,
+        "Commits": 581144,
+        "Rollbacks": 14043,
+        "Inserts": 1604443,
+        "Updates": 346351,
+        "Deletes": 887227,
+        "Deadlocks": 0,
+        "BlocksRead": 3687,
+        "BlocksHit": 109915376,
+        "TempBytes": 0,
+        "RelationBytes": 18104320
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Accepted": 1232,
+          "Rejected": 14078,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 1015.448,
+            "P50": 2765.738,
+            "P95": 4445.677,
+            "P99": 5467.058,
+            "Maximum": 5849.549
+          },
+          "MaximumCompletionGapMilliseconds": 1572.3528861999512
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Accepted": 239,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 208.472,
+            "P50": 256.073,
+            "P95": 665.085,
+            "P99": 1256.387,
+            "Maximum": 1332.857
+          },
+          "MaximumCompletionGapMilliseconds": 1145.6048488616943
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Accepted": 239,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 207.183,
+            "P50": 256.968,
+            "P95": 680.308,
+            "P99": 1233.011,
+            "Maximum": 1271.616
+          },
+          "MaximumCompletionGapMilliseconds": 1147.5889682769775
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Accepted": 239,
+          "Rejected": 0,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 207.841,
+            "P50": 255.09,
+            "P95": 681.997,
+            "P99": 1244.614,
+            "Maximum": 1336.66
+          },
+          "MaximumCompletionGapMilliseconds": 1239.0809059143066
+        }
+      ],
+      "StorageSamples": [
+        {
+          "ElapsedSeconds": 0.0689295,
+          "RetainedPrimaryRows": 0,
+          "ActivePrimaryRows": 0,
+          "RetainedJobs": 0,
+          "JobAttemptRows": 0,
+          "RuntimeRelationBytes": 368640
+        },
+        {
+          "ElapsedSeconds": 1.0963064,
+          "RetainedPrimaryRows": 32,
+          "ActivePrimaryRows": 29,
+          "RetainedJobs": 84,
+          "JobAttemptRows": 46,
+          "RuntimeRelationBytes": 1064960
+        },
+        {
+          "ElapsedSeconds": 2.1141103,
+          "RetainedPrimaryRows": 48,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 147,
+          "JobAttemptRows": 107,
+          "RuntimeRelationBytes": 1400832
+        },
+        {
+          "ElapsedSeconds": 3.1563372,
+          "RetainedPrimaryRows": 59,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 183,
+          "JobAttemptRows": 147,
+          "RuntimeRelationBytes": 1662976
+        },
+        {
+          "ElapsedSeconds": 4.2017925,
+          "RetainedPrimaryRows": 76,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 206,
+          "JobAttemptRows": 161,
+          "RuntimeRelationBytes": 1974272
+        },
+        {
+          "ElapsedSeconds": 5.3056129,
+          "RetainedPrimaryRows": 71,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 172,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 2179072
+        },
+        {
+          "ElapsedSeconds": 6.3591153,
+          "RetainedPrimaryRows": 54,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 128,
+          "RuntimeRelationBytes": 2416640
+        },
+        {
+          "ElapsedSeconds": 7.4105315,
+          "RetainedPrimaryRows": 76,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 197,
+          "JobAttemptRows": 151,
+          "RuntimeRelationBytes": 2670592
+        },
+        {
+          "ElapsedSeconds": 8.4584513,
+          "RetainedPrimaryRows": 69,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 172,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 2826240
+        },
+        {
+          "ElapsedSeconds": 9.5078784,
+          "RetainedPrimaryRows": 64,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 190,
+          "JobAttemptRows": 149,
+          "RuntimeRelationBytes": 2965504
+        },
+        {
+          "ElapsedSeconds": 10.7539018,
+          "RetainedPrimaryRows": 75,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 201,
+          "JobAttemptRows": 159,
+          "RuntimeRelationBytes": 3399680
+        },
+        {
+          "ElapsedSeconds": 11.7917325,
+          "RetainedPrimaryRows": 56,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 131,
+          "RuntimeRelationBytes": 3596288
+        },
+        {
+          "ElapsedSeconds": 12.8243245,
+          "RetainedPrimaryRows": 78,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 217,
+          "JobAttemptRows": 168,
+          "RuntimeRelationBytes": 3874816
+        },
+        {
+          "ElapsedSeconds": 13.8790032,
+          "RetainedPrimaryRows": 73,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 188,
+          "JobAttemptRows": 148,
+          "RuntimeRelationBytes": 3997696
+        },
+        {
+          "ElapsedSeconds": 14.9443212,
+          "RetainedPrimaryRows": 56,
+          "ActivePrimaryRows": 25,
+          "RetainedJobs": 175,
+          "JobAttemptRows": 146,
+          "RuntimeRelationBytes": 4202496
+        },
+        {
+          "ElapsedSeconds": 16.0685224,
+          "RetainedPrimaryRows": 72,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 198,
+          "JobAttemptRows": 153,
+          "RuntimeRelationBytes": 4390912
+        },
+        {
+          "ElapsedSeconds": 17.2209117,
+          "RetainedPrimaryRows": 58,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 142,
+          "JobAttemptRows": 102,
+          "RuntimeRelationBytes": 4554752
+        },
+        {
+          "ElapsedSeconds": 18.3639342,
+          "RetainedPrimaryRows": 49,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 135,
+          "JobAttemptRows": 102,
+          "RuntimeRelationBytes": 4685824
+        },
+        {
+          "ElapsedSeconds": 19.6077874,
+          "RetainedPrimaryRows": 58,
+          "ActivePrimaryRows": 26,
+          "RetainedJobs": 158,
+          "JobAttemptRows": 128,
+          "RuntimeRelationBytes": 4808704
+        },
+        {
+          "ElapsedSeconds": 20.8413838,
+          "RetainedPrimaryRows": 56,
+          "ActivePrimaryRows": 28,
+          "RetainedJobs": 112,
+          "JobAttemptRows": 82,
+          "RuntimeRelationBytes": 4923392
+        },
+        {
+          "ElapsedSeconds": 21.9272427,
+          "RetainedPrimaryRows": 47,
+          "ActivePrimaryRows": 30,
+          "RetainedJobs": 122,
+          "JobAttemptRows": 85,
+          "RuntimeRelationBytes": 5005312
+        },
+        {
+          "ElapsedSeconds": 22.9639797,
+          "RetainedPrimaryRows": 56,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 157,
+          "JobAttemptRows": 119,
+          "RuntimeRelationBytes": 5193728
+        },
+        {
+          "ElapsedSeconds": 24.0132145,
+          "RetainedPrimaryRows": 60,
+          "ActivePrimaryRows": 30,
+          "RetainedJobs": 181,
+          "JobAttemptRows": 144,
+          "RuntimeRelationBytes": 5382144
+        },
+        {
+          "ElapsedSeconds": 25.0472037,
+          "RetainedPrimaryRows": 73,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 192,
+          "JobAttemptRows": 145,
+          "RuntimeRelationBytes": 5611520
+        },
+        {
+          "ElapsedSeconds": 26.0924692,
+          "RetainedPrimaryRows": 65,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 171,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 5750784
+        },
+        {
+          "ElapsedSeconds": 27.1457303,
+          "RetainedPrimaryRows": 70,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 205,
+          "JobAttemptRows": 161,
+          "RuntimeRelationBytes": 5971968
+        },
+        {
+          "ElapsedSeconds": 28.1876757,
+          "RetainedPrimaryRows": 77,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 197,
+          "JobAttemptRows": 155,
+          "RuntimeRelationBytes": 6365184
+        },
+        {
+          "ElapsedSeconds": 29.2506609,
+          "RetainedPrimaryRows": 60,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 170,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 6938624
+        },
+        {
+          "ElapsedSeconds": 30.3115109,
+          "RetainedPrimaryRows": 70,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 196,
+          "JobAttemptRows": 157,
+          "RuntimeRelationBytes": 7651328
+        },
+        {
+          "ElapsedSeconds": 31.3527453,
+          "RetainedPrimaryRows": 71,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 180,
+          "JobAttemptRows": 142,
+          "RuntimeRelationBytes": 7823360
+        },
+        {
+          "ElapsedSeconds": 32.3944085,
+          "RetainedPrimaryRows": 57,
+          "ActivePrimaryRows": 28,
+          "RetainedJobs": 179,
+          "JobAttemptRows": 146,
+          "RuntimeRelationBytes": 7962624
+        },
+        {
+          "ElapsedSeconds": 33.4298914,
+          "RetainedPrimaryRows": 74,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 199,
+          "JobAttemptRows": 153,
+          "RuntimeRelationBytes": 8134656
+        },
+        {
+          "ElapsedSeconds": 34.4754511,
+          "RetainedPrimaryRows": 63,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 166,
+          "JobAttemptRows": 131,
+          "RuntimeRelationBytes": 8232960
+        },
+        {
+          "ElapsedSeconds": 35.5142109,
+          "RetainedPrimaryRows": 66,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 196,
+          "JobAttemptRows": 152,
+          "RuntimeRelationBytes": 8536064
+        },
+        {
+          "ElapsedSeconds": 36.6260137,
+          "RetainedPrimaryRows": 76,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 200,
+          "JobAttemptRows": 158,
+          "RuntimeRelationBytes": 8699904
+        },
+        {
+          "ElapsedSeconds": 37.6755523,
+          "RetainedPrimaryRows": 59,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 165,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 8863744
+        },
+        {
+          "ElapsedSeconds": 38.7401818,
+          "RetainedPrimaryRows": 70,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 199,
+          "JobAttemptRows": 155,
+          "RuntimeRelationBytes": 9035776
+        },
+        {
+          "ElapsedSeconds": 39.7872456,
+          "RetainedPrimaryRows": 75,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 186,
+          "JobAttemptRows": 146,
+          "RuntimeRelationBytes": 9175040
+        },
+        {
+          "ElapsedSeconds": 40.8199211,
+          "RetainedPrimaryRows": 64,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 180,
+          "JobAttemptRows": 143,
+          "RuntimeRelationBytes": 9363456
+        },
+        {
+          "ElapsedSeconds": 41.8638097,
+          "RetainedPrimaryRows": 75,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 204,
+          "JobAttemptRows": 157,
+          "RuntimeRelationBytes": 9543680
+        },
+        {
+          "ElapsedSeconds": 42.902918,
+          "RetainedPrimaryRows": 69,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 181,
+          "JobAttemptRows": 145,
+          "RuntimeRelationBytes": 9699328
+        },
+        {
+          "ElapsedSeconds": 43.9572707,
+          "RetainedPrimaryRows": 58,
+          "ActivePrimaryRows": 25,
+          "RetainedJobs": 177,
+          "JobAttemptRows": 144,
+          "RuntimeRelationBytes": 9805824
+        },
+        {
+          "ElapsedSeconds": 44.9981776,
+          "RetainedPrimaryRows": 73,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 186,
+          "JobAttemptRows": 140,
+          "RuntimeRelationBytes": 9977856
+        },
+        {
+          "ElapsedSeconds": 46.057866,
+          "RetainedPrimaryRows": 61,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 167,
+          "JobAttemptRows": 126,
+          "RuntimeRelationBytes": 10092544
+        },
+        {
+          "ElapsedSeconds": 47.1127501,
+          "RetainedPrimaryRows": 67,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 191,
+          "JobAttemptRows": 152,
+          "RuntimeRelationBytes": 10264576
+        },
+        {
+          "ElapsedSeconds": 48.1456073,
+          "RetainedPrimaryRows": 76,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 187,
+          "JobAttemptRows": 145,
+          "RuntimeRelationBytes": 10420224
+        },
+        {
+          "ElapsedSeconds": 49.1920304,
+          "RetainedPrimaryRows": 57,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 168,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 10428416
+        },
+        {
+          "ElapsedSeconds": 50.2419043,
+          "RetainedPrimaryRows": 77,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 204,
+          "JobAttemptRows": 156,
+          "RuntimeRelationBytes": 10428416
+        },
+        {
+          "ElapsedSeconds": 51.2899619,
+          "RetainedPrimaryRows": 67,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 170,
+          "JobAttemptRows": 134,
+          "RuntimeRelationBytes": 10444800
+        },
+        {
+          "ElapsedSeconds": 52.483067,
+          "RetainedPrimaryRows": 55,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 174,
+          "JobAttemptRows": 142,
+          "RuntimeRelationBytes": 10477568
+        },
+        {
+          "ElapsedSeconds": 53.6248076,
+          "RetainedPrimaryRows": 64,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 123,
+          "RuntimeRelationBytes": 10493952
+        },
+        {
+          "ElapsedSeconds": 54.6888092,
+          "RetainedPrimaryRows": 59,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 146,
+          "JobAttemptRows": 102,
+          "RuntimeRelationBytes": 10502144
+        },
+        {
+          "ElapsedSeconds": 55.7348569,
+          "RetainedPrimaryRows": 56,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 158,
+          "JobAttemptRows": 120,
+          "RuntimeRelationBytes": 10543104
+        },
+        {
+          "ElapsedSeconds": 56.8287329,
+          "RetainedPrimaryRows": 64,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 177,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 10559488
+        },
+        {
+          "ElapsedSeconds": 57.8663083,
+          "RetainedPrimaryRows": 73,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 187,
+          "JobAttemptRows": 145,
+          "RuntimeRelationBytes": 10575872
+        },
+        {
+          "ElapsedSeconds": 59.0425149,
+          "RetainedPrimaryRows": 56,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 144,
+          "JobAttemptRows": 104,
+          "RuntimeRelationBytes": 10592256
+        },
+        {
+          "ElapsedSeconds": 60.1451391,
+          "RetainedPrimaryRows": 50,
+          "ActivePrimaryRows": 36,
+          "RetainedJobs": 129,
+          "JobAttemptRows": 99,
+          "RuntimeRelationBytes": 10600448
+        },
+        {
+          "ElapsedSeconds": 61.3829704,
+          "RetainedPrimaryRows": 59,
+          "ActivePrimaryRows": 37,
+          "RetainedJobs": 144,
+          "JobAttemptRows": 108,
+          "RuntimeRelationBytes": 10608640
+        },
+        {
+          "ElapsedSeconds": 62.4599715,
+          "RetainedPrimaryRows": 59,
+          "ActivePrimaryRows": 30,
+          "RetainedJobs": 134,
+          "JobAttemptRows": 92,
+          "RuntimeRelationBytes": 10665984
+        },
+        {
+          "ElapsedSeconds": 63.7884344,
+          "RetainedPrimaryRows": 72,
+          "ActivePrimaryRows": 38,
+          "RetainedJobs": 161,
+          "JobAttemptRows": 115,
+          "RuntimeRelationBytes": 10665984
+        },
+        {
+          "ElapsedSeconds": 64.8415423,
+          "RetainedPrimaryRows": 53,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 140,
+          "JobAttemptRows": 100,
+          "RuntimeRelationBytes": 10682368
+        },
+        {
+          "ElapsedSeconds": 65.8917713,
+          "RetainedPrimaryRows": 53,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 143,
+          "JobAttemptRows": 112,
+          "RuntimeRelationBytes": 10706944
+        },
+        {
+          "ElapsedSeconds": 66.9296123,
+          "RetainedPrimaryRows": 70,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 189,
+          "JobAttemptRows": 143,
+          "RuntimeRelationBytes": 10739712
+        },
+        {
+          "ElapsedSeconds": 67.9613154,
+          "RetainedPrimaryRows": 77,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 202,
+          "JobAttemptRows": 163,
+          "RuntimeRelationBytes": 10756096
+        },
+        {
+          "ElapsedSeconds": 69.0036636,
+          "RetainedPrimaryRows": 59,
+          "ActivePrimaryRows": 27,
+          "RetainedJobs": 185,
+          "JobAttemptRows": 150,
+          "RuntimeRelationBytes": 10788864
+        },
+        {
+          "ElapsedSeconds": 70.0364365,
+          "RetainedPrimaryRows": 73,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 201,
+          "JobAttemptRows": 157,
+          "RuntimeRelationBytes": 10887168
+        },
+        {
+          "ElapsedSeconds": 71.0908568,
+          "RetainedPrimaryRows": 62,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 169,
+          "JobAttemptRows": 136,
+          "RuntimeRelationBytes": 10952704
+        },
+        {
+          "ElapsedSeconds": 72.1285576,
+          "RetainedPrimaryRows": 72,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 205,
+          "JobAttemptRows": 162,
+          "RuntimeRelationBytes": 11091968
+        },
+        {
+          "ElapsedSeconds": 73.1697792,
+          "RetainedPrimaryRows": 77,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 203,
+          "JobAttemptRows": 163,
+          "RuntimeRelationBytes": 11149312
+        },
+        {
+          "ElapsedSeconds": 74.2160968,
+          "RetainedPrimaryRows": 57,
+          "ActivePrimaryRows": 33,
+          "RetainedJobs": 185,
+          "JobAttemptRows": 151,
+          "RuntimeRelationBytes": 11223040
+        },
+        {
+          "ElapsedSeconds": 75.2586148,
+          "RetainedPrimaryRows": 78,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 210,
+          "JobAttemptRows": 164,
+          "RuntimeRelationBytes": 12050432
+        },
+        {
+          "ElapsedSeconds": 76.2983869,
+          "RetainedPrimaryRows": 70,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 174,
+          "JobAttemptRows": 140,
+          "RuntimeRelationBytes": 12484608
+        },
+        {
+          "ElapsedSeconds": 77.3469734,
+          "RetainedPrimaryRows": 70,
+          "ActivePrimaryRows": 28,
+          "RetainedJobs": 203,
+          "JobAttemptRows": 160,
+          "RuntimeRelationBytes": 13025280
+        },
+        {
+          "ElapsedSeconds": 78.3791,
+          "RetainedPrimaryRows": 74,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 193,
+          "JobAttemptRows": 154,
+          "RuntimeRelationBytes": 13107200
+        },
+        {
+          "ElapsedSeconds": 79.4177255,
+          "RetainedPrimaryRows": 54,
+          "ActivePrimaryRows": 28,
+          "RetainedJobs": 177,
+          "JobAttemptRows": 145,
+          "RuntimeRelationBytes": 13246464
+        },
+        {
+          "ElapsedSeconds": 80.4477289,
+          "RetainedPrimaryRows": 74,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 203,
+          "JobAttemptRows": 156,
+          "RuntimeRelationBytes": 13361152
+        },
+        {
+          "ElapsedSeconds": 81.4803888,
+          "RetainedPrimaryRows": 61,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 131,
+          "RuntimeRelationBytes": 13443072
+        },
+        {
+          "ElapsedSeconds": 82.5194947,
+          "RetainedPrimaryRows": 67,
+          "ActivePrimaryRows": 30,
+          "RetainedJobs": 198,
+          "JobAttemptRows": 155,
+          "RuntimeRelationBytes": 13582336
+        },
+        {
+          "ElapsedSeconds": 83.5544071,
+          "RetainedPrimaryRows": 77,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 201,
+          "JobAttemptRows": 156,
+          "RuntimeRelationBytes": 13688832
+        },
+        {
+          "ElapsedSeconds": 84.5954419,
+          "RetainedPrimaryRows": 54,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 174,
+          "JobAttemptRows": 141,
+          "RuntimeRelationBytes": 13852672
+        },
+        {
+          "ElapsedSeconds": 85.6795839,
+          "RetainedPrimaryRows": 76,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 208,
+          "JobAttemptRows": 161,
+          "RuntimeRelationBytes": 14049280
+        },
+        {
+          "ElapsedSeconds": 86.7463063,
+          "RetainedPrimaryRows": 67,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 159,
+          "JobAttemptRows": 118,
+          "RuntimeRelationBytes": 14106624
+        },
+        {
+          "ElapsedSeconds": 87.8184723,
+          "RetainedPrimaryRows": 52,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 155,
+          "JobAttemptRows": 121,
+          "RuntimeRelationBytes": 14262272
+        },
+        {
+          "ElapsedSeconds": 88.8877039,
+          "RetainedPrimaryRows": 66,
+          "ActivePrimaryRows": 27,
+          "RetainedJobs": 174,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 14417920
+        },
+        {
+          "ElapsedSeconds": 90.0648438,
+          "RetainedPrimaryRows": 69,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 160,
+          "JobAttemptRows": 116,
+          "RuntimeRelationBytes": 14483456
+        },
+        {
+          "ElapsedSeconds": 91.1640854,
+          "RetainedPrimaryRows": 51,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 137,
+          "JobAttemptRows": 102,
+          "RuntimeRelationBytes": 14622720
+        },
+        {
+          "ElapsedSeconds": 92.2768258,
+          "RetainedPrimaryRows": 62,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 175,
+          "JobAttemptRows": 139,
+          "RuntimeRelationBytes": 14819328
+        },
+        {
+          "ElapsedSeconds": 93.5230741,
+          "RetainedPrimaryRows": 67,
+          "ActivePrimaryRows": 29,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 125,
+          "RuntimeRelationBytes": 14901248
+        },
+        {
+          "ElapsedSeconds": 94.6247245,
+          "RetainedPrimaryRows": 60,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 144,
+          "JobAttemptRows": 102,
+          "RuntimeRelationBytes": 15056896
+        },
+        {
+          "ElapsedSeconds": 95.7000196,
+          "RetainedPrimaryRows": 54,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 154,
+          "JobAttemptRows": 119,
+          "RuntimeRelationBytes": 15179776
+        },
+        {
+          "ElapsedSeconds": 96.7630276,
+          "RetainedPrimaryRows": 59,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 165,
+          "JobAttemptRows": 130,
+          "RuntimeRelationBytes": 15310848
+        },
+        {
+          "ElapsedSeconds": 97.7942937,
+          "RetainedPrimaryRows": 76,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 194,
+          "JobAttemptRows": 150,
+          "RuntimeRelationBytes": 15441920
+        },
+        {
+          "ElapsedSeconds": 98.8348397,
+          "RetainedPrimaryRows": 64,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 169,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 15572992
+        },
+        {
+          "ElapsedSeconds": 99.8696218,
+          "RetainedPrimaryRows": 68,
+          "ActivePrimaryRows": 26,
+          "RetainedJobs": 199,
+          "JobAttemptRows": 159,
+          "RuntimeRelationBytes": 15794176
+        },
+        {
+          "ElapsedSeconds": 100.9395432,
+          "RetainedPrimaryRows": 75,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 198,
+          "JobAttemptRows": 157,
+          "RuntimeRelationBytes": 15958016
+        },
+        {
+          "ElapsedSeconds": 101.9957503,
+          "RetainedPrimaryRows": 53,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 162,
+          "JobAttemptRows": 129,
+          "RuntimeRelationBytes": 16105472
+        },
+        {
+          "ElapsedSeconds": 103.0393418,
+          "RetainedPrimaryRows": 64,
+          "ActivePrimaryRows": 28,
+          "RetainedJobs": 178,
+          "JobAttemptRows": 139,
+          "RuntimeRelationBytes": 16220160
+        },
+        {
+          "ElapsedSeconds": 104.103867,
+          "RetainedPrimaryRows": 74,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 178,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 16424960
+        },
+        {
+          "ElapsedSeconds": 105.1528006,
+          "RetainedPrimaryRows": 58,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 169,
+          "JobAttemptRows": 133,
+          "RuntimeRelationBytes": 16547840
+        },
+        {
+          "ElapsedSeconds": 106.2138378,
+          "RetainedPrimaryRows": 62,
+          "ActivePrimaryRows": 34,
+          "RetainedJobs": 174,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 16662528
+        },
+        {
+          "ElapsedSeconds": 107.2459202,
+          "RetainedPrimaryRows": 72,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 174,
+          "JobAttemptRows": 129,
+          "RuntimeRelationBytes": 16883712
+        },
+        {
+          "ElapsedSeconds": 108.2827115,
+          "RetainedPrimaryRows": 58,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 164,
+          "JobAttemptRows": 129,
+          "RuntimeRelationBytes": 16850944
+        },
+        {
+          "ElapsedSeconds": 109.3419309,
+          "RetainedPrimaryRows": 72,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 202,
+          "JobAttemptRows": 154,
+          "RuntimeRelationBytes": 16850944
+        },
+        {
+          "ElapsedSeconds": 110.3803932,
+          "RetainedPrimaryRows": 72,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 184,
+          "JobAttemptRows": 146,
+          "RuntimeRelationBytes": 16850944
+        },
+        {
+          "ElapsedSeconds": 111.4196345,
+          "RetainedPrimaryRows": 58,
+          "ActivePrimaryRows": 28,
+          "RetainedJobs": 176,
+          "JobAttemptRows": 143,
+          "RuntimeRelationBytes": 16859136
+        },
+        {
+          "ElapsedSeconds": 112.4613152,
+          "RetainedPrimaryRows": 72,
+          "ActivePrimaryRows": 32,
+          "RetainedJobs": 195,
+          "JobAttemptRows": 151,
+          "RuntimeRelationBytes": 16867328
+        },
+        {
+          "ElapsedSeconds": 113.5209503,
+          "RetainedPrimaryRows": 62,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 155,
+          "JobAttemptRows": 117,
+          "RuntimeRelationBytes": 16867328
+        },
+        {
+          "ElapsedSeconds": 114.5791069,
+          "RetainedPrimaryRows": 57,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 167,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 16875520
+        },
+        {
+          "ElapsedSeconds": 115.6179087,
+          "RetainedPrimaryRows": 77,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 208,
+          "JobAttemptRows": 162,
+          "RuntimeRelationBytes": 16883712
+        },
+        {
+          "ElapsedSeconds": 116.6487311,
+          "RetainedPrimaryRows": 67,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 172,
+          "JobAttemptRows": 137,
+          "RuntimeRelationBytes": 16883712
+        },
+        {
+          "ElapsedSeconds": 117.6825357,
+          "RetainedPrimaryRows": 67,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 197,
+          "JobAttemptRows": 156,
+          "RuntimeRelationBytes": 16900096
+        },
+        {
+          "ElapsedSeconds": 118.7236312,
+          "RetainedPrimaryRows": 78,
+          "ActivePrimaryRows": 35,
+          "RetainedJobs": 207,
+          "JobAttemptRows": 165,
+          "RuntimeRelationBytes": 16908288
+        },
+        {
+          "ElapsedSeconds": 119.7718137,
+          "RetainedPrimaryRows": 56,
+          "ActivePrimaryRows": 31,
+          "RetainedJobs": 169,
+          "JobAttemptRows": 138,
+          "RuntimeRelationBytes": 16908288
+        },
+        {
+          "ElapsedSeconds": 120.8128397,
+          "RetainedPrimaryRows": 49,
+          "ActivePrimaryRows": 15,
+          "RetainedJobs": 147,
+          "JobAttemptRows": 135,
+          "RuntimeRelationBytes": 16916480
+        },
+        {
+          "ElapsedSeconds": 121.0584464,
+          "RetainedPrimaryRows": 0,
+          "ActivePrimaryRows": 0,
+          "RetainedJobs": 0,
+          "JobAttemptRows": 0,
+          "RuntimeRelationBytes": 16924672
+        }
+      ],
+      "Verified": true
+    }
+  ]
+}

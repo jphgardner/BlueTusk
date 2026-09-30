@@ -1,0 +1,178 @@
+{
+  "StartedUtc": "2026-09-27T22:03:59.5014556+00:00",
+  "FinishedUtc": "2026-09-27T22:05:30.3560109+00:00",
+  "Cases": [
+    {
+      "Method": "SourceGeneratedSerialize",
+      "Parameters": "PayloadBytes=1024",
+      "BaselineAllocatedBytes": 1176,
+      "OptimizedAllocatedBytes": 1176,
+      "SavedBytes": 0,
+      "SavedPercent": 0.0,
+      "BaselineMeanNanoseconds": 1595.3532536824544,
+      "OptimizedMeanNanoseconds": 1604.1400909423828,
+      "BaselineConfidenceInterval": {
+        "N": 3,
+        "Mean": 1595.3532536824544,
+        "StandardError": 16.05870226455558,
+        "Level": 12,
+        "Margin": 507.43980723109365,
+        "Lower": 1087.9134464513606,
+        "Upper": 2102.793060913548
+      },
+      "OptimizedConfidenceInterval": {
+        "N": 3,
+        "Mean": 1604.1400909423828,
+        "StandardError": 23.996727096847437,
+        "Level": 12,
+        "Margin": 758.2738861207982,
+        "Lower": 845.8662048215846,
+        "Upper": 2362.413977063181
+      }
+    },
+    {
+      "Method": "StageEightDocuments",
+      "Parameters": "PayloadBytes=1024",
+      "BaselineAllocatedBytes": 40400,
+      "OptimizedAllocatedBytes": 30992,
+      "SavedBytes": 9408,
+      "SavedPercent": 23.287128712871286,
+      "BaselineMeanNanoseconds": 24485.667928059895,
+      "OptimizedMeanNanoseconds": 24425.604248046875,
+      "BaselineConfidenceInterval": {
+        "N": 3,
+        "Mean": 24485.667928059895,
+        "StandardError": 196.30803405068266,
+        "Level": 12,
+        "Margin": 6203.1482566595905,
+        "Lower": 18282.519671400303,
+        "Upper": 30688.816184719486
+      },
+      "OptimizedConfidenceInterval": {
+        "N": 3,
+        "Mean": 24425.604248046875,
+        "StandardError": 349.31109577849304,
+        "Level": 12,
+        "Margin": 11037.900334994849,
+        "Lower": 13387.703913052026,
+        "Upper": 35463.50458304172
+      }
+    },
+    {
+      "Method": "SourceGeneratedSerialize",
+      "Parameters": "PayloadBytes=65536",
+      "BaselineAllocatedBytes": 71032,
+      "OptimizedAllocatedBytes": 71032,
+      "SavedBytes": 0,
+      "SavedPercent": 0.0,
+      "BaselineMeanNanoseconds": 104659.23665364583,
+      "OptimizedMeanNanoseconds": 103496.48844401042,
+      "BaselineConfidenceInterval": {
+        "N": 3,
+        "Mean": 104659.23665364583,
+        "StandardError": 2110.3282360808153,
+        "Level": 12,
+        "Margin": 66684.37683627597,
+        "Lower": 37974.859817369856,
+        "Upper": 171343.6134899218
+      },
+      "OptimizedConfidenceInterval": {
+        "N": 3,
+        "Mean": 103496.48844401042,
+        "StandardError": 993.2660805030906,
+        "Level": 12,
+        "Margin": 31386.26895973657,
+        "Lower": 72110.21948427385,
+        "Upper": 134882.757403747
+      }
+    },
+    {
+      "Method": "StageEightDocuments",
+      "Parameters": "PayloadBytes=65536",
+      "BaselineAllocatedBytes": 3418218,
+      "OptimizedAllocatedBytes": 2850288,
+      "SavedBytes": 567930,
+      "SavedPercent": 16.61479753485588,
+      "BaselineMeanNanoseconds": 1608015.7552083333,
+      "OptimizedMeanNanoseconds": 1596300.8463541667,
+      "BaselineConfidenceInterval": {
+        "N": 3,
+        "Mean": 1608015.7552083333,
+        "StandardError": 7195.542340486731,
+        "Level": 12,
+        "Margin": 227372.33420404332,
+        "Lower": 1380643.42100429,
+        "Upper": 1835388.0894123765
+      },
+      "OptimizedConfidenceInterval": {
+        "N": 3,
+        "Mean": 1596300.8463541667,
+        "StandardError": 21565.97035731909,
+        "Level": 12,
+        "Margin": 681464.2715572094,
+        "Lower": 914836.5747969573,
+        "Upper": 2277765.117911376
+      }
+    },
+    {
+      "Method": "SourceGeneratedSerialize",
+      "Parameters": "PayloadBytes=1048576",
+      "BaselineAllocatedBytes": 1130740,
+      "OptimizedAllocatedBytes": 1130740,
+      "SavedBytes": 0,
+      "SavedPercent": 0.0,
+      "BaselineMeanNanoseconds": 1693795.703125,
+      "OptimizedMeanNanoseconds": 1693121.09375,
+      "BaselineConfidenceInterval": {
+        "N": 3,
+        "Mean": 1693795.703125,
+        "StandardError": 20343.373477418434,
+        "Level": 12,
+        "Margin": 642831.3661805748,
+        "Lower": 1050964.3369444252,
+        "Upper": 2336627.0693055745
+      },
+      "OptimizedConfidenceInterval": {
+        "N": 3,
+        "Mean": 1693121.09375,
+        "StandardError": 18946.24041938007,
+        "Level": 12,
+        "Margin": 598683.2826077209,
+        "Lower": 1094437.811142279,
+        "Upper": 2291804.376357721
+      }
+    },
+    {
+      "Method": "StageEightDocuments",
+      "Parameters": "PayloadBytes=1048576",
+      "BaselineAllocatedBytes": 54273630,
+      "OptimizedAllocatedBytes": 45228975,
+      "SavedBytes": 9044655,
+      "SavedPercent": 16.66491627702072,
+      "BaselineMeanNanoseconds": 28200252.083333332,
+      "OptimizedMeanNanoseconds": 26544861.458333332,
+      "BaselineConfidenceInterval": {
+        "N": 3,
+        "Mean": 28200252.083333332,
+        "StandardError": 233693.3536624586,
+        "Level": 12,
+        "Margin": 7384489.0066493545,
+        "Lower": 20815763.076683976,
+        "Upper": 35584741.08998269
+      },
+      "OptimizedConfidenceInterval": {
+        "N": 3,
+        "Mean": 26544861.458333332,
+        "StandardError": 85443.49539919928,
+        "Level": 12,
+        "Margin": 2699933.6633955846,
+        "Lower": 23844927.79493775,
+        "Upper": 29244795.121728916
+      }
+    }
+  ],
+  "BinarySnapshotsRechecked": true,
+  "BaselineRawReportSha256": "9E16C59B48B6BB9EF283165DE3C4CEA54C1D734EE1321D2E68F5E85FE1C486A7",
+  "OptimizedRawReportSha256": "52B551B7F2425BCCF15D3FE04A098E80F9D923A256DADD0FDEB5615FFA827A1E",
+  "Limits": "Exact retained executable dependencies, no provider restore/build and no database IO. Serialized controls are unchanged. Report allocations separately from short-run timing confidence intervals; no production or database-throughput qualification."
+}

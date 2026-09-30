@@ -3,6 +3,42 @@ namespace BlueTusk.Data.Tests;
 public sealed class BlueTuskCommandTextRewriterTests
 {
     [Theory]
+    [InlineData(0)]
+    [InlineData(18000)]
+    public void Cached_statement_templates_never_share_parameter_values(int padding)
+    {
+        var sql = "SELECT @right::int4; /*" + new string(' ', padding) + "*/ SELECT @left::int4 + @right::int4;";
+        Parallel.For(0, 64, value =>
+        {
+            var recreatedSql = new string(sql.ToCharArray());
+            var parameters = new BlueTuskParameterCollection();
+            var left = parameters.Add(new BlueTuskParameter<int>(value) { ParameterName = "left" });
+            var right = parameters.Add(new BlueTuskParameter<int>(value + 1) { ParameterName = "right" });
+            var parent = BlueTuskCommandTextRewriter.Rewrite(recreatedSql, parameters);
+            var plans = BlueTuskCommandTextRewriter.RewriteStatements(recreatedSql, parameters, parent.UsesNamedParameters);
+            Assert.True(parent.HasMultipleStatements);
+            Assert.Equal(2, plans.Length);
+            Assert.Same(right, Assert.Single(plans[0].Parameters));
+            Assert.Same(left, plans[1].Parameters[0]);
+            Assert.Same(right, plans[1].Parameters[1]);
+        });
+    }
+
+    [Theory]
+    [InlineData("SELECT @a; SELECT @b;", 2)]
+    [InlineData("SELECT ';' AS \"a;b\"; -- trailing ;\n", 1)]
+    [InlineData("; /* outer ; /* nested ; */ done */ SELECT 1;; SELECT 2; /* tail ; */", 2)]
+    [InlineData("SELECT $body$one;two$body$; SELECT $$three;four$$", 2)]
+    [InlineData("SELECT E'escaped\\\';semicolon'; SELECT 2", 2)]
+    [InlineData("-- only a comment ;\n/* another ; */;", 0)]
+    public void Statement_splitting_preserves_quoted_and_commented_semicolons(string sql, int count)
+    {
+        var statements = BlueTuskCommandTextRewriter.SplitStatements(sql);
+        Assert.Equal(count, statements.Count);
+        Assert.All(statements, statement => Assert.True(BlueTuskCommandTextRewriter.CanUseExtendedProtocol(statement)));
+    }
+
+    [Theory]
     [InlineData("SELECT $1::int4", false)]
     [InlineData("SELECT value::text", false)]
     [InlineData("SELECT @value", true)]
@@ -25,6 +61,27 @@ public sealed class BlueTuskCommandTextRewriterTests
 
         Assert.Equal(first, second);
         Assert.Empty(first.Parameters);
+    }
+
+    [Fact]
+    public void Publishes_parameterless_plans_safely_to_concurrent_commands()
+    {
+        var sql = $"SELECT 42 /* {Guid.NewGuid():N} */";
+
+        Parallel.For(
+            0,
+            Environment.ProcessorCount * 4_096,
+            _ =>
+            {
+                var plan = BlueTuskCommandTextRewriter.Rewrite(
+                    sql,
+                    new BlueTuskParameterCollection());
+
+                Assert.Equal(sql, plan.Sql);
+                Assert.NotNull(plan.Parameters);
+                Assert.Empty(plan.Parameters);
+                Assert.False(plan.UsesNamedParameters);
+            });
     }
 
     [Fact]

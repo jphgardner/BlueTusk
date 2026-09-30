@@ -17,6 +17,39 @@ public enum BlueTuskGraphEdgeDirection
 {
     Outgoing,
     Incoming,
+    Undirected,
+}
+
+/// <summary>An immutable SQL/PGQ label expression with OR semantics.</summary>
+public sealed class BlueTuskGraphLabelExpression
+{
+    private readonly IReadOnlyList<string> _labels;
+
+    private BlueTuskGraphLabelExpression(IEnumerable<string> labels)
+    {
+        ArgumentNullException.ThrowIfNull(labels);
+        var resolved = labels.ToArray();
+        if (resolved.Length is 0 or > 8 || resolved.Any(string.IsNullOrWhiteSpace))
+        {
+            throw new ArgumentException(
+                "A graph label expression must contain between one and eight non-empty labels.",
+                nameof(labels));
+        }
+
+        if (resolved.Distinct(StringComparer.Ordinal).Count() != resolved.Length)
+        {
+            throw new ArgumentException(
+                "A graph label expression cannot contain duplicate labels.",
+                nameof(labels));
+        }
+
+        _labels = Array.AsReadOnly(resolved);
+    }
+
+    public IReadOnlyList<string> Labels => _labels;
+
+    public static BlueTuskGraphLabelExpression AnyOf(params string[] labels) =>
+        new(labels);
 }
 
 /// <summary>A typed vertex in a linear SQL/PGQ graph pattern.</summary>
@@ -24,14 +57,24 @@ public sealed record BlueTuskGraphVertexPattern(
     Type EntityType,
     string Variable,
     string? ElementTableAlias,
-    LambdaExpression? Predicate);
+    LambdaExpression? Predicate)
+{
+    public BlueTuskGraphLabelExpression? LabelExpression { get; init; }
+}
 
 /// <summary>A typed edge in a linear SQL/PGQ graph pattern.</summary>
 public sealed record BlueTuskGraphEdgePattern(
     Type EntityType,
     string Variable,
     string? ElementTableAlias,
-    BlueTuskGraphEdgeDirection Direction);
+    BlueTuskGraphEdgeDirection Direction)
+{
+    public BlueTuskGraphLabelExpression? LabelExpression { get; init; }
+
+    public int MinimumHops { get; init; } = 1;
+
+    public int MaximumHops { get; init; } = 1;
+}
 
 /// <summary>Builds a safe, linear, typed graph pattern.</summary>
 public sealed class BlueTuskGraphPatternBuilder
@@ -81,18 +124,65 @@ public sealed class BlueTuskGraphPatternBuilder
         string variable,
         string? elementTableAlias = null)
         where TEdge : class =>
-        Edge<TEdge>(variable, elementTableAlias, BlueTuskGraphEdgeDirection.Outgoing);
+        Edge<TEdge>(variable, elementTableAlias, BlueTuskGraphEdgeDirection.Outgoing, 1, 1);
+
+    public BlueTuskGraphPatternBuilder OutgoingPath<TEdge>(
+        string variable,
+        int minimumHops,
+        int maximumHops,
+        string? elementTableAlias = null)
+        where TEdge : class =>
+        Edge<TEdge>(
+            variable,
+            elementTableAlias,
+            BlueTuskGraphEdgeDirection.Outgoing,
+            minimumHops,
+            maximumHops);
 
     public BlueTuskGraphPatternBuilder Incoming<TEdge>(
         string variable,
         string? elementTableAlias = null)
         where TEdge : class =>
-        Edge<TEdge>(variable, elementTableAlias, BlueTuskGraphEdgeDirection.Incoming);
+        Edge<TEdge>(variable, elementTableAlias, BlueTuskGraphEdgeDirection.Incoming, 1, 1);
+
+    public BlueTuskGraphPatternBuilder IncomingPath<TEdge>(
+        string variable,
+        int minimumHops,
+        int maximumHops,
+        string? elementTableAlias = null)
+        where TEdge : class =>
+        Edge<TEdge>(
+            variable,
+            elementTableAlias,
+            BlueTuskGraphEdgeDirection.Incoming,
+            minimumHops,
+            maximumHops);
+
+    public BlueTuskGraphPatternBuilder Undirected<TEdge>(
+        string variable,
+        string? elementTableAlias = null)
+        where TEdge : class =>
+        Edge<TEdge>(variable, elementTableAlias, BlueTuskGraphEdgeDirection.Undirected, 1, 1);
+
+    public BlueTuskGraphPatternBuilder UndirectedPath<TEdge>(
+        string variable,
+        int minimumHops,
+        int maximumHops,
+        string? elementTableAlias = null)
+        where TEdge : class =>
+        Edge<TEdge>(
+            variable,
+            elementTableAlias,
+            BlueTuskGraphEdgeDirection.Undirected,
+            minimumHops,
+            maximumHops);
 
     private BlueTuskGraphPatternBuilder Edge<TEdge>(
         string variable,
         string? elementTableAlias,
-        BlueTuskGraphEdgeDirection direction)
+        BlueTuskGraphEdgeDirection direction,
+        int minimumHops,
+        int maximumHops)
         where TEdge : class
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(variable);
@@ -107,14 +197,51 @@ public sealed class BlueTuskGraphPatternBuilder
                 "A graph edge must follow a vertex and be followed by another vertex.");
         }
 
+        if (minimumHops <= 0 || maximumHops < minimumHops || maximumHops > 8)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maximumHops),
+                "A bounded graph path must use 1 <= minimumHops <= maximumHops <= 8.");
+        }
+
         EnsureVariableAvailable(variable);
         _steps.Add(new BlueTuskGraphEdgePattern(
-            typeof(TEdge), variable, elementTableAlias, direction));
+            typeof(TEdge), variable, elementTableAlias, direction)
+        {
+            MinimumHops = minimumHops,
+            MaximumHops = maximumHops,
+        });
+        return this;
+    }
+
+    /// <summary>Applies an OR label expression to the most recently added vertex or edge.</summary>
+    public BlueTuskGraphPatternBuilder LabelsAnyOf(params string[] labels)
+    {
+        if (_steps.Count == 0)
+        {
+            throw new BlueTuskGraphTranslationException(
+                "A label expression must follow a graph vertex or edge.");
+        }
+
+        var expression = BlueTuskGraphLabelExpression.AnyOf(labels);
+        _steps[^1] = _steps[^1] switch
+        {
+            BlueTuskGraphVertexPattern vertex => vertex with { LabelExpression = expression },
+            BlueTuskGraphEdgePattern edge => edge with { LabelExpression = expression },
+            _ => throw new BlueTuskGraphTranslationException(
+                "A label expression must follow a graph vertex or edge."),
+        };
         return this;
     }
 
     private void EnsureVariableAvailable(string variable)
     {
+        if (variable.StartsWith("__bluetusk_", StringComparison.Ordinal))
+        {
+            throw new BlueTuskGraphTranslationException(
+                "Graph variables beginning with '__bluetusk_' are reserved for bounded path expansion.");
+        }
+
         if (_steps.Any(step => step switch
             {
                 BlueTuskGraphVertexPattern vertex => vertex.Variable == variable,

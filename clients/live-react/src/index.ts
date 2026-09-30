@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import {
   type BlueTuskLiveClient,
   type LiveKey,
@@ -18,8 +18,8 @@ export function useBlueTuskLiveQuery<
     () => client.createQuery<TRow, TKey, TParameters>(request),
     [client, request]
   );
-  const state = useSyncExternalStore(
-    (onStoreChange) => {
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
       let queued = false;
       let active = true;
       const unsubscribe = query.subscribe(() => {
@@ -40,9 +40,10 @@ export function useBlueTuskLiveQuery<
         unsubscribe();
       };
     },
-    () => query.state,
-    () => query.state
+    [query]
   );
+  const getSnapshot = useCallback(() => query.state, [query]);
+  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   useEffect(() => {
     query.start();

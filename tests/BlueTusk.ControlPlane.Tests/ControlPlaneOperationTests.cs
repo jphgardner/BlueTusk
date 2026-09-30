@@ -2,6 +2,20 @@ namespace BlueTusk.ControlPlane.Tests;
 
 public sealed class ControlPlaneOperationTests
 {
+    [Fact]
+    public void Deployment_delete_requires_administrator_and_exact_confirmation()
+    {
+        var policy = ControlPlaneOperationPolicies.Get(
+            ControlPlaneOperationKind.DeleteDeployment,
+            "deployment:production/orders");
+
+        Assert.Equal(ControlPlaneRole.Administrator, policy.RequiredRole);
+        Assert.True(policy.IsDestructive);
+        Assert.Equal(
+            "DeleteDeployment:deployment:production/orders",
+            policy.RequiredConfirmation);
+    }
+
     private static readonly DateTimeOffset Timestamp =
         new(2026, 8, 3, 16, 0, 0, TimeSpan.Zero);
 

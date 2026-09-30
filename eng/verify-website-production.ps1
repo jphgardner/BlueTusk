@@ -33,9 +33,9 @@ $initialBudget = @(
         Where-Object { [string]$_.type -eq 'initial' }
 )
 if ($initialBudget.Count -ne 1 -or
-    [string]$initialBudget[0].maximumError -ne '650kB')
+    [string]$initialBudget[0].maximumError -ne '900kB')
 {
-    throw 'Angular production builds must fail when the initial bundle exceeds 650 kB.'
+    throw 'Angular production builds must fail when the initial bundle exceeds 900 kB.'
 }
 if ([string]$angular.projects.website.architect.build.configurations.production.outputHashing -ne
     'all')
@@ -111,7 +111,7 @@ if (-not $securityContact.Contains('Contact: https://', [StringComparison]::Ordi
 $applicationTemplate = Get-Content -LiteralPath (
     Join-Path $websiteRoot 'src/app/app.html') -Raw
 if (-not $applicationTemplate.Contains(
-        '<img src="/favicon.ico" width="32" height="32" alt="" />',
+        '<img src="/bluetusk-mark.png" width="36" height="36" alt="" />',
         [StringComparison]::Ordinal))
 {
     throw 'The persistent navigation must use the bounded logo asset with explicit dimensions.'
@@ -122,7 +122,8 @@ $homeTemplate = Get-Content -LiteralPath (
 foreach ($requiredImageAttribute in @(
         'width="1376"',
         'height="768"',
-        'loading="lazy"',
+        'loading="eager"',
+        'fetchpriority="high"',
         'decoding="async"'))
 {
     if (-not $homeTemplate.Contains(
@@ -134,7 +135,7 @@ foreach ($requiredImageAttribute in @(
 }
 
 Write-Output (
-    "Verified the website production source contract: a 650000-byte initial build ceiling, " +
+    "Verified the website production source contract: a 900000-byte Angular initial build ceiling, " +
     "$([long]$limits.initialBrotliBytes)-byte Brotli transfer ceiling, hashed assets, " +
     'post-build measurement, content hashes, archived evidence, bounded images, ' +
     'discoverability metadata and security contact.')

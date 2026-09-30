@@ -1,0 +1,302 @@
+#nullable enable
+BlueTusk.Jobs.FencedJobTransactionResult<T>
+BlueTusk.Jobs.FencedJobTransactionResult<T>.<Clone>$() -> BlueTusk.Jobs.FencedJobTransactionResult<T>!
+BlueTusk.Jobs.FencedJobTransactionResult<T>.Deconstruct(out bool Executed, out T? Value) -> void
+BlueTusk.Jobs.FencedJobTransactionResult<T>.Equals(BlueTusk.Jobs.FencedJobTransactionResult<T>? other) -> bool
+BlueTusk.Jobs.FencedJobTransactionResult<T>.Executed.get -> bool
+BlueTusk.Jobs.FencedJobTransactionResult<T>.Executed.init -> void
+BlueTusk.Jobs.FencedJobTransactionResult<T>.FencedJobTransactionResult(bool Executed, T? Value) -> void
+BlueTusk.Jobs.FencedJobTransactionResult<T>.Value.get -> T?
+BlueTusk.Jobs.FencedJobTransactionResult<T>.Value.init -> void
+BlueTusk.Jobs.IJobHandler<T>
+BlueTusk.Jobs.IJobHandler<T>.ExecuteAsync(T payload, BlueTusk.Jobs.JobExecutionContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Jobs.JobAttempt
+BlueTusk.Jobs.JobAttempt.<Clone>$() -> BlueTusk.Jobs.JobAttempt!
+BlueTusk.Jobs.JobAttempt.Attempt.get -> int
+BlueTusk.Jobs.JobAttempt.Attempt.init -> void
+BlueTusk.Jobs.JobAttempt.Deconstruct(out int Attempt, out long FencingToken, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? FinishedAt, out string! Outcome, out string? FailureCode) -> void
+BlueTusk.Jobs.JobAttempt.Equals(BlueTusk.Jobs.JobAttempt? other) -> bool
+BlueTusk.Jobs.JobAttempt.FailureCode.get -> string?
+BlueTusk.Jobs.JobAttempt.FailureCode.init -> void
+BlueTusk.Jobs.JobAttempt.FencingToken.get -> long
+BlueTusk.Jobs.JobAttempt.FencingToken.init -> void
+BlueTusk.Jobs.JobAttempt.FinishedAt.get -> System.DateTimeOffset?
+BlueTusk.Jobs.JobAttempt.FinishedAt.init -> void
+BlueTusk.Jobs.JobAttempt.JobAttempt(int Attempt, long FencingToken, System.DateTimeOffset StartedAt, System.DateTimeOffset? FinishedAt, string! Outcome, string? FailureCode) -> void
+BlueTusk.Jobs.JobAttempt.Outcome.get -> string!
+BlueTusk.Jobs.JobAttempt.Outcome.init -> void
+BlueTusk.Jobs.JobAttempt.StartedAt.get -> System.DateTimeOffset
+BlueTusk.Jobs.JobAttempt.StartedAt.init -> void
+BlueTusk.Jobs.JobExecutionContext
+BlueTusk.Jobs.JobExecutionContext.<Clone>$() -> BlueTusk.Jobs.JobExecutionContext!
+BlueTusk.Jobs.JobExecutionContext.Attempt.get -> int
+BlueTusk.Jobs.JobExecutionContext.Attempt.init -> void
+BlueTusk.Jobs.JobExecutionContext.Deconstruct(out System.Guid JobId, out BlueTusk.Jobs.JobScope! Scope, out int Attempt, out long FencingToken) -> void
+BlueTusk.Jobs.JobExecutionContext.Equals(BlueTusk.Jobs.JobExecutionContext? other) -> bool
+BlueTusk.Jobs.JobExecutionContext.FencingToken.get -> long
+BlueTusk.Jobs.JobExecutionContext.FencingToken.init -> void
+BlueTusk.Jobs.JobExecutionContext.JobExecutionContext(System.Guid JobId, BlueTusk.Jobs.JobScope! Scope, int Attempt, long FencingToken) -> void
+BlueTusk.Jobs.JobExecutionContext.JobId.get -> System.Guid
+BlueTusk.Jobs.JobExecutionContext.JobId.init -> void
+BlueTusk.Jobs.JobExecutionContext.Lease.get -> BlueTusk.Jobs.JobLease?
+BlueTusk.Jobs.JobExecutionContext.Lease.init -> void
+BlueTusk.Jobs.JobExecutionContext.Scope.get -> BlueTusk.Jobs.JobScope!
+BlueTusk.Jobs.JobExecutionContext.Scope.init -> void
+BlueTusk.Jobs.JobHandlerException
+BlueTusk.Jobs.JobHandlerException.FailureCode.get -> string!
+BlueTusk.Jobs.JobHandlerException.JobHandlerException(string! failureCode, bool retryable = true) -> void
+BlueTusk.Jobs.JobHandlerException.Retryable.get -> bool
+BlueTusk.Jobs.JobHandlerRegistry
+BlueTusk.Jobs.JobHandlerRegistry.JobHandlerRegistry() -> void
+BlueTusk.Jobs.JobHandlerRegistry.Register<T>(string! jobType, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! typeInfo, BlueTusk.Jobs.IJobHandler<T>! handler) -> BlueTusk.Jobs.JobHandlerRegistry!
+BlueTusk.Jobs.JobHandlerRegistry.Register<T>(string! jobType, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! typeInfo, System.Func<T, BlueTusk.Jobs.JobExecutionContext!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! handler) -> BlueTusk.Jobs.JobHandlerRegistry!
+BlueTusk.Jobs.JobLease
+BlueTusk.Jobs.JobLease.<Clone>$() -> BlueTusk.Jobs.JobLease!
+BlueTusk.Jobs.JobLease.Attempt.get -> int
+BlueTusk.Jobs.JobLease.Attempt.init -> void
+BlueTusk.Jobs.JobLease.Deconstruct(out System.Guid JobId, out BlueTusk.Jobs.JobScope! Scope, out string! JobType, out System.ReadOnlyMemory<byte> Payload, out int Attempt, out int MaximumAttempts, out string! Owner, out long FencingToken, out System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Jobs.JobLease.Equals(BlueTusk.Jobs.JobLease? other) -> bool
+BlueTusk.Jobs.JobLease.ExpiresAt.get -> System.DateTimeOffset
+BlueTusk.Jobs.JobLease.ExpiresAt.init -> void
+BlueTusk.Jobs.JobLease.FencingToken.get -> long
+BlueTusk.Jobs.JobLease.FencingToken.init -> void
+BlueTusk.Jobs.JobLease.JobId.get -> System.Guid
+BlueTusk.Jobs.JobLease.JobId.init -> void
+BlueTusk.Jobs.JobLease.JobLease(System.Guid JobId, BlueTusk.Jobs.JobScope! Scope, string! JobType, System.ReadOnlyMemory<byte> Payload, int Attempt, int MaximumAttempts, string! Owner, long FencingToken, System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Jobs.JobLease.JobType.get -> string!
+BlueTusk.Jobs.JobLease.JobType.init -> void
+BlueTusk.Jobs.JobLease.MaximumAttempts.get -> int
+BlueTusk.Jobs.JobLease.MaximumAttempts.init -> void
+BlueTusk.Jobs.JobLease.Owner.get -> string!
+BlueTusk.Jobs.JobLease.Owner.init -> void
+BlueTusk.Jobs.JobLease.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Jobs.JobLease.Payload.init -> void
+BlueTusk.Jobs.JobLease.Scope.get -> BlueTusk.Jobs.JobScope!
+BlueTusk.Jobs.JobLease.Scope.init -> void
+BlueTusk.Jobs.JobMisfirePolicy
+BlueTusk.Jobs.JobMisfirePolicy.Coalesce = 0 -> BlueTusk.Jobs.JobMisfirePolicy
+BlueTusk.Jobs.JobMisfirePolicy.Skip = 1 -> BlueTusk.Jobs.JobMisfirePolicy
+BlueTusk.Jobs.JobQueueHealth
+BlueTusk.Jobs.JobQueueHealth.<Clone>$() -> BlueTusk.Jobs.JobQueueHealth!
+BlueTusk.Jobs.JobQueueHealth.Deconstruct(out int PendingObserved, out bool PendingCountCapped, out int RunningObserved, out bool RunningCountCapped, out int ExpiredLeasesObserved, out bool ExpiredLeaseCountCapped, out System.TimeSpan? OldestReadyAge) -> void
+BlueTusk.Jobs.JobQueueHealth.Equals(BlueTusk.Jobs.JobQueueHealth? other) -> bool
+BlueTusk.Jobs.JobQueueHealth.ExpiredLeaseCountCapped.get -> bool
+BlueTusk.Jobs.JobQueueHealth.ExpiredLeaseCountCapped.init -> void
+BlueTusk.Jobs.JobQueueHealth.ExpiredLeasesObserved.get -> int
+BlueTusk.Jobs.JobQueueHealth.ExpiredLeasesObserved.init -> void
+BlueTusk.Jobs.JobQueueHealth.JobQueueHealth(int PendingObserved, bool PendingCountCapped, int RunningObserved, bool RunningCountCapped, int ExpiredLeasesObserved, bool ExpiredLeaseCountCapped, System.TimeSpan? OldestReadyAge) -> void
+BlueTusk.Jobs.JobQueueHealth.OldestReadyAge.get -> System.TimeSpan?
+BlueTusk.Jobs.JobQueueHealth.OldestReadyAge.init -> void
+BlueTusk.Jobs.JobQueueHealth.PendingCountCapped.get -> bool
+BlueTusk.Jobs.JobQueueHealth.PendingCountCapped.init -> void
+BlueTusk.Jobs.JobQueueHealth.PendingObserved.get -> int
+BlueTusk.Jobs.JobQueueHealth.PendingObserved.init -> void
+BlueTusk.Jobs.JobQueueHealth.RunningCountCapped.get -> bool
+BlueTusk.Jobs.JobQueueHealth.RunningCountCapped.init -> void
+BlueTusk.Jobs.JobQueueHealth.RunningObserved.get -> int
+BlueTusk.Jobs.JobQueueHealth.RunningObserved.init -> void
+BlueTusk.Jobs.JobRequest
+BlueTusk.Jobs.JobRequest.<Clone>$() -> BlueTusk.Jobs.JobRequest!
+BlueTusk.Jobs.JobRequest.DeduplicationKey.get -> string?
+BlueTusk.Jobs.JobRequest.DeduplicationKey.init -> void
+BlueTusk.Jobs.JobRequest.Delay.get -> System.TimeSpan
+BlueTusk.Jobs.JobRequest.Delay.init -> void
+BlueTusk.Jobs.JobRequest.Equals(BlueTusk.Jobs.JobRequest? other) -> bool
+BlueTusk.Jobs.JobRequest.JobRequest() -> void
+BlueTusk.Jobs.JobRequest.JobType.get -> string!
+BlueTusk.Jobs.JobRequest.JobType.init -> void
+BlueTusk.Jobs.JobRequest.MaximumAttempts.get -> int
+BlueTusk.Jobs.JobRequest.MaximumAttempts.init -> void
+BlueTusk.Jobs.JobRequest.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Jobs.JobRequest.Payload.init -> void
+BlueTusk.Jobs.JobRequest.Scope.get -> BlueTusk.Jobs.JobScope!
+BlueTusk.Jobs.JobRequest.Scope.init -> void
+BlueTusk.Jobs.JobRetryPolicy
+BlueTusk.Jobs.JobRetryPolicy.<Clone>$() -> BlueTusk.Jobs.JobRetryPolicy!
+BlueTusk.Jobs.JobRetryPolicy.Equals(BlueTusk.Jobs.JobRetryPolicy? other) -> bool
+BlueTusk.Jobs.JobRetryPolicy.GetDelay(int attempt) -> System.TimeSpan
+BlueTusk.Jobs.JobRetryPolicy.InitialDelay.get -> System.TimeSpan
+BlueTusk.Jobs.JobRetryPolicy.InitialDelay.init -> void
+BlueTusk.Jobs.JobRetryPolicy.JitterFraction.get -> double
+BlueTusk.Jobs.JobRetryPolicy.JitterFraction.init -> void
+BlueTusk.Jobs.JobRetryPolicy.JobRetryPolicy() -> void
+BlueTusk.Jobs.JobRetryPolicy.MaximumDelay.get -> System.TimeSpan
+BlueTusk.Jobs.JobRetryPolicy.MaximumDelay.init -> void
+BlueTusk.Jobs.JobScope
+BlueTusk.Jobs.JobScope.<Clone>$() -> BlueTusk.Jobs.JobScope!
+BlueTusk.Jobs.JobScope.Equals(BlueTusk.Jobs.JobScope? other) -> bool
+BlueTusk.Jobs.JobScope.JobScope(string! tenant, string! queue) -> void
+BlueTusk.Jobs.JobScope.Queue.get -> string!
+BlueTusk.Jobs.JobScope.Tenant.get -> string!
+BlueTusk.Jobs.JobSnapshot
+BlueTusk.Jobs.JobSnapshot.<Clone>$() -> BlueTusk.Jobs.JobSnapshot!
+BlueTusk.Jobs.JobSnapshot.Attempts.get -> int
+BlueTusk.Jobs.JobSnapshot.Attempts.init -> void
+BlueTusk.Jobs.JobSnapshot.AvailableAt.get -> System.DateTimeOffset
+BlueTusk.Jobs.JobSnapshot.AvailableAt.init -> void
+BlueTusk.Jobs.JobSnapshot.CompletedAt.get -> System.DateTimeOffset?
+BlueTusk.Jobs.JobSnapshot.CompletedAt.init -> void
+BlueTusk.Jobs.JobSnapshot.Deconstruct(out System.Guid JobId, out BlueTusk.Jobs.JobScope! Scope, out string! JobType, out BlueTusk.Jobs.JobStatus Status, out int Attempts, out int MaximumAttempts, out long FencingToken, out System.DateTimeOffset AvailableAt, out System.DateTimeOffset? CompletedAt, out string? LastFailureCode) -> void
+BlueTusk.Jobs.JobSnapshot.Equals(BlueTusk.Jobs.JobSnapshot? other) -> bool
+BlueTusk.Jobs.JobSnapshot.FencingToken.get -> long
+BlueTusk.Jobs.JobSnapshot.FencingToken.init -> void
+BlueTusk.Jobs.JobSnapshot.JobId.get -> System.Guid
+BlueTusk.Jobs.JobSnapshot.JobId.init -> void
+BlueTusk.Jobs.JobSnapshot.JobSnapshot(System.Guid JobId, BlueTusk.Jobs.JobScope! Scope, string! JobType, BlueTusk.Jobs.JobStatus Status, int Attempts, int MaximumAttempts, long FencingToken, System.DateTimeOffset AvailableAt, System.DateTimeOffset? CompletedAt, string? LastFailureCode) -> void
+BlueTusk.Jobs.JobSnapshot.JobType.get -> string!
+BlueTusk.Jobs.JobSnapshot.JobType.init -> void
+BlueTusk.Jobs.JobSnapshot.LastFailureCode.get -> string?
+BlueTusk.Jobs.JobSnapshot.LastFailureCode.init -> void
+BlueTusk.Jobs.JobSnapshot.MaximumAttempts.get -> int
+BlueTusk.Jobs.JobSnapshot.MaximumAttempts.init -> void
+BlueTusk.Jobs.JobSnapshot.Scope.get -> BlueTusk.Jobs.JobScope!
+BlueTusk.Jobs.JobSnapshot.Scope.init -> void
+BlueTusk.Jobs.JobSnapshot.Status.get -> BlueTusk.Jobs.JobStatus
+BlueTusk.Jobs.JobSnapshot.Status.init -> void
+BlueTusk.Jobs.JobStatus
+BlueTusk.Jobs.JobStatus.Canceled = 4 -> BlueTusk.Jobs.JobStatus
+BlueTusk.Jobs.JobStatus.Failed = 3 -> BlueTusk.Jobs.JobStatus
+BlueTusk.Jobs.JobStatus.Pending = 0 -> BlueTusk.Jobs.JobStatus
+BlueTusk.Jobs.JobStatus.Running = 1 -> BlueTusk.Jobs.JobStatus
+BlueTusk.Jobs.JobStatus.Succeeded = 2 -> BlueTusk.Jobs.JobStatus
+BlueTusk.Jobs.JobStoreOptions
+BlueTusk.Jobs.JobStoreOptions.<Clone>$() -> BlueTusk.Jobs.JobStoreOptions!
+BlueTusk.Jobs.JobStoreOptions.CommandTimeoutSeconds.get -> int
+BlueTusk.Jobs.JobStoreOptions.CommandTimeoutSeconds.init -> void
+BlueTusk.Jobs.JobStoreOptions.Equals(BlueTusk.Jobs.JobStoreOptions? other) -> bool
+BlueTusk.Jobs.JobStoreOptions.JobStoreOptions() -> void
+BlueTusk.Jobs.JobStoreOptions.MaximumClaimBatch.get -> int
+BlueTusk.Jobs.JobStoreOptions.MaximumClaimBatch.init -> void
+BlueTusk.Jobs.JobStoreOptions.MaximumClaimPayloadBytes.get -> int
+BlueTusk.Jobs.JobStoreOptions.MaximumClaimPayloadBytes.init -> void
+BlueTusk.Jobs.JobStoreOptions.MaximumHistoryEntries.get -> int
+BlueTusk.Jobs.JobStoreOptions.MaximumHistoryEntries.init -> void
+BlueTusk.Jobs.JobStoreOptions.MaximumPayloadBytes.get -> int
+BlueTusk.Jobs.JobStoreOptions.MaximumPayloadBytes.init -> void
+BlueTusk.Jobs.JobStoreOptions.Schema.get -> string!
+BlueTusk.Jobs.JobStoreOptions.Schema.init -> void
+BlueTusk.Jobs.JobTelemetry
+BlueTusk.Jobs.JobWorker
+BlueTusk.Jobs.JobWorker.JobWorker(BlueTusk.Jobs.PostgreSqlJobStore! store, BlueTusk.Jobs.JobScope! scope, string! owner, BlueTusk.Jobs.JobHandlerRegistry! handlers, BlueTusk.Jobs.JobWorkerOptions? options = null) -> void
+BlueTusk.Jobs.JobWorker.RunAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+BlueTusk.Jobs.JobWorkerOptions
+BlueTusk.Jobs.JobWorkerOptions.<Clone>$() -> BlueTusk.Jobs.JobWorkerOptions!
+BlueTusk.Jobs.JobWorkerOptions.ClaimBatchSize.get -> int
+BlueTusk.Jobs.JobWorkerOptions.ClaimBatchSize.init -> void
+BlueTusk.Jobs.JobWorkerOptions.Concurrency.get -> int
+BlueTusk.Jobs.JobWorkerOptions.Concurrency.init -> void
+BlueTusk.Jobs.JobWorkerOptions.DispatchRecurringSchedules.get -> bool
+BlueTusk.Jobs.JobWorkerOptions.DispatchRecurringSchedules.init -> void
+BlueTusk.Jobs.JobWorkerOptions.Equals(BlueTusk.Jobs.JobWorkerOptions? other) -> bool
+BlueTusk.Jobs.JobWorkerOptions.HeartbeatInterval.get -> System.TimeSpan
+BlueTusk.Jobs.JobWorkerOptions.HeartbeatInterval.init -> void
+BlueTusk.Jobs.JobWorkerOptions.JobWorkerOptions() -> void
+BlueTusk.Jobs.JobWorkerOptions.LeaseDuration.get -> System.TimeSpan
+BlueTusk.Jobs.JobWorkerOptions.LeaseDuration.init -> void
+BlueTusk.Jobs.JobWorkerOptions.MaximumInFlightPayloadBytes.get -> int
+BlueTusk.Jobs.JobWorkerOptions.MaximumInFlightPayloadBytes.init -> void
+BlueTusk.Jobs.JobWorkerOptions.PollInterval.get -> System.TimeSpan
+BlueTusk.Jobs.JobWorkerOptions.PollInterval.init -> void
+BlueTusk.Jobs.JobWorkerOptions.RetryPolicy.get -> BlueTusk.Jobs.JobRetryPolicy!
+BlueTusk.Jobs.JobWorkerOptions.RetryPolicy.init -> void
+BlueTusk.Jobs.JobWorkerOptions.SchedulePollInterval.get -> System.TimeSpan
+BlueTusk.Jobs.JobWorkerOptions.SchedulePollInterval.init -> void
+BlueTusk.Jobs.JobWorkerOptions.StoreFailureBackoff.get -> System.TimeSpan
+BlueTusk.Jobs.JobWorkerOptions.StoreFailureBackoff.init -> void
+BlueTusk.Jobs.PostgreSqlJobStore
+BlueTusk.Jobs.PostgreSqlJobStore.CancelAsync(BlueTusk.Jobs.JobScope! scope, System.Guid id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Jobs.PostgreSqlJobStore.ClaimAsync(BlueTusk.Jobs.JobScope! scope, string! owner, int maximumCount, System.TimeSpan leaseDuration, System.Collections.Generic.IReadOnlyCollection<string!>? jobTypes = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Jobs.JobLease!>!>
+BlueTusk.Jobs.PostgreSqlJobStore.CompleteAsync(BlueTusk.Jobs.JobLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Jobs.PostgreSqlJobStore.CreateScheduleAsync(BlueTusk.Jobs.RecurringJobSchedule! schedule, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Jobs.PostgreSqlJobStore.DeleteScheduleAsync(BlueTusk.Jobs.JobScope! scope, string! name, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Jobs.PostgreSqlJobStore.DispatchSchedulesAsync(BlueTusk.Jobs.JobScope! scope, int maximumCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Jobs.PostgreSqlJobStore.EnqueueAsync(BlueTusk.Jobs.JobRequest! request) -> System.Threading.Tasks.ValueTask<System.Guid>
+BlueTusk.Jobs.PostgreSqlJobStore.EnqueueAsync(BlueTusk.Jobs.JobRequest! request, BlueTusk.Data.BlueTuskTransaction! transaction, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Guid>
+BlueTusk.Jobs.PostgreSqlJobStore.EnqueueAsync(BlueTusk.Jobs.JobRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Guid>
+BlueTusk.Jobs.PostgreSqlJobStore.ExecuteFencedAsync<T>(BlueTusk.Jobs.JobLease! lease, System.Func<BlueTusk.Data.BlueTuskConnection!, BlueTusk.Data.BlueTuskTransaction!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<T>>! action, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Jobs.FencedJobTransactionResult<T>!>
+BlueTusk.Jobs.PostgreSqlJobStore.FailAsync(BlueTusk.Jobs.JobLease! lease, string! failureCode, System.TimeSpan retryDelay, bool retryable = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Jobs.PostgreSqlJobStore.HeartbeatAsync(BlueTusk.Jobs.JobLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Jobs.PostgreSqlJobStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Jobs.PostgreSqlJobStore.InspectAsync(BlueTusk.Jobs.JobScope! scope, int maximumObserved = 10000, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Jobs.JobQueueHealth!>
+BlueTusk.Jobs.PostgreSqlJobStore.PostgreSqlJobStore(BlueTusk.Data.BlueTuskDataSource! dataSource, BlueTusk.Jobs.JobStoreOptions? options = null) -> void
+BlueTusk.Jobs.PostgreSqlJobStore.PruneAsync(BlueTusk.Jobs.JobScope! scope, System.TimeSpan retention, int maximumCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Jobs.PostgreSqlJobStore.ReadAsync(BlueTusk.Jobs.JobScope! scope, System.Guid id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Jobs.JobSnapshot?>
+BlueTusk.Jobs.PostgreSqlJobStore.ReadHistoryAsync(BlueTusk.Jobs.JobScope! scope, System.Guid id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Jobs.JobAttempt!>!>
+BlueTusk.Jobs.RecurringJobSchedule
+BlueTusk.Jobs.RecurringJobSchedule.<Clone>$() -> BlueTusk.Jobs.RecurringJobSchedule!
+BlueTusk.Jobs.RecurringJobSchedule.Equals(BlueTusk.Jobs.RecurringJobSchedule? other) -> bool
+BlueTusk.Jobs.RecurringJobSchedule.FirstOccurrence.get -> System.DateTimeOffset
+BlueTusk.Jobs.RecurringJobSchedule.FirstOccurrence.init -> void
+BlueTusk.Jobs.RecurringJobSchedule.Interval.get -> System.TimeSpan
+BlueTusk.Jobs.RecurringJobSchedule.Interval.init -> void
+BlueTusk.Jobs.RecurringJobSchedule.Job.get -> BlueTusk.Jobs.JobRequest!
+BlueTusk.Jobs.RecurringJobSchedule.Job.init -> void
+BlueTusk.Jobs.RecurringJobSchedule.MisfirePolicy.get -> BlueTusk.Jobs.JobMisfirePolicy
+BlueTusk.Jobs.RecurringJobSchedule.MisfirePolicy.init -> void
+BlueTusk.Jobs.RecurringJobSchedule.Name.get -> string!
+BlueTusk.Jobs.RecurringJobSchedule.Name.init -> void
+BlueTusk.Jobs.RecurringJobSchedule.RecurringJobSchedule() -> void
+const BlueTusk.Jobs.JobTelemetry.InstrumentationName = "BlueTusk.Jobs" -> string!
+override BlueTusk.Jobs.FencedJobTransactionResult<T>.Equals(object? obj) -> bool
+override BlueTusk.Jobs.FencedJobTransactionResult<T>.GetHashCode() -> int
+override BlueTusk.Jobs.FencedJobTransactionResult<T>.ToString() -> string!
+override BlueTusk.Jobs.JobAttempt.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobAttempt.GetHashCode() -> int
+override BlueTusk.Jobs.JobAttempt.ToString() -> string!
+override BlueTusk.Jobs.JobExecutionContext.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobExecutionContext.GetHashCode() -> int
+override BlueTusk.Jobs.JobExecutionContext.ToString() -> string!
+override BlueTusk.Jobs.JobLease.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobLease.GetHashCode() -> int
+override BlueTusk.Jobs.JobLease.ToString() -> string!
+override BlueTusk.Jobs.JobQueueHealth.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobQueueHealth.GetHashCode() -> int
+override BlueTusk.Jobs.JobQueueHealth.ToString() -> string!
+override BlueTusk.Jobs.JobRequest.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobRequest.GetHashCode() -> int
+override BlueTusk.Jobs.JobRequest.ToString() -> string!
+override BlueTusk.Jobs.JobRetryPolicy.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobRetryPolicy.GetHashCode() -> int
+override BlueTusk.Jobs.JobRetryPolicy.ToString() -> string!
+override BlueTusk.Jobs.JobScope.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobScope.GetHashCode() -> int
+override BlueTusk.Jobs.JobScope.ToString() -> string!
+override BlueTusk.Jobs.JobSnapshot.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobSnapshot.GetHashCode() -> int
+override BlueTusk.Jobs.JobSnapshot.ToString() -> string!
+override BlueTusk.Jobs.JobStoreOptions.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobStoreOptions.GetHashCode() -> int
+override BlueTusk.Jobs.JobStoreOptions.ToString() -> string!
+override BlueTusk.Jobs.JobWorkerOptions.Equals(object? obj) -> bool
+override BlueTusk.Jobs.JobWorkerOptions.GetHashCode() -> int
+override BlueTusk.Jobs.JobWorkerOptions.ToString() -> string!
+override BlueTusk.Jobs.RecurringJobSchedule.Equals(object? obj) -> bool
+override BlueTusk.Jobs.RecurringJobSchedule.GetHashCode() -> int
+override BlueTusk.Jobs.RecurringJobSchedule.ToString() -> string!
+static BlueTusk.Jobs.FencedJobTransactionResult<T>.operator !=(BlueTusk.Jobs.FencedJobTransactionResult<T>? left, BlueTusk.Jobs.FencedJobTransactionResult<T>? right) -> bool
+static BlueTusk.Jobs.FencedJobTransactionResult<T>.operator ==(BlueTusk.Jobs.FencedJobTransactionResult<T>? left, BlueTusk.Jobs.FencedJobTransactionResult<T>? right) -> bool
+static BlueTusk.Jobs.JobAttempt.operator !=(BlueTusk.Jobs.JobAttempt? left, BlueTusk.Jobs.JobAttempt? right) -> bool
+static BlueTusk.Jobs.JobAttempt.operator ==(BlueTusk.Jobs.JobAttempt? left, BlueTusk.Jobs.JobAttempt? right) -> bool
+static BlueTusk.Jobs.JobExecutionContext.operator !=(BlueTusk.Jobs.JobExecutionContext? left, BlueTusk.Jobs.JobExecutionContext? right) -> bool
+static BlueTusk.Jobs.JobExecutionContext.operator ==(BlueTusk.Jobs.JobExecutionContext? left, BlueTusk.Jobs.JobExecutionContext? right) -> bool
+static BlueTusk.Jobs.JobLease.operator !=(BlueTusk.Jobs.JobLease? left, BlueTusk.Jobs.JobLease? right) -> bool
+static BlueTusk.Jobs.JobLease.operator ==(BlueTusk.Jobs.JobLease? left, BlueTusk.Jobs.JobLease? right) -> bool
+static BlueTusk.Jobs.JobQueueHealth.operator !=(BlueTusk.Jobs.JobQueueHealth? left, BlueTusk.Jobs.JobQueueHealth? right) -> bool
+static BlueTusk.Jobs.JobQueueHealth.operator ==(BlueTusk.Jobs.JobQueueHealth? left, BlueTusk.Jobs.JobQueueHealth? right) -> bool
+static BlueTusk.Jobs.JobRequest.FromJson<T>(BlueTusk.Jobs.JobScope! scope, string! jobType, T payload, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! typeInfo) -> BlueTusk.Jobs.JobRequest!
+static BlueTusk.Jobs.JobRequest.operator !=(BlueTusk.Jobs.JobRequest? left, BlueTusk.Jobs.JobRequest? right) -> bool
+static BlueTusk.Jobs.JobRequest.operator ==(BlueTusk.Jobs.JobRequest? left, BlueTusk.Jobs.JobRequest? right) -> bool
+static BlueTusk.Jobs.JobRetryPolicy.operator !=(BlueTusk.Jobs.JobRetryPolicy? left, BlueTusk.Jobs.JobRetryPolicy? right) -> bool
+static BlueTusk.Jobs.JobRetryPolicy.operator ==(BlueTusk.Jobs.JobRetryPolicy? left, BlueTusk.Jobs.JobRetryPolicy? right) -> bool
+static BlueTusk.Jobs.JobScope.operator !=(BlueTusk.Jobs.JobScope? left, BlueTusk.Jobs.JobScope? right) -> bool
+static BlueTusk.Jobs.JobScope.operator ==(BlueTusk.Jobs.JobScope? left, BlueTusk.Jobs.JobScope? right) -> bool
+static BlueTusk.Jobs.JobSnapshot.operator !=(BlueTusk.Jobs.JobSnapshot? left, BlueTusk.Jobs.JobSnapshot? right) -> bool
+static BlueTusk.Jobs.JobSnapshot.operator ==(BlueTusk.Jobs.JobSnapshot? left, BlueTusk.Jobs.JobSnapshot? right) -> bool
+static BlueTusk.Jobs.JobStoreOptions.operator !=(BlueTusk.Jobs.JobStoreOptions? left, BlueTusk.Jobs.JobStoreOptions? right) -> bool
+static BlueTusk.Jobs.JobStoreOptions.operator ==(BlueTusk.Jobs.JobStoreOptions? left, BlueTusk.Jobs.JobStoreOptions? right) -> bool
+static BlueTusk.Jobs.JobTelemetry.ActivitySource.get -> System.Diagnostics.ActivitySource!
+static BlueTusk.Jobs.JobTelemetry.Meter.get -> System.Diagnostics.Metrics.Meter!
+static BlueTusk.Jobs.JobWorkerOptions.operator !=(BlueTusk.Jobs.JobWorkerOptions? left, BlueTusk.Jobs.JobWorkerOptions? right) -> bool
+static BlueTusk.Jobs.JobWorkerOptions.operator ==(BlueTusk.Jobs.JobWorkerOptions? left, BlueTusk.Jobs.JobWorkerOptions? right) -> bool
+static BlueTusk.Jobs.RecurringJobSchedule.operator !=(BlueTusk.Jobs.RecurringJobSchedule? left, BlueTusk.Jobs.RecurringJobSchedule? right) -> bool
+static BlueTusk.Jobs.RecurringJobSchedule.operator ==(BlueTusk.Jobs.RecurringJobSchedule? left, BlueTusk.Jobs.RecurringJobSchedule? right) -> bool

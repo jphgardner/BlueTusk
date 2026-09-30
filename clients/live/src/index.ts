@@ -153,6 +153,8 @@ export interface LiveClientOptions {
   readonly retryJitter?: number;
   readonly random?: () => number;
   readonly onResumeToken?: (token: string | null) => void;
+  /** Already available SSE frames per reduction/publication batch. Default 64; use 1 for per-event snapshots. */
+  readonly maximumBatchEvents?: number;
 }
 
 export class LiveProtocolError extends Error {
@@ -181,12 +183,20 @@ class LiveResetRequiredError extends Error {
   }
 }
 
+class LiveCallbackError extends Error {
+  constructor(cause: unknown) {
+    super("The application's Live resume-token callback failed.", { cause });
+    this.name = "LiveCallbackError";
+  }
+}
+
 export class LiveResultStore<TRow, TKey extends LiveKey> {
-  readonly #rows = new Map<TKey, TRow>();
+  #rows = new Map<TKey, TRow>();
   #order: TKey[] = [];
+  #cachedRows: readonly TRow[] | null = null;
 
   get rows(): readonly TRow[] {
-    return this.#order.map((key) => {
+    return this.#cachedRows ??= this.#order.map((key) => {
       const row = this.#rows.get(key);
       if (row === undefined) {
         throw new LiveProtocolError(`Live result order references missing key '${String(key)}'.`);
@@ -197,6 +207,12 @@ export class LiveResultStore<TRow, TKey extends LiveKey> {
   }
 
   apply(event: LiveResultEvent<TRow, TKey>): readonly TRow[] {
+    this.applyEvent(event);
+    return this.rows;
+  }
+
+  /** Reduce one event without materializing rows. Read rows after the desired bounded batch. */
+  applyEvent(event: LiveResultEvent<TRow, TKey>): void {
     switch (event.kind) {
       case "InitialResult":
       case "ResultReset":
@@ -218,24 +234,36 @@ export class LiveResultStore<TRow, TKey extends LiveKey> {
         throw new LiveProtocolError(`Unknown Live event kind '${String(event.kind)}'.`);
     }
 
+    this.#cachedRows = null;
+  }
+
+  /** Sequential reduction: on failure the successful prefix remains, but the invalid event is not applied. */
+  applyBatch(events: Iterable<LiveResultEvent<TRow, TKey>>): readonly TRow[] {
+    for (const event of events) {
+      this.applyEvent(event);
+    }
     return this.rows;
   }
 
   #replace(event: LiveResultEvent<TRow, TKey>): void {
-    if (event.rows === null || event.order === null || event.rows.length !== event.order.length) {
+    if (!Array.isArray(event.rows) || !Array.isArray(event.order) || event.rows.length !== event.order.length) {
       throw new LiveProtocolError(`${event.kind} must contain equally sized rows and order arrays.`);
     }
 
     const replacement = new Map<TKey, TRow>();
     event.order.forEach((key, index) => {
-      if (replacement.has(key)) {
+      if ((typeof key !== "string" && typeof key !== "number") ||
+          (typeof key === "number" && !Number.isFinite(key))) {
+        throw new LiveProtocolError("Live result order must contain string or finite number keys.");
+      }
+      const resultKey = key as TKey;
+      if (replacement.has(resultKey)) {
         throw new LiveProtocolError(`Live result contains duplicate key '${String(key)}'.`);
       }
 
-      replacement.set(key, event.rows![index]!);
+      replacement.set(resultKey, event.rows![index]!);
     });
-    this.#rows.clear();
-    replacement.forEach((row, key) => this.#rows.set(key, row));
+    this.#rows = replacement;
     this.#order = [...event.order];
   }
 
@@ -244,7 +272,8 @@ export class LiveResultStore<TRow, TKey extends LiveKey> {
       throw new LiveProtocolError("RowAdded must contain key, row, and currentIndex.");
     }
 
-    if (this.#rows.has(event.key) || event.currentIndex < 0 || event.currentIndex > this.#order.length) {
+    if (this.#rows.has(event.key) || !Number.isSafeInteger(event.currentIndex) ||
+        event.currentIndex < 0 || event.currentIndex > this.#order.length) {
       throw new LiveProtocolError("RowAdded conflicts with the current keyed result.");
     }
 
@@ -257,33 +286,47 @@ export class LiveResultStore<TRow, TKey extends LiveKey> {
       throw new LiveProtocolError("RowUpdated must reference an existing key and contain a row.");
     }
 
-    this.#rows.set(event.key, event.row);
+    let previous = -1;
     if (event.currentIndex !== null) {
-      const previous = this.#order.indexOf(event.key);
-      if (previous < 0 || event.currentIndex < 0 || event.currentIndex >= this.#order.length) {
+      if (!Number.isSafeInteger(event.currentIndex) || event.currentIndex < 0 || event.currentIndex >= this.#order.length) {
         throw new LiveProtocolError("RowUpdated contains an invalid result index.");
       }
+      previous = this.#order[event.currentIndex] === event.key
+        ? event.currentIndex
+        : this.#findIndex(event.key, event.previousIndex);
+      if (previous < 0) {
+        throw new LiveProtocolError("RowUpdated key is absent from the result order.");
+      }
+    }
 
+    this.#rows.set(event.key, event.row);
+    if (event.currentIndex !== null && previous !== event.currentIndex) {
       this.#order.splice(previous, 1);
       this.#order.splice(event.currentIndex, 0, event.key);
     }
   }
 
   #remove(event: LiveResultEvent<TRow, TKey>): void {
-    if (event.key === null || !this.#rows.delete(event.key)) {
+    if (event.key === null || !this.#rows.has(event.key)) {
       throw new LiveProtocolError("RowRemoved must reference an existing key.");
     }
 
-    const index = this.#order.indexOf(event.key);
+    const index = this.#findIndex(event.key, event.previousIndex);
     if (index < 0) {
       throw new LiveProtocolError("RowRemoved key is absent from the result order.");
     }
 
+    this.#rows.delete(event.key);
     this.#order.splice(index, 1);
   }
 
+  #findIndex(key: TKey, hint: number | null): number {
+    return hint !== null && Number.isSafeInteger(hint) && this.#order[hint] === key
+      ? hint : this.#order.indexOf(key);
+  }
+
   #reorder(event: LiveResultEvent<TRow, TKey>): void {
-    if (event.order === null || event.order.length !== this.#rows.size) {
+    if (!Array.isArray(event.order) || event.order.length !== this.#rows.size) {
       throw new LiveProtocolError("ResultReordered must contain every current key exactly once.");
     }
 
@@ -315,6 +358,7 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
   };
   #abort: AbortController | null = null;
   #resumeToken: string | undefined;
+  #requiresAuthoritative = true;
 
   constructor(client: BlueTuskLiveClient, request: LiveSubscriptionRequest<TParameters>) {
     this.#client = client;
@@ -366,9 +410,18 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
           signal
         );
 
+        if (!this.#isCurrent(signal)) {
+          try { await response.body?.cancel(); } catch { /* Already aborted by fetch. */ }
+          return;
+        }
+
         if (response.status === 409 && this.#resumeToken !== undefined) {
           this.#resumeToken = undefined;
-          this.#client.persistResumeToken(null);
+          this.#requiresAuthoritative = true;
+          this.#persistResumeToken(null);
+          if (!this.#isCurrent(signal)) {
+            return;
+          }
           attempt = 0;
           this.#setPhase("reconnecting");
           continue;
@@ -387,64 +440,28 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
 
         attempt = 0;
         this.#setPhase("live");
-        for await (const frame of parseServerSentEvents(response.body, signal)) {
-          if (frame.event !== "change" && frame.event !== "reset") {
-            continue;
+        for await (const frames of parseSseBatches(response.body, this.#client.maximumBatchEvents, signal)) {
+          if (!this.#isCurrent(signal)) {
+            return;
           }
-
-          const message = parseTransportMessage<TRow, TKey>(frame.data);
-          if (message.kind === "ResetRequired") {
-            this.#resumeToken = undefined;
-            this.#client.persistResumeToken(null);
-            throw new LiveResetRequiredError();
-          }
-
-          if (message.event === null || message.sequence === null || message.resumeToken === null) {
-            throw new LiveProtocolError("Live event message is missing event, sequence, or resume token.");
-          }
-
-          if (message.event.sequence !== message.sequence) {
-            throw new LiveProtocolError("Live envelope and event sequences do not match.");
-          }
-
-          if (message.sequence <= this.#state.lastSequence) {
-            continue;
-          }
-
-          const authoritative = message.event.kind === "InitialResult" ||
-            message.event.kind === "ResultReset";
-          if (!authoritative &&
-              this.#state.lastSequence !== 0 &&
-              message.sequence !== this.#state.lastSequence + 1) {
-            throw new LiveProtocolError(
-              `Live sequence jumped from ${this.#state.lastSequence} to ${message.sequence}.`
-            );
-          }
-
-          const rows = this.#store.apply(message.event);
-          this.#resumeToken = message.resumeToken;
-          this.#client.persistResumeToken(message.resumeToken);
-          this.#setState({
-            phase: "live",
-            rows,
-            lastSequence: message.sequence,
-            error: null
-          });
+          this.#applyFrames(frames, signal);
         }
 
         if (!signal.aborted) {
           throw new LiveHttpError(0, true);
         }
       } catch (error) {
-        if (signal.aborted) {
+        if (!this.#isCurrent(signal)) {
           return;
         }
 
         const failure = error instanceof Error ? error : new Error(String(error));
-        if (failure instanceof LiveProtocolError ||
+        if (failure instanceof LiveProtocolError || failure instanceof LiveCallbackError ||
             (failure instanceof LiveHttpError && !failure.retryable)) {
-          this.#setState({ ...this.#state, phase: "faulted", error: failure });
+          const abort = this.#abort;
           this.#abort = null;
+          abort?.abort();
+          this.#setState({ ...this.#state, phase: "faulted", error: failure });
           return;
         }
 
@@ -457,6 +474,87 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
           await this.#client.delay(attempt++, signal);
         }
       }
+    }
+  }
+
+  #isCurrent(signal: AbortSignal): boolean {
+    return !signal.aborted && this.#abort?.signal === signal;
+  }
+
+  #persistResumeToken(token: string | null): void {
+    try {
+      this.#client.persistResumeToken(token);
+    } catch (cause) {
+      throw new LiveCallbackError(cause);
+    }
+  }
+
+  #applyFrames(frames: readonly SseFrame[], signal: AbortSignal): void {
+    let sequence = this.#state.lastSequence;
+    let token = this.#resumeToken;
+    let changed = false;
+    const publish = (): void => {
+      if (!changed || !this.#isCurrent(signal)) {
+        return;
+      }
+      changed = false;
+      const state: LiveQueryState<TRow> = {
+        phase: "live", rows: this.#store.rows, lastSequence: sequence, error: null
+      };
+      // Token callbacks may read state or stop/restart the query. Expose the
+      // complete snapshot first; never overwrite a reentrant lifecycle change.
+      this.#state = state;
+      this.#resumeToken = token;
+      this.#persistResumeToken(token!);
+      if (this.#isCurrent(signal)) {
+        this.#setState(state);
+      }
+    };
+    try {
+      for (const frame of frames) {
+        if (!this.#isCurrent(signal)) {
+          return;
+        }
+        if (frame.event !== "change" && frame.event !== "reset") {
+          continue;
+        }
+        const message = parseTransportMessage<TRow, TKey>(frame.data);
+        if (message.kind === "ResetRequired") {
+          publish();
+          if (!this.#isCurrent(signal)) {
+            return;
+          }
+          this.#resumeToken = undefined;
+          this.#requiresAuthoritative = true;
+          this.#persistResumeToken(null);
+          throw new LiveResetRequiredError();
+        }
+        if (message.event === null || message.sequence === null || message.resumeToken === null) {
+          throw new LiveProtocolError("Live event message is missing event, sequence, or resume token.");
+        }
+        if (message.event.sequence !== message.sequence) {
+          throw new LiveProtocolError("Live envelope and event sequences do not match.");
+        }
+        const authoritative = message.event.kind === "InitialResult" || message.event.kind === "ResultReset";
+        if (this.#requiresAuthoritative && !authoritative) {
+          throw new LiveProtocolError("A fresh Live connection must establish an authoritative snapshot before deltas.");
+        }
+        if (!this.#requiresAuthoritative && message.sequence <= sequence) {
+          continue;
+        }
+        if (!authoritative && message.sequence !== sequence + 1) {
+          throw new LiveProtocolError(`Live sequence jumped from ${sequence} to ${message.sequence}.`);
+        }
+        this.#store.applyEvent(message.event);
+        this.#requiresAuthoritative = false;
+        sequence = message.sequence;
+        token = message.resumeToken;
+        changed = true;
+      }
+    } finally {
+      // A malformed later frame must not hide successfully reduced earlier
+      // events or persist a token beyond the exact committed prefix.
+      publish();
     }
   }
 
@@ -475,7 +573,7 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
 export class BlueTuskLiveClient {
   readonly #options: Required<Pick<
     LiveClientOptions,
-    "endpoint" | "initialRetryDelayMs" | "maximumRetryDelayMs" | "retryJitter" | "random"
+    "endpoint" | "initialRetryDelayMs" | "maximumRetryDelayMs" | "retryJitter" | "random" | "maximumBatchEvents"
   >> & LiveClientOptions;
   readonly #fetch: typeof globalThis.fetch;
 
@@ -487,7 +585,12 @@ export class BlueTuskLiveClient {
     const initialRetryDelayMs = options.initialRetryDelayMs ?? 250;
     const maximumRetryDelayMs = options.maximumRetryDelayMs ?? 15_000;
     const retryJitter = options.retryJitter ?? 0.2;
-    if (initialRetryDelayMs < 0 ||
+    const maximumBatchEvents = options.maximumBatchEvents ?? 64;
+    if (!Number.isSafeInteger(maximumBatchEvents) || maximumBatchEvents < 1 || maximumBatchEvents > 1024) {
+      throw new RangeError("maximumBatchEvents must be an integer from 1 through 1024.");
+    }
+    if (!Number.isFinite(initialRetryDelayMs) || !Number.isFinite(maximumRetryDelayMs) ||
+        !Number.isFinite(retryJitter) || initialRetryDelayMs < 0 ||
         maximumRetryDelayMs < initialRetryDelayMs ||
         retryJitter < 0 ||
         retryJitter > 1) {
@@ -505,8 +608,13 @@ export class BlueTuskLiveClient {
       initialRetryDelayMs,
       maximumRetryDelayMs,
       retryJitter,
+      maximumBatchEvents,
       random: options.random ?? Math.random
     };
+  }
+
+  get maximumBatchEvents(): number {
+    return this.#options.maximumBatchEvents;
   }
 
   createQuery<TRow, TKey extends LiveKey, TParameters extends object>(
@@ -576,9 +684,40 @@ export async function* parseServerSentEvents(
   stream: ReadableStream<Uint8Array>,
   signal?: AbortSignal
 ): AsyncGenerator<SseFrame> {
+  for await (const frames of parseSseBatches(stream, 64, signal)) {
+    for (const frame of frames) {
+      if (signal?.aborted === true) {
+        return;
+      }
+      yield frame;
+    }
+  }
+}
+
+async function* parseSseBatches(
+  stream: ReadableStream<Uint8Array>,
+  maximumBatchEvents: number,
+  signal?: AbortSignal
+): AsyncGenerator<readonly SseFrame[]> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let trailingCarriageReturn = false;
+  const append = (text: string): void => {
+    if (text.length === 0) {
+      return;
+    }
+    if (trailingCarriageReturn && text.startsWith("\n")) {
+      text = text.slice(1);
+    }
+    trailingCarriageReturn = text.endsWith("\r");
+    buffer += text.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+  };
+  const cancel = (): void => { void reader.cancel().catch(() => {}); };
+  signal?.addEventListener("abort", cancel, { once: true });
+  if (signal?.aborted === true) {
+    cancel();
+  }
   try {
     while (true) {
       if (signal?.aborted === true) {
@@ -587,28 +726,43 @@ export async function* parseServerSentEvents(
 
       const result = await reader.read();
       if (result.done) {
-        buffer += decoder.decode();
+        append(decoder.decode());
         break;
       }
 
-      buffer += decoder.decode(result.value, { stream: true });
-      buffer = buffer.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+      append(decoder.decode(result.value, { stream: true }));
+      let frames: SseFrame[] = [];
+      let consumed = 0;
       let boundary: number;
-      while ((boundary = buffer.indexOf("\n\n")) >= 0) {
-        const block = buffer.slice(0, boundary);
-        buffer = buffer.slice(boundary + 2);
+      while ((boundary = buffer.indexOf("\n\n", consumed)) >= 0) {
+        const block = buffer.slice(consumed, boundary);
+        consumed = boundary + 2;
         const frame = parseSseBlock(block);
         if (frame !== null) {
-          yield frame;
+          frames.push(frame);
+          if (frames.length === maximumBatchEvents) {
+            yield frames;
+            frames = [];
+            if (signal?.aborted) {
+              return;
+            }
+          }
         }
+      }
+      buffer = buffer.slice(consumed);
+      // Publish what is available now, without waiting for another network
+      // read, a timer, a full batch or an animation frame.
+      if (frames.length > 0) {
+        yield frames;
       }
     }
 
     const tail = parseSseBlock(buffer);
     if (tail !== null) {
-      yield tail;
+      yield [tail];
     }
   } finally {
+    signal?.removeEventListener("abort", cancel);
     try {
       await reader.cancel();
     } catch {
@@ -621,7 +775,12 @@ export async function* parseServerSentEvents(
 export function parseTransportMessage<TRow, TKey extends LiveKey>(
   json: string
 ): LiveTransportMessage<TRow, TKey> {
-  const value: unknown = JSON.parse(json);
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch {
+    throw new LiveProtocolError("Live transport payload is invalid JSON.");
+  }
   if (typeof value !== "object" || value === null) {
     throw new LiveProtocolError("Live transport payload must be a JSON object.");
   }
@@ -634,7 +793,7 @@ export function parseTransportMessage<TRow, TKey extends LiveKey>(
   const normalizedKind = normalizeEnum(kind, ["Event", "ResetRequired"] as const, "message kind");
   return {
     kind: normalizedKind,
-    sequence: sequence === null ? null : requireSafeInteger(sequence, "sequence"),
+    sequence: sequence === null ? null : requirePositiveSequence(sequence, "sequence"),
     resumeToken: resumeToken === null ? null : requireString(resumeToken, "resumeToken"),
     event: eventValue === null ? null : normalizeLiveEvent<TRow, TKey>(eventValue)
   };
@@ -649,7 +808,7 @@ function normalizeLiveEvent<TRow, TKey extends LiveKey>(
 
   const source = value as Record<string, unknown>;
   return {
-    sequence: requireSafeInteger(readProperty(source, "sequence", "Sequence"), "event.sequence"),
+    sequence: requirePositiveSequence(readProperty(source, "sequence", "Sequence"), "event.sequence"),
     kind: normalizeEnum(
       readProperty(source, "kind", "Kind"),
       ["InitialResult", "RowAdded", "RowUpdated", "RowRemoved", "ResultReordered", "ResultReset"] as const,
@@ -754,6 +913,14 @@ function requireSafeInteger(value: unknown, field: string): number {
   return value;
 }
 
+function requirePositiveSequence(value: unknown, field: string): number {
+  const sequence = requireSafeInteger(value, field);
+  if (sequence <= 0) {
+    throw new LiveProtocolError(`Live ${field} must be positive.`);
+  }
+  return sequence;
+}
+
 function requireString(value: unknown, field: string): string {
   if (typeof value !== "string" || value.length === 0) {
     throw new LiveProtocolError(`Live ${field} must be a non-empty string.`);
@@ -768,10 +935,12 @@ async function abortableDelay(milliseconds: number, signal: AbortSignal): Promis
   }
 
   await new Promise<void>((resolve) => {
-    const handle = setTimeout(resolve, milliseconds);
-    signal.addEventListener("abort", () => {
+    const complete = (): void => {
       clearTimeout(handle);
+      signal.removeEventListener("abort", complete);
       resolve();
-    }, { once: true });
+    };
+    const handle = setTimeout(complete, milliseconds);
+    signal.addEventListener("abort", complete, { once: true });
   });
 }

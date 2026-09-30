@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Net;
 using System.Text;
@@ -55,6 +56,49 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
 
         Assert.Equal(payload, actual);
         Assert.Equal(0, await connection.ReadMessagePayloadAsync(actual.AsMemory(0, 1), CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Complete_message_reads_preserve_payloads_across_sync_and_async_fragments(bool yieldReads)
+    {
+        var payload = Enumerable.Range(0, 8192).Select(static value => (byte)value).ToArray();
+        var ready = Frame((byte)'Z', [(byte)'I']);
+        await using var transport = new FragmentedTransport(
+            Frame((byte)'d', payload).Concat(ready).ToArray(), 1024, yieldReads);
+        await using var connection = new BlueTuskProtocolConnection(transport);
+        using var cancellation = new CancellationTokenSource();
+
+        var message = await connection.ReadMessageAsync(cancellation.Token);
+
+        Assert.Equal('d', message.Identifier);
+        Assert.Equal(payload, message.Payload.ToArray());
+        var following = await connection.ReadMessageAsync(cancellation.Token);
+        Assert.Equal('Z', following.Identifier);
+        Assert.Equal([(byte)'I'], following.Payload.ToArray());
+    }
+
+    [Fact]
+    public async Task Cancelled_partial_message_read_releases_its_read_lease_and_can_resume()
+    {
+        var payload = Enumerable.Range(0, 4096).Select(static value => (byte)value).ToArray();
+        await using var transport = new FragmentedTransport(Frame((byte)'d', payload), 1024)
+        {
+            PauseOnAsyncRead = 2,
+        };
+        await using var connection = new BlueTuskProtocolConnection(transport);
+        using var cancellation = new CancellationTokenSource();
+        var pending = connection.ReadMessageAsync(cancellation.Token).AsTask();
+
+        await transport.ReadPaused.WaitAsync(TimeSpan.FromSeconds(10));
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+        transport.ResumeReads();
+
+        var message = await connection.ReadMessageAsync(CancellationToken.None);
+        Assert.Equal('d', message.Identifier);
+        Assert.Equal(payload, message.Payload.ToArray());
     }
 
     [Fact]
@@ -205,9 +249,18 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
         output.Advance(length);
     }
 
-    private sealed class FragmentedTransport(byte[] input, int maximumRead) : IBlueTuskTransport
+    private sealed class FragmentedTransport(byte[] input, int maximumRead, bool yieldReads = false) : IBlueTuskTransport
     {
         private int _offset;
+        private int _asyncReadCount;
+        private readonly TaskCompletionSource _readPaused = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _resumeReads = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int PauseOnAsyncRead { get; init; }
+
+        public Task ReadPaused => _readPaused.Task;
+
+        public void ResumeReads() => _resumeReads.TrySetResult();
 
         public List<byte[]> Writes { get; } = [];
 
@@ -236,7 +289,31 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
         public ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var pause = ++_asyncReadCount == PauseOnAsyncRead;
+            if (yieldReads || pause)
+            {
+                return ReadSlowAsync(buffer, pause, cancellationToken);
+            }
+
             return ValueTask.FromResult(Read(buffer.Span));
+        }
+
+        private async ValueTask<int> ReadSlowAsync(
+            Memory<byte> buffer, bool pause, CancellationToken cancellationToken)
+        {
+            if (yieldReads)
+            {
+                await Task.Yield();
+            }
+
+            if (pause)
+            {
+                _readPaused.TrySetResult();
+                await _resumeReads.Task.WaitAsync(cancellationToken);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            return Read(buffer.Span);
         }
 
         public void Write(ReadOnlySpan<byte> buffer)

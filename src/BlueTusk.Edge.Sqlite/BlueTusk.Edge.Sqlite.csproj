@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Edge</BlueTuskProductFamily>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>SQLite transactional offline cache, revision fences and durable mutation queue.</Description>
+    <PackageTags>sqlite;offline;sync;edge;conflicts;idempotency</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Edge.props" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <ProjectReference Include="..\BlueTusk.Edge\BlueTusk.Edge.csproj" />
+  </ItemGroup>
+</Project>

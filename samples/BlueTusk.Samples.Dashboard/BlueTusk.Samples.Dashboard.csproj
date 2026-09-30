@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <BlueTuskProductFamily>ControlPlane</BlueTuskProductFamily>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.Dashboard\BlueTusk.Dashboard.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.ContinuousGraph.ControlPlane\BlueTusk.ContinuousGraph.ControlPlane.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlueTusk.ControlPlane.Tests" />
+  </ItemGroup>
+</Project>

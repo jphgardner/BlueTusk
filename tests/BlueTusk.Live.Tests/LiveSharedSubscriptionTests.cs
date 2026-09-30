@@ -226,6 +226,303 @@ public sealed class LiveSharedSubscriptionTests
         await fresh.Connection.DisposeAsync();
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task Failed_initial_append_can_be_retried(bool stored, bool canceled)
+    {
+        var replay = new FailingReplayStore { FailNextAppend = true, StoreBeforeFailure = stored, CancelFailure = canceled };
+        var invalidations = new InvalidationLog();
+        await using var shared = Shared(invalidations, replay, () => [new Row(1, "initial")]);
+
+        Assert.NotNull(await Record.ExceptionAsync(async () =>
+            await shared.StartAsync(TestContext.Current.CancellationToken)));
+        Assert.False(shared.Status.IsStarted);
+        Assert.False(shared.Status.QuerySession.IsStarted);
+        Assert.Equal(0, shared.Status.PersistedSequence);
+
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(shared.Status.IsStarted);
+        Assert.Equal(1, shared.Status.QuerySession.AuthoritativeQueryCount);
+        Assert.Equal(1, shared.Status.QuerySession.LastSequence);
+        Assert.Equal(1, shared.Status.PersistedSequence);
+        Assert.Same(replay.Attempts[0].Events[0], replay.Attempts[1].Events[0]);
+        var connection = await shared.ConnectAsync(0, TestContext.Current.CancellationToken);
+        Assert.Single(connection.Connection!.Replay);
+        await connection.Connection.DisposeAsync();
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task Failed_refresh_append_retries_exact_payload_before_newer_changes(bool stored, bool canceled)
+    {
+        var replay = new FailingReplayStore { StoreBeforeFailure = stored, CancelFailure = canceled };
+        var invalidations = new InvalidationLog();
+        IReadOnlyList<Row> rows = [new Row(1, "before")];
+        await using var shared = Shared(invalidations, replay, () => rows);
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+        var connected = await shared.ConnectAsync(1, TestContext.Current.CancellationToken);
+        await using var connection = connected.Connection!;
+        rows = [new Row(1, "after")];
+        invalidations.Append();
+        replay.FailNextAppend = true;
+
+        Assert.NotNull(await Record.ExceptionAsync(async () =>
+            await shared.RefreshAsync(TestContext.Current.CancellationToken)));
+        Assert.Equal(0, shared.Status.QuerySession.Cursor.Value);
+        Assert.Equal(1, shared.Status.QuerySession.LastSequence);
+        Assert.Equal(1, shared.Status.PersistedSequence);
+        Assert.Equal(0, shared.Status.FanOutDeliveries);
+
+        rows = [new Row(1, "newer")];
+        invalidations.Append();
+        Assert.Equal(2, await shared.RefreshAsync(TestContext.Current.CancellationToken));
+        var first = await ReadOneAsync(connection, TestContext.Current.CancellationToken);
+        var second = await ReadOneAsync(connection, TestContext.Current.CancellationToken);
+        Assert.Equal(2, first.Event!.Sequence);
+        Assert.Equal(3, second.Event!.Sequence);
+        Assert.Contains("after", System.Text.Encoding.UTF8.GetString(first.Event.Payload.Span), StringComparison.Ordinal);
+        Assert.Contains("newer", System.Text.Encoding.UTF8.GetString(second.Event.Payload.Span), StringComparison.Ordinal);
+        Assert.Same(replay.Attempts[1].Events[0], replay.Attempts[2].Events[0]);
+        Assert.Equal(3, shared.Status.PersistedSequence);
+        Assert.Empty((await replay.ReadAsync(shared.Identity, 3, 10)).Events);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Failed_reset_append_is_recovered_before_connect(bool stored)
+    {
+        var replay = new FailingReplayStore { StoreBeforeFailure = stored };
+        var invalidations = new InvalidationLog();
+        IReadOnlyList<Row> rows = [new Row(1, "before")];
+        await using var shared = Shared(invalidations, replay, () => rows);
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+        rows = [new Row(2, "current")];
+        replay.ExpireNextRead = true;
+        replay.FailNextAppend = true;
+
+        Assert.NotNull(await Record.ExceptionAsync(async () =>
+            await shared.ConnectAsync(0, TestContext.Current.CancellationToken)));
+        Assert.Equal(1, shared.Status.QuerySession.LastSequence);
+        Assert.Equal(1, shared.Status.PersistedSequence);
+
+        var connected = await shared.ConnectAsync(0, TestContext.Current.CancellationToken);
+        await using var connection = connected.Connection!;
+        Assert.Equal(LiveEventKind.ResultReset, connection.Replay[^1].Kind);
+        Assert.Equal(2, connection.Replay[^1].Sequence);
+        Assert.Equal(2, shared.Status.QuerySession.AuthoritativeQueryCount);
+        Assert.Same(replay.Attempts[1].Events[0], replay.Attempts[2].Events[0]);
+    }
+
+    [Fact]
+    public async Task Serialization_failure_retains_initial_proposal_without_advancing_state()
+    {
+        var row = new SerializationRow(1) { FailSerialization = true };
+        var plan = new LiveQueryPlan<SerializationRow, int>(
+            "orders", "database", new string('a', 64),
+            LiveQueryCapabilities.SingleTable | LiveQueryCapabilities.DeterministicOrdering |
+                LiveQueryCapabilities.BoundedTake,
+            [new LiveTableDependency("sales", "orders")], [], 10,
+            (_, _) => ValueTask.FromResult<IReadOnlyList<SerializationRow>>([row]),
+            static item => item.Id);
+        var session = new LiveQuerySession<SerializationRow, int>(plan,
+            LiveQueryArguments.Create([], new Dictionary<string, object?>()),
+            new LiveSecurityScope("tenant:a", "policy:v1"), new InvalidationLog());
+        var replay = new FailingReplayStore();
+        await using var shared = new LiveSharedSubscription<SerializationRow, int>(session, replay);
+
+        Assert.NotNull(await Record.ExceptionAsync(async () =>
+            await shared.StartAsync(TestContext.Current.CancellationToken)));
+        Assert.False(shared.Status.IsStarted);
+        Assert.Equal(0, shared.Status.QuerySession.LastSequence);
+        Assert.Equal(0, shared.Status.PersistedSequence);
+        Assert.Empty(replay.Attempts);
+
+        row.FailSerialization = false;
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, shared.Status.QuerySession.AuthoritativeQueryCount);
+        Assert.Equal(1, shared.Status.PersistedSequence);
+        Assert.Single(replay.Attempts);
+    }
+
+    [Fact]
+    public async Task Cancellation_after_successful_append_still_commits_and_publishes()
+    {
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        var replay = new FailingReplayStore();
+        var invalidations = new InvalidationLog();
+        IReadOnlyList<Row> rows = [new Row(1, "before")];
+        await using var shared = Shared(invalidations, replay, () => rows);
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+        var connected = await shared.ConnectAsync(1, TestContext.Current.CancellationToken);
+        await using var connection = connected.Connection!;
+        rows = [new Row(1, "after")];
+        invalidations.Append();
+        replay.AfterAppend = cancellation.Cancel;
+
+        Assert.Equal(1, await shared.RefreshAsync(cancellation.Token));
+
+        Assert.True(cancellation.IsCancellationRequested);
+        Assert.Equal(1, shared.Status.QuerySession.Cursor.Value);
+        Assert.Equal(2, shared.Status.QuerySession.LastSequence);
+        Assert.Equal(2, shared.Status.PersistedSequence);
+        Assert.Equal(2, (await ReadOneAsync(connection, TestContext.Current.CancellationToken)).Event!.Sequence);
+        replay.AfterAppend = null;
+        Assert.Equal(0, await shared.RefreshAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(2, replay.Attempts.Count);
+    }
+
+    [Fact]
+    public async Task Divergent_replay_fork_never_commits_pending_proposal()
+    {
+        var replay = new FailingReplayStore();
+        var invalidations = new InvalidationLog();
+        IReadOnlyList<Row> rows = [new Row(1, "before")];
+        await using var shared = Shared(invalidations, replay, () => rows);
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+        rows = [new Row(1, "after")];
+        invalidations.Append();
+        replay.FailNextAppend = true;
+        await Assert.ThrowsAsync<IOException>(async () =>
+            await shared.RefreshAsync(TestContext.Current.CancellationToken));
+        var fork = LiveReplayJsonSerializer.Serialize(LiveResultDiffer.Initial<Row, int>(
+            [new Row(1, "fork")], static row => row.Id, sequence: 2).Events[0]);
+        _ = await replay.StoreAsync(new LiveReplayAppendRequest(shared.Identity, 1, [fork]));
+
+        await Assert.ThrowsAsync<LiveReplaySequenceException>(async () =>
+            await shared.RefreshAsync(TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<LiveReplaySequenceException>(async () =>
+            await shared.ConnectAsync(0, TestContext.Current.CancellationToken));
+
+        Assert.Equal(0, shared.Status.QuerySession.Cursor.Value);
+        Assert.Equal(1, shared.Status.QuerySession.LastSequence);
+        Assert.Equal(1, shared.Status.PersistedSequence);
+        Assert.Equal(0, shared.Status.FanOutDeliveries);
+        Assert.Same(replay.Attempts[1].Events[0], replay.Attempts[2].Events[0]);
+    }
+
+    [Fact]
+    public async Task Metrics_observer_failures_do_not_interrupt_durability_or_fan_out()
+    {
+        var scope = new AsyncLocal<bool> { Value = true };
+        var observations = 0;
+        using var listener = new System.Diagnostics.Metrics.MeterListener
+        {
+            InstrumentPublished = (instrument, meterListener) =>
+            {
+                if (instrument.Meter.Name == "BlueTusk.Live")
+                {
+                    meterListener.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        listener.SetMeasurementEventCallback<long>((_, _, _, _) =>
+        {
+            if (scope.Value)
+            {
+                Interlocked.Increment(ref observations);
+                throw new InvalidOperationException("Metrics exporter failed.");
+            }
+        });
+        listener.SetMeasurementEventCallback<double>((_, _, _, _) =>
+        {
+            if (scope.Value)
+            {
+                Interlocked.Increment(ref observations);
+                throw new InvalidOperationException("Metrics exporter failed.");
+            }
+        });
+        listener.Start();
+        var invalidations = new InvalidationLog();
+        IReadOnlyList<Row> rows = [new Row(1, "before")];
+        await using var shared = Shared(invalidations, new FailingReplayStore(), () => rows);
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+        var connected = await shared.ConnectAsync(1, TestContext.Current.CancellationToken);
+        await using var connection = connected.Connection!;
+        rows = [new Row(1, "after")];
+        invalidations.Append();
+
+        Assert.Equal(1, await shared.RefreshAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(2, (await ReadOneAsync(connection, TestContext.Current.CancellationToken)).Event!.Sequence);
+        Assert.Equal(2, shared.Status.PersistedSequence);
+        Assert.Equal(0, await shared.RefreshAsync(TestContext.Current.CancellationToken));
+        Assert.True(observations > 0);
+    }
+
+    private sealed record SerializationRow(int Id)
+    {
+        [System.Text.Json.Serialization.JsonIgnore]
+        public bool FailSerialization { get; set; }
+        public string Payload => FailSerialization ? throw new InvalidOperationException("Cannot serialize this row.") : "payload";
+    }
+
+    private sealed class FailingReplayStore : ILiveReplayStore
+    {
+        private readonly BlueTusk.Live.Testing.InMemoryLiveReplayStore _inner = new();
+
+        public bool FailNextAppend { get; set; }
+        public bool StoreBeforeFailure { get; init; }
+        public bool CancelFailure { get; init; }
+        public bool ExpireNextRead { get; set; }
+        public Action? AfterAppend { get; set; }
+        public List<LiveReplayAppendRequest> Attempts { get; } = [];
+
+        public ValueTask<LiveReplayAppendResult> StoreAsync(LiveReplayAppendRequest request) =>
+            _inner.AppendAsync(request);
+
+        public async ValueTask<LiveReplayAppendResult> AppendAsync(
+            LiveReplayAppendRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            Attempts.Add(request);
+            if (FailNextAppend)
+            {
+                FailNextAppend = false;
+                if (StoreBeforeFailure)
+                {
+                    _ = await _inner.AppendAsync(request, cancellationToken);
+                }
+
+                if (CancelFailure)
+                {
+                    throw new OperationCanceledException("Replay outcome is uncertain.");
+                }
+
+                throw new IOException("Replay outcome is uncertain.");
+            }
+
+            var result = await _inner.AppendAsync(request, cancellationToken);
+            AfterAppend?.Invoke();
+            return result;
+        }
+
+        public ValueTask<LiveReplayReadResult> ReadAsync(
+            LiveSubscriptionIdentity identity,
+            long afterSequence,
+            int maximumEvents,
+            CancellationToken cancellationToken = default)
+        {
+            if (ExpireNextRead)
+            {
+                ExpireNextRead = false;
+                return ValueTask.FromResult(new LiveReplayReadResult(LiveReplayReadStatus.Expired, 2, 1));
+            }
+
+            return _inner.ReadAsync(identity, afterSequence, maximumEvents, cancellationToken);
+        }
+
+        public ValueTask<int> PruneAsync(CancellationToken cancellationToken = default) =>
+            _inner.PruneAsync(cancellationToken);
+    }
+
     private static async ValueTask<LiveSubscriberMessage> ReadOneAsync(
         LiveSubscriptionConnection connection,
         CancellationToken cancellationToken)

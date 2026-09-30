@@ -7,6 +7,7 @@ using Xunit.Sdk;
 
 namespace BlueTusk.IntegrationTests;
 
+[Collection("Global multiplexing metrics")]
 public sealed class BlueTuskMultiplexingIntegrationTests
 {
     [Fact]
@@ -37,46 +38,97 @@ public sealed class BlueTuskMultiplexingIntegrationTests
     }
 
     [Fact]
-    public async Task Exhausted_pool_preserves_bounded_admission_and_cancellation()
+    public async Task Reused_command_remains_cancelable_after_earlier_pipeline_cleanup()
     {
-        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
-        {
-            MaximumPoolSize = 1,
-        };
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString()) { MaximumPoolSize = 2 };
         await using var dataSource = new BlueTuskDataSourceBuilder(settings.ConnectionString)
             .EnableMultiplexing(options =>
             {
-                options.WorkerCount = 1;
-                options.QueueCapacity = 1;
-                options.MaxCommandsPerLease = 1;
-                options.MaxPipelineCommands = 1;
-            })
-            .Build();
-        await using var held = await dataSource.OpenConnectionAsync();
-        await using var first = dataSource.CreateCommand("SELECT 40::int4");
-        await using var second = dataSource.CreateCommand("SELECT 41::int4");
-        await using var canceled = dataSource.CreateCommand("SELECT 99::int4");
+                options.WorkerCount = 2;
+                options.QueueCapacity = 16;
+                options.MaxPipelineCommands = 16;
+            }).Build();
+        await using var heldFirst = await dataSource.OpenConnectionAsync();
+        await using var heldSecond = await dataSource.OpenConnectionAsync();
+        await using var reused = dataSource.CreateCommand("SELECT 11::int4");
+        await using var otherLane = dataSource.CreateCommand("SELECT 22::int4");
+        await using var oldTail = dataSource.CreateCommand("SELECT 33::int4 FROM pg_sleep(0.5)");
+        reused.CommandTimeout = otherLane.CommandTimeout = oldTail.CommandTimeout = 0;
 
-        var firstTask = first.ExecuteScalarAsync<int>();
+        var originalTask = reused.ExecuteScalarAsync<int>();
         await WaitUntilAsync(() => dataSource.GetPoolStatistics().Waiting == 1);
-        var secondTask = second.ExecuteScalarAsync<int>();
-        await WaitUntilAsync(() => dataSource.GetMultiplexingStatistics().Queued >= 1);
-        using var admissionCancellation = new CancellationTokenSource(
-            TimeSpan.FromMilliseconds(150));
+        var otherTask = otherLane.ExecuteScalarAsync<int>();
+        await WaitUntilAsync(() => dataSource.GetPoolStatistics().Waiting == 2);
+        var tailTask = oldTail.ExecuteScalarAsync<int>();
+        // Both workers await a lease. Releasing only the first lets its pipeline
+        // collect the queued tail before returning the first command's result.
+        await heldFirst.DisposeAsync();
+        Assert.Equal(11, await originalTask);
+        reused.CommandText = "SELECT 44::int4 FROM pg_sleep(5)";
+        var reusedTask = reused.ExecuteScalarAsync<int>();
+        await heldSecond.DisposeAsync();
+        Assert.Equal(22, await otherTask);
+        Assert.Equal(33, await tailTask);
+        // The first batch is now fully released; the second still owns both its
+        // completed first group and the executing reused command. No timing sleep
+        // or private-field mutation is needed to observe the late-cleanup boundary.
+        await WaitUntilAsync(() => dataSource.GetMultiplexingStatistics() is
+        { Queued: 0, Completed: 3, Executing: 2 });
+
+        reused.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => canceled.ExecuteScalarAsync<int>(admissionCancellation.Token));
+            () => reusedTask.WaitAsync(TimeSpan.FromSeconds(2)));
+        await WaitUntilAsync(() => dataSource.GetMultiplexingStatistics().Executing == 0);
+        reused.CommandText = "SELECT 55::int4";
+        Assert.Equal(55, await reused.ExecuteScalarAsync<int>());
+    }
 
-        await held.DisposeAsync();
-        Assert.Equal(40, await firstTask);
-        Assert.Equal(41, await secondTask);
-        await WaitUntilAsync(
-            () => dataSource.GetMultiplexingStatistics() is { Queued: 0, Executing: 0 });
-        var statistics = dataSource.GetMultiplexingStatistics();
-        Assert.Equal(2, statistics.Accepted);
-        Assert.Equal(2, statistics.Completed);
-        Assert.Equal(0, statistics.Queued);
-        Assert.Equal(0, statistics.Executing);
+    [Fact]
+    public async Task Exhausted_pool_preserves_bounded_admission_and_cancellation()
+    {
+        const int iterations = 8;
+        for (var iteration = 0; iteration < iterations; iteration++)
+        {
+            var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
+            {
+                MaximumPoolSize = 1,
+            };
+            await using var dataSource = new BlueTuskDataSourceBuilder(settings.ConnectionString)
+                .EnableMultiplexing(options =>
+                {
+                    options.WorkerCount = 1;
+                    options.QueueCapacity = 1;
+                    options.MaxCommandsPerLease = 1;
+                    options.MaxPipelineCommands = 1;
+                })
+                .Build();
+            await using var held = await dataSource.OpenConnectionAsync();
+            await using var first = dataSource.CreateCommand("SELECT 40::int4");
+            await using var second = dataSource.CreateCommand("SELECT 41::int4");
+            await using var canceled = dataSource.CreateCommand("SELECT 99::int4");
+
+            var firstTask = first.ExecuteScalarAsync<int>();
+            await WaitUntilAsync(() => dataSource.GetPoolStatistics().Waiting == 1);
+            var secondTask = second.ExecuteScalarAsync<int>();
+            await WaitUntilAsync(() => dataSource.GetMultiplexingStatistics().Queued >= 1);
+            using var admissionCancellation = new CancellationTokenSource(
+                TimeSpan.FromMilliseconds(150));
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => canceled.ExecuteScalarAsync<int>(admissionCancellation.Token));
+
+            await held.DisposeAsync();
+            Assert.Equal(40, await firstTask);
+            Assert.Equal(41, await secondTask);
+            await WaitUntilAsync(
+                () => dataSource.GetMultiplexingStatistics() is { Queued: 0, Executing: 0 });
+            var statistics = dataSource.GetMultiplexingStatistics();
+            Assert.Equal(2, statistics.Accepted);
+            Assert.Equal(2, statistics.Completed);
+            Assert.Equal(0, statistics.Queued);
+            Assert.Equal(0, statistics.Executing);
+        }
     }
 
     [Fact]

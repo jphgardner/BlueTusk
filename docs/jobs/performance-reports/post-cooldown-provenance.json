@@ -1,0 +1,49 @@
+{
+  "Candidate": "Separate post-cooldown real-wire test; not the frozen three-pair workload",
+  "PostgreSqlFixture": "Existing disposable local PostgreSQL 18 at 127.0.0.1:55418",
+  "ProcessRepetitions": 3,
+  "PassingTests": 3,
+  "FailedTests": 0,
+  "SkippedTests": 0,
+  "MissingFixtureGuard": "One intentional failure, exit 1, zero skips",
+  "ProviderAndTestDlls": [
+    {
+      "Name": "BlueTusk.Data.dll",
+      "Sha256": "4F4C906F0B55086E9A4DCE3050F55E0702A02715F9A2165498BAFD25AEA0DAF1"
+    },
+    {
+      "Name": "BlueTusk.Diagnostics.dll",
+      "Sha256": "3E1254E58C0505D075D312E10D41AEF2B0A169B0F7625938A42B3D9117099DC0"
+    },
+    {
+      "Name": "BlueTusk.Workflows.PostCooldownTests.dll",
+      "Sha256": "D879C6B8B68D8EBC146A52EAC1994729050306E5957CB2F85D7872B2655ED077"
+    }
+  ],
+  "TestSources": [
+    {
+      "Name": "tests/BlueTusk.Workflows.PostCooldownTests/PostCooldownWireTests.cs",
+      "Sha256": "7E9EC47331403B2BD284A5322C20558BCC42C929F2DE0D234442C9B43D9C9D8B"
+    },
+    {
+      "Name": "tests/BlueTusk.Workflows.PostCooldownTests/BlueTusk.Workflows.PostCooldownTests.csproj",
+      "Sha256": "860240E1CC28C9A4D14F261BBDE49CDFEC5C129BE5C0636FD246953B1CD9F366"
+    }
+  ],
+  "RawReportCopies": [
+    {
+      "Name": "post-cooldown-run1.json",
+      "Sha256": "7D22D0479AB6DC8D8ADEDD23CEBF0BD07AB827816D234450BA029E7BDE0BE932"
+    },
+    {
+      "Name": "post-cooldown-run2.json",
+      "Sha256": "DA2AE0863B336CC668F04D63D12E7C5697D21B6668E7256E853A575B8C17B838"
+    },
+    {
+      "Name": "post-cooldown-run3.json",
+      "Sha256": "72AF9B9544BE583A4A69321342CAAC72E91622F0C44BA72484F2E3152C38CEE7"
+    }
+  ],
+  "ProductionQualified": false,
+  "Limit": "One ten-second cooldown interval and an owned non-PostgreSQL first-host socket per process; no multi-interval endurance or physical promotion in this separate test."
+}

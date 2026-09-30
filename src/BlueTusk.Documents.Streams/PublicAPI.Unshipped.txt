@@ -1,0 +1,111 @@
+#nullable enable
+BlueTusk.Documents.Streams.DocumentChangeImage<T>
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.<Clone>$() -> BlueTusk.Documents.Streams.DocumentChangeImage<T>!
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.BodyState.get -> BlueTusk.Streams.ChangeColumnState
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.BodyState.init -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Collection.get -> string!
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Collection.init -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Columns.get -> BlueTusk.Streams.ChangeRow!
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Columns.init -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Deconstruct(out string! Tenant, out string! Collection, out string! Id, out long? Revision, out int? SchemaVersion, out T? Value, out bool HasValue, out BlueTusk.Streams.ChangeColumnState BodyState, out BlueTusk.Streams.ChangeRow! Columns) -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.DocumentChangeImage(string! Tenant, string! Collection, string! Id, long? Revision, int? SchemaVersion, T? Value, bool HasValue, BlueTusk.Streams.ChangeColumnState BodyState, BlueTusk.Streams.ChangeRow! Columns) -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Equals(BlueTusk.Documents.Streams.DocumentChangeImage<T>? other) -> bool
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.HasValue.get -> bool
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.HasValue.init -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Id.get -> string!
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Id.init -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Revision.get -> long?
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Revision.init -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.SchemaVersion.get -> int?
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.SchemaVersion.init -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Tenant.get -> string!
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Tenant.init -> void
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Value.get -> T?
+BlueTusk.Documents.Streams.DocumentChangeImage<T>.Value.init -> void
+BlueTusk.Documents.Streams.DocumentChangeMapper<T>
+BlueTusk.Documents.Streams.DocumentChangeMapper<T>.DocumentChangeMapper(string! tenant, BlueTusk.Documents.DocumentCollectionDefinition<T>! collection, BlueTusk.Documents.Streams.DocumentStreamOptions? options = null) -> void
+BlueTusk.Documents.Streams.DocumentChangeMapper<T>.MapSnapshot(BlueTusk.Streams.ChangeSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>!
+BlueTusk.Documents.Streams.DocumentChangeMapper<T>.MapTransactionAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Documents.Streams.DocumentStreamTransaction<T>!>
+BlueTusk.Documents.Streams.DocumentStreamChange<T>
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.<Clone>$() -> BlueTusk.Documents.Streams.DocumentStreamChange<T>!
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.Deconstruct(out BlueTusk.Streams.ChangeId Id, out BlueTusk.Streams.ChangeKind Kind, out BlueTusk.Documents.Streams.DocumentChangeImage<T>? OldImage, out BlueTusk.Documents.Streams.DocumentChangeImage<T>? NewImage) -> void
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.DocumentStreamChange(BlueTusk.Streams.ChangeId Id, BlueTusk.Streams.ChangeKind Kind, BlueTusk.Documents.Streams.DocumentChangeImage<T>? OldImage, BlueTusk.Documents.Streams.DocumentChangeImage<T>? NewImage) -> void
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.Equals(BlueTusk.Documents.Streams.DocumentStreamChange<T>? other) -> bool
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.Id.get -> BlueTusk.Streams.ChangeId
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.Id.init -> void
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.Kind.get -> BlueTusk.Streams.ChangeKind
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.Kind.init -> void
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.NewImage.get -> BlueTusk.Documents.Streams.DocumentChangeImage<T>?
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.NewImage.init -> void
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.OldImage.get -> BlueTusk.Documents.Streams.DocumentChangeImage<T>?
+BlueTusk.Documents.Streams.DocumentStreamChange<T>.OldImage.init -> void
+BlueTusk.Documents.Streams.DocumentStreamDeployment
+BlueTusk.Documents.Streams.DocumentStreamMappingException
+BlueTusk.Documents.Streams.DocumentStreamMappingException.DocumentStreamMappingException(string! message) -> void
+BlueTusk.Documents.Streams.DocumentStreamOptions
+BlueTusk.Documents.Streams.DocumentStreamOptions.<Clone>$() -> BlueTusk.Documents.Streams.DocumentStreamOptions!
+BlueTusk.Documents.Streams.DocumentStreamOptions.DocumentStreamOptions() -> void
+BlueTusk.Documents.Streams.DocumentStreamOptions.Equals(BlueTusk.Documents.Streams.DocumentStreamOptions? other) -> bool
+BlueTusk.Documents.Streams.DocumentStreamOptions.MaxDocumentBytes.get -> int
+BlueTusk.Documents.Streams.DocumentStreamOptions.MaxDocumentBytes.init -> void
+BlueTusk.Documents.Streams.DocumentStreamOptions.MaxTransactionBytes.get -> long
+BlueTusk.Documents.Streams.DocumentStreamOptions.MaxTransactionBytes.init -> void
+BlueTusk.Documents.Streams.DocumentStreamOptions.MaxTransactionChanges.get -> int
+BlueTusk.Documents.Streams.DocumentStreamOptions.MaxTransactionChanges.init -> void
+BlueTusk.Documents.Streams.DocumentStreamOptions.RequireCompleteNewDocuments.get -> bool
+BlueTusk.Documents.Streams.DocumentStreamOptions.RequireCompleteNewDocuments.init -> void
+BlueTusk.Documents.Streams.DocumentStreamOptions.Schema.get -> string!
+BlueTusk.Documents.Streams.DocumentStreamOptions.Schema.init -> void
+BlueTusk.Documents.Streams.DocumentStreamResetRequiredException
+BlueTusk.Documents.Streams.DocumentStreamResetRequiredException.DocumentStreamResetRequiredException() -> void
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.<Clone>$() -> BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>!
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.Deconstruct(out BlueTusk.Streams.SnapshotEpoch Epoch, out long Sequence, out bool IsLastForTable, out System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.Streams.DocumentChangeImage<T>!>! Documents) -> void
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.Documents.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.Streams.DocumentChangeImage<T>!>!
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.Documents.init -> void
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.DocumentStreamSnapshot(BlueTusk.Streams.SnapshotEpoch Epoch, long Sequence, bool IsLastForTable, System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.Streams.DocumentChangeImage<T>!>! Documents) -> void
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.Epoch.get -> BlueTusk.Streams.SnapshotEpoch
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.Epoch.init -> void
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.Equals(BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>? other) -> bool
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.IsLastForTable.get -> bool
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.IsLastForTable.init -> void
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.Sequence.get -> long
+BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.Sequence.init -> void
+BlueTusk.Documents.Streams.DocumentStreamTransaction<T>
+BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.<Clone>$() -> BlueTusk.Documents.Streams.DocumentStreamTransaction<T>!
+BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.Changes.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.Streams.DocumentStreamChange<T>!>!
+BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.Changes.init -> void
+BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.Deconstruct(out BlueTusk.Streams.ChangeTransaction! SourceTransaction, out System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.Streams.DocumentStreamChange<T>!>! Changes) -> void
+BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.DocumentStreamTransaction(BlueTusk.Streams.ChangeTransaction! SourceTransaction, System.Collections.Generic.IReadOnlyList<BlueTusk.Documents.Streams.DocumentStreamChange<T>!>! Changes) -> void
+BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.Equals(BlueTusk.Documents.Streams.DocumentStreamTransaction<T>? other) -> bool
+BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.SourceTransaction.get -> BlueTusk.Streams.ChangeTransaction!
+BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.SourceTransaction.init -> void
+BlueTusk.Documents.Streams.DocumentTransactionConsumer<T>
+BlueTusk.Documents.Streams.DocumentTransactionConsumer<T>.ConsumeAsync(BlueTusk.Streams.ChangeTransactionDelivery! delivery, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Documents.Streams.DocumentTransactionConsumer<T>.DocumentTransactionConsumer(BlueTusk.Documents.Streams.DocumentChangeMapper<T>! mapper, System.Func<BlueTusk.Documents.Streams.DocumentStreamTransaction<T>!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! apply) -> void
+override BlueTusk.Documents.Streams.DocumentChangeImage<T>.Equals(object? obj) -> bool
+override BlueTusk.Documents.Streams.DocumentChangeImage<T>.GetHashCode() -> int
+override BlueTusk.Documents.Streams.DocumentChangeImage<T>.ToString() -> string!
+override BlueTusk.Documents.Streams.DocumentStreamChange<T>.Equals(object? obj) -> bool
+override BlueTusk.Documents.Streams.DocumentStreamChange<T>.GetHashCode() -> int
+override BlueTusk.Documents.Streams.DocumentStreamChange<T>.ToString() -> string!
+override BlueTusk.Documents.Streams.DocumentStreamOptions.Equals(object? obj) -> bool
+override BlueTusk.Documents.Streams.DocumentStreamOptions.GetHashCode() -> int
+override BlueTusk.Documents.Streams.DocumentStreamOptions.ToString() -> string!
+override BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.Equals(object? obj) -> bool
+override BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.GetHashCode() -> int
+override BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.ToString() -> string!
+override BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.Equals(object? obj) -> bool
+override BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.GetHashCode() -> int
+override BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.ToString() -> string!
+static BlueTusk.Documents.Streams.DocumentChangeImage<T>.operator !=(BlueTusk.Documents.Streams.DocumentChangeImage<T>? left, BlueTusk.Documents.Streams.DocumentChangeImage<T>? right) -> bool
+static BlueTusk.Documents.Streams.DocumentChangeImage<T>.operator ==(BlueTusk.Documents.Streams.DocumentChangeImage<T>? left, BlueTusk.Documents.Streams.DocumentChangeImage<T>? right) -> bool
+static BlueTusk.Documents.Streams.DocumentStreamChange<T>.operator !=(BlueTusk.Documents.Streams.DocumentStreamChange<T>? left, BlueTusk.Documents.Streams.DocumentStreamChange<T>? right) -> bool
+static BlueTusk.Documents.Streams.DocumentStreamChange<T>.operator ==(BlueTusk.Documents.Streams.DocumentStreamChange<T>? left, BlueTusk.Documents.Streams.DocumentStreamChange<T>? right) -> bool
+static BlueTusk.Documents.Streams.DocumentStreamDeployment.EnableFullReplicaIdentityAsync(System.Data.Common.DbDataSource! dataSource, string! schema = "bluetusk_documents", System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+static BlueTusk.Documents.Streams.DocumentStreamOptions.operator !=(BlueTusk.Documents.Streams.DocumentStreamOptions? left, BlueTusk.Documents.Streams.DocumentStreamOptions? right) -> bool
+static BlueTusk.Documents.Streams.DocumentStreamOptions.operator ==(BlueTusk.Documents.Streams.DocumentStreamOptions? left, BlueTusk.Documents.Streams.DocumentStreamOptions? right) -> bool
+static BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.operator !=(BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>? left, BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>? right) -> bool
+static BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>.operator ==(BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>? left, BlueTusk.Documents.Streams.DocumentStreamSnapshot<T>? right) -> bool
+static BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.operator !=(BlueTusk.Documents.Streams.DocumentStreamTransaction<T>? left, BlueTusk.Documents.Streams.DocumentStreamTransaction<T>? right) -> bool
+static BlueTusk.Documents.Streams.DocumentStreamTransaction<T>.operator ==(BlueTusk.Documents.Streams.DocumentStreamTransaction<T>? left, BlueTusk.Documents.Streams.DocumentStreamTransaction<T>? right) -> bool

@@ -703,12 +703,12 @@ foreach ($integrityCheck in @(
 $destinationImages = @($evidence.sync.expectedDestinationImages | ForEach-Object {
     [string]$_
 })
-if ($destinationImages.Count -ne 3 -or
+if ($destinationImages.Count -ne 5 -or
     @($destinationImages | Where-Object {
         $_ -notmatch '@sha256:[0-9a-f]{64}$'
     }).Count -ne 0)
 {
-    throw 'Sync evidence must declare exactly three digest-pinned destination images.'
+    throw 'Sync evidence must declare exactly five digest-pinned destination images.'
 }
 & (Join-Path $PSScriptRoot 'verify-sync-endurance-report.ps1') `
     -ReportPath $syncReport `

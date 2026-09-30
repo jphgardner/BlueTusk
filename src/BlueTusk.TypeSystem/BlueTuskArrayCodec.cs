@@ -5,8 +5,9 @@ using System.Text;
 namespace BlueTusk.TypeSystem;
 
 /// <summary>Encodes PostgreSQL arrays by composing the catalogue-discovered element codec.</summary>
-public sealed class BlueTuskArrayCodec :
+public sealed partial class BlueTuskArrayCodec :
     IBlueTuskCodec,
+    IBlueTuskNullableArrayCodec,
     IBlueTuskRangeCodecFactory,
     IBlueTuskWriteFormatSelector
 {
@@ -22,7 +23,9 @@ public sealed class BlueTuskArrayCodec :
     {
         _elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
         _elementCodec = elementCodec ?? throw new ArgumentNullException(nameof(elementCodec));
-        _arrayFactory = elementCodec as IBlueTuskArrayFactory;
+        _arrayFactory = elementCodec is BlueTuskDomainCodec domain
+            ? domain.ArrayFactory
+            : elementCodec as IBlueTuskArrayFactory;
         ClrType = ResolveArrayClrType(elementCodec, _arrayFactory);
     }
 
@@ -128,10 +131,10 @@ public sealed class BlueTuskArrayCodec :
         for (var dimension = 0; dimension < rank; dimension++)
         {
             var length = reader.ReadInt32BigEndian();
-            if (length < 0)
+            if (length <= 0)
             {
                 throw new InvalidOperationException(
-                    $"The {type.QualifiedName} binary array has a negative dimension length.");
+                    $"The {type.QualifiedName} binary array has a nonpositive dimension length. Empty PostgreSQL arrays use rank zero.");
             }
 
             lengths[dimension] = length;
@@ -544,6 +547,7 @@ public sealed class BlueTuskArrayCodec :
 
 internal sealed class BlueTuskArrayCodec<T> :
     IBlueTuskCodec<T[]>,
+    IBlueTuskNullableArrayCodec,
     IBlueTuskRangeCodecFactory,
     IBlueTuskWriteFormatSelector
 {
@@ -561,6 +565,9 @@ internal sealed class BlueTuskArrayCodec<T> :
     }
 
     public Type ClrType => typeof(T[]);
+
+    TElement?[] IBlueTuskNullableArrayCodec.ReadNullableElements<TElement>(ref BlueTuskReader reader,
+        BlueTuskDataFormat format, BlueTuskTypeDescriptor type) => _fallback.ReadNullableElements<TElement>(ref reader, format, type);
 
     public object Read(
         ref BlueTuskReader reader,

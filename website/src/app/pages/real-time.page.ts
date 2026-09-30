@@ -2,7 +2,7 @@ import { Component, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { PRODUCT_STATUSES, sourceUrl } from '../content/catalog';
+import { sourceUrl } from '../content/catalog';
 import { SourceLink, StatusPill } from '../shared/technical-ui';
 
 @Component({
@@ -11,17 +11,21 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
   template: `
     <section class="page-hero realtime-hero">
       <div class="realtime-copy">
-        <span class="eyebrow"><i class="live-dot"></i> COMMITTED CHANGE DATA</span>
-        <h1>From WAL to a live experience.<br /><em>With the contract visible.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> AFTER COMMIT</span>
+        <h1>Move PostgreSQL changes <em>without losing recovery.</em></h1>
         <p>
-          Streams, Sync, Live, and the Control Plane advance independently. Acknowledgements,
-          checkpoints, replay, and destinations keep distinct responsibilities.
+          Streams turns committed WAL transactions into acknowledged deliveries. Sync writes them to
+          other systems, Live updates authorized clients, and Control Plane exposes operational
+          state. Each product has a separate job and recovery contract.
         </p>
         <div class="hero-actions">
           <a mat-flat-button routerLink="/documentation/real-time/platform" class="primary-action"
-            >Read the correctness contract</a
-          ><a mat-stroked-button routerLink="/evidence?subsystem=Streams" class="secondary-action"
-            >View release evidence</a
+            >Read the platform guide</a
+          ><a
+            mat-stroked-button
+            routerLink="/documentation/real-time/contracts"
+            class="secondary-action"
+            >Review delivery contracts</a
           >
         </div>
       </div>
@@ -43,13 +47,10 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>DELIVERY CONTRACT</span>
-          <h2>Acknowledge only what became durable.</h2>
+          <span>THE DELIVERY RULE</span>
+          <h2>Save progress after durable work.</h2>
         </div>
-        <p>
-          Select a stage to inspect the boundary between committed PostgreSQL state and downstream
-          progress.
-        </p>
+        <p>Select a step to see where ownership and failure handling change.</p>
       </header>
       <div class="sequence-explorer">
         <div class="sequence-track">
@@ -77,21 +78,47 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
       </div>
     </section>
 
+    <section class="page-section">
+      <header class="section-head">
+        <div>
+          <span>CHOOSE THE CONSUMER</span>
+          <h2>Use one product for one outcome.</h2>
+        </div>
+        <p>Streams is the source boundary; the other products consume it for different jobs.</p>
+      </header>
+      <div class="journey-grid journey-grid-two">
+        @for (outcome of outcomes; track outcome.title) {
+          <article>
+            <mat-icon>{{ outcome.icon }}</mat-icon
+            ><small>{{ outcome.kicker }}</small>
+            <h3>{{ outcome.title }}</h3>
+            <div class="journey-flow">
+              @for (step of outcome.steps; track step) {
+                <span>{{ step }}</span>
+              }
+            </div>
+            <p>{{ outcome.detail }}</p>
+            <a [routerLink]="outcome.route">{{ outcome.action }}</a>
+          </article>
+        }
+      </div>
+    </section>
+
     <section class="page-section snapshot-section">
       <header class="section-head">
         <div>
-          <span>SNAPSHOT → STREAM</span>
-          <h2>Bootstrap without a change gap.</h2>
+          <span>INITIAL DATA → LIVE CHANGES</span>
+          <h2>Start without a gap.</h2>
         </div>
         <bt-source-link
           [href]="source('docs/streams/snapshot-bootstrap.md')"
-          label="Snapshot protocol"
+          label="Snapshot bootstrap guide"
         />
       </header>
       <div class="timeline-flow">
-        @for (step of snapshot; track step.title; let i = $index) {
+        @for (step of snapshot; track step.title; let index = $index) {
           <article>
-            <span>0{{ i + 1 }}</span
+            <span>0{{ index + 1 }}</span
             ><mat-icon>{{ step.icon }}</mat-icon>
             <h3>{{ step.title }}</h3>
             <p>{{ step.body }}</p>
@@ -100,71 +127,15 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
       </div>
     </section>
 
-    <section class="page-section">
-      <header class="section-head">
-        <div>
-          <span>SYNC DESTINATIONS</span>
-          <h2>Four destinations. Four explicit contracts.</h2>
-        </div>
-        <p>
-          Sync does not pretend different systems provide identical atomicity or replay behavior.
-        </p>
-      </header>
-      <div class="destination-matrix">
-        <div class="matrix-head">
-          <span>Destination</span><span>Write model</span><span>Recovery</span
-          ><span>Current boundary</span>
-        </div>
-        @for (destination of destinations; track destination.name) {
-          <div>
-            <strong
-              ><mat-icon>{{ destination.icon }}</mat-icon
-              >{{ destination.name }}</strong
-            ><span>{{ destination.write }}</span
-            ><span>{{ destination.recovery }}</span
-            ><small>{{ destination.boundary }}</small>
-          </div>
-        }
-      </div>
-      <aside class="truth-note">
-        <mat-icon>info</mat-icon>
-        <p>
-          <strong>No exactly-once marketing claim.</strong> BlueTusk documents acknowledgement,
-          idempotency, fencing, and destination behavior independently.
-        </p>
-        <a routerLink="/documentation/real-time/sync">Read Sync contract</a>
-      </aside>
-    </section>
-
-    <section class="page-section live-grid">
-      <div>
-        <span class="section-kicker">LIVE DELIVERY</span>
-        <h2>Authorized state, then updates.</h2>
-        <p>
-          Initial delivery, replay, shared subscriptions, backpressure, and ASP.NET transports
-          retain an authoritative re-query security boundary.
-        </p>
-        <div class="tag-cloud">
-          <span>SSE</span><span>WebSockets</span><span>Browser client</span><span>Replay</span
-          ><span>Backpressure</span><span>Shared subscriptions</span>
-        </div>
-      </div>
-      <div class="control-panel">
-        <small>CONTROL PLANE VISIBILITY</small>
-        @for (item of controls; track item.label) {
-          <article>
-            <mat-icon>{{ item.icon }}</mat-icon
-            ><span
-              ><strong>{{ item.label }}</strong
-              ><small>{{ item.detail }}</small></span
-            >
-          </article>
-        }
-        <a routerLink="/documentation/real-time/control-plane"
-          >Open operations guide <mat-icon>arrow_forward</mat-icon></a
-        >
-      </div>
-    </section>
+    <aside class="truth-note">
+      <mat-icon>verified_user</mat-icon>
+      <p>
+        <strong>At-least-once delivery is explicit.</strong> A crash can resend the final
+        unconfirmed transaction. Each consumer must make that retry safe before acknowledging it;
+        official Sync connectors document their own atomicity or idempotency boundary.
+      </p>
+      <a routerLink="/documentation/real-time/sync">Read the Sync contract</a>
+    </aside>
   `,
 })
 export class RealTimePage {
@@ -174,143 +145,147 @@ export class RealTimePage {
     {
       id: 'streams',
       name: 'Streams',
-      version: 'V1 candidate',
-      role: 'Transactions, snapshots, relay',
+      version: '1.1.0-rc.1 public',
+      role: 'Decode, checkpoint, and replay committed changes',
       icon: 'stream',
-      stage: 'pending',
-      gate: '72h evidence pending',
+      stage: 'gate-passed',
+      gate: 'Stable endurance pending',
     },
     {
       id: 'sync',
       name: 'Sync',
-      version: 'V1 candidate',
-      role: 'Versioned destination writes',
+      version: '1.1.0-rc.1 public',
+      role: 'Write changes to external destinations',
       icon: 'sync_alt',
-      stage: 'pending',
-      gate: '24h evidence pending',
+      stage: 'gate-passed',
+      gate: 'Stable endurance pending',
     },
     {
       id: 'live',
       name: 'Live',
-      version: 'V1 candidate',
-      role: 'Authorized client delivery',
+      version: '1.1.0-rc.1 public',
+      role: 'Maintain authorized client query results',
       icon: 'sensors',
       stage: 'gate-passed',
-      gate: 'Code and package gates complete',
+      gate: 'RC package verified',
     },
     {
       id: 'control',
       name: 'Control Plane',
-      version: 'V1 candidate',
-      role: 'Operations and audit',
+      version: '1.1.0-rc.1 public',
+      role: 'Inspect and audit operational state',
       icon: 'monitoring',
-      stage: 'pending',
-      gate: 'Dependency release chain pending',
+      stage: 'gate-passed',
+      gate: 'RC package verified',
     },
   ] as const;
   protected readonly sequence = [
     {
       id: 'commit',
       name: 'Commit',
-      signal: 'PostgreSQL WAL',
+      signal: 'PostgreSQL transaction',
       icon: 'storage',
       kicker: 'SOURCE OF TRUTH',
       title: 'PostgreSQL commits the transaction',
-      detail:
-        'Logical replication exposes only committed change data with a stable source identity.',
-      rule: 'No destination acknowledgement exists yet.',
+      detail: 'Logical replication exposes the transaction only after PostgreSQL commits it.',
+      rule: 'Nothing has been acknowledged by the consumer.',
     },
     {
-      id: 'assemble',
-      name: 'Assemble',
-      signal: 'Bounded spool',
+      id: 'deliver',
+      name: 'Deliver',
+      signal: 'One bounded unit',
       icon: 'inventory_2',
-      kicker: 'TRANSACTION BOUNDARY',
-      title: 'Changes become one delivery',
-      detail: 'The stream assembles transaction records under bounded memory and spill behavior.',
-      rule: 'The delivery owns its acknowledgement callback.',
+      kicker: 'STREAMS',
+      title: 'Streams assembles one delivery',
+      detail:
+        'Changes stay in transaction order and spill to versioned storage when memory limits require it.',
+      rule: 'The delivery carries identity, position, and an acknowledgement operation.',
     },
     {
       id: 'apply',
       name: 'Apply',
-      signal: 'Destination',
+      signal: 'Consumer-owned effect',
       icon: 'input',
-      kicker: 'APPLICATION WORK',
-      title: 'The consumer applies the transaction',
+      kicker: 'DESTINATION',
+      title: 'The consumer makes its effect durable',
       detail:
-        'Application or connector logic writes its intended result and handles its own failure mode.',
-      rule: 'Failure leaves the source position unacknowledged.',
+        'Application code or a Sync connector writes the transaction using the destination’s recovery model.',
+      rule: 'A failed or ambiguous write cannot advance progress.',
     },
     {
       id: 'ack',
       name: 'Acknowledge',
-      signal: 'Checkpoint',
+      signal: 'Saved checkpoint',
       icon: 'done_all',
-      kicker: 'DURABLE PROGRESS',
-      title: 'Progress advances after durable work',
-      detail: 'The acknowledgement updates the checkpoint using ordering and fencing rules.',
-      rule: 'Acknowledgement is not an exactly-once claim.',
+      kicker: 'SAFE TO CONTINUE',
+      title: 'Progress advances last',
+      detail:
+        'Only after the consumer’s contract permits it does BlueTusk record the next resume position.',
+      rule: 'Recovery may resend only the final unconfirmed transaction.',
     },
   ] as const;
   protected readonly activeStep = computed(
-    () => this.sequence.find((x) => x.id === this.selectedStep()) ?? this.sequence[0],
+    () => this.sequence.find((step) => step.id === this.selectedStep()) ?? this.sequence[0],
   );
+  protected readonly outcomes = [
+    {
+      kicker: 'CAPTURE',
+      title: 'Build a recoverable change stream',
+      icon: 'stream',
+      steps: ['WAL', 'Transaction', 'Checkpoint', 'Replay'],
+      detail:
+        'Use Streams when application code needs committed changes with explicit acknowledgement.',
+      route: '/documentation/real-time/streams',
+      action: 'Read the Streams guide',
+    },
+    {
+      kicker: 'SYNCHRONIZE',
+      title: 'Maintain another system',
+      icon: 'sync_alt',
+      steps: ['Transform', 'Write', 'Checkpoint', 'Reconcile'],
+      detail: 'Use Sync for versioned destination writes, quarantine, repair, and rebuild.',
+      route: '/documentation/real-time/sync',
+      action: 'Read the Sync guide',
+    },
+    {
+      kicker: 'DELIVER',
+      title: 'Update connected clients',
+      icon: 'sensors',
+      steps: ['Authorize', 'Query', 'Diff', 'Replay'],
+      detail: 'Use Live for server-authorized initial results and bounded client updates.',
+      route: '/documentation/real-time/live',
+      action: 'Read the Live guide',
+    },
+    {
+      kicker: 'OPERATE',
+      title: 'Inspect runtime state',
+      icon: 'monitoring',
+      steps: ['Inventory', 'Health', 'Audit', 'Action'],
+      detail: 'Use Control Plane for redacted operational views and authorized, audited actions.',
+      route: '/documentation/real-time/control-plane',
+      action: 'Read the Control Plane guide',
+    },
+  ] as const;
   protected readonly snapshot = [
     {
       icon: 'lock_clock',
-      title: 'Export snapshot',
-      body: 'Acquire a consistent database view and a matching WAL position.',
+      title: 'Create a consistent fence',
+      body: 'Record the WAL position associated with one exported database snapshot.',
     },
     {
       icon: 'download',
-      title: 'Read baseline',
-      body: 'Stream bounded rows from the snapshot into the consumer.',
+      title: 'Read existing rows',
+      body: 'Stream the snapshot through bounded, restartable batches.',
     },
     {
       icon: 'flag',
-      title: 'Record fence',
-      body: 'Persist source identity and the exact transition position.',
+      title: 'Persist the handover',
+      body: 'Save snapshot progress and the exact replication starting position.',
     },
     {
       icon: 'play_arrow',
-      title: 'Consume WAL',
-      body: 'Begin live transactions beyond the fence without a gap.',
+      title: 'Follow new commits',
+      body: 'Resume change delivery from the fence without an unaccounted gap.',
     },
-  ] as const;
-  protected readonly destinations = [
-    {
-      name: 'PostgreSQL',
-      icon: 'database',
-      write: 'Transactional upsert',
-      recovery: 'Version check + reconciliation',
-      boundary: 'Database transaction semantics',
-    },
-    {
-      name: 'NATS',
-      icon: 'swap_horiz',
-      write: 'Published message',
-      recovery: 'Consumer and message identity',
-      boundary: 'Broker acknowledgement contract',
-    },
-    {
-      name: 'Redis',
-      icon: 'memory',
-      write: 'Versioned key update',
-      recovery: 'Compare-and-apply + rebuild',
-      boundary: 'Key-level atomic behavior',
-    },
-    {
-      name: 'OpenSearch',
-      icon: 'search',
-      write: 'Versioned document index',
-      recovery: 'External version + reconcile',
-      boundary: 'Index refresh is independent',
-    },
-  ] as const;
-  protected readonly controls = [
-    { icon: 'source', label: 'Sources + slots', detail: 'Identity, WAL position, and lag' },
-    { icon: 'archive', label: 'Relay storage', detail: 'Segments, retention, and backups' },
-    { icon: 'groups', label: 'Consumer groups', detail: 'Membership and checkpoints' },
-    { icon: 'history', label: 'Audit', detail: 'Versioned operational responses' },
   ] as const;
 }

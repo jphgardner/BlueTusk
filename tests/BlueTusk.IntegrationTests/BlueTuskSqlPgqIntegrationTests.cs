@@ -8,7 +8,7 @@ namespace BlueTusk.IntegrationTests;
 public sealed class BlueTuskSqlPgqIntegrationTests
 {
     [Fact]
-    public async Task Data_source_inspector_discovers_persistent_graphs_and_guards_older_servers()
+    public async Task Data_source_inspector_discovers_persistent_graphs_and_guards_unsupported_servers()
     {
         await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
         await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
@@ -61,13 +61,18 @@ public sealed class BlueTuskSqlPgqIntegrationTests
     }
 
     [Fact]
-    public async Task PostgreSQL_19_property_graphs_cover_DDL_metadata_preparation_and_batches()
+    public async Task Property_graph_capability_controls_DDL_metadata_preparation_and_batches()
     {
         await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
         await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
         var capabilities = Assert.IsType<BlueTuskServerCapabilities>(
             connection.ServerCapabilities);
-        if (capabilities.ServerVersion.Major < 19)
+        await using var capabilityCommand = new BlueTuskCommand(
+            "SELECT to_regclass('information_schema.property_graphs') IS NOT NULL", connection);
+        Assert.Equal(
+            Assert.IsType<bool>(await capabilityCommand.ExecuteScalarAsync(CancellationToken.None)),
+            capabilities.SupportsSqlPgq);
+        if (!capabilities.SupportsSqlPgq)
         {
             Assert.False(capabilities.SupportsSqlPgq);
             var unavailableInspector = new BlueTuskPropertyGraphSchemaInspector(connection);

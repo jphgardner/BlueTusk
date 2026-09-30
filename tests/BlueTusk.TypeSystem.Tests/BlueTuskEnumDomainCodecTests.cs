@@ -137,6 +137,75 @@ public sealed class BlueTuskEnumDomainCodecTests
         Assert.Equal(typeof(int[]), Assert.IsType<BlueTuskArrayCodec>(domainArrayCodec).ClrType);
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void Domain_arrays_preserve_base_descriptor_and_nested_domain_identity(
+        bool nested,
+        bool directCustomCodec)
+    {
+        var domain = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(90_300),
+            Schema = "app",
+            Name = "domain_array_element",
+            Kind = BlueTuskTypeKind.Domain,
+            BaseType = BlueTuskBuiltInTypes.Int4.Id,
+        };
+        IBlueTuskCodec baseCodec = directCustomCodec
+            ? new DirectInt32Codec()
+            : new BlueTuskInt32Codec();
+        IBlueTuskCodec elementCodec = new BlueTuskDomainCodec(BlueTuskBuiltInTypes.Int4, baseCodec);
+        if (nested)
+        {
+            elementCodec = new BlueTuskDomainCodec(domain, elementCodec);
+            domain = domain with { Id = new BlueTuskTypeId(90_301), BaseType = domain.Id };
+        }
+        var arrayType = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(90_302),
+            Schema = "app",
+            Name = "_domain_array_element",
+            Kind = BlueTuskTypeKind.Array,
+            ElementType = domain.Id,
+        };
+        var codec = new BlueTuskArrayCodec(domain, elementCodec);
+        Assert.Equal(typeof(int[]), codec.ClrType);
+        int[] expected = [11, 22, 33];
+        foreach (var format in new[] { BlueTuskDataFormat.Binary, BlueTuskDataFormat.Text })
+        {
+            var bytes = new byte[256];
+            var writer = new BlueTuskWriter(bytes);
+            codec.Write(ref writer, expected, format, arrayType);
+            if (format == BlueTuskDataFormat.Binary)
+            {
+                Assert.Equal(domain.Id.Oid,
+                    System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(8, 4)));
+            }
+            var reader = new BlueTuskReader(bytes.AsSpan(0, writer.WrittenCount));
+            Assert.Equal(expected, Assert.IsType<int[]>(codec.Read(ref reader, format, arrayType)));
+            Assert.Equal(0, reader.Remaining);
+        }
+    }
+
+    private sealed class DirectInt32Codec : IBlueTuskCodec
+    {
+        private readonly BlueTuskInt32Codec _inner = new();
+        public Type ClrType => typeof(int);
+        public object Read(ref BlueTuskReader reader, BlueTuskDataFormat format, BlueTuskTypeDescriptor type)
+        {
+            Assert.Equal(BlueTuskBuiltInTypes.Int4.Id, type.Id);
+            return _inner.ReadTyped(ref reader, format, type);
+        }
+        public void Write(ref BlueTuskWriter writer, object? value, BlueTuskDataFormat format, BlueTuskTypeDescriptor type)
+        {
+            Assert.Equal(BlueTuskBuiltInTypes.Int4.Id, type.Id);
+            _inner.WriteTyped(ref writer, Assert.IsType<int>(value), format, type);
+        }
+    }
+
     private static void AssertRoundTrip(
         BlueTuskEnumCodec<OrderStatus> codec,
         OrderStatus value,

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>ControlPlane</BlueTuskProductFamily>
+    <Description>Kubernetes custom-resource reconciliation for the BlueTusk Control Plane.</Description>
+    <PackageTags>postgresql;cdc;control-plane;kubernetes;operator</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\ControlPlane.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.ControlPlane\BlueTusk.ControlPlane.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\deploy\kubernetes\operator\*.yaml"
+          Pack="true"
+          PackagePath="contentFiles/any/any/kubernetes"
+          Link="kubernetes/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

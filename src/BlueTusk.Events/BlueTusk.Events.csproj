@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Events</BlueTuskProductFamily>
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Typed versioned business events, transactional PostgreSQL outbox and inbox, and fenced stream replay.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Events.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+  </ItemGroup>
+</Project>

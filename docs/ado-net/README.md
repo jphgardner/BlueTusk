@@ -1,15 +1,44 @@
 # ADO.NET
 
-The stable V1 contract provides native synchronous and asynchronous
-`BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`,
-`BlueTuskBatch`, buffered and sequential `BlueTuskDataReader`, provider
-factory, and pooled `BlueTuskDataSource` paths. Synchronous operations use
-blocking socket, TLS, protocol, authentication, pool, and query
-implementations rather than blocking asynchronous I/O.
+Use `BlueTusk.Data` when you want direct PostgreSQL commands, transactions,
+batches, COPY, notifications, or replication from .NET. If your application is
+primarily LINQ and change tracking, start with the [EF Core guide](../ef-core/README.md).
 
-The [V1 compatibility matrix](compatibility.md) records the supported and
-explicitly excluded ADO.NET, Dapper, dependency-injection, schema and routine
-surfaces.
+## Run one query
+
+Create one long-lived data source and short-lived commands:
+
+```csharp
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
+await using var command = dataSource.CreateCommand(
+    "SELECT @left::int4 + @right::int4");
+
+command.Parameters.Add(new BlueTuskParameter<int>(20) { ParameterName = "left" });
+command.Parameters.Add(new BlueTuskParameter<int>(22) { ParameterName = "right" });
+
+var answer = await command.ExecuteScalarAsync<int>(); // 42
+```
+
+Values are bound separately from SQL. Keep the data source for the application
+lifetime so commands and logical connections share its bounded physical pool.
+
+## Choose the API by task
+
+| Task                                             | API or guide                                 |
+| ------------------------------------------------ | -------------------------------------------- |
+| One command without connection-affine state      | `dataSource.CreateCommand(...)`              |
+| Several commands in one transaction              | Open a connection, then begin a transaction. |
+| Several independent statements in one round trip | [Batches](batches.md)                        |
+| Bulk import or export                            | [COPY](copy.md)                              |
+| Large field without buffering the complete row   | [Sequential readers](sequential-readers.md)  |
+| Primary/standby routing                          | [Multi-host](multi-host.md)                  |
+| High-concurrency session-neutral commands        | [Pooling and multiplexing](pooling.md)       |
+| Reclaim table space with PostgreSQL 19            | [Native REPACK](repack.md)                   |
+
+The [compatibility matrix](compatibility.md) records supported and explicitly
+excluded ADO.NET, Dapper, dependency-injection, schema, and routine surfaces.
+
+## How the provider works
 
 Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths.
 

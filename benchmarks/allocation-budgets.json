@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "environment": "windows-ryzen7-5800x-dotnet10",
   "budgets": [
     {
@@ -144,36 +144,43 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.DiffOneUpdatedRowInOneThousand",
+      "parameters": "ResultCount=1000&SubscriberCount=64",
       "maximumBytesPerOperation": 102400,
       "reason": "The keyed 1,000-row diff reuses the previous snapshot map and owns only the new snapshot state."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.DiffUnchangedOneThousandRows",
+      "parameters": "ResultCount=1000&SubscriberCount=64",
       "maximumBytesPerOperation": 102400,
       "reason": "The unchanged 1,000-row diff reuses cached snapshot keys and indexes."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.SerializeOneUpdatedRow",
+      "parameters": "ResultCount=1000&SubscriberCount=64",
       "maximumBytesPerOperation": 900,
       "reason": "Versioned JSON replay payload, owned integrity hash, and one updated result row."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.CoalesceOneHundredInvalidationsAndFanOut64SubscribersAsync",
+      "parameters": "ResultCount=1000&SubscriberCount=64",
       "maximumBytesPerOperation": 185000,
       "reason": "Complete in-memory shared-subscription lifecycle, 100-invalidation coalescing, replay persistence, and bounded fan-out to 64 subscribers."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.CompileGraphRegistrationAsync",
+      "parameters": "EdgeCount=1000&TopN=1000",
       "maximumBytesPerOperation": 115000,
       "reason": "PostgreSQL capability handshake, EF graph metadata/dependency validation, translation, fingerprinting, and compiled Live plan ownership."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AuthoritativeGraphRequeryAsync",
+      "parameters": "EdgeCount=1000&TopN=1000",
       "maximumBytesPerOperation": 720000,
       "reason": "Authoritative PostgreSQL GRAPH_TABLE execution plus 999 caller-owned keyed path result objects."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AffectedGraphRefreshAndDiffAsync",
+      "parameters": "EdgeCount=1000&TopN=1000",
       "maximumBytesPerOperation": 960000,
       "reason": "Complete affected-invalidation path through PostgreSQL GRAPH_TABLE requery, 999 keyed comparisons, and immutable Live snapshot ownership."
     },
@@ -204,32 +211,39 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.AssembleAndMaterializeOneThousandInserts",
+      "parameters": "TransactionChangeCount=1000",
+      "normalizationDivisorParameter": "TransactionChangeCount",
       "maximumBytesPerOperation": 1000,
       "reason": "CDC transaction assembly and materialisation normalized per change, including owned row values and transaction metadata."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.SpillAndStreamFourMiBTransaction",
+      "parameters": "TransactionChangeCount=1",
       "maximumBytesPerOperation": 262144,
       "maximumGen2Collections": 0,
       "reason": "End-to-end integrity-checked 4 MiB spool write, durable flush, memory-mapped replay, and cleanup must avoid managed large-object materialisation and Gen2 collection."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.SyncConnectorBenchmarks.ConstructCoreTransactionBatch",
+      "parameters": "MutationCount=1",
       "maximumBytesPerOperation": 256,
       "reason": "Core Sync batch ownership baseline before connector-specific ownership changes."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.SyncConnectorBenchmarks.EncodeNatsTransactionEnvelope",
+      "parameters": "MutationCount=1",
       "maximumBytesPerOperation": 72000,
       "reason": "NATS transaction-envelope encoding baseline before connector payload ownership changes."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.SyncConnectorBenchmarks.ValidateOpenSearchDocument",
+      "parameters": "MutationCount=1",
       "maximumBytesPerOperation": 128,
       "reason": "OpenSearch JSON validation baseline before connector payload ownership changes."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.SyncConnectorBenchmarks.CopyPostgreSqlParameterPayload",
+      "parameters": "MutationCount=1",
       "maximumBytesPerOperation": 36000,
       "reason": "PostgreSQL parameter-payload copy baseline before connector payload ownership changes."
     }

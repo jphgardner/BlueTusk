@@ -1,0 +1,3 @@
+<Project>
+  <!-- Stops parent repositories from leaking build targets into generated applications. -->
+</Project>

@@ -105,6 +105,84 @@ public sealed class LiveQuerySessionTests
         Assert.Equal(2, session.Status.AuthoritativeQueryCount);
     }
 
+    [Theory]
+    [InlineData("query")]
+    [InlineData("cancellation")]
+    [InlineData("diff")]
+    public async Task Failed_refresh_retries_the_same_invalidation(string failure)
+    {
+        var log = new TestInvalidationLog();
+        var executions = 0;
+        var plan = CreatePlan((_, _) =>
+        {
+            executions++;
+            if (executions == 2)
+            {
+                if (failure == "query")
+                {
+                    throw new IOException("Query unavailable.");
+                }
+
+                if (failure == "cancellation")
+                {
+                    throw new OperationCanceledException();
+                }
+
+                return ValueTask.FromResult<IReadOnlyList<Row>>(
+                    [new Row(1, "after"), new Row(1, "duplicate")]);
+            }
+
+            return ValueTask.FromResult<IReadOnlyList<Row>>(
+                [new Row(1, executions == 1 ? "before" : "after")]);
+        });
+        await using var session = CreateSession(plan, log);
+        _ = await session.StartAsync(TestContext.Current.CancellationToken);
+        log.Append(new LiveTableDependency("sales", "orders"));
+
+        var exception = await Record.ExceptionAsync(async () =>
+            await session.RefreshToCurrentAsync(TestContext.Current.CancellationToken));
+
+        Assert.NotNull(exception);
+        Assert.Equal(0, session.Status.Cursor.Value);
+        Assert.Equal(1, session.Status.LastSequence);
+        var retry = await session.RefreshToCurrentAsync(TestContext.Current.CancellationToken);
+        Assert.NotNull(retry);
+        var updated = Assert.Single(retry.Events);
+        Assert.Equal(LiveEventKind.RowUpdated, updated.Kind);
+        Assert.Equal("after", updated.Row!.Value);
+        Assert.Equal(2, updated.Sequence);
+        Assert.Equal(1, session.Status.Cursor.Value);
+    }
+
+    [Fact]
+    public async Task Reset_preserves_changes_that_arrive_during_the_query()
+    {
+        var log = new TestInvalidationLog();
+        IReadOnlyList<Row> rows = [new Row(1, "before")];
+        var executions = 0;
+        var plan = CreatePlan((_, _) =>
+        {
+            var captured = rows;
+            if (++executions == 2)
+            {
+                rows = [new Row(1, "after")];
+                log.Append(new LiveTableDependency("sales", "orders"));
+            }
+
+            return ValueTask.FromResult(captured);
+        });
+        await using var session = CreateSession(plan, log);
+        _ = await session.StartAsync(TestContext.Current.CancellationToken);
+        var reset = await session.ResetAsync(
+            LiveResetReason.ReplayExpired,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal("before", Assert.Single(reset.Snapshot.Rows).Value);
+        var refresh = await session.RefreshToCurrentAsync(TestContext.Current.CancellationToken);
+        Assert.NotNull(refresh);
+        Assert.Equal("after", Assert.Single(refresh.Events).Row!.Value);
+    }
+
     private static LiveQuerySession<Row, int> CreateSession(
         LiveQueryPlan<Row, int> plan,
         ILiveInvalidationLog log,

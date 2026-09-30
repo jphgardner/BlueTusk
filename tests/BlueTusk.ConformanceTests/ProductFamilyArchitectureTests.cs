@@ -14,6 +14,16 @@ public sealed class ProductFamilyArchitectureTests
             ["BlueTusk.ControlPlane"] = "ControlPlane",
             ["BlueTusk.Dashboard"] = "ControlPlane",
             ["BlueTusk.ContinuousGraph"] = "ContinuousGraph",
+            ["BlueTusk.Events"] = "Events",
+            ["BlueTusk.Jobs"] = "Jobs",
+            ["BlueTusk.Documents"] = "Documents",
+            ["BlueTusk.Projections"] = "Projections",
+            ["BlueTusk.Search"] = "Search",
+            ["BlueTusk.Schema"] = "Schema",
+            ["BlueTusk.Sql"] = "Sql",
+            ["BlueTusk.Studio"] = "Studio",
+            ["BlueTusk.Edge"] = "Edge",
+            ["BlueTusk.Workflows"] = "Workflows",
         };
 
     [Fact]
@@ -176,7 +186,7 @@ public sealed class ProductFamilyArchitectureTests
         {
             var publication = family.Value.GetProperty("publication");
             var channel = publication.GetProperty("channel").GetString();
-            Assert.Equal("stable", channel);
+            Assert.True(channel is "stable" or "preview", $"{family.Name} has an unsupported release channel: {channel}.");
 
             var tagPrefix = publication.GetProperty("tagPrefix").GetString()!;
             Assert.Matches("^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", tagPrefix);

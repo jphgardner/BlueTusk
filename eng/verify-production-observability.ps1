@@ -195,6 +195,15 @@ if ([string]$dashboard.uid -ne 'bluetusk-v1-production' -or
 }
 
 $dashboardSource = Get-Content -LiteralPath $dashboardPath -Raw
+foreach ($requiredSpoolQuery in @(
+        'bluetusk_streams_spool_operation_duration_seconds_bucket',
+        'bluetusk_streams_spool_operation_duration_seconds_count'))
+{
+    if (-not $dashboardSource.Contains($requiredSpoolQuery, [StringComparison]::Ordinal))
+    {
+        throw "The production dashboard is missing spool diagnostic query '$requiredSpoolQuery'."
+    }
+}
 foreach ($prefix in @(
         'bluetusk_commands',
         'bluetusk_streams',

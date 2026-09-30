@@ -1,0 +1,1 @@
+Connect timeout=1s per connection attempt; target=ReadWrite; no configured host-recheck interval (tested provider refreshes host state on checkout); pool maximum=8 per host/16 aggregate; lease=1s; heartbeat=100ms; store backoff=100ms; poll=20ms; drain phase deadline=45s; scenario deadline=180s

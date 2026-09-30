@@ -1,10 +1,20 @@
 # BlueTusk real-time platform
 
-BlueTusk extends the native provider with transaction-preserving change
-streams, durable fan-out, destination synchronisation, authorised live queries,
-and ContinuousGraph queries. Every component is MIT licensed and remains in
-this monorepo, but each product family has an independent semantic version and
-release train.
+BlueTusk can react after PostgreSQL commits a change. Start with the outcome you
+need; most applications do not need every product.
+
+## Choose one starting point
+
+| You need to…                                                              | Start with                                        | What it gives you                                                                    |
+| ------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Process committed changes in .NET                                         | [Streams](../streams/README.md)                   | Complete transactions, checkpointing, leases, spooling, and snapshots.               |
+| Feed several independent consumers from one slot                          | [Durable relay](../streams/durable-relay.md)      | Retained transactions and independently acknowledged groups.                         |
+| Keep Redis, OpenSearch, NATS, Kafka, PostgreSQL, S3, or a webhook current | [Sync](../sync/README.md)                         | Transforms, destination guarantees, retries, reconciliation, and rebuilds.           |
+| Push a bounded query result to connected users                            | [Live](../live/README.md)                         | Authorized queries, keyed diffs, replay, resume tokens, and browser clients.         |
+| Maintain a changing graph result                                          | [Continuous Graph](../continuous-graph/README.md) | Incremental and authoritative SQL/PGQ maintenance under the original security scope. |
+| Inspect and operate the deployment                                        | [Control Plane](../control-plane/README.md)       | Redacted inventory, drill-down dashboard, authorization, and audit.                  |
+
+## How the pieces connect
 
 ```text
 PostgreSQL 15–19
@@ -18,7 +28,13 @@ BlueTusk Streams ─→ PostgreSQL durable relay
                     Control Plane / Dashboard
 ```
 
-Streams is the only application-level CDC boundary. Sync, Live, and Continuous Graph consume Streams deliveries or relay cursors and are forbidden by architecture tests from referencing replication internals.
+Build and prove Streams first. Add a relay when more than one independently
+recoverable consumer needs the feed. Add Sync, Live, or Continuous Graph only
+for the corresponding outcome.
+
+Streams is the only application-level CDC boundary. Sync, Live, and Continuous
+Graph consume Streams deliveries or relay cursors; they do not reach into
+replication protocol internals.
 
 ## Correctness contract
 

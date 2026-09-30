@@ -11,18 +11,53 @@ This is the repository's 1.0 security-gate review record. It is a maintainer
 code/configuration review backed by deterministic and live tests; it is not a
 claim of independent penetration testing or a production support SLA.
 
+## Minimum production setup
+
+Use this checklist before an application handles real data:
+
+1. Create a PostgreSQL role for the application. Grant only the database,
+   schema, table, sequence, function, and replication permissions that its
+   features need. Do not connect as `postgres` or a migration owner at runtime.
+2. Store the connection string in your deployment platform's secret store. Do
+   not commit it, bake it into an image, or send it to logs or traces.
+3. Keep server identity verification enabled. A typical production connection
+   string ends with:
+
+   ```text
+   SSL Mode=VerifyFull;Channel Binding=Prefer;Persist Security Info=false
+   ```
+
+4. Use a separate, more privileged identity for migrations. Run migrations as
+   a controlled deployment step, then start the application with its restricted
+   runtime identity.
+5. Leave SQL values parameterized. Treat raw SQL fragments, identifiers,
+   migration bodies, and custom certificate callbacks as trusted-code-only
+   boundaries.
+6. Export BlueTusk metrics and traces, but keep SQL text, parameter values,
+   credentials, tokens, and captured payloads disabled unless a short-lived,
+   access-controlled diagnostic session requires them.
+7. Exercise connection loss, credential rotation, cancellation, retry, and
+   restore procedures in a production-like environment before launch.
+
+For deployment topology and readiness checks, continue with the
+[deployment guide](operations/deployment.md). For authentication methods and credential
+lifecycle details, use the [authentication guide](ado-net/authentication.md).
+
+The rest of this page records the complete reviewed threat model, evidence,
+accepted application boundaries, and release checks.
+
 ## Threat model and controls
 
-| Boundary | Primary threats | Reviewed controls and evidence |
-| --- | --- | --- |
-| Connection configuration | Password, token, passfile, or client-key disclosure | Telemetry redaction has an allowlist-shaped payload; callback exceptions discard original messages; client options redact `ToString()`; public connection/data-source strings default to `Persist Security Info=false`; secrets are absent from diagnostic tests and the live parameter-redaction gate. |
-| Server identity and transport | Downgrade, hostname/certificate bypass, credential exposure | `VerifyFull` is the default; `SslStream` platform validation and online revocation are used unless an application explicitly supplies the validation callback; required TLS fails if PostgreSQL rejects encryption; channel binding supports require/prefer/disable; cleartext passwords and access-token adapters fail closed on insecure transport by default. |
-| Authentication exchange | Offline cracking, replay, token leakage, malformed negotiation | SCRAM-SHA-256/PLUS, OAUTHBEARER, GSSAPI/Kerberos/SSPI, client certificates, MD5 compatibility, and explicitly gated cleartext are covered by unit/conformance tests. OAuth has a real PostgreSQL validator gate and GSSAPI has a real MIT KDC gate. Writable authentication payloads are overwritten after flush and temporary buffers use cryptographic zeroing. |
-| Wire protocol | Oversized/negative lengths, truncation, unknown frames, desynchronisation | Frame/message lengths and state transitions are bounded and validated before payload use; fake-server and parser tests cover fragmentation, truncation, unknown messages/OIDs, delayed readiness, protocol errors, cancellation races, and recovery. Broken or undrainable sessions are discarded. |
-| Pool boundary | Cross-tenant/session state leakage, poisoned reuse, waiter starvation | A data source owns one immutable configuration; returns roll back transactions and reset session state; health/lifetime checks discard unsafe sessions; cancellation and clear/drain have stress coverage; multi-host pools remain endpoint-partitioned. Applications must not share one data source between different security principals. |
-| Commands and schema tooling | SQL injection, unsafe identifier/literal handling, accidental trusted SQL execution | Runtime values use protocol parameters. Provider-generated identifiers and literals use central quoting. APIs that accept SQL expressions, routine bodies, predicates, or migration fragments are documented trusted-code boundaries and retain explicit validation/diagnostics; they do not reinterpret user input as parameters. |
-| Diagnostics and captures | SQL, parameters, exception messages, credentials, or tokens in telemetry | Provider activities/metrics expose bounded stable attributes without SQL or parameter values. Slow-command events are opt-in and redacted. Protocol capture requires explicit payload capture, uses bounded records, and supplies a redaction-aware inspector. |
-| Dependencies and release | Known vulnerable direct/transitive package, compromised review trail | Restore explicitly enables `NuGetAuditMode=all` at `NuGetAuditLevel=low`; warnings are errors and there are no advisory suppressions. The 2026-08-02 machine-readable audit reported no vulnerable direct or transitive packages. CI has read-only default permissions and pinned major action versions. |
+| Boundary                        | Primary threats                                                                                                                | Reviewed controls and evidence                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connection configuration        | Password, token, passfile, or client-key disclosure                                                                            | Telemetry redaction has an allowlist-shaped payload; callback exceptions discard original messages; client options redact `ToString()`; public connection/data-source strings default to `Persist Security Info=false`; secrets are absent from diagnostic tests and the live parameter-redaction gate.                                                                                      |
+| Server identity and transport   | Downgrade, hostname/certificate bypass, credential exposure                                                                    | `VerifyFull` is the default; `SslStream` platform validation and online revocation are used unless an application explicitly supplies the validation callback; required TLS fails if PostgreSQL rejects encryption; channel binding supports require/prefer/disable; cleartext passwords and access-token adapters fail closed on insecure transport by default.                             |
+| Authentication exchange         | Offline cracking, replay, token leakage, malformed negotiation                                                                 | SCRAM-SHA-256/PLUS, OAUTHBEARER, GSSAPI/Kerberos/SSPI, client certificates, MD5 compatibility, and explicitly gated cleartext are covered by unit/conformance tests. OAuth has a real PostgreSQL validator gate and GSSAPI has a real MIT KDC gate. Writable authentication payloads are overwritten after flush and temporary buffers use cryptographic zeroing.                            |
+| Wire protocol                   | Oversized/negative lengths, truncation, unknown frames, desynchronisation                                                      | Frame/message lengths and state transitions are bounded and validated before payload use; fake-server and parser tests cover fragmentation, truncation, unknown messages/OIDs, delayed readiness, protocol errors, cancellation races, and recovery. Broken or undrainable sessions are discarded.                                                                                           |
+| Pool boundary                   | Cross-tenant/session state leakage, poisoned reuse, waiter starvation                                                          | A data source owns one immutable configuration; returns roll back transactions and reset session state; health/lifetime checks discard unsafe sessions; cancellation and clear/drain have stress coverage; multi-host pools remain endpoint-partitioned. Applications must not share one data source between different security principals.                                                  |
+| Commands and schema tooling     | SQL injection, unsafe identifier/literal handling, accidental trusted SQL execution                                            | Runtime values use protocol parameters. Provider-generated identifiers and literals use central quoting. APIs that accept SQL expressions, routine bodies, predicates, or migration fragments are documented trusted-code boundaries and retain explicit validation/diagnostics; they do not reinterpret user input as parameters.                                                           |
+| Diagnostics and captures        | SQL, parameters, exception messages, credentials, or tokens in telemetry                                                       | Provider activities/metrics expose bounded stable attributes without SQL or parameter values. Slow-command events are opt-in and redacted. Protocol capture requires explicit payload capture, uses bounded records, and supplies a redaction-aware inspector.                                                                                                                               |
+| Dependencies and release        | Known vulnerable direct/transitive package, compromised review trail                                                           | Restore explicitly enables `NuGetAuditMode=all` at `NuGetAuditLevel=low`; warnings are errors and there are no advisory suppressions. The 2026-08-02 machine-readable audit reported no vulnerable direct or transitive packages. CI has read-only default permissions and pinned major action versions.                                                                                     |
 | Test credentials and automation | A disposable credential is mistaken for production material, copied into a release path, or silently replaced by a real secret | `eng/test-credential-inventory.json` records SHA-256 fingerprints rather than repeating values. Its verifier scans workflow and Compose sources, fixes the accepted file/context/count for every literal, requires localhost or named disposable containers, and forbids literal credentials in candidate and publication workflows. Unknown fingerprints and external-host use fail closed. |
 
 ## Intentional test credentials and external scanner triage

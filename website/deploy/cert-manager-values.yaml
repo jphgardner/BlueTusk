@@ -1,0 +1,16 @@
+crds:
+  enabled: true
+
+replicaCount: 2
+podDisruptionBudget:
+  enabled: true
+
+webhook:
+  replicaCount: 2
+  podDisruptionBudget:
+    enabled: true
+
+cainjector:
+  replicaCount: 2
+  podDisruptionBudget:
+    enabled: true

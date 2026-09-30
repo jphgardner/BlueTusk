@@ -1,4 +1,108 @@
 #nullable enable
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.Category.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.Category.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.ControlPlaneContinuousGraphComposition(string! Category, int Count) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.Count.get -> int
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.Count.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.Deconstruct(out string! Category, out int Count) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.Equals(BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Category.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Category.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.ControlPlaneContinuousGraphEdge(string! Id, string! SourceNodeId, string! TargetNodeId, string! Label, string! Category, bool Directed, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty!>! Properties) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Deconstruct(out string! Id, out string! SourceNodeId, out string! TargetNodeId, out string! Label, out string! Category, out bool Directed, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty!>! Properties) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Directed.get -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Directed.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Equals(BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Id.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Id.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Label.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Label.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Properties.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Properties.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.SourceNodeId.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.SourceNodeId.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.TargetNodeId.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.TargetNodeId.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphExecutionException
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphExecutionException.Code.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphExecutionException.ControlPlaneContinuousGraphExecutionException(string! code, string! message) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.ControlPlaneContinuousGraphFragment(System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode!>! Nodes, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge!>! Edges) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode!>! Nodes, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge!>! Edges) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.Edges.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.Edges.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.Equals(BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.Nodes.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.Nodes.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Category.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Category.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.ControlPlaneContinuousGraphNode(string! Id, string! Label, string! Category, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty!>! Properties) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Deconstruct(out string! Id, out string! Label, out string! Category, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty!>! Properties) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Equals(BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Id.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Id.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Label.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Label.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Properties.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Properties.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.AllowNull.get -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.AllowNull.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.ControlPlaneContinuousGraphParameterSnapshot(string! Name, string! Type, bool AllowNull, bool Editable, string? SuggestedValue) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.Deconstruct(out string! Name, out string! Type, out bool AllowNull, out bool Editable, out string? SuggestedValue) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.Editable.get -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.Editable.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.Equals(BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.Name.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.Name.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.SuggestedValue.get -> string?
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.SuggestedValue.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.Type.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.Type.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.ControlPlaneContinuousGraphProperty(string! Name, string? Value) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.Deconstruct(out string! Name, out string? Value) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.Equals(BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.Name.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.Name.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.Value.get -> string?
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.Value.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.CanExecute.get -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.ControlPlaneContinuousGraphQuerySnapshot(string! name, string! databaseIdentity, string! queryFingerprint, string! graphName, string? graphSchema, System.Collections.Generic.IReadOnlyList<string!>! elementTableAliases, System.Collections.Generic.IReadOnlyList<string!>! tableDependencies, int maximumResultCount, string! capabilities, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot!>! parameters, bool canExecute) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.Parameters.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.ControlPlaneContinuousGraphRunRequest(System.Collections.Generic.IReadOnlyDictionary<string!, string?>! Parameters) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, string?>! Parameters) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.Equals(BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string?>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.Parameters.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.ControlPlaneContinuousGraphRunResult(System.Guid executionId, System.DateTimeOffset observedAt, System.TimeSpan duration, string! queryFingerprint, string! queryName, string! databaseIdentity, string! graphName, string? graphSchema, int resultRowCount, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode!>! nodes, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge!>! edges, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition!>! nodeComposition, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition!>! edgeComposition) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.DatabaseIdentity.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.Duration.get -> System.TimeSpan
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.EdgeComposition.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.Edges.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.ExecutionId.get -> System.Guid
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.GraphName.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.GraphSchema.get -> string?
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.NodeComposition.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.Nodes.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.ObservedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.QueryFingerprint.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.QueryName.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult.ResultRowCount.get -> int
+BlueTusk.ControlPlane.IControlPlaneContinuousGraphExecutionService
+BlueTusk.ControlPlane.IControlPlaneContinuousGraphExecutionService.ExecuteAsync(string! queryFingerprint, BlueTusk.ControlPlane.ControlPlaneActor! actor, BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult!>
 BlueTusk.ControlPlane.IManagedDeploymentLeaseStore
 BlueTusk.ControlPlane.IManagedDeploymentLeaseStore.ReleaseAsync(BlueTusk.ControlPlane.ManagedDeploymentLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.ControlPlane.IManagedDeploymentLeaseStore.RenewAsync(BlueTusk.ControlPlane.ManagedDeploymentLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentLease!>
@@ -276,6 +380,27 @@ const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumSettingsPerWorklo
 const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumWorkloads = 32 -> int
 const BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.CurrentDocumentFormatVersion = 1 -> int
 const BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.CurrentSchemaVersion = 1 -> int
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.ToString() -> string!
 override BlueTusk.ControlPlane.ManagedDeployment.Equals(object? obj) -> bool
 override BlueTusk.ControlPlane.ManagedDeployment.GetHashCode() -> int
 override BlueTusk.ControlPlane.ManagedDeployment.ToString() -> string!
@@ -315,6 +440,20 @@ override BlueTusk.ControlPlane.ManagedTenantUsage.ToString() -> string!
 override BlueTusk.ControlPlane.ManagedWorkloadSpec.Equals(object? obj) -> bool
 override BlueTusk.ControlPlane.ManagedWorkloadSpec.GetHashCode() -> int
 override BlueTusk.ControlPlane.ManagedWorkloadSpec.ToString() -> string!
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.operator !=(BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition.operator ==(BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphComposition? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.operator !=(BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge.operator ==(BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphEdge? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.operator !=(BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment.operator ==(BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.operator !=(BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode.operator ==(BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphNode? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.operator !=(BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot.operator ==(BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.operator !=(BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty.operator ==(BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphProperty? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.operator !=(BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest.operator ==(BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest? left, BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest? right) -> bool
 static BlueTusk.ControlPlane.ManagedDeployment.operator !=(BlueTusk.ControlPlane.ManagedDeployment? left, BlueTusk.ControlPlane.ManagedDeployment? right) -> bool
 static BlueTusk.ControlPlane.ManagedDeployment.operator ==(BlueTusk.ControlPlane.ManagedDeployment? left, BlueTusk.ControlPlane.ManagedDeployment? right) -> bool
 static BlueTusk.ControlPlane.ManagedDeploymentAction.operator !=(BlueTusk.ControlPlane.ManagedDeploymentAction? left, BlueTusk.ControlPlane.ManagedDeploymentAction? right) -> bool
@@ -346,3 +485,42 @@ static BlueTusk.ControlPlane.ManagedTenantUsage.operator ==(BlueTusk.ControlPlan
 static BlueTusk.ControlPlane.ManagedWorkloadSpec.operator !=(BlueTusk.ControlPlane.ManagedWorkloadSpec? left, BlueTusk.ControlPlane.ManagedWorkloadSpec? right) -> bool
 static BlueTusk.ControlPlane.ManagedWorkloadSpec.operator ==(BlueTusk.ControlPlane.ManagedWorkloadSpec? left, BlueTusk.ControlPlane.ManagedWorkloadSpec? right) -> bool
 static BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService.Create(System.Collections.Generic.IEnumerable<BlueTusk.ControlPlane.ControlPlanePostgreSqlSource!>! instances, BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions! options, System.TimeProvider? timeProvider = null) -> BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService!
+BlueTusk.ControlPlane.ControlPlaneFleetOverview
+BlueTusk.ControlPlane.ControlPlaneFleetOverview.ControlPlaneFleetOverview(System.DateTimeOffset observedAt, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot!>! deployments) -> void
+BlueTusk.ControlPlane.ControlPlaneFleetOverview.Deployments.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot!>!
+BlueTusk.ControlPlane.ControlPlaneFleetOverview.ObservedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.ControlPlaneManagedDeploymentSnapshot(string! deploymentId, string! tenantId, string! provider, string! region, long desiredGeneration, long observedGeneration, long statusRevision, BlueTusk.ControlPlane.ManagedDeploymentState state, bool paused, bool deleteProtection, int workloadCount, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedWorkloadKind>! workloadKinds, int replicas, long cpuMillicores, long memoryBytes, long storageBytes, string? diagnosticCode, System.DateTimeOffset updatedAt) -> void
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.CpuMillicores.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.DeleteProtection.get -> bool
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.DeploymentId.get -> string!
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.DesiredGeneration.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.DiagnosticCode.get -> string?
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.MemoryBytes.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.ObservedGeneration.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.Paused.get -> bool
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.Provider.get -> string!
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.Region.get -> string!
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.Replicas.get -> int
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.State.get -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.StatusRevision.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.StorageBytes.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.TenantId.get -> string!
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.UpdatedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.WorkloadCount.get -> int
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.WorkloadKinds.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedWorkloadKind>!
+BlueTusk.ControlPlane.IControlPlaneFleetQueryService
+BlueTusk.ControlPlane.IControlPlaneFleetQueryService.GetFleetOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneFleetOverview!>
+BlueTusk.ControlPlane.ManagedDeploymentFleetQueryService
+BlueTusk.ControlPlane.ManagedDeploymentFleetQueryService.GetFleetOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneFleetOverview!>
+BlueTusk.ControlPlane.ManagedDeploymentFleetQueryService.ManagedDeploymentFleetQueryService(BlueTusk.ControlPlane.IManagedDeploymentStore! store, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.ControlPlane.ControlPlaneOperationKind.DeleteDeployment = 15 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.PauseDeployment = 11 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.RebuildDeployment = 14 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.ReconcileDeployment = 13 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.ResumeDeployment = 12 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.IManagedDeploymentRebuildHandler
+BlueTusk.ControlPlane.IManagedDeploymentRebuildHandler.RebuildAsync(BlueTusk.ControlPlane.ManagedDeployment! deployment, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.ManagedDeploymentControlPlaneOperationHandler
+BlueTusk.ControlPlane.ManagedDeploymentControlPlaneOperationHandler.ExecuteAsync(BlueTusk.ControlPlane.ControlPlaneOperationRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.ManagedDeploymentControlPlaneOperationHandler.ManagedDeploymentControlPlaneOperationHandler(BlueTusk.ControlPlane.IManagedDeploymentStore! store, BlueTusk.ControlPlane.ManagedDeploymentController! controller, BlueTusk.ControlPlane.IManagedDeploymentRebuildHandler! rebuilds, BlueTusk.ControlPlane.IControlPlaneOperationHandler? fallback = null) -> void

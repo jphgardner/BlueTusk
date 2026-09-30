@@ -1,5 +1,6 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using BlueTusk.Client;
 using BlueTusk.Data.Internal;
 using BlueTusk.Diagnostics;
@@ -315,6 +316,7 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private static async ValueTask<BlueTuskConnection> CompleteOpenConnectionAsync(
         BlueTuskConnection connection,
         Task opening)

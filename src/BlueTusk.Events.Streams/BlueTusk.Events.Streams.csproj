@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Events</BlueTuskProductFamily>
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Strict bounded transactional business-event delivery over BlueTusk Streams CDC.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Events.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Events\BlueTusk.Events.csproj" />
+    <ProjectReference Include="..\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+  </ItemGroup>
+</Project>

@@ -12,12 +12,12 @@ import { StatusPill } from '../shared/technical-ui';
   template: `
     <section class="page-hero evidence-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> V1 EVIDENCE · 04 AUG 2026</span>
-        <h1>Candidate-ready, with <em>receipts.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> EVIDENCE SNAPSHOT · 29 AUG 2026</span>
+        <h1>Separate what passed from <em>what remains open.</em></h1>
         <p>
-          Compatibility, parser reliability, API governance, security, provenance, performance and
-          release gates are separated so implemented hardening is never confused with pending
-          external authorization.
+          This page records package publication, compatibility, tests, security, performance, and
+          release gates. Each result has a date, a state, and a source; an RC package is never
+          presented as a stable approval.
         </p>
       </div>
       <div class="evidence-totals">
@@ -29,7 +29,10 @@ import { StatusPill } from '../shared/technical-ui';
           <strong>{{ pendingCount() }}</strong
           ><span>explicitly pending</span>
         </article>
-        <article><strong>12,975</strong><span>budgeted API signatures</span></article>
+        <article>
+          <strong>{{ guardedCount() }}</strong
+          ><span>capability guarded</span>
+        </article>
       </div>
     </section>
 
@@ -37,7 +40,7 @@ import { StatusPill } from '../shared/technical-ui';
       <header class="section-head">
         <div>
           <span>FILTERABLE RECORD</span>
-          <h2>Interrogate the current snapshot.</h2>
+          <h2>Inspect one claim at a time.</h2>
         </div>
         <button
           type="button"
@@ -108,12 +111,12 @@ import { StatusPill } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>PRODUCT GATES</span>
-          <h2>Code state and release authority are separate.</h2>
+          <span>PRODUCT STATUS</span>
+          <h2>Package availability and stable approval are different.</h2>
         </div>
         <p>
-          Package availability is not inferred from a built project, a local candidate, or an
-          implementation gate.
+          Every product is available as the coordinated 1.1 RC. Stable promotion depends on the
+          remaining product-specific and platform-wide gates.
         </p>
       </header>
       <div class="release-ledger">
@@ -127,10 +130,10 @@ import { StatusPill } from '../shared/technical-ui';
               <small>PACKAGE</small><strong>{{ product.packageState }}</strong>
             </div>
             <div>
-              <small>GATE</small><strong>{{ product.gateState }}</strong>
+              <small>REMAINING CHECK</small><strong>{{ product.gateState }}</strong>
             </div>
             <div>
-              <small>LIMIT</small><span>{{ product.limitations[0] }}</span>
+              <small>WHAT TO KNOW</small><span>{{ product.limitations[0] }}</span>
             </div>
           </article>
         }
@@ -141,31 +144,19 @@ import { StatusPill } from '../shared/technical-ui';
       <div>
         <mat-icon>warning_amber</mat-icon>
         <div>
-          <span class="section-kicker">KNOWN LIMITS</span>
-          <h2>What this page does not claim.</h2>
+          <span class="section-kicker">INTERPRETATION</span>
+          <h2>Read the boundary with the result.</h2>
         </div>
       </div>
       <ul>
+        <li><code>1.1.0-rc.1</code> is public; it is not stable <code>1.1.0</code>.</li>
+        <li>A repository or package test does not approve an application’s production topology.</li>
         <li>
-          No stable public package availability is asserted; the documented evaluation path remains
-          a source build.
-        </li>
-        <li>V1 code readiness is not presented as broad production validation.</li>
-        <li>
-          No delivery path is labelled exactly-once; destination contracts and acknowledgement rules
-          remain separate.
+          Streams and Sync stable promotion still require their exact long-running recovery gates.
         </li>
         <li>
-          Streams 72-hour and Sync 24-hour evidence remains pending until archived exact-candidate
-          runs satisfy their contracts, including all seven in-window operational disturbances for
-          each run.
-        </li>
-        <li>
-          SQL/PGQ is capability-guarded and stable PostgreSQL 19 support waits for GA evidence.
-        </li>
-        <li>
-          Independent review, application pilots, backup/restore and rollback rehearsal remain
-          mandatory.
+          SQL/PGQ remains capability guarded until PostgreSQL 19 GA and exact-candidate evidence
+          pass.
         </li>
       </ul>
     </section>
@@ -192,6 +183,9 @@ export class EvidencePage {
   );
   protected readonly pendingCount = computed(
     () => this.records.filter((x) => x.status === 'pending').length,
+  );
+  protected readonly guardedCount = computed(
+    () => this.records.filter((x) => x.status === 'guarded').length,
   );
   constructor(
     private route: ActivatedRoute,

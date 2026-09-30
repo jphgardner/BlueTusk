@@ -1,1 +1,18 @@
 #nullable enable
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgeDirection.Undirected = 2 -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgeDirection
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.LabelExpression.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression?
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.LabelExpression.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.MaximumHops.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.MaximumHops.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.MinimumHops.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.MinimumHops.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression.Labels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder.IncomingPath<TEdge>(string! variable, int minimumHops, int maximumHops, string? elementTableAlias = null) -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder.LabelsAnyOf(params string![]! labels) -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder.OutgoingPath<TEdge>(string! variable, int minimumHops, int maximumHops, string? elementTableAlias = null) -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder.Undirected<TEdge>(string! variable, string? elementTableAlias = null) -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder.UndirectedPath<TEdge>(string! variable, int minimumHops, int maximumHops, string? elementTableAlias = null) -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphVertexPattern.LabelExpression.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression?
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphVertexPattern.LabelExpression.init -> void
+static BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression.AnyOf(params string![]! labels) -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression!

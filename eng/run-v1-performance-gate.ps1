@@ -8,8 +8,11 @@ param(
     [string] $ExpectedCommit,
 
     [Parameter(Mandatory)]
-    [ValidatePattern('^postgres:19[^@\s]+@sha256:[0-9a-f]{64}$')]
+    [ValidatePattern('^postgres:(?:15|16|17|18|19)[^@\s]+@sha256:[0-9a-f]{64}$')]
     [string] $PostgreSqlImage,
+
+    [ValidateSet('Legacy', 'Core')]
+    [string] $ReleaseTrack = 'Legacy',
 
     [string] $ConnectionString = $env:BLUETUSK_BENCHMARK_CONNECTION_STRING,
 
@@ -20,6 +23,18 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path -LiteralPath (Split-Path $PSScriptRoot -Parent)).Path
+$previewFixtures = @('SqlPgqBenchmarks', 'ContinuousGraphBenchmarks')
+if ($ReleaseTrack -eq 'Core')
+{
+    $coreContract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'v1.2-candidate-readiness.json') -Raw | ConvertFrom-Json
+    if ($PostgreSqlImage -cne [string]$coreContract.endurancePostgreSqlImage)
+    { throw 'Core performance capture requires the configured stable PostgreSQL image.' }
+}
+elseif ($PostgreSqlImage -notmatch '^postgres:19')
+{ throw 'Legacy performance capture requires the historical PostgreSQL 19 fixture.' }
+$sourceStatus = @(& git -C $repositoryRoot status --porcelain --untracked-files=no)
+if ($LASTEXITCODE -ne 0 -or $sourceStatus.Count -ne 0)
+{ throw 'Performance capture requires a clean tracked candidate.' }
 $artifactsRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts'))
 $fullOutputPath = [IO.Path]::GetFullPath($OutputPath)
 $artifactsPrefix = $artifactsRoot.TrimEnd(
@@ -70,14 +85,20 @@ try
     {
         $runArguments += '--no-build'
     }
+    $benchmarkFilters = if ($ReleaseTrack -eq 'Core')
+    {
+        @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'benchmarks/BlueTusk.Benchmarks') -Filter '*Benchmarks.cs' |
+            Where-Object BaseName -notin $previewFixtures |
+            ForEach-Object { "BlueTusk.Benchmarks.$($_.BaseName).*" })
+    }
+    else { @('*') }
     $runArguments += @(
         '--',
         '--job',
         'medium',
         '--inProcess',
-        '--filter',
-        '*'
-    )
+        '--filter'
+    ) + $benchmarkFilters
 
     $pairedArguments = @(
         'run',
@@ -109,7 +130,7 @@ try
     }
     $providerPairedArguments += @(
         '--',
-        '--provider-paired-evidence',
+        '--provider-extended-paired-evidence',
         $providerPairedReport
     )
 
@@ -155,12 +176,39 @@ foreach ($pattern in $invalidLogPatterns)
 }
 
 $resultsPath = Join-Path $fullOutputPath 'results'
+$coverageArguments = @{ BaselinePath = $resultsPath }
+$allocationArguments = @{ BaselinePath = $resultsPath }
+$latencyArguments = @{ BaselinePath = $resultsPath }
+if ($ReleaseTrack -eq 'Core')
+{
+    # Keep every stable fixture and its existing ceilings; only the separately
+    # qualified SQL/PGQ preview fixtures are outside the Core release track.
+    $scopedSource = Join-Path $fullOutputPath 'core-fixtures'
+    [IO.Directory]::CreateDirectory($scopedSource) | Out-Null
+    $coreFixtures = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'benchmarks/BlueTusk.Benchmarks') -Filter '*Benchmarks.cs' |
+        Where-Object BaseName -notin $previewFixtures)
+    foreach ($fixture in $coreFixtures) { Copy-Item -LiteralPath $fixture.FullName -Destination $scopedSource }
+    $coverageArguments.BenchmarkSourcePath = $scopedSource
+    $coverageArguments.MinimumFixtureCount = $coreFixtures.Count
+    $coverageArguments.MinimumBenchmarkCount = (@($coreFixtures | ForEach-Object { [regex]::Matches((Get-Content -LiteralPath $_.FullName -Raw), '\[Benchmark(?:\([^\]]*\))?\]').Count }) | Measure-Object -Sum).Sum
+    foreach ($budgetKind in @('allocation', 'latency'))
+    {
+        $budget = Get-Content -LiteralPath (Join-Path $repositoryRoot "benchmarks/$budgetKind-budgets.json") -Raw | ConvertFrom-Json
+        $budget.budgets = @($budget.budgets | Where-Object {
+            [string]$_.benchmark -notmatch '^BlueTusk\.Benchmarks\.(?:SqlPgqBenchmarks|ContinuousGraphBenchmarks)\.'
+        })
+        $budgetPath = Join-Path $fullOutputPath "core-$budgetKind-budgets.json"
+        $budget | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $budgetPath -Encoding utf8NoBOM
+        if ($budgetKind -eq 'allocation') { $allocationArguments.BudgetFile = $budgetPath }
+        else { $latencyArguments.BudgetFile = $budgetPath }
+    }
+}
 & (Join-Path $PSScriptRoot 'verify-benchmark-coverage.ps1') `
-    -BaselinePath $resultsPath
+    @coverageArguments
 & (Join-Path $PSScriptRoot 'verify-allocation-budgets.ps1') `
-    -BaselinePath $resultsPath
+    @allocationArguments
 & (Join-Path $PSScriptRoot 'verify-latency-budgets.ps1') `
-    -BaselinePath $resultsPath
+    @latencyArguments
 
 $multiplexingReport = Join-Path $resultsPath (
     'BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json')
@@ -204,6 +252,7 @@ $digest = ([regex]::Match($PostgreSqlImage, '@(?<digest>sha256:[0-9a-f]{64})$'))
     Groups['digest'].Value
 $evidence = [ordered]@{
     schemaVersion = 2
+    releaseTrack = $ReleaseTrack
     sourceCommit = $ExpectedCommit
     capturedUtc = [DateTimeOffset]::UtcNow.ToString('O')
     benchmark = [ordered]@{
@@ -228,14 +277,14 @@ $evidence = [ordered]@{
             [regex]::Match(
                 [string]$report.HostEnvironmentInfo.RuntimeVersion,
                 '^\.NET (?<version>[0-9.]+)')).Groups['version'].Value
-        postgresqlMajor = 19
+        postgresqlMajor = [int]([regex]::Match($PostgreSqlImage, '^postgres:(\d+)').Groups[1].Value)
         postgresqlImage = $PostgreSqlImage
         postgresqlImageDigest = "postgres@$digest"
         topology = 'Dedicated loopback PostgreSQL; four physical lanes for provider comparisons.'
     }
     command = (
         "dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj " +
-        "-c Release --no-build -- --job medium --inProcess --filter '*'")
+        "-c Release --no-build -- --job medium --inProcess --filter " + ($benchmarkFilters -join ' '))
     report = [ordered]@{
         path = 'results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json'
         sha256 = $reportHash
@@ -271,4 +320,4 @@ $evidence | ConvertTo-Json -Depth 8 |
     -EvidencePath $evidencePath
 
 Write-Output (
-    "V1 performance gate passed for $ExpectedCommit. Evidence: '$fullOutputPath'.")
+    "$ReleaseTrack reference performance gate passed for $ExpectedCommit. Evidence: '$fullOutputPath'.")

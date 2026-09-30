@@ -20,13 +20,20 @@ if (@($manifest.requiredFutureCadence).Count -ne 3)
     throw 'PostgreSQL 19 must require later beta, release-candidate and GA cadence.'
 }
 
-$current = @($manifest.milestones | Where-Object {
+$official = @($manifest.milestones | Where-Object {
     $_.version -eq $manifest.currentOfficialMilestone
+})
+if ($official.Count -ne 1)
+{
+    throw 'The observed official PostgreSQL milestone must have exactly one record.'
+}
+$current = @($manifest.milestones | Where-Object {
+    $_.version -eq $manifest.lastVerifiedMilestone
 })
 if ($current.Count -ne 1 -or $current[0].status -ne 'verified')
 {
     throw (
-        "Current PostgreSQL milestone '$($manifest.currentOfficialMilestone)' " +
+        "Last verified PostgreSQL milestone '$($manifest.lastVerifiedMilestone)' " +
         'must have one verified record.')
 }
 if ([string]$current[0].image -notmatch
@@ -42,6 +49,16 @@ foreach ($path in @($current[0].evidence, $manifest.typedSubsetRecord))
     }
 }
 
+foreach ($evidence in $manifest.requiredFeatureEvidence.PSObject.Properties)
+{
+    if ([string]::IsNullOrWhiteSpace([string]$evidence.Value) -or
+        -not (Test-Path -LiteralPath (
+            Join-Path $RepositoryRoot ([string]$evidence.Value)) -PathType Leaf))
+    {
+        throw "PostgreSQL 19 feature evidence '$($evidence.Name)' is missing."
+    }
+}
+
 $compose = Get-Content -LiteralPath (
     Join-Path $RepositoryRoot 'eng/compose/postgres.yml') -Raw
 if (-not $compose.Contains([string]$current[0].image, [StringComparison]::Ordinal))
@@ -49,30 +66,13 @@ if (-not $compose.Contains([string]$current[0].image, [StringComparison]::Ordina
     throw 'The PostgreSQL 19 compose service does not use the recorded image digest.'
 }
 
-foreach ($workflowPath in @(
-        '.github/workflows/streams-release-endurance.yml',
-        '.github/workflows/sync-release-endurance.yml'))
+# Core endurance uses a stable PostgreSQL image. The preview capture resolves
+# its separate historical fixture through this manifest, not core workflows.
+$previewWorkflow = Get-Content -LiteralPath (
+    Join-Path $RepositoryRoot '.github/workflows/performance-leadership.yml') -Raw
+if (-not $previewWorkflow.Contains('$programme.lastVerifiedMilestone', [StringComparison]::Ordinal))
 {
-    $workflow = Get-Content -LiteralPath (
-        Join-Path $RepositoryRoot $workflowPath) -Raw
-    $recordedImages = @(
-        [regex]::Matches(
-            $workflow,
-            'postgres:19[^''"\s]+@sha256:[0-9a-f]{64}') |
-            ForEach-Object { $_.Value }
-    )
-    if ($recordedImages.Count -ne 2 -or
-        @($recordedImages | Where-Object {
-            -not [string]::Equals(
-                $_,
-                [string]$current[0].image,
-                [StringComparison]::Ordinal)
-        }).Count -ne 0)
-    {
-        throw (
-            "PostgreSQL 19 release workflow '$workflowPath' must bind its " +
-            'endurance runner and evidence verifier to the current milestone image.')
-    }
+    throw 'The historical preview performance capture must resolve the last verified milestone explicitly.'
 }
 
 if ($VerifyOfficialCurrent)
@@ -110,6 +110,7 @@ if ($RequireGeneralAvailability)
             [string]$manifest.currentOfficialMilestone,
             [string]$ga.version,
             [StringComparison]::Ordinal) -or
+        $manifest.lastVerifiedMilestone -cne $manifest.currentOfficialMilestone -or
         -not [string]::Equals(
             [string]$current[0].image,
             [string]$ga.image,
@@ -122,5 +123,6 @@ if ($RequireGeneralAvailability)
 }
 
 Write-Host (
-    "PostgreSQL 19 programme verified at $($manifest.currentOfficialMilestone); " +
+    "PostgreSQL 19 programme: official $($manifest.currentOfficialMilestone), " +
+    "last tested $($manifest.lastVerifiedMilestone); " +
     "GA status is $($manifest.generalAvailability.status).")

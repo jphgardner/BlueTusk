@@ -1,0 +1,65 @@
+#nullable enable
+BlueTusk.Edge.Http.EdgeHttpClientOwnership
+BlueTusk.Edge.Http.EdgeHttpClientOwnership.Borrowed = 0 -> BlueTusk.Edge.Http.EdgeHttpClientOwnership
+BlueTusk.Edge.Http.EdgeHttpClientOwnership.Owned = 1 -> BlueTusk.Edge.Http.EdgeHttpClientOwnership
+BlueTusk.Edge.Http.EdgeHttpSnapshotPage
+BlueTusk.Edge.Http.EdgeHttpSnapshotPage.<Clone>$() -> BlueTusk.Edge.Http.EdgeHttpSnapshotPage!
+BlueTusk.Edge.Http.EdgeHttpSnapshotPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>! Records, out string? NextAfterId) -> void
+BlueTusk.Edge.Http.EdgeHttpSnapshotPage.EdgeHttpSnapshotPage(System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>! Records, string? NextAfterId) -> void
+BlueTusk.Edge.Http.EdgeHttpSnapshotPage.Equals(BlueTusk.Edge.Http.EdgeHttpSnapshotPage? other) -> bool
+BlueTusk.Edge.Http.EdgeHttpSnapshotPage.NextAfterId.get -> string?
+BlueTusk.Edge.Http.EdgeHttpSnapshotPage.NextAfterId.init -> void
+BlueTusk.Edge.Http.EdgeHttpSnapshotPage.Records.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>!
+BlueTusk.Edge.Http.EdgeHttpSnapshotPage.Records.init -> void
+BlueTusk.Edge.Http.EdgeHttpTransportException
+BlueTusk.Edge.Http.EdgeHttpTransportException.EdgeHttpTransportException(int statusCode) -> void
+BlueTusk.Edge.Http.EdgeHttpTransportException.StatusCode.get -> int
+BlueTusk.Edge.Http.EdgeHttpTransportOptions
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.<Clone>$() -> BlueTusk.Edge.Http.EdgeHttpTransportOptions!
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.EdgeHttpTransportOptions() -> void
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.Equals(BlueTusk.Edge.Http.EdgeHttpTransportOptions? other) -> bool
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.MaxBatchRecords.get -> int
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.MaxBatchRecords.init -> void
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.MaxRecordBytes.get -> int
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.MaxRecordBytes.init -> void
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.MaxRequestBytes.get -> int
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.MaxRequestBytes.init -> void
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.MaxResponseBytes.get -> int
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.MaxResponseBytes.init -> void
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.RequestTimeout.get -> System.TimeSpan
+BlueTusk.Edge.Http.EdgeHttpTransportOptions.RequestTimeout.init -> void
+BlueTusk.Edge.Http.EdgeWireCodec
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport.ApplyMutationAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeMutationOutcome!>
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport.AdvanceOrderedReceiptHorizonAsync(BlueTusk.Edge.EdgeScope! scope, System.Guid throughMutationId, int maxReceipts = 1000, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport.BeginSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeSnapshot!>
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport.Dispose() -> void
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport.FinalizeMutationReceiptAsync(BlueTusk.Edge.EdgeMutation! mutation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport.HttpEdgeRemoteTransport(System.Net.Http.HttpClient! client, System.Uri! endpoint, BlueTusk.Edge.Http.EdgeHttpTransportOptions? options = null, BlueTusk.Edge.Http.EdgeHttpClientOwnership ownership = BlueTusk.Edge.Http.EdgeHttpClientOwnership.Borrowed) -> void
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport.Options.get -> BlueTusk.Edge.Http.EdgeHttpTransportOptions!
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport.ReadChangesAsync(BlueTusk.Edge.EdgeScope! scope, long afterPosition, int maxRecords, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Edge.EdgeChangeBatch?>
+BlueTusk.Edge.Http.HttpEdgeRemoteTransport.ReadSnapshotAsync(BlueTusk.Edge.EdgeScope! scope, BlueTusk.Edge.EdgeSnapshot! snapshot, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>!>!
+override BlueTusk.Edge.Http.EdgeHttpSnapshotPage.Equals(object? obj) -> bool
+override BlueTusk.Edge.Http.EdgeHttpSnapshotPage.GetHashCode() -> int
+override BlueTusk.Edge.Http.EdgeHttpSnapshotPage.ToString() -> string!
+override BlueTusk.Edge.Http.EdgeHttpTransportOptions.Equals(object? obj) -> bool
+override BlueTusk.Edge.Http.EdgeHttpTransportOptions.GetHashCode() -> int
+override BlueTusk.Edge.Http.EdgeHttpTransportOptions.ToString() -> string!
+static BlueTusk.Edge.Http.EdgeHttpSnapshotPage.operator !=(BlueTusk.Edge.Http.EdgeHttpSnapshotPage? left, BlueTusk.Edge.Http.EdgeHttpSnapshotPage? right) -> bool
+static BlueTusk.Edge.Http.EdgeHttpSnapshotPage.operator ==(BlueTusk.Edge.Http.EdgeHttpSnapshotPage? left, BlueTusk.Edge.Http.EdgeHttpSnapshotPage? right) -> bool
+static BlueTusk.Edge.Http.EdgeHttpTransportOptions.operator !=(BlueTusk.Edge.Http.EdgeHttpTransportOptions? left, BlueTusk.Edge.Http.EdgeHttpTransportOptions? right) -> bool
+static BlueTusk.Edge.Http.EdgeHttpTransportOptions.operator ==(BlueTusk.Edge.Http.EdgeHttpTransportOptions? left, BlueTusk.Edge.Http.EdgeHttpTransportOptions? right) -> bool
+static BlueTusk.Edge.Http.EdgeWireCodec.DeserializeChanges(System.ReadOnlySpan<byte> bytes, int maxRecords, int maxPayloadBytes) -> BlueTusk.Edge.EdgeChangeBatch!
+static BlueTusk.Edge.Http.EdgeWireCodec.DeserializeMutation(BlueTusk.Edge.EdgeScope! scope, System.ReadOnlySpan<byte> bytes, int maxPayloadBytes) -> BlueTusk.Edge.EdgeMutation!
+static BlueTusk.Edge.Http.EdgeWireCodec.DeserializeOrderedReceiptHorizon(System.ReadOnlySpan<byte> bytes) -> (System.Guid ThroughMutationId, int MaxReceipts)
+static BlueTusk.Edge.Http.EdgeWireCodec.DeserializeOutcome(System.ReadOnlySpan<byte> bytes, int maxPayloadBytes) -> BlueTusk.Edge.EdgeMutationOutcome!
+static BlueTusk.Edge.Http.EdgeWireCodec.DeserializeSnapshot(System.ReadOnlySpan<byte> bytes) -> BlueTusk.Edge.EdgeSnapshot!
+static BlueTusk.Edge.Http.EdgeWireCodec.DeserializeSnapshotPage(System.ReadOnlySpan<byte> bytes, int maxRecords, int maxPayloadBytes) -> BlueTusk.Edge.Http.EdgeHttpSnapshotPage!
+static BlueTusk.Edge.Http.EdgeWireCodec.Number(long value) -> string!
+static BlueTusk.Edge.Http.EdgeWireCodec.ParseNumber(string! value) -> long
+static BlueTusk.Edge.Http.EdgeWireCodec.SerializeChanges(BlueTusk.Edge.EdgeChangeBatch! batch) -> byte[]!
+static BlueTusk.Edge.Http.EdgeWireCodec.SerializeMutation(BlueTusk.Edge.EdgeMutation! mutation) -> byte[]!
+static BlueTusk.Edge.Http.EdgeWireCodec.SerializeOrderedReceiptHorizon(System.Guid throughMutationId, int maxReceipts) -> byte[]!
+static BlueTusk.Edge.Http.EdgeWireCodec.SerializeOutcome(BlueTusk.Edge.EdgeMutationOutcome! outcome) -> byte[]!
+static BlueTusk.Edge.Http.EdgeWireCodec.SerializeSnapshot(BlueTusk.Edge.EdgeSnapshot! snapshot) -> byte[]!
+static BlueTusk.Edge.Http.EdgeWireCodec.SerializeSnapshotPage(System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeRecord!>! records, string? nextAfterId) -> byte[]!

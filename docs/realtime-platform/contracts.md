@@ -1,4 +1,29 @@
-# Real-time platform contracts
+# Delivery guarantees in plain language
+
+This page explains when BlueTusk considers work complete and what can happen
+after a crash. Read it before choosing a state store or destination.
+
+The shared rule is simple:
+
+1. PostgreSQL commits a source transaction.
+2. BlueTusk delivers that transaction without splitting its order.
+3. The consumer makes its effect and progress durable.
+4. Only then does BlueTusk acknowledge the source position.
+
+If a process stops between steps 3 and 4, the last transaction can arrive
+again. BlueTusk provides stable identities, atomic checkpoints where supported,
+and connector-specific replay protection. It does not hide these boundaries
+behind an “exactly once” slogan.
+
+## Choose the guarantee you need
+
+| Product          | Durable completion point                                          | Recovery behavior                                            |
+| ---------------- | ----------------------------------------------------------------- | ------------------------------------------------------------ |
+| Streams          | Consumer effect plus checkpoint, then PostgreSQL feedback         | Last unconfirmed transaction is redelivered.                 |
+| Durable relay    | Relay append commits, then source acknowledgement                 | Each consumer group replays independently.                   |
+| Sync             | Destination-specific durable confirmation                         | Atomic or stable-identity replay according to the connector. |
+| Live             | Replay event append and session commit                            | Client resumes with a signed token or receives a reset.      |
+| Continuous Graph | Replay append, graph session commit, then Streams acknowledgement | Incremental state is replayed or repaired authoritatively.   |
 
 ## Streams
 

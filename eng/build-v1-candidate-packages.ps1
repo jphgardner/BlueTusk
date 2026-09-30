@@ -3,6 +3,9 @@ param(
     [string] $OutputRoot = 'artifacts/v1-candidate-packages',
     [string] $Configuration = 'Release',
 
+    [ValidateSet('Legacy', 'Core')]
+    [string] $ReleaseTrack = 'Legacy',
+
     [ValidatePattern('^[0-9a-fA-F]{40}$')]
     [string] $Commit,
 
@@ -55,7 +58,7 @@ if ($LASTEXITCODE -ne 0 -or $trackedStatus.Count -ne 0)
 
 if (Test-Path -LiteralPath $resolvedOutputRoot)
 {
-    Remove-Item -LiteralPath $resolvedOutputRoot -Recurse -Force
+    throw "Candidate package output '$resolvedOutputRoot' already exists. Preserve it and choose a new -OutputRoot."
 }
 [IO.Directory]::CreateDirectory($resolvedOutputRoot) | Out-Null
 
@@ -68,7 +71,7 @@ $sbomRoot = Join-Path $resolvedOutputRoot 'sbom'
 
 if (-not $NoRestore)
 {
-    & dotnet restore (Join-Path $repositoryRoot 'BlueTusk.slnx')
+    & dotnet restore (Join-Path $repositoryRoot 'BlueTusk.slnx') --locked-mode
     if ($LASTEXITCODE -ne 0)
     {
         throw "Candidate package restore failed with exit code $LASTEXITCODE."
@@ -81,6 +84,21 @@ $familyNames = @(
     $manifest.families.PSObject.Properties |
         ForEach-Object { $_.Name }
 )
+if ($ReleaseTrack -eq 'Core')
+{
+    & (Join-Path $PSScriptRoot 'verify-release-track.ps1') | Out-Null
+    $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
+    $familyNames = @($tracks.stableFamilies)
+    foreach ($familyName in $familyNames)
+    {
+        [xml]$version = Get-Content -LiteralPath (Join-Path $repositoryRoot $manifest.families.$familyName.versionFile) -Raw
+        if ([string]$version.Project.PropertyGroup.VersionPrefix -cne '1.2.0' -or
+            -not [string]::IsNullOrWhiteSpace([string]$version.Project.PropertyGroup.VersionSuffix))
+        {
+            throw "Core candidate '$familyName' must have the exact unsuffixed source version 1.2.0."
+        }
+    }
+}
 $artifactRecords = [Collections.Generic.List[object]]::new()
 $familyRecords = [Collections.Generic.List[object]]::new()
 $totalPackageBytes = 0L
@@ -187,6 +205,11 @@ try
         artifacts = $sortedArtifacts
         supplyChain = $supplyFiles
     }
+    if ($ReleaseTrack -eq 'Core')
+    {
+        $candidateManifest.releaseTrack = 'Core'
+        $candidateManifest.releaseVersion = '1.2.0'
+    }
     $candidateManifest | ConvertTo-Json -Depth 8 |
         Set-Content -LiteralPath (
             Join-Path $resolvedOutputRoot 'package-manifest.json') `
@@ -201,6 +224,6 @@ finally
 }
 
 Write-Output (
-    "Built immutable V1 package evidence for commit ${Commit}: " +
+    "Built immutable $ReleaseTrack package evidence for commit ${Commit}: " +
     "$($familyRecords.Count) families, $($artifactRecords.Count) package artifacts, " +
     "$totalPackageBytes bytes.")

@@ -10,7 +10,10 @@ param(
     [ValidatePattern('^[0-9a-fA-F]{40}$')]
     [string] $ExpectedCommit,
 
-    [DateTimeOffset] $NotBeforeUtc = [DateTimeOffset]::MinValue
+    [DateTimeOffset] $NotBeforeUtc = [DateTimeOffset]::MinValue,
+
+    [ValidateSet('Legacy', 'Core')]
+    [string] $ReleaseTrack = 'Legacy'
 )
 
 Set-StrictMode -Version Latest
@@ -154,6 +157,27 @@ if ([int]$contract.schemaVersion -ne 1 -or
     [int]$contract.approvalSchemaVersion -ne 4)
 {
     throw 'The V1 approval-evidence contract has an unsupported schema.'
+}
+if ($ReleaseTrack -eq 'Core')
+{
+    & (Join-Path $PSScriptRoot 'verify-release-track.ps1') | Out-Null
+    # Only family-count fields change scope. Every other review, security,
+    # operational, independence and publication requirement is retained.
+    foreach ($definition in $contract.gates)
+    {
+        foreach ($field in $definition.details)
+        {
+            if ($definition.id -eq 'independent-release-review' -and $field.name -eq 'packageFamiliesReviewed')
+            {
+                $field.equals = 5
+            }
+            if ($definition.id -eq 'maintainer-signoff')
+            {
+                if ($field.name -in @('versions', 'publishedPrereleaseFamilies')) { $field.minimumItems = 5 }
+                if ($field.name -eq 'publishedPrereleaseTags') { $field.equals = 5 }
+            }
+        }
+    }
 }
 
 $gateMatches = @($contract.gates | Where-Object {

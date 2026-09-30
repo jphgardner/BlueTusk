@@ -1,0 +1,6 @@
+{
+  "Purpose": "Verify corrected server application identity and nonzero bounded database client sampling; no throughput or latency comparison is claimed.",
+  "Profile": "Fifteen one-second requested cells plus three-second sustained phase and actual child-process recovery; exploratory shared-host run with provider routing and Documents serialization changes.",
+  "OriginalBaseline": "Unchanged original baseline activity counters remain invalid; this diagnostic does not retroactively repair them.",
+  "Evidence": "All sixteen scenarios verified; database client peaks equal provider pool peaks (one or eight), never exceed configured capacity; ten dependency hashes match pre-run snapshots; scoped source inventory unchanged; owned schema count zero and labelled container/volume removed."
+}

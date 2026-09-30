@@ -1,0 +1,8 @@
+*
+!Dockerfile
+!nginx.conf
+!dist/
+!dist/website/
+!dist/website/browser/
+!dist/website/browser/**
+

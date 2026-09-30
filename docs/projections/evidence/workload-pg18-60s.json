@@ -1,0 +1,44 @@
+{
+  "postgresql": "18.6",
+  "elapsedSeconds": 60.0369434,
+  "scope": "one bounded serial producer: real SQL/business\u002Boutbox commit, real pgoutput projection, transactional inbox, owned Live refresh every32commits; not a production capacity claim",
+  "businessTransactions": 1149,
+  "sourceDeliveries": 1180,
+  "transactionsPerSecond": 19.138216153755756,
+  "leaseRecoveries": 49,
+  "duplicateAppends": 31,
+  "liveMessages": 36,
+  "endToEnd": {
+    "p50Milliseconds": 28.3681,
+    "p95Milliseconds": 116.0496,
+    "p99Milliseconds": 264.9328,
+    "maximumMilliseconds": 699.0965
+  },
+  "businessAndOutboxCommit": {
+    "p50Milliseconds": 8.0886,
+    "p95Milliseconds": 33.2183,
+    "p99Milliseconds": 73.3633,
+    "maximumMilliseconds": 257.2215
+  },
+  "walAndProjection": {
+    "p50Milliseconds": 12.3259,
+    "p95Milliseconds": 49.6377,
+    "p99Milliseconds": 133.9282,
+    "maximumMilliseconds": 468.2495
+  },
+  "transactionalInbox": {
+    "p50Milliseconds": 7.0956,
+    "p95Milliseconds": 31.154,
+    "p99Milliseconds": 67.1571,
+    "maximumMilliseconds": 213.764
+  },
+  "processAllocatedBytes": 114139560,
+  "maximumWorkingSetBytes": 106852352,
+  "processCpuMilliseconds": 18625,
+  "gen0Collections": 8,
+  "gen1Collections": 3,
+  "gen2Collections": 1,
+  "processReplayCommittedMeasurements": 1149,
+  "processProjectionCommitMeasurements": 1180,
+  "invariants": "exact inbox count/sum/contiguous checkpoints; exact published aggregate/document/revision; bounded outstanding work; stale leases rejected; duplicate retries suppressed"
+}

@@ -1,0 +1,87 @@
+fullnameOverride: traefik
+
+image:
+  tag: v3.7.12
+  digest: sha256:9c2a54d87f76f5c2f5f2682c68394af92fb12c0a2686798d6462a3f84bd78eaf
+versionOverride: v3.7.12
+
+deployment:
+  enabled: true
+  kind: Deployment
+  replicas: 3
+  revisionHistoryLimit: 3
+  terminationGracePeriodSeconds: 60
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+service:
+  enabled: false
+
+ingressClass:
+  enabled: true
+  isDefaultClass: false
+  name: traefik
+
+gateway:
+  enabled: false
+
+gatewayClass:
+  enabled: false
+
+providers:
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: false
+    allowExternalNameServices: false
+    allowEmptyServices: false
+  kubernetesIngress:
+    enabled: true
+    ingressClass: traefik
+    allowExternalNameServices: false
+    allowEmptyServices: false
+  kubernetesGateway:
+    enabled: false
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+api:
+  dashboard: false
+
+log:
+  format: json
+  level: INFO
+
+accessLog:
+  enabled: true
+  format: json
+  bufferingSize: 100
+
+metrics:
+  prometheus:
+    enabled: true
+
+ports:
+  web:
+    port: 8000
+  websecure:
+    port: 8443
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: traefik

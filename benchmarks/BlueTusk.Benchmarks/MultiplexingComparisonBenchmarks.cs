@@ -27,6 +27,7 @@ public class MultiplexingComparisonBenchmarks : IAsyncDisposable
     private NpgsqlCommand[] _npgsqlCommands = null!;
     private NpgsqlCommand[] _npgsqlPooledCommands = null!;
     private Task<int>[] _blueTuskReusedTasks = null!;
+    private Task<int>[] _npgsqlReusedTasks = null!;
     private int _disposed;
 
     [GlobalSetup]
@@ -70,6 +71,7 @@ public class MultiplexingComparisonBenchmarks : IAsyncDisposable
         _npgsqlCommands = new NpgsqlCommand[BurstSize];
         _npgsqlPooledCommands = new NpgsqlCommand[BurstSize];
         _blueTuskReusedTasks = new Task<int>[BurstSize];
+        _npgsqlReusedTasks = new Task<int>[BurstSize];
         for (var index = 0; index < BurstSize; index++)
         {
             var blueTuskCommand = _blueTusk.CreateCommand("SELECT $1::int4");
@@ -93,14 +95,23 @@ public class MultiplexingComparisonBenchmarks : IAsyncDisposable
             _npgsqlPooledCommands[index] = npgsqlPooledCommand;
         }
 
-        _ = await BlueTuskConcurrentScalarBurstAsync();
-        _ = await BlueTuskPooledConcurrentScalarBurstAsync();
-        _ = await NpgsqlConcurrentScalarBurstAsync();
-        _ = await NpgsqlPooledConcurrentScalarBurstAsync();
-        _ = await BlueTuskReusedScalarBurstAsync();
-        _ = await BlueTuskPooledReusedScalarBurstAsync();
-        _ = await NpgsqlReusedScalarBurstAsync();
-        _ = await NpgsqlPooledReusedScalarBurstAsync();
+        VerifyBurstResult(await BlueTuskConcurrentScalarBurstAsync());
+        VerifyBurstResult(await BlueTuskPooledConcurrentScalarBurstAsync());
+        VerifyBurstResult(await NpgsqlConcurrentScalarBurstAsync());
+        VerifyBurstResult(await NpgsqlPooledConcurrentScalarBurstAsync());
+        VerifyBurstResult(await BlueTuskReusedScalarBurstAsync());
+        VerifyBurstResult(await BlueTuskPooledReusedScalarBurstAsync());
+        VerifyBurstResult(await NpgsqlReusedScalarBurstAsync());
+        VerifyBurstResult(await NpgsqlPooledReusedScalarBurstAsync());
+    }
+
+    private static void VerifyBurstResult(int actual)
+    {
+        const int expected = BurstSize * (BurstSize - 1) / 2;
+        if (actual != expected)
+        {
+            throw new InvalidOperationException($"Scalar burst returned {actual}; expected {expected}.");
+        }
     }
 
     [GlobalCleanup]
@@ -180,7 +191,7 @@ public class MultiplexingComparisonBenchmarks : IAsyncDisposable
     [BenchmarkCategory("ReusedMultiplexedScalar")]
     public async Task<int> NpgsqlReusedScalarBurstAsync()
     {
-        var tasks = new Task<int>[BurstSize];
+        var tasks = _npgsqlReusedTasks;
         for (var index = 0; index < tasks.Length; index++)
         {
             tasks[index] = ExecuteNpgsqlScalarAsync(_npgsqlCommands[index]);

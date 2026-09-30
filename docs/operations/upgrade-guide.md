@@ -34,9 +34,12 @@ EF Core and extension packages must use compatible Provider-family versions.
 Do not mix an arbitrary set of locally built packages because they share a
 similar version string.
 
-The application RC uses exact `1.0.0-rc.1` versions across all six families.
-Do not mix RC and stable family packages, and do not treat an RC deployment as
-stable migration or pilot evidence.
+The current public package RC uses exact `1.1.0-rc.1` versions across all six
+families and three npm clients. Do not mix RC and stable family packages, and
+do not treat an RC deployment as stable migration or pilot evidence. Current
+package-consumer application source and image workflows pin `1.1.0-rc.1`.
+Historical `1.0.0-rc.1` application observations remain immutable records,
+not a version recommendation or reusable evidence for a new deployment.
 
 ## Provider upgrade
 

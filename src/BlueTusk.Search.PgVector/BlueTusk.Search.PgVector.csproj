@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Search</BlueTuskProductFamily>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>pgvector storage and cosine retrieval adapter for BlueTusk Search.</Description>
+    <PackageTags>postgresql;search;pgvector;hybrid;cosine</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Search.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Search\BlueTusk.Search.csproj" />
+  </ItemGroup>
+</Project>

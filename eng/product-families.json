@@ -60,6 +60,7 @@
         "src/BlueTusk.Transport/BlueTusk.Transport.csproj",
         "src/BlueTusk.TypeSystem/BlueTusk.TypeSystem.csproj",
         "templates/BlueTusk.Extension/BlueTusk.Templates.csproj",
+        "templates/BlueTusk.Production/BlueTusk.Production.Templates.csproj",
         "tooling/BlueTusk.Tool/BlueTusk.Tool.csproj"
       ]
     },
@@ -153,11 +154,14 @@
         "src/BlueTusk.Sync/BlueTusk.Sync.csproj",
         "src/BlueTusk.Sync.Aspire/BlueTusk.Sync.Aspire.csproj",
         "src/BlueTusk.Sync.DependencyInjection/BlueTusk.Sync.DependencyInjection.csproj",
+        "src/BlueTusk.Sync.Kafka/BlueTusk.Sync.Kafka.csproj",
         "src/BlueTusk.Sync.Nats/BlueTusk.Sync.Nats.csproj",
         "src/BlueTusk.Sync.OpenSearch/BlueTusk.Sync.OpenSearch.csproj",
         "src/BlueTusk.Sync.PostgreSql/BlueTusk.Sync.PostgreSql.csproj",
         "src/BlueTusk.Sync.Redis/BlueTusk.Sync.Redis.csproj",
-        "src/BlueTusk.Sync.Testing/BlueTusk.Sync.Testing.csproj"
+        "src/BlueTusk.Sync.S3/BlueTusk.Sync.S3.csproj",
+        "src/BlueTusk.Sync.Testing/BlueTusk.Sync.Testing.csproj",
+        "src/BlueTusk.Sync.Webhooks/BlueTusk.Sync.Webhooks.csproj"
       ]
     },
     "Live": {
@@ -180,6 +184,12 @@
             ]
           },
           {
+            "workflowFile": "live-control-plane-release-endurance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
             "workflowFile": "v1-candidate-readiness.yml",
             "allowedEvents": [
               "workflow_dispatch"
@@ -194,7 +204,9 @@
       "npmPackages": [
         "clients/live",
         "clients/live-angular",
-        "clients/live-react"
+        "clients/live-react",
+        "clients/live-svelte",
+        "clients/live-vue"
       ],
       "packages": [
         "src/BlueTusk.Live/BlueTusk.Live.csproj",
@@ -228,6 +240,12 @@
             ]
           },
           {
+            "workflowFile": "live-control-plane-release-endurance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
             "workflowFile": "v1-candidate-readiness.yml",
             "allowedEvents": [
               "workflow_dispatch"
@@ -243,6 +261,7 @@
       ],
       "packages": [
         "src/BlueTusk.ControlPlane/BlueTusk.ControlPlane.csproj",
+        "src/BlueTusk.ControlPlane.Kubernetes/BlueTusk.ControlPlane.Kubernetes.csproj",
         "src/BlueTusk.Dashboard/BlueTusk.Dashboard.csproj"
       ]
     },
@@ -288,6 +307,446 @@
       "packages": [
         "src/BlueTusk.ContinuousGraph.ControlPlane/BlueTusk.ContinuousGraph.ControlPlane.csproj",
         "src/BlueTusk.ContinuousGraph/BlueTusk.ContinuousGraph.csproj"
+      ]
+    },
+    "Events": {
+      "versionFile": "eng/versions/Events.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "events",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "Provider",
+        "Streams"
+      ],
+      "packages": [
+        "src/BlueTusk.Events.EntityFrameworkCore/BlueTusk.Events.EntityFrameworkCore.csproj",
+        "src/BlueTusk.Events.Streams/BlueTusk.Events.Streams.csproj",
+        "src/BlueTusk.Events/BlueTusk.Events.csproj"
+      ]
+    },
+    "Jobs": {
+      "versionFile": "eng/versions/Jobs.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "jobs",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "Provider"
+      ],
+      "packages": [
+        "src/BlueTusk.Jobs.DependencyInjection/BlueTusk.Jobs.DependencyInjection.csproj",
+        "src/BlueTusk.Jobs/BlueTusk.Jobs.csproj"
+      ]
+    },
+    "Documents": {
+      "versionFile": "eng/versions/Documents.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "documents",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "Live",
+        "Provider",
+        "Streams"
+      ],
+      "packages": [
+        "src/BlueTusk.Documents.AspNetCore/BlueTusk.Documents.AspNetCore.csproj",
+        "src/BlueTusk.Documents.Live/BlueTusk.Documents.Live.csproj",
+        "src/BlueTusk.Documents.Streams/BlueTusk.Documents.Streams.csproj",
+        "src/BlueTusk.Documents/BlueTusk.Documents.csproj"
+      ]
+    },
+    "Schema": {
+      "versionFile": "eng/versions/Schema.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "schema",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "Provider"
+      ],
+      "packages": [
+        "src/BlueTusk.Schema/BlueTusk.Schema.csproj",
+        "tooling/BlueTusk.Schema.Tool/BlueTusk.Schema.Tool.csproj"
+      ]
+    },
+    "Projections": {
+      "versionFile": "eng/versions/Projections.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "projections",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "Events",
+        "Live",
+        "Provider",
+        "Streams"
+      ],
+      "packages": [
+        "src/BlueTusk.Projections.Live/BlueTusk.Projections.Live.csproj",
+        "src/BlueTusk.Projections/BlueTusk.Projections.csproj"
+      ]
+    },
+    "Search": {
+      "versionFile": "eng/versions/Search.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "search",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "Jobs",
+        "Provider"
+      ],
+      "packages": [
+        "src/BlueTusk.Search.AspNetCore/BlueTusk.Search.AspNetCore.csproj",
+        "src/BlueTusk.Search.Jobs/BlueTusk.Search.Jobs.csproj",
+        "src/BlueTusk.Search.OpenSearch/BlueTusk.Search.OpenSearch.csproj",
+        "src/BlueTusk.Search.PgVector/BlueTusk.Search.PgVector.csproj",
+        "src/BlueTusk.Search/BlueTusk.Search.csproj"
+      ]
+    },
+    "Sql": {
+      "versionFile": "eng/versions/Sql.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "sql",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "Provider",
+        "Schema"
+      ],
+      "packages": [
+        "src/BlueTusk.Sql.SourceGeneration/BlueTusk.Sql.SourceGeneration.csproj",
+        "src/BlueTusk.Sql/BlueTusk.Sql.csproj",
+        "tooling/BlueTusk.Sql.Tool/BlueTusk.Sql.Tool.csproj"
+      ]
+    },
+    "Studio": {
+      "versionFile": "eng/versions/Studio.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "studio",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "ControlPlane",
+        "Events",
+        "Provider",
+        "Schema",
+        "Sql"
+      ],
+      "packages": [
+        "src/BlueTusk.Studio.ControlPlane/BlueTusk.Studio.ControlPlane.csproj",
+        "src/BlueTusk.Studio.Events/BlueTusk.Studio.Events.csproj",
+        "src/BlueTusk.Studio/BlueTusk.Studio.csproj",
+        "tooling/BlueTusk.Studio.Tool/BlueTusk.Studio.Tool.csproj"
+      ]
+    },
+    "Edge": {
+      "versionFile": "eng/versions/Edge.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "edge",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "Documents",
+        "Provider",
+        "Search"
+      ],
+      "packages": [
+        "src/BlueTusk.Edge.AspNetCore/BlueTusk.Edge.AspNetCore.csproj",
+        "src/BlueTusk.Edge.Http/BlueTusk.Edge.Http.csproj",
+        "src/BlueTusk.Edge.Server/BlueTusk.Edge.Server.csproj",
+        "src/BlueTusk.Edge.Sqlite/BlueTusk.Edge.Sqlite.csproj",
+        "src/BlueTusk.Edge/BlueTusk.Edge.csproj"
+      ],
+      "npmPackages": [
+        "clients/edge"
+      ]
+    },
+    "Workflows": {
+      "versionFile": "eng/versions/Workflows.props",
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "workflows",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "security.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "ecosystem-build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
+      "releaseDependencies": [
+        "Jobs",
+        "Provider"
+      ],
+      "packages": [
+        "src/BlueTusk.Workflows.DependencyInjection/BlueTusk.Workflows.DependencyInjection.csproj",
+        "src/BlueTusk.Workflows/BlueTusk.Workflows.csproj"
       ]
     }
   }

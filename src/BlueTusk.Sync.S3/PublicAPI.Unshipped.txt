@@ -1,0 +1,44 @@
+#nullable enable
+BlueTusk.Sync.S3.S3SyncConfigurationException
+BlueTusk.Sync.S3.S3SyncConfigurationException.S3SyncConfigurationException(string! message) -> void
+BlueTusk.Sync.S3.S3SyncDeliveryException
+BlueTusk.Sync.S3.S3SyncDeliveryException.S3SyncDeliveryException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.S3.S3SyncDestination
+BlueTusk.Sync.S3.S3SyncDestination.ApplySnapshotBatchAsync(BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.S3.S3SyncDestination.ApplyTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncApplyResult!>
+BlueTusk.Sync.S3.S3SyncDestination.Capabilities.get -> BlueTusk.Sync.SyncDestinationCapabilities
+BlueTusk.Sync.S3.S3SyncDestination.CompleteSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotComplete! complete, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.S3.S3SyncDestination.Name.get -> string!
+BlueTusk.Sync.S3.S3SyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
+BlueTusk.Sync.S3.S3SyncDestination.ReplayTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, string! operationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineReplayApplyResult!>
+BlueTusk.Sync.S3.S3SyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.S3.S3SyncDestination.S3SyncDestination(BlueTusk.Sync.S3.S3SyncOptions! options) -> void
+BlueTusk.Sync.S3.S3SyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.S3.S3SyncException
+BlueTusk.Sync.S3.S3SyncException.S3SyncException(string! message) -> void
+BlueTusk.Sync.S3.S3SyncException.S3SyncException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.S3.S3SyncObjectConflictException
+BlueTusk.Sync.S3.S3SyncObjectConflictException.S3SyncObjectConflictException(string! message) -> void
+BlueTusk.Sync.S3.S3SyncOptions
+BlueTusk.Sync.S3.S3SyncOptions.<Clone>$() -> BlueTusk.Sync.S3.S3SyncOptions!
+BlueTusk.Sync.S3.S3SyncOptions.BucketName.get -> string!
+BlueTusk.Sync.S3.S3SyncOptions.BucketName.init -> void
+BlueTusk.Sync.S3.S3SyncOptions.Client.get -> Amazon.S3.IAmazonS3!
+BlueTusk.Sync.S3.S3SyncOptions.Client.init -> void
+BlueTusk.Sync.S3.S3SyncOptions.Equals(BlueTusk.Sync.S3.S3SyncOptions? other) -> bool
+BlueTusk.Sync.S3.S3SyncOptions.KmsKeyId.get -> string?
+BlueTusk.Sync.S3.S3SyncOptions.KmsKeyId.init -> void
+BlueTusk.Sync.S3.S3SyncOptions.MaxMutationCount.get -> int
+BlueTusk.Sync.S3.S3SyncOptions.MaxMutationCount.init -> void
+BlueTusk.Sync.S3.S3SyncOptions.MaxParquetBytes.get -> int
+BlueTusk.Sync.S3.S3SyncOptions.MaxParquetBytes.init -> void
+BlueTusk.Sync.S3.S3SyncOptions.Prefix.get -> string!
+BlueTusk.Sync.S3.S3SyncOptions.Prefix.init -> void
+BlueTusk.Sync.S3.S3SyncOptions.S3SyncOptions() -> void
+BlueTusk.Sync.S3.S3SyncOptions.ServerSideEncryption.get -> Amazon.S3.ServerSideEncryptionMethod!
+BlueTusk.Sync.S3.S3SyncOptions.ServerSideEncryption.init -> void
+override BlueTusk.Sync.S3.S3SyncOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.S3.S3SyncOptions.GetHashCode() -> int
+override BlueTusk.Sync.S3.S3SyncOptions.ToString() -> string!
+static BlueTusk.Sync.S3.S3SyncOptions.operator !=(BlueTusk.Sync.S3.S3SyncOptions? left, BlueTusk.Sync.S3.S3SyncOptions? right) -> bool
+static BlueTusk.Sync.S3.S3SyncOptions.operator ==(BlueTusk.Sync.S3.S3SyncOptions? left, BlueTusk.Sync.S3.S3SyncOptions? right) -> bool

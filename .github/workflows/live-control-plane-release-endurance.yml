@@ -1,0 +1,85 @@
+name: Live and Control Plane 24-hour release endurance
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-LIVE-CONTROL-PLANE-24-HOUR-ENDURANCE to start the release gate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-control-plane-24-hour-release-endurance
+  cancel-in-progress: false
+
+jobs:
+  endurance:
+    name: Live churn and Control Plane fleet endurance
+    if: inputs.confirmation == 'RUN-LIVE-CONTROL-PLANE-24-HOUR-ENDURANCE'
+    runs-on: [self-hosted, linux, x64, bluetusk-endurance]
+    timeout-minutes: 1530
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@1e60f620b9541d5c243b7c465e4c271cb43572c8 # v6
+        with:
+          node-version: 24.13.0
+          cache: npm
+
+      - name: Build exact Live and Control Plane candidate provenance
+        shell: pwsh
+        run: |
+          ./eng/pack-product-family.ps1 `
+            -Family Live `
+            -Prerelease `
+            -VersionOverride '1.2.0-rc.1' `
+            -PrereleaseTrainPath eng/prerelease-train.json `
+            -Output 'artifacts/test-results/live-control-plane-endurance/candidate-packages'
+          ./eng/pack-product-family.ps1 `
+            -Family ControlPlane `
+            -Prerelease `
+            -VersionOverride '1.2.0-rc.1' `
+            -PrereleaseTrainPath eng/prerelease-train.json `
+            -Output 'artifacts/test-results/live-control-plane-endurance/candidate-packages'
+          dotnet restore BlueTusk.slnx --locked-mode
+          ./eng/generate-sbom.ps1 `
+            -PackageDirectory 'artifacts/test-results/live-control-plane-endurance/candidate-packages' `
+            -OutputDirectory 'artifacts/test-results/live-control-plane-endurance/candidate-sbom' `
+            -Commit '${{ github.sha }}' `
+            -NoRestore
+
+      - name: Run 24-hour Live and Control Plane endurance
+        shell: pwsh
+        run: |
+          ./eng/run-live-control-plane-endurance.ps1 `
+            -Duration '1.00:00:00' `
+            -MinimumCycles 100000 `
+            -IntervalMilliseconds 250 `
+            -ReportPath 'artifacts/test-results/live-control-plane-endurance/report.json' `
+            -CandidateProvenancePath 'artifacts/test-results/live-control-plane-endurance/candidate-sbom/build-provenance.json' `
+            -Configuration Release
+
+      - name: Verify endurance evidence
+        shell: pwsh
+        run: |
+          ./eng/verify-live-control-plane-endurance-report.ps1 `
+            -ReportPath 'artifacts/test-results/live-control-plane-endurance/report.json' `
+            -RequiredDuration '1.00:00:00' `
+            -MinimumCycles 100000 `
+            -ExpectedCommit '${{ github.sha }}' `
+            -CandidateProvenancePath 'artifacts/test-results/live-control-plane-endurance/candidate-sbom/build-provenance.json'
+
+      - name: Upload endurance evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: live-control-plane-endurance-${{ github.run_id }}
+          path: artifacts/test-results/live-control-plane-endurance
+          if-no-files-found: error
+          retention-days: 90

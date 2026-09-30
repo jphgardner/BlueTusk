@@ -1,0 +1,198 @@
+{
+  "StartedAt": "2026-09-27T19:49:07.2320558+00:00",
+  "Profile": "soak",
+  "OperatingSystem": "Microsoft Windows 10.0.26200",
+  "Framework": ".NET 10.0.12",
+  "ProcessArchitecture": "X64",
+  "LogicalProcessors": 16,
+  "PostgreSqlVersion": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "SourceSha256": "F618F7ADAD158AB76B64E8311690C268239D8BEC274703E60ECFBD8478DA8F44",
+  "MeasurementLimitations": "Local bounded harness with instrumentation/collector overhead. WAL and pg_stat_database counters are cluster/database scoped and may include concurrent work; snapshots may lag. RSS and waits are sampled every 100 ms. Durable latency includes backlog enqueue time. No production qualification or comparative performance leadership is established.",
+  "Cases": [
+    {
+      "Configuration": {
+        "Name": "jobs-endurance",
+        "Product": "Jobs",
+        "Count": 200000,
+        "Tenants": 4,
+        "ConcurrencyPerTenant": 4,
+        "PaddingBytes": 1024,
+        "RetainedRows": 10000,
+        "HandlerDelayMilliseconds": 1,
+        "PoolSize": 64,
+        "DurationSeconds": 30,
+        "AdmissionWindow": 256,
+        "HotTenantWeight": 4
+      },
+      "Produced": 7371,
+      "Completed": 7371,
+      "DurableEffects": 7371,
+      "ActualPayloadBytes": 1102,
+      "EnqueueSeconds": 30.0080994,
+      "DrainSeconds": 30.7542744,
+      "CompletedPerDrainSecond": 239.67400121785997,
+      "DurableLatencyMilliseconds": {
+        "Minimum": 10.317,
+        "P50": 737.506,
+        "P95": 2407.123,
+        "P99": 2974.884,
+        "Maximum": 3432.343
+      },
+      "HandlerDurationMilliseconds": {
+        "Minimum": 4.2609,
+        "P50": 8.4734,
+        "P95": 21.6589,
+        "P99": 51.4606,
+        "Maximum": 99.7901
+      },
+      "Tenants": [
+        {
+          "Tenant": "tenant-0000",
+          "Completed": 4212,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 20.242,
+            "P50": 1176.406,
+            "P95": 2515.706,
+            "P99": 3166.473,
+            "Maximum": 3432.343
+          }
+        },
+        {
+          "Tenant": "tenant-0001",
+          "Completed": 1053,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 10.545,
+            "P50": 24.561,
+            "P95": 50.584,
+            "P99": 99.571,
+            "Maximum": 173.128
+          }
+        },
+        {
+          "Tenant": "tenant-0002",
+          "Completed": 1053,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 10.985,
+            "P50": 25.468,
+            "P95": 50.412,
+            "P99": 100.805,
+            "Maximum": 158.184
+          }
+        },
+        {
+          "Tenant": "tenant-0003",
+          "Completed": 1053,
+          "DurableLatencyMilliseconds": {
+            "Minimum": 10.317,
+            "P50": 24.888,
+            "P95": 49.768,
+            "P99": 102.695,
+            "Maximum": 152.029
+          }
+        }
+      ],
+      "Runtime": {
+        "AllocatedBytes": 474131552,
+        "Gen0Collections": 31,
+        "Gen1Collections": 5,
+        "Gen2Collections": 2,
+        "PeakWorkingSetBytes": 109461504,
+        "PeakManagedBytes": 24729960,
+        "PeakPoolTotal": 15,
+        "PeakPoolBusy": 11,
+        "PeakPoolWaiting": 0,
+        "PeakDatabaseClientBackends": 15,
+        "PeakDatabaseLockWaiters": 0,
+        "PeakDatabaseWaitingBackends": 14,
+        "FinalPool": {
+          "PoolingEnabled": true,
+          "MinimumSize": 0,
+          "MaximumSize": 64,
+          "Total": 15,
+          "Idle": 15,
+          "Busy": 0,
+          "Waiting": 0,
+          "Opened": 15,
+          "Reused": 35528,
+          "Discarded": 0
+        },
+        "Instruments": [
+          {
+            "Name": "bluetusk.jobs.claimed",
+            "Measurements": 9517,
+            "Sum": 7371,
+            "Maximum": 3
+          },
+          {
+            "Name": "bluetusk.jobs.handler.duration",
+            "Measurements": 7371,
+            "Sum": 77.9037099999997,
+            "Maximum": 0.1001199
+          },
+          {
+            "Name": "bluetusk.jobs.succeeded",
+            "Measurements": 7371,
+            "Sum": 7371,
+            "Maximum": 1
+          }
+        ]
+      },
+      "Before": {
+        "WalPosition": 833959120,
+        "Commits": 203253,
+        "Rollbacks": 3461,
+        "Inserts": 1070443,
+        "Updates": 171327,
+        "Deletes": 604140,
+        "Deadlocks": 0,
+        "BlocksRead": 2805,
+        "BlocksHit": 66402295,
+        "TempBytes": 0,
+        "RelationBytes": 3432448
+      },
+      "After": {
+        "WalPosition": 879211104,
+        "Commits": 273727,
+        "Rollbacks": 3461,
+        "Inserts": 1103358,
+        "Updates": 193399,
+        "Deletes": 604141,
+        "Deadlocks": 0,
+        "BlocksRead": 2814,
+        "BlocksHit": 88848633,
+        "TempBytes": 0,
+        "RelationBytes": 20332544
+      },
+      "ObservedClusterWalBytes": 45251984,
+      "RelationGrowthBytes": 16900096,
+      "PrunedTerminalRows": 17371,
+      "Verified": true
+    }
+  ],
+  "Faults": [
+    {
+      "Name": "process-death-after-effect-before-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 975.9487,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false
+    },
+    {
+      "Name": "workflow-process-death-before-result",
+      "Passed": true,
+      "RecoveryMilliseconds": 1177.8535,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false
+    },
+    {
+      "Name": "ambiguous-commit-lost-server-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 14.7282,
+      "Attempts": 0,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": true
+    }
+  ]
+}

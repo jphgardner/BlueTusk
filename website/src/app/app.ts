@@ -41,25 +41,25 @@ export class App {
     {
       label: 'Platform',
       href: '/platform',
-      description: 'The complete BlueTusk ecosystem and architecture.',
+      description: 'See how the BlueTusk products work together.',
       icon: 'hub',
     },
     {
       label: 'Provider',
       href: '/provider',
-      description: 'ADO.NET, pooling, COPY, notifications, and replication.',
+      description: 'Connect .NET applications directly to PostgreSQL.',
       icon: 'storage',
     },
     {
       label: 'EF Core',
       href: '/ef-core',
-      description: 'PostgreSQL-native queries, mappings, and migrations.',
+      description: 'Use PostgreSQL through familiar EF Core workflows.',
       icon: 'data_object',
     },
     {
       label: 'Real Time',
       href: '/real-time',
-      description: 'Streams, Sync, Live, relay, and control plane.',
+      description: 'Move changes, sync data, and update users live.',
       icon: 'stream',
     },
     {
@@ -71,26 +71,14 @@ export class App {
     {
       label: 'Graph',
       href: '/graph',
-      description: 'PostgreSQL 19 SQL/PGQ and Continuous Graph.',
+      description: 'Query relationships and keep results up to date.',
       icon: 'share',
-    },
-    {
-      label: 'Evidence',
-      href: '/evidence',
-      description: 'V1 compatibility, security, provenance, performance, and open gates.',
-      icon: 'verified_user',
     },
     {
       label: 'Documentation',
       href: '/documentation',
-      description: 'The complete source-synchronized V1 engineering handbook.',
+      description: 'Find tutorials, guides, and production help.',
       icon: 'menu_book',
-    },
-    {
-      label: 'Community',
-      href: '/community',
-      description: 'Contribute, report issues, and become a design partner.',
-      icon: 'groups',
     },
   ];
 
@@ -124,9 +112,7 @@ export class App {
         this.guideSearch.set(GUIDE_SEARCH);
         this.guideSearchUnavailable.set(false);
       })
-      .catch(() => {
-        this.guideSearchUnavailable.set(true);
-      });
+      .catch(() => this.guideSearchUnavailable.set(true));
     window.setTimeout(() => this.searchField?.nativeElement?.focus());
   }
 
@@ -156,8 +142,11 @@ export class App {
 
   @HostListener('document:keydown.escape')
   protected onEscape(): void {
-    if (this.searchOpen()) this.closeSearch();
-    else if (this.mobileNavOpen()) this.closeMobileNav();
+    if (this.searchOpen()) {
+      this.closeSearch();
+    } else if (this.mobileNavOpen()) {
+      this.closeMobileNav();
+    }
   }
 
   @HostListener('document:keydown', ['$event'])

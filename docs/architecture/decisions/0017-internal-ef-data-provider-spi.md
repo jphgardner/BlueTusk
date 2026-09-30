@@ -18,7 +18,7 @@ details before usability evidence exists.
 
 ## Decision
 
-Data owns three assembly-internal contracts in `BlueTusk.Data.Internal`:
+Data owns four assembly-internal contracts in `BlueTusk.Data.Internal`:
 
 - `IProviderServices` creates and validates provider connections and data
   sources and derives safe database-lifecycle settings;
@@ -26,12 +26,21 @@ Data owns three assembly-internal contracts in `BlueTusk.Data.Internal`:
   configuration, type and Data-owned capability snapshots, diagnostics, administration
   connections and catalogue reload; and
 - `IProviderDataSource` supplies source identity, configuration/type/diagnostic
-  snapshots, logical and administration connections, and pool clearing.
+  snapshots, logical and administration connections, and pool clearing; and
+- `IProviderUpdateResult` supplies a completed statement's DML row count, without
+  changing ADO.NET's public batch-total `RecordsAffected` property. The EF
+  consumer reads through statement completion before requesting the count.
 
 The contracts are exposed to the EF assembly only through
 `InternalsVisibleTo`. Concrete `BlueTuskConnection` and `BlueTuskDataSource`
 implement them explicitly, so no public API is added. EF's public
 `UseBlueTusk` overloads remain the only concrete-type boundary.
+
+`BlueTuskDataReader` explicitly implements the update-result contract. This lets
+ordinary tracked writes consume PostgreSQL's command-completion metadata rather
+than fabricate a returned constant row. For command-reader interceptors and
+custom update SQL generators, EF keeps its existing row-based result protocol;
+wrapping a reader must not silently lose the concurrency-checking information.
 
 An EF-created logical connection is owned by its context. A caller-supplied data
 source remains caller/container-owned. Administration connections are dedicated

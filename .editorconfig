@@ -26,3 +26,9 @@ indent_size = 2
 [*.md]
 trim_trailing_whitespace = false
 
+# Protobuf output can live in the project obj directory or an SDK artifacts path.
+# Keep the exception limited to these generated protocol files.
+[**/BlueTusk.Live.Grpc/**/Protos/BluetuskLive{,Grpc}.cs]
+generated_code = true
+dotnet_diagnostic.RS0016.severity = none
+dotnet_diagnostic.RS0041.severity = none

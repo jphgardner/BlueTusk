@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Jobs</BlueTuskProductFamily>
+    <Description>Bounded scoped readiness and typed hosting integration for BlueTusk Jobs.</Description>
+    <PackageTags>postgresql;jobs;dependency-injection;health-checks</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Jobs.props" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <ProjectReference Include="..\BlueTusk.Jobs\BlueTusk.Jobs.csproj" />
+  </ItemGroup>
+</Project>

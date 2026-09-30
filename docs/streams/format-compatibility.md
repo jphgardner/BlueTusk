@@ -25,6 +25,15 @@ the storage ceiling. An operator may delete confirmed-orphan artifacts only
 while that worker is stopped. BlueTusk never claims that a spool file can replace
 a checkpoint.
 
+The version 1 spool checksum remains CRC-32/IEEE, not CRC-32C. Its optimized
+implementation uses `System.IO.Hashing` 10.0.11 without changing stored bytes.
+Byte-for-byte compatibility tests cover small and large records, offset payloads,
+alternating segments, per-record checksum reset, and custom protectors. The
+same compatibility checks run with hardware intrinsics disabled to exercise
+the portable fallback. Disk flushing, completion, replay validation and
+acknowledgement order are unchanged. CRC is a corruption check, not encryption
+or authentication.
+
 Before increasing a version, add the new reader/writer or migration behavior,
 retain fixtures for every supported older version, update the registry, and add
 upgrade and future-version rejection tests. Removing a readable version is a

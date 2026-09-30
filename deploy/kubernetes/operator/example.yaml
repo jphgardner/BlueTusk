@@ -1,0 +1,38 @@
+apiVersion: controlplane.bluetusk.io/v1alpha1
+kind: BlueTuskDeployment
+metadata:
+  name: orders
+  namespace: production
+spec:
+  tenantId: commerce
+  provider: kubernetes
+  region: uk-south
+  deleteProtection: true
+  labels:
+    environment: production
+    owner: commerce-platform
+  workloads:
+    - kind: Streams
+      version: 1.2.0
+      resources:
+        replicas: 2
+        cpuMillicoresPerReplica: 500
+        memoryBytesPerReplica: 536870912
+        storageBytes: 10737418240
+      secretReferences:
+        - store: kubernetes
+          name: orders-database
+      settings:
+        durability: relay
+    - kind: Sync
+      version: 1.2.0
+      resources:
+        replicas: 2
+        cpuMillicoresPerReplica: 500
+        memoryBytesPerReplica: 536870912
+        storageBytes: 0
+      secretReferences:
+        - store: kubernetes
+          name: orders-destinations
+      settings:
+        pipeline: orders

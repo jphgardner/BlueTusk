@@ -7,10 +7,12 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
-if ($contract.schemaVersion -ne 1 -or $contract.release -ne '1.1.0')
+if ($contract.schemaVersion -ne 2 -or $contract.release -ne '1.2.0' -or
+    $contract.releaseTracksFile -cne 'eng/release-tracks.json')
 {
-    throw 'The performance-leadership contract must be schema 1 for release 1.1.0.'
+    throw 'The performance-leadership contract must be schema 2 for release 1.2.0 and bind the family release tracks.'
 }
+& (Join-Path $PSScriptRoot 'verify-release-track.ps1')
 
 $rules = $contract.comparisonRules
 if ($rules.sameRuntimeMaximumRatio -ne 0.98 -or
@@ -18,6 +20,9 @@ if ($rules.sameRuntimeMaximumRatio -ne 0.98 -or
     $rules.crossRuntimeMaximumCostRatio -ne 0.95 -or
     $rules.confidenceLevel -ne 0.95 -or
     $rules.statisticalTiesPass -ne $false -or
+    $rules.uniqueWorkloadMaximumRegressionRatio -ne 1.02 -or
+    $rules.primaryHotPathMaximumP95Ratio -ne 0.8 -or
+    $rules.primaryHotPathMaximumAllocationRatio -ne 0.8 -or
     $rules.trustedCdcMaximumFullRequeryRatio -ne 0.1 -or
     $rules.authoritativeDeltaMaximumFullRequeryRatio -ne 0.35)
 {
@@ -78,9 +83,15 @@ if ($contract.enduranceHours.Streams -ne 72 -or
     $contract.enduranceHours.Live -ne 24 -or
     $contract.enduranceHours.ControlPlane -ne 24 -or
     $contract.enduranceHours.ContinuousGraph -ne 24 -or
-    $contract.stablePublicationRequiresPostgreSql19Ga -ne $true)
+    $contract.graphStablePublicationRequiresQualifiedSqlPgqServer -ne $true)
 {
-    throw 'Endurance duration or the PostgreSQL 19 GA publication gate was weakened.'
+    throw 'Endurance duration or the qualified SQL/PGQ Graph publication gate was weakened.'
+}
+if (@($contract.workloads.Sync.destinations).Count -ne 7 -or
+    @(Compare-Object @('nats', 'redis', 'opensearch', 'postgresql', 'kafka', 's3', 'webhooks') `
+        @($contract.workloads.Sync.destinations) -SyncWindow 0).Count -ne 0)
+{
+    throw 'All seven 1.2 Sync destinations require performance coverage.'
 }
 
 $workflowPath = Join-Path (
@@ -88,7 +99,7 @@ $workflowPath = Join-Path (
 $workflow = Get-Content -LiteralPath $workflowPath -Raw
 if ($workflow -notmatch '(?m)^\s*workflow_dispatch\s*:' -or
     $workflow -match '(?m)^\s*(push|pull_request|schedule)\s*:' -or
-    $workflow -notmatch 'CAPTURE-1\.1-PERFORMANCE-EVIDENCE' -or
+    $workflow -notmatch 'CAPTURE-1\.2-PERFORMANCE-EVIDENCE' -or
     $workflow -notmatch '\[\"self-hosted\",\"windows\",\"x64\",\"bluetusk-benchmark\"\]' -or
     $workflow -notmatch '\[\"self-hosted\",\"linux\",\"x64\",\"bluetusk-benchmark\"\]' -or
     $workflow -notmatch 'run-v1-performance-gate\.ps1' -or
@@ -98,4 +109,4 @@ if ($workflow -notmatch '(?m)^\s*workflow_dispatch\s*:' -or
     throw 'The manual exact-SHA Windows/Linux evidence capture workflow is incomplete.'
 }
 
-Write-Output 'Verified the complete BlueTusk 1.1 performance-leadership contract.'
+Write-Output 'Verified the complete BlueTusk 1.2 performance-leadership contract.'

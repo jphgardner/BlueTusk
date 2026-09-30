@@ -1,37 +1,65 @@
 [CmdletBinding()]
-param()
+param(
+    [ValidateSet('Core', 'ContinuousGraphPreview')]
+    [string] $ReleaseTrack = 'Core',
+    [string] $OutputRoot,
+    [switch] $ValidateOnly
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
-$programme = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'postgresql19-programme.json') -Raw |
-    ConvertFrom-Json
-$current = @($programme.milestones | Where-Object {
-        $_.version -eq $programme.currentOfficialMilestone
-    })
-if ($current.Count -ne 1)
+$plan = & (Join-Path $PSScriptRoot 'get-application-postgresql-test-plan.ps1') -ReleaseTrack $ReleaseTrack
+if ($ValidateOnly) { $plan; return }
+
+$captureId = [Guid]::NewGuid().ToString('N')
+if ([string]::IsNullOrWhiteSpace($OutputRoot))
 {
-    throw "Expected one current PostgreSQL 19 milestone '$($programme.currentOfficialMilestone)'."
+    $OutputRoot = "artifacts/application-postgresql-$($ReleaseTrack.ToLowerInvariant())-$captureId"
 }
-$image = [string]$current[0].image
-if ($image -notmatch '^postgres:19beta3-alpine@sha256:[a-f0-9]{64}$')
+$outputPath = [IO.Path]::GetFullPath((Join-Path $repositoryRoot $OutputRoot))
+$artifactsRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts'))
+if (-not $outputPath.StartsWith($artifactsRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
+    (Test-Path -LiteralPath $outputPath))
 {
-    throw 'The application integration harness requires the programme-pinned PostgreSQL 19 Beta 3 image.'
+    throw 'Application test output must be a new directory beneath repository artifacts. Existing evidence is never overwritten.'
 }
-$containerName = "bluetusk-applications-test-$PID"
-$password = "bluetusk-test-$PID"
+$ancestor = $outputPath
+while (-not [string]::IsNullOrWhiteSpace($ancestor))
+{
+    if (Test-Path -LiteralPath $ancestor)
+    {
+        $item = Get-Item -LiteralPath $ancestor -Force
+        if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
+        { throw 'Application evidence output must not traverse a symbolic link or junction.' }
+    }
+    $ancestor = Split-Path $ancestor -Parent
+}
+$sourceCommit = (& git -C $repositoryRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or $sourceCommit -cnotmatch '^[0-9a-f]{40}$')
+{ throw 'Could not resolve the application test source commit.' }
+$sourceStatus = @(& git -C $repositoryRoot status --porcelain --untracked-files=normal)
+if ($LASTEXITCODE -ne 0) { throw 'Could not determine source cleanliness.' }
+$null = New-Item -ItemType Directory -Path $outputPath
+$containerName = "bluetusk-applications-test-$captureId"
+$password = "bluetusk-test-$captureId"
+$containerCreated = $false
+$previousConnection = $env:BLUETUSK_APPLICATION_TEST_CONNECTION
+$previousReset = $env:BLUETUSK_APPLICATION_TEST_ALLOW_RESET
+$startedAt = [DateTimeOffset]::UtcNow.ToString('O')
 try
 {
     $containerId = (& docker run --detach --name $containerName `
         --env "POSTGRES_PASSWORD=$password" `
         --env POSTGRES_DB=bluetusk_app_test `
         --publish 127.0.0.1::5432 `
-        $image).Trim()
+        $plan.image).Trim()
     if ($LASTEXITCODE -ne 0 -or $containerId -notmatch '^[0-9a-f]{64}$')
     {
         throw 'Could not start the pinned PostgreSQL application test container.'
     }
+    $containerCreated = $true
     $ready = $false
     foreach ($attempt in 1..30)
     {
@@ -41,7 +69,8 @@ try
     }
     if (-not $ready) { throw 'Pinned PostgreSQL application test container did not become ready.' }
     $portText = (& docker port $containerName 5432/tcp).Trim()
-    if ($portText -notmatch ':(\d+)$') { throw "Could not resolve test container port '$portText'." }
+    if ($LASTEXITCODE -ne 0 -or $portText -notmatch '^127\.0\.0\.1:(\d+)$')
+    { throw "Could not resolve the loopback test container port '$portText'." }
     $port = $Matches[1]
     $env:BLUETUSK_APPLICATION_TEST_CONNECTION = (
         "Host=127.0.0.1;Port=$port;Database=bluetusk_app_test;" +
@@ -50,12 +79,32 @@ try
     & dotnet test (
         Join-Path $repositoryRoot 'applications/tests/BlueTusk.Applications.ArchitectureTests/BlueTusk.Applications.ArchitectureTests.csproj') `
         --configuration Release `
-        --no-restore
+        --no-restore --filter $plan.filter `
+        --logger 'trx;LogFileName=tests.trx' --results-directory $outputPath
     if ($LASTEXITCODE -ne 0) { throw 'Application PostgreSQL integration tests failed.' }
+    $trxPath = Join-Path $outputPath 'tests.trx'
+    & (Join-Path $PSScriptRoot 'verify-application-postgresql-results.ps1') `
+        -TrxPath $trxPath -ReleaseTrack $ReleaseTrack
+    [ordered]@{
+        schemaVersion = 1
+        qualification = 'local-integration-only'
+        sourceCommit = $sourceCommit
+        sourceClean = $sourceStatus.Count -eq 0
+        releaseTrack = $ReleaseTrack
+        image = [string]$plan.image
+        milestone = [string]$plan.milestone
+        startedAt = $startedAt
+        completedAt = [DateTimeOffset]::UtcNow.ToString('O')
+        expectedTests = @($plan.expectedTests)
+        trxPath = 'tests.trx'
+        trxSha256 = (Get-FileHash -LiteralPath $trxPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        stableGraphQualification = $false
+    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $outputPath 'report.json') -Encoding utf8NoBOM
+    Write-Output "Retained $ReleaseTrack integration evidence in '$outputPath'; package provenance and release qualification are separate gates."
 }
 finally
 {
-    Remove-Item Env:BLUETUSK_APPLICATION_TEST_CONNECTION -ErrorAction SilentlyContinue
-    Remove-Item Env:BLUETUSK_APPLICATION_TEST_ALLOW_RESET -ErrorAction SilentlyContinue
-    & docker rm --force $containerName *> $null
+    $env:BLUETUSK_APPLICATION_TEST_CONNECTION = $previousConnection
+    $env:BLUETUSK_APPLICATION_TEST_ALLOW_RESET = $previousReset
+    if ($containerCreated) { & docker rm --force $containerName *> $null }
 }

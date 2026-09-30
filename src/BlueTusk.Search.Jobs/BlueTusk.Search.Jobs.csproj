@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Search</BlueTuskProductFamily>
+    <Description>Durable tenant-scoped versioned Search ingestion and embedding work over BlueTusk Jobs.</Description>
+    <PackageTags>postgresql;search;jobs;embeddings</PackageTags>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Search.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Search\BlueTusk.Search.csproj" />
+    <ProjectReference Include="..\BlueTusk.Jobs\BlueTusk.Jobs.csproj" />
+  </ItemGroup>
+</Project>

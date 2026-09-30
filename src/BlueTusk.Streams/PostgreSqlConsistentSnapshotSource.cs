@@ -178,6 +178,12 @@ public sealed class PostgreSqlConsistentSnapshotSource : IConsistentSnapshotSour
                 cancellationToken).ConfigureAwait(false);
             var system = await replication.IdentifySystemAsync(cancellationToken).ConfigureAwait(false);
             ValidateIdentity(system);
+            // An exported snapshot expires at the next command on this WAL sender. Capture the
+            // catalogue identity before creating the slot, then recheck only after snapshot import.
+            BlueTuskLogicalPublicationBinding? publicationBinding = _options.PublicationNames.Count == 1
+                ? await replication.ReadPublicationBindingAsync(_options.PublicationNames[0], null,
+                    cancellationToken).ConfigureAwait(false)
+                : null;
             var slot = await replication.CreateReplicationSlotAsync(
                 new BlueTuskLogicalReplicationSlotCreationOptions
                 {
@@ -202,7 +208,9 @@ public sealed class PostgreSqlConsistentSnapshotSource : IConsistentSnapshotSour
                 slot,
                 SnapshotEpoch.Create(_options.Source, slot.ConsistentPoint, _timeProvider),
                 _options,
-                _observerFactory);
+                _observerFactory,
+                system.Timeline,
+                publicationBinding);
             replication = null;
             return attempt;
         }
@@ -321,6 +329,9 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
     private readonly BlueTuskLogicalReplicationConnection _replication;
     private readonly BlueTuskReplicationSlotCreationResult _slot;
     private readonly PostgreSqlConsistentSnapshotOptions _options;
+    private readonly string[] _publicationNames;
+    private readonly uint _replicationTimeline;
+    private readonly BlueTuskLogicalPublicationBinding? _publicationBinding;
     private readonly Func<BlueTuskLogicalReplicationConnection, IChangeDeliveryObserver?>? _observerFactory;
     private readonly IReadOnlyList<ChangeTable> _tables;
     private int _snapshotStarted;
@@ -334,13 +345,20 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
         BlueTuskReplicationSlotCreationResult slot,
         SnapshotEpoch epoch,
         PostgreSqlConsistentSnapshotOptions options,
-        Func<BlueTuskLogicalReplicationConnection, IChangeDeliveryObserver?>? observerFactory)
+        Func<BlueTuskLogicalReplicationConnection, IChangeDeliveryObserver?>? observerFactory,
+        uint replicationTimeline,
+        BlueTuskLogicalPublicationBinding? publicationBinding)
     {
         _dataSource = dataSource;
         _replication = replication;
         _slot = slot;
         Epoch = epoch;
         _options = options;
+        // Use one immutable snapshot for both START_REPLICATION and delivery provenance.
+        // Mutating the caller's PublicationNames collection cannot change either side later.
+        _publicationNames = options.PublicationNames.ToArray();
+        _replicationTimeline = replicationTimeline;
+        _publicationBinding = publicationBinding;
         _observerFactory = observerFactory;
         _tables = Array.AsReadOnly(options.Tables.Select(table => table.Table).ToArray());
     }
@@ -389,6 +407,20 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
             }
 
             await completion.ConfigureAwait(false);
+            if (_publicationBinding is { } expected)
+            {
+                // Every exported snapshot consumer has finished before another WAL-sender command.
+                var actual = await _replication.ReadPublicationBindingAsync(_publicationNames[0],
+                    _options.Source.SlotName, cancellationToken).ConfigureAwait(false);
+                var system = await _replication.IdentifySystemAsync(cancellationToken).ConfigureAwait(false);
+                if (actual != expected || system.Timeline != _replicationTimeline ||
+                    system.SystemIdentifier != _options.Source.SystemIdentifier ||
+                    system.DatabaseName != _options.Source.DatabaseName)
+                {
+                    throw new SnapshotAttemptException(
+                        "The logical WAL sender changed publication, database, slot, or timeline before streaming.");
+                }
+            }
             Volatile.Write(ref _snapshotCompleted, 1);
         }
         finally
@@ -428,7 +460,7 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
                     new BlueTuskPgOutputReplicationOptions
                     {
                         SlotName = _options.Source.SlotName,
-                        PublicationNames = _options.PublicationNames,
+                        PublicationNames = _publicationNames,
                         StartPosition = Epoch.ConsistentPosition,
                         ProtocolVersion = stagePreparedTransactions ? 3 : 2,
                         Messages = true,
@@ -443,7 +475,12 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
                         }),
                 _options.Source,
                 _options.TransactionAssembly,
-                observer: observer);
+                spool: null,
+                observer: observer,
+                replicationPublicationNames: _publicationNames,
+                replicationTimeline: _replicationTimeline,
+                replicationDatabaseOid: _publicationBinding?.DatabaseOid,
+                replicationPublicationOid: _publicationBinding?.PublicationOid);
         }
         catch
         {

@@ -13,7 +13,7 @@
     "categoryLabel": "Getting started",
     "slug": "provider-overview",
     "source": "docs/ado-net/README.md",
-    "summary": "Build and run the native ADO.NET provider.",
+    "summary": "Connect a .NET application, run safe SQL, and choose the right command, transaction, batch, or bulk API.",
     "keywords": ["ado.net", "quickstart", "connection"],
     "order": 20
   },
@@ -103,9 +103,18 @@
     "categoryLabel": "Provider",
     "slug": "types",
     "source": "docs/types/README.md",
-    "summary": "Catalogue-driven PostgreSQL type mappings and extension points.",
+    "summary": "Read and write common, custom, array, JSON, temporal, and extension-defined PostgreSQL values from .NET.",
     "keywords": ["types", "arrays", "ranges", "json"],
     "order": 100
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "repack",
+    "source": "docs/ado-net/repack.md",
+    "summary": "Run and monitor PostgreSQL 19 native REPACK safely from .NET.",
+    "keywords": ["repack", "maintenance", "postgresql 19", "bloat"],
+    "order": 105
   },
   {
     "category": "provider",
@@ -121,7 +130,7 @@
     "categoryLabel": "Provider",
     "slug": "replication",
     "source": "docs/replication/README.md",
-    "summary": "Physical and logical replication, pgoutput, and WAL feedback.",
+    "summary": "Open a dedicated replication session, decode pgoutput, and acknowledge only durable transaction progress.",
     "keywords": ["logical", "physical", "wal", "pgoutput"],
     "order": 120
   },
@@ -130,7 +139,7 @@
     "categoryLabel": "EF Core",
     "slug": "overview",
     "source": "docs/ef-core/README.md",
-    "summary": "Queries, mappings, migrations, scaffolding, and PostgreSQL 19 graph.",
+    "summary": "Set up an EF Core context, query and save data, create migrations, and prepare the provider for production.",
     "keywords": ["linq", "migrations", "scaffolding", "mapping"],
     "order": 10
   },
@@ -141,14 +150,15 @@
     "source": "docs/ef-core/specification-tests.md",
     "summary": "Official relational specification coverage and native PostgreSQL gates.",
     "keywords": ["tests", "1987", "2111"],
-    "order": 20
+    "order": 20,
+    "listed": false
   },
   {
     "category": "real-time",
     "categoryLabel": "Real time",
     "slug": "platform",
     "source": "docs/realtime-platform/README.md",
-    "summary": "Correctness contract and independent release trains.",
+    "summary": "Choose Streams, Sync, Live, Continuous Graph, or Control Plane from the outcome your application needs.",
     "keywords": ["streams", "sync", "live", "contracts"],
     "order": 10
   },
@@ -157,7 +167,7 @@
     "categoryLabel": "Real time",
     "slug": "contracts",
     "source": "docs/realtime-platform/contracts.md",
-    "summary": "Shared delivery, checkpoint, and source identity contracts.",
+    "summary": "Understand when work is durable, when it may be replayed, and what each real-time product guarantees.",
     "keywords": ["contract", "delivery", "checkpoint"],
     "order": 20
   },
@@ -166,7 +176,7 @@
     "categoryLabel": "Real time",
     "slug": "streams",
     "source": "docs/streams/README.md",
-    "summary": "The implemented Streams kernel, transactions, failures, and performance.",
+    "summary": "Turn PostgreSQL changes into complete transactions with bounded storage, durable progress, and safe recovery.",
     "keywords": ["cdc", "stream", "transaction"],
     "order": 30
   },
@@ -211,6 +221,7 @@
     "categoryLabel": "Real time",
     "slug": "streams-endurance",
     "source": "docs/streams/release-endurance.md",
+    "listed": false,
     "summary": "The 72-hour endurance gate and evidence contract.",
     "keywords": ["72h", "endurance", "release"],
     "order": 80
@@ -220,7 +231,7 @@
     "categoryLabel": "Real time",
     "slug": "sync",
     "source": "docs/sync/README.md",
-    "summary": "Versioned destination synchronization, quarantine, reconciliation, and rebuilds.",
+    "summary": "Keep PostgreSQL, Redis, OpenSearch, NATS, Kafka, S3, or a webhook current from committed changes.",
     "keywords": ["redis", "nats", "opensearch", "destination"],
     "order": 90
   },
@@ -229,6 +240,7 @@
     "categoryLabel": "Real time",
     "slug": "sync-endurance",
     "source": "docs/sync/release-endurance.md",
+    "listed": false,
     "summary": "The 24-hour Sync release gate and evidence contract.",
     "keywords": ["24h", "endurance", "release"],
     "order": 100
@@ -238,7 +250,7 @@
     "categoryLabel": "Real time",
     "slug": "live",
     "source": "docs/live/README.md",
-    "summary": "Authorized live delivery, replay, subscriptions, transports, and browser clients.",
+    "summary": "Register one authorized query and keep browser or .NET clients updated with bounded, resumable changes.",
     "keywords": ["websocket", "sse", "replay", "security"],
     "order": 110
   },
@@ -247,7 +259,7 @@
     "categoryLabel": "Real time",
     "slug": "control-plane",
     "source": "docs/control-plane/README.md",
-    "summary": "Operational queries, dashboard boundaries, authorization, and audit.",
+    "summary": "Run the dashboard, inspect every product, drill into unhealthy resources, and authorize audited operations.",
     "keywords": ["dashboard", "operations", "audit"],
     "order": 120
   },
@@ -256,7 +268,7 @@
     "categoryLabel": "Real time",
     "slug": "continuous-graph",
     "source": "docs/continuous-graph/README.md",
-    "summary": "Checkpointed graph projections for fraud and network workloads.",
+    "summary": "Keep a bounded SQL/PGQ result current with incremental updates and authoritative repair.",
     "keywords": ["graph", "projection", "checkpoint"],
     "order": 130
   },
@@ -265,7 +277,7 @@
     "categoryLabel": "Extensions",
     "slug": "catalog",
     "source": "docs/extensions/README.md",
-    "summary": "Extension SDK, seven V1 extension families, and one upstream-preview adapter.",
+    "summary": "Choose and configure typed support for PostGIS, pgvector, TimescaleDB, citext, and other extensions.",
     "keywords": ["postgis", "pgvector", "timescaledb", "citext"],
     "order": 10
   },
@@ -274,7 +286,7 @@
     "categoryLabel": "Graph",
     "slug": "sql-pgq",
     "source": "docs/graph/README.md",
-    "summary": "PostgreSQL 19 SQL/PGQ, discovery, migrations, and typed EF queries.",
+    "summary": "Define a PostgreSQL property graph, run a safe GRAPH_TABLE query, and inspect or map it from .NET.",
     "keywords": ["sql/pgq", "property graph", "postgresql 19"],
     "order": 10
   },
@@ -292,7 +304,7 @@
     "categoryLabel": "Operations",
     "slug": "security",
     "source": "docs/security.md",
-    "summary": "Threat model, closed findings, application boundaries, and checks.",
+    "summary": "Apply secure connection, identity, secret-handling, and diagnostics defaults before production.",
     "keywords": ["security", "threat", "secrets"],
     "order": 20
   },
@@ -301,6 +313,7 @@
     "categoryLabel": "Operations",
     "slug": "release-readiness",
     "source": "docs/release-readiness.md",
+    "listed": false,
     "summary": "Executable gates for provider, EF, extensions, artifacts, and documentation.",
     "keywords": ["release", "gates", "artifacts"],
     "order": 30
@@ -310,6 +323,7 @@
     "categoryLabel": "Operations",
     "slug": "api-compatibility",
     "source": "docs/api-compatibility.md",
+    "listed": false,
     "summary": "Public API baselines and compatibility expectations.",
     "keywords": ["api", "compatibility", "freeze"],
     "order": 40
@@ -319,6 +333,7 @@
     "categoryLabel": "Operations",
     "slug": "testing",
     "source": "docs/contributing/testing.md",
+    "listed": false,
     "summary": "Unit, live, topology, security, stress, and endurance test profiles.",
     "keywords": ["testing", "postgresql", "docker"],
     "order": 50
@@ -328,6 +343,7 @@
     "categoryLabel": "Operations",
     "slug": "repository-layout",
     "source": "docs/contributing/repository-layout.md",
+    "listed": false,
     "summary": "Repository projects and dependency boundaries.",
     "keywords": ["repository", "projects", "dependencies"],
     "order": 60
@@ -337,6 +353,7 @@
     "categoryLabel": "Operations",
     "slug": "roadmap",
     "source": "docs/roadmap.md",
+    "listed": false,
     "summary": "Provider, EF, graph, extension, real-time, and 1.0 milestones.",
     "keywords": ["roadmap", "milestone"],
     "order": 70
@@ -346,6 +363,7 @@
     "categoryLabel": "Operations",
     "slug": "contributing",
     "source": "CONTRIBUTING.md",
+    "listed": false,
     "summary": "Issue-first contribution flow, tests, compatibility, and secrets policy.",
     "keywords": ["contribute", "issues", "pull request"],
     "order": 80
@@ -355,6 +373,7 @@
     "categoryLabel": "Operations",
     "slug": "report-security",
     "source": "SECURITY.md",
+    "listed": false,
     "summary": "Report vulnerabilities privately through the repository hosting platform.",
     "keywords": ["vulnerability", "reporting"],
     "order": 90
@@ -364,6 +383,7 @@
     "categoryLabel": "Getting started",
     "slug": "handbook",
     "source": "docs/README.md",
+    "listed": false,
     "summary": "Navigate the complete BlueTusk V1 engineering handbook by workload, product family, architecture, operations, and release responsibility.",
     "keywords": ["documentation", "handbook", "navigation", "v1"],
     "order": 1
@@ -373,8 +393,8 @@
     "categoryLabel": "Getting started",
     "slug": "quickstart",
     "source": "docs/getting-started/quickstart.md",
-    "summary": "Build the repository, start PostgreSQL, run the provider, register dependency injection, and choose the right next layer.",
-    "keywords": ["quickstart", "install", "build", "sample", "docker"],
+    "summary": "Create a .NET console app, install BlueTusk, run a parameterized PostgreSQL query, and understand data-source ownership.",
+    "keywords": ["quickstart", "install", "query", "connection", "sample"],
     "order": 5
   },
   {
@@ -445,6 +465,7 @@
     "categoryLabel": "Operations",
     "slug": "npgsql-performance-comparison",
     "source": "docs/operations/npgsql-performance-comparison.md",
+    "listed": false,
     "summary": "Review the V1 BlueTusk versus Npgsql benchmark matrix, tail latency, allocation, saturated pooling evidence, methodology, and integrity hashes.",
     "keywords": ["npgsql", "comparison", "benchmark", "multiplexing", "pooling"],
     "order": 26
@@ -457,5 +478,33 @@
     "summary": "Upgrade product families, EF Core, extensions, PostgreSQL, formats, mappings, and rolling deployments with a recoverable plan.",
     "keywords": ["upgrade", "migration", "rollback", "format", "version"],
     "order": 35
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "install",
+    "source": "docs/getting-started/install.md",
+    "summary": "Choose the stable or RC channel, install the smallest NuGet/npm package set, pin exact versions, and verify the resolved dependency graph.",
+    "keywords": ["install", "nuget", "npm", "packages", "1.1.0-rc.1", "versions"],
+    "order": 2
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "release-1-1-rc1",
+    "source": "docs/releases/1.1.0-rc.1.md",
+    "listed": false,
+    "summary": "Review the immutable 1.1.0-rc.1 tags, workflow runs, 65 public packages, verification record, product changes, and stable-release boundary.",
+    "keywords": ["release", "rc", "1.1.0-rc.1", "nuget", "npm", "verification"],
+    "order": 3
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "production-checklist",
+    "source": "docs/operations/production-checklist.md",
+    "summary": "Take a BlueTusk application from package selection to a secure, bounded, observable, recoverable, and operator-owned production deployment.",
+    "keywords": ["production", "checklist", "deployment", "security", "slo", "rollback", "runbook"],
+    "order": 2
   }
 ]

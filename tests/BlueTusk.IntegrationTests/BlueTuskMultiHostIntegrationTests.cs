@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using Xunit.Sdk;
@@ -6,6 +8,39 @@ namespace BlueTusk.IntegrationTests;
 
 public sealed class BlueTuskMultiHostIntegrationTests
 {
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Pooled_routing_defers_real_startup_disconnect_and_explicit_clear_rechecks(bool asynchronous)
+    {
+        var settings = CreateSettings();
+        var configured = settings.HostEndpoints[0];
+        await using var failingEndpoint = new DisconnectingEndpoint();
+        settings.Host = $"127.0.0.1,{configured.Host}";
+        settings.Ports = $"{failingEndpoint.Port},{configured.Port}";
+        settings.Pooling = true;
+        settings.MinimumPoolSize = 0;
+        settings.MaximumPoolSize = 1;
+        settings.TargetSessionAttributes = BlueTuskTargetSessionAttributes.ReadWrite;
+        await using var source = BlueTuskDataSource.Create(settings.ConnectionString);
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        for (var checkout = 0; checkout < 12; checkout++)
+        {
+            await using var connection = asynchronous ? await source.OpenConnectionAsync(deadline.Token) : source.OpenConnection();
+            Assert.Equal(configured, connection.ConnectedEndpoint);
+            await using var command = new BlueTuskCommand("SELECT 42::int4", connection);
+            Assert.Equal(42, await command.ExecuteScalarAsync<int>(deadline.Token));
+        }
+        Assert.Equal(1, failingEndpoint.Accepted);
+        if (asynchronous) { await source.ClearPoolAsync(); } else { source.ClearPool(); }
+        await using (var connection = asynchronous ? await source.OpenConnectionAsync(deadline.Token) : source.OpenConnection())
+        {
+            Assert.Equal(configured, connection.ConnectedEndpoint);
+            Assert.Equal(2, failingEndpoint.Accepted);
+        }
+        Assert.Equal(0, source.GetPoolStatistics().Busy);
+    }
+
     [Theory]
     [InlineData(BlueTuskTargetSessionAttributes.Any)]
     [InlineData(BlueTuskTargetSessionAttributes.Primary)]
@@ -72,8 +107,9 @@ public sealed class BlueTuskMultiHostIntegrationTests
     {
         var settings = CreateSettings();
         var configured = settings.HostEndpoints[0];
-        settings.Host = "localhost,127.0.0.1";
-        settings.Ports = $"{configured.Port},{configured.Port}";
+        await using var forwarded = new ForwardingEndpoint(configured);
+        settings.Host = $"127.0.0.1,{configured.Host}";
+        settings.Ports = $"{forwarded.Port},{configured.Port}";
         settings.Pooling = true;
         settings.MinimumPoolSize = 1;
         settings.MaximumPoolSize = 1;
@@ -95,12 +131,12 @@ public sealed class BlueTuskMultiHostIntegrationTests
         await using (var second = await dataSource.OpenConnectionAsync(CancellationToken.None))
         {
             Assert.Equal(
-                ["127.0.0.1", "localhost"],
+                new[] { new BlueTuskHostEndpoint("127.0.0.1", forwarded.Port), configured }.OrderBy(endpoint => endpoint.Port),
                 new[]
                 {
-                    first.ConnectedEndpoint!.Value.Host,
-                    second.ConnectedEndpoint!.Value.Host,
-                }.Order(StringComparer.Ordinal));
+                    first.ConnectedEndpoint!.Value,
+                    second.ConnectedEndpoint!.Value,
+                }.OrderBy(endpoint => endpoint.Port));
             Assert.All(
                 dataSource.GetHostPoolStatistics().Values,
                 statistics => Assert.Equal(1, statistics.Busy));
@@ -111,6 +147,66 @@ public sealed class BlueTuskMultiHostIntegrationTests
             statistics => Assert.Equal(1, statistics.Idle));
         await dataSource.ClearPoolAsync();
         Assert.Equal(0, dataSource.GetPoolStatistics().Total);
+    }
+
+    private sealed class ForwardingEndpoint : IAsyncDisposable
+    {
+        private readonly TcpListener _listener = new(IPAddress.Loopback, 0);
+        private readonly CancellationTokenSource _stop = new();
+        private readonly Task _forwarding;
+        internal ForwardingEndpoint(BlueTuskHostEndpoint target)
+        { _listener.Start(); _forwarding = ForwardAsync(target); }
+        internal int Port => ((IPEndPoint)_listener.LocalEndpoint).Port;
+        private async Task ForwardAsync(BlueTuskHostEndpoint target)
+        {
+            try
+            {
+                using var downstream = await _listener.AcceptTcpClientAsync(_stop.Token);
+                using var upstream = new TcpClient();
+                await upstream.ConnectAsync(target.Host, target.Port, _stop.Token);
+                using var transfer = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token);
+                var request = downstream.GetStream().CopyToAsync(upstream.GetStream(), transfer.Token);
+                var response = upstream.GetStream().CopyToAsync(downstream.GetStream(), transfer.Token);
+                await Task.WhenAny(request, response);
+                await transfer.CancelAsync();
+                upstream.Dispose(); downstream.Dispose();
+                try { await Task.WhenAll(request, response); }
+                catch (Exception exception) when (exception is OperationCanceledException or IOException or SocketException or ObjectDisposedException) { }
+            }
+            catch (Exception exception) when (_stop.IsCancellationRequested &&
+                exception is OperationCanceledException or SocketException or ObjectDisposedException)
+            { }
+        }
+        public async ValueTask DisposeAsync()
+        { await _stop.CancelAsync(); _listener.Stop(); await _forwarding; _stop.Dispose(); }
+    }
+
+    private sealed class DisconnectingEndpoint : IAsyncDisposable
+    {
+        private readonly TcpListener _listener = new(IPAddress.Loopback, 0);
+        private readonly CancellationTokenSource _stop = new();
+        private readonly Task _accepting;
+        private int _accepted;
+        internal DisconnectingEndpoint() { _listener.Start(); _accepting = AcceptAsync(); }
+        internal int Port => ((IPEndPoint)_listener.LocalEndpoint).Port;
+        internal int Accepted => Volatile.Read(ref _accepted);
+        private async Task AcceptAsync()
+        {
+            try
+            {
+                while (true)
+                {
+                    using var client = await _listener.AcceptTcpClientAsync(_stop.Token);
+                    Interlocked.Increment(ref _accepted);
+                    // A real socket accepted and closed before startup completes.
+                }
+            }
+            catch (Exception exception) when (_stop.IsCancellationRequested &&
+                exception is OperationCanceledException or SocketException or ObjectDisposedException)
+            { }
+        }
+        public async ValueTask DisposeAsync()
+        { await _stop.CancelAsync(); _listener.Stop(); await _accepting; _stop.Dispose(); }
     }
 
     private static BlueTuskConnectionStringBuilder CreateSettings()

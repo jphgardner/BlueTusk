@@ -16,7 +16,10 @@ param(
 
     [string] $ExpectedPostgreSqlImage,
 
-    [string[]] $ExpectedDestinationImages = @()
+    [string[]] $ExpectedDestinationImages = @(),
+
+    [ValidateSet('Legacy', 'Core')]
+    [string] $ReleaseTrack = 'Legacy'
 )
 
 Set-StrictMode -Version Latest
@@ -31,9 +34,9 @@ $fullReportPath = (Resolve-Path -LiteralPath $ReportPath).Path
 $report = Get-Content -LiteralPath $fullReportPath -Raw | ConvertFrom-Json
 $failures = [Collections.Generic.List[string]]::new()
 
-if ($report.formatVersion -ne 3)
+if ($report.formatVersion -ne 4)
 {
-    $failures.Add("Expected report format 3; found '$($report.formatVersion)'.")
+    $failures.Add("Expected report format 4; found '$($report.formatVersion)'.")
 }
 
 if ($report.completed -ne $true)
@@ -72,9 +75,13 @@ if ($RequiredDuration -ge $releaseDuration)
     {
         $failures.Add('The release report has no candidate-package provenance.')
     }
-    if ([string]$report.postgresqlImage -notmatch
-        '^postgres:19[^@\s]+@sha256:[0-9a-f]{64}$' -or
-        @($report.destinationImages).Count -ne 3 -or
+    $imagePattern = if ($ReleaseTrack -eq 'Core')
+    {
+        '^postgres:(?:15|16|17|18)(?:\.\d+)?-alpine@sha256:[0-9a-f]{64}$'
+    }
+    else { '^postgres:19[^@\s]+@sha256:[0-9a-f]{64}$' }
+    if ([string]$report.postgresqlImage -notmatch $imagePattern -or
+        @($report.destinationImages).Count -ne 5 -or
         @($report.destinationImages | Where-Object {
             [string]$_ -notmatch '@sha256:[0-9a-f]{64}$'
         }).Count -ne 0)
@@ -150,9 +157,21 @@ if ([long]$report.projectRuns -ne $expectedProjectRuns)
         "$($report.cycles) cycle(s) x $($projects.Count) project(s).")
 }
 
-if ($projects.Count -ne 6)
+$expectedProjects = @(
+    'tests/BlueTusk.Sync.Tests/BlueTusk.Sync.Tests.csproj',
+    'tests/BlueTusk.Sync.DependencyInjection.Tests/BlueTusk.Sync.DependencyInjection.Tests.csproj',
+    'tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj',
+    'tests/BlueTusk.Sync.Redis.Tests/BlueTusk.Sync.Redis.Tests.csproj',
+    'tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj',
+    'tests/BlueTusk.Sync.Kafka.Tests/BlueTusk.Sync.Kafka.Tests.csproj',
+    'tests/BlueTusk.Sync.S3.Tests/BlueTusk.Sync.S3.Tests.csproj',
+    'tests/BlueTusk.Sync.Webhooks.Tests/BlueTusk.Sync.Webhooks.Tests.csproj',
+    'tests/BlueTusk.Sync.Testing.Tests/BlueTusk.Sync.Testing.Tests.csproj'
+)
+if ($projects.Count -ne 9 -or
+    (Compare-Object @($projects | Sort-Object) @($expectedProjects | Sort-Object)))
 {
-    $failures.Add("Expected six Sync endurance projects; found $($projects.Count).")
+    $failures.Add('Expected exactly the nine registered Sync endurance projects; duplicates and substitute projects are not accepted.')
 }
 
 if (-not [string]::IsNullOrWhiteSpace($ExpectedCommit) -and
@@ -223,6 +242,6 @@ if ($failures.Count -gt 0)
 }
 
 Write-Output (
-    "Verified Sync endurance report format 3 for commit $($report.sourceCommit): " +
+    "Verified Sync endurance report format 4 for commit $($report.sourceCommit): " +
     "$($report.cycles) cycles, $($report.projectRuns) project runs, " +
     "duration $actualDuration, $($report.testArtifactFileCount) immutable artifacts.")

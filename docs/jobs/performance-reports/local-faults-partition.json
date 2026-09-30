@@ -1,0 +1,74 @@
+{
+  "StartedAt": "2026-09-27T19:55:29.2043525+00:00",
+  "Profile": "faults",
+  "OperatingSystem": "Microsoft Windows 10.0.26200",
+  "Framework": ".NET 10.0.12",
+  "ProcessArchitecture": "X64",
+  "LogicalProcessors": 16,
+  "PostgreSqlVersion": "PostgreSQL 18.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "SourceSha256": "1ACED92F4241B39334795274B2FC901DE8F3A12D013CFF0EEDDBC05B01DCA7F4",
+  "MeasurementLimitations": "Local bounded harness with instrumentation/collector overhead. WAL and pg_stat_database counters are cluster/database scoped and may include concurrent work; snapshots may lag. RSS and waits are sampled every 100 ms. Durable latency includes backlog enqueue time. No production qualification or comparative performance leadership is established.",
+  "Cases": [],
+  "Faults": [
+    {
+      "Name": "process-death-after-effect-before-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 1047.3685,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "workflow-process-death-before-result",
+      "Passed": true,
+      "RecoveryMilliseconds": 1072.4327,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "ambiguous-commit-lost-server-ack",
+      "Passed": true,
+      "RecoveryMilliseconds": 14.907,
+      "Attempts": 0,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": true,
+      "CanceledAttempts": 0,
+      "RejectedConnections": 0,
+      "PeakProxyConnections": 0,
+      "StoreFailureObservations": 0
+    },
+    {
+      "Name": "jobs-network-partition-and-heal",
+      "Passed": true,
+      "RecoveryMilliseconds": 94.08,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 1,
+      "RejectedConnections": 16,
+      "PeakProxyConnections": 1,
+      "StoreFailureObservations": 16
+    },
+    {
+      "Name": "workflow-network-partition-and-heal",
+      "Passed": true,
+      "RecoveryMilliseconds": 247.8951,
+      "Attempts": 2,
+      "DurableEffects": 1,
+      "CommitAcknowledgementDropped": false,
+      "CanceledAttempts": 1,
+      "RejectedConnections": 31,
+      "PeakProxyConnections": 2,
+      "StoreFailureObservations": 16
+    }
+  ]
+}

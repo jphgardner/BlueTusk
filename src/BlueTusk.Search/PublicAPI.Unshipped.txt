@@ -1,0 +1,248 @@
+#nullable enable
+BlueTusk.Search.IPostgreSqlSearchVectorAdapter
+BlueTusk.Search.IPostgreSqlSearchVectorAdapter.ColumnTypeSql.get -> string!
+BlueTusk.Search.IPostgreSqlSearchVectorAdapter.Dimensions.get -> int
+BlueTusk.Search.IPostgreSqlSearchVectorAdapter.DistanceSql(string! trustedColumnSql, string! trustedParameterSql) -> string!
+BlueTusk.Search.IPostgreSqlSearchVectorAdapter.Encode(System.ReadOnlySpan<float> vector) -> string!
+BlueTusk.Search.IPostgreSqlSearchVectorAdapter.ParameterSql(string! trustedParameterSql) -> string!
+BlueTusk.Search.IPostgreSqlSearchVectorAdapter.StorageContract.get -> string!
+BlueTusk.Search.IPostgreSqlSearchVectorAdapter.ValidateInstallationAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.IScopedSearchEmbeddingProvider
+BlueTusk.Search.IScopedSearchEmbeddingProvider.EmbedForScopeAsync(BlueTusk.Search.SearchScope! scope, System.Collections.Generic.IReadOnlyList<string!>! texts, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>!>
+BlueTusk.Search.ISearchEmbeddingProvider
+BlueTusk.Search.ISearchEmbeddingProvider.EmbedAsync(System.Collections.Generic.IReadOnlyList<string!>! texts, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>!>
+BlueTusk.Search.ISearchEmbeddingProvider.ModelIdentity.get -> string!
+BlueTusk.Search.ISearchRankingExtension
+BlueTusk.Search.ISearchRankingExtension.RankAsync(BlueTusk.Search.SearchScope! scope, string! queryText, System.Collections.Generic.IReadOnlyList<BlueTusk.Search.SearchHit!>! candidates, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Search.SearchRankingScore!>!>
+BlueTusk.Search.PostgreSqlSearchStore
+BlueTusk.Search.PostgreSqlSearchStore.ContinueSearchAsync(BlueTusk.Search.SearchScope! scope, BlueTusk.Search.SearchCursor! cursor, int pageSize = 20, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.SearchPage!>
+BlueTusk.Search.PostgreSqlSearchStore.DeleteAsync(string! tenant, string! index, string! id, long version, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.SearchIngestionResult!>
+BlueTusk.Search.PostgreSqlSearchStore.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.PostgreSqlSearchStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Search.PostgreSqlSearchStore.Options.get -> BlueTusk.Search.SearchStoreOptions!
+BlueTusk.Search.PostgreSqlSearchStore.PostgreSqlSearchStore(System.Data.Common.DbDataSource! source, BlueTusk.Search.SearchStoreOptions? options = null, BlueTusk.Search.IPostgreSqlSearchVectorAdapter? vectors = null, BlueTusk.Search.ISearchEmbeddingProvider? embeddings = null, BlueTusk.Search.SearchDataSourceOwnership ownership = BlueTusk.Search.SearchDataSourceOwnership.Borrowed, BlueTusk.Search.ISearchRankingExtension? ranking = null) -> void
+BlueTusk.Search.PostgreSqlSearchStore.PruneExpiredQueriesAsync(int maxQueries = 100, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Search.PostgreSqlSearchStore.ReadHealthAsync(BlueTusk.Search.SearchScope! scope, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.SearchStoreHealthSnapshot!>
+BlueTusk.Search.PostgreSqlSearchStore.SearchAsync(BlueTusk.Search.SearchScope! scope, BlueTusk.Search.SearchRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.SearchPage!>
+BlueTusk.Search.PostgreSqlSearchStore.UpsertAsync(BlueTusk.Search.SearchDocument! document, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Search.SearchIngestionResult!>
+BlueTusk.Search.SearchBackpressureException
+BlueTusk.Search.SearchBackpressureException.SearchBackpressureException() -> void
+BlueTusk.Search.SearchChunker
+BlueTusk.Search.SearchCursor
+BlueTusk.Search.SearchCursor.<Clone>$() -> BlueTusk.Search.SearchCursor!
+BlueTusk.Search.SearchCursor.AfterRank.get -> int
+BlueTusk.Search.SearchCursor.AfterRank.init -> void
+BlueTusk.Search.SearchCursor.Deconstruct(out System.Guid QueryId, out int AfterRank) -> void
+BlueTusk.Search.SearchCursor.Equals(BlueTusk.Search.SearchCursor? other) -> bool
+BlueTusk.Search.SearchCursor.QueryId.get -> System.Guid
+BlueTusk.Search.SearchCursor.QueryId.init -> void
+BlueTusk.Search.SearchCursor.SearchCursor(System.Guid QueryId, int AfterRank) -> void
+BlueTusk.Search.SearchCursorExpiredException
+BlueTusk.Search.SearchCursorExpiredException.SearchCursorExpiredException() -> void
+BlueTusk.Search.SearchDataSourceOwnership
+BlueTusk.Search.SearchDataSourceOwnership.Borrowed = 0 -> BlueTusk.Search.SearchDataSourceOwnership
+BlueTusk.Search.SearchDataSourceOwnership.Owned = 1 -> BlueTusk.Search.SearchDataSourceOwnership
+BlueTusk.Search.SearchDocument
+BlueTusk.Search.SearchDocument.Content.get -> string!
+BlueTusk.Search.SearchDocument.Id.get -> string!
+BlueTusk.Search.SearchDocument.IsPublic.get -> bool
+BlueTusk.Search.SearchDocument.Metadata.get -> System.Text.Json.JsonElement
+BlueTusk.Search.SearchDocument.Scope.get -> BlueTusk.Search.SearchScope!
+BlueTusk.Search.SearchDocument.SearchDocument(string! tenant, string! index, string! id, long version, string! title, string! content, bool isPublic = false, System.Collections.Generic.IReadOnlyList<string!>? principals = null, System.Text.Json.JsonElement? metadata = null) -> void
+BlueTusk.Search.SearchDocument.Title.get -> string!
+BlueTusk.Search.SearchDocument.Version.get -> long
+BlueTusk.Search.SearchHit
+BlueTusk.Search.SearchHit.<Clone>$() -> BlueTusk.Search.SearchHit!
+BlueTusk.Search.SearchHit.ChunkOrdinal.get -> int
+BlueTusk.Search.SearchHit.ChunkOrdinal.init -> void
+BlueTusk.Search.SearchHit.Content.get -> string!
+BlueTusk.Search.SearchHit.Content.init -> void
+BlueTusk.Search.SearchHit.Deconstruct(out string! DocumentId, out int ChunkOrdinal, out long SourceVersion, out string! Title, out string! Content, out System.Text.Json.JsonElement Metadata, out double Score) -> void
+BlueTusk.Search.SearchHit.DocumentId.get -> string!
+BlueTusk.Search.SearchHit.DocumentId.init -> void
+BlueTusk.Search.SearchHit.Equals(BlueTusk.Search.SearchHit? other) -> bool
+BlueTusk.Search.SearchHit.Metadata.get -> System.Text.Json.JsonElement
+BlueTusk.Search.SearchHit.Metadata.init -> void
+BlueTusk.Search.SearchHit.Score.get -> double
+BlueTusk.Search.SearchHit.Score.init -> void
+BlueTusk.Search.SearchHit.SearchHit(string! DocumentId, int ChunkOrdinal, long SourceVersion, string! Title, string! Content, System.Text.Json.JsonElement Metadata, double Score) -> void
+BlueTusk.Search.SearchHit.SourceVersion.get -> long
+BlueTusk.Search.SearchHit.SourceVersion.init -> void
+BlueTusk.Search.SearchHit.Title.get -> string!
+BlueTusk.Search.SearchHit.Title.init -> void
+BlueTusk.Search.SearchIngestionResult
+BlueTusk.Search.SearchIngestionResult.<Clone>$() -> BlueTusk.Search.SearchIngestionResult!
+BlueTusk.Search.SearchIngestionResult.ChunkCount.get -> int
+BlueTusk.Search.SearchIngestionResult.ChunkCount.init -> void
+BlueTusk.Search.SearchIngestionResult.CurrentVersion.get -> long
+BlueTusk.Search.SearchIngestionResult.CurrentVersion.init -> void
+BlueTusk.Search.SearchIngestionResult.Deconstruct(out BlueTusk.Search.SearchIngestionStatus Status, out long CurrentVersion, out int ChunkCount) -> void
+BlueTusk.Search.SearchIngestionResult.Equals(BlueTusk.Search.SearchIngestionResult? other) -> bool
+BlueTusk.Search.SearchIngestionResult.SearchIngestionResult(BlueTusk.Search.SearchIngestionStatus Status, long CurrentVersion, int ChunkCount) -> void
+BlueTusk.Search.SearchIngestionResult.Status.get -> BlueTusk.Search.SearchIngestionStatus
+BlueTusk.Search.SearchIngestionResult.Status.init -> void
+BlueTusk.Search.SearchIngestionStatus
+BlueTusk.Search.SearchIngestionStatus.AlreadyApplied = 1 -> BlueTusk.Search.SearchIngestionStatus
+BlueTusk.Search.SearchIngestionStatus.Applied = 0 -> BlueTusk.Search.SearchIngestionStatus
+BlueTusk.Search.SearchIngestionStatus.StaleIgnored = 2 -> BlueTusk.Search.SearchIngestionStatus
+BlueTusk.Search.SearchMode
+BlueTusk.Search.SearchMode.FullText = 0 -> BlueTusk.Search.SearchMode
+BlueTusk.Search.SearchMode.Hybrid = 2 -> BlueTusk.Search.SearchMode
+BlueTusk.Search.SearchMode.Vector = 1 -> BlueTusk.Search.SearchMode
+BlueTusk.Search.SearchPage
+BlueTusk.Search.SearchPage.<Clone>$() -> BlueTusk.Search.SearchPage!
+BlueTusk.Search.SearchPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Search.SearchHit!>! Hits, out BlueTusk.Search.SearchCursor? NextCursor, out System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Search.SearchPage.Equals(BlueTusk.Search.SearchPage? other) -> bool
+BlueTusk.Search.SearchPage.ExpiresAt.get -> System.DateTimeOffset
+BlueTusk.Search.SearchPage.ExpiresAt.init -> void
+BlueTusk.Search.SearchPage.Hits.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Search.SearchHit!>!
+BlueTusk.Search.SearchPage.Hits.init -> void
+BlueTusk.Search.SearchPage.NextCursor.get -> BlueTusk.Search.SearchCursor?
+BlueTusk.Search.SearchPage.NextCursor.init -> void
+BlueTusk.Search.SearchPage.SearchPage(System.Collections.Generic.IReadOnlyList<BlueTusk.Search.SearchHit!>! Hits, BlueTusk.Search.SearchCursor? NextCursor, System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Search.SearchRankingScore
+BlueTusk.Search.SearchRankingScore.<Clone>$() -> BlueTusk.Search.SearchRankingScore!
+BlueTusk.Search.SearchRankingScore.ChunkOrdinal.get -> int
+BlueTusk.Search.SearchRankingScore.ChunkOrdinal.init -> void
+BlueTusk.Search.SearchRankingScore.Deconstruct(out string! DocumentId, out int ChunkOrdinal, out double Score) -> void
+BlueTusk.Search.SearchRankingScore.DocumentId.get -> string!
+BlueTusk.Search.SearchRankingScore.DocumentId.init -> void
+BlueTusk.Search.SearchRankingScore.Equals(BlueTusk.Search.SearchRankingScore? other) -> bool
+BlueTusk.Search.SearchRankingScore.Score.get -> double
+BlueTusk.Search.SearchRankingScore.Score.init -> void
+BlueTusk.Search.SearchRankingScore.SearchRankingScore(string! DocumentId, int ChunkOrdinal, double Score) -> void
+BlueTusk.Search.SearchRequest
+BlueTusk.Search.SearchRequest.<Clone>$() -> BlueTusk.Search.SearchRequest!
+BlueTusk.Search.SearchRequest.ApproximateVectorSearch.get -> bool
+BlueTusk.Search.SearchRequest.ApproximateVectorSearch.init -> void
+BlueTusk.Search.SearchRequest.CandidateLimit.get -> int
+BlueTusk.Search.SearchRequest.CandidateLimit.init -> void
+BlueTusk.Search.SearchRequest.Equals(BlueTusk.Search.SearchRequest? other) -> bool
+BlueTusk.Search.SearchRequest.FullTextWeight.get -> double
+BlueTusk.Search.SearchRequest.FullTextWeight.init -> void
+BlueTusk.Search.SearchRequest.Mode.get -> BlueTusk.Search.SearchMode
+BlueTusk.Search.SearchRequest.Mode.init -> void
+BlueTusk.Search.SearchRequest.PageSize.get -> int
+BlueTusk.Search.SearchRequest.PageSize.init -> void
+BlueTusk.Search.SearchRequest.ReciprocalRankConstant.get -> int
+BlueTusk.Search.SearchRequest.ReciprocalRankConstant.init -> void
+BlueTusk.Search.SearchRequest.SearchRequest() -> void
+BlueTusk.Search.SearchRequest.Text.get -> string!
+BlueTusk.Search.SearchRequest.Text.init -> void
+BlueTusk.Search.SearchRequest.Vector.get -> System.ReadOnlyMemory<float>
+BlueTusk.Search.SearchRequest.Vector.init -> void
+BlueTusk.Search.SearchRequest.VectorWeight.get -> double
+BlueTusk.Search.SearchRequest.VectorWeight.init -> void
+BlueTusk.Search.SearchScope
+BlueTusk.Search.SearchScope.Index.get -> string!
+BlueTusk.Search.SearchScope.Principals.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Search.SearchScope.SearchScope(string! tenant, string! index, System.Collections.Generic.IReadOnlyList<string!>? principals = null) -> void
+BlueTusk.Search.SearchScope.Tenant.get -> string!
+BlueTusk.Search.SearchStoreHealthSnapshot
+BlueTusk.Search.SearchStoreHealthSnapshot.DatabaseTime.get -> System.DateTimeOffset
+BlueTusk.Search.SearchStoreHealthSnapshot.HasDocuments.get -> bool
+BlueTusk.Search.SearchStoreHealthSnapshot.ObservedActiveQueries.get -> int
+BlueTusk.Search.SearchStoreHealthSnapshot.ObservedRetainedQueries.get -> int
+BlueTusk.Search.SearchStoreHealthSnapshot.QueryCapacityReached.get -> bool
+BlueTusk.Search.SearchStoreHealthSnapshot.StorageVersion.get -> int
+BlueTusk.Search.SearchStoreOptions
+BlueTusk.Search.SearchStoreOptions.<Clone>$() -> BlueTusk.Search.SearchStoreOptions!
+BlueTusk.Search.SearchStoreOptions.ChunkOverlapCharacters.get -> int
+BlueTusk.Search.SearchStoreOptions.ChunkOverlapCharacters.init -> void
+BlueTusk.Search.SearchStoreOptions.CommandTimeoutSeconds.get -> int
+BlueTusk.Search.SearchStoreOptions.CommandTimeoutSeconds.init -> void
+BlueTusk.Search.SearchStoreOptions.EmbeddingBatchSize.get -> int
+BlueTusk.Search.SearchStoreOptions.EmbeddingBatchSize.init -> void
+BlueTusk.Search.SearchStoreOptions.Equals(BlueTusk.Search.SearchStoreOptions? other) -> bool
+BlueTusk.Search.SearchStoreOptions.MaxActiveQueriesPerScope.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxActiveQueriesPerScope.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxCandidateCount.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxCandidateCount.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxChunkCharacters.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxChunkCharacters.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxChunksPerDocument.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxChunksPerDocument.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxConcurrentIngestions.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxConcurrentIngestions.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxConcurrentRankings.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxConcurrentRankings.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxDocumentBytes.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxDocumentBytes.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxMetadataBytes.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxMetadataBytes.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxPageBytes.get -> long
+BlueTusk.Search.SearchStoreOptions.MaxPageBytes.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxPageSize.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxPageSize.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxRerankingBytes.get -> long
+BlueTusk.Search.SearchStoreOptions.MaxRerankingBytes.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxRetainedQueries.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxRetainedQueries.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxRetainedRankBytes.get -> long
+BlueTusk.Search.SearchStoreOptions.MaxRetainedRankBytes.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxRetainedRankRows.get -> long
+BlueTusk.Search.SearchStoreOptions.MaxRetainedRankRows.init -> void
+BlueTusk.Search.SearchStoreOptions.MaxTitleBytes.get -> int
+BlueTusk.Search.SearchStoreOptions.MaxTitleBytes.init -> void
+BlueTusk.Search.SearchStoreOptions.QueryLifetime.get -> System.TimeSpan
+BlueTusk.Search.SearchStoreOptions.QueryLifetime.init -> void
+BlueTusk.Search.SearchStoreOptions.Schema.get -> string!
+BlueTusk.Search.SearchStoreOptions.Schema.init -> void
+BlueTusk.Search.SearchStoreOptions.SearchStoreOptions() -> void
+BlueTusk.Search.SearchTextChunk
+BlueTusk.Search.SearchTextChunk.<Clone>$() -> BlueTusk.Search.SearchTextChunk!
+BlueTusk.Search.SearchTextChunk.Content.get -> string!
+BlueTusk.Search.SearchTextChunk.Content.init -> void
+BlueTusk.Search.SearchTextChunk.Deconstruct(out int Ordinal, out int StartCharacter, out string! Content) -> void
+BlueTusk.Search.SearchTextChunk.Equals(BlueTusk.Search.SearchTextChunk? other) -> bool
+BlueTusk.Search.SearchTextChunk.Ordinal.get -> int
+BlueTusk.Search.SearchTextChunk.Ordinal.init -> void
+BlueTusk.Search.SearchTextChunk.SearchTextChunk(int Ordinal, int StartCharacter, string! Content) -> void
+BlueTusk.Search.SearchTextChunk.StartCharacter.get -> int
+BlueTusk.Search.SearchTextChunk.StartCharacter.init -> void
+BlueTusk.Search.SearchVersionConflictException
+BlueTusk.Search.SearchVersionConflictException.DocumentId.get -> string!
+BlueTusk.Search.SearchVersionConflictException.SearchVersionConflictException(string! id, long version) -> void
+BlueTusk.Search.SearchVersionConflictException.Version.get -> long
+const BlueTusk.Search.PostgreSqlSearchStore.CurrentStorageVersion = 3 -> int
+override BlueTusk.Search.SearchCursor.Equals(object? obj) -> bool
+override BlueTusk.Search.SearchCursor.GetHashCode() -> int
+override BlueTusk.Search.SearchCursor.ToString() -> string!
+override BlueTusk.Search.SearchHit.Equals(object? obj) -> bool
+override BlueTusk.Search.SearchHit.GetHashCode() -> int
+override BlueTusk.Search.SearchHit.ToString() -> string!
+override BlueTusk.Search.SearchIngestionResult.Equals(object? obj) -> bool
+override BlueTusk.Search.SearchIngestionResult.GetHashCode() -> int
+override BlueTusk.Search.SearchIngestionResult.ToString() -> string!
+override BlueTusk.Search.SearchPage.Equals(object? obj) -> bool
+override BlueTusk.Search.SearchPage.GetHashCode() -> int
+override BlueTusk.Search.SearchPage.ToString() -> string!
+override BlueTusk.Search.SearchRankingScore.Equals(object? obj) -> bool
+override BlueTusk.Search.SearchRankingScore.GetHashCode() -> int
+override BlueTusk.Search.SearchRankingScore.ToString() -> string!
+override BlueTusk.Search.SearchRequest.Equals(object? obj) -> bool
+override BlueTusk.Search.SearchRequest.GetHashCode() -> int
+override BlueTusk.Search.SearchRequest.ToString() -> string!
+override BlueTusk.Search.SearchStoreOptions.Equals(object? obj) -> bool
+override BlueTusk.Search.SearchStoreOptions.GetHashCode() -> int
+override BlueTusk.Search.SearchStoreOptions.ToString() -> string!
+override BlueTusk.Search.SearchTextChunk.Equals(object? obj) -> bool
+override BlueTusk.Search.SearchTextChunk.GetHashCode() -> int
+override BlueTusk.Search.SearchTextChunk.ToString() -> string!
+static BlueTusk.Search.SearchChunker.Chunk(string! content, int maxCharacters = 2048, int overlapCharacters = 128, int maxChunks = 2048) -> System.Collections.Generic.IReadOnlyList<BlueTusk.Search.SearchTextChunk!>!
+static BlueTusk.Search.SearchCursor.operator !=(BlueTusk.Search.SearchCursor? left, BlueTusk.Search.SearchCursor? right) -> bool
+static BlueTusk.Search.SearchCursor.operator ==(BlueTusk.Search.SearchCursor? left, BlueTusk.Search.SearchCursor? right) -> bool
+static BlueTusk.Search.SearchHit.operator !=(BlueTusk.Search.SearchHit? left, BlueTusk.Search.SearchHit? right) -> bool
+static BlueTusk.Search.SearchHit.operator ==(BlueTusk.Search.SearchHit? left, BlueTusk.Search.SearchHit? right) -> bool
+static BlueTusk.Search.SearchIngestionResult.operator !=(BlueTusk.Search.SearchIngestionResult? left, BlueTusk.Search.SearchIngestionResult? right) -> bool
+static BlueTusk.Search.SearchIngestionResult.operator ==(BlueTusk.Search.SearchIngestionResult? left, BlueTusk.Search.SearchIngestionResult? right) -> bool
+static BlueTusk.Search.SearchPage.operator !=(BlueTusk.Search.SearchPage? left, BlueTusk.Search.SearchPage? right) -> bool
+static BlueTusk.Search.SearchPage.operator ==(BlueTusk.Search.SearchPage? left, BlueTusk.Search.SearchPage? right) -> bool
+static BlueTusk.Search.SearchRankingScore.operator !=(BlueTusk.Search.SearchRankingScore? left, BlueTusk.Search.SearchRankingScore? right) -> bool
+static BlueTusk.Search.SearchRankingScore.operator ==(BlueTusk.Search.SearchRankingScore? left, BlueTusk.Search.SearchRankingScore? right) -> bool
+static BlueTusk.Search.SearchRequest.operator !=(BlueTusk.Search.SearchRequest? left, BlueTusk.Search.SearchRequest? right) -> bool
+static BlueTusk.Search.SearchRequest.operator ==(BlueTusk.Search.SearchRequest? left, BlueTusk.Search.SearchRequest? right) -> bool
+static BlueTusk.Search.SearchStoreOptions.operator !=(BlueTusk.Search.SearchStoreOptions? left, BlueTusk.Search.SearchStoreOptions? right) -> bool
+static BlueTusk.Search.SearchStoreOptions.operator ==(BlueTusk.Search.SearchStoreOptions? left, BlueTusk.Search.SearchStoreOptions? right) -> bool
+static BlueTusk.Search.SearchTextChunk.operator !=(BlueTusk.Search.SearchTextChunk? left, BlueTusk.Search.SearchTextChunk? right) -> bool
+static BlueTusk.Search.SearchTextChunk.operator ==(BlueTusk.Search.SearchTextChunk? left, BlueTusk.Search.SearchTextChunk? right) -> bool

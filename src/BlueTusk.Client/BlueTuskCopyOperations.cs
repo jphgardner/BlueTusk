@@ -56,6 +56,7 @@ public sealed class BlueTuskCopyInOperation : IDisposable
         var write = _session.WriteCopyInAsync(data, cancellationToken);
         if (write.IsCompletedSuccessfully)
         {
+            write.GetAwaiter().GetResult();
             _bytesTransferred = checked(_bytesTransferred + data.Length);
             return ValueTask.CompletedTask;
         }

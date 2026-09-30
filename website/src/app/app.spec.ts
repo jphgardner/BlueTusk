@@ -22,6 +22,9 @@ describe('App', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand')?.textContent).toContain('BlueTusk');
+    expect(compiled.querySelector<HTMLImageElement>('.brand img')?.src).toContain(
+      'bluetusk-mark.png',
+    );
     expect(compiled.querySelector('.desktop-nav')?.textContent).toContain('Provider');
   });
 
@@ -51,7 +54,6 @@ describe('App', () => {
     expect(input).toBeTruthy();
     input!.value = 'quickstart';
     input!.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
     await vi.waitFor(() => {
       fixture.detectChanges();
       expect(
@@ -62,18 +64,18 @@ describe('App', () => {
     });
   });
 
-  it('opens and closes mobile navigation', () => {
+  it('opens a descriptive mobile navigation', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('[aria-label="Open navigation"]')
-      ?.click();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    compiled.querySelector<HTMLButtonElement>('.mobile-menu-trigger')?.click();
     fixture.detectChanges();
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('#mobile-navigation a'),
-    ).toBeTruthy();
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelector('#mobile-navigation')).toBeNull();
+    await fixture.whenStable();
+
+    const dialog = compiled.querySelector<HTMLElement>('#mobile-navigation');
+    expect(dialog?.getAttribute('aria-modal')).toBe('true');
+    expect(dialog?.textContent).toContain('Choose what you want to build.');
+    expect(dialog?.textContent).toContain('Connect .NET applications directly to PostgreSQL.');
   });
 });

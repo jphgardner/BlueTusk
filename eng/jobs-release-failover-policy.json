@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "family": "Jobs",
+  "qualification": "manual-exact-candidate-synchronous-physical-promotion",
+  "repetitions": 3,
+  "postgreSqlImage": "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "acknowledgedJobsPerRun": 66,
+  "jobLeasesPerRun": 2,
+  "workflowLeasesPerRun": 4,
+  "workflowEffectsPerRun": 12,
+  "maximumRecoveryMilliseconds": 180000,
+  "unqualifiedDisturbances": [
+    "asynchronous-replication-loss",
+    "split-brain",
+    "old-primary-rejoin",
+    "credential-rotation-during-promotion",
+    "persistent-storage-corruption-or-loss",
+    "power-loss-durability",
+    "independent-host-fleet"
+  ]
+}

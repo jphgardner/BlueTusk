@@ -1,6 +1,7 @@
 {
-  "schemaVersion": 1,
-  "release": "1.1.0",
+  "schemaVersion": 2,
+  "release": "1.2.0",
+  "releaseTracksFile": "eng/release-tracks.json",
   "comparisonRules": {
     "sameRuntimeMaximumRatio": 0.98,
     "crossRuntimeMinimumThroughputRatio": 1.05,
@@ -64,7 +65,7 @@
     },
     "Sync": {
       "mutationCounts": [1, 100, 1000],
-      "destinations": ["nats", "redis", "opensearch", "postgresql"]
+      "destinations": ["nats", "redis", "opensearch", "postgresql", "kafka", "s3", "webhooks"]
     },
     "Live": {
       "resultCounts": [10, 1000, 100000],
@@ -115,5 +116,5 @@
     "ControlPlane": 24,
     "ContinuousGraph": 24
   },
-  "stablePublicationRequiresPostgreSql19Ga": true
+  "graphStablePublicationRequiresQualifiedSqlPgqServer": true
 }

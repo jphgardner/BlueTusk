@@ -1,0 +1,46 @@
+#nullable enable
+BlueTusk.ControlPlane.Kubernetes.IKubernetesManagedDeploymentClient
+BlueTusk.ControlPlane.Kubernetes.IKubernetesManagedDeploymentClient.ListAsync(int limit, string? continuationToken = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentPage!>
+BlueTusk.ControlPlane.Kubernetes.IKubernetesManagedDeploymentClient.ReplaceFinalizersAsync(BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource! resource, System.Collections.Generic.IReadOnlyList<string!>! finalizers, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource!>
+BlueTusk.ControlPlane.Kubernetes.IKubernetesManagedDeploymentClient.ReplaceStatusAsync(BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource! resource, BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentStatus! status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.Kubernetes.KubernetesApiManagedDeploymentClient
+BlueTusk.ControlPlane.Kubernetes.KubernetesApiManagedDeploymentClient.KubernetesApiManagedDeploymentClient(System.Net.Http.HttpClient! httpClient, string? resourceNamespace = null) -> void
+BlueTusk.ControlPlane.Kubernetes.KubernetesApiManagedDeploymentClient.ListAsync(int limit, string? continuationToken = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentPage!>
+BlueTusk.ControlPlane.Kubernetes.KubernetesApiManagedDeploymentClient.ReplaceFinalizersAsync(BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource! resource, System.Collections.Generic.IReadOnlyList<string!>! finalizers, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource!>
+BlueTusk.ControlPlane.Kubernetes.KubernetesApiManagedDeploymentClient.ReplaceStatusAsync(BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource! resource, BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentStatus! status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentOperator
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentOperator.KubernetesManagedDeploymentOperator(BlueTusk.ControlPlane.IManagedDeploymentStore! store, BlueTusk.ControlPlane.ManagedDeploymentController! controller, BlueTusk.ControlPlane.Kubernetes.IKubernetesManagedDeploymentClient! client, int maximumConcurrency = 4, int pageSize = 100, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentOperator.ReconcileAllAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentReconcileResult!>!>
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentOperator.ReconcileAsync(BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource! resource, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentReconcileResult!>
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentPage
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentPage.ContinuationToken.get -> string?
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentPage.KubernetesManagedDeploymentPage(System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource!>! resources, string? continuationToken) -> void
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentPage.Resources.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource!>!
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentReconcileResult
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentReconcileResult.Changed.get -> bool
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentReconcileResult.DeploymentId.get -> string!
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentReconcileResult.DiagnosticCode.get -> string?
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentReconcileResult.KubernetesManagedDeploymentReconcileResult(string! deploymentId, bool succeeded, bool changed, string? diagnosticCode) -> void
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentReconcileResult.Succeeded.get -> bool
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.DeletionTimestamp.get -> System.DateTimeOffset?
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.DeploymentId.get -> string!
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.Desired.get -> BlueTusk.ControlPlane.ManagedDeploymentSpec!
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.Finalizers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.Generation.get -> long
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.KubernetesManagedDeploymentResource(string! resourceNamespace, string! name, string! uid, string! resourceVersion, long generation, System.DateTimeOffset? deletionTimestamp, System.Collections.Generic.IReadOnlyList<string!>! finalizers, BlueTusk.ControlPlane.ManagedDeploymentSpec! desired) -> void
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.Name.get -> string!
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.ResourceNamespace.get -> string!
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.ResourceVersion.get -> string!
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentResource.Uid.get -> string!
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentStatus
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentStatus.DiagnosticCode.get -> string?
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentStatus.KubernetesManagedDeploymentStatus(long observedResourceGeneration, long managedGeneration, BlueTusk.ControlPlane.ManagedDeploymentState state, string? diagnosticCode, System.DateTimeOffset updatedAt) -> void
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentStatus.ManagedGeneration.get -> long
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentStatus.ObservedResourceGeneration.get -> long
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentStatus.State.get -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentStatus.UpdatedAt.get -> System.DateTimeOffset
+const BlueTusk.ControlPlane.Kubernetes.KubernetesApiManagedDeploymentClient.ApiGroup = "controlplane.bluetusk.io" -> string!
+const BlueTusk.ControlPlane.Kubernetes.KubernetesApiManagedDeploymentClient.ApiVersion = "v1alpha1" -> string!
+const BlueTusk.ControlPlane.Kubernetes.KubernetesApiManagedDeploymentClient.Plural = "bluetuskdeployments" -> string!
+const BlueTusk.ControlPlane.Kubernetes.KubernetesManagedDeploymentOperator.Finalizer = "controlplane.bluetusk.io/finalizer" -> string!

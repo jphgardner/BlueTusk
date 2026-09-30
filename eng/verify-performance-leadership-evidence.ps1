@@ -3,6 +3,13 @@ param(
     [Parameter(Mandatory)]
     [string] $EvidencePath,
 
+    [Parameter(Mandatory)]
+    [ValidatePattern('^[0-9a-f]{40}$')]
+    [string] $ExpectedCommit,
+
+    [ValidateSet('Core', 'ContinuousGraphPreview')]
+    [string] $Scope = 'Core',
+
     [string] $ContractPath = (Join-Path $PSScriptRoot 'performance-leadership-contract.json')
 )
 
@@ -18,6 +25,65 @@ function Assert-Sha256
     }
 }
 
+function Assert-EvidenceArtifact
+{
+    param(
+        [Parameter(Mandatory)][string] $RelativePath,
+        [Parameter(Mandatory)][string] $Sha256,
+        [Parameter(Mandatory)][string] $Description
+    )
+
+    Assert-Sha256 $Sha256 $Description
+    if ([IO.Path]::IsPathRooted($RelativePath) -or
+        $RelativePath.Contains('\') -or $RelativePath.Contains(':') -or
+        @($RelativePath.Split('/') | Where-Object { $_ -in @('', '.', '..') }).Count -ne 0)
+    {
+        throw "$Description must use a normalized relative path within the evidence directory."
+    }
+
+    $path = $evidenceRoot
+    foreach ($segment in $RelativePath.Split('/'))
+    {
+        $path = Join-Path $path $segment
+        if (-not (Test-Path -LiteralPath $path))
+        {
+            throw "$Description artifact '$RelativePath' is missing."
+        }
+        $item = Get-Item -LiteralPath $path -Force -ErrorAction Stop
+        if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
+        {
+            throw "$Description must not traverse a symbolic link or junction."
+        }
+    }
+    if ($item.PSIsContainer -or $item.Length -eq 0)
+    {
+        throw "$Description must reference a nonempty file."
+    }
+    $actual = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actual -cne $Sha256)
+    {
+        throw "$Description does not match its SHA-256 digest."
+    }
+    return $path
+}
+
+function Get-FiniteNumber
+{
+    param([AllowNull()][object] $Value, [Parameter(Mandatory)][string] $Description)
+
+    if ($null -eq $Value -or $Value -is [string] -or $Value -is [bool] -or
+        $Value -isnot [ValueType])
+    {
+        throw "$Description must be a finite JSON number."
+    }
+    $number = [double]$Value
+    if ([double]::IsNaN($number) -or [double]::IsInfinity($number))
+    {
+        throw "$Description must be a finite JSON number."
+    }
+    return $number
+}
+
 function Assert-LowerBetter
 {
     param(
@@ -27,10 +93,10 @@ function Assert-LowerBetter
     )
 
     $value = $Comparison.metrics.PSObject.Properties[$Metric].Value
-    $candidate = [double]$value.candidate
-    $reference = [double]$value.reference
-    $candidateUpper = [double]$value.candidateCiUpper
-    $referenceLower = [double]$value.referenceCiLower
+    $candidate = Get-FiniteNumber $value.candidate "$Metric candidate"
+    $reference = Get-FiniteNumber $value.reference "$Metric reference"
+    $candidateUpper = Get-FiniteNumber $value.candidateCiUpper "$Metric candidate upper bound"
+    $referenceLower = Get-FiniteNumber $value.referenceCiLower "$Metric reference lower bound"
     if ($candidate -lt 0 -or $reference -le 0 -or
         $candidateUpper -lt $candidate -or $referenceLower -le 0 -or
         $referenceLower -gt $reference)
@@ -58,10 +124,10 @@ function Assert-HigherBetter
     )
 
     $value = $Comparison.metrics.PSObject.Properties[$Metric].Value
-    $candidate = [double]$value.candidate
-    $reference = [double]$value.reference
-    $candidateLower = [double]$value.candidateCiLower
-    $referenceUpper = [double]$value.referenceCiUpper
+    $candidate = Get-FiniteNumber $value.candidate "$Metric candidate"
+    $reference = Get-FiniteNumber $value.reference "$Metric reference"
+    $candidateLower = Get-FiniteNumber $value.candidateCiLower "$Metric candidate lower bound"
+    $referenceUpper = Get-FiniteNumber $value.referenceCiUpper "$Metric reference upper bound"
     if ($candidate -le 0 -or $reference -le 0 -or
         $candidateLower -le 0 -or $candidateLower -gt $candidate -or
         $referenceUpper -lt $reference)
@@ -95,16 +161,23 @@ function Add-Expected
 }
 
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
+& (Join-Path $PSScriptRoot 'verify-performance-leadership-contract.ps1') -ContractPath $ContractPath | Out-Null
+$tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
+$scopeFamilies = if ($Scope -eq 'Core') { @($tracks.stableFamilies) } else { @($tracks.previewFamilies) }
+$evidenceRoot = Split-Path -Parent (Resolve-Path -LiteralPath $EvidencePath).Path
 $evidence = Get-Content -LiteralPath $EvidencePath -Raw | ConvertFrom-Json
-if ($evidence.schemaVersion -ne 1 -or $evidence.release -ne $contract.release -or
-    [string]$evidence.sourceCommit -notmatch '^[0-9a-f]{40}$' -or
+if ($evidence.schemaVersion -ne 3 -or $evidence.release -ne $contract.release -or
+    $evidence.scope -cne $Scope -or
+    [string]$evidence.sourceCommit -cne $ExpectedCommit -or
     [double]$evidence.confidenceLevel -ne [double]$contract.comparisonRules.confidenceLevel)
 {
-    throw 'Performance evidence identity, release, commit, or confidence level is invalid.'
+    throw 'Performance evidence identity, release, commit, scope, or confidence level is invalid.'
 }
 
-Assert-Sha256 ([string]$evidence.consolidatedReportSha256) 'Consolidated report'
-Assert-Sha256 ([string]$evidence.verifierSelfTestsSha256) 'Verifier self-tests'
+$null = Assert-EvidenceArtifact $evidence.consolidatedReportPath `
+    $evidence.consolidatedReportSha256 'Consolidated report'
+$null = Assert-EvidenceArtifact $evidence.verifierSelfTestsPath `
+    $evidence.verifierSelfTestsSha256 'Verifier self-tests'
 
 $environmentNames = @($contract.environments.os | Sort-Object)
 $evidenceEnvironments = @($evidence.environments)
@@ -120,12 +193,23 @@ foreach ($environmentName in $environmentNames)
     {
         throw "Environment evidence for '$environmentName' is missing or bound to another candidate."
     }
-    Assert-Sha256 ([string]$matches[0].environmentManifestSha256) "$environmentName environment manifest"
-    Assert-Sha256 ([string]$matches[0].rawSamplesSha256) "$environmentName raw samples"
+    $manifestPath = Assert-EvidenceArtifact $matches[0].environmentManifestPath `
+        $matches[0].environmentManifestSha256 "$environmentName environment manifest"
+    $null = Assert-EvidenceArtifact $matches[0].rawSamplesPath `
+        $matches[0].rawSamplesSha256 "$environmentName raw samples"
     $digests = @($matches[0].containerImageDigests)
     if ($digests.Count -eq 0 -or $digests.Where({ $_ -notmatch '@sha256:[0-9a-f]{64}$' }).Count -ne 0)
     {
         throw "Environment '$environmentName' has missing or mutable container image evidence."
+    }
+    $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    if ($manifest.sourceCommit -cne $ExpectedCommit -or
+        $manifest.os -cne $environmentName -or $manifest.architecture -cne 'x64' -or
+        @($manifest.containerImageDigests).Count -ne $digests.Count -or
+        (($manifest.containerImageDigests | Sort-Object) -join "`n") -cne
+            (($digests | Sort-Object) -join "`n"))
+    {
+        throw "Environment manifest '$environmentName' does not match the candidate, platform, or images."
     }
 }
 
@@ -203,6 +287,14 @@ foreach ($os in $environmentNames)
     }
 }
 
+# Keep each track exact and complete; preview results cannot fill missing core work.
+foreach ($key in @($expected.Keys))
+{
+    if ($key.Split('|')[1] -notin $scopeFamilies)
+    {
+        $null = $expected.Remove($key)
+    }
+}
 $comparisons = @($evidence.comparisons)
 if ($comparisons.Count -ne $expected.Count)
 {
@@ -228,6 +320,15 @@ foreach ($comparison in $comparisons)
         if ($null -eq $comparison.metrics.PSObject.Properties[[string]$metric])
         {
             throw "Workload '$key' is missing required metric '$metric'."
+        }
+        $value = $comparison.metrics.PSObject.Properties[[string]$metric].Value
+        foreach ($provider in @('candidate', 'reference'))
+        {
+            $number = Get-FiniteNumber $value.PSObject.Properties[$provider].Value "$key $metric $provider"
+            if ($number -lt 0)
+            {
+                throw "Workload '$key' has a negative '$metric' measurement."
+            }
         }
     }
 
@@ -274,5 +375,5 @@ foreach ($comparison in $comparisons)
 }
 
 Write-Output (
-    "Verified $($comparisons.Count) BlueTusk 1.1 performance comparisons for " +
+    "Verified retained artifacts and $($comparisons.Count) declared BlueTusk $($contract.release) $Scope performance comparisons for " +
     "$($environmentNames -join ' and ') at commit $($evidence.sourceCommit).")

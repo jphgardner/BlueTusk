@@ -7,7 +7,8 @@ namespace BlueTusk.Data;
 internal readonly record struct BlueTuskCommandPlan(
     string Sql,
     IReadOnlyList<BlueTuskParameter> Parameters,
-    bool UsesNamedParameters);
+    bool UsesNamedParameters,
+    bool HasMultipleStatements);
 
 internal static class BlueTuskCommandTextRewriter
 {
@@ -17,22 +18,34 @@ internal static class BlueTuskCommandTextRewriter
     private static readonly ConditionalWeakTable<string, NoNamedRewriteTemplate> NoNamedTemplates = new();
     private static readonly ConcurrentDictionary<string, NamedRewriteTemplate> NamedTemplatesByValue =
         new(StringComparer.Ordinal);
+    private const int MaximumBatchCachedSqlLength = 64 * 1024;
+    private const int MaximumBatchCachedTemplateCount = 128;
+    private static readonly ConcurrentDictionary<string, BatchSqlTemplate> BatchTemplatesByValue = new(StringComparer.Ordinal);
+    private static readonly ConditionalWeakTable<string, BatchSqlTemplate> BatchTemplates = new();
+    private static readonly object BatchTemplateLock = new();
 
     public static BlueTuskCommandPlan Rewrite(
         string sql,
-        BlueTuskParameterCollection parameters)
+        BlueTuskParameterCollection parameters,
+        Dictionary<string, BlueTuskParameter>? namedParameterMap = null)
     {
         ArgumentNullException.ThrowIfNull(sql);
         ArgumentNullException.ThrowIfNull(parameters);
+        // Keep the immutable SQL key alive with its bounded batch template. Large
+        // EF command strings are recreated per SaveChanges, not interned by EF.
+        if (sql.Length > MaximumValueCachedSqlLength && BatchTemplatesByValue.TryGetValue(sql, out var batchTemplate))
+        {
+            sql = batchTemplate.Sql;
+        }
         if (NamedTemplates.TryGetValue(sql, out var cachedTemplate))
         {
-            return cachedTemplate.Bind(parameters);
+            return cachedTemplate.Bind(parameters, namedParameterMap);
         }
 
         if (sql.Length <= MaximumValueCachedSqlLength &&
             NamedTemplatesByValue.TryGetValue(sql, out cachedTemplate))
         {
-            return cachedTemplate.Bind(parameters);
+            return cachedTemplate.Bind(parameters, namedParameterMap);
         }
 
         if (NoNamedTemplates.TryGetValue(sql, out var noNamedTemplate))
@@ -40,7 +53,7 @@ internal static class BlueTuskCommandTextRewriter
             return noNamedTemplate.Bind(parameters);
         }
 
-        Dictionary<string, BlueTuskParameter>? namedParameters = null;
+        Dictionary<string, BlueTuskParameter>? namedParameters = namedParameterMap;
         Dictionary<string, int>? ordinals = null;
         List<BlueTuskParameter>? ordered = null;
         List<string>? orderedNames = null;
@@ -166,7 +179,7 @@ internal static class BlueTuskCommandTextRewriter
             template = NamedTemplates.GetValue(sql, _ => template);
         }
 
-        return template.Bind(parameters);
+        return template.Bind(parameters, namedParameterMap);
     }
 
     internal static bool MightContainNamedParameters(string sql)
@@ -251,6 +264,79 @@ internal static class BlueTuskCommandTextRewriter
         }
 
         return true;
+    }
+
+    internal static BlueTuskCommandPlan[] RewriteStatements(string sql, BlueTuskParameterCollection parameters,
+        bool usesNamedParameters)
+    {
+        var statements = GetBatchTemplate(sql).Statements;
+        // Validate/index the parent collection once, not once per statement.
+        var names = usesNamedParameters ? BuildNamedParameterMap(parameters) : null;
+        var plans = new BlueTuskCommandPlan[statements.Count];
+        for (var index = 0; index < statements.Count; index++)
+        {
+            plans[index] = Rewrite(statements[index], parameters, names);
+        }
+        return plans;
+    }
+
+    private static BatchSqlTemplate GetBatchTemplate(string sql)
+    {
+        if (BatchTemplatesByValue.TryGetValue(sql, out var cached)) { return cached; }
+        var template = BatchTemplates.GetValue(sql, static text => new BatchSqlTemplate(text, SplitStatements(text)));
+        if (sql.Length <= MaximumBatchCachedSqlLength)
+        {
+            lock (BatchTemplateLock)
+            {
+                if (BatchTemplatesByValue.TryGetValue(sql, out cached)) { return cached; }
+                if (BatchTemplatesByValue.Count < MaximumBatchCachedTemplateCount) { BatchTemplatesByValue.TryAdd(sql, template); }
+            }
+        }
+        return template;
+    }
+
+    // No parameter values, connections, or mutable command state are cached.
+    private sealed record BatchSqlTemplate(string Sql, IReadOnlyList<string> Statements);
+
+    internal static IReadOnlyList<string> SplitStatements(string sql)
+    {
+        ArgumentNullException.ThrowIfNull(sql);
+        var statements = new List<string>();
+        var start = 0;
+        var hasToken = false;
+        for (var index = 0; index < sql.Length;)
+        {
+            var current = sql[index];
+            if (char.IsWhiteSpace(current)) { index++; continue; }
+            if (current == '-' && index + 1 < sql.Length && sql[index + 1] == '-')
+            {
+                index = SkipLineComment(sql, index + 2);
+                continue;
+            }
+            if (current == '/' && index + 1 < sql.Length && sql[index + 1] == '*')
+            {
+                index = SkipBlockComment(sql, index);
+                continue;
+            }
+            if (current == ';')
+            {
+                if (hasToken) { statements.Add(sql[start..index]); }
+                start = ++index;
+                hasToken = false;
+                continue;
+            }
+            hasToken = true;
+            if (current == '\'') { index = SkipSingleQuotedString(sql, index); continue; }
+            if (current == '"') { index = SkipDoubleQuotedIdentifier(sql, index); continue; }
+            if (current == '$' && TryReadDollarQuoteDelimiter(sql, index, out var delimiter))
+            {
+                index = SkipDollarQuotedString(sql, index, delimiter);
+                continue;
+            }
+            index++;
+        }
+        if (hasToken) { statements.Add(sql[start..]); }
+        return statements;
     }
 
     private static Dictionary<string, BlueTuskParameter> BuildNamedParameterMap(
@@ -411,25 +497,48 @@ internal static class BlueTuskCommandTextRewriter
 
     private sealed class NoNamedRewriteTemplate(string sql)
     {
-        private BlueTuskCommandPlan? _parameterlessPlan;
+        private readonly bool _hasMultipleStatements = !CanUseExtendedProtocol(sql);
+        // This template is shared by every command that uses the same SQL text.
+        // A lazily assigned Nullable<BlueTuskCommandPlan> can tear while its
+        // multi-field struct value is published by concurrent first callers,
+        // exposing a plan whose Parameters member is null. Construct the
+        // immutable parameterless plan with the template and never mutate it.
+        private readonly BlueTuskCommandPlan _parameterlessPlan = new(
+            sql,
+            Array.Empty<BlueTuskParameter>(),
+            UsesNamedParameters: false,
+            HasMultipleStatements: !CanUseExtendedProtocol(sql));
 
         public BlueTuskCommandPlan Bind(BlueTuskParameterCollection parameters) =>
             parameters.Count == 0
-                ? _parameterlessPlan ??= new BlueTuskCommandPlan(
-                    sql,
-                    Array.Empty<BlueTuskParameter>(),
-                    UsesNamedParameters: false)
+                ? _parameterlessPlan
                 : new BlueTuskCommandPlan(
                     sql,
                     parameters.Items,
-                    UsesNamedParameters: false);
+                    UsesNamedParameters: false,
+                    HasMultipleStatements: _hasMultipleStatements);
     }
 
     private sealed record NamedRewriteTemplate(string Sql, string[] OrderedNames)
     {
-        public BlueTuskCommandPlan Bind(BlueTuskParameterCollection parameters)
+        private readonly bool _hasMultipleStatements = !CanUseExtendedProtocol(Sql);
+
+        public BlueTuskCommandPlan Bind(BlueTuskParameterCollection parameters,
+            Dictionary<string, BlueTuskParameter>? namedParameterMap = null)
         {
-            ValidateUniqueNames(parameters.Items);
+            if (namedParameterMap is not null)
+            {
+                var batchParameters = new BlueTuskParameter[OrderedNames.Length];
+                for (var index = 0; index < OrderedNames.Length; index++)
+                {
+                    if (!namedParameterMap.TryGetValue(OrderedNames[index], out var parameter))
+                    {
+                        throw new InvalidOperationException($"Command text references missing named parameter '{OrderedNames[index]}'.");
+                    }
+                    batchParameters[index] = parameter;
+                }
+                return new BlueTuskCommandPlan(Sql, batchParameters, true, _hasMultipleStatements);
+            }
             if (parameters.Count == OrderedNames.Length)
             {
                 var alreadyOrdered = true;
@@ -446,13 +555,17 @@ internal static class BlueTuskCommandTextRewriter
 
                 if (alreadyOrdered)
                 {
+                    // Template names are unique by construction. An exact
+                    // ordered match also proves collection uniqueness in O(n).
                     return new BlueTuskCommandPlan(
                         Sql,
                         parameters.Items,
-                        UsesNamedParameters: true);
+                        UsesNamedParameters: true,
+                        HasMultipleStatements: _hasMultipleStatements);
                 }
             }
 
+            ValidateUniqueNames(parameters.Items);
             var ordered = new BlueTuskParameter[OrderedNames.Length];
             for (var nameIndex = 0; nameIndex < OrderedNames.Length; nameIndex++)
             {
@@ -471,7 +584,8 @@ internal static class BlueTuskCommandTextRewriter
                     $"Command text references named parameter '{name}', but the parameter collection does not contain it.");
             }
 
-            return new BlueTuskCommandPlan(Sql, ordered, UsesNamedParameters: true);
+            return new BlueTuskCommandPlan(Sql, ordered, UsesNamedParameters: true,
+                HasMultipleStatements: _hasMultipleStatements);
         }
 
         private static void ValidateUniqueNames(IReadOnlyList<BlueTuskParameter> parameters)

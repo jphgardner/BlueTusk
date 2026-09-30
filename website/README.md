@@ -1,9 +1,9 @@
 # BlueTusk website
 
 The developer-facing BlueTusk product and documentation site. It uses Angular
-22, Angular Material, and Tailwind CSS. Every repository Markdown guide is
-discovered, transformed into sanitized searchable content, cross-linked to
-other guides, and checked for drift during a production build.
+22, Angular Material, and Tailwind CSS. Repository Markdown remains the source
+of truth: task-oriented guides appear in the public index and search, while
+project records retain stable generated routes without crowding navigation.
 
 ## Local development
 
@@ -12,7 +12,7 @@ npm install
 npm start
 ```
 
-`npm start` refreshes the complete documentation index before starting the
+`npm start` refreshes the generated documentation routes and curated index before starting the
 Angular development server at `http://localhost:4200`.
 
 ## Validation and production build

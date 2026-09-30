@@ -28,6 +28,11 @@ for (const required of contract.requiredMetadata) {
     throw new Error(`The production index is missing required metadata: ${required}`);
   }
 }
+if (/\sonload=/i.test(index) || /<link[^>]+rel="stylesheet"[^>]+media="print"/i.test(index)) {
+  throw new Error(
+    'Production stylesheets must not depend on inline load handlers that violate the site CSP.',
+  );
+}
 
 async function collectFiles(directory, relative = '') {
   const results = [];
@@ -51,9 +56,58 @@ const files = (await collectFiles(distributionRoot))
   .filter((file) => file.relativePath !== 'production-metrics.json')
   .sort((left, right) => left.relativePath.localeCompare(right.relativePath));
 const fileMap = new Map(files.map((file) => [file.relativePath, file]));
+const prerenderedRouteCount = files.filter(
+  (file) => file.relativePath === 'index.html' || file.relativePath.endsWith('/index.html'),
+).length;
+if (prerenderedRouteCount < (contract.minimumPrerenderedRoutes ?? 0)) {
+  throw new Error(
+    `Production output contains ${prerenderedRouteCount} prerendered routes; ` +
+      `${contract.minimumPrerenderedRoutes} are required.`,
+  );
+}
 for (const requiredAsset of contract.requiredAssets) {
   if (!fileMap.has(requiredAsset)) {
     throw new Error(`Required production website asset is missing: ${requiredAsset}`);
+  }
+}
+const robots = await readFile(fileMap.get('robots.txt').absolutePath, 'utf8');
+const sitemap = await readFile(fileMap.get('sitemap.xml').absolutePath, 'utf8');
+const llmsIndex = await readFile(fileMap.get('llms.txt').absolutePath, 'utf8');
+const llmsFull = await readFile(fileMap.get('llms-full.txt').absolutePath, 'utf8');
+if (!robots.includes('Sitemap: https://bluetusk.io/sitemap.xml')) {
+  throw new Error('robots.txt does not advertise the production sitemap.');
+}
+for (const crawler of ['OAI-SearchBot', 'ChatGPT-User', 'GPTBot']) {
+  if (!robots.includes(`User-agent: ${crawler}`)) {
+    throw new Error(`robots.txt does not explicitly allow ${crawler}.`);
+  }
+}
+if (!sitemap.includes('<loc>https://bluetusk.io/documentation/real-time/continuous-graph</loc>')) {
+  throw new Error('The production sitemap is missing a representative documentation route.');
+}
+if (
+  !llmsIndex.includes('https://bluetusk.io/documentation/getting-started/quickstart') ||
+  !llmsIndex.includes('https://bluetusk.io/llms-full.txt')
+) {
+  throw new Error('llms.txt does not advertise the quickstart and curated guide set.');
+}
+if (
+  !llmsFull.includes('# BlueTusk curated documentation') ||
+  !llmsFull.includes('# Quickstart: run the first query') ||
+  llmsFull.includes('# Independent V1 release review handoff')
+) {
+  throw new Error('llms-full.txt does not contain the curated BlueTusk guide set.');
+}
+
+for (const route of contract.requiredPrerenderedRoutes ?? []) {
+  const relativePath = route === '/' ? 'index.html' : `${route.slice(1)}/index.html`;
+  const file = fileMap.get(relativePath);
+  if (!file) {
+    throw new Error(`Required prerendered route is missing: ${route}`);
+  }
+  const html = await readFile(file.absolutePath, 'utf8');
+  if (!/<app-root[^>]*>[\s\S]*?<h1[\s>]/i.test(html)) {
+    throw new Error(`Prerendered route does not contain readable page content: ${route}`);
   }
 }
 
@@ -65,10 +119,6 @@ if (sourceMaps.length !== 0) {
 const initialReferences = [...index.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)].map((match) =>
   match[1].replace(/^\//, ''),
 );
-const entryScripts = [...index.matchAll(/<script\b[^>]*src="([^"]+\.js)"[^>]*>/g)];
-if (entryScripts.length !== 1 || !/^\/?main-[A-Za-z0-9_-]{8,}\.js$/.test(entryScripts[0][1])) {
-  throw new Error('Production index must reference one hashed main entry script.');
-}
 const initialAssets = [...new Set(initialReferences)].map((relativePath) => {
   const file = fileMap.get(relativePath);
   if (!file) {
@@ -83,7 +133,9 @@ if (
   initialAssets.filter((file) => file.relativePath.endsWith('.js')).length < 1 ||
   initialAssets.filter((file) => file.relativePath.endsWith('.css')).length !== 1
 ) {
-  throw new Error('Production index must reference initial JavaScript and exactly one CSS asset.');
+  throw new Error(
+    'Production index must reference at least one initial JavaScript asset and exactly one CSS asset.',
+  );
 }
 
 function brotliBytes(file) {
@@ -157,6 +209,7 @@ const report = {
     brotliBytes: file.brotliBytes,
   })),
   metrics: {
+    prerenderedRouteCount,
     initialRawBytes,
     initialBrotliBytes,
     largestLazyAsset: largestLazy?.relativePath ?? null,

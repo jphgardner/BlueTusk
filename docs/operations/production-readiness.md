@@ -20,8 +20,10 @@ and the verifier defaults to the safe engineering mode:
 
 The command must finish with every publication switch disabled. Candidate mode
 instead requires all six stable policies armed in the immutable reviewed
-`origin/main` commit, with no release tags or candidate packages published.
-It is intentionally impossible to pass with the checked-in example evidence.
+`origin/main` commit, with no stable release tags or stable packages published.
+A manifest-bound public prerelease such as `1.1.0-rc.1` is allowed but cannot
+satisfy a stable exact-SHA gate. It is intentionally impossible to pass with
+the checked-in example evidence.
 
 ## What V1 measures
 

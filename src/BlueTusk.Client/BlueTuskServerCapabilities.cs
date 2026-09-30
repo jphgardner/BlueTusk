@@ -23,6 +23,9 @@ public sealed record BlueTuskServerCapabilities
 
     public bool SupportsSqlPgq { get; init; }
 
+    /// <summary>Gets whether PostgreSQL exposes the native <c>REPACK</c> command.</summary>
+    public bool SupportsRepack { get; init; }
+
     public bool SupportsVirtualGeneratedColumns { get; init; }
 
     public bool SupportsOAuthBearer { get; init; }
@@ -46,6 +49,7 @@ public sealed record BlueTuskServerCapabilities
             SupportsMultiranges = serverVersion.Major >= 14,
             // SQL/PGQ requires an explicit PostgreSQL 19 catalogue/syntax probe before it is enabled.
             SupportsSqlPgq = false,
+            SupportsRepack = serverVersion.Major >= 19,
             SupportsVirtualGeneratedColumns = serverVersion.Major >= 18,
             // Successful OAUTHBEARER negotiation promotes this connection-scoped value to true.
             SupportsOAuthBearer = false,
