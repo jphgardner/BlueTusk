@@ -22,12 +22,10 @@ public sealed class BlueTuskSocketTransportTests
             return;
         }
 
-        using var ipv6Listener = new TcpListener(IPAddress.IPv6Loopback, 0);
-        ipv6Listener.Server.DualMode = false;
-        ipv6Listener.Start();
+        var listeners = StartCrossFamilyListeners();
+        using var ipv6Listener = listeners.Ipv6;
+        using var ipv4Listener = listeners.Ipv4;
         var port = ((IPEndPoint)ipv6Listener.LocalEndpoint).Port;
-        using var ipv4Listener = new TcpListener(IPAddress.Loopback, port);
-        ipv4Listener.Start();
         await using var transport = CreateTransport([IPAddress.IPv6Loopback, IPAddress.Loopback]);
 
         if (asynchronous)
@@ -261,6 +259,41 @@ public sealed class BlueTuskSocketTransportTests
         new(
             _ => addresses,
             (_, _) => ValueTask.FromResult(addresses));
+
+    private static (TcpListener Ipv6, TcpListener Ipv4) StartCrossFamilyListeners()
+    {
+        const int maximumAttempts = 32;
+        for (var attempt = 1; ; attempt++)
+        {
+            var ipv6Listener = new TcpListener(IPAddress.IPv6Loopback, 0);
+            TcpListener? ipv4Listener = null;
+            var started = false;
+            try
+            {
+                ipv6Listener.Server.DualMode = false;
+                ipv6Listener.Start();
+                var port = ((IPEndPoint)ipv6Listener.LocalEndpoint).Port;
+                ipv4Listener = new TcpListener(IPAddress.Loopback, port);
+                ipv4Listener.Start();
+                started = true;
+                return (ipv6Listener, ipv4Listener);
+            }
+            catch (SocketException exception) when (
+                exception.SocketErrorCode == SocketError.AddressAlreadyInUse && attempt < maximumAttempts)
+            {
+                // An ephemeral IPv6 port can already be occupied by an IPv4 socket.
+                // Reserve a fresh pair before exercising the transport or its assertions.
+            }
+            finally
+            {
+                if (!started)
+                {
+                    ipv4Listener?.Dispose();
+                    ipv6Listener.Dispose();
+                }
+            }
+        }
+    }
 
     private static int ReserveUnusedPort()
     {
