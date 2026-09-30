@@ -216,13 +216,14 @@ try {
         }
         return null;
       }, [...pending.keys()]);
-      if (!leased || ![...pending.values()].some(row => row.id === leased)) throw new Error("Lost response did not leave an original durable identity.");
+      const lostKey = [...pending.entries()].find(([, row]) => row.id === leased)?.[0];
+      if (!leased || lostKey === undefined) throw new Error("Lost response did not leave an original durable identity.");
       lostMutation = leased;
       const metrics = await page.evaluate(() => window.edgeCapacity.metrics);
       applyBeforeRestart.push(...metrics.apply); horizonBeforeRestart.push(...metrics.horizon);
       await context.close(); context = undefined; page = undefined;
       clockOffset = 120_000; await openBrowser(false); restarted = true;
-      const persisted = await page.evaluate(async key => (await window.edgeCapacity.local.get(window.edgeCapacity.scope, key)).pendingId, key);
+      const persisted = await page.evaluate(async key => (await window.edgeCapacity.local.get(window.edgeCapacity.scope, key)).pendingId, lostKey);
       if (persisted !== lostMutation) throw new Error("Browser restart changed the leased mutation identity.");
       continue;
     }
