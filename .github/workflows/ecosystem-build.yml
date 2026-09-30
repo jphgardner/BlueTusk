@@ -122,6 +122,20 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Locked npm dependencies failed to install.' }
           npm exec --workspace @bluetusk/edge -- playwright install msedge
           if ($LASTEXITCODE -ne 0) { throw 'Microsoft Edge browser is unavailable.' }
+      - name: Verify Node checkpoint publication while the Windows observer holds a snapshot
+        shell: pwsh
+        run: |
+          dotnet test tests/BlueTusk.Edge.Tests/BlueTusk.Edge.Tests.csproj --configuration Release `
+            --filter 'FullyQualifiedName~BrowserCheckpointFileTests' `
+            --logger trx --results-directory artifacts/edge-checkpoint-tests
+          if ($LASTEXITCODE -ne 0) { throw 'Windows checkpoint publication failed.' }
+      - name: Retain Windows checkpoint regression result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: edge-checkpoint-windows-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/edge-checkpoint-tests
+          if-no-files-found: warn
       - name: Verify real Windows Edge profile recovery
         shell: pwsh
         run: |

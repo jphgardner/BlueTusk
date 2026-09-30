@@ -3,6 +3,7 @@ import { readFile, writeFile, readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { chromium } from "playwright";
+import { publishCheckpoint } from "./checkpoint.mjs";
 
 const endpoint = process.env.BLUETUSK_EDGE_LOAD_ENDPOINT;
 const seconds = Number(process.env.BLUETUSK_EDGE_LOAD_SECONDS);
@@ -138,7 +139,7 @@ async function sample(elapsed) {
   maximumPhysicalBytes = Math.max(maximumPhysicalBytes, await physicalBytes(profile));
   samplePhysicalTimes.push(performance.now() - started);
   started = performance.now();
-  await writeFile(checkpointFile, current.checkpoint);
+  await publishCheckpoint(checkpointFile, current.checkpoint);
   sampleCheckpointTimes.push(performance.now() - started);
 }
 

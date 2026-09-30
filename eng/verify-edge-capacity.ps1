@@ -96,11 +96,11 @@ for ($run = 1; $run -le $manifest.Runs; $run++) {
         $runSource.sourceTreeSha256 -ceq $before.sourceTreeSha256) "$label changed candidate source."
     $assetPath = Join-Path $runRoot 'browser-assets.json'
     $assets = @((Json $assetPath).Files)
-    Require ($assets.Count -eq 4) "$label lacks the exact browser asset snapshot."
-    foreach ($name in @('index.js','http.js','ordered.js','browser.mjs')) {
+    Require ($assets.Count -eq 5) "$label lacks the exact browser asset snapshot."
+    foreach ($name in @('index.js','http.js','ordered.js','browser.mjs','checkpoint.mjs')) {
         $entry = @($assets | Where-Object Name -ceq $name)
         Require ($entry.Count -eq 1) "$label browser asset $name is missing or duplicated."
-        $path = if ($name -eq 'browser.mjs') { Join-Path $runRoot $name } else { Join-Path (Join-Path $runRoot 'browser-assets') $name }
+        $path = if ($name -in @('browser.mjs', 'checkpoint.mjs')) { Join-Path $runRoot $name } else { Join-Path (Join-Path $runRoot 'browser-assets') $name }
         Require ((Hash $path) -ceq $entry[0].Sha256) "$label browser asset $name differs from its snapshot."
     }
     $browser = Json (Join-Path $runRoot 'browser.json')

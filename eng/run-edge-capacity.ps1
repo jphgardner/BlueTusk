@@ -109,6 +109,7 @@ try {
         $assets = Join-Path $runRoot 'browser-assets'
         New-Item -ItemType Directory -Path $assets -Force | Out-Null
         Copy-Item -LiteralPath 'benchmarks/BlueTusk.Edge.LoadHarness/browser.mjs' -Destination (Join-Path $runRoot 'browser.mjs')
+        Copy-Item -LiteralPath 'benchmarks/BlueTusk.Edge.LoadHarness/checkpoint.mjs' -Destination (Join-Path $runRoot 'checkpoint.mjs')
         $assetList = @()
         foreach ($name in @('index.js','http.js','ordered.js')) {
             $live = Join-Path 'clients/edge/dist' $name
@@ -117,6 +118,7 @@ try {
             $assetList += [ordered]@{ Name = $name; Sha256 = (Hash $copy) }
         }
         $assetList += [ordered]@{ Name = 'browser.mjs'; Sha256 = (Hash (Join-Path $runRoot 'browser.mjs')) }
+        $assetList += [ordered]@{ Name = 'checkpoint.mjs'; Sha256 = (Hash (Join-Path $runRoot 'checkpoint.mjs')) }
         [ordered]@{ Files = $assetList } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $runRoot 'browser-assets.json') -Encoding utf8
         $env:BLUETUSK_EDGE_LOAD_BROWSER_SHA256 = Hash (Join-Path $runRoot 'browser-assets.json')
         foreach ($entry in $binaries) {
@@ -148,7 +150,7 @@ try {
                 Require ((Test-Path -LiteralPath $live -PathType Leaf) -and (Hash $live) -ceq $entry.Sha256) "An Edge binary changed during run $run."
             }
             foreach ($entry in $assetList) {
-                $live = if ($entry.Name -eq 'browser.mjs') { 'benchmarks/BlueTusk.Edge.LoadHarness/browser.mjs' } else { Join-Path 'clients/edge/dist' $entry.Name }
+                $live = if ($entry.Name -in @('browser.mjs', 'checkpoint.mjs')) { Join-Path 'benchmarks/BlueTusk.Edge.LoadHarness' $entry.Name } else { Join-Path 'clients/edge/dist' $entry.Name }
                 Require ((Hash $live) -ceq $entry.Sha256) "A browser asset changed during run $run."
             }
         }

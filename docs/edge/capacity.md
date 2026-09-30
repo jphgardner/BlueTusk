@@ -29,6 +29,14 @@ socket or proxy failure. The .NET SQLite handles are reopened, not forcibly kill
 processes. The browser closes and relaunches its persistent profile. A failed run retains its
 partial evidence without asserting capacity.
 
+The browser publishes its durable checkpoint through a same-directory atomic rename. The
+.NET observer shares deletion while reading the previous snapshot, so publication neither
+truncates an observed checkpoint nor writes into its open handle. Replacement retries only
+Windows lock errors for a bounded interval, then surfaces any persistent failure. The frozen `fa18630`
+full campaign failed during its first run when the original in-place writer encountered
+`EBUSY` on `browser.checkpoint`; its partial capture remains failed. The publication fix
+requires a new exact-source campaign with the same durations and budgets.
+
 Use an installed Playwright browser channel and an otherwise idle reference host. A short
 diagnostic must precede interpreting the provisional budget:
 

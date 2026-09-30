@@ -6,6 +6,8 @@
   </PropertyGroup>
   <Import Project="..\..\eng\versions\Edge.props" />
   <ItemGroup>
+    <Compile Include="..\..\benchmarks\BlueTusk.Edge.LoadHarness\BrowserCheckpointFile.cs" Link="LoadHarness\BrowserCheckpointFile.cs" />
+    <None Include="..\..\benchmarks\BlueTusk.Edge.LoadHarness\checkpoint.mjs" Link="checkpoint.mjs" CopyToOutputDirectory="PreserveNewest" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\..\src\BlueTusk.Edge.Http\BlueTusk.Edge.Http.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Edge.AspNetCore\BlueTusk.Edge.AspNetCore.csproj" />
