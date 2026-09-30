@@ -230,8 +230,9 @@ try {
     for (const key of synced.acknowledged) {
       const row = pending.get(key); if (!row) throw new Error("Acknowledged browser key was not offered.");
       pending.delete(key); acknowledged++;
-      if (row.id === lostMutation) { recoveries.push((performance.now() - began) / 1000 - lostAt); lostRecovered = true; }
-      if (elapsed > 10 && !faultAffected(row.offeredAt, elapsed))
+      const acknowledgedAt = (performance.now() - began) / 1000;
+      if (row.id === lostMutation) { recoveries.push(acknowledgedAt - lostAt); lostRecovered = true; }
+      if (acknowledgedAt > 10 && !faultAffected(row.offeredAt, acknowledgedAt))
         ackTimes.push(performance.now() - row.began);
     }
     if (!firstOfflineRecovered && elapsed >= offlineOne + offlineLength)
