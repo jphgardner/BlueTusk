@@ -187,9 +187,19 @@ if ($ReleaseTrack -eq 'Core')
     [IO.Directory]::CreateDirectory($scopedSource) | Out-Null
     $coreFixtures = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'benchmarks/BlueTusk.Benchmarks') -Filter '*Benchmarks.cs' |
         Where-Object BaseName -notin $previewFixtures)
-    foreach ($fixture in $coreFixtures) { Copy-Item -LiteralPath $fixture.FullName -Destination $scopedSource }
+    $coreFixtureNames = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($fixture in $coreFixtures)
+    {
+        $source = Get-Content -LiteralPath $fixture.FullName -Raw
+        $classMatch = [regex]::Match($source,
+            '(?m)^public\s+(?:(?:sealed|partial)\s+)*class\s+(?<class>[A-Za-z_][A-Za-z0-9_]*Benchmarks)\b')
+        if (-not $classMatch.Success) { throw "Could not find a public benchmark fixture in '$($fixture.FullName)'." }
+        $null = $coreFixtureNames.Add($classMatch.Groups['class'].Value)
+        Copy-Item -LiteralPath $fixture.FullName -Destination $scopedSource
+    }
     $coverageArguments.BenchmarkSourcePath = $scopedSource
-    $coverageArguments.MinimumFixtureCount = $coreFixtures.Count
+    # Partial fixture declarations share one class and one measured report.
+    $coverageArguments.MinimumFixtureCount = $coreFixtureNames.Count
     $coverageArguments.MinimumBenchmarkCount = (@($coreFixtures | ForEach-Object { [regex]::Matches((Get-Content -LiteralPath $_.FullName -Raw), '\[Benchmark(?:\([^\]]*\))?\]').Count }) | Measure-Object -Sum).Sum
     foreach ($budgetKind in @('allocation', 'latency'))
     {
