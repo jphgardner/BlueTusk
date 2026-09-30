@@ -17,6 +17,7 @@ internal sealed class SqliteCapacityClient : IDisposable
     private readonly Random _random;
     private readonly MutableTimeProvider _clock;
     private readonly LatencyCapture _enqueue = new(), _ack = new(), _syncPass = new();
+    private readonly EdgeLocalPhaseTimings _localPhases = new();
     private readonly Dictionary<string, (Guid Id, long Started, double OfferedAt)> _pending = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _pendingGate = new(1, 1);
     private readonly List<double> _recoveries = [];
@@ -38,7 +39,7 @@ internal sealed class SqliteCapacityClient : IDisposable
         _index = index; _scope = new EdgeScope(Tenant(index), "orders", 1); _path = path;
         _payloadBytes = payloadBytes; _clock = clock; _random = new Random(84273 + index);
         _local = local; _http = http; _remote = remote; _fault = fault;
-        _coordinator = new EdgeSynchronizationCoordinator(local, fault);
+        _coordinator = new EdgeSynchronizationCoordinator(new TimedEdgeLocalStore(local, _localPhases), fault);
     }
 
     internal static async Task<SqliteCapacityClient> OpenAsync(int index, string directory, Uri endpoint,
@@ -143,6 +144,15 @@ internal sealed class SqliteCapacityClient : IDisposable
             $"{confirm.P50Milliseconds:F1}/{confirm.P95Milliseconds:F1}/{confirm.P99Milliseconds:F1} ms; " +
             $"change reads {changes.Samples} p50/p95/p99 " +
             $"{changes.P50Milliseconds:F1}/{changes.P95Milliseconds:F1}/{changes.P99Milliseconds:F1} ms.");
+        Console.WriteLine($"SQLite client {_index} local phase p95 ms: " +
+            $"checkpoint {_localPhases.Checkpoint.Snapshot().P95Milliseconds:F1}, " +
+            $"claim {_localPhases.Claim.Snapshot().P95Milliseconds:F1}, " +
+            $"ack {_localPhases.Acknowledge.Snapshot().P95Milliseconds:F1}, " +
+            $"receipt read {_localPhases.ReadReceipt.Snapshot().P95Milliseconds:F1}, " +
+            $"receipt mark {_localPhases.ConfirmReceipt.Snapshot().P95Milliseconds:F1}, " +
+            $"horizon read {_localPhases.ReadHorizon.Snapshot().P95Milliseconds:F1}, " +
+            $"horizon mark {_localPhases.AdvanceHorizon.Snapshot().P95Milliseconds:F1}, " +
+            $"apply changes {_localPhases.ApplyChanges.Snapshot().P95Milliseconds:F1}.");
     }
 
     internal async Task<ClientReport> ReportAsync(PostgreSqlEdgeServerStore server, CancellationToken token)
@@ -237,7 +247,7 @@ internal sealed class SqliteCapacityClient : IDisposable
             {
                 _local = new SqliteEdgeStore(Options(_path, _clock));
                 await _local.InitializeAsync(token).ConfigureAwait(false);
-                _coordinator = new EdgeSynchronizationCoordinator(_local, _fault);
+                _coordinator = new EdgeSynchronizationCoordinator(new TimedEdgeLocalStore(_local, _localPhases), _fault);
                 var lost = _pending.SingleOrDefault(item => item.Value.Id == _lostMutation);
                 var persisted = lost.Key is null ? null : await _local.GetAsync(_scope, lost.Key, token).ConfigureAwait(false);
                 if (persisted?.PendingMutationId != _lostMutation)
