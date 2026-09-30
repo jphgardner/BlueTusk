@@ -153,23 +153,24 @@
       >
         <div class="search-input-row">
           <mat-icon>search</mat-icon>
-          <mat-form-field appearance="outline">
-            <mat-label>Search the platform</mat-label>
-            <input
-              #searchField
-              matInput
-              autofocus
-              [value]="searchQuery()"
-              (input)="updateSearch($event)"
-              placeholder="Connections, EF Core, live updates, graph…"
-            />
-          </mat-form-field>
+          <input
+            #searchField
+            class="search-field"
+            type="search"
+            aria-label="Search the platform"
+            [value]="searchQuery()"
+            (input)="updateSearch($event)"
+            placeholder="Connections, EF Core, live updates, graph…"
+          />
           <button mat-icon-button type="button" (click)="closeSearch()" aria-label="Close search">
             <mat-icon>close</mat-icon>
           </button>
         </div>
 
         <div class="search-results">
+          @if (guideSearchUnavailable()) {
+            <p class="empty-search">Documentation search is temporarily unavailable.</p>
+          }
           @for (item of filteredSearchItems(); track item.route) {
             <a [routerLink]="item.route" (click)="closeSearch()">
               <mat-icon>{{ item.icon }}</mat-icon>

@@ -1190,8 +1190,21 @@ a {
   color: var(--cyan);
 }
 
-.search-input-row mat-form-field {
+.search-field {
   width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  outline: none;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+}
+
+.search-field:focus-visible {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px rgba(76, 215, 246, 0.25);
 }
 
 .search-results {

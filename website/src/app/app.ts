@@ -1,12 +1,10 @@
 import { Component, ElementRef, HostListener, ViewChild, computed, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { GUIDE_SEARCH } from '../generated/guide-search.generated';
 import { SITE_SEARCH } from './content/catalog';
+import type { SearchRecord } from './content/models';
 
 interface NavigationItem {
   label: string;
@@ -22,9 +20,7 @@ interface NavigationItem {
     RouterLinkActive,
     RouterOutlet,
     MatButtonModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatTooltipModule,
   ],
   templateUrl: './app.html',
@@ -37,6 +33,8 @@ export class App {
   @ViewChild('mobileNavFirst') private mobileNavFirst?: ElementRef<HTMLAnchorElement>;
   protected readonly searchOpen = signal(false);
   protected readonly searchQuery = signal('');
+  private readonly guideSearch = signal<readonly SearchRecord[]>([]);
+  protected readonly guideSearchUnavailable = signal(false);
   protected readonly mobileNavOpen = signal(false);
 
   protected readonly navItems: readonly NavigationItem[] = [
@@ -87,7 +85,7 @@ export class App {
   protected readonly filteredSearchItems = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
     const sections = SITE_SEARCH.map((item) => ({ ...item, icon: 'web' }));
-    const guides = GUIDE_SEARCH.map((guide) => ({ ...guide, icon: 'description' }));
+    const guides = this.guideSearch().map((guide) => ({ ...guide, icon: 'description' }));
     const all = [...sections, ...guides];
     if (!query) return all.slice(0, 8);
     return all
@@ -109,6 +107,12 @@ export class App {
     this.mobileNavOpen.set(false);
     this.searchQuery.set('');
     this.searchOpen.set(true);
+    void import('../generated/guide-search.generated')
+      .then(({ GUIDE_SEARCH }) => {
+        this.guideSearch.set(GUIDE_SEARCH);
+        this.guideSearchUnavailable.set(false);
+      })
+      .catch(() => this.guideSearchUnavailable.set(true));
     window.setTimeout(() => this.searchField?.nativeElement?.focus());
   }
 
