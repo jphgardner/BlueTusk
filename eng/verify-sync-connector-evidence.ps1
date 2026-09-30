@@ -5,7 +5,7 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1') -Force
-Import-Module (Join-Path $PSScriptRoot 'core-test-evidence.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'core-test-evidence.psm1')
+Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1')
 $payload = Read-CoreEvidenceJson $EvidencePath
 Get-CoreTestShardReport $EvidencePath $ExpectedCommit 'SyncConnectors' $payload.environmentId

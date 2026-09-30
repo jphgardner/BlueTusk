@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1')
 
 function Get-CoreTestPlan
 {
