@@ -16,7 +16,7 @@ internal sealed class EdgeLocalPhaseTimings
 }
 
 internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseTimings timings,
-    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedBatchLocalStore
+    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedBatchLocalStore, IEdgeOrderedReceiptBatchLocalStore
 {
     public ValueTask ActivateScopeAsync(EdgeScope scope, EdgeEpochChangePolicy policy = EdgeEpochChangePolicy.RejectIfPending,
         CancellationToken cancellationToken = default) => inner.ActivateScopeAsync(scope, policy, cancellationToken);
@@ -120,10 +120,27 @@ internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseT
         return result;
     }
 
+    public async ValueTask<IReadOnlyList<EdgeMutation>> ReadUnconfirmedOrderedReceiptsAsync(EdgeScope scope,
+        int maxReceipts, CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        var result = await inner.ReadUnconfirmedOrderedReceiptsAsync(scope, maxReceipts, cancellationToken).ConfigureAwait(false);
+        timings.ReadReceipt.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        return result;
+    }
+
     public async ValueTask MarkOrderedReceiptConfirmedAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
     {
         var started = Stopwatch.GetTimestamp();
         await inner.MarkOrderedReceiptConfirmedAsync(mutation, cancellationToken).ConfigureAwait(false);
+        timings.ConfirmReceipt.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+    }
+
+    public async ValueTask MarkOrderedReceiptsConfirmedAsync(EdgeScope scope, IReadOnlyList<EdgeMutation> mutations,
+        CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        await inner.MarkOrderedReceiptsConfirmedAsync(scope, mutations, cancellationToken).ConfigureAwait(false);
         timings.ConfirmReceipt.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
     }
 

@@ -3,7 +3,7 @@ using Microsoft.Data.Sqlite;
 
 namespace BlueTusk.Edge.Sqlite;
 
-public sealed partial class SqliteEdgeStore
+public sealed partial class SqliteEdgeStore : IEdgeOrderedReceiptBatchLocalStore
 {
     private async ValueTask StageOrderedConfirmationAsync(SqliteConnection connection, SqliteTransaction transaction,
         EdgeMutation mutation, CancellationToken cancellationToken)
@@ -71,12 +71,59 @@ public sealed partial class SqliteEdgeStore
             : null;
     }
 
+    public async ValueTask<IReadOnlyList<EdgeMutation>> ReadUnconfirmedOrderedReceiptsAsync(EdgeScope scope,
+        int maxReceipts, CancellationToken cancellationToken = default)
+    {
+        if (maxReceipts is < 1 or > 1000) { throw new ArgumentOutOfRangeException(nameof(maxReceipts)); }
+        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
+        _ = await CheckScopeAsync(connection, null, scope, cancellationToken).ConfigureAwait(false);
+        await using var command = Command(connection, null, "SELECT mutation_id,document_id,expected_revision,kind,payload FROM ordered_confirmations WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch AND confirmed=0 ORDER BY sequence LIMIT @maximum");
+        ScopeParameters(command, scope); command.Parameters.AddWithValue("maximum", maxReceipts);
+        var mutations = new List<EdgeMutation>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            mutations.Add(new EdgeMutation(scope, Guid.ParseExact(reader.GetString(0), "N"), reader.GetString(1),
+                reader.GetInt64(2), (EdgeMutationKind)reader.GetInt32(3), (byte[])reader.GetValue(4)));
+        }
+        return mutations;
+    }
+
     public async ValueTask MarkOrderedReceiptConfirmedAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(mutation);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         using var transaction = connection.BeginTransaction(deferred: false);
         _ = await CheckScopeAsync(connection, transaction, mutation.Scope, cancellationToken).ConfigureAwait(false);
+        await MarkOrderedReceiptConfirmedInTransactionAsync(connection, transaction, mutation, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask MarkOrderedReceiptsConfirmedAsync(EdgeScope scope, IReadOnlyList<EdgeMutation> mutations,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(mutations);
+        if (mutations.Count is < 1 or > 1000) { throw new ArgumentOutOfRangeException(nameof(mutations)); }
+        var identities = new HashSet<Guid>();
+        foreach (var mutation in mutations)
+        {
+            ArgumentNullException.ThrowIfNull(mutation);
+            if (mutation.Scope != scope || !identities.Add(mutation.Id)) { throw new EdgeMutationIdentityException(); }
+        }
+        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
+        using var transaction = connection.BeginTransaction(deferred: false);
+        _ = await CheckScopeAsync(connection, transaction, scope, cancellationToken).ConfigureAwait(false);
+        foreach (var mutation in mutations)
+        {
+            await MarkOrderedReceiptConfirmedInTransactionAsync(connection, transaction, mutation, cancellationToken).ConfigureAwait(false);
+        }
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async ValueTask MarkOrderedReceiptConfirmedInTransactionAsync(SqliteConnection connection,
+        SqliteTransaction transaction, EdgeMutation mutation, CancellationToken cancellationToken)
+    {
         await using (var read = Command(connection, transaction, "SELECT fingerprint FROM ordered_confirmations WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch AND mutation_id=@mutation"))
         {
             MutationParameters(read, mutation);
@@ -85,7 +132,6 @@ public sealed partial class SqliteEdgeStore
         }
         await using (var mark = Command(connection, transaction, "UPDATE ordered_confirmations SET confirmed=1,payload=X'' WHERE tenant=@tenant AND scope_id=@scope AND epoch=@epoch AND mutation_id=@mutation"))
         { MutationParameters(mark, mutation); _ = await mark.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false); }
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<Guid?> ReadConfirmedOrderedHorizonAsync(EdgeScope scope, int maxReceipts = 1000, CancellationToken cancellationToken = default)

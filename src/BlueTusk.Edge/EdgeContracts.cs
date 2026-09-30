@@ -168,6 +168,13 @@ public interface IEdgeOrderedLocalStore : IEdgeLocalStore
     ValueTask MarkOrderedReceiptHorizonAsync(EdgeScope scope, Guid throughMutationId, CancellationToken cancellationToken = default);
 }
 
+/// <summary>Optional bounded bulk access to the durable ordered-receipt outbox.</summary>
+public interface IEdgeOrderedReceiptBatchLocalStore : IEdgeOrderedLocalStore
+{
+    ValueTask<IReadOnlyList<EdgeMutation>> ReadUnconfirmedOrderedReceiptsAsync(EdgeScope scope, int maxReceipts, CancellationToken cancellationToken = default);
+    ValueTask MarkOrderedReceiptsConfirmedAsync(EdgeScope scope, IReadOnlyList<EdgeMutation> mutations, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Optional remote confirmation and horizon contract. Confirm only after a durable local outcome acknowledgement.</summary>
 public interface IEdgeOrderedReceiptTransport
 {
@@ -278,12 +285,37 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
     private static async ValueTask FlushOrderedReceiptsAsync(IEdgeOrderedLocalStore store, IEdgeOrderedReceiptTransport transport,
         EdgeScope scope, int maximum, CancellationToken cancellationToken)
     {
-        for (var i = 0; i < maximum; i++)
+        if (store is IEdgeOrderedReceiptBatchLocalStore batchStore)
         {
-            var mutation = await store.ReadNextUnconfirmedOrderedReceiptAsync(scope, cancellationToken).ConfigureAwait(false);
-            if (mutation is null) { break; }
-            await transport.FinalizeMutationReceiptAsync(mutation, cancellationToken).ConfigureAwait(false);
-            await store.MarkOrderedReceiptConfirmedAsync(mutation, cancellationToken).ConfigureAwait(false);
+            var pending = await batchStore.ReadUnconfirmedOrderedReceiptsAsync(scope, maximum, cancellationToken).ConfigureAwait(false);
+            var confirmed = new List<EdgeMutation>(pending.Count);
+            try
+            {
+                foreach (var mutation in pending)
+                {
+                    await transport.FinalizeMutationReceiptAsync(mutation, cancellationToken).ConfigureAwait(false);
+                    confirmed.Add(mutation);
+                }
+            }
+            finally
+            {
+                // A successfully finalized receipt remains retryable until the horizon advances.
+                // Persist the successful prefix even when a later request fails or is cancelled.
+                if (confirmed.Count != 0)
+                {
+                    await batchStore.MarkOrderedReceiptsConfirmedAsync(scope, confirmed, CancellationToken.None).ConfigureAwait(false);
+                }
+            }
+        }
+        else
+        {
+            for (var i = 0; i < maximum; i++)
+            {
+                var mutation = await store.ReadNextUnconfirmedOrderedReceiptAsync(scope, cancellationToken).ConfigureAwait(false);
+                if (mutation is null) { break; }
+                await transport.FinalizeMutationReceiptAsync(mutation, cancellationToken).ConfigureAwait(false);
+                await store.MarkOrderedReceiptConfirmedAsync(mutation, cancellationToken).ConfigureAwait(false);
+            }
         }
         var through = await store.ReadConfirmedOrderedHorizonAsync(scope, maximum, cancellationToken).ConfigureAwait(false);
         if (through is Guid id)
