@@ -175,6 +175,7 @@ jobs:
           ./eng/test-core-workflow-evidence.ps1
           ./eng/test-core-endurance-contract.ps1
           ./eng/test-core-candidate-bindings.ps1
+          ./eng/test-core-test-evidence.ps1
 
       - name: Build
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore
@@ -191,6 +192,24 @@ jobs:
 
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
+
+      - name: Capture exact Core unit regression evidence
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: >-
+          ./eng/run-core-test-evidence.ps1
+          -Kind Regression
+          -OutputRoot artifacts/core-regression/${{ matrix.os }}
+          -ExpectedCommit ${{ github.sha }}
+
+      - name: Retain raw Core unit regression evidence
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-test-regression-${{ matrix.os }}-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-regression/${{ matrix.os }}
+          if-no-files-found: error
+          retention-days: 90
 
   browser-clients:
     name: Browser client contracts (${{ matrix.os }})
@@ -403,6 +422,8 @@ jobs:
       fail-fast: false
       matrix:
         major: [15, 16, 17, 18]
+    env:
+      BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -417,9 +438,27 @@ jobs:
         run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres${{ matrix.major }}
 
       - name: Run live provider matrix
-        env:
-          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
         run: dotnet test BlueTusk.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+
+      - name: Capture exact Core stable compatibility evidence
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          $container = (& docker compose -f eng/compose/postgres.yml --profile preview ps --quiet postgres${{ matrix.major }}).Trim()
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($container)) { throw 'Stable PostgreSQL fixture is missing.' }
+          ./eng/run-core-test-evidence.ps1 -Kind Compatibility `
+            -OutputRoot artifacts/core-compatibility/postgresql-${{ matrix.major }} `
+            -ExpectedCommit ${{ github.sha }} `
+            -PostgreSqlMajor ${{ matrix.major }} -PostgreSqlContainer $container
+
+      - name: Retain raw Core stable compatibility evidence
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-test-compatibility-postgresql-${{ matrix.major }}-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-compatibility/postgresql-${{ matrix.major }}
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Capture PostgreSQL logs on failure
         if: failure()
@@ -428,6 +467,56 @@ jobs:
       - name: Stop PostgreSQL
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  core-test-evidence:
+    name: Aggregate immutable Core regression and stable compatibility payloads
+    if: github.event_name == 'workflow_dispatch'
+    needs: [build-and-test, postgresql-integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-regression-ubuntu-latest-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/regression/runs/linux-x64
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-regression-windows-latest-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/regression/runs/windows-x64
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-15-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-15
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-16-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-16
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-17-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-17
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-18-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-18
+      - name: Verify every raw test payload and build complete Core manifests
+        shell: pwsh
+        run: |
+          ./eng/build-core-test-manifest.ps1 -Kind Regression `
+            -EvidenceRoot artifacts/core-test-evidence/regression -ExpectedCommit ${{ github.sha }}
+          ./eng/build-core-test-manifest.ps1 -Kind Compatibility `
+            -EvidenceRoot artifacts/core-test-evidence/compatibility -ExpectedCommit ${{ github.sha }}
+      - name: Retain complete immutable Core test matrices
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v1.2-core-test-evidence-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence
+          if-no-files-found: error
+          retention-days: 90
 
   postgresql19-provider-compatibility:
     # Keep the existing protected status context. This is real provider preview

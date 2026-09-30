@@ -116,7 +116,36 @@ approval schemas and approval ordering. Its self-test exercises a synthetic
 binding set and rejects malformed or stale substitutions; it is part of the
 build gate. The binding report explicitly leaves payload qualification, live
 GitHub identity and release approval unverified. The final remote aggregator and
-the missing Core evidence producers still need implementation.
+the remaining Core evidence producers still need implementation.
+
+Manual `build.yml` runs now capture the Core unit regression matrix on Windows
+and Linux, and stable database acceptance on PostgreSQL 15–18. Each capture
+retains the discovery log, raw TRX, test log and exact-commit test assembly.
+All four database fixtures are digest-pinned. The compatibility runner verifies
+that its test connection targets the inspected local database and port. Unit
+regression excludes the named database-only Live and Sync classes; compatibility
+executes those classes against the live fixtures. The existing complete solution
+build/test jobs remain required, as do separate destination and topology gates.
+
+`eng/build-core-test-manifest.ps1` joins the two OS captures or four database
+captures without overwriting evidence. `eng/verify-core-test-evidence.ps1`
+requires complete coverage, the canonical project filters, exact discovery/TRX
+agreement, zero skips and failures, matching counters, source-bound assemblies
+and the recorded stable database identities. The aggregated
+`v1.2-core-test-evidence-<sha>-<run-id>` artifact contains `regression/` and
+`compatibility/` payload trees at the schema 4 binding paths. Copy both complete
+trees when assembling a candidate. These readers qualify test payloads only;
+they do not certify live GitHub identity, performance, endurance or publication.
+
+```powershell
+./eng/test-core-test-evidence.ps1
+./eng/verify-core-test-evidence.ps1 -Kind Regression `
+    -EvidencePath artifacts/my-core-evidence/regression/core-regression-manifest.json `
+    -ExpectedCommit <full-40-character-sha>
+./eng/verify-core-test-evidence.ps1 -Kind Compatibility `
+    -EvidencePath artifacts/my-core-evidence/compatibility/core-compatibility-manifest.json `
+    -ExpectedCommit <full-40-character-sha>
+```
 
 The proposed seven-run scope excludes Graph and adds combined Live/Control Plane
 endurance. Preserve the full downloaded payload trees beside the envelope:

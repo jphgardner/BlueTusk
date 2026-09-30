@@ -31,7 +31,7 @@ function Read-CoreEvidenceJson
         { throw "Evidence JSON '$Path' must contain a $expectedKind root." }
     }
     finally { $document.Dispose() }
-    return ,($text | ConvertFrom-Json -Depth 64)
+    return ,($text | ConvertFrom-Json -Depth 64 -DateKind String)
 }
 
 function Assert-CoreEvidenceProperties
