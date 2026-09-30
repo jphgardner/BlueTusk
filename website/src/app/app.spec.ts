@@ -36,4 +36,44 @@ describe('App', () => {
       'Platform',
     );
   });
+
+  it('loads documentation results when search opens', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[aria-label="Search BlueTusk"]')
+      ?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      '.search-field',
+    );
+    expect(input).toBeTruthy();
+    input!.value = 'quickstart';
+    input!.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          'a[href="/documentation/getting-started/quickstart"]',
+        ),
+      ).toBeTruthy();
+    });
+  });
+
+  it('opens and closes mobile navigation', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[aria-label="Open navigation"]')
+      ?.click();
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('#mobile-navigation a'),
+    ).toBeTruthy();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#mobile-navigation')).toBeNull();
+  });
 });
