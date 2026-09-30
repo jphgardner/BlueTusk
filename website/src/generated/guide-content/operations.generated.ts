@@ -3104,7 +3104,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "upgrade"
     ],
-    "order": 1090,
+    "order": 1091,
     "title": "Jobs binary upgrade and rollback gate",
     "sourcePath": "docs/jobs/upgrade.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/upgrade.md",
@@ -3138,7 +3138,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1098,
+    "order": 1099,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -3236,7 +3236,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1099,
+    "order": 1100,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -3345,7 +3345,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1101,
+    "order": 1102,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -3419,7 +3419,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1102,
+    "order": 1103,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -3476,7 +3476,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1104,
+    "order": 1105,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -3604,7 +3604,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1105,
+    "order": 1106,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -3689,7 +3689,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "1",
       "1"
     ],
-    "order": 1106,
+    "order": 1107,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -3762,7 +3762,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1109,
+    "order": 1110,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -3921,7 +3921,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1110,
+    "order": 1111,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -4009,7 +4009,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "website",
       "production"
     ],
-    "order": 1113,
+    "order": 1114,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -4076,7 +4076,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1115,
+    "order": 1116,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -4108,7 +4108,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LIVE"
     ],
-    "order": 1116,
+    "order": 1117,
     "title": "Published projections in Live",
     "sourcePath": "docs/projections/LIVE.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
@@ -4170,7 +4170,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LOAD"
     ],
-    "order": 1117,
+    "order": 1118,
     "title": "Workload and recovery qualification",
     "sourcePath": "docs/projections/LOAD.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
@@ -4227,7 +4227,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "README"
     ],
-    "order": 1118,
+    "order": 1119,
     "title": "BlueTusk.Projections",
     "sourcePath": "docs/projections/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
@@ -4294,7 +4294,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "RECOVERY"
     ],
-    "order": 1119,
+    "order": 1120,
     "title": "Explicit source recovery and controlled DDL",
     "sourcePath": "docs/projections/RECOVERY.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
@@ -4332,7 +4332,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "evidence",
       "README"
     ],
-    "order": 1120,
+    "order": 1121,
     "title": "Local bounded workload evidence",
     "sourcePath": "docs/projections/evidence/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
@@ -4378,7 +4378,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1123,
+    "order": 1124,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -4410,7 +4410,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "process"
     ],
-    "order": 1128,
+    "order": 1129,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -4458,7 +4458,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1130,
+    "order": 1131,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -4509,7 +4509,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1131,
+    "order": 1132,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -4594,7 +4594,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1132,
+    "order": 1133,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -4639,7 +4639,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1134,
+    "order": 1135,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -4687,7 +4687,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1135,
+    "order": 1136,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -4759,7 +4759,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "schema",
       "README"
     ],
-    "order": 1139,
+    "order": 1140,
     "title": "BlueTusk Schema",
     "sourcePath": "docs/schema/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
@@ -4882,7 +4882,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "catalogue",
       "attestation"
     ],
-    "order": 1140,
+    "order": 1141,
     "title": "Catalogue consistency attestation",
     "sourcePath": "docs/schema/catalogue-attestation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
@@ -4944,7 +4944,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "README"
     ],
-    "order": 1141,
+    "order": 1142,
     "title": "BlueTusk.Search",
     "sourcePath": "docs/search/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
@@ -5056,7 +5056,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "capacity"
     ],
-    "order": 1142,
+    "order": 1143,
     "title": "Search mixed ingestion and retrieval capacity campaign",
     "sourcePath": "docs/search/capacity.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/capacity.md",
@@ -5113,7 +5113,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sql",
       "README"
     ],
-    "order": 1144,
+    "order": 1145,
     "title": "BlueTusk Sql",
     "sourcePath": "docs/sql/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
@@ -5195,7 +5195,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "studio",
       "README"
     ],
-    "order": 1161,
+    "order": 1162,
     "title": "BlueTusk Studio",
     "sourcePath": "docs/studio/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
@@ -5287,7 +5287,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1170,
+    "order": 1171,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -5345,7 +5345,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1171,
+    "order": 1172,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -5392,7 +5392,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "workflows",
       "README"
     ],
-    "order": 1172,
+    "order": 1173,
     "title": "BlueTusk.Workflows",
     "sourcePath": "docs/workflows/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",
