@@ -115,8 +115,31 @@ exact commit and producer bindings, file digests and sizes, root containment,
 approval schemas and approval ordering. Its self-test exercises a synthetic
 binding set and rejects malformed or stale substitutions; it is part of the
 build gate. The binding report explicitly leaves payload qualification, live
-GitHub identity and release approval unverified. The final remote aggregator and
-the remaining Core evidence producers still need implementation.
+GitHub identity and release approval unverified. The final qualification
+aggregator and the remaining Core evidence producers still need implementation.
+
+For authorized local Docker campaigns, `-UseLocalExecution` builds a separate
+schema 5 envelope from `producer-runs.json`. Build, security and fuzzing still
+require actual GitHub Actions records. Performance and the three endurance
+producers may instead use `LocalDocker` capture records. Local records use UUIDs
+and `local:<uuid>` artifact identities; GitHub records retain their real run IDs
+and attempts. Local captures cannot supply GitHub URLs or numeric workflow IDs.
+Each capture binds an immutable manifest, its source and verifier-tool commits,
+UTC start/completion times, exit status, host/Docker platform, pinned images,
+retained logs and exact producer artifact hashes. The binding reader counts
+local captures separately and does not certify execution authenticity or
+publication. It accepts no replacement for missing payload qualification.
+
+`eng/build-core-local-endurance-record.ps1` emits an endurance capture record
+only after the existing full-duration payload reader passes: 72 hours and
+100,000 Streams transactions; 24 hours and 100 Sync cycles; or 24 hours and
+100,000 Live/Control Plane cycles. It inspects only named Docker resources
+labelled `bluetusk.owner=v1-local-qualification` and bound to the same candidate
+commit. Preserve the full report/provenance trees and capture log under the
+canonical artifact paths before emitting a record. Short preflight diagnostics
+cannot produce a release-duration record. Performance leadership still requires
+its full Windows/Linux comparison matrix; a reference-budget report is not a
+performance-leadership manifest.
 
 Manual `build.yml` runs now capture the Core unit regression matrix on Windows
 and Linux, and stable database acceptance on PostgreSQL 15–18. Each capture
