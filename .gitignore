@@ -17,5 +17,6 @@ coverage/
 node_modules/
 clients/*/dist/
 applications/web/*/dist/
+applications/web/*/test-results/
 applications/web/*/.angular/
 applications/web/*/*.tsbuildinfo
