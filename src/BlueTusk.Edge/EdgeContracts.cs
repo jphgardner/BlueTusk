@@ -100,6 +100,17 @@ public sealed record EdgeCachePage(IReadOnlyList<EdgeCachedDocument> Items, stri
 public sealed record EdgeCheckpoint(long Position, bool SnapshotReady);
 public sealed record EdgeMutationLease(EdgeMutation Mutation, long Fence, DateTimeOffset ExpiresAt);
 public sealed record EdgeMutationOutcome(EdgeMutationOutcomeKind Kind, EdgeRecord? ServerRecord);
+public sealed class EdgeMutationAcknowledgement
+{
+    public EdgeMutationAcknowledgement(EdgeMutationLease lease, EdgeMutationOutcome outcome)
+    {
+        Lease = lease ?? throw new ArgumentNullException(nameof(lease));
+        Outcome = outcome ?? throw new ArgumentNullException(nameof(outcome));
+    }
+
+    public EdgeMutationLease Lease { get; }
+    public EdgeMutationOutcome Outcome { get; }
+}
 public sealed record EdgeChangeBatch(long FromPosition, long ToPosition, IReadOnlyList<EdgeRecord> Records);
 public sealed record EdgeSnapshot(Guid Id, long Position);
 
@@ -123,6 +134,19 @@ public interface IEdgeChainedLocalStore : IEdgeLocalStore
 {
     ValueTask<EdgeMutationLease?> AcknowledgeAndClaimNextAsync(EdgeMutationLease lease, EdgeMutationOutcome outcome,
         TimeSpan leaseDuration, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Optional ordered-prefix claim and atomic acknowledgement for bounded catch-up after reconnect.</summary>
+public interface IEdgeOrderedBatchLocalStore : IEdgeChainedLocalStore, IEdgeOrderedLocalStore
+{
+    /// <summary>Returns null when the earliest work needs the ordinary claim path; an empty list means no claimable work.</summary>
+    ValueTask<IReadOnlyList<EdgeMutationLease>?> ClaimOrderedBatchAsync(EdgeScope scope, int maximum,
+        TimeSpan leaseDuration, CancellationToken cancellationToken = default);
+    ValueTask AcknowledgeBatchAsync(IReadOnlyList<EdgeMutationAcknowledgement> acknowledgements,
+        CancellationToken cancellationToken = default);
+    /// <summary>Returns unprocessed leases to the queue while fencing their former owners.</summary>
+    ValueTask ReleaseOrderedBatchAsync(IReadOnlyList<EdgeMutationLease> leases,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>Host-owned authenticated transport. Server mutation identity receipts must commit atomically with business effects.</summary>
@@ -182,25 +206,56 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
         if (store is IEdgeOrderedLocalStore orderedLocal && transport is IEdgeOrderedReceiptTransport orderedRemote)
         { await FlushOrderedReceiptsAsync(orderedLocal, orderedRemote, scope, maxPushes, cancellationToken).ConfigureAwait(false); }
 
-        EdgeMutationLease? nextLease = null;
-        for (var i = 0; i < maxPushes; i++)
+        var batchStore = store as IEdgeOrderedBatchLocalStore;
+        var claimedBatch = batchStore is null ? null :
+            await batchStore.ClaimOrderedBatchAsync(scope, maxPushes, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
+        if (claimedBatch is not null)
         {
-            var lease = nextLease ?? await store.ClaimAsync(scope, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
-            if (lease is null)
+            var acknowledged = new List<EdgeMutationAcknowledgement>(claimedBatch.Count);
+            try
             {
-                break;
+                foreach (var lease in claimedBatch)
+                {
+                    var outcome = await transport.ApplyMutationAsync(lease.Mutation, cancellationToken).ConfigureAwait(false);
+                    acknowledged.Add(new EdgeMutationAcknowledgement(lease, outcome));
+                }
             }
-
-            var outcome = await transport.ApplyMutationAsync(lease.Mutation, cancellationToken).ConfigureAwait(false);
-            if (store is IEdgeChainedLocalStore chained && i + 1 < maxPushes)
+            finally
             {
-                nextLease = await chained.AcknowledgeAndClaimNextAsync(lease, outcome, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
-                if (nextLease is null) { break; }
+                // Successful remote outcomes must be made durable even if a later request fails.
+                var committed = false;
+                try
+                {
+                    if (acknowledged.Count != 0)
+                    { await batchStore!.AcknowledgeBatchAsync(acknowledged, CancellationToken.None).ConfigureAwait(false); }
+                    committed = true;
+                }
+                finally
+                {
+                    IReadOnlyList<EdgeMutationLease> unreleased = committed ? claimedBatch.Skip(acknowledged.Count).ToArray() : claimedBatch;
+                    if (unreleased.Count != 0)
+                    { await batchStore!.ReleaseOrderedBatchAsync(unreleased, CancellationToken.None).ConfigureAwait(false); }
+                }
             }
-            else
+        }
+        else
+        {
+            EdgeMutationLease? nextLease = null;
+            for (var i = 0; i < maxPushes; i++)
             {
-                await store.AcknowledgeAsync(lease, outcome, cancellationToken).ConfigureAwait(false);
-                nextLease = null;
+                var lease = nextLease ?? await store.ClaimAsync(scope, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
+                if (lease is null) { break; }
+                var outcome = await transport.ApplyMutationAsync(lease.Mutation, cancellationToken).ConfigureAwait(false);
+                if (store is IEdgeChainedLocalStore chained && i + 1 < maxPushes)
+                {
+                    nextLease = await chained.AcknowledgeAndClaimNextAsync(lease, outcome, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
+                    if (nextLease is null) { break; }
+                }
+                else
+                {
+                    await store.AcknowledgeAsync(lease, outcome, cancellationToken).ConfigureAwait(false);
+                    nextLease = null;
+                }
             }
         }
 

@@ -92,7 +92,7 @@
       "apiExemptProjects": []
     },
     "Edge": {
-      "maximumSignatures": 466,
+      "maximumSignatures": 477,
       "baselineProjects": 5,
       "apiExemptProjects": []
     }

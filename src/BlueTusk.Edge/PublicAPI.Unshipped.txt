@@ -200,3 +200,11 @@ static BlueTusk.Edge.EdgeOrderedMutationId.NewStreamId() -> string!
 static BlueTusk.Edge.EdgeOrderedMutationId.TryParse(System.Guid id, out string! streamId, out long sequence) -> bool
 static BlueTusk.Edge.EdgeValidation.JsonObject(System.ReadOnlyMemory<byte> payload) -> void
 static BlueTusk.Edge.EdgeValidation.Key(string! value, string! parameterName, int maxBytes) -> void
+BlueTusk.Edge.EdgeMutationAcknowledgement
+BlueTusk.Edge.EdgeMutationAcknowledgement.EdgeMutationAcknowledgement(BlueTusk.Edge.EdgeMutationLease! lease, BlueTusk.Edge.EdgeMutationOutcome! outcome) -> void
+BlueTusk.Edge.EdgeMutationAcknowledgement.Lease.get -> BlueTusk.Edge.EdgeMutationLease!
+BlueTusk.Edge.EdgeMutationAcknowledgement.Outcome.get -> BlueTusk.Edge.EdgeMutationOutcome!
+BlueTusk.Edge.IEdgeOrderedBatchLocalStore
+BlueTusk.Edge.IEdgeOrderedBatchLocalStore.AcknowledgeBatchAsync(System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeMutationAcknowledgement!>! acknowledgements, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Edge.IEdgeOrderedBatchLocalStore.ClaimOrderedBatchAsync(BlueTusk.Edge.EdgeScope! scope, int maximum, System.TimeSpan leaseDuration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeMutationLease!>?>
+BlueTusk.Edge.IEdgeOrderedBatchLocalStore.ReleaseOrderedBatchAsync(System.Collections.Generic.IReadOnlyList<BlueTusk.Edge.EdgeMutationLease!>! leases, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask

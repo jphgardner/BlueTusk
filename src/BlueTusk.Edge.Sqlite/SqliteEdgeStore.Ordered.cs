@@ -3,7 +3,7 @@ using Microsoft.Data.Sqlite;
 
 namespace BlueTusk.Edge.Sqlite;
 
-public sealed partial class SqliteEdgeStore : IEdgeOrderedLocalStore
+public sealed partial class SqliteEdgeStore
 {
     private async ValueTask StageOrderedConfirmationAsync(SqliteConnection connection, SqliteTransaction transaction,
         EdgeMutation mutation, CancellationToken cancellationToken)

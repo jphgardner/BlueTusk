@@ -16,7 +16,7 @@ internal sealed class EdgeLocalPhaseTimings
 }
 
 internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseTimings timings,
-    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedLocalStore, IEdgeChainedLocalStore
+    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedBatchLocalStore
 {
     public ValueTask ActivateScopeAsync(EdgeScope scope, EdgeEpochChangePolicy policy = EdgeEpochChangePolicy.RejectIfPending,
         CancellationToken cancellationToken = default) => inner.ActivateScopeAsync(scope, policy, cancellationToken);
@@ -51,6 +51,15 @@ internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseT
         return result;
     }
 
+    public async ValueTask<IReadOnlyList<EdgeMutationLease>?> ClaimOrderedBatchAsync(EdgeScope scope, int maximum,
+        TimeSpan leaseDuration, CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        var result = await inner.ClaimOrderedBatchAsync(scope, maximum, leaseDuration, cancellationToken).ConfigureAwait(false);
+        timings.Claim.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        return result;
+    }
+
     public async ValueTask AcknowledgeAsync(EdgeMutationLease lease, EdgeMutationOutcome outcome,
         CancellationToken cancellationToken = default)
     {
@@ -60,6 +69,20 @@ internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseT
         timings.Acknowledge.Add(Stopwatch.GetElapsedTime(started, committed).TotalMilliseconds);
         await onDurableAcknowledgement(lease.Mutation, committed, cancellationToken).ConfigureAwait(false);
     }
+
+    public async ValueTask AcknowledgeBatchAsync(IReadOnlyList<EdgeMutationAcknowledgement> acknowledgements,
+        CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        await inner.AcknowledgeBatchAsync(acknowledgements, cancellationToken).ConfigureAwait(false);
+        var committed = Stopwatch.GetTimestamp();
+        timings.Acknowledge.Add(Stopwatch.GetElapsedTime(started, committed).TotalMilliseconds);
+        foreach (var acknowledgement in acknowledgements)
+        { await onDurableAcknowledgement(acknowledgement.Lease.Mutation, committed, cancellationToken).ConfigureAwait(false); }
+    }
+
+    public ValueTask ReleaseOrderedBatchAsync(IReadOnlyList<EdgeMutationLease> leases,
+        CancellationToken cancellationToken = default) => inner.ReleaseOrderedBatchAsync(leases, cancellationToken);
 
     public async ValueTask<EdgeMutationLease?> AcknowledgeAndClaimNextAsync(EdgeMutationLease lease,
         EdgeMutationOutcome outcome, TimeSpan leaseDuration, CancellationToken cancellationToken = default)

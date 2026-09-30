@@ -150,6 +150,77 @@ public sealed class SqliteEdgeStoreTests
     });
 
     [Fact]
+    public Task Ordered_batch_claims_once_and_acknowledges_atomically() => WithReadyStoreAsync(async (store, options) =>
+    {
+        var first = await store.EnqueueOrderedAsync(Scope, "first", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        var second = await store.EnqueueOrderedAsync(Scope, "second", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        var leases = (await store.ClaimOrderedBatchAsync(Scope, 2, TimeSpan.FromMinutes(1)))!;
+        Assert.Equal(new[] { first.Id, second.Id }, leases.Select(static lease => lease.Mutation.Id).ToArray());
+        Assert.Null(await new SqliteEdgeStore(options).ClaimAsync(Scope, TimeSpan.FromMinutes(1)));
+        await store.AcknowledgeBatchAsync(leases.Select(lease => new EdgeMutationAcknowledgement(lease,
+            new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record(lease.Mutation.DocumentId, 1, "server")))).ToArray());
+        Assert.Null((await store.GetAsync(Scope, "first"))!.PendingMutationId);
+        Assert.Null((await store.GetAsync(Scope, "second"))!.PendingMutationId);
+        Assert.Equal(first.Id, (await store.ReadNextUnconfirmedOrderedReceiptAsync(Scope))!.Id);
+    });
+
+    [Fact]
+    public Task Ordered_batch_acknowledgement_rolls_back_all_outcomes_when_one_outbox_write_fails() => WithReadyStoreAsync(async (store, options) =>
+    {
+        var first = await store.EnqueueOrderedAsync(Scope, "first", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        var second = await store.EnqueueOrderedAsync(Scope, "second", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        var leases = (await store.ClaimOrderedBatchAsync(Scope, 2, TimeSpan.FromMinutes(1)))!;
+        var outcomes = leases.Select(lease => new EdgeMutationAcknowledgement(lease,
+            new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record(lease.Mutation.DocumentId, 1, "server")))).ToArray();
+        await using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = options.DatabasePath, Pooling = false }.ToString());
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "CREATE TRIGGER fail_second_batch_outbox BEFORE INSERT ON ordered_confirmations WHEN NEW.document_id='second' BEGIN SELECT RAISE(ABORT,'injected batch failure'); END";
+        _ = await command.ExecuteNonQueryAsync();
+        await Assert.ThrowsAsync<SqliteException>(async () => await store.AcknowledgeBatchAsync(outcomes));
+        Assert.Equal(first.Id, (await store.GetAsync(Scope, "first"))!.PendingMutationId);
+        Assert.Equal(second.Id, (await store.GetAsync(Scope, "second"))!.PendingMutationId);
+        Assert.Null(await store.ReadNextUnconfirmedOrderedReceiptAsync(Scope));
+        command.CommandText = "DROP TRIGGER fail_second_batch_outbox"; _ = await command.ExecuteNonQueryAsync();
+        await store.AcknowledgeBatchAsync(outcomes);
+        Assert.Null((await store.GetAsync(Scope, "first"))!.PendingMutationId);
+        Assert.Null((await store.GetAsync(Scope, "second"))!.PendingMutationId);
+    });
+
+    [Fact]
+    public Task Releasing_an_unprocessed_batch_suffix_fences_its_old_lease() => WithReadyStoreAsync(async (store, unusedOptions) =>
+    {
+        _ = await store.EnqueueOrderedAsync(Scope, "first", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        _ = await store.EnqueueOrderedAsync(Scope, "second", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        var leases = (await store.ClaimOrderedBatchAsync(Scope, 2, TimeSpan.FromMinutes(1)))!;
+        await store.AcknowledgeBatchAsync([new EdgeMutationAcknowledgement(leases[0],
+            new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record("first", 1, "server")))]);
+        await store.ReleaseOrderedBatchAsync([leases[1]]);
+        await Assert.ThrowsAsync<EdgeLeaseLostException>(async () => await store.AcknowledgeAsync(leases[1],
+            new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record("second", 1, "server"))));
+        var retried = (await store.ClaimAsync(Scope, TimeSpan.FromMinutes(1)))!;
+        Assert.Equal(leases[1].Mutation.Id, retried.Mutation.Id);
+        Assert.True(retried.Fence > leases[1].Fence);
+    });
+
+    [Fact]
+    public Task Ordered_batch_coordinator_persists_successful_prefix_and_releases_failed_suffix() => WithReadyStoreAsync(async (store, unusedOptions) =>
+    {
+        var first = await store.EnqueueOrderedAsync(Scope, "first", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        var second = await store.EnqueueOrderedAsync(Scope, "second", 0, EdgeMutationKind.Upsert, Payload("offline"));
+        var remote = new FailSecondTransport();
+        await Assert.ThrowsAsync<IOException>(async () => await new EdgeSynchronizationCoordinator(store, remote)
+            .SynchronizeAsync(Scope, maxPushes: 2));
+        Assert.Equal(2, remote.Attempts);
+        Assert.Null((await store.GetAsync(Scope, "first"))!.PendingMutationId);
+        Assert.Equal(first.Id, (await store.ReadNextUnconfirmedOrderedReceiptAsync(Scope))!.Id);
+        Assert.Equal(second.Id, (await store.GetAsync(Scope, "second"))!.PendingMutationId);
+        Assert.Equal(EdgeMutationStatus.Pending, (await store.GetAsync(Scope, "second"))!.PendingStatus);
+        var retry = (await store.ClaimAsync(Scope, TimeSpan.FromMinutes(1)))!;
+        Assert.Equal(second.Id, retry.Mutation.Id);
+    });
+
+    [Fact]
     public Task Coordinator_does_not_claim_beyond_its_push_limit() => WithReadyStoreAsync(async (store, unusedOptions) =>
     {
         await store.EnqueueAsync(Mutation("first", 0, "offline"));
@@ -492,5 +563,16 @@ public sealed class SqliteEdgeStoreTests
             Applies++;
             return ValueTask.FromResult(new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record(mutation.DocumentId, 1, "server")));
         }
+    }
+
+    private sealed class FailSecondTransport : IEdgeRemoteTransport
+    {
+        public int Attempts { get; private set; }
+        public ValueTask<EdgeSnapshot> BeginSnapshotAsync(EdgeScope scope, CancellationToken cancellationToken = default) => throw new InvalidOperationException("The local snapshot is ready.");
+        public IAsyncEnumerable<IReadOnlyList<EdgeRecord>> ReadSnapshotAsync(EdgeScope scope, EdgeSnapshot snapshot, CancellationToken cancellationToken = default) => throw new InvalidOperationException("The local snapshot is ready.");
+        public ValueTask<EdgeChangeBatch?> ReadChangesAsync(EdgeScope scope, long afterPosition, int maxRecords, CancellationToken cancellationToken = default) => ValueTask.FromResult<EdgeChangeBatch?>(null);
+        public ValueTask<EdgeMutationOutcome> ApplyMutationAsync(EdgeMutation mutation, CancellationToken cancellationToken = default) =>
+            ++Attempts == 2 ? ValueTask.FromException<EdgeMutationOutcome>(new IOException("Injected second ordered request failure.")) :
+                ValueTask.FromResult(new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record(mutation.DocumentId, 1, "server")));
     }
 }
