@@ -1,0 +1,81 @@
+name: Edge exact-candidate release capacity
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character commit SHA containing this Edge gate
+        required: true
+        type: string
+      confirmation:
+        description: Type RUN-EDGE-RELEASE-CAPACITY to start two full campaigns
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bluetusk-reference-host
+  cancel-in-progress: false
+
+jobs:
+  qualify:
+    name: Isolated Windows Edge capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 180
+    env:
+      EVIDENCE_ROOT: artifacts/edge-release-capacity/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      BLUETUSK_EDGE_BROWSER_CHANNEL: msedge
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify exact candidate and reference host
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Edge capacity requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-EDGE-RELEASE-CAPACITY') { throw 'The exact manual Edge confirmation is required.' }
+          $head = (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $head -cne $env:CANDIDATE_SHA) { throw 'Checkout differs from the requested candidate.' }
+          if (@(git status --porcelain --untracked-files=normal).Count -ne 0) { throw 'Edge capacity requires a clean checkout.' }
+          $processor = (Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name)
+          if ($processor -notmatch 'AMD Ryzen 7 5800X') { throw "Unexpected Edge reference processor: '$processor'." }
+          python --version
+          if ($LASTEXITCODE -ne 0) { throw 'Python is required for exact source capture.' }
+
+      - name: Run two exact-candidate Edge campaigns
+        shell: pwsh
+        run: ./eng/run-edge-capacity.ps1 -ExpectedCommit $env:CANDIDATE_SHA -OutputDirectory $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Edge capacity evidence
+        shell: pwsh
+        run: ./eng/verify-edge-capacity.ps1 -ExpectedCommit $env:CANDIDATE_SHA -EvidenceDirectory $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Edge capacity evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-edge-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: edge-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
