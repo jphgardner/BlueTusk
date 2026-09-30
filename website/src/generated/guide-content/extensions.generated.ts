@@ -121,7 +121,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "extensions",
       "reference"
     ],
-    "order": 1075,
+    "order": 1076,
     "title": "Extension SDK",
     "sourcePath": "docs/extensions/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/reference.md",

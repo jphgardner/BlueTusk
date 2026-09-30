@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { readFile, mkdtemp, rm } from "node:fs/promises";
+import { readFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep, basename } from "node:path";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
 const endpoint = process.env.BLUETUSK_EDGE_HTTP_ENDPOINT;
 if (!endpoint) throw new Error("Run the BlueTusk.Edge.BrowserHttpSmoke host, or set its disposable test endpoint.");
@@ -22,10 +22,14 @@ const url = `http://127.0.0.1:${server.address().port}`;
 const profile = process.env.BLUETUSK_EDGE_HTTP_BROWSER_PROFILE ?? await mkdtemp(join(tmpdir(), "bluetusk-edge-http-browser-"));
 if (!resolve(profile).startsWith(resolve(tmpdir()) + sep) || !basename(resolve(profile)).startsWith("bluetusk-edge-http-browser-")) throw new Error("The smoke profile must be an owned dedicated temporary directory.");
 const channel = process.env.BLUETUSK_EDGE_BROWSER_CHANNEL ?? (process.platform === "win32" ? "msedge" : "chromium");
+const browserType = { chromium, msedge: chromium, firefox, webkit }[channel];
+if (!browserType) throw new Error(`Unsupported Edge browser channel: ${channel}`);
+const launchOptions = { headless: true, ...(channel === "msedge" ? { channel } : {}) };
 let context;
 try {
-  context = await chromium.launchPersistentContext(profile, { channel, headless: true });
+  context = await browserType.launchPersistentContext(profile, launchOptions);
   let page = await context.newPage(); await page.goto(url);
+  const userAgent = await page.evaluate(() => navigator.userAgent);
   const first = await page.evaluate(async endpoint => {
     const { IndexedDbEdgeStore, EdgeHttpRemoteTransport, synchronizeEdge } = await import("/edge.js");
     const scope = { tenant: "tenant", id: "orders", epoch: "1" };
@@ -41,7 +45,7 @@ try {
     let disconnected = false;
     try { await synchronizeEdge(store, remote, scope) }
     catch (error) {
-      if (!(error instanceof TypeError && error.message === "Failed to fetch")) throw error;
+      if (!(error instanceof TypeError)) throw error;
       disconnected = true;
     }
     if (!disconnected) throw new Error("The real committed response was not disconnected.");
@@ -60,7 +64,7 @@ try {
   });
   assert.equal(offline, first.mutationId);
   await context.close(); context = undefined;
-  context = await chromium.launchPersistentContext(profile, { channel, headless: true });
+  context = await browserType.launchPersistentContext(profile, launchOptions);
   page = await context.newPage(); await page.goto(url);
   // A browser fetch rejection hides the network reason; keep the failed request and
   // CORS console error visible in CI when the deliberately severed write is replayed.
@@ -102,6 +106,15 @@ try {
     return { deleted: deleted.deleted, pendingId: deleted.pendingId, position: checkpoint.position };
   }, { endpoint, mutationId: first.mutationId });
   assert.deepEqual(resumed, { deleted: true, pendingId: null, position: "4" });
+  if (process.env.BLUETUSK_EDGE_HTTP_BROWSER_RESULT) {
+    await writeFile(process.env.BLUETUSK_EDGE_HTTP_BROWSER_RESULT, JSON.stringify({
+      formatVersion: 1, channel, engine: browserType.name(), platform: process.platform,
+      userAgent, passed: true, productionQualified: false,
+      checks: ["committed-response-loss", "offline-read", "persistent-profile-restart",
+        "idempotent-business-effect", "authentication-denial", "tenant-isolation",
+        "conflict-resolution", "deletion-and-feed"]
+    }, null, 2) + "\n", { flag: "wx" });
+  }
   process.stdout.write(`Real ${channel}/IndexedDB/PostgreSQL HTTP: commit/disconnect, offline reads, browser restart, stable write dedupe, authentication/tenant denial, conflict resolution, deletion and bounded feed passed.\n`);
 } finally {
   if (context) await context.close();

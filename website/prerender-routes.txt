@@ -137,6 +137,7 @@
 /documentation/operations/ecosystem-progress
 /documentation/operations/ecosystem-release-qualification
 /documentation/operations/edge
+/documentation/operations/edge-capacity
 /documentation/operations/events-published-retention
 /documentation/operations/events
 /documentation/operations/fuzzing

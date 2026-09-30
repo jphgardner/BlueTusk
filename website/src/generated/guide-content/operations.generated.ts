@@ -2283,8 +2283,8 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 3633,
-    "readMinutes": 17,
+    "wordCount": 3805,
+    "readMinutes": 18,
     "searchText": "BlueTusk.Edge BlueTusk.Edge `0.1.0-preview.1` supplies offline synchronization contracts and a bounded coordinator. BlueTusk.Edge.Sqlite provides a durable file cache and queued mutations. BlueTusk.Edge.Server supplies a PostgreSQL record repository with an atomic mutation inbox, consistent snapshots and a retained change feed. BlueTusk.Edge.Http and BlueTusk.Edge.AspNetCore connect that repository through authenticated HTTP. `@bluetusk/edge` supplies durable IndexedDB storage, an interoperable HTTP client and a bounded reconnect helper. The host obtains tenant, selective scope identity and increasing epoch from an authenticated server contract. A scope may represent a user, permission set and selection filter; changing any access boundary should rotate its epoch. The client cannot authorize its own arbitrary scope ID or epoch. Local persistence is not an authentication boundary or encryption mechanism; the host owns local file/browser profile access and logout/revocation handling. Cache, snapshots and changes SQLite keys include tenant, scope and epoch. IndexedDB uses the same composite identity. Activating a newer epoch atomically purges prior cached/staged state and receipts, resets its checkpoint, and invalidates older-epoch reads. Pending writes make rotation fail by default. The host must explicitly choose `DiscardPending`/`discard` after its pending-write policy is resolved; the library does not silently discard offline user changes. A host detecting authorization revocation must stop using the old scope while resolving that policy. Snapshots use stable identities, stage bounded batches separately from the active cache, and publish their full selective record set plus checkpoint in one transaction. Reopening/restarting does not expose partial snapshots, and repeating the same begin preserves staged batches. Completing a new snapshot removes records outside its authorized selection. SQLite and IndexedDB enforce separate active and staged limits, each defaultin",
     "blocks": [
       {
@@ -2339,7 +2339,59 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>Set <code>BLUETUSK_TEST_CONNECTION_STRING</code> to a disposable PostgreSQL database for server tests and the browser HTTP host. The .NET suite exercises real SQLite files, reopen recovery, concurrent claims, higher-fence rejection, duplicate identities/acknowledgements, explicit conflict resolution, scoped epoch rotation, snapshots/checkpoints/tombstones, capacity rollback, schema upgrade and cancellation; actual PostgreSQL competing CAS, snapshot/feed boundaries, injected receipt-trigger and application-table callback rollback, replay-floor expiry and bounded materialized snapshots; and actual authenticated Kestrel HTTP commit/disconnect, server restart, SQLite reopen, explicit conflicts and deletion. Bounded local and server workloads each commit 128 1 KiB writes through four writers; the server feed has one contiguous position per applied effect. The lost-response/server-restart test checks that a separate application business counter advances once, and replay/conflict tests ensure the host callback is skipped.</p>\n<p>The .NET suite also tests receipt payload compaction, permanent retry fencing, storage migration and HTTP confirmation. Operator-health cases verify committed counters across replay/conflict/deletion/pruning, tenant/epoch isolation, bounded snapshot observation, schema drift, fixed telemetry tags, real database-lock timeout/cancellation/recovery, retained admission for an uncooperative connection open, and an actual authenticated ASP.NET readiness endpoint. The real browser HTTP smoke additionally checks exactly four separate application-table effects after reconnect/retry/conflict/deletion; the extended native executable checks exactly two after receipt replay and conflicts. These use synthetic test authentication and a deliberately isolated business counter, not a production domain schema.</p>\n<p>Run the browser HTTP executable from the workspace root, or pass that absolute workspace path after <code>--</code>. It validates the Node script location, binds its Kestrel listener to an ephemeral loopback port, creates its own unique database schema, owns the child Node/browser process with a two-minute deadline, and drops only its schema on exit. The Node script owns a separate loopback asset server and verified temporary browser profile. CI must provide the disposable database connection and an installed Node/.NET 10 runtime, install the workspace’s locked npm dependencies, build <code>@bluetusk/edge</code>, install the matching Playwright browser, and explicitly set <code>BLUETUSK_EDGE_BROWSER_CHANNEL</code> (for example <code>chromium</code> on Linux or <code>msedge</code> when installed on Windows). The host supplies its endpoint to the child through <code>BLUETUSK_EDGE_HTTP_ENDPOINT</code>; no external service endpoint is required.</p>\n<p>Seventeen JavaScript contract tests cover IndexedDB deterministic races/fault conditions, ordered receipt recovery and wire/authorization/streamed byte bounds. A separate actual headless Microsoft Edge test persists a dedicated temporary browser profile, closes and relaunches it, and verifies real IndexedDB snapshot/rollback, Int64 precision, recovered higher lease fence, duplicate atomic acknowledgement and epoch isolation. <code>BlueTusk.Edge.BrowserHttpSmoke</code> additionally starts a disposable PostgreSQL/Kestrel host and drives real browser HTTP: the server commits a write but drops its response (including browser transparent retries), offline reads retain the queued value, and a browser restart recovers the original UUID with one business effect. It checks bearer 401, tenant 403, raw Unicode/whitespace identity, conflict preservation/resolution, deletion and exact final feed position four, using a configured eight-record HTTP batch bound. <code>BLUETUSK_EDGE_BROWSER_CHANNEL</code> chooses an installed Playwright channel; Windows defaults to <code>msedge</code>, other platforms to <code>chromium</code>. Tests use their own temporary profiles. Test-only synthetic bearer validation/CORS/drop middleware is never a product authentication recommendation.</p>\n<p>All five Edge packages enable NativeAOT/trimming analyzers. The combined <code>tests/BlueTusk.Edge.NativeAotSmoke</code> was published as win-x64 NativeAOT without warnings and executed with real PostgreSQL/pgvector fixtures plus a real SQLite file. Its Edge checks reopen the durable queue and duplicate acknowledgement; it also starts actual authenticated native Kestrel/ASP.NET endpoints and exercises PostgreSQL server snapshots, source-generated HTTP codecs, queue push/change feed, UUID receipt replay, CAS conflict and bearer/tenant denial. It checks exact operator health counters, authenticated native readiness, health-route 401, and HTTP 503 after injected storage-format drift. The server commits exactly two applied business effects. Set both <code>BLUETUSK_TEST_CONNECTION_STRING</code> and <code>BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING</code>; the executable also checks Documents and Search. Other architectures and complete API paths remain unqualified.</p>\n<p>Still required: Streams/Live or Documents projection adapters; authenticated scope negotiation; ordered conflict-replacement allocation; browser worker/service-worker orchestration and managed conflict UI; offline indexed query extensions; disk/quota pressure, forced process death, clock/suspend, mobile and multi-browser recovery tests of ordered confirmation; additional native architectures/API paths; repeatable latency/allocation/storage workload reports and long endurance. Current code and short workloads do not establish production qualification or universal performance leadership.</p>\n"
+        "html": "<p>Set <code>BLUETUSK_TEST_CONNECTION_STRING</code> to a disposable PostgreSQL database for server tests and the browser HTTP host. The .NET suite exercises real SQLite files, reopen recovery, concurrent claims, higher-fence rejection, duplicate identities/acknowledgements, explicit conflict resolution, scoped epoch rotation, snapshots/checkpoints/tombstones, capacity rollback, schema upgrade and cancellation; actual PostgreSQL competing CAS, snapshot/feed boundaries, injected receipt-trigger and application-table callback rollback, replay-floor expiry and bounded materialized snapshots; and actual authenticated Kestrel HTTP commit/disconnect, server restart, SQLite reopen, explicit conflicts and deletion. Bounded local and server workloads each commit 128 1 KiB writes through four writers; the server feed has one contiguous position per applied effect. The lost-response/server-restart test checks that a separate application business counter advances once, and replay/conflict tests ensure the host callback is skipped.</p>\n<p>The .NET suite also tests receipt payload compaction, permanent retry fencing, storage migration and HTTP confirmation. Operator-health cases verify committed counters across replay/conflict/deletion/pruning, tenant/epoch isolation, bounded snapshot observation, schema drift, fixed telemetry tags, real database-lock timeout/cancellation/recovery, retained admission for an uncooperative connection open, and an actual authenticated ASP.NET readiness endpoint. The real browser HTTP smoke additionally checks exactly four separate application-table effects after reconnect/retry/conflict/deletion; the extended native executable checks exactly two after receipt replay and conflicts. These use synthetic test authentication and a deliberately isolated business counter, not a production domain schema.</p>\n<p>Run the browser HTTP executable from the workspace root, or pass that absolute workspace path after <code>--</code>. It validates the Node script location, binds its Kestrel listener to an ephemeral loopback port, creates its own unique database schema, owns the child Node/browser process with a two-minute deadline, and drops only its schema on exit. The Node script owns a separate loopback asset server and verified temporary browser profile. CI must provide the disposable database connection and an installed Node/.NET 10 runtime, install the workspace’s locked npm dependencies, build <code>@bluetusk/edge</code>, install the matching Playwright browser, and explicitly set <code>BLUETUSK_EDGE_BROWSER_CHANNEL</code> (for example <code>chromium</code> on Linux or <code>msedge</code> when installed on Windows). The host supplies its endpoint to the child through <code>BLUETUSK_EDGE_HTTP_ENDPOINT</code>; no external service endpoint is required.</p>\n<p>Seventeen JavaScript contract tests cover IndexedDB deterministic races/fault conditions, ordered receipt recovery and wire/authorization/streamed byte bounds. The real browser storage test persists a dedicated temporary profile, closes and relaunches it, and verifies IndexedDB snapshot/rollback, Int64 precision, recovered higher lease fence, duplicate atomic acknowledgement and epoch isolation. <code>BlueTusk.Edge.BrowserHttpSmoke</code> additionally starts a disposable PostgreSQL/Kestrel host and drives real browser HTTP: the server commits a write but drops its response (including browser transparent retries), offline reads retain the queued value, and a browser restart recovers the original UUID with one business effect. It checks bearer 401, tenant 403, raw Unicode/whitespace identity, conflict preservation/resolution, deletion and exact final feed position four, using a configured eight-record HTTP batch bound. <code>BLUETUSK_EDGE_BROWSER_CHANNEL</code> chooses installed <code>chromium</code>, <code>firefox</code>, <code>webkit</code>, or <code>msedge</code> (Windows default); other platforms default to <code>chromium</code>. Tests use their own temporary profiles. Test-only synthetic bearer validation/CORS/drop middleware is never a product authentication recommendation.</p>\n<p>The CI browser matrix runs those storage and authenticated HTTP recovery checks separately on Linux Chromium, Firefox and WebKit. A separate Windows Microsoft Edge job tests durable storage and browser-profile restart only; it does not assert HTTP compatibility, because that job has no PostgreSQL fixture. <code>eng/run-edge-browser-compatibility.ps1</code> requires a clean full-SHA checkout, captures source before/after, runtime and browser identity, built asset snapshots, logs and a SHA-256 inventory. The full Linux mode also requires a disposable database. <code>eng/verify-edge-browser-compatibility.ps1</code> rejects storage-only evidence presented as full HTTP evidence. A missing browser binary or failing engine fails its CI job; no engine is skipped. On pull requests, the artifact’s <code>CandidateSha</code> is <code>github.sha</code>, the checkout’s synthetic merge commit; <code>ReviewHeadSha</code> records the pull-request branch head only for reviewer context. A matrix pass establishes only these tested browser/OS paths, and every artifact retains <code>ProductionQualified=false</code>. It does not cover mobile browsers, quota eviction, forced process death or offline endurance.</p>\n<p>All five Edge packages enable NativeAOT/trimming analyzers. The combined <code>tests/BlueTusk.Edge.NativeAotSmoke</code> was published as win-x64 NativeAOT without warnings and executed with real PostgreSQL/pgvector fixtures plus a real SQLite file. Its Edge checks reopen the durable queue and duplicate acknowledgement; it also starts actual authenticated native Kestrel/ASP.NET endpoints and exercises PostgreSQL server snapshots, source-generated HTTP codecs, queue push/change feed, UUID receipt replay, CAS conflict and bearer/tenant denial. It checks exact operator health counters, authenticated native readiness, health-route 401, and HTTP 503 after injected storage-format drift. The server commits exactly two applied business effects. Set both <code>BLUETUSK_TEST_CONNECTION_STRING</code> and <code>BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING</code>; the executable also checks Documents and Search. Other architectures and complete API paths remain unqualified.</p>\n<p>The proposed exact-commit ordered capacity campaign is documented in <a href=\"/documentation/operations/edge-capacity\">capacity.md</a>. Its budgets are not achieved results until the full repeated run and offline verifier pass.</p>\n<p>Still required: Streams/Live or Documents projection adapters; authenticated scope negotiation; ordered conflict-replacement allocation; browser worker/service-worker orchestration and managed conflict UI; offline indexed query extensions; disk/quota pressure, forced process death, clock/suspend, mobile and multi-browser recovery tests of ordered confirmation; additional native architectures/API paths; repeatable latency/allocation/storage workload reports and long endurance. Current code and short workloads do not establish production qualification or universal performance leadership.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
+    "slug": "edge-capacity",
+    "summary": "eng/run-edge-capacity.ps1 prepares a clean exact-commit local measurement. It builds the .NET harness and locked browser client, snapshots every executable dependency and the JavaScript",
+    "keywords": [
+      "docs",
+      "edge",
+      "capacity"
+    ],
+    "order": 1069,
+    "title": "Edge ordered offline capacity campaign",
+    "sourcePath": "docs/edge/capacity.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/capacity.md",
+    "headings": [
+      {
+        "id": "edge-ordered-offline-capacity-campaign",
+        "text": "Edge ordered offline capacity campaign",
+        "level": 1
+      }
+    ],
+    "wordCount": 637,
+    "readMinutes": 3,
+    "searchText": "Edge ordered offline capacity campaign `eng/run-edge-capacity.ps1` prepares a clean exact-commit local measurement. It builds the .NET harness and locked browser client, snapshots every executable dependency and the JavaScript modules, then runs two fresh digest-pinned PostgreSQL 18 fixtures. Each fixture has four Docker CPUs, 2 GiB of memory and its own database volume. A real Kestrel endpoint serves seven SQLite clients and one persistent-profile Chromium-family IndexedDB client. The runner labels and removes only its own PostgreSQL container and volume and generates a fresh random database credential per fixture. It retains raw JSON, workload logs, local SQLite files, browser profile, source captures, binary snapshots and SHA-256 manifest under `artifacts/`. The eight isolated tenant scopes each begin with 256 distinct 4 KiB records and an empty ordered client stream. Each client schedules one 4 KiB high-entropy update every 200 ms for 30 minutes: 40 planned writes/s across the fixture. The monotonic scheduler counts every slot as offered or skipped, including slots remaining after a slow operation crosses the deadline, and never creates an unbounded client request queue. The offline verifier requires exact planned-slot accounting for each client. The same key cannot have two pending writes. Each client holds at most 512 local mutations and receipts; the server caps each scope at 512 receipts and 1024 feed entries. Successful reconnect passes durably acknowledge results, confirm original mutations, advance gapless ordered horizons and prune only a feed prefix behind the active client's durable checkpoint. An intentionally lagging read verifies HTTP 410 and a fresh snapshot after the floor advances. Each run includes two 30-second offline windows, one response dropped **after** the server's business transaction commits for every client, a local SQLite reopen or real browser-profile restart, and a Kestrel restart. The response drop is injected by a client-side tran",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Edge ordered offline capacity campaign</h1>\n<p><code>eng/run-edge-capacity.ps1</code> prepares a clean exact-commit local measurement. It builds the .NET\nharness and locked browser client, snapshots every executable dependency and the JavaScript\nmodules, then runs two fresh digest-pinned PostgreSQL 18 fixtures. Each fixture has four Docker\nCPUs, 2 GiB of memory and its own database volume. A real Kestrel endpoint serves seven SQLite\nclients and one persistent-profile Chromium-family IndexedDB client. The runner labels and removes\nonly its own PostgreSQL container and volume and generates a fresh random database credential per\nfixture. It retains raw JSON, workload logs, local SQLite\nfiles, browser profile, source captures, binary snapshots and SHA-256 manifest under <code>artifacts/</code>.</p>\n<p>The eight isolated tenant scopes each begin with 256 distinct 4 KiB records and an empty ordered\nclient stream. Each client schedules one 4 KiB high-entropy update every 200 ms for 30 minutes:\n40 planned writes/s across the fixture. The monotonic scheduler counts every slot as offered or\nskipped, including slots remaining after a slow operation crosses the deadline, and never creates\nan unbounded client request queue. The offline verifier requires exact planned-slot accounting for\neach client. The same key cannot have two pending writes. Each\nclient holds at most 512 local mutations and receipts; the server caps each scope at 512 receipts\nand 1024 feed entries. Successful reconnect passes durably acknowledge results, confirm original\nmutations, advance gapless ordered horizons and prune only a feed prefix behind the active\nclient’s durable checkpoint. An intentionally lagging read verifies HTTP 410 and a fresh snapshot\nafter the floor advances.</p>\n<p>Each run includes two 30-second offline windows, one response dropped <strong>after</strong> the server’s\nbusiness transaction commits for every client, a local SQLite reopen or real browser-profile\nrestart, and a Kestrel restart. The response drop is injected by a client-side transport wrapper\nafter a real successful HTTP response; it proves durable retry behavior but does not model every\nsocket or proxy failure. The .NET SQLite handles are reopened, not forcibly killed as OS\nprocesses. The browser closes and relaunches its persistent profile. A failed run retains its\npartial evidence without asserting capacity.</p>\n<p>Use an installed Playwright browser channel and an otherwise idle reference host. A short\ndiagnostic must precede interpreting the provisional budget:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:BLUETUSK_EDGE_BROWSER_CHANNEL = 'msedge' # or chromium when installed\n./eng/run-edge-capacity.ps1 -ExpectedCommit '<full 40-character SHA>' -Seconds 60 -Repetitions 1\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_EDGE_BROWSER_CHANNEL</span> = <span class=\"hljs-string\">&#x27;msedge&#x27;</span> <span class=\"hljs-comment\"># or chromium when installed</span>\n./eng/run<span class=\"hljs-literal\">-edge-capacity</span>.ps1 <span class=\"hljs-literal\">-ExpectedCommit</span> <span class=\"hljs-string\">&#x27;&lt;full 40-character SHA&gt;&#x27;</span> <span class=\"hljs-literal\">-Seconds</span> <span class=\"hljs-number\">60</span> <span class=\"hljs-literal\">-Repetitions</span> <span class=\"hljs-number\">1</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The default is two independent 30-minute runs, roughly 70–90 minutes total including seed,\nfaults, drain and verification on a ready host:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "./eng/run-edge-capacity.ps1 -ExpectedCommit '<same full SHA>'\n./eng/verify-edge-capacity.ps1 -ExpectedCommit '<same full SHA>' -EvidenceDirectory 'artifacts/edge-capacity/<campaign>'\n",
+        "highlighted": "./eng/run<span class=\"hljs-literal\">-edge-capacity</span>.ps1 <span class=\"hljs-literal\">-ExpectedCommit</span> <span class=\"hljs-string\">&#x27;&lt;same full SHA&gt;&#x27;</span>\n./eng/verify<span class=\"hljs-literal\">-edge-capacity</span>.ps1 <span class=\"hljs-literal\">-ExpectedCommit</span> <span class=\"hljs-string\">&#x27;&lt;same full SHA&gt;&#x27;</span> <span class=\"hljs-literal\">-EvidenceDirectory</span> <span class=\"hljs-string\">&#x27;artifacts/edge-capacity/&lt;campaign&gt;&#x27;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The offline verifier checks source/binary/asset hashes, all retained artifacts, nonoverlapping\nruns, offered-slot accounting, all eight stores, four fault recoveries per client, exact business\neffect counts, contiguous retained feed, final local checkpoints, server horizons, empty durable\nconfirmation outboxes, and a 410 retry fence on a reclaimed UUID. It requires at least 30\ndurable applications/s; at most 5% missed slots; successful-call p99 limits of 250 ms enqueue,\n2 s HTTP apply and 1 s horizon advance; a 5 s p99 for acknowledgments outside fault windows;\nand at most 120 s to the first successful reconnect or lost-write recovery and final drain.\nIt also checks five-second physical samples, 2 GiB owned\nrelations, 4 GiB whole database, 32 MiB/min late owned growth, 128 KiB inserted WAL per\napplication, and bounded SQLite/browser profile footprints. The numeric thresholds in\n<code>eng/edge-capacity-budgets.json</code> are <strong>proposed</strong>, not measured results. Diagnostic runs cannot\nset <code>QualifiedLocalCapacity=true</code>; even a full local pass sets <code>ProductionQualified=false</code>.</p>\n<p>The campaign measures one client stream per scope, one loopback host, fixed 256-key churn and\nthe ordered receipt path. It does not qualify multi-device scope contention, long offline\nperiods beyond the bounded queue, clock rollback/suspend, mobile browsers, operator-selected\nretention floors with unknown clients, real process kills for the SQLite clients, external\nauthentication, fleet failover, or production disk and network behavior. Those require\nseparate release evidence.</p>\n"
       }
     ]
   },
@@ -2355,7 +2407,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "PUBLISHED",
       "RETENTION"
     ],
-    "order": 1072,
+    "order": 1073,
     "title": "Published outbox retention: required protocol",
     "sourcePath": "docs/events/PUBLISHED-RETENTION.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/PUBLISHED-RETENTION.md",
@@ -2387,7 +2439,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "events",
       "README"
     ],
-    "order": 1073,
+    "order": 1074,
     "title": "BlueTusk.Events",
     "sourcePath": "docs/events/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
@@ -2468,7 +2520,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "docs",
       "fuzzing"
     ],
-    "order": 1076,
+    "order": 1077,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -2560,7 +2612,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1082,
+    "order": 1083,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -2637,7 +2689,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "improvement",
       "audit"
     ],
-    "order": 1083,
+    "order": 1084,
     "title": "BlueTusk improvement audit and action record",
     "sourcePath": "docs/improvement-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
@@ -2694,7 +2746,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "README"
     ],
-    "order": 1084,
+    "order": 1085,
     "title": "BlueTusk.Jobs",
     "sourcePath": "docs/jobs/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
@@ -2772,7 +2824,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "durable",
       "format"
     ],
-    "order": 1085,
+    "order": 1086,
     "title": "Durable-format support and rehearsal",
     "sourcePath": "docs/jobs/durable-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
@@ -2804,7 +2856,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "failover"
     ],
-    "order": 1086,
+    "order": 1087,
     "title": "Jobs and Workflows physical promotion rehearsal",
     "sourcePath": "docs/jobs/failover.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
@@ -2876,7 +2928,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "hosting"
     ],
-    "order": 1087,
+    "order": 1088,
     "title": "Scoped Jobs and Workflows host readiness",
     "sourcePath": "docs/jobs/hosting.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
@@ -2928,7 +2980,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "maintenance"
     ],
-    "order": 1088,
+    "order": 1089,
     "title": "Durable storage maintenance contract",
     "sourcePath": "docs/jobs/maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
@@ -2960,7 +3012,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "performance"
     ],
-    "order": 1089,
+    "order": 1090,
     "title": "Jobs and Workflows capacity and recovery harness",
     "sourcePath": "docs/jobs/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
@@ -3067,7 +3119,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "upgrade"
     ],
-    "order": 1090,
+    "order": 1091,
     "title": "Jobs binary upgrade and rollback gate",
     "sourcePath": "docs/jobs/upgrade.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/upgrade.md",
@@ -3101,7 +3153,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1098,
+    "order": 1099,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -3199,7 +3251,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1099,
+    "order": 1100,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -3308,7 +3360,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1101,
+    "order": 1102,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -3382,7 +3434,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1102,
+    "order": 1103,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -3439,7 +3491,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1104,
+    "order": 1105,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -3567,7 +3619,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1105,
+    "order": 1106,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -3652,7 +3704,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "1",
       "1"
     ],
-    "order": 1106,
+    "order": 1107,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -3725,7 +3777,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1109,
+    "order": 1110,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -3884,7 +3936,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1110,
+    "order": 1111,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -3972,7 +4024,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "website",
       "production"
     ],
-    "order": 1113,
+    "order": 1114,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -4039,7 +4091,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1115,
+    "order": 1116,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -4071,7 +4123,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LIVE"
     ],
-    "order": 1116,
+    "order": 1117,
     "title": "Published projections in Live",
     "sourcePath": "docs/projections/LIVE.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
@@ -4133,7 +4185,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LOAD"
     ],
-    "order": 1117,
+    "order": 1118,
     "title": "Workload and recovery qualification",
     "sourcePath": "docs/projections/LOAD.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
@@ -4190,7 +4242,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "README"
     ],
-    "order": 1118,
+    "order": 1119,
     "title": "BlueTusk.Projections",
     "sourcePath": "docs/projections/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
@@ -4257,7 +4309,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "RECOVERY"
     ],
-    "order": 1119,
+    "order": 1120,
     "title": "Explicit source recovery and controlled DDL",
     "sourcePath": "docs/projections/RECOVERY.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
@@ -4295,7 +4347,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "evidence",
       "README"
     ],
-    "order": 1120,
+    "order": 1121,
     "title": "Local bounded workload evidence",
     "sourcePath": "docs/projections/evidence/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
@@ -4341,7 +4393,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1123,
+    "order": 1124,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -4373,7 +4425,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "process"
     ],
-    "order": 1128,
+    "order": 1129,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -4421,7 +4473,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1130,
+    "order": 1131,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -4472,7 +4524,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1131,
+    "order": 1132,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -4557,7 +4609,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1132,
+    "order": 1133,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -4602,7 +4654,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1134,
+    "order": 1135,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -4650,7 +4702,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1135,
+    "order": 1136,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -4732,7 +4784,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "schema",
       "README"
     ],
-    "order": 1139,
+    "order": 1140,
     "title": "BlueTusk Schema",
     "sourcePath": "docs/schema/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
@@ -4855,7 +4907,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "catalogue",
       "attestation"
     ],
-    "order": 1140,
+    "order": 1141,
     "title": "Catalogue consistency attestation",
     "sourcePath": "docs/schema/catalogue-attestation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
@@ -4917,7 +4969,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "README"
     ],
-    "order": 1141,
+    "order": 1142,
     "title": "BlueTusk.Search",
     "sourcePath": "docs/search/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
@@ -5029,7 +5081,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "capacity"
     ],
-    "order": 1142,
+    "order": 1143,
     "title": "Search mixed ingestion and retrieval capacity campaign",
     "sourcePath": "docs/search/capacity.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/capacity.md",
@@ -5086,7 +5138,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sql",
       "README"
     ],
-    "order": 1144,
+    "order": 1145,
     "title": "BlueTusk Sql",
     "sourcePath": "docs/sql/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
@@ -5168,7 +5220,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "studio",
       "README"
     ],
-    "order": 1161,
+    "order": 1162,
     "title": "BlueTusk Studio",
     "sourcePath": "docs/studio/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
@@ -5260,7 +5312,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1170,
+    "order": 1171,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -5318,7 +5370,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1171,
+    "order": 1172,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -5365,7 +5417,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "workflows",
       "README"
     ],
-    "order": 1172,
+    "order": 1173,
     "title": "BlueTusk.Workflows",
     "sourcePath": "docs/workflows/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",
