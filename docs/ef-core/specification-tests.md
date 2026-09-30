@@ -87,7 +87,7 @@ hidden skips.
 
 The 223 complex-type/JSON query cases also run as a focused PostgreSQL 15–19
 matrix: each server reports 221 passes and the same two upstream EF skips. The
-complete official-assembly results are:
+complete official-assembly results from the earlier capture are:
 
 | PostgreSQL | Passed | Upstream skips | Version-excluded rows | Discovered |
 | --- | ---: | ---: | ---: | ---: |
@@ -97,12 +97,18 @@ complete official-assembly results are:
 | 18 | 1,987 | 124 | 0 | 2,111 |
 | 19 | 1,987 | 124 | 0 | 2,111 |
 
-Migration methods whose SQL is not supported by an older server carry explicit
-server-version discovery conditions: generated-column expression changes run
-on PostgreSQL 17 and later, while virtual generated-column cases run on
-PostgreSQL 18 and later. These conditions exclude only the inapplicable
-parameterized method rows; BlueTusk's native migration suite continues to run
-the version-appropriate generated-column cases on every supported server.
+Generated-column migration cases now execute on every supported server. Stored
+columns and the provider's default stored form run the upstream assertions on
+PostgreSQL 15–18. Virtual columns require PostgreSQL 18; generated-expression
+changes require PostgreSQL 17. On older servers the same migration is executed
+and must fail with SQLSTATE `0A000` and the exact provider capability diagnostic.
+This replaces the whole-method discovery conditions that also removed supported
+stored-column rows. Fresh captures must retain an execution result for every
+discovered row; the historical table above does not qualify the current source.
+
+The strict Core release collector still rejects the 124 inherited upstream skip
+declarations. Passing the ordinary specification suite with those skips is not
+zero-skip Core compatibility evidence and does not authorize stable publication.
 
 Run the gate directly with:
 

@@ -28,33 +28,63 @@ public sealed class BlueTuskMigrationsTest
     public override Task Add_required_primitve_collection_with_custom_default_value_sql_to_existing_table()
         => Add_required_primitve_collection_with_custom_default_value_sql_to_existing_table_core("ARRAY[3,2,1]");
 
-    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
     public override Task Create_table_with_computed_column(bool? stored)
-        => base.Create_table_with_computed_column(stored);
+        => AssertGeneratedColumnMigration(
+            () => base.Create_table_with_computed_column(stored), stored == false ? 180000 : 0);
 
-    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
     public override Task Alter_column_make_computed(bool? stored)
-        => base.Alter_column_make_computed(stored);
+        => AssertGeneratedColumnMigration(
+            () => base.Alter_column_make_computed(stored), stored == false ? 180000 : 0);
 
-    [BlueTuskServerVersionCondition(170000, "Generated-column expression changes")]
     public override Task Alter_column_change_computed_recreates_indexes()
-        => base.Alter_column_change_computed_recreates_indexes();
+        => AssertGeneratedColumnMigration(base.Alter_column_change_computed_recreates_indexes, 170000);
 
-    [BlueTuskServerVersionCondition(170000, "Generated-column expression changes")]
     public override Task Alter_column_change_computed()
-        => base.Alter_column_change_computed();
+        => AssertGeneratedColumnMigration(base.Alter_column_change_computed, 170000);
 
-    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
     public override Task Add_column_computed_with_collation(bool stored)
-        => base.Add_column_computed_with_collation(stored);
+        => AssertGeneratedColumnMigration(
+            () => base.Add_column_computed_with_collation(stored), stored ? 0 : 180000);
 
-    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
     public override Task Add_column_with_computedSql(bool? stored)
-        => base.Add_column_with_computedSql(stored);
+        => AssertGeneratedColumnMigration(
+            () => base.Add_column_with_computedSql(stored), stored == false ? 180000 : 0);
 
-    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
     public override Task Alter_column_change_computed_type()
-        => base.Alter_column_change_computed_type();
+        => AssertGeneratedColumnMigration(base.Alter_column_change_computed_type, 180000);
+
+    private static async Task AssertGeneratedColumnMigration(Func<Task> test, int minimumVersion)
+    {
+        if (minimumVersion != 0)
+        {
+            var settings = new BlueTuskConnectionStringBuilder(
+                Environment.GetEnvironmentVariable(BlueTuskTestStore.ConnectionStringEnvironmentVariable)!)
+            {
+                Database = "postgres",
+                Pooling = false,
+            };
+            await using var dataSource = BlueTuskDataSource.Create(settings.ConnectionString);
+            await using var command = dataSource.CreateCommand(
+                "SELECT current_setting('server_version_num')::int4");
+            var serverVersion = await command.ExecuteScalarAsync<int>(CancellationToken.None);
+            if (serverVersion < minimumVersion)
+            {
+                // Execute the migration on older servers too: its explicit
+                // capability rejection is part of the provider contract.
+                var exception = await Assert.ThrowsAsync<BlueTuskException>(test);
+                Assert.Equal("0A000", exception.SqlState);
+                Assert.Contains(
+                    minimumVersion == 180000
+                        ? "BlueTusk virtual generated columns require PostgreSQL 18 or later."
+                        : "BlueTusk generated-column expression changes require PostgreSQL 17 or later.",
+                    exception.Message,
+                    StringComparison.Ordinal);
+                return;
+            }
+        }
+
+        await test();
+    }
 
     protected override string NonDefaultCollation
         => "POSIX";
