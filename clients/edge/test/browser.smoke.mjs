@@ -58,6 +58,15 @@ try {
     await store.acknowledge(lease, { kind: "applied", record: { id: "2", revision: "1", payload: "{\"value\":\"committed\"}", deleted: false } });
     await store.acknowledge(lease, { kind: "applied", record: { id: "2", revision: "1", payload: "{\"value\":\"committed\"}", deleted: false } });
     if (await store.claim(scope) !== null) throw new Error("Acknowledged mutation remained queued.");
+    for (const id of ["3", "4"]) await store.enqueueOrdered({ scope, documentId: id, expectedRevision: "0", kind: "upsert", payload: "{}" });
+    const ordered = await store.claimOrderedBatch(scope, 2);
+    if (ordered?.length !== 2) throw new Error("Real IndexedDB did not claim the ordered prefix.");
+    await store.acknowledgeBatch(ordered.map(item => ({ lease: item, outcome: { kind: "applied", record: {
+      id: item.mutation.documentId, revision: "1", payload: "{}", deleted: false
+    } } })));
+    if ((await store.get(scope, "3")).pendingId !== null || (await store.get(scope, "4")).pendingId !== null ||
+        (await store.nextUnconfirmedOrderedReceipt(scope)).id !== ordered[0].mutation.id)
+      throw new Error("Real IndexedDB did not commit the ordered batch and confirmation outbox atomically.");
     const checkpoint = await store.checkpoint(scope); const committed = await store.get(scope, "2");
     await store.activate({ ...scope, epoch: "2" }, "discard");
     let denied = false; try { await store.get(scope, "1") } catch (error) { denied = error instanceof EdgeScopeError }
@@ -69,10 +78,10 @@ try {
       formatVersion: 1, channel, engine: browserType.name(), platform: process.platform,
       userAgent, passed: true, productionQualified: false,
       checks: ["indexeddb-snapshot-rollback", "persistent-profile-restart", "lease-fence",
-        "atomic-acknowledgement", "int64-precision", "epoch-isolation"]
+        "atomic-acknowledgement", "ordered-batch-acknowledgement", "int64-precision", "epoch-isolation"]
     }, null, 2) + "\n", { flag: "wx" });
   }
-  process.stdout.write(`Real ${channel} IndexedDB: snapshot/rollback, browser restart, lease fencing, atomic acknowledgement, Int64 precision and epoch isolation passed.\n`);
+  process.stdout.write(`Real ${channel} IndexedDB: snapshot/rollback, browser restart, lease fencing, atomic and ordered batch acknowledgement, Int64 precision and epoch isolation passed.\n`);
 } finally {
   if (context) await context.close();
   await new Promise(resolve => server.close(resolve));

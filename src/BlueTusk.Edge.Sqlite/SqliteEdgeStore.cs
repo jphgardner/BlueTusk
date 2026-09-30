@@ -6,7 +6,7 @@ using Microsoft.Data.Sqlite;
 namespace BlueTusk.Edge.Sqlite;
 
 /// <summary>File-backed SQLite cache and durable write queue. Every state transition uses one immediate transaction.</summary>
-public sealed partial class SqliteEdgeStore : IEdgeLocalStore
+public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore
 {
     public const int CurrentSchemaVersion = 3;
     private readonly string _connectionString;

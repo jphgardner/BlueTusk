@@ -16,7 +16,7 @@ internal sealed class EdgeLocalPhaseTimings
 }
 
 internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseTimings timings,
-    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedLocalStore
+    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedBatchLocalStore, IEdgeOrderedReceiptBatchLocalStore
 {
     public ValueTask ActivateScopeAsync(EdgeScope scope, EdgeEpochChangePolicy policy = EdgeEpochChangePolicy.RejectIfPending,
         CancellationToken cancellationToken = default) => inner.ActivateScopeAsync(scope, policy, cancellationToken);
@@ -51,6 +51,15 @@ internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseT
         return result;
     }
 
+    public async ValueTask<IReadOnlyList<EdgeMutationLease>?> ClaimOrderedBatchAsync(EdgeScope scope, int maximum,
+        TimeSpan leaseDuration, CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        var result = await inner.ClaimOrderedBatchAsync(scope, maximum, leaseDuration, cancellationToken).ConfigureAwait(false);
+        timings.Claim.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        return result;
+    }
+
     public async ValueTask AcknowledgeAsync(EdgeMutationLease lease, EdgeMutationOutcome outcome,
         CancellationToken cancellationToken = default)
     {
@@ -59,6 +68,31 @@ internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseT
         var committed = Stopwatch.GetTimestamp();
         timings.Acknowledge.Add(Stopwatch.GetElapsedTime(started, committed).TotalMilliseconds);
         await onDurableAcknowledgement(lease.Mutation, committed, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask AcknowledgeBatchAsync(IReadOnlyList<EdgeMutationAcknowledgement> acknowledgements,
+        CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        await inner.AcknowledgeBatchAsync(acknowledgements, cancellationToken).ConfigureAwait(false);
+        var committed = Stopwatch.GetTimestamp();
+        timings.Acknowledge.Add(Stopwatch.GetElapsedTime(started, committed).TotalMilliseconds);
+        foreach (var acknowledgement in acknowledgements)
+        { await onDurableAcknowledgement(acknowledgement.Lease.Mutation, committed, cancellationToken).ConfigureAwait(false); }
+    }
+
+    public ValueTask ReleaseOrderedBatchAsync(IReadOnlyList<EdgeMutationLease> leases,
+        CancellationToken cancellationToken = default) => inner.ReleaseOrderedBatchAsync(leases, cancellationToken);
+
+    public async ValueTask<EdgeMutationLease?> AcknowledgeAndClaimNextAsync(EdgeMutationLease lease,
+        EdgeMutationOutcome outcome, TimeSpan leaseDuration, CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        var next = await inner.AcknowledgeAndClaimNextAsync(lease, outcome, leaseDuration, cancellationToken).ConfigureAwait(false);
+        var committed = Stopwatch.GetTimestamp();
+        timings.Acknowledge.Add(Stopwatch.GetElapsedTime(started, committed).TotalMilliseconds);
+        await onDurableAcknowledgement(lease.Mutation, committed, cancellationToken).ConfigureAwait(false);
+        return next;
     }
 
     public ValueTask BeginSnapshotAsync(EdgeScope scope, EdgeSnapshot snapshot, CancellationToken cancellationToken = default) =>
@@ -86,10 +120,27 @@ internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseT
         return result;
     }
 
+    public async ValueTask<IReadOnlyList<EdgeMutation>> ReadUnconfirmedOrderedReceiptsAsync(EdgeScope scope,
+        int maxReceipts, CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        var result = await inner.ReadUnconfirmedOrderedReceiptsAsync(scope, maxReceipts, cancellationToken).ConfigureAwait(false);
+        timings.ReadReceipt.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        return result;
+    }
+
     public async ValueTask MarkOrderedReceiptConfirmedAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
     {
         var started = Stopwatch.GetTimestamp();
         await inner.MarkOrderedReceiptConfirmedAsync(mutation, cancellationToken).ConfigureAwait(false);
+        timings.ConfirmReceipt.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+    }
+
+    public async ValueTask MarkOrderedReceiptsConfirmedAsync(EdgeScope scope, IReadOnlyList<EdgeMutation> mutations,
+        CancellationToken cancellationToken = default)
+    {
+        var started = Stopwatch.GetTimestamp();
+        await inner.MarkOrderedReceiptsConfirmedAsync(scope, mutations, cancellationToken).ConfigureAwait(false);
         timings.ConfirmReceipt.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
     }
 

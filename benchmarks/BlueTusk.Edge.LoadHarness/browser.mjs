@@ -72,7 +72,11 @@ async function openBrowser(synchronizeInitial = true) {
         const path = new URL(url).pathname;
         if (response.ok && options.method === "POST" && path.endsWith("/mutations")) {
           metrics.apply.push(performance.now() - started);
-          if (window.edgeDropNextResponse) { window.edgeDropNextResponse = false; throw new TypeError("Failed to fetch"); }
+          if (window.edgeDropNextResponse) {
+            window.edgeDropNextResponse = false;
+            window.edgeDroppedMutationId = JSON.parse(options.body).id;
+            throw new TypeError("Failed to fetch");
+          }
         }
         if (response.ok && options.method === "POST" && path.endsWith("/mutations/horizon"))
           metrics.horizon.push(performance.now() - started);
@@ -185,22 +189,23 @@ try {
       if (offlineActive || (now >= hostAt - 2 && now <= hostAt + 30)) return;
       if (!lossArmed || restarted) throw new Error("Unexpected browser transport failure.");
       lostAt = now;
-      const leased = await page.evaluate(async keys => {
+      const replayable = await page.evaluate(async keys => {
+        const droppedId = window.edgeDroppedMutationId;
         for (const candidate of keys) {
           const row = await window.edgeCapacity.local.get(window.edgeCapacity.scope, candidate);
-          if (row.pendingStatus === "leased") return row.pendingId;
+          if (row.pendingId === droppedId && (row.pendingStatus === "leased" || row.pendingStatus === "pending")) return row.pendingId;
         }
         return null;
       }, [...pending.keys()]);
-      const lostKey = [...pending.entries()].find(([, row]) => row.id === leased)?.[0];
-      if (!leased || lostKey === undefined) throw new Error("Lost response did not leave an original durable identity.");
-      lostMutation = leased;
+      const lostKey = [...pending.entries()].find(([, row]) => row.id === replayable)?.[0];
+      if (!replayable || lostKey === undefined) throw new Error("Lost response did not leave its original replayable durable identity.");
+      lostMutation = replayable;
       const metrics = await page.evaluate(() => window.edgeCapacity.metrics);
       applyBeforeRestart.push(...metrics.apply); horizonBeforeRestart.push(...metrics.horizon);
       await context.close(); context = undefined; page = undefined;
       clockOffset = 120_000; await openBrowser(false); restarted = true;
       const persisted = await page.evaluate(async key => (await window.edgeCapacity.local.get(window.edgeCapacity.scope, key)).pendingId, lostKey);
-      if (persisted !== lostMutation) throw new Error("Browser restart changed the leased mutation identity.");
+      if (persisted !== lostMutation) throw new Error("Browser restart changed the replayable mutation identity.");
       return;
     }
     for (const key of synced.acknowledged) {

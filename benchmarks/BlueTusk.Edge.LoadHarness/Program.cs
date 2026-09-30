@@ -8,6 +8,7 @@ using System.Text.Json;
 using BlueTusk.Data;
 using BlueTusk.Edge.Http;
 using BlueTusk.Edge.Server;
+using Microsoft.Data.Sqlite;
 
 namespace BlueTusk.Edge.LoadHarness;
 
@@ -183,12 +184,18 @@ internal static class Program
         }
         catch (Exception error)
         {
-            var origin = new StackTrace(error, true).GetFrame(0);
+            var frames = new StackTrace(error, true).GetFrames()?.Take(8).Select(frame => new
+            {
+                Method = frame.GetMethod()?.DeclaringType?.FullName + "." + frame.GetMethod()?.Name,
+                Line = frame.GetFileLineNumber()
+            }).ToArray();
+            var sqlite = error as SqliteException;
             await File.WriteAllTextAsync(Path.Combine(runRoot, "failure.json"), JsonSerializer.Serialize(new
             {
                 Type = error.GetType().Name,
-                Origin = origin?.GetMethod()?.DeclaringType?.FullName,
-                Line = origin?.GetFileLineNumber(),
+                SqliteErrorCode = sqlite?.SqliteErrorCode,
+                SqliteExtendedErrorCode = sqlite?.SqliteExtendedErrorCode,
+                Frames = frames,
                 Stage = "edge-capacity-workload",
                 FailedUtc = DateTimeOffset.UtcNow,
                 ProductionQualified = false

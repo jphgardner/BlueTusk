@@ -100,6 +100,17 @@ public sealed record EdgeCachePage(IReadOnlyList<EdgeCachedDocument> Items, stri
 public sealed record EdgeCheckpoint(long Position, bool SnapshotReady);
 public sealed record EdgeMutationLease(EdgeMutation Mutation, long Fence, DateTimeOffset ExpiresAt);
 public sealed record EdgeMutationOutcome(EdgeMutationOutcomeKind Kind, EdgeRecord? ServerRecord);
+public sealed class EdgeMutationAcknowledgement
+{
+    public EdgeMutationAcknowledgement(EdgeMutationLease lease, EdgeMutationOutcome outcome)
+    {
+        Lease = lease ?? throw new ArgumentNullException(nameof(lease));
+        Outcome = outcome ?? throw new ArgumentNullException(nameof(outcome));
+    }
+
+    public EdgeMutationLease Lease { get; }
+    public EdgeMutationOutcome Outcome { get; }
+}
 public sealed record EdgeChangeBatch(long FromPosition, long ToPosition, IReadOnlyList<EdgeRecord> Records);
 public sealed record EdgeSnapshot(Guid Id, long Position);
 
@@ -116,6 +127,26 @@ public interface IEdgeLocalStore
     ValueTask ApplySnapshotBatchAsync(EdgeScope scope, Guid snapshotId, IReadOnlyList<EdgeRecord> records, CancellationToken cancellationToken = default);
     ValueTask CommitSnapshotAsync(EdgeScope scope, Guid snapshotId, CancellationToken cancellationToken = default);
     ValueTask ApplyChangesAsync(EdgeScope scope, EdgeChangeBatch batch, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Optional atomic acknowledgement and next-claim transition for durable local stores.</summary>
+public interface IEdgeChainedLocalStore : IEdgeLocalStore
+{
+    ValueTask<EdgeMutationLease?> AcknowledgeAndClaimNextAsync(EdgeMutationLease lease, EdgeMutationOutcome outcome,
+        TimeSpan leaseDuration, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Optional ordered-prefix claim and atomic acknowledgement for bounded catch-up after reconnect.</summary>
+public interface IEdgeOrderedBatchLocalStore : IEdgeChainedLocalStore, IEdgeOrderedLocalStore
+{
+    /// <summary>Returns null when the earliest work needs the ordinary claim path; an empty list means no claimable work.</summary>
+    ValueTask<IReadOnlyList<EdgeMutationLease>?> ClaimOrderedBatchAsync(EdgeScope scope, int maximum,
+        TimeSpan leaseDuration, CancellationToken cancellationToken = default);
+    ValueTask AcknowledgeBatchAsync(IReadOnlyList<EdgeMutationAcknowledgement> acknowledgements,
+        CancellationToken cancellationToken = default);
+    /// <summary>Returns unprocessed leases to the queue while fencing their former owners.</summary>
+    ValueTask ReleaseOrderedBatchAsync(IReadOnlyList<EdgeMutationLease> leases,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>Host-owned authenticated transport. Server mutation identity receipts must commit atomically with business effects.</summary>
@@ -135,6 +166,13 @@ public interface IEdgeOrderedLocalStore : IEdgeLocalStore
     ValueTask MarkOrderedReceiptConfirmedAsync(EdgeMutation mutation, CancellationToken cancellationToken = default);
     ValueTask<Guid?> ReadConfirmedOrderedHorizonAsync(EdgeScope scope, int maxReceipts = 1000, CancellationToken cancellationToken = default);
     ValueTask MarkOrderedReceiptHorizonAsync(EdgeScope scope, Guid throughMutationId, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Optional bounded bulk access to the durable ordered-receipt outbox.</summary>
+public interface IEdgeOrderedReceiptBatchLocalStore : IEdgeOrderedLocalStore
+{
+    ValueTask<IReadOnlyList<EdgeMutation>> ReadUnconfirmedOrderedReceiptsAsync(EdgeScope scope, int maxReceipts, CancellationToken cancellationToken = default);
+    ValueTask MarkOrderedReceiptsConfirmedAsync(EdgeScope scope, IReadOnlyList<EdgeMutation> mutations, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Optional remote confirmation and horizon contract. Confirm only after a durable local outcome acknowledgement.</summary>
@@ -175,16 +213,57 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
         if (store is IEdgeOrderedLocalStore orderedLocal && transport is IEdgeOrderedReceiptTransport orderedRemote)
         { await FlushOrderedReceiptsAsync(orderedLocal, orderedRemote, scope, maxPushes, cancellationToken).ConfigureAwait(false); }
 
-        for (var i = 0; i < maxPushes; i++)
+        var batchStore = store as IEdgeOrderedBatchLocalStore;
+        var claimedBatch = batchStore is null ? null :
+            await batchStore.ClaimOrderedBatchAsync(scope, maxPushes, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
+        if (claimedBatch is not null)
         {
-            var lease = await store.ClaimAsync(scope, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
-            if (lease is null)
+            var acknowledged = new List<EdgeMutationAcknowledgement>(claimedBatch.Count);
+            try
             {
-                break;
+                foreach (var lease in claimedBatch)
+                {
+                    var outcome = await transport.ApplyMutationAsync(lease.Mutation, cancellationToken).ConfigureAwait(false);
+                    acknowledged.Add(new EdgeMutationAcknowledgement(lease, outcome));
+                }
             }
-
-            var outcome = await transport.ApplyMutationAsync(lease.Mutation, cancellationToken).ConfigureAwait(false);
-            await store.AcknowledgeAsync(lease, outcome, cancellationToken).ConfigureAwait(false);
+            finally
+            {
+                // Successful remote outcomes must be made durable even if a later request fails.
+                var committed = false;
+                try
+                {
+                    if (acknowledged.Count != 0)
+                    { await batchStore!.AcknowledgeBatchAsync(acknowledged, CancellationToken.None).ConfigureAwait(false); }
+                    committed = true;
+                }
+                finally
+                {
+                    IReadOnlyList<EdgeMutationLease> unreleased = committed ? claimedBatch.Skip(acknowledged.Count).ToArray() : claimedBatch;
+                    if (unreleased.Count != 0)
+                    { await batchStore!.ReleaseOrderedBatchAsync(unreleased, CancellationToken.None).ConfigureAwait(false); }
+                }
+            }
+        }
+        else
+        {
+            EdgeMutationLease? nextLease = null;
+            for (var i = 0; i < maxPushes; i++)
+            {
+                var lease = nextLease ?? await store.ClaimAsync(scope, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
+                if (lease is null) { break; }
+                var outcome = await transport.ApplyMutationAsync(lease.Mutation, cancellationToken).ConfigureAwait(false);
+                if (store is IEdgeChainedLocalStore chained && i + 1 < maxPushes)
+                {
+                    nextLease = await chained.AcknowledgeAndClaimNextAsync(lease, outcome, TimeSpan.FromMinutes(1), cancellationToken).ConfigureAwait(false);
+                    if (nextLease is null) { break; }
+                }
+                else
+                {
+                    await store.AcknowledgeAsync(lease, outcome, cancellationToken).ConfigureAwait(false);
+                    nextLease = null;
+                }
+            }
         }
 
         if (store is IEdgeOrderedLocalStore orderedAfterPush && transport is IEdgeOrderedReceiptTransport remoteAfterPush)
@@ -206,12 +285,37 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
     private static async ValueTask FlushOrderedReceiptsAsync(IEdgeOrderedLocalStore store, IEdgeOrderedReceiptTransport transport,
         EdgeScope scope, int maximum, CancellationToken cancellationToken)
     {
-        for (var i = 0; i < maximum; i++)
+        if (store is IEdgeOrderedReceiptBatchLocalStore batchStore)
         {
-            var mutation = await store.ReadNextUnconfirmedOrderedReceiptAsync(scope, cancellationToken).ConfigureAwait(false);
-            if (mutation is null) { break; }
-            await transport.FinalizeMutationReceiptAsync(mutation, cancellationToken).ConfigureAwait(false);
-            await store.MarkOrderedReceiptConfirmedAsync(mutation, cancellationToken).ConfigureAwait(false);
+            var pending = await batchStore.ReadUnconfirmedOrderedReceiptsAsync(scope, maximum, cancellationToken).ConfigureAwait(false);
+            var confirmed = new List<EdgeMutation>(pending.Count);
+            try
+            {
+                foreach (var mutation in pending)
+                {
+                    await transport.FinalizeMutationReceiptAsync(mutation, cancellationToken).ConfigureAwait(false);
+                    confirmed.Add(mutation);
+                }
+            }
+            finally
+            {
+                // A successfully finalized receipt remains retryable until the horizon advances.
+                // Persist the successful prefix even when a later request fails or is cancelled.
+                if (confirmed.Count != 0)
+                {
+                    await batchStore.MarkOrderedReceiptsConfirmedAsync(scope, confirmed, CancellationToken.None).ConfigureAwait(false);
+                }
+            }
+        }
+        else
+        {
+            for (var i = 0; i < maximum; i++)
+            {
+                var mutation = await store.ReadNextUnconfirmedOrderedReceiptAsync(scope, cancellationToken).ConfigureAwait(false);
+                if (mutation is null) { break; }
+                await transport.FinalizeMutationReceiptAsync(mutation, cancellationToken).ConfigureAwait(false);
+                await store.MarkOrderedReceiptConfirmedAsync(mutation, cancellationToken).ConfigureAwait(false);
+            }
         }
         var through = await store.ReadConfirmedOrderedHorizonAsync(scope, maximum, cancellationToken).ConfigureAwait(false);
         if (through is Guid id)

@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { IndexedDbEdgeStore, EdgeHttpRemoteTransport, EdgeHttpError, EdgeScopeError, EdgeCapacityError, EdgeRevisionError, EdgeIdentityError, EdgeLeaseError, newOrderedStreamId, orderedMutationId, parseOrderedMutationId, flushOrderedReceipts } from "../dist/index.js";
+import { IndexedDbEdgeStore, EdgeHttpRemoteTransport, EdgeHttpError, EdgeScopeError, EdgeCapacityError, EdgeRevisionError, EdgeIdentityError, EdgeLeaseError, newOrderedStreamId, orderedMutationId, parseOrderedMutationId, flushOrderedReceipts, synchronizeEdge } from "../dist/index.js";
 
 const scope = { tenant: "tenant", id: "readers", epoch: "1" };
 const record = (id, revision, value) => ({ id, revision, payload: JSON.stringify({ value }), deleted: false });
@@ -134,6 +134,46 @@ test("ordered allocation, claim order and confirmation outbox survive IndexedDB 
         assert.equal(parseOrderedMutationId((await again.claim(scope)).mutation.id).sequence, "2");
       } finally { again.close() }
     } finally { reopened.close() }
+  });
+});
+
+test("ordered batch acknowledgement rolls back every local effect when capacity rejects its suffix", async () => {
+  await fixture(async store => {
+    await ready(store);
+    const writes = [];
+    for (const id of ["first", "second"]) writes.push(await store.enqueueOrdered({ scope, documentId: id, expectedRevision: "0", kind: "upsert", payload: "{}" }));
+    const leases = await store.claimOrderedBatch(scope, 2);
+    assert.deepEqual(leases.map(lease => lease.mutation.id), writes.map(write => write.id));
+    const outcomes = leases.map(lease => ({ lease, outcome: { kind: "applied", record: record(lease.mutation.documentId, "1", "server") } }));
+    await assert.rejects(store.acknowledgeBatch(outcomes), EdgeCapacityError);
+    for (const id of ["first", "second"]) assert.equal((await store.get(scope, id)).pendingStatus, "leased");
+    assert.equal(await store.nextUnconfirmedOrderedReceipt(scope), null);
+    await store.releaseOrderedBatch(leases);
+    const recovered = await store.claimOrderedBatch(scope, 2);
+    assert.deepEqual(recovered.map(lease => lease.mutation.id), writes.map(write => write.id));
+    assert.ok(recovered[0].fence > leases[0].fence);
+  }, { maxReceipts: 1 });
+});
+
+test("browser reconnect durably acknowledges a successful ordered prefix and releases the failed suffix", async () => {
+  await fixture(async store => {
+    await ready(store);
+    const first = await store.enqueueOrdered({ scope, documentId: "first", expectedRevision: "0", kind: "upsert", payload: "{}" });
+    const second = await store.enqueueOrdered({ scope, documentId: "second", expectedRevision: "0", kind: "upsert", payload: "{}" });
+    let attempts = 0;
+    const remote = new EdgeHttpRemoteTransport({ endpoint: "https://example.test/edge", bearerToken: () => "token", fetch: async url => {
+      if (!String(url).includes("/mutations?")) throw new Error("Unexpected request.");
+      if (++attempts === 2) throw new Error("Injected second ordered request failure.");
+      return new Response(JSON.stringify({ kind: "applied", record: { id: "first", revision: "1", payload: btoa('{"value":"server"}'), deleted: false } }), { status: 200 });
+    } });
+    await assert.rejects(synchronizeEdge(store, remote, scope, { maxPushes: 2 }), /Injected second ordered request failure/);
+    assert.equal(attempts, 2);
+    assert.equal((await store.get(scope, "first")).pendingId, null);
+    assert.equal((await store.nextUnconfirmedOrderedReceipt(scope)).id, first.id);
+    assert.equal((await store.get(scope, "second")).pendingId, second.id);
+    assert.equal((await store.get(scope, "second")).pendingStatus, "pending");
+    const retry = await store.claimOrderedBatch(scope, 2);
+    assert.deepEqual(retry.map(lease => lease.mutation.id), [second.id]);
   });
 });
 
