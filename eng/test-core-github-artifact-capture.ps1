@@ -6,13 +6,13 @@ Import-Module (Join-Path $PSScriptRoot 'core-github-artifact-capture.psm1') -For
 $commit = 'a' * 40
 $id = 67890L
 $runId = 12345L
-$name = 'core-payload-example'
+$expectedArtifactName = 'core-payload-example'
 $url = "https://api.github.com/repos/jphgardner/BlueTusk/actions/artifacts/$id"
 $fixture = [ordered]@{
     run=@{id=$runId; head_sha=$commit; repository=@{id=42; full_name='jphgardner/BlueTusk'}
         head_repository=@{id=42; full_name='jphgardner/BlueTusk'}
         run_started_at='2026-01-01T00:00:01Z'; updated_at='2026-01-01T00:00:10Z'}
-    artifact=@{id=$id; name=$name; size_in_bytes=123; digest=('sha256:' + ('b' * 64)); expired=$false
+    artifact=@{id=$id; name=$expectedArtifactName; size_in_bytes=123; digest=('sha256:' + ('b' * 64)); expired=$false
         url=$url; archive_download_url="$url/zip"; created_at='2026-01-01T00:00:04Z'
         updated_at='2026-01-01T00:00:05Z'; expires_at=[DateTimeOffset]::UtcNow.AddDays(30).ToString('yyyy-MM-ddTHH:mm:ssZ')
         workflow_run=@{id=$runId; repository_id=42; head_repository_id=42; head_sha=$commit}}
@@ -23,7 +23,7 @@ function Fresh { return $json | ConvertFrom-Json -Depth 12 -DateKind String }
 function Verify([object] $Fixture)
 {
     return ConvertTo-CoreGithubArtifactMetadata -Artifact $Fixture.artifact -Run $Fixture.run `
-        -ArtifactId $id -ArtifactName $name -RunId $runId -ExpectedCommit $commit
+        -ArtifactId $id -ArtifactName $script:expectedArtifactName -RunId $runId -ExpectedCommit $commit
 }
 function Reject([string] $Name, [scriptblock] $Change, [string] $Guard)
 {
