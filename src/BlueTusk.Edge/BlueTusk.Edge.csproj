@@ -6,5 +6,10 @@
     <Description>Durable scoped offline cache and mutation synchronization contracts.</Description>
     <PackageTags>offline;sync;edge;conflicts;idempotency</PackageTags>
   </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlueTusk.Edge.Sqlite" />
+    <InternalsVisibleTo Include="BlueTusk.Edge.LoadHarness" />
+    <InternalsVisibleTo Include="BlueTusk.Edge.Tests" />
+  </ItemGroup>
   <Import Project="..\..\eng\versions\Edge.props" />
 </Project>

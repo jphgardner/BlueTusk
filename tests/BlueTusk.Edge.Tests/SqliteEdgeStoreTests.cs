@@ -510,7 +510,7 @@ public sealed class SqliteEdgeStoreTests
     [Fact]
     public Task Synchronization_session_allows_independent_writers_and_releases_durable_files() => WithReadyStoreAsync(async (store, options) =>
     {
-        await using (await store.OpenSynchronizationSessionAsync())
+        await using (await ((IEdgeSynchronizationSessionLocalStore)store).OpenSynchronizationSessionAsync())
         {
             Assert.True(File.Exists(options.DatabasePath + "-wal"));
             var independent = new SqliteEdgeStore(options);

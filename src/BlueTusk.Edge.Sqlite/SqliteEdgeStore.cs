@@ -36,7 +36,7 @@ public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore, IEdge
     public string DatabasePath { get; }
 
     /// <summary>Keeps one idle connection open until the pass ends, avoiding last-connection WAL cleanup between local operations. Each operation retains its own durable transaction.</summary>
-    public async ValueTask<IAsyncDisposable> OpenSynchronizationSessionAsync(CancellationToken cancellationToken = default) =>
+    async ValueTask<IAsyncDisposable> IEdgeSynchronizationSessionLocalStore.OpenSynchronizationSessionAsync(CancellationToken cancellationToken) =>
         await OpenAsync(cancellationToken).ConfigureAwait(false);
 
     public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)

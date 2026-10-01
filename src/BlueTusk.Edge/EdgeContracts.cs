@@ -130,7 +130,7 @@ public interface IEdgeLocalStore
 }
 
 /// <summary>Optional storage resource lifetime for one synchronization pass. A session must not hold a transaction or reader across remote requests.</summary>
-public interface IEdgeSynchronizationSessionLocalStore : IEdgeLocalStore
+internal interface IEdgeSynchronizationSessionLocalStore : IEdgeLocalStore
 {
     ValueTask<IAsyncDisposable> OpenSynchronizationSessionAsync(CancellationToken cancellationToken = default);
 }
