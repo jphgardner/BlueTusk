@@ -1,18 +1,22 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][ValidateSet('Regression', 'Compatibility')][string] $Kind,
+    [Parameter(Mandatory)][ValidateSet('Regression', 'Compatibility', 'SyncConnectors')][string] $Kind,
     [Parameter(Mandatory)][string] $OutputRoot,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [ValidateSet(0, 15, 16, 17, 18)][int] $PostgreSqlMajor = 0,
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9_.-]*$')][string] $PostgreSqlContainer,
+    [string] $SourceRoot = (Split-Path $PSScriptRoot -Parent),
+    [switch] $Build,
     [switch] $ValidateOnly
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'core-test-evidence.psm1') -Force
-$repositoryRoot = Split-Path $PSScriptRoot -Parent
+$toolRoot = Split-Path $PSScriptRoot -Parent
+$repositoryRoot = (Resolve-Path -LiteralPath $SourceRoot).Path
 $plan = Get-CoreTestPlan $Kind $PostgreSqlMajor
 if ($ValidateOnly) { $plan; return }
+if ($Build -and $Kind -ne 'SyncConnectors') { throw 'Build mode is limited to standalone Sync connector capture.' }
 $architecture = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture
 $environment = if ($IsWindows) { 'windows-x64' } elseif ($IsLinux) { 'linux-x64' } else { throw 'Core evidence requires Windows or Linux.' }
 if ($architecture -ne [Runtime.InteropServices.Architecture]::X64) { throw 'Core test captures require x64.' }
@@ -21,6 +25,23 @@ if ($Kind -eq 'Compatibility' -and ($environment -ne 'linux-x64' -or $PostgreSql
 { throw 'Compatibility capture requires a live stable PostgreSQL fixture on Linux and its configured test connection.' }
 if ($Kind -eq 'Regression' -and ($PostgreSqlMajor -ne 0 -or -not [string]::IsNullOrWhiteSpace($PostgreSqlContainer)))
 { throw 'Unit regression captures must not claim a PostgreSQL fixture.' }
+$toolCommit = (& git -C $toolRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or $toolCommit -cnotmatch '^[0-9a-f]{40}$' -or
+    @(& git -C $toolRoot status --porcelain --untracked-files=normal).Count -ne 0)
+{ throw 'Evidence collectors require clean committed verifier tools.' }
+if ($Kind -eq 'SyncConnectors')
+{
+    if ($PostgreSqlMajor -ne 0 -or -not [string]::IsNullOrWhiteSpace($PostgreSqlContainer))
+    { throw 'Standalone Sync test payloads must not invent authenticated fixture metadata.' }
+    $requiredEnvironment = @('BLUETUSK_TEST_CONNECTION_STRING', 'BLUETUSK_NATS_URL', 'BLUETUSK_KAFKA_BOOTSTRAP_SERVERS',
+        'BLUETUSK_S3_ENDPOINT', 'BLUETUSK_S3_ACCESS_KEY', 'BLUETUSK_S3_SECRET_KEY',
+        'BLUETUSK_TEST_REDIS_CONNECTION_STRING', 'BLUETUSK_OPENSEARCH_URL')
+    foreach ($variable in $requiredEnvironment)
+    {
+        if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($variable)))
+        { throw "Configure '$variable' for the actual seven-destination Sync capture." }
+    }
+}
 
 function Assert-Source
 {
@@ -51,10 +72,14 @@ function Get-Fixture
     return [pscustomobject]@{ major = $PostgreSqlMajor; imageReference = $identity[0]; imageId = $identity[1]; serverVersionNumber = [long]$version }
 }
 Assert-Source
-$output = [IO.Path]::GetFullPath((Join-Path $repositoryRoot $OutputRoot))
-$artifacts = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts'))
+$output = [IO.Path]::GetFullPath((Join-Path $toolRoot $OutputRoot))
+$artifacts = [IO.Path]::GetFullPath((Join-Path $toolRoot 'artifacts'))
+$prefix = if ($Kind -eq 'SyncConnectors') { 'connector-tests/' } else { '' }
+$captureRoot = if ($Kind -eq 'SyncConnectors') { Join-Path $output 'connector-tests' } else { $output }
+$name = if ($Kind -eq 'SyncConnectors') { 'sync-connector-validation.json' } else { 'core-test-shard.json' }
 if (-not $output.StartsWith($artifacts + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
-    (Test-Path -LiteralPath $output)) { throw 'Core test capture requires a new directory beneath repository artifacts.' }
+    (Test-Path -LiteralPath $captureRoot) -or (Test-Path -LiteralPath (Join-Path $output $name)))
+{ throw 'Core test capture requires fresh payload paths beneath repository artifacts; existing captures are never overwritten.' }
 $ancestor = $output
 while (-not [string]::IsNullOrWhiteSpace($ancestor))
 {
@@ -63,7 +88,7 @@ while (-not [string]::IsNullOrWhiteSpace($ancestor))
     { throw 'Core test output must not traverse a symbolic link or junction.' }
     $ancestor = Split-Path $ancestor -Parent
 }
-$null = New-Item -ItemType Directory -Path $output
+$null = [IO.Directory]::CreateDirectory($captureRoot)
 $started = [DateTimeOffset]::UtcNow.ToString('O')
 $previousLanguage = $env:DOTNET_CLI_UI_LANGUAGE
 $env:DOTNET_CLI_UI_LANGUAGE = 'en-US'
@@ -78,9 +103,17 @@ try
     }
     foreach ($project in $plan)
     {
-        $relative = "tests/$($project.name)"
+        $relative = "${prefix}tests/$($project.name)"
         $directory = Join-Path $output $relative
         $null = New-Item -ItemType Directory -Path $directory
+        if ($Build)
+        {
+            $projectPath = Join-Path $repositoryRoot $project.path
+            & dotnet restore $projectPath --locked-mode --nologo --verbosity quiet *> (Join-Path $directory 'restore.log')
+            if ($LASTEXITCODE -ne 0) { throw "Locked restore failed for '$($project.name)'; raw output is retained." }
+            & dotnet build $projectPath --configuration Release --no-restore --nologo --verbosity quiet *> (Join-Path $directory 'build.log')
+            if ($LASTEXITCODE -ne 0) { throw "Build failed for '$($project.name)'; raw output is retained." }
+        }
         $assembly = Join-Path $repositoryRoot "tests/$($project.name)/bin/Release/net10.0/$($project.name).dll"
         if (-not (Test-Path -LiteralPath $assembly -PathType Leaf)) { throw "Build '$($project.name)' in Release before capturing Core test evidence." }
         if ((Get-CoreTestAssemblyVersion $assembly) -cne "1.2.0+$ExpectedCommit")
@@ -108,6 +141,9 @@ try
         Write-Host "$($project.name): $($summary.Passed) discovered tests passed, zero skips."
     }
     Assert-Source
+    if ((& git -C $toolRoot rev-parse HEAD).Trim() -cne $toolCommit -or
+        @(& git -C $toolRoot status --porcelain --untracked-files=normal).Count -ne 0)
+    { throw 'Verifier tools changed during the capture.' }
     $database = $null
     if ($Kind -eq 'Compatibility')
     {
@@ -121,7 +157,8 @@ try
     $shard = [pscustomobject]@{ schemaVersion = 1; scope = 'Core'; releaseVersion = '1.2.0'; sourceCommit = $ExpectedCommit;
         sourceTreeDirty = $false; kind = $Kind; environmentId = $environment; postgreSql = $database;
         startedAtUtc = $started; completedAtUtc = [DateTimeOffset]::UtcNow.ToString('O'); projects = $rows.ToArray() }
-    $path = Join-Path $output 'core-test-shard.json'
+    if ($Kind -eq 'SyncConnectors') { $shard | Add-Member -NotePropertyName toolSourceCommit -NotePropertyValue $toolCommit }
+    $path = Join-Path $output $name
     $shard | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $path -Encoding utf8NoBOM
     Get-CoreTestShardReport $path $ExpectedCommit $Kind $environment $PostgreSqlMajor
 }

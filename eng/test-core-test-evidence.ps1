@@ -30,7 +30,7 @@ function New-Fixture([string] $Kind)
 {
     $root = Join-Path $scratch $Kind
     $null = New-Item -ItemType Directory -Path $root
-    $ids = if ($Kind -eq 'Regression') { @('linux-x64', 'windows-x64') } else { @(15, 16, 17, 18 | ForEach-Object { "postgresql-$_" }) }
+    $ids = if ($Kind -ne 'Compatibility') { @('linux-x64', 'windows-x64') } else { @(15, 16, 17, 18 | ForEach-Object { "postgresql-$_" }) }
     foreach ($id in $ids)
     {
         $shardRoot = Join-Path $root "runs/$id"
@@ -39,7 +39,7 @@ function New-Fixture([string] $Kind)
         $major = if ($Kind -eq 'Compatibility') { [int]$id.Substring('postgresql-'.Length) } else { 0 }
         foreach ($project in Get-CoreTestPlan $Kind $major)
         {
-            $relative = "tests/$($project.name)"
+            $relative = $(if ($Kind -eq 'SyncConnectors') { 'connector-tests/' } else { '' }) + "tests/$($project.name)"
             $directory = Join-Path $shardRoot $relative
             $null = New-Item -ItemType Directory -Path $directory
             $className = if ($project.name -ceq 'BlueTusk.EntityFrameworkCore.SpecificationTests')
@@ -68,13 +68,17 @@ function New-Fixture([string] $Kind)
             $database = [pscustomobject]@{ major = $major; imageReference = $image; imageId = $fixture.imageId;
                 serverVersionNumber = $fixture.serverVersionNumber; fixture = New-CoreTestArtifact $shardRoot 'postgresql-fixture.json' }
         }
-        Save-Json (Join-Path $shardRoot 'core-test-shard.json') ([pscustomobject]@{
+        $payload = [pscustomobject]@{
             schemaVersion = 1; scope = 'Core'; releaseVersion = '1.2.0'; sourceCommit = $commit; sourceTreeDirty = $false;
-            kind = $Kind; environmentId = $(if ($Kind -eq 'Regression') { $id } else { 'linux-x64' });
+            kind = $Kind; environmentId = $(if ($Kind -ne 'Compatibility') { $id } else { 'linux-x64' });
             postgreSql = $database; startedAtUtc = '2026-09-01T00:00:00Z'; completedAtUtc = '2026-09-01T00:01:00Z'; projects = $rows
-        })
+        }
+        $name = if ($Kind -eq 'SyncConnectors') { 'sync-connector-validation.json' } else { 'core-test-shard.json' }
+        if ($Kind -eq 'SyncConnectors') { $payload | Add-Member -NotePropertyName toolSourceCommit -NotePropertyValue ('3' * 40) }
+        Save-Json (Join-Path $shardRoot $name) $payload
     }
-    $null = & (Join-Path $PSScriptRoot 'build-core-test-manifest.ps1') -EvidenceRoot $root -ExpectedCommit $commit -Kind $Kind
+    if ($Kind -ne 'SyncConnectors')
+    { $null = & (Join-Path $PSScriptRoot 'build-core-test-manifest.ps1') -EvidenceRoot $root -ExpectedCommit $commit -Kind $Kind }
     return $root
 }
 function Update-Shard([string] $Root, [object] $Manifest, [object] $Shard)
@@ -114,7 +118,7 @@ try
     & dotnet build $fixtureProject -c Release --no-restore --nologo --verbosity quiet *>> (Join-Path $scratch 'fixture-build.log')
     if ($LASTEXITCODE -ne 0) { throw 'Could not build the dependency-free synthetic assembly fixture.' }
     Copy-Item -LiteralPath (Join-Path $scratch 'bin/Release/net10.0/CoreReaderFixture.dll') -Destination (Join-Path $scratch 'reader-fixture.dll')
-    $roots = @{ Regression = New-Fixture Regression; Compatibility = New-Fixture Compatibility }
+    $roots = @{ Regression = New-Fixture Regression; Compatibility = New-Fixture Compatibility; SyncConnectors = New-Fixture SyncConnectors }
     $baseline = @{}
     foreach ($file in Get-ChildItem -LiteralPath $scratch -Recurse -File)
     { $baseline[$file.FullName] = [IO.File]::ReadAllBytes($file.FullName) }
@@ -129,6 +133,15 @@ try
         try { & (Join-Path $PSScriptRoot 'build-core-test-manifest.ps1') -EvidenceRoot $roots[$kind] -ExpectedCommit $commit -Kind $kind | Out-Null }
         catch { $overwriteRejected = $true }
         if (-not $overwriteRejected) { throw 'Existing evidence was overwritten.' }
+    }
+    foreach ($id in @('linux-x64', 'windows-x64'))
+    {
+        $path = Join-Path $roots.SyncConnectors "runs/$id/sync-connector-validation.json"
+        $report = & (Join-Path $PSScriptRoot 'verify-sync-connector-evidence.ps1') -EvidencePath $path -ExpectedCommit $commit
+        if ($report.ProjectCount -ne 9 -or $report.Passed -ne 9 -or $report.RawTestPayloadsValidated -ne $true -or
+            $report.FixtureIdentityValidated -ne $false -or $report.ExecutionAuthenticityValidated -ne $false -or
+            $report.EnduranceValidated -ne $false -or $report.ReleaseApproved -ne $false)
+        { throw 'Sync raw test reader lost its exact coverage or partial-qualification boundary.' }
     }
     $cases = @(
         @{ Kind = 'Regression'; Change = { param($r,$m,$s) $m.schemaVersion = '1' } },
@@ -197,7 +210,47 @@ try
         if (-not $failed) { throw "Malformed Core test evidence case $rejected was accepted." }
         $rejected++
     }
-    Write-Output "Core test evidence reader self-test passed: complete 2-OS/4-database synthetic matrices, immutable manifests and $rejected rejected substitutions, skips, counter/schema or fixture changes. NOT release evidence."
+    $syncCases = @(
+        { param($r,$s) $s.projects = @($s.projects | Select-Object -First 8) },
+        { param($r,$s) $s.projects[8] = $s.projects[0] },
+        { param($r,$s) $s.projects[0].filter = 'FullyQualifiedName~Passes' },
+        { param($r,$s) $s.projects[0].projectPath = 'tests/other.csproj' },
+        { param($r,$s) $s.toolSourceCommit = 'uncommitted' },
+        { param($r,$s) $s.PSObject.Properties.Remove('toolSourceCommit') },
+        { param($r,$s) $s.sourceCommit = '2' * 40 },
+        { param($r,$s) $s.sourceTreeDirty = $true },
+        { param($r,$s) $s.environmentId = 'macos-arm64' },
+        { param($r,$s) $s.postgreSql = [pscustomobject]@{ major = 18 } },
+        { param($r,$s) $s.projects[0].trx.path = $s.projects[0].trx.path.Replace('connector-tests/', '') },
+        { param($r,$s) $s.projects[0].trx.sha256 = 'a' * 64 },
+        { param($r,$s)
+            $path = Join-Path $r $s.projects[0].trx.path
+            [xml]$document = Get-Content -LiteralPath $path -Raw
+            $document.TestRun.Results.UnitTestResult.outcome = 'NotExecuted'
+            $document.Save($path)
+            $s.projects[0].trx = New-CoreTestArtifact $r $s.projects[0].trx.path
+        },
+        { param($r,$s)
+            $path = Join-Path $r $s.projects[0].discovery.path
+            Add-Content -LiteralPath $path -Value '    BlueTusk.Sync.Tests.ReaderFixture.MissingExecution'
+            $s.projects[0].discovery = New-CoreTestArtifact $r $s.projects[0].discovery.path
+        }
+    )
+    foreach ($mutation in $syncCases)
+    {
+        foreach ($entry in $baseline.GetEnumerator()) { [IO.File]::WriteAllBytes($entry.Key, $entry.Value) }
+        $root = Join-Path $roots.SyncConnectors 'runs/linux-x64'
+        $path = Join-Path $root 'sync-connector-validation.json'
+        $shard = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        & $mutation $root $shard
+        Save-Json $path $shard
+        $failed = $false
+        try { & (Join-Path $PSScriptRoot 'verify-sync-connector-evidence.ps1') -EvidencePath $path -ExpectedCommit $commit | Out-Null }
+        catch { $failed = $true }
+        if (-not $failed) { throw "Malformed Sync connector evidence case $rejected was accepted." }
+        $rejected++
+    }
+    Write-Output "Core test evidence reader self-test passed: complete 2-OS/4-database and 9-project Sync synthetic captures, immutable manifests and $rejected rejected substitutions, skips, counter/schema or fixture changes. NOT release evidence."
 }
 finally
 {

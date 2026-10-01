@@ -56,6 +56,46 @@ PostgreSQL minor upgrade. Those seven records are independently
 content-addressed and verified with the Streams records by the
 [endurance disturbance evidence contract](../operations/endurance-disturbance-evidence.md).
 
+## Retained connector test results
+
+The release workflow also captures one complete, unfiltered functional run of
+all nine suites with `eng/run-core-test-evidence.ps1 -Kind SyncConnectors`.
+`sync-connector-validation.json` binds the clean exact source commit, the
+committed collector version, OS, execution interval, each test assembly's
+version and hash, raw VSTest discovery, TRX and test log. Payloads are retained
+under `connector-tests/tests/`. Existing payload paths are never overwritten;
+failed discovery, restore, build or execution logs remain available.
+
+The reader `eng/verify-sync-connector-evidence.ps1` requires every discovered
+test to have exactly one passing result, matching definitions and counters,
+with zero skips. Missing projects, filters, substituted tests and changed
+payload bytes fail verification. This functional capture does not establish
+24-hour endurance, authenticate fixture or remote execution identities, or
+approve publication. It does not assert that every endurance cycle has a TRX.
+
+For local Docker execution, configure all eight environment variables below
+against actual fixtures, then use a fresh output subtree:
+
+```powershell
+./eng/run-core-test-evidence.ps1 -Kind SyncConnectors `
+  -ExpectedCommit (git rev-parse HEAD) `
+  -OutputRoot 'artifacts/test-results/sync-functional' -Build
+./eng/verify-sync-connector-evidence.ps1 `
+  -EvidencePath 'artifacts/test-results/sync-functional/sync-connector-validation.json' `
+  -ExpectedCommit (git rev-parse HEAD)
+```
+
+`-SourceRoot` can select another clean checkout at `-ExpectedCommit`; outputs
+remain beneath the collector checkout's `artifacts/` directory. Both source
+and tools must be committed and clean throughout capture. This permits new
+collector tools to measure a retained older source without relabelling it.
+Keep the exact-source functional manifest and its `connector-tests/` subtree
+beside the endurance report when assembling the `sync/` evidence folder.
+The local record emitter verifies both captures and records their complete
+combined execution interval; the 24-hour duration gate remains bound to the
+original endurance report. An older report without raw results cannot supply
+this additional functional evidence by itself.
+
 ## Local smoke
 
 Start PostgreSQL 18, Redis 8, NATS JetStream, Kafka 4.1, MinIO, and OpenSearch 3.7 using the same
