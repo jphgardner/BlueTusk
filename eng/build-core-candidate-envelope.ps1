@@ -4,11 +4,12 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][DateTimeOffset] $CandidateCommitUtc,
     [ValidatePattern('^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')][string] $ExpectedRepository = 'jphgardner/BlueTusk',
-    [switch] $UseLocalExecution
+    [switch] $UseLocalExecution,
+    [switch] $VerifyPayloads
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1')
 $root = (Resolve-Path -LiteralPath $EvidenceRoot).Path
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
 $artifactsPrefix = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts')).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
@@ -71,10 +72,16 @@ try
     try { $temporary.Write($bytes, 0, $bytes.Length) } finally { $temporary.Dispose() }
     $report = Get-CoreCandidateBindingReport -EvidencePath $temporaryPath `
         -ExpectedCommit $ExpectedCommit -CandidateCommitUtc $CandidateCommitUtc -ExpectedRepository $ExpectedRepository
+    if ($VerifyPayloads)
+    {
+        Import-Module (Join-Path $PSScriptRoot 'core-candidate-payloads.psm1')
+        $report = Get-CoreCandidatePayloadReport -EvidencePath $temporaryPath `
+            -ExpectedCommit $ExpectedCommit -CandidateCommitUtc $CandidateCommitUtc -ExpectedRepository $ExpectedRepository
+    }
     $stream = [IO.File]::Open($output, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
     try { $stream.Write($bytes, 0, $bytes.Length) } finally { $stream.Dispose() }
     Write-Output $report
-    Write-Information "Retained immutable envelope: $output. Bindings only, NOT release approval." -InformationAction Continue
+    Write-Information "Retained immutable envelope: $output. NOT release approval; inspect the report's verification flags." -InformationAction Continue
 }
 finally
 {

@@ -115,8 +115,38 @@ exact commit and producer bindings, file digests and sizes, root containment,
 approval schemas and approval ordering. Its self-test exercises a synthetic
 binding set and rejects malformed or stale substitutions; it is part of the
 build gate. The binding report explicitly leaves payload qualification, live
-GitHub identity and release approval unverified. The final qualification
-aggregator and the remaining Core evidence producers still need implementation.
+GitHub identity and release approval unverified.
+
+`eng/verify-core-candidate-payloads.ps1` adds the next offline aggregation stage.
+It first verifies the same bindings and approvals, then runs the existing
+website, complete Core package/SBOM, full performance-leadership matrix, raw
+regression/compatibility/Sync connector, full-duration endurance and operational
+disturbance readers. All fourteen roles must pass. Each endurance provenance
+file must be byte-for-byte identical to the packaged candidate provenance;
+matching a source SHA alone does not prove the same packages were exercised.
+The complete assembled bundle, including raw descendants, is fingerprinted
+before and after verification and must remain unchanged. Symbolic links,
+junctions and case-ambiguous file paths are rejected.
+
+Use a completed, immutable evidence bundle. An active capture directory is not
+an aggregation input. The report may set `AllPayloadsValidated=true` only after
+every payload reader passes. Fixture identity, execution authenticity, live
+GitHub identity and `ReleaseApproved` remain false. No successful Core payload
+aggregate has been captured yet. The final authenticity gate and remaining
+Core evidence producers still need implementation. The binding self-test also
+checks that correctly hashed synthetic placeholders and a same-source package
+provenance substitution cannot pass this payload stage; these are reader tests,
+not release qualification.
+
+```powershell
+./eng/verify-core-candidate-payloads.ps1 `
+    -EvidencePath artifacts/my-core-evidence/candidate.json `
+    -ExpectedCommit <full-40-character-sha> -CandidateCommitUtc <commit-time-UTC>
+```
+
+`build-core-candidate-envelope.ps1 -VerifyPayloads` runs both offline stages
+before retaining the envelope. Without that switch it retains binding-only
+evidence with the original false payload and release flags.
 
 For authorized local Docker campaigns, `-UseLocalExecution` builds a separate
 schema 5 envelope from `producer-runs.json`. Build, security and fuzzing still
