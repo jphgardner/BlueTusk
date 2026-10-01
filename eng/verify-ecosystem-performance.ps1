@@ -123,8 +123,15 @@ function VerifyJobs($Root, $Configuration, $Run, [string]$ExpectedImage) {
             $environment.ProductScope -ceq 'Jobs' -and
             $environment.FixtureOwner -ceq 'jobs-release-capacity' -and
             -not [string]::IsNullOrWhiteSpace([string]$environment.FixtureRunId)) "Jobs run $Run did not use the owned product fixture."
+        # Evidence recorded before local campaigns existed carries no kind and came from a workflow run.
+        $kindProperty = $environment.PSObject.Properties['FixtureRunKind']
+        $runKind = if ($null -eq $kindProperty) { 'github' } else { [string]$kindProperty.Value }
+        Require (($runKind -ceq 'github' -and [string]$environment.FixtureRunId -match '^[0-9]+$') -or
+            ($runKind -ceq 'local' -and [string]$environment.FixtureRunId -cmatch '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')) "Jobs run $Run has an invalid fixture owner identity."
         if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) {
-            Require ($environment.FixtureRunId -ceq $env:GITHUB_RUN_ID) "Jobs run $Run used a fixture from another workflow run."
+            Require ($runKind -ceq 'github' -and $environment.FixtureRunId -ceq $env:GITHUB_RUN_ID) "Jobs run $Run used a fixture from another workflow run."
+        } elseif (-not [string]::IsNullOrWhiteSpace($env:BLUETUSK_LOCAL_CAMPAIGN_ID)) {
+            Require ($runKind -ceq 'local' -and $environment.FixtureRunId -ceq $env:BLUETUSK_LOCAL_CAMPAIGN_ID) "Jobs run $Run used a fixture from another local campaign."
         }
     }
     Require ($report.PayloadMode -ceq $Configuration.payloadMode -and $environment.PayloadMode -ceq $Configuration.payloadMode) "Jobs/Workflows run $Run did not attest the high-entropy payload."

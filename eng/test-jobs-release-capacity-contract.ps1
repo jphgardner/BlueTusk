@@ -9,6 +9,7 @@ $combinedWorkflow = Get-Content (Join-Path $root '.github/workflows/ecosystem-pe
 $wrapper = Get-Content (Join-Path $PSScriptRoot 'verify-jobs-release-capacity.ps1') -Raw
 $verifier = Get-Content (Join-Path $PSScriptRoot 'verify-ecosystem-performance.ps1') -Raw
 $campaign = Get-Content (Join-Path $PSScriptRoot 'jobs-storage-campaign.ps1') -Raw
+$local = Get-Content (Join-Path $PSScriptRoot 'run-ecosystem-capacity-local.ps1') -Raw
 $budget = Get-Content (Join-Path $PSScriptRoot 'jobs-release-capacity-budgets.json') -Raw | ConvertFrom-Json
 
 function Require([bool] $Condition, [string] $Message)
@@ -28,7 +29,7 @@ foreach ($mode in @('Preflight', 'Run', 'Verify'))
 Require ($workflow -match [regex]::Escape('name: expansion-jobs-capacity-${{ inputs.candidate_sha }}') -and
     $workflow -match 'name: jobs-capacity-partial-' -and
     $workflow -match 'retention-days: 90') 'Jobs capacity must publish a distinct retained success artifact.'
-foreach ($fixtureWorkflow in @($workflow, $combinedWorkflow))
+foreach ($fixtureWorkflow in @($workflow, $combinedWorkflow, $local))
 {
     $passwordAssignments = [regex]::Matches($fixtureWorkflow, 'POSTGRES_PASSWORD=')
     Require ($fixtureWorkflow -match '\[Security\.Cryptography\.RandomNumberGenerator\]::GetBytes\(24\)' -and
@@ -42,6 +43,11 @@ Require ($campaign -match "'storage-jobs'" -and
     $campaign -match "'bluetusk-jobs-release-pg15'" -and
     $campaign -match 'ImageRepoDigests' -and
     $verifier -match 'ImageRepoDigests') 'Jobs campaign must use its Jobs-only profile and verify the pinned image.'
+Require ($local -match "-Mode Preflight" -and $local -match "-Mode Run" -and $local -match "-Mode Verify" -and
+    $local -match 'bluetusk\.run-kind=local' -and $local -match '\[guid\]::NewGuid\(\)' -and
+    $local -match 'GITHUB_RUN_ID\)\) \{ throw' -and
+    $campaign -match 'FixtureRunKind' -and $verifier -match 'FixtureRunKind' -and
+    $verifier -match 'BLUETUSK_LOCAL_CAMPAIGN_ID') 'Local capacity gates must use a local campaign UUID and record the Jobs fixture owner kind.'
 Require ($budget.schemaVersion -eq 1 -and $budget.repetitions -eq 2 -and
     $budget.qualification -ceq 'manual-exact-candidate-jobs-capacity' -and
     $budget.jobsWorkflows.secondsPerProduct -ge 1800 -and

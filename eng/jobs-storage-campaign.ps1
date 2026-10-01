@@ -34,11 +34,18 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Owned fixture inspection failed.' }
     $taskFixture = ($taskInspection | ConvertFrom-Json)[0]
     if (!$taskFixture.State.Running) { throw 'Owned fixture is not running.' }
+    # A GitHub workflow run owns the fixture inside Actions; outside Actions only a local campaign UUID may own it.
+    $taskRunKind = ''
+    if (![string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) { $taskRunKind = 'github' }
+    elseif ([string]$env:BLUETUSK_LOCAL_CAMPAIGN_ID -cmatch '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') { $taskRunKind = 'local' }
+    $taskRunId = if ($taskRunKind -eq 'github') { $env:GITHUB_RUN_ID } else { $env:BLUETUSK_LOCAL_CAMPAIGN_ID }
+    $taskRunKindLabel = $taskFixture.Config.Labels.PSObject.Properties['bluetusk.run-kind']
     if ($Product -eq 'Jobs' -and
         ($taskFixture.Config.Labels.'bluetusk.owner' -cne 'jobs-release-capacity' -or
-         [string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID) -or
-         $taskFixture.Config.Labels.'bluetusk.run' -cne $env:GITHUB_RUN_ID)) {
-        throw 'Jobs release capacity fixture is not owned by this workflow run.'
+         $taskRunKind -eq '' -or
+         $taskFixture.Config.Labels.'bluetusk.run' -cne $taskRunId -or
+         ($taskRunKind -eq 'local') -ne ($null -ne $taskRunKindLabel -and $taskRunKindLabel.Value -ceq 'local'))) {
+        throw 'Jobs release capacity fixture is not owned by this workflow run or local campaign.'
     }
     $taskImageReference = ''
     $taskRepoDigests = @()
@@ -81,7 +88,7 @@ SELECT json_build_object('server', version(), 'settings',
     if ($LASTEXITCODE -ne 0) { throw 'Owned fixture settings observation failed.' }
     @{ StartedAtUtc = [DateTimeOffset]::UtcNow.ToString('O'); Container = $taskContainer; ImageId = $taskFixture.Image;
        ProductScope = $Product; FixtureOwner = $taskFixture.Config.Labels.'bluetusk.owner';
-       FixtureRunId = $taskFixture.Config.Labels.'bluetusk.run';
+       FixtureRunId = $taskFixture.Config.Labels.'bluetusk.run'; FixtureRunKind = $taskRunKind;
        ImageReference = $taskImageReference; ImageRepoDigests = $taskRepoDigests;
        PostgreSql = ($taskServerJson | ConvertFrom-Json); PerProductDurationSeconds = $Seconds;
        PayloadMode = $PayloadMode;
