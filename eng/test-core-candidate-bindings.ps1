@@ -69,6 +69,30 @@ function Reject-Fixture([string] $Name, [scriptblock] $Change, [string] $Expecte
     $script:rejected++
 }
 
+function Reject-PayloadFixture([string] $Name, [scriptblock] $Change, [string] $ExpectedError, [string] $FixtureRoot = $baseRoot)
+{
+    $root = Join-Path $scratch $Name
+    $null = New-Item -ItemType Directory -Path $root
+    Get-ChildItem -LiteralPath $FixtureRoot -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $root -Recurse }
+    $path = Join-Path $root 'candidate.json'
+    $envelope = Read-CoreEvidenceJson $path
+    & $Change $envelope $root
+    Write-FixtureJson $path $envelope
+    # These fixtures deliberately pass the binding layer; the new payload layer
+    # must reject them, rather than promote a correctly hashed placeholder.
+    $null = Verify-Fixture $root
+    $failure = $null
+    try
+    {
+        & (Join-Path $PSScriptRoot 'verify-core-candidate-payloads.ps1') -EvidencePath $path `
+            -ExpectedCommit $commit -CandidateCommitUtc $commitUtc | Out-Null
+    }
+    catch { $failure = $_.Exception.Message }
+    if ($null -eq $failure -or $failure -notmatch $ExpectedError)
+    { throw "Payload fixture '$Name' did not fail at '$ExpectedError': $failure" }
+    $script:rejected++
+}
+
 try
 {
     # These are deliberately incomplete synthetic payloads. Passing this stage
@@ -117,6 +141,26 @@ try
         $positive.RemoteIdentityValidated -ne $false -or $positive.ReleaseApproved -ne $false)
     { throw 'Binding-only report weakened coverage or claimed release qualification.' }
     $null = Verify-Fixture $baseRoot
+    Reject-PayloadFixture 'hashed-placeholder-is-not-payload' {} 'limits'
+    foreach ($role in @('streamsProvenance', 'syncProvenance', 'liveControlPlaneProvenance'))
+    {
+        $changedRole = $role
+        Reject-PayloadFixture "different-packages-$role" {
+            param($e,$r)
+            Edit-Payload $e $r $changedRole { param($p) $p | Add-Member artifactSubstitution 'same source, different package capture' }
+        } 'exact packaged candidate provenance'
+    }
+    $payloadBuilderRoot = Join-Path $scratch 'payload-builder-refusal'
+    $null = New-Item -ItemType Directory -Path $payloadBuilderRoot
+    Get-ChildItem -LiteralPath $baseRoot -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $payloadBuilderRoot -Recurse }
+    Remove-Item -LiteralPath (Join-Path $payloadBuilderRoot 'candidate.json')
+    $failure = $null
+    try { & $builder -EvidenceRoot $payloadBuilderRoot -ExpectedCommit $commit -CandidateCommitUtc $commitUtc -VerifyPayloads | Out-Null }
+    catch { $failure = $_.Exception.Message }
+    if ($failure -notmatch 'limits' -or (Test-Path -LiteralPath (Join-Path $payloadBuilderRoot 'candidate.json')) -or
+        @(Get-ChildItem -LiteralPath $payloadBuilderRoot -Filter '.core-envelope-*' -Force).Count -ne 0)
+    { throw "Payload builder retained an invalid envelope or failed to remove its private temporary input: $failure" }
+    $rejected++
     $hashBefore = (Get-FileHash -LiteralPath (Join-Path $baseRoot 'candidate.json') -Algorithm SHA256).Hash
     $failure = $null
     try { & $builder -EvidenceRoot $baseRoot -ExpectedCommit $commit -CandidateCommitUtc $commitUtc | Out-Null }
@@ -213,6 +257,7 @@ try
         $localReport.WorkflowCount -ne 3 -or $localReport.ProducerCount -ne 7 -or $localReport.ReleaseApproved -ne $false -or
         $localReport.AllPayloadsValidated -ne $false -or $localReport.RemoteIdentityValidated -ne $false)
     { throw 'Hybrid bindings must retain distinct identities and cannot claim release qualification.' }
+    Reject-PayloadFixture 'local-hashed-placeholder-is-not-payload' {} 'limits' $localRoot
     function Edit-LocalManifest([object] $Envelope, [string] $Root, [scriptblock] $Change)
     {
         $record = $Envelope.producerRuns[3].capture.manifest
@@ -296,6 +341,23 @@ try
         $rejected++
     }
     finally { Remove-Item -LiteralPath $link -Force }
+    $rawLink = Join-Path $baseRoot 'unbound-raw-link'
+    if ($IsWindows) { $null = New-Item -ItemType Junction -Path $rawLink -Value (Join-Path $baseRoot 'website') }
+    else { $null = New-Item -ItemType SymbolicLink -Path $rawLink -Value (Join-Path $baseRoot 'website') }
+    try
+    {
+        $null = Verify-Fixture $baseRoot
+        $failure = $null
+        try
+        {
+            & (Join-Path $PSScriptRoot 'verify-core-candidate-payloads.ps1') `
+                -EvidencePath (Join-Path $baseRoot 'candidate.json') -ExpectedCommit $commit -CandidateCommitUtc $commitUtc | Out-Null
+        }
+        catch { $failure = $_.Exception.Message }
+        if ($failure -notmatch 'payload trees') { throw "Raw descendant link guard failed: $failure" }
+        $rejected++
+    }
+    finally { Remove-Item -LiteralPath $rawLink -Force }
     Write-Output "Core candidate binding self-test passed: synthetic remote and hybrid 7-producer/14-artifact/10-approval joins and $rejected rejected mutations. No payload qualification, execution authenticity, workflow execution or publication is certified."
 }
 finally
