@@ -540,28 +540,47 @@ export class IndexedDbEdgeStore {
     });
   }
   async nextUnconfirmedOrderedReceipt(scopeInput: EdgeScope): Promise<EdgeMutation | null> {
+    return (await this.nextUnconfirmedOrderedReceiptBatch(scopeInput, 1))[0] ?? null;
+  }
+  /** Read a bounded ordered confirmation prefix in one IndexedDB transaction. */
+  async nextUnconfirmedOrderedReceiptBatch(scopeInput: EdgeScope, maximum = 32): Promise<readonly EdgeMutation[]> {
     const scope = scopeCopy(scopeInput);
+    if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > 1000) throw new TypeError("Invalid ordered confirmation batch limit.");
     return await this.transact("readonly", async tx => {
       await this.active(tx, scope);
       const rows = await request<OrderedOutbox[]>(tx.objectStore("orderedOutbox").index("status").getAll(
-        IDBKeyRange.bound([...scopeKey(scope), "pending", ""], [...scopeKey(scope), "pending", "\uffff"]), 1));
-      const row = rows[0];
-      return row ? { scope: row.scope, id: row.id, documentId: row.documentId, expectedRevision: row.expectedRevision, kind: row.kind, payload: row.payload } : null;
+        IDBKeyRange.bound([...scopeKey(scope), "pending", ""], [...scopeKey(scope), "pending", "\uffff"]), maximum));
+      return rows.map(row => ({ scope: row.scope, id: row.id, documentId: row.documentId, expectedRevision: row.expectedRevision, kind: row.kind, payload: row.payload }));
     });
   }
   async markOrderedReceiptConfirmed(input: EdgeMutation): Promise<void> {
-    const mutation = await this.prepared(input); const ordered = parseOrderedMutationId(mutation.id);
-    if (!ordered) throw new EdgeIdentityError();
+    await this.markOrderedReceiptConfirmedBatch([input]);
+  }
+  /** Commit a successful confirmation prefix atomically, retaining retry identities on failure. */
+  async markOrderedReceiptConfirmedBatch(inputs: readonly EdgeMutation[]): Promise<void> {
+    if (!inputs.length || inputs.length > 1000) throw new TypeError("Invalid ordered confirmation batch count.");
+    const prepared = await Promise.all(inputs.map(async input => {
+      const mutation = await this.prepared(input); const ordered = parseOrderedMutationId(mutation.id);
+      if (!ordered) throw new EdgeIdentityError();
+      return { mutation, ordered };
+    }));
+    const scope = prepared[0]!.mutation.scope; const seen = new Set<string>();
+    for (const { mutation } of prepared) {
+      if (mutation.scope.tenant !== scope.tenant || mutation.scope.id !== scope.id || mutation.scope.epoch !== scope.epoch || seen.has(mutation.id)) throw new EdgeIdentityError();
+      seen.add(mutation.id);
+    }
     await this.transact("readwrite", async tx => {
-      await this.active(tx, mutation.scope);
-      const outbox = tx.objectStore("orderedOutbox");
-      const row = await request<OrderedOutbox | undefined>(outbox.get([...scopeKey(mutation.scope), ordinal(ordered.sequence)]));
-      if (!row || row.id !== mutation.id || row.fingerprint !== mutation.fingerprint) throw new EdgeIdentityError();
-      if (row.status === "pending") {
-        const totals = await this.totals(tx);
-        totals.orderedOutboxBytes -= encoder.encode(row.payload).byteLength;
-        outbox.put({ ...row, status: "confirmed", payload: "" } satisfies OrderedOutbox); tx.objectStore("metadata").put(totals);
+      await this.active(tx, scope);
+      const outbox = tx.objectStore("orderedOutbox"); const totals = await this.totals(tx); let changed = false;
+      for (const { mutation, ordered } of prepared) {
+        const row = await request<OrderedOutbox | undefined>(outbox.get([...scopeKey(scope), ordinal(ordered.sequence)]));
+        if (!row || row.id !== mutation.id || row.fingerprint !== mutation.fingerprint) throw new EdgeIdentityError();
+        if (row.status === "pending") {
+          totals.orderedOutboxBytes -= encoder.encode(row.payload).byteLength;
+          outbox.put({ ...row, status: "confirmed", payload: "" } satisfies OrderedOutbox); changed = true;
+        }
       }
+      if (changed) tx.objectStore("metadata").put(totals);
     });
   }
   async confirmedOrderedHorizon(scopeInput: EdgeScope, maxReceipts = 1000): Promise<string | null> {

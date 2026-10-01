@@ -50,7 +50,7 @@ try {
   context = await browserType.launchPersistentContext(profile, launchOptions);
   page = await context.newPage(); await page.goto(url);
   const resumed = await page.evaluate(async () => {
-    const { IndexedDbEdgeStore, EdgeScopeError } = await import("/edge.js");
+    const { IndexedDbEdgeStore, EdgeIdentityError } = await import("/edge.js");
     const scope = { tenant: "tenant", id: "readers", epoch: "1" };
     const store = await IndexedDbEdgeStore.open({ databaseName: "real-browser", now: () => 1_800_000_001_001 });
     const lease = await store.claim(scope, 1000);
@@ -67,21 +67,45 @@ try {
     if ((await store.get(scope, "3")).pendingId !== null || (await store.get(scope, "4")).pendingId !== null ||
         (await store.nextUnconfirmedOrderedReceipt(scope)).id !== ordered[0].mutation.id)
       throw new Error("Real IndexedDB did not commit the ordered batch and confirmation outbox atomically.");
+    const receipts = await store.nextUnconfirmedOrderedReceiptBatch(scope, 2);
+    if (receipts.length !== 2) throw new Error("Real IndexedDB did not return the bounded confirmation batch.");
+    let rejected = false;
+    try { await store.markOrderedReceiptConfirmedBatch([receipts[0], { ...receipts[1], documentId: "substitution" }]) }
+    catch (error) { rejected = error instanceof EdgeIdentityError }
+    if (!rejected || await store.confirmedOrderedHorizon(scope) !== null ||
+        (await store.nextUnconfirmedOrderedReceiptBatch(scope, 2)).length !== 2)
+      throw new Error("Real IndexedDB failed to roll back the invalid confirmation suffix.");
+    await store.markOrderedReceiptConfirmedBatch(receipts);
     const checkpoint = await store.checkpoint(scope); const committed = await store.get(scope, "2");
+    store.close(); return { checkpoint, pendingId: committed.pendingId, through: receipts[1].id };
+  });
+  assert.equal(resumed.checkpoint.position, "9007199254740999"); assert.equal(resumed.pendingId, null);
+  await context.close(); context = undefined;
+  context = await browserType.launchPersistentContext(profile, launchOptions);
+  page = await context.newPage(); await page.goto(url);
+  const confirmed = await page.evaluate(async through => {
+    const { IndexedDbEdgeStore, EdgeScopeError } = await import("/edge.js");
+    const scope = { tenant: "tenant", id: "readers", epoch: "1" };
+    const store = await IndexedDbEdgeStore.open({ databaseName: "real-browser" });
+    if ((await store.nextUnconfirmedOrderedReceiptBatch(scope, 2)).length || await store.confirmedOrderedHorizon(scope) !== through)
+      throw new Error("Browser restart lost the atomically confirmed prefix.");
+    await store.markOrderedHorizon(scope, through);
+    if (await store.confirmedOrderedHorizon(scope) !== null) throw new Error("Browser restart could not reclaim confirmed receipts.");
     await store.activate({ ...scope, epoch: "2" }, "discard");
     let denied = false; try { await store.get(scope, "1") } catch (error) { denied = error instanceof EdgeScopeError }
-    store.close(); return { checkpoint, pendingId: committed.pendingId, denied };
-  });
-  assert.equal(resumed.checkpoint.position, "9007199254740999"); assert.equal(resumed.pendingId, null); assert.equal(resumed.denied, true);
+    store.close(); return { denied };
+  }, resumed.through);
+  assert.equal(confirmed.denied, true);
   if (process.env.BLUETUSK_EDGE_BROWSER_RESULT) {
     await writeFile(process.env.BLUETUSK_EDGE_BROWSER_RESULT, JSON.stringify({
       formatVersion: 1, channel, engine: browserType.name(), platform: process.platform,
       userAgent, passed: true, productionQualified: false,
       checks: ["indexeddb-snapshot-rollback", "persistent-profile-restart", "lease-fence",
-        "atomic-acknowledgement", "ordered-batch-acknowledgement", "int64-precision", "epoch-isolation"]
+        "atomic-acknowledgement", "ordered-batch-acknowledgement", "confirmation-batch-rollback",
+        "confirmation-batch-browser-restart", "int64-precision", "epoch-isolation"]
     }, null, 2) + "\n", { flag: "wx" });
   }
-  process.stdout.write(`Real ${channel} IndexedDB: snapshot/rollback, browser restart, lease fencing, atomic and ordered batch acknowledgement, Int64 precision and epoch isolation passed.\n`);
+  process.stdout.write(`Real ${channel} IndexedDB: snapshot/rollback, browser restart, lease fencing, atomic ordered acknowledgement and confirmation batches, Int64 precision and epoch isolation passed.\n`);
 } finally {
   if (context) await context.close();
   await new Promise(resolve => server.close(resolve));
