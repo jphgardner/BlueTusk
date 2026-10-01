@@ -221,6 +221,30 @@ authenticity, full payload validation and release approval remain false. The
 candidate's final authenticity gate still requires implementation. The mapper's
 synthetic substitution tests do not certify any live GitHub run.
 
+For an individual GitHub artifact, supply both `-ArtifactId <actual-artifact-id>`
+and `-ArtifactName <exact-artifact-name>` to the same collector. It downloads the
+binary archive directly from the verified artifact API route, retains matching
+before/after artifact metadata, and checks the actual ZIP byte count and SHA-256
+against GitHub's digest. The artifact must belong to the selected repository,
+workflow run and source; its creation/update must fall within that attempt's
+lifecycle, and it must remain unexpired. A previous attempt's archive is rejected.
+
+The retained `capture.json` includes an individual `artifactReceipt`: archive
+identity, the exact decompressed size and SHA-256 of every file, and the separate
+collector commit. Unsafe paths, duplicate or case ambiguous paths, links, special
+files and file/directory collisions are rejected before any payload assembly.
+The collector does not extract the archive, follow members or unpack nested
+archives. Both download and decompressed inventory have bounded byte limits.
+Failed captures retain partial archives and raw API responses without producing
+`record.json`. Use a fresh capture directory for each individual artifact.
+
+`ArtifactDeliveryIdentityValidated=true` proves that individual delivery only.
+GitHub's artifact API does not provide a job/attempt identity: lifecycle agreement
+is retained explicitly and does not prove the producer's actual checkout.
+The complete artifact set, nested payloads, fixtures, execution authenticity and
+release eligibility still require independent verification. Their flags remain
+false. The artifact guard tests use synthetic inputs and cannot qualify a release.
+
 ```powershell
 ./eng/test-core-test-evidence.ps1
 ./eng/verify-core-test-evidence.ps1 -Kind Regression `
