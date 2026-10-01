@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { readFile, writeFile, readdir, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { chromium } from "playwright";
 import { publishCheckpoint } from "./checkpoint.mjs";
@@ -321,13 +321,17 @@ try {
     FinalLocalReceipts: final.receipts, FinalCheckpoint: Number(final.checkpoint),
     FinalOrderedSequence: Number(BigInt(final.nextSequence) - 1n), FinalHorizon: Number(final.horizon),
     MaximumPhysicalBytes: maximumPhysicalBytes, Enqueue: summary(enqueueTimes),
-    OfferOperation: summary(offerTimes), SyncPass: summary(syncTimes),
-    SampleState: summary(sampleStateTimes), SamplePhysical: summary(samplePhysicalTimes),
-    SampleCheckpoint: summary(sampleCheckpointTimes),
     HttpApply: summary([...applyBeforeRestart, ...verified.metrics.apply]), DurableAck: summary(ackTimes),
     Horizon: summary([...horizonBeforeRestart, ...verified.metrics.horizon]), FaultRecoverySeconds: recoveries,
     LostResponseRecovered: lostRecovered, ReclaimedRetryFenced: verified.fenced, ExactFinalCache: verified.exact
   };
+  // Phase timings are diagnostics outside the client report contract, which the verifier compares exactly.
+  const phases = {
+    OfferOperation: summary(offerTimes), SyncPass: summary(syncTimes),
+    SampleState: summary(sampleStateTimes), SamplePhysical: summary(samplePhysicalTimes),
+    SampleCheckpoint: summary(sampleCheckpointTimes)
+  };
+  await writeFile(join(dirname(reportPath), "browser-phases.json"), JSON.stringify(phases, null, 2));
   await writeFile(reportPath, JSON.stringify(result, null, 2));
   process.stdout.write(`IndexedDB browser client: ${acknowledged} durable ordered writes, ${scheduleSkipped} schedule skips, ${pendingKeySkipped} pending-key skips, horizon ${final.horizon}, profile peak ${maximumPhysicalBytes} bytes.\n`);
 } finally {

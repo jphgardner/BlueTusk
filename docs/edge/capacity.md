@@ -37,6 +37,13 @@ full campaign failed during its first run when the original in-place writer enco
 `EBUSY` on `browser.checkpoint`; its partial capture remains failed. The publication fix
 requires a new exact-source campaign with the same durations and budgets.
 
+The browser worker report must contain exactly the client report contract, because the verifier
+compares it with the combined report byte for byte. Browser phase timings are diagnostics and are
+written separately to `browser-phases.json`; the harness rejects unknown browser report members so
+contract drift fails during the short diagnostic. The frozen `7a35701` full campaign completed both
+1800-second raw runs but failed verification because the browser report carried those phase
+timings; it remains failed and does not establish local capacity.
+
 Use an installed Playwright browser channel and an otherwise idle reference host. A short
 diagnostic must precede interpreting the provisional budget:
 

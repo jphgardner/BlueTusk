@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using BlueTusk.Data;
 using BlueTusk.Edge.Http;
 using BlueTusk.Edge.Server;
@@ -18,7 +19,8 @@ internal static class Program
     private const int RecordsPerScope = 256;
     private const int PayloadBytes = 4096;
     private const int FeedTail = 128;
-    private static readonly JsonSerializerOptions ReportReadOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions ReportReadOptions = new()
+    { PropertyNameCaseInsensitive = true, UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
     private static readonly JsonSerializerOptions ReportWriteOptions = new() { WriteIndented = true };
 
     private static async Task<int> Main(string[] args)
