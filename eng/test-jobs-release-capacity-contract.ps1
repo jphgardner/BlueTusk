@@ -9,7 +9,7 @@ $combinedWorkflow = Get-Content (Join-Path $root '.github/workflows/ecosystem-pe
 $wrapper = Get-Content (Join-Path $PSScriptRoot 'verify-jobs-release-capacity.ps1') -Raw
 $verifier = Get-Content (Join-Path $PSScriptRoot 'verify-ecosystem-performance.ps1') -Raw
 $campaign = Get-Content (Join-Path $PSScriptRoot 'jobs-storage-campaign.ps1') -Raw
-$local = Get-Content (Join-Path $PSScriptRoot 'run-jobs-capacity-local.ps1') -Raw
+$local = Get-Content (Join-Path $PSScriptRoot 'run-ecosystem-capacity-local.ps1') -Raw
 $budget = Get-Content (Join-Path $PSScriptRoot 'jobs-release-capacity-budgets.json') -Raw | ConvertFrom-Json
 
 function Require([bool] $Condition, [string] $Message)
@@ -47,7 +47,7 @@ Require ($local -match "-Mode Preflight" -and $local -match "-Mode Run" -and $lo
     $local -match 'bluetusk\.run-kind=local' -and $local -match '\[guid\]::NewGuid\(\)' -and
     $local -match 'GITHUB_RUN_ID\)\) \{ throw' -and
     $campaign -match 'FixtureRunKind' -and $verifier -match 'FixtureRunKind' -and
-    $verifier -match 'BLUETUSK_LOCAL_CAMPAIGN_ID') 'Local Jobs capacity must use a local campaign UUID and record its fixture owner kind.'
+    $verifier -match 'BLUETUSK_LOCAL_CAMPAIGN_ID') 'Local capacity gates must use a local campaign UUID and record the Jobs fixture owner kind.'
 Require ($budget.schemaVersion -eq 1 -and $budget.repetitions -eq 2 -and
     $budget.qualification -ceq 'manual-exact-candidate-jobs-capacity' -and
     $budget.jobsWorkflows.secondsPerProduct -ge 1800 -and

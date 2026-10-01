@@ -68,11 +68,13 @@ snapshot and a file-hash manifest in the
 limits, not claims about independent hosts or multi-day retention. No
 capacity pass is recorded by adding the workflow.
 
-On the local reference host, `eng/run-jobs-capacity-local.ps1` runs the same
-Preflight, Run and Verify modes from a clean exact-candidate checkout. It starts
-the same pinned fixture owned by a fresh local campaign UUID with
+On the local reference host, `eng/run-ecosystem-capacity-local.ps1` runs the
+same Preflight, Run and Verify modes from a clean exact-candidate checkout, for
+the Jobs gate (`-Product Jobs`, the default) or the combined Jobs, Workflows,
+Projections and Documents gate (`-Product All`). It starts the same pinned
+PostgreSQL 15 fixture owned by a fresh local campaign UUID with
 `bluetusk.run-kind=local`, never a GitHub run identity, and removes only that
-fixture. The environment records `FixtureRunKind`; the verifier accepts a
+fixture. The Jobs environment records `FixtureRunKind`; the verifier accepts a
 numeric workflow run or a local UUID and rejects a fixture owned by another run
 or campaign. A local pass establishes local capacity only and is not a
 workflow artifact.
