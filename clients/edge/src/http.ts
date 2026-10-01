@@ -172,11 +172,19 @@ export async function synchronizeEdge(store: IndexedDbEdgeStore, remote: EdgeHtt
 export async function flushOrderedReceipts(store: IndexedDbEdgeStore, remote: EdgeHttpRemoteTransport, scope: EdgeScope,
   maximum = 32, signal?: AbortSignal): Promise<void> {
   if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > 1000) throw new RangeError("Ordered receipt flush limit exceeded.");
-  for (let i = 0; i < maximum; i++) {
-    signal?.throwIfAborted(); const mutation = await store.nextUnconfirmedOrderedReceipt(scope);
-    if (!mutation) break;
-    await remote.finalizeMutationReceipt(mutation, signal);
-    await store.markOrderedReceiptConfirmed(mutation);
+  signal?.throwIfAborted();
+  const pending = await store.nextUnconfirmedOrderedReceiptBatch(scope, maximum);
+  const confirmed: EdgeMutation[] = [];
+  try {
+    for (const mutation of pending) {
+      signal?.throwIfAborted();
+      await remote.finalizeMutationReceipt(mutation, signal);
+      confirmed.push(mutation);
+    }
+  } finally {
+    // A remote failure or cancellation cannot discard the successful prefix.
+    // A failed local commit leaves the original durable outbox replayable.
+    if (confirmed.length) await store.markOrderedReceiptConfirmedBatch(confirmed);
   }
   const through = await store.confirmedOrderedHorizon(scope, maximum);
   if (through !== null) {

@@ -19,6 +19,13 @@ async function fixture(action, limits = {}) {
   try { await action(store, options, delta => now += delta) }
   finally { store.close(); await req(indexedDB.deleteDatabase(databaseName)) }
 }
+async function acknowledgedOrdered(store, names, current = scope) {
+  const writes = [];
+  for (const documentId of names) writes.push(await store.enqueueOrdered({ scope: current, documentId, expectedRevision: "0", kind: "upsert", payload: "{}" }));
+  const leases = await store.claimOrderedBatch(current, writes.length);
+  await store.acknowledgeBatch(leases.map(lease => ({ lease, outcome: { kind: "applied", record: record(lease.mutation.documentId, "1", "server") } })));
+  return writes;
+}
 
 test("staged snapshots are invisible, resume after reopen, and atomically replace the scope", async () => {
   await fixture(async (store, options) => {
@@ -213,6 +220,100 @@ test("ordered horizon reclaims IndexedDB receipt capacity without reusing a sequ
     await store.acknowledge(second, { kind: "applied", record: record("second", "1", "server") });
     assert.equal(parseOrderedMutationId(second.mutation.id).sequence, "2");
   }, { maxReceipts: 1 });
+});
+
+test("ordered confirmation batches are bounded, ordered and isolated by scope", async () => {
+  await fixture(async store => {
+    await ready(store);
+    const writes = await acknowledgedOrdered(store, ["first", "second", "third"]);
+    const other = { ...scope, tenant: "other" }; await ready(store, other);
+    const foreign = await acknowledgedOrdered(store, ["foreign"], other);
+    assert.deepEqual((await store.nextUnconfirmedOrderedReceiptBatch(scope, 2)).map(row => row.id), writes.slice(0, 2).map(row => row.id));
+    assert.deepEqual((await store.nextUnconfirmedOrderedReceiptBatch(other, 2)).map(row => row.id), foreign.map(row => row.id));
+    for (const limit of [0, -1, 1.5, 1001]) await assert.rejects(store.nextUnconfirmedOrderedReceiptBatch(scope, limit), TypeError);
+    await assert.rejects(store.markOrderedReceiptConfirmedBatch([]), TypeError);
+    await assert.rejects(store.markOrderedReceiptConfirmedBatch(Array(1001).fill(writes[0])), TypeError);
+    await assert.rejects(store.markOrderedReceiptConfirmedBatch([writes[0], writes[0]]), EdgeIdentityError);
+    await assert.rejects(store.markOrderedReceiptConfirmedBatch([writes[0], foreign[0]]), EdgeIdentityError);
+    assert.equal(await store.confirmedOrderedHorizon(scope), null);
+    assert.equal(await store.confirmedOrderedHorizon(other), null);
+  });
+});
+
+test("a bad confirmation suffix rolls back its entire IndexedDB prefix", async () => {
+  await fixture(async store => {
+    await ready(store);
+    const writes = await acknowledgedOrdered(store, ["first", "second"]);
+    await assert.rejects(store.markOrderedReceiptConfirmedBatch([writes[0], { ...writes[1], documentId: "substitution" }]), EdgeIdentityError);
+    assert.deepEqual(await store.nextUnconfirmedOrderedReceiptBatch(scope, 2), writes);
+    assert.equal(await store.confirmedOrderedHorizon(scope), null);
+    await store.markOrderedReceiptConfirmedBatch(writes);
+    await store.markOrderedReceiptConfirmedBatch(writes);
+    assert.deepEqual(await store.nextUnconfirmedOrderedReceiptBatch(scope, 2), []);
+    assert.equal(await store.confirmedOrderedHorizon(scope), writes[1].id);
+  });
+});
+
+test("confirmed batches survive reopen and reclaim receipts without reusing ordered identities", async () => {
+  await fixture(async (store, options) => {
+    await ready(store);
+    const writes = await acknowledgedOrdered(store, ["first", "second", "third"]);
+    await store.markOrderedReceiptConfirmedBatch(writes);
+    store.close(); const reopened = await IndexedDbEdgeStore.open(options);
+    try {
+      assert.deepEqual(await reopened.nextUnconfirmedOrderedReceiptBatch(scope, 3), []);
+      assert.equal(await reopened.confirmedOrderedHorizon(scope), writes[2].id);
+      await reopened.markOrderedHorizon(scope, writes[2].id);
+      assert.equal(await reopened.confirmedOrderedHorizon(scope), null);
+      const next = await reopened.enqueueOrdered({ scope, documentId: "fourth", expectedRevision: "0", kind: "upsert", payload: "{}" });
+      assert.equal(parseOrderedMutationId(next.id).sequence, "4");
+    } finally { reopened.close() }
+  });
+});
+
+test("a lost confirmation response retains its committed prefix and replays the original suffix after reopen", async () => {
+  await fixture(async (store, options) => {
+    await ready(store);
+    const writes = await acknowledgedOrdered(store, ["first", "second", "third"]);
+    const attempts = []; let horizons = 0;
+    const remote = new EdgeHttpRemoteTransport({ endpoint: "https://example.test/edge", bearerToken: () => "token", fetch: async (url, init) => {
+      if (url.includes("/confirm")) {
+        attempts.push(JSON.parse(init.body).id);
+        if (attempts.length === 2) throw new Error("Lost second confirmation response.");
+        return new Response(null, { status: 204 });
+      }
+      if (url.includes("/horizon")) { horizons++; return new Response(null, { status: 204 }) }
+      throw new Error("Unexpected request.");
+    } });
+    await assert.rejects(flushOrderedReceipts(store, remote, scope, 3), /Lost second confirmation response/);
+    assert.deepEqual((await store.nextUnconfirmedOrderedReceiptBatch(scope, 3)).map(row => row.id), writes.slice(1).map(row => row.id));
+    assert.equal(await store.confirmedOrderedHorizon(scope), writes[0].id);
+    assert.equal(horizons, 0);
+    store.close(); const reopened = await IndexedDbEdgeStore.open(options);
+    try {
+      await flushOrderedReceipts(reopened, remote, scope, 3);
+      assert.deepEqual(attempts, [writes[0].id, writes[1].id, writes[1].id, writes[2].id]);
+      assert.equal(horizons, 1);
+      assert.deepEqual(await reopened.nextUnconfirmedOrderedReceiptBatch(scope, 3), []);
+      assert.equal(await reopened.confirmedOrderedHorizon(scope), null);
+    } finally { reopened.close() }
+  });
+});
+
+test("cancellation between remote confirmations commits only the completed prefix", async () => {
+  await fixture(async store => {
+    await ready(store);
+    const writes = await acknowledgedOrdered(store, ["first", "second"]);
+    const stop = new AbortController(); const attempts = [];
+    const remote = {
+      async finalizeMutationReceipt(write) { attempts.push(write.id); stop.abort(new Error("Stop confirmation pass.")) },
+      async advanceOrderedReceiptHorizon() { throw new Error("Cancelled pass cannot advance the horizon.") }
+    };
+    await assert.rejects(flushOrderedReceipts(store, remote, scope, 2, stop.signal), /Stop confirmation pass/);
+    assert.deepEqual(attempts, [writes[0].id]);
+    assert.equal(await store.confirmedOrderedHorizon(scope), writes[0].id);
+    assert.deepEqual((await store.nextUnconfirmedOrderedReceiptBatch(scope, 2)).map(row => row.id), [writes[1].id]);
+  });
 });
 
 test("checkpoint and revision conflicts roll back whole batches and tombstones fence resurrection", async () => {

@@ -80,7 +80,9 @@ if ($StorageOnly) { Require ($null -eq $binaries.HostDllSha256) 'Storage-only ev
 else { Require ((Hash (Join-Path $evidence 'binary-snapshot/BlueTusk.Edge.BrowserHttpSmoke.dll')) -ceq $binaries.HostDllSha256) 'HTTP host snapshot differs.' }
 $expectedEngine = if ($Browser -eq 'msedge') { 'chromium' } else { $Browser }
 $expectedChecks = @{
-    storage = @('indexeddb-snapshot-rollback','persistent-profile-restart','lease-fence','atomic-acknowledgement','ordered-batch-acknowledgement','int64-precision','epoch-isolation')
+    storage = @('indexeddb-snapshot-rollback','persistent-profile-restart','lease-fence','atomic-acknowledgement',
+        'ordered-batch-acknowledgement','confirmation-batch-rollback','confirmation-batch-browser-restart',
+        'int64-precision','epoch-isolation')
     http = @('committed-response-loss','offline-read','persistent-profile-restart','idempotent-business-effect',
         'authentication-denial','tenant-isolation','conflict-resolution','deletion-and-feed')
 }
