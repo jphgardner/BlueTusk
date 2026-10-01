@@ -508,6 +508,53 @@ public sealed class SqliteEdgeStoreTests
     });
 
     [Fact]
+    public Task Synchronization_session_allows_independent_writers_and_releases_durable_files() => WithReadyStoreAsync(async (store, options) =>
+    {
+        await using (await store.OpenSynchronizationSessionAsync())
+        {
+            Assert.True(File.Exists(options.DatabasePath + "-wal"));
+            var independent = new SqliteEdgeStore(options);
+            await independent.EnqueueAsync(Mutation("1", 0, "independent writer"));
+            Assert.NotNull((await store.GetAsync(Scope, "1"))!.PendingMutationId);
+            Assert.True(File.Exists(options.DatabasePath + "-wal"));
+        }
+        Assert.False(File.Exists(options.DatabasePath + "-wal"));
+        using (File.Open(options.DatabasePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { }
+        var reopened = new SqliteEdgeStore(options);
+        Assert.NotNull((await reopened.GetAsync(Scope, "1"))!.PendingMutationId);
+        Assert.Equal("{\"value\":\"independent writer\"}", Json((await reopened.GetAsync(Scope, "1"))!.Payload));
+    });
+
+    [Theory]
+    [InlineData("success")]
+    [InlineData("disconnect")]
+    [InlineData("cancellation")]
+    public Task Coordinator_releases_synchronization_session_on_every_exit(string exit) => WithReadyStoreAsync(async (store, options) =>
+    {
+        await store.EnqueueAsync(Mutation("1", 0, "offline"));
+        using var cancellation = new CancellationTokenSource();
+        var remote = new SessionObservingTransport(options.DatabasePath, exit, cancellation);
+        var coordinator = new EdgeSynchronizationCoordinator(store, remote);
+        if (exit == "disconnect")
+        {
+            _ = await Assert.ThrowsAsync<IOException>(() => coordinator.SynchronizeAsync(Scope, cancellationToken: cancellation.Token).AsTask());
+        }
+        else if (exit == "cancellation")
+        {
+            _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => coordinator.SynchronizeAsync(Scope, cancellationToken: cancellation.Token).AsTask());
+        }
+        else { await coordinator.SynchronizeAsync(Scope, cancellationToken: cancellation.Token); }
+        Assert.True(remote.SawOpenSession);
+        Assert.False(File.Exists(options.DatabasePath + "-wal"));
+        using (File.Open(options.DatabasePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { }
+        var reopened = new SqliteEdgeStore(options);
+        var document = await reopened.GetAsync(Scope, "1");
+        Assert.NotNull(document);
+        Assert.Equal(exit == "success", document.PendingMutationId is null);
+        Assert.Equal(new EdgeCheckpoint(0, true), await reopened.GetCheckpointAsync(Scope));
+    });
+
+    [Fact]
     public Task Canceled_write_does_not_change_checkpoint_or_cache() => WithReadyStoreAsync(async (store, unusedOptions) =>
     {
         using var cancellation = new CancellationTokenSource();
@@ -604,6 +651,22 @@ public sealed class SqliteEdgeStoreTests
         { if (++Confirmations == FailConfirmationAt) { throw new IOException("Injected confirmation failure."); } return ValueTask.CompletedTask; }
         public ValueTask AdvanceOrderedReceiptHorizonAsync(EdgeScope scope, Guid throughMutationId, int maxReceipts = 1000, CancellationToken cancellationToken = default)
         { if (++HorizonAttempts == 1 && LoseFirstHorizon) { throw new IOException("Injected lost horizon response."); } return ValueTask.CompletedTask; }
+    }
+
+    private sealed class SessionObservingTransport(string databasePath, string exit, CancellationTokenSource cancellation) : IEdgeRemoteTransport
+    {
+        public bool SawOpenSession { get; private set; }
+        public ValueTask<EdgeSnapshot> BeginSnapshotAsync(EdgeScope scope, CancellationToken cancellationToken = default) => throw new InvalidOperationException("The local snapshot is ready.");
+        public IAsyncEnumerable<IReadOnlyList<EdgeRecord>> ReadSnapshotAsync(EdgeScope scope, EdgeSnapshot snapshot, CancellationToken cancellationToken = default) => throw new InvalidOperationException("The local snapshot is ready.");
+        public ValueTask<EdgeChangeBatch?> ReadChangesAsync(EdgeScope scope, long afterPosition, int maxRecords, CancellationToken cancellationToken = default) => ValueTask.FromResult<EdgeChangeBatch?>(null);
+        public ValueTask<EdgeMutationOutcome> ApplyMutationAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
+        {
+            SawOpenSession = File.Exists(databasePath + "-wal");
+            Assert.True(SawOpenSession);
+            if (exit == "disconnect") { throw new IOException("Injected remote disconnect during an open session."); }
+            if (exit == "cancellation") { cancellation.Cancel(); cancellationToken.ThrowIfCancellationRequested(); }
+            return ValueTask.FromResult(new EdgeMutationOutcome(EdgeMutationOutcomeKind.Applied, Record(mutation.DocumentId, 1, "server")));
+        }
     }
 
     private sealed class SuccessfulTransport : IEdgeRemoteTransport

@@ -129,6 +129,12 @@ public interface IEdgeLocalStore
     ValueTask ApplyChangesAsync(EdgeScope scope, EdgeChangeBatch batch, CancellationToken cancellationToken = default);
 }
 
+/// <summary>Optional storage resource lifetime for one synchronization pass. A session must not hold a transaction or reader across remote requests.</summary>
+public interface IEdgeSynchronizationSessionLocalStore : IEdgeLocalStore
+{
+    ValueTask<IAsyncDisposable> OpenSynchronizationSessionAsync(CancellationToken cancellationToken = default);
+}
+
 /// <summary>Optional atomic acknowledgement and next-claim transition for durable local stores.</summary>
 public interface IEdgeChainedLocalStore : IEdgeLocalStore
 {
@@ -191,6 +197,9 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
         ArgumentOutOfRangeException.ThrowIfGreaterThan(maxPushes, 1000);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxChangeBatches, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(maxChangeBatches, 1000);
+        await using var session = store is IEdgeSynchronizationSessionLocalStore sessionStore
+            ? await sessionStore.OpenSynchronizationSessionAsync(cancellationToken).ConfigureAwait(false)
+            : null;
         var checkpoint = await store.GetCheckpointAsync(scope, cancellationToken).ConfigureAwait(false);
         if (!checkpoint.SnapshotReady)
         {
