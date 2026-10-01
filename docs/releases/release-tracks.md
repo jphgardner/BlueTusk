@@ -190,6 +190,37 @@ and the recorded stable database identities. The aggregated
 trees when assembling a candidate. These readers qualify test payloads only;
 they do not certify live GitHub identity, performance, endurance or publication.
 
+`eng/collect-core-github-run.ps1` collects a canonical eight-field workflow
+record from the live GitHub API, rather than accepting a claimed run identity.
+It requires a clean committed collector checkout and an exact candidate commit
+available locally. The requested attempt must be a completed successful manual
+run in the expected repository, with the matching head, workflow ID and path.
+All pages of that attempt's jobs must agree with its source and execution IDs,
+be complete, and contain only successful or conditional skipped jobs. At least
+one job must have succeeded. This does not permit skipped applicable test cases;
+the raw compatibility and regression readers remain unchanged.
+
+```powershell
+./eng/collect-core-github-run.ps1 -WorkflowFile security.yml `
+    -RunId <actual-run-id> -RunAttempt <actual-attempt> `
+    -ExpectedCommit <full-40-character-sha> `
+    -OutputDirectory artifacts/my-core-security-metadata
+```
+
+The collector retains two matching API snapshots, raw stderr, file hashes and
+its separate tool commit. `record.json` is created only after both snapshots
+pass; rejected captures retain their failure and cannot supply that canonical
+record. Copy the record into the appropriate schema 4 workflow or schema 5
+GitHub producer entry, preserving the complete metadata capture separately.
+`completedUtc` is the latest actual job completion, not a supplied timestamp.
+
+`LiveRunMetadataValidated=true` proves this metadata collection stage only.
+The workflow head is not proof of an actual checkout when a workflow overrides
+its source. Checkout identity, artifact identity, fixture identity, execution
+authenticity, full payload validation and release approval remain false. The
+candidate's final authenticity gate still requires implementation. The mapper's
+synthetic substitution tests do not certify any live GitHub run.
+
 ```powershell
 ./eng/test-core-test-evidence.ps1
 ./eng/verify-core-test-evidence.ps1 -Kind Regression `
