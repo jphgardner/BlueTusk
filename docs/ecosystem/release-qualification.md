@@ -68,6 +68,15 @@ snapshot and a file-hash manifest in the
 limits, not claims about independent hosts or multi-day retention. No
 capacity pass is recorded by adding the workflow.
 
+On the local reference host, `eng/run-jobs-capacity-local.ps1` runs the same
+Preflight, Run and Verify modes from a clean exact-candidate checkout. It starts
+the same pinned fixture owned by a fresh local campaign UUID with
+`bluetusk.run-kind=local`, never a GitHub run identity, and removes only that
+fixture. The environment records `FixtureRunKind`; the verifier accepts a
+numeric workflow run or a local UUID and rejects a fixture owned by another run
+or campaign. A local pass establishes local capacity only and is not a
+workflow artifact.
+
 The Jobs failover workflow repeats three fresh PostgreSQL 18 synchronous
 primary/standby promotions. Its verifier requires the exact candidate source,
 unchanged test binaries, a passing unskipped test for each pair, 66 preserved
