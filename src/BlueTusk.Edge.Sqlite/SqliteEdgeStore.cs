@@ -6,7 +6,7 @@ using Microsoft.Data.Sqlite;
 namespace BlueTusk.Edge.Sqlite;
 
 /// <summary>File-backed SQLite cache and durable write queue. Every state transition uses one immediate transaction.</summary>
-public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore
+public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore, IEdgeSynchronizationSessionLocalStore
 {
     public const int CurrentSchemaVersion = 3;
     private readonly string _connectionString;
@@ -34,6 +34,10 @@ public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore
 
     public SqliteEdgeOptions Options { get; }
     public string DatabasePath { get; }
+
+    /// <summary>Keeps one idle connection open until the pass ends, avoiding last-connection WAL cleanup between local operations. Each operation retains its own durable transaction.</summary>
+    async ValueTask<IAsyncDisposable> IEdgeSynchronizationSessionLocalStore.OpenSynchronizationSessionAsync(CancellationToken cancellationToken) =>
+        await OpenAsync(cancellationToken).ConfigureAwait(false);
 
     public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
     {

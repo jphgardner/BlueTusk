@@ -16,8 +16,11 @@ internal sealed class EdgeLocalPhaseTimings
 }
 
 internal sealed class TimedEdgeLocalStore(SqliteEdgeStore inner, EdgeLocalPhaseTimings timings,
-    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedBatchLocalStore, IEdgeOrderedReceiptBatchLocalStore
+    Func<EdgeMutation, long, CancellationToken, ValueTask> onDurableAcknowledgement) : IEdgeOrderedBatchLocalStore, IEdgeOrderedReceiptBatchLocalStore, IEdgeSynchronizationSessionLocalStore
 {
+    public ValueTask<IAsyncDisposable> OpenSynchronizationSessionAsync(CancellationToken cancellationToken = default) =>
+        ((IEdgeSynchronizationSessionLocalStore)inner).OpenSynchronizationSessionAsync(cancellationToken);
+
     public ValueTask ActivateScopeAsync(EdgeScope scope, EdgeEpochChangePolicy policy = EdgeEpochChangePolicy.RejectIfPending,
         CancellationToken cancellationToken = default) => inner.ActivateScopeAsync(scope, policy, cancellationToken);
 
