@@ -1090,7 +1090,39 @@ jobs:
         run: dotnet restore BlueTusk.slnx
 
       - name: Install Kerberos client
-        run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes krb5-user
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          . /etc/os-release
+          architecture="$(dpkg --print-architecture)"
+          if [[ "$ID" != ubuntu || "$architecture" != amd64 || ! "$VERSION_CODENAME" =~ ^[a-z]+$ ]]; then
+            echo 'The Kerberos fixture requires a supported Ubuntu amd64 runner.' >&2
+            exit 1
+          fi
+          test -r /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          # The runner's mirror selector stalled on the Azure HTTP mirror after
+          # fetching signed release metadata from the official HTTPS archive.
+          # Scope direct, signed Ubuntu sources to these two APT invocations;
+          # keep the runner's system sources and signature/TLS checks intact.
+          kerberos_sources="$(mktemp --tmpdir="$RUNNER_TEMP" bluetusk-kerberos-XXXXXX.list)"
+          trap 'rm -f -- "$kerberos_sources"' EXIT
+          for suite in "$VERSION_CODENAME" "$VERSION_CODENAME-updates"; do
+            printf 'deb [arch=%s signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ %s main restricted universe multiverse\n' \
+              "$architecture" "$suite" >> "$kerberos_sources"
+          done
+          printf 'deb [arch=%s signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu/ %s-security main restricted universe multiverse\n' \
+            "$architecture" "$VERSION_CODENAME" >> "$kerberos_sources"
+          apt_options=(
+            -o "Dir::Etc::sourcelist=$kerberos_sources"
+            -o 'Dir::Etc::sourceparts=-'
+            -o 'Acquire::Retries=2'
+            -o 'Acquire::http::Timeout=30'
+            -o 'Acquire::https::Timeout=30'
+            -o 'APT::Update::Error-Mode=any'
+          )
+          sudo apt-get "${apt_options[@]}" update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install --yes krb5-user
 
       - name: Start PostgreSQL and MIT Kerberos KDC
         run: docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait gss18
