@@ -7,10 +7,10 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
-if ($contract.schemaVersion -ne 2 -or $contract.release -ne '1.2.0' -or
+if ($contract.schemaVersion -ne 2 -or $contract.release -ne '1.1.0' -or
     $contract.releaseTracksFile -cne 'eng/release-tracks.json')
 {
-    throw 'The performance-leadership contract must be schema 2 for release 1.2.0 and bind the family release tracks.'
+    throw 'The performance-leadership contract must be schema 2 for release 1.1.0 and bind the family release tracks.'
 }
 & (Join-Path $PSScriptRoot 'verify-release-track.ps1')
 

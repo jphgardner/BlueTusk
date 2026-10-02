@@ -144,7 +144,7 @@ public sealed class KubernetesManagedDeploymentOperatorTests
     private static KubernetesManagedDeploymentResource Resource(
         long generation,
         IReadOnlyList<string>? finalizers = null,
-        string version = "1.2.0",
+        string version = "1.1.0",
         bool deleteProtection = false,
         bool deleting = false) =>
         new(
@@ -179,7 +179,7 @@ public sealed class KubernetesManagedDeploymentOperatorTests
             "tenantId": "tenant-a", "provider": "kubernetes", "region": "uk-south",
             "paused": false, "deleteProtection": true, "labels": { "environment": "production" },
             "workloads": [{
-              "kind": "Streams", "version": "1.2.0",
+              "kind": "Streams", "version": "1.1.0",
               "resources": { "replicas": 2, "cpuMillicoresPerReplica": 500, "memoryBytesPerReplica": 536870912, "storageBytes": 10737418240 },
               "secretReferences": [{ "store": "kubernetes", "name": "orders-database" }],
               "settings": { "mode": "durable" }

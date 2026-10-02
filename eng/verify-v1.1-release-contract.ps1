@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string] $ContractPath = (Join-Path $PSScriptRoot 'v1.2-release-contract.json')
+    [string] $ContractPath = (Join-Path $PSScriptRoot 'v1.1-release-contract.json')
 )
 
 Set-StrictMode -Version Latest
@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
 $families = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph')
-$rcVersion = '1.2.0-rc.1'
+$rcVersion = '1.1.0-rc.2'
 if ($contract.releaseTracksFile -cne 'eng/release-tracks.json')
 {
     throw 'The 1.2 release contract must use the canonical family release tracks.'
@@ -17,7 +17,7 @@ if ($contract.releaseTracksFile -cne 'eng/release-tracks.json')
 & (Join-Path $PSScriptRoot 'verify-release-track.ps1')
 
 if ([int]$contract.schemaVersion -ne 1 -or
-    [string]$contract.releaseVersion -ne '1.2.0' -or
+    [string]$contract.releaseVersion -ne '1.1.0' -or
     [string]$contract.baselineCommit -notmatch '^[0-9a-f]{40}$')
 {
     throw 'The 1.2 release contract has an invalid schema, version, or baseline commit.'

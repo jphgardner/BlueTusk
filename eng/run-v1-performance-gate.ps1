@@ -26,7 +26,7 @@ $repositoryRoot = (Resolve-Path -LiteralPath (Split-Path $PSScriptRoot -Parent))
 $previewFixtures = @('SqlPgqBenchmarks', 'ContinuousGraphBenchmarks')
 if ($ReleaseTrack -eq 'Core')
 {
-    $coreContract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'v1.2-candidate-readiness.json') -Raw | ConvertFrom-Json
+    $coreContract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'v1.1-candidate-readiness.json') -Raw | ConvertFrom-Json
     if ($PostgreSqlImage -cne [string]$coreContract.endurancePostgreSqlImage)
     { throw 'Core performance capture requires the configured stable PostgreSQL image.' }
 }

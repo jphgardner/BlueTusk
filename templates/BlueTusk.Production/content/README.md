@@ -21,7 +21,7 @@ It is deliberately more than a hello-world sample.
 
 ```console
 docker compose up -d
-dotnet tool install --global BlueTusk.Tool --version 1.2.0
+dotnet tool install --global BlueTusk.Tool --version 1.1.0
 bluetusk doctor --connection "Host=localhost;Database=bluetusk_orders;Username=bluetusk;Password=local-development-only" --require-streams
 dotnet run --project applications/src/OrderOperations/BlueTusk.OrderOperations.Api -- --migrate
 ```

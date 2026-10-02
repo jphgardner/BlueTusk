@@ -87,7 +87,7 @@ function Resolve-CoreEvidenceFile
 
 function Get-CoreCandidateContract
 {
-    param([string] $ConfigurationPath = (Join-Path $PSScriptRoot 'v1.2-candidate-readiness.json'))
+    param([string] $ConfigurationPath = (Join-Path $PSScriptRoot 'v1.1-candidate-readiness.json'))
     $contract = Read-CoreEvidenceJson $ConfigurationPath
     $expectedRoles = @('websiteMetrics', 'packageManifest', 'packageProvenance',
         'performanceManifest', 'regressionManifest', 'compatibilityManifest',
@@ -97,7 +97,7 @@ function Get-CoreCandidateContract
         'streams-release-endurance.yml', 'sync-release-endurance.yml', 'live-control-plane-release-endurance.yml')
     $localProducers = @($workflows | Select-Object -Skip 3)
     if ($contract.schemaVersion -ne 1 -or $contract.candidateEvidenceSchemaVersion -ne 4 -or
-        $contract.releaseVersion -isnot [string] -or $contract.releaseVersion -cne '1.2.0' -or
+        $contract.releaseVersion -isnot [string] -or $contract.releaseVersion -cne '1.1.0' -or
         $contract.scope -isnot [string] -or $contract.scope -cne 'Core' -or
         $contract.publicationEnabled -isnot [bool] -or $contract.publicationEnabled -ne $false -or
         @($contract.requiredArtifactRoles).Count -ne $expectedRoles.Count -or
@@ -146,7 +146,7 @@ function Get-CoreCandidateBindingReport
         [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
         [Parameter(Mandatory)][DateTimeOffset] $CandidateCommitUtc,
         [ValidatePattern('^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')][string] $ExpectedRepository = 'jphgardner/BlueTusk',
-        [string] $ConfigurationPath = (Join-Path $PSScriptRoot 'v1.2-candidate-readiness.json'))
+        [string] $ConfigurationPath = (Join-Path $PSScriptRoot 'v1.1-candidate-readiness.json'))
     $EvidenceRoot = Split-Path (Resolve-Path -LiteralPath $EvidencePath).Path -Parent
     $EvidencePath = Resolve-CoreEvidenceFile $EvidenceRoot ([IO.Path]::GetFileName($EvidencePath))
     $envelopeHash = (Get-FileHash -LiteralPath $EvidencePath -Algorithm SHA256).Hash
@@ -158,7 +158,7 @@ function Get-CoreCandidateBindingReport
         'releaseVersion', $executionProperty, 'artifacts', 'approvals') 'Core candidate envelope'
     if (($Evidence.schemaVersion -isnot [int] -and $Evidence.schemaVersion -isnot [long]) -or
         $Evidence.schemaVersion -notin @(4, 5) -or $Evidence.scope -isnot [string] -or $Evidence.scope -cne 'Core' -or
-        $Evidence.releaseVersion -isnot [string] -or $Evidence.releaseVersion -cne '1.2.0' -or
+        $Evidence.releaseVersion -isnot [string] -or $Evidence.releaseVersion -cne '1.1.0' -or
         $Evidence.candidateCommit -isnot [string] -or $Evidence.candidateCommit -cne $ExpectedCommit)
     { throw 'Core candidate envelope schema, scope, version or exact commit is invalid.' }
     if ($Evidence.PSObject.Properties[$executionProperty].Value -isnot [array] -or
@@ -245,9 +245,9 @@ function Get-CoreCandidateBindingReport
         $payloads[$role] = $payload
     }
     if ($payloads.packageManifest.releaseTrack -isnot [string] -or $payloads.packageManifest.releaseTrack -cne 'Core' -or
-        $payloads.packageManifest.releaseVersion -isnot [string] -or $payloads.packageManifest.releaseVersion -cne '1.2.0' -or
+        $payloads.packageManifest.releaseVersion -isnot [string] -or $payloads.packageManifest.releaseVersion -cne '1.1.0' -or
         $payloads.performanceManifest.scope -isnot [string] -or $payloads.performanceManifest.scope -cne 'Core' -or
-        $payloads.performanceManifest.release -isnot [string] -or $payloads.performanceManifest.release -cne '1.2.0')
+        $payloads.performanceManifest.release -isnot [string] -or $payloads.performanceManifest.release -cne '1.1.0')
     { throw 'Package or performance payload scope/version cannot substitute a preview or older release.' }
     $approvalContract = Read-CoreEvidenceJson (Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json')
     $ids = @($approvalContract.gates.id)
@@ -278,7 +278,7 @@ function Get-CoreCandidateBindingReport
     if ((Get-FileHash -LiteralPath $EvidencePath -Algorithm SHA256).Hash -cne $envelopeHash)
     { throw 'Candidate envelope changed during verification.' }
     return [pscustomobject]@{
-        Stage = 'CoreEvidenceBindings'; CandidateCommit = $ExpectedCommit; ReleaseVersion = '1.2.0'
+        Stage = 'CoreEvidenceBindings'; CandidateCommit = $ExpectedCommit; ReleaseVersion = '1.1.0'
         ProducerCount = $workflowReport.RunCount
         WorkflowCount = $(if ($localExecution) { $workflowReport.GitHubRunCount } else { $workflowReport.RunCount })
         ArtifactCount = $files.Count; ApprovalCount = $ids.Count

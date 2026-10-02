@@ -1,14 +1,14 @@
 [CmdletBinding()]
 param(
     [string] $RepositoryRoot = (Split-Path $PSScriptRoot -Parent),
-    [string] $ConfigurationPath = (Join-Path $PSScriptRoot 'v1.2-candidate-readiness.json')
+    [string] $ConfigurationPath = (Join-Path $PSScriptRoot 'v1.1-candidate-readiness.json')
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $contract = Get-Content -LiteralPath $ConfigurationPath -Raw | ConvertFrom-Json
 $core = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane')
 if ($contract.schemaVersion -ne 1 -or $contract.candidateEvidenceSchemaVersion -ne 4 -or
-    $contract.releaseVersion -cne '1.2.0' -or $contract.scope -cne 'Core' -or
+    $contract.releaseVersion -cne '1.1.0' -or $contract.scope -cne 'Core' -or
     $contract.status -cne 'aggregation-migration-in-progress' -or
     $contract.publicationEnabled -ne $false -or @($contract.coreFamilies).Count -ne 5 -or
     (Compare-Object $core @($contract.coreFamilies)))

@@ -106,13 +106,13 @@ if ($ReleaseTrack -eq 'Core')
     $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
     $requiredFamilies = @($tracks.stableFamilies)
     $signoff = $approvals['maintainer-signoff'].details
-    $versions = @('Provider 1.2.0', 'Streams 1.2.0', 'Sync 1.2.0', 'Live 1.2.0', 'Control Plane 1.2.0')
+    $versions = @('Provider 1.1.0', 'Streams 1.1.0', 'Sync 1.1.0', 'Live 1.1.0', 'Control Plane 1.1.0')
     if (@($signoff.versions).Count -ne 5 -or
         @(Compare-Object $versions @($signoff.versions) -CaseSensitive).Count -ne 0 -or
         @($signoff.publishedPrereleaseFamilies).Count -ne 5 -or
         @(Compare-Object $requiredFamilies @($signoff.publishedPrereleaseFamilies) -CaseSensitive).Count -ne 0)
     {
-        throw 'Core maintainer sign-off must identify exactly the five 1.2.0 stable versions and five core prerelease families.'
+        throw 'Core maintainer sign-off must identify exactly the five 1.1.0 stable versions and five core prerelease families.'
     }
 }
 $pilotFamilies = @(

@@ -13,7 +13,7 @@ spec:
     owner: commerce-platform
   workloads:
     - kind: Streams
-      version: 1.2.0
+      version: 1.1.0
       resources:
         replicas: 2
         cpuMillicoresPerReplica: 500
@@ -25,7 +25,7 @@ spec:
       settings:
         durability: relay
     - kind: Sync
-      version: 1.2.0
+      version: 1.1.0
       resources:
         replicas: 2
         cpuMillicoresPerReplica: 500

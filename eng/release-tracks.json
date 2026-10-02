@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "releaseVersion": "1.2.0",
+  "releaseVersion": "1.1.0",
   "stableFamilies": ["Provider", "Streams", "Sync", "Live", "ControlPlane"],
   "previewFamilies": ["ContinuousGraph"],
   "stablePostgreSqlMajors": [15, 16, 17, 18],

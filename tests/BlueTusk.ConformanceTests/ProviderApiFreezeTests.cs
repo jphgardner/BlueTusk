@@ -70,7 +70,7 @@ public sealed class ProviderApiFreezeTests
             }
 
             var addition = Assert.Contains(unshippedRelative, reviewedAdditions);
-            Assert.Equal("1.2.0", addition.Release);
+            Assert.Equal("1.1.0", addition.Release);
             var unshippedDigest = Convert.ToHexString(
                     SHA256.HashData(Encoding.UTF8.GetBytes(unshippedContents)))
                 .ToLowerInvariant();

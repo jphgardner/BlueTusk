@@ -14,7 +14,7 @@ param(
 
     [string] $CandidateSha,
 
-    [string] $CandidateVersion = '1.2.0-rc.1',
+    [string] $CandidateVersion = '1.1.0-rc.2',
 
     [string] $Output = 'artifacts/kubernetes-endurance-evidence',
 
@@ -66,7 +66,7 @@ function Assert-Candidate
     }
     if ($CandidateVersion -notmatch '^1\.2\.0-rc\.[1-9][0-9]*$')
     {
-        throw 'Start actions require an exact 1.2.0 release-candidate version.'
+        throw 'Start actions require an exact 1.1.0 release-candidate version.'
     }
 
     & git -C $repositoryRoot fetch origin main --no-tags
@@ -89,7 +89,7 @@ function Assert-PreviewCandidate
     }
     if ($CandidateVersion -notmatch '^1\.2\.0-rc\.[1-9][0-9]*$')
     {
-        throw 'Preview start requires an exact 1.2.0 release-candidate version.'
+        throw 'Preview start requires an exact 1.1.0 release-candidate version.'
     }
 
     & git -C $repositoryRoot fetch origin $CandidateSha --no-tags --depth=1

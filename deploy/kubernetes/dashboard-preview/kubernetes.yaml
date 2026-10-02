@@ -109,7 +109,7 @@ metadata:
     app.kubernetes.io/name: bluetusk-dashboard-preview
     app.kubernetes.io/part-of: bluetusk
     app.kubernetes.io/component: dashboard
-    app.kubernetes.io/version: 1.2.0-rc.1
+    app.kubernetes.io/version: 1.1.0-rc.2
 spec:
   replicas: 2
   minReadySeconds: 5
@@ -128,7 +128,7 @@ spec:
         app.kubernetes.io/name: bluetusk-dashboard-preview
         app.kubernetes.io/part-of: bluetusk
         app.kubernetes.io/component: dashboard
-        app.kubernetes.io/version: 1.2.0-rc.1
+        app.kubernetes.io/version: 1.1.0-rc.2
     spec:
       serviceAccountName: bluetusk-dashboard-preview
       automountServiceAccountToken: false
@@ -216,7 +216,7 @@ metadata:
     app.kubernetes.io/name: bluetusk-dashboard-topology-collector
     app.kubernetes.io/part-of: bluetusk
     app.kubernetes.io/component: topology-collector
-    app.kubernetes.io/version: 1.2.0-rc.1
+    app.kubernetes.io/version: 1.1.0-rc.2
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -231,7 +231,7 @@ spec:
         app.kubernetes.io/name: bluetusk-dashboard-topology-collector
         app.kubernetes.io/part-of: bluetusk
         app.kubernetes.io/component: topology-collector
-        app.kubernetes.io/version: 1.2.0-rc.1
+        app.kubernetes.io/version: 1.1.0-rc.2
     spec:
       serviceAccountName: bluetusk-dashboard-topology-collector
       automountServiceAccountToken: true

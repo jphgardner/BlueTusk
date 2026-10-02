@@ -20,7 +20,7 @@ function Write-CoreFixture([string] $Name, [scriptblock] $Mutate)
         if ($record.gateId -eq 'independent-release-review') { $record.details.packageFamiliesReviewed = 5 }
         if ($record.gateId -eq 'maintainer-signoff')
         {
-            $record.details.versions = @('Provider 1.2.0', 'Streams 1.2.0', 'Sync 1.2.0', 'Live 1.2.0', 'Control Plane 1.2.0')
+            $record.details.versions = @('Provider 1.1.0', 'Streams 1.1.0', 'Sync 1.1.0', 'Live 1.1.0', 'Control Plane 1.1.0')
             $record.details.publishedPrereleaseTags = 5
             $record.details.publishedPrereleaseFamilies = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane')
         }
@@ -40,7 +40,7 @@ try
         { param($records) foreach ($record in $records | Where-Object { $_.gateId -like 'application-pilot-*' }) { $record.details.enabledProductFamilies = @($record.details.enabledProductFamilies | Where-Object { $_ -ne 'ControlPlane' }) } },
         { param($records) ($records | Where-Object gateId -eq 'application-pilot-a').details.enabledProductFamilies += 'ContinuousGraph' },
         { param($records) ($records | Where-Object gateId -eq 'independent-release-review').details.reviewerIndependent = $false },
-        { param($records) ($records | Where-Object gateId -eq 'maintainer-signoff').details.versions[0] = 'Provider 1.1.0' },
+        { param($records) ($records | Where-Object gateId -eq 'maintainer-signoff').details.versions[0] = 'Provider 1.0.0' },
         { param($records) ($records | Where-Object gateId -eq 'maintainer-signoff').details.publishedPrereleaseFamilies[0] = 'ContinuousGraph' },
         { param($records) ($records | Where-Object gateId -eq 'security-review').approvedUtc = '2026-01-02T00:00:00Z' }
     )

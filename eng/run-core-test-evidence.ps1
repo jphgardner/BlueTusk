@@ -116,7 +116,7 @@ try
         }
         $assembly = Join-Path $repositoryRoot "tests/$($project.name)/bin/Release/net10.0/$($project.name).dll"
         if (-not (Test-Path -LiteralPath $assembly -PathType Leaf)) { throw "Build '$($project.name)' in Release before capturing Core test evidence." }
-        if ((Get-CoreTestAssemblyVersion $assembly) -cne "1.2.0+$ExpectedCommit")
+        if ((Get-CoreTestAssemblyVersion $assembly) -cne "1.1.0+$ExpectedCommit")
         { throw "Rebuild '$($project.name)' from the exact committed candidate before capturing evidence." }
         $assemblyHash = (Get-FileHash -LiteralPath $assembly -Algorithm SHA256).Hash
         Copy-Item -LiteralPath $assembly -Destination (Join-Path $directory "$($project.name).dll")
@@ -154,7 +154,7 @@ try
             imageId = $fixture.imageId; serverVersionNumber = $fixture.serverVersionNumber;
             fixture = New-CoreTestArtifact $output 'postgresql-fixture.json' }
     }
-    $shard = [pscustomobject]@{ schemaVersion = 1; scope = 'Core'; releaseVersion = '1.2.0'; sourceCommit = $ExpectedCommit;
+    $shard = [pscustomobject]@{ schemaVersion = 1; scope = 'Core'; releaseVersion = '1.1.0'; sourceCommit = $ExpectedCommit;
         sourceTreeDirty = $false; kind = $Kind; environmentId = $environment; postgreSql = $database;
         startedAtUtc = $started; completedAtUtc = [DateTimeOffset]::UtcNow.ToString('O'); projects = $rows.ToArray() }
     if ($Kind -eq 'SyncConnectors') { $shard | Add-Member -NotePropertyName toolSourceCommit -NotePropertyValue $toolCommit }

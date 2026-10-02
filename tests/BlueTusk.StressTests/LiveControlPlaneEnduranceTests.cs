@@ -216,7 +216,7 @@ public sealed class LiveControlPlaneEnduranceTests
             [
                 new ManagedWorkloadSpec(
                     index % 2 == 0 ? ManagedWorkloadKind.Live : ManagedWorkloadKind.ControlPlane,
-                    "1.2.0-rc.1",
+                    "1.1.0-rc.2",
                     new ManagedResourceRequest(2, 250, 256L * 1024 * 1024, 1024L * 1024 * 1024),
                     [],
                     new Dictionary<string, string>(StringComparer.Ordinal)

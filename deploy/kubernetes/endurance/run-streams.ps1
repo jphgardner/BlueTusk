@@ -11,7 +11,7 @@ $postgresImage = 'postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b5
 if ($env:CANDIDATE_SHA -notmatch '^[0-9a-f]{40}$' -or
     $env:CANDIDATE_VERSION -notmatch '^1\.2\.0-rc\.[1-9][0-9]*$')
 {
-    throw 'A lowercase full candidate SHA and a 1.2.0 RC version are required.'
+    throw 'A lowercase full candidate SHA and a 1.1.0 RC version are required.'
 }
 
 Set-Location $repositoryRoot

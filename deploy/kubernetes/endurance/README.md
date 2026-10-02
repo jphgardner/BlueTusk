@@ -24,25 +24,25 @@ has an official digest-pinned image; Beta 3 must never satisfy that stable gate.
 ./eng/deploy-kubernetes-endurance.ps1 `
   -Action StartContinuousGraphPreview `
   -CandidateSha <full-remote-sha> `
-  -CandidateVersion 1.2.0-rc.1
+  -CandidateVersion 1.1.0-rc.2
 
 # After the reviewed 1.2 RC commit is merged to main:
 ./eng/deploy-kubernetes-endurance.ps1 `
   -Action StartStreams `
   -CandidateSha <full-main-sha> `
-  -CandidateVersion 1.2.0-rc.1
+  -CandidateVersion 1.1.0-rc.2
 
 # Only after streams-72h reports Complete:
 ./eng/deploy-kubernetes-endurance.ps1 `
   -Action StartSync `
   -CandidateSha <same-full-main-sha> `
-  -CandidateVersion 1.2.0-rc.1
+  -CandidateVersion 1.1.0-rc.2
 
 # Only after sync-24h reports Complete:
 ./eng/deploy-kubernetes-endurance.ps1 `
   -Action StartLiveControlPlane `
   -CandidateSha <same-full-main-sha> `
-  -CandidateVersion 1.2.0-rc.1
+  -CandidateVersion 1.1.0-rc.2
 
 ./eng/deploy-kubernetes-endurance.ps1 `
   -Action DownloadEvidence `

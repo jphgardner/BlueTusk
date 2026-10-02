@@ -11,7 +11,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $tracks = Get-Content -LiteralPath $TrackPath -Raw | ConvertFrom-Json
 $core = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane')
-if ($tracks.schemaVersion -ne 1 -or $tracks.releaseVersion -cne '1.2.0' -or
+if ($tracks.schemaVersion -ne 1 -or $tracks.releaseVersion -cne '1.1.0' -or
     @($tracks.stableFamilies).Count -ne $core.Count -or
     @(Compare-Object $core @($tracks.stableFamilies) -SyncWindow 0).Count -ne 0 -or
     @($tracks.previewFamilies).Count -ne 1 -or $tracks.previewFamilies[0] -cne 'ContinuousGraph' -or

@@ -19,7 +19,7 @@ public sealed class ControlPlaneApiFreezeTests
         var root = document.RootElement;
 
         Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
-        Assert.Equal("1.2.0-development", root.GetProperty("baseline").GetString());
+        Assert.Equal("1.1.0-development", root.GetProperty("baseline").GetString());
         Assert.Equal("utf8-lf", root.GetProperty("normalization").GetString());
 
         var registered = root.GetProperty("files")

@@ -3,7 +3,7 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $verifier = Join-Path $PSScriptRoot 'verify-core-endurance-contract.ps1'
-$configuration = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'v1.2-candidate-readiness.json') -Raw
+$configuration = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'v1.1-candidate-readiness.json') -Raw
 $scratch = Join-Path ([IO.Path]::GetTempPath()) "bluetusk-core-contract-$([Guid]::NewGuid().ToString('N'))"
 $null = New-Item -ItemType Directory -Path $scratch
 try

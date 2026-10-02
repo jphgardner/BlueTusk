@@ -47,7 +47,7 @@ synthetic fixtures only; their success is not a performance result.
 ## Remaining release wiring
 
 The build workflow now measures stable PostgreSQL 15–18 compatibility and
-produces `v1.2-core-packages-<sha>` independently of optional historical
+produces `v1.1-core-packages-<sha>` independently of optional historical
 six-family packaging. The separate `postgresql-preview.yml` workflow retains
 the historical PostgreSQL 19 Beta 3 matrix; it is not current Beta 4 support or
 stable qualification. Compile-time and shared API checks still cover Graph.
@@ -107,7 +107,7 @@ These contributor commands test the readers with synthetic evidence only:
 ```
 
 Use a new output directory for each capture; existing evidence is not overwritten.
-`eng/v1.2-candidate-readiness.json` is a draft aggregation contract, explicitly
+`eng/v1.1-candidate-readiness.json` is a draft aggregation contract, explicitly
 marked as migration in progress. `eng/build-core-candidate-envelope.ps1` now
 builds its schema 4 envelope from seven run records, fourteen canonical artifact
 roles and ten approval records. `eng/verify-core-candidate-bindings.ps1` verifies
@@ -185,7 +185,7 @@ captures without overwriting evidence. `eng/verify-core-test-evidence.ps1`
 requires complete coverage, the canonical project filters, exact discovery/TRX
 agreement, zero skips and failures, matching counters, source-bound assemblies
 and the recorded stable database identities. The aggregated
-`v1.2-core-test-evidence-<sha>-<run-id>` artifact contains `regression/` and
+`v1.1-core-test-evidence-<sha>-<run-id>` artifact contains `regression/` and
 `compatibility/` payload trees at the schema 4 binding paths. Copy both complete
 trees when assembling a candidate. These readers qualify test payloads only;
 they do not certify live GitHub identity, performance, endurance or publication.
