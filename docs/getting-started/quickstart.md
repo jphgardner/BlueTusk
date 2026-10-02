@@ -1,133 +1,121 @@
-# Quickstart: run the first query
+# 5-minute first app
 
-This guide creates a .NET console application, connects it to PostgreSQL, and
-runs one parameterized query. It uses the published `1.1.0-rc.1` package; use
-`1.0.0` instead if you require the stable channel.
+In this quick start you create a .NET console app, connect it to PostgreSQL and
+run a parameterized query. It takes about five minutes.
 
-## Prerequisites
+## Before you start
 
-- .NET 10 SDK
-- PostgreSQL 15, 16, 17, or 18
-- a database and credentials you may use for this test
+You need:
 
-See [Install BlueTusk](install.md) for the complete compatibility and package
-selection guidance.
+- the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0);
+- a PostgreSQL 15, 16, 17 or 18 server you can use for testing. If you have
+  Docker, step 1 starts one for you.
 
-## 1. Create the application
+## 1. Start PostgreSQL
+
+Skip this step if you already have a test database.
+
+```powershell
+docker run --name bluetusk-postgres `
+  -e POSTGRES_PASSWORD=local-dev-only `
+  -p 5432:5432 `
+  -d postgres:18 `
+  -c wal_level=logical
+```
+
+`wal_level=logical` is not needed for this quick start. It lets you reuse the
+same container for the [Streams guide](../streams/README.md) later.
+
+## 2. Create the app
 
 ```powershell
 dotnet new console --framework net10.0 --name BlueTuskQuickstart
-Set-Location BlueTuskQuickstart
+cd BlueTuskQuickstart
 dotnet add package BlueTusk.Data --version 1.1.0-rc.1
 ```
 
-Keep all BlueTusk dependencies on the same exact version. Do not mix stable
-and release-candidate packages.
+`1.1.0-rc.1` is the latest public release candidate. Use `1.0.0` if you need
+the stable release. See [Install BlueTusk](install.md) to choose.
 
-## 2. Set the connection string
+## 3. Set the connection string
 
-Use an environment variable so credentials do not enter source control:
+Keep credentials out of source code by using an environment variable:
 
 ```powershell
-$env:BLUETUSK_CONNECTION_STRING =
-  "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk;SSL Mode=Disable;Channel Binding=Disable"
+$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable"
 ```
 
-That example disables TLS only for an isolated local PostgreSQL instance. Use
-TLS and appropriately scoped credentials outside local development.
+On Linux or macOS, use `export BLUETUSK_CONNECTION_STRING="..."` instead.
 
-## 3. Replace `Program.cs`
+> **Warning:** `SSL Mode=Disable` is only for a local test container.
+> BlueTusk's default is `SSL Mode=VerifyFull`, which requires TLS and validates
+> the server certificate. Keep that default everywhere else.
+
+## 4. Write the code
+
+Replace the contents of `Program.cs`:
 
 ```csharp
 using BlueTusk.Data;
 
 var connectionString =
     Environment.GetEnvironmentVariable("BLUETUSK_CONNECTION_STRING")
-    ?? throw new InvalidOperationException(
-        "Set BLUETUSK_CONNECTION_STRING before running the application.");
+    ?? throw new InvalidOperationException("Set BLUETUSK_CONNECTION_STRING first.");
 
-await using var dataSource =
-    new BlueTuskDataSourceBuilder(connectionString).Build();
+// Create one data source for the lifetime of the application.
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
 
-await using var connection = await dataSource.OpenConnectionAsync();
-await using var command = connection.CreateCommand();
-
-command.CommandText = "SELECT @left::int4 + @right::int4";
-command.Parameters.Add(new BlueTuskParameter<int>("left", 20));
-command.Parameters.Add(new BlueTuskParameter<int>("right", 22));
+// Create a command, bind two typed parameters, and run it.
+await using var command = dataSource.CreateCommand("SELECT @left::int4 + @right::int4");
+command.Parameters.Add(new BlueTuskParameter<int>(20) { ParameterName = "left" });
+command.Parameters.Add(new BlueTuskParameter<int>(22) { ParameterName = "right" });
 
 var answer = await command.ExecuteScalarAsync<int>();
-Console.WriteLine(answer);
+Console.WriteLine($"The answer is {answer}");
 ```
 
-The parameters travel through PostgreSQL protocol binding; their values are
-not interpolated into SQL.
-
-## 4. Run it
+## 5. Run it
 
 ```powershell
 dotnet run
 ```
 
-The application should print:
+You should see:
 
 ```text
-42
+The answer is 42
 ```
 
-## Understand the ownership model
+## What just happened
 
-`BlueTuskDataSource` owns configuration, PostgreSQL type metadata, and the
-physical connection pool. Create one long-lived data source for each distinct
-connection configuration. Open and dispose short-lived logical connections as
-work arrives; healthy physical sessions return to the pool.
+- `BlueTuskDataSourceBuilder.Build()` created a **data source**. It owns the
+  configuration, the connection pool and the PostgreSQL type catalogue. Create
+  one per connection string and keep it for the life of the app.
+- `dataSource.CreateCommand(...)` created a command that borrows a pooled
+  connection when it runs and returns it afterwards.
+- The parameter values were sent separately from the SQL text. They are never
+  pasted into the SQL, so this pattern is safe from SQL injection.
 
-Do not create a data source per request.
+## If it fails
 
-## Choose the next guide
+| Error | Fix |
+| --- | --- |
+| Connection refused or timeout | Check that PostgreSQL is running and that `Host` and `Port` are correct. |
+| TLS or certificate error | For a local container only, keep `SSL Mode=Disable`. For a real server, configure TLS. |
+| Password authentication failed | Check `Username` and `Password`. |
 
-- [ADO.NET provider](../ado-net/README.md): commands, transactions, batches,
-  COPY, notifications, large objects, and replication.
-- [Dependency injection](../ado-net/dependency-injection.md): register the data
-  source and a readiness check in a hosted application.
-- [EF Core](../ef-core/README.md): use LINQ, migrations, scaffolding, and
-  PostgreSQL-native mappings.
-- [Extensions](../extensions/README.md): add PostGIS, pgvector, TimescaleDB,
-  and other focused packages.
-- [Streams](../streams/README.md): consume committed PostgreSQL changes with
-  acknowledgement and checkpoints.
-- [Production checklist](../operations/production-checklist.md): prepare a
-  secure, bounded, observable, and recoverable deployment.
+The [provider troubleshooting guide](../operations/troubleshooting.md) covers more
+cases.
 
-## Build the repository instead
-
-The package quickstart above is the normal application path. Contributors can
-build and run the repository sample directly:
+## Clean up
 
 ```powershell
-git clone https://github.com/jphgardner/BlueTusk.git
-Set-Location BlueTusk
-dotnet restore BlueTusk.slnx
-dotnet build BlueTusk.slnx --configuration Release --no-restore
-
-docker compose -f eng/compose/postgres.yml up -d --wait postgres18
-$env:BLUETUSK_CONNECTION_STRING =
-  "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
-
-dotnet run `
-  --project samples/BlueTusk.Samples.AdoNet/BlueTusk.Samples.AdoNet.csproj `
-  --configuration Release
+docker rm --force bluetusk-postgres
 ```
 
-The repository credentials are restricted to the disposable local test
-database. Stop it with:
+## Next steps
 
-```powershell
-docker compose -f eng/compose/postgres.yml down
-```
-
-Add `--volumes` only when you intentionally want to remove its test data.
-
-If the first run fails, use the [troubleshooting guide](../operations/troubleshooting.md)
-and include the BlueTusk version, PostgreSQL version, and smallest reproducer
-when reporting a defect.
+- [Core concepts](concepts.md): the vocabulary every BlueTusk product uses.
+- [ADO.NET guide](../ado-net/README.md): transactions, batches, COPY and more.
+- [EF Core guide](../ef-core/README.md): LINQ and migrations.
+- [Streams guide](../streams/README.md): react to committed changes.
