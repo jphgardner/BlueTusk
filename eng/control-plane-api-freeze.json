@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "baseline": "1.2.0-development",
+  "baseline": "1.1.0-development",
   "normalization": "utf8-lf",
   "files": [
     {

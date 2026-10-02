@@ -69,7 +69,7 @@ function New-Fixture([string] $Kind)
                 serverVersionNumber = $fixture.serverVersionNumber; fixture = New-CoreTestArtifact $shardRoot 'postgresql-fixture.json' }
         }
         $payload = [pscustomobject]@{
-            schemaVersion = 1; scope = 'Core'; releaseVersion = '1.2.0'; sourceCommit = $commit; sourceTreeDirty = $false;
+            schemaVersion = 1; scope = 'Core'; releaseVersion = '1.1.0'; sourceCommit = $commit; sourceTreeDirty = $false;
             kind = $Kind; environmentId = $(if ($Kind -ne 'Compatibility') { $id } else { 'linux-x64' });
             postgreSql = $database; startedAtUtc = '2026-09-01T00:00:00Z'; completedAtUtc = '2026-09-01T00:01:00Z'; projects = $rows
         }
@@ -108,7 +108,7 @@ try
 <EnableDefaultCompileItems>false</EnableDefaultCompileItems><AssemblyName>CoreReaderFixture</AssemblyName>
 <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries><EnableSourceLink>false</EnableSourceLink>
-<InformationalVersion>1.2.0+$commit</InformationalVersion>
+<InformationalVersion>1.1.0+$commit</InformationalVersion>
 </PropertyGroup></Project>
 "@ | Set-Content -LiteralPath $fixtureProject -Encoding utf8NoBOM
     '<configuration><packageSources><clear /></packageSources></configuration>' |

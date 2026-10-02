@@ -117,8 +117,8 @@ internal static class ProviderRequestAnalysisSelfTests
                 postgreSqlImage = Image,
                 tlsActive = false,
                 referenceAssembly = "10.0.3",
-                harnessAssembly = "1.2.0+" + Commit,
-                candidateAssembly = "1.2.0+" + Commit,
+                harnessAssembly = "1.1.0+" + Commit,
+                candidateAssembly = "1.1.0+" + Commit,
                 runtime = "different-runtime",
             });
             badHash = await SaveAsync(referencePath, reference with { Environment = badEnvironment });
@@ -143,8 +143,8 @@ internal static class ProviderRequestAnalysisSelfTests
                         postgreSqlImage = Image,
                         tlsActive = false,
                         referenceAssembly = "10.0.3",
-                        harnessAssembly = "1.2.0+" + Commit,
-                        candidateAssembly = "1.2.0+" + Commit,
+                        harnessAssembly = "1.1.0+" + Commit,
+                        candidateAssembly = "1.1.0+" + Commit,
                         runtime = "synthetic-test-only",
                         poolSize,
                         multiplexingConfigured = multiplexing,
@@ -204,8 +204,8 @@ internal static class ProviderRequestAnalysisSelfTests
             postgreSqlImage = Image,
             tlsActive = false,
             referenceAssembly = "10.0.3",
-            harnessAssembly = "1.2.0+" + Commit,
-            candidateAssembly = "1.2.0+" + Commit,
+            harnessAssembly = "1.1.0+" + Commit,
+            candidateAssembly = "1.1.0+" + Commit,
             runtime = "synthetic-test-only",
         }), JsonSerializer.SerializeToElement(new { frequency = 1_000_000, sampleBufferCapacityBytes = 1600 }), CreateWindow());
 

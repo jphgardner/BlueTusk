@@ -102,8 +102,8 @@ try
         $binding = $contract.artifactBindings.PSObject.Properties[$role].Value
         $payload = [ordered]@{ schemaVersion = 1; fixture = 'synthetic binding self-test; NOT release evidence' }
         $payload[$binding.commitProperty] = $commit
-        if ($role -eq 'packageManifest') { $payload.releaseTrack = 'Core'; $payload.releaseVersion = '1.2.0' }
-        if ($role -eq 'performanceManifest') { $payload.scope = 'Core'; $payload.release = '1.2.0' }
+        if ($role -eq 'packageManifest') { $payload.releaseTrack = 'Core'; $payload.releaseVersion = '1.1.0' }
+        if ($role -eq 'performanceManifest') { $payload.scope = 'Core'; $payload.release = '1.1.0' }
         Write-FixtureJson (Join-Path $baseRoot $binding.path) $payload
     }
     $runs = @(for ($index = 0; $index -lt $contract.requiredWorkflows.Count; $index++)
@@ -128,7 +128,7 @@ try
         if ($record.gateId -eq 'website-deployment-acceptance') { $record.details.productionMetricsSha256 = $metricsHash }
         if ($record.gateId -eq 'maintainer-signoff')
         {
-            $record.details.versions = @('Provider 1.2.0', 'Streams 1.2.0', 'Sync 1.2.0', 'Live 1.2.0', 'Control Plane 1.2.0')
+            $record.details.versions = @('Provider 1.1.0', 'Streams 1.1.0', 'Sync 1.1.0', 'Live 1.1.0', 'Control Plane 1.1.0')
             $record.details.publishedPrereleaseTags = 5
             $record.details.publishedPrereleaseFamilies = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane')
         }
@@ -175,7 +175,7 @@ try
         @{ Name = 'text-schema'; Error = 'envelope'; Change = {param($e,$r) $e.schemaVersion = '4'} },
         @{ Name = 'preview-scope'; Error = 'envelope'; Change = {param($e,$r) $e.scope = 'ContinuousGraphPreview'} },
         @{ Name = 'boolean-scope'; Error = 'envelope'; Change = {param($e,$r) $e.scope = $true} },
-        @{ Name = 'old-release'; Error = 'envelope'; Change = {param($e,$r) $e.releaseVersion = '1.1.0'} },
+        @{ Name = 'old-release'; Error = 'envelope'; Change = {param($e,$r) $e.releaseVersion = '1.0.0'} },
         @{ Name = 'wrong-candidate'; Error = 'envelope'; Change = {param($e,$r) $e.candidateCommit = ('1' * 40)} },
         @{ Name = 'pretend-ready'; Error = 'schema mismatch'; Change = {param($e,$r) $e | Add-Member releaseApproved $true} },
         @{ Name = 'missing-workflow'; Error = 'each required workflow'; Change = {param($e,$r) $e.workflowRuns = @($e.workflowRuns | Select-Object -First 6)} },
@@ -202,7 +202,7 @@ try
         @{ Name = 'boolean-payload-commit'; Error = 'exact candidate'; Change = {param($e,$r) Edit-Payload $e $r websiteMetrics {param($p) $p.sourceCommit = $true}} },
         @{ Name = 'graph-performance'; Error = 'scope/version'; Change = {param($e,$r) Edit-Payload $e $r performanceManifest {param($p) $p.scope = 'ContinuousGraphPreview'}} },
         @{ Name = 'boolean-performance-scope'; Error = 'scope/version'; Change = {param($e,$r) Edit-Payload $e $r performanceManifest {param($p) $p.scope = $true}} },
-        @{ Name = 'old-performance-version'; Error = 'scope/version'; Change = {param($e,$r) Edit-Payload $e $r performanceManifest {param($p) $p.release = '1.1.0'}} },
+        @{ Name = 'old-performance-version'; Error = 'scope/version'; Change = {param($e,$r) Edit-Payload $e $r performanceManifest {param($p) $p.release = '1.0.0'}} },
         @{ Name = 'legacy-package-track'; Error = 'scope/version'; Change = {param($e,$r) Edit-Payload $e $r packageManifest {param($p) $p.releaseTrack = 'Legacy'}} },
         @{ Name = 'missing-approval'; Error = 'ten canonical'; Change = {param($e,$r) $e.approvals = @($e.approvals | Select-Object -First 9)} },
         @{ Name = 'duplicate-approval'; Error = 'exactly once'; Change = {param($e,$r) $e.approvals[9].id = $e.approvals[0].id} },
@@ -241,7 +241,7 @@ try
             [ordered]@{ role = $role; file = $file }
         })
         $manifest = [ordered]@{ schemaVersion = 1; kind = 'LocalDocker'; captureId = $id; producerFile = $producer
-            scope = 'Core'; releaseVersion = '1.2.0'; sourceCommit = $commit; toolSourceCommit = $commit
+            scope = 'Core'; releaseVersion = '1.1.0'; sourceCommit = $commit; toolSourceCommit = $commit
             sourceTreeDirty = $false; startedUtc = '2026-01-01T00:00:01Z'; completedUtc = "2026-01-01T00:00:0$($index + 1)Z"
             exitCode = 0; environment = @{ hostOs = 'windows'; architecture = 'x64'; dockerOs = 'linux' }
             containerImageDigests = @($contract.endurancePostgreSqlImage); logs = @($log); artifacts = @($produced) }
@@ -303,7 +303,7 @@ try
     )
     foreach ($case in $contractCases)
     {
-        $copy = Read-CoreEvidenceJson (Join-Path $PSScriptRoot 'v1.2-candidate-readiness.json')
+        $copy = Read-CoreEvidenceJson (Join-Path $PSScriptRoot 'v1.1-candidate-readiness.json')
         & $case.Change $copy
         $path = Join-Path $scratch ("contract-$($case.Name).json")
         Write-FixtureJson $path $copy

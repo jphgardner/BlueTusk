@@ -20,7 +20,7 @@ foreach ($id in $ids)
     $major = if ($Kind -eq 'Regression') { 0 } else { [int]$id.Substring('postgresql-'.Length) }
     $null = Get-CoreTestShardReport (Join-Path $root "runs/$id/core-test-shard.json") $ExpectedCommit $Kind $environment $major
 }
-$manifest = [pscustomobject]@{ schemaVersion = 1; scope = 'Core'; releaseVersion = '1.2.0'; sourceCommit = $ExpectedCommit; kind = $Kind; shards = $shards }
+$manifest = [pscustomobject]@{ schemaVersion = 1; scope = 'Core'; releaseVersion = '1.1.0'; sourceCommit = $ExpectedCommit; kind = $Kind; shards = $shards }
 $stream = [IO.File]::Open($path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
 try
 {

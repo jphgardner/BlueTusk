@@ -271,7 +271,7 @@ try
     } 'identity, release, commit'
     Test-RejectedEvidence 'previous-release' {
         param($changed)
-        $changed.release = '1.1.0'
+        $changed.release = '1.0.0'
     } 'identity, release, commit'
     Test-RejectedEvidence 'wrong-commit' {
         param($changed)

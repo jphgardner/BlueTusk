@@ -56,7 +56,7 @@ $approvals = @(foreach ($id in $approvalContract.gates.id)
         bytes = (Get-Item -LiteralPath $path).Length }
 })
 $evidence = [ordered]@{ schemaVersion = $(if ($UseLocalExecution) { 5 } else { 4 })
-    candidateCommit = $ExpectedCommit; scope = 'Core'; releaseVersion = '1.2.0' }
+    candidateCommit = $ExpectedCommit; scope = 'Core'; releaseVersion = '1.1.0' }
 if ($UseLocalExecution) { $evidence.producerRuns = @($runs) } else { $evidence.workflowRuns = @($runs) }
 $evidence.artifacts = $artifacts
 $evidence.approvals = $approvals

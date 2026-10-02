@@ -16,7 +16,7 @@ try
     & $verifier -ReleaseTrack Core -EvidenceRoot $source -ExpectedCommit $ExpectedCommit | Out-Null
     $mutations = @(
         @{ Name = 'graph-family'; Error = 'exactly every product family'; Change = {param($m) $m.families[0].id = 'ContinuousGraph'} },
-        @{ Name = 'wrong-version'; Error = 'Core 1.2.0'; Change = {param($m) $m.releaseVersion = '1.1.0'} },
+        @{ Name = 'wrong-version'; Error = 'Core 1.1.0'; Change = {param($m) $m.releaseVersion = '1.0.0'} },
         @{ Name = 'wrong-commit'; Error = 'Package evidence commit'; Change = {param($m) $m.sourceCommit = ('0' * 40)} },
         @{ Name = 'wrong-artifact-count'; Error = 'artifact count mismatch'; Change = {param($m) $m.artifactCount++} },
         @{ Name = 'wrong-package-hash'; Error = 'does not match its hash'; Change = {param($m) $m.artifacts[0].sha256 = ('0' * 64)} },
@@ -41,7 +41,7 @@ try
         if ($null -eq $failure -or -not $failure.Contains($mutation.Error, [StringComparison]::OrdinalIgnoreCase))
         { throw "Invalid package fixture '$($mutation.Name)' did not fail at the expected guard: $failure" }
     }
-    Write-Output 'Core package-reader self-test passed against retained real packages: stable 1.2.0 accepted without prerelease arming; eight identity, scope or integrity mutations rejected.'
+    Write-Output 'Core package-reader self-test passed against retained real packages: stable 1.1.0 accepted without prerelease arming; eight identity, scope or integrity mutations rejected.'
 }
 finally
 {

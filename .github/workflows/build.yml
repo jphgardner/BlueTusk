@@ -169,7 +169,7 @@ jobs:
           ./eng/test-performance-leadership-evidence-verifier.ps1
           ./eng/test-endurance-workflow-sbom-contract.ps1
           ./eng/test-live-control-plane-endurance-verifier.ps1
-          ./eng/verify-v1.2-release-contract.ps1
+          ./eng/verify-v1.1-release-contract.ps1
           ./eng/test-release-track-verifier.ps1
           'Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search',
           'Sql', 'Studio', 'Edge', 'Workflows' |
@@ -345,24 +345,24 @@ jobs:
         run: >-
           ./eng/build-v1-candidate-packages.ps1
           -ReleaseTrack Core
-          -OutputRoot artifacts/v1.2-core-packages
+          -OutputRoot artifacts/v1.1-core-packages
           -Commit ${{ github.sha }}
 
       - name: Verify stable core package reader and integrity guards
         shell: pwsh
         run: >-
           ./eng/test-core-package-evidence.ps1
-          -EvidenceRoot artifacts/v1.2-core-packages
+          -EvidenceRoot artifacts/v1.1-core-packages
           -ExpectedCommit ${{ github.sha }}
 
       - name: Archive immutable core package evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: v1.2-core-packages-${{ github.sha }}
+          name: v1.1-core-packages-${{ github.sha }}
           path: |
-            artifacts/v1.2-core-packages/package-manifest.json
-            artifacts/v1.2-core-packages/packages
-            artifacts/v1.2-core-packages/sbom
+            artifacts/v1.1-core-packages/package-manifest.json
+            artifacts/v1.1-core-packages/packages
+            artifacts/v1.1-core-packages/sbom
           if-no-files-found: error
           retention-days: 90
 
@@ -534,7 +534,7 @@ jobs:
       - name: Retain complete immutable Core test matrices
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: v1.2-core-test-evidence-${{ github.sha }}-${{ github.run_id }}
+          name: v1.1-core-test-evidence-${{ github.sha }}-${{ github.run_id }}
           path: artifacts/core-test-evidence
           if-no-files-found: error
           retention-days: 90

@@ -104,7 +104,7 @@ function Get-CoreExecutionBindingReport
             { throw 'Local manifest schema must be an integer.' }
             if ($manifest.schemaVersion -ne 1 -or $manifest.kind -cne 'LocalDocker' -or
                 $manifest.captureId -cne $id -or $manifest.producerFile -cne $producer -or
-                $manifest.scope -cne 'Core' -or $manifest.releaseVersion -cne '1.2.0' -or
+                $manifest.scope -cne 'Core' -or $manifest.releaseVersion -cne '1.1.0' -or
                 $manifest.sourceCommit -isnot [string] -or $manifest.sourceCommit -cne $ExpectedCommit -or
                 $manifest.toolSourceCommit -isnot [string] -or $manifest.toolSourceCommit -cnotmatch '^[0-9a-f]{40}$' -or
                 $manifest.sourceTreeDirty -isnot [bool] -or $manifest.sourceTreeDirty -ne $false -or

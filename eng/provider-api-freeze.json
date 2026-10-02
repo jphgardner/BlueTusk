@@ -4,17 +4,17 @@
   "normalization": "utf8-lf",
   "reviewedAdditions": [
     {
-      "release": "1.2.0",
+      "release": "1.1.0",
       "path": "src/BlueTusk.Client/PublicAPI.Unshipped.txt",
       "sha256": "7b7eff1e4403db8797a75e47fdb3a168999f33fcad47d903b8009bf14bde08d2"
     },
     {
-      "release": "1.2.0",
+      "release": "1.1.0",
       "path": "src/BlueTusk.Data/PublicAPI.Unshipped.txt",
       "sha256": "4561189d5dc55729161fdebea90dfd45b67b5eccc365c13fc6d5478cd29225cd"
     },
     {
-      "release": "1.2.0",
+      "release": "1.1.0",
       "path": "src/BlueTusk.EntityFrameworkCore/PublicAPI.Unshipped.txt",
       "sha256": "41bb0c248adad1226fa11623432c941cfc3b34b097469791e3bba35f6ef32a4d"
     }

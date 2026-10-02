@@ -2,7 +2,7 @@
 param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$configuration = Join-Path $PSScriptRoot 'v1.2-candidate-readiness.json'
+$configuration = Join-Path $PSScriptRoot 'v1.1-candidate-readiness.json'
 $contract = Get-Content -LiteralPath $configuration -Raw | ConvertFrom-Json
 $scratch = Join-Path ([IO.Path]::GetTempPath()) "bluetusk-core-workflow-$([Guid]::NewGuid().ToString('N'))"
 $null = New-Item -ItemType Directory -Path $scratch

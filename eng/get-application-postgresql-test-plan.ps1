@@ -15,7 +15,7 @@ $testClass = 'BlueTusk.Applications.ArchitectureTests.PostgreSqlApplicationInteg
 if ($ReleaseTrack -eq 'Core')
 {
     $contract = Get-Content -LiteralPath (
-        Join-Path $ConfigurationDirectory 'v1.2-candidate-readiness.json') -Raw | ConvertFrom-Json
+        Join-Path $ConfigurationDirectory 'v1.1-candidate-readiness.json') -Raw | ConvertFrom-Json
     $image = [string]$contract.endurancePostgreSqlImage
     if ($contract.schemaVersion -ne 1 -or $contract.scope -cne 'Core' -or
         $contract.releaseVersion -cne $tracks.releaseVersion -or

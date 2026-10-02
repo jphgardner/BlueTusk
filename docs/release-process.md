@@ -95,7 +95,7 @@ so this sequence is a release plan, not permission to tag now.
    substitute for a core gate.
 7. Complete the external acceptance records and the migrated protected 1.2
    core candidate aggregator at that exact commit. Its current
-   `eng/v1.2-candidate-readiness.json` contract is marked migration-in-progress
+   `eng/v1.1-candidate-readiness.json` contract is marked migration-in-progress
    and publication-disabled. The historical `v1-candidate-readiness.yml` does
    not satisfy this step.
 8. Do not change the candidate commit after evidence succeeds. Any source,

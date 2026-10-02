@@ -115,7 +115,7 @@ app.MapGet("/health/live", () => Results.Ok(new { status = "healthy" }));
 app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
 app.MapGet("/preview", () => Results.Ok(new
 {
-    release = "1.2.0-rc.1",
+    release = "1.1.0-rc.2",
     mode = "read-only public preview",
     mutationsEnabled = false,
     graph = new

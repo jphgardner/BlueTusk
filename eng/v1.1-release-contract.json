@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "releaseVersion": "1.2.0",
+  "releaseVersion": "1.1.0",
   "baselineCommit": "2e735ed46aec11d5009158a00ca7b862f9ec12af",
   "releaseTracksFile": "eng/release-tracks.json",
   "coordinatedFamilies": [

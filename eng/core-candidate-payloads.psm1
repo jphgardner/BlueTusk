@@ -133,7 +133,7 @@ function Get-CoreCandidatePayloadReport
     }
 
     return [pscustomobject]@{
-        Stage = 'CoreEvidencePayloads'; CandidateCommit = $ExpectedCommit; ReleaseVersion = '1.2.0'
+        Stage = 'CoreEvidencePayloads'; CandidateCommit = $ExpectedCommit; ReleaseVersion = '1.1.0'
         ProducerCount = $bindings.ProducerCount; WorkflowCount = $bindings.WorkflowCount
         ArtifactCount = $verified.Count; ApprovalCount = $bindings.ApprovalCount
         ApprovalPayloadsValidated = $true; AllPayloadsValidated = $true

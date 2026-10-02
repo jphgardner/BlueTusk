@@ -92,10 +92,10 @@ if ($ReleaseTrack -eq 'Core')
     foreach ($familyName in $familyNames)
     {
         [xml]$version = Get-Content -LiteralPath (Join-Path $repositoryRoot $manifest.families.$familyName.versionFile) -Raw
-        if ([string]$version.Project.PropertyGroup.VersionPrefix -cne '1.2.0' -or
+        if ([string]$version.Project.PropertyGroup.VersionPrefix -cne '1.1.0' -or
             -not [string]::IsNullOrWhiteSpace([string]$version.Project.PropertyGroup.VersionSuffix))
         {
-            throw "Core candidate '$familyName' must have the exact unsuffixed source version 1.2.0."
+            throw "Core candidate '$familyName' must have the exact unsuffixed source version 1.1.0."
         }
     }
 }
@@ -208,7 +208,7 @@ try
     if ($ReleaseTrack -eq 'Core')
     {
         $candidateManifest.releaseTrack = 'Core'
-        $candidateManifest.releaseVersion = '1.2.0'
+        $candidateManifest.releaseVersion = '1.1.0'
     }
     $candidateManifest | ConvertTo-Json -Depth 8 |
         Set-Content -LiteralPath (

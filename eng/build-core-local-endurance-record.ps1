@@ -110,7 +110,7 @@ $artifacts = @(foreach ($role in $contract.requiredArtifactRoles)
     { [ordered]@{ role = $role; file = Bind-File $binding.path } }
 })
 $manifest = [ordered]@{ schemaVersion = 1; kind = 'LocalDocker'; captureId = $id; producerFile = $ProducerFile
-    scope = 'Core'; releaseVersion = '1.2.0'; sourceCommit = $ExpectedCommit; toolSourceCommit = $toolCommit
+    scope = 'Core'; releaseVersion = '1.1.0'; sourceCommit = $ExpectedCommit; toolSourceCommit = $toolCommit
     sourceTreeDirty = $false; startedUtc = $captureStartedUtc.ToString('O')
     completedUtc = $captureCompletedUtc.ToString('O'); exitCode = 0
     environment = @{ hostOs = $(if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { throw 'Unsupported local host.' })

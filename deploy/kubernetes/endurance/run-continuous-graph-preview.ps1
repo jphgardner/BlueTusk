@@ -10,7 +10,7 @@ $postgresImage = 'postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e
 if ($env:CANDIDATE_SHA -notmatch '^[0-9a-f]{40}$' -or
     $env:CANDIDATE_VERSION -notmatch '^1\.2\.0-rc\.[1-9][0-9]*$')
 {
-    throw 'A lowercase full candidate SHA and a 1.2.0 RC version are required.'
+    throw 'A lowercase full candidate SHA and a 1.1.0 RC version are required.'
 }
 if ($env:NON_GATING_PREVIEW -ne 'true')
 {

@@ -38,13 +38,13 @@ jobs:
           ./eng/pack-product-family.ps1 `
             -Family Live `
             -Prerelease `
-            -VersionOverride '1.2.0-rc.1' `
+            -VersionOverride '1.1.0-rc.2' `
             -PrereleaseTrainPath eng/prerelease-train.json `
             -Output 'artifacts/test-results/live-control-plane-endurance/candidate-packages'
           ./eng/pack-product-family.ps1 `
             -Family ControlPlane `
             -Prerelease `
-            -VersionOverride '1.2.0-rc.1' `
+            -VersionOverride '1.1.0-rc.2' `
             -PrereleaseTrainPath eng/prerelease-train.json `
             -Output 'artifacts/test-results/live-control-plane-endurance/candidate-packages'
           dotnet restore BlueTusk.slnx --locked-mode

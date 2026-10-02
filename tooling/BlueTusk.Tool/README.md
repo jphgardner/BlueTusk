@@ -5,7 +5,7 @@ provider and the production preflight for BlueTusk applications. Install the
 packed .NET tool, then validate a target environment without changing it:
 
 ```powershell
-dotnet tool install --global BlueTusk.Tool --version 1.2.0
+dotnet tool install --global BlueTusk.Tool --version 1.1.0
 $env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Database=app;Username=app;Password=..."
 bluetusk doctor --require-tls --require-streams --extension pgcrypto
 ```
