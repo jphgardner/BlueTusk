@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.TestUtilities;
 using Xunit.Sdk;
 
@@ -87,6 +88,33 @@ public sealed class BlueTuskModelBuilderGenericTest : RelationalModelBuilderTest
         [ConditionalFact]
         public override void Can_set_unicode_for_property_type()
             => base.Can_set_unicode_for_property_type();
+
+        // EF Core 10 configures complex-type discriminators to be saved after insert (dotnet/efcore#38119) so an optional complex
+        // property can switch between null and non-null once saved. EF Core's version of this test, skipped upstream, predates
+        // that change and asserts PropertySaveBehavior.Throw. Ported with that one assertion updated; the others are unchanged.
+        [ConditionalFact]
+        public override void Can_specify_discriminator_without_explicit_value()
+        {
+            var modelBuilder = CreateModelBuilder(configure: null);
+
+            modelBuilder
+                .Ignore<Order>()
+                .Ignore<IndexedClass>()
+                .Entity<ComplexProperties>()
+                .ComplexProperty(
+                    e => e.Quarks,
+                    b => b.HasDiscriminator<string>("Discriminator"));
+
+            var model = modelBuilder.FinalizeModel();
+
+            var complexType = model.FindEntityType(typeof(ComplexProperties))!.GetComplexProperties().Single().ComplexType;
+            Assert.Equal(nameof(Quarks), complexType.GetDiscriminatorValue());
+
+            var discriminator = complexType.FindDiscriminatorProperty()!;
+            Assert.False(discriminator.IsNullable);
+            Assert.Equal(PropertySaveBehavior.Save, discriminator.GetAfterSaveBehavior());
+            Assert.NotNull(discriminator.GetValueGeneratorFactory());
+        }
 
         [ConditionalFact]
         public override void Can_specify_discriminator_value()
@@ -195,6 +223,34 @@ public sealed class BlueTuskModelBuilderGenericTest : RelationalModelBuilderTest
         [ConditionalFact]
         public override void Can_add_shadow_properties_when_they_have_been_ignored()
             => base.Can_add_shadow_properties_when_they_have_been_ignored();
+
+        // EF Core's version maps the collection without ConfigureComplexCollection, which every sibling test applies, so on a
+        // relational provider it stops at JSON-mapping validation before reaching its assertions. Ported with that call; the
+        // assertions are unchanged.
+        [ConditionalFact]
+        public override void Can_map_a_tuple_collection()
+        {
+            var modelBuilder = CreateModelBuilder(configure: null);
+
+            modelBuilder
+                .Entity<ValueComplexProperties>()
+                .Ignore(e => e.Label)
+                .Ignore(e => e.OldLabel)
+                .Ignore(e => e.Tuple)
+                .ComplexCollection(e => e.Tuples, b => ConfigureComplexCollection(b));
+
+            var model = modelBuilder.FinalizeModel();
+
+            var valueType = model.FindEntityType(typeof(ValueComplexProperties))!;
+            var tupleProperty = valueType.FindComplexProperty(nameof(ValueComplexProperties.Tuples))!;
+            Assert.False(tupleProperty.IsNullable);
+            Assert.Equal(typeof(List<(string, int)>), tupleProperty.ClrType);
+            var tupleType = tupleProperty.ComplexType;
+            Assert.Equal(typeof((string, int)), tupleType.ClrType);
+            Assert.Equal("ValueComplexProperties.Tuples#ValueTuple<string, int>", tupleType.DisplayName());
+
+            Assert.Equal(2, tupleType.GetProperties().Count());
+        }
 
         [ConditionalFact]
         public override void Can_set_custom_value_generator_for_properties()

@@ -2,6 +2,7 @@
 
 using System.Runtime.CompilerServices;
 using BlueTusk.EntityFrameworkCore.ChangeTracking.Internal;
+using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -39,6 +40,10 @@ internal sealed class BlueTuskModelRuntimeInitializer(
                     foreach (var entityType in ((IModel)model!).GetEntityTypes().Cast<RuntimeEntityType>())
                     {
                         Install(entityType);
+                        if (BlueTuskValueTypeCollectionAccessors.HasValueTypeCollection(entityType))
+                        {
+                            BlueTuskValueTypeCollectionAccessors.Install(entityType);
+                        }
                     }
 
                     return true;
