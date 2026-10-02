@@ -21,6 +21,16 @@ public sealed class ProjectionWriteContext
     private bool _boundExceeded;
     private readonly HashSet<(string Tenant, ProjectionDependency Dependency, string After)> _pendingPages = [];
 
+    // Exact image of the source mirror rows this context has read or written (null = known absent).
+    // The store holds the projection version's state-row lock (FOR UPDATE) for the whole callback,
+    // and every writer of a version's derived rows (snapshot, CDC, reset, retirement) takes that lock
+    // first, so a remembered image is byte-for-byte what a repeated read in this transaction returns.
+    // Raw Connection/Transaction access may write source rows directly, so it permanently discards
+    // the image; so does any failed command, leaving an aborted transaction to fail reads as before.
+    private Dictionary<(string Tenant, string Table, string Key), byte[]?>? _sources = [];
+    private long _sourceBytes;
+    private const int MaximumRememberedSources = 4096;
+
     internal ProjectionWriteContext(DbConnection connection, DbTransaction transaction, ProjectionIdentity identity,
         PostgreSqlProjectionsOptions options)
     {
@@ -31,13 +41,16 @@ public sealed class ProjectionWriteContext
         _schema = '"' + options.Schema + '"';
     }
 
-    public DbConnection Connection { get { EnsureActive(); return _connection; } }
-    public DbTransaction Transaction { get { EnsureActive(); return _transaction; } }
+    public DbConnection Connection { get { EnsureActive(); ForgetSources(); return _connection; } }
+    public DbTransaction Transaction { get { EnsureActive(); ForgetSources(); return _transaction; } }
     internal int WriteCount => _writes;
     internal int InvalidationCount => _invalidations;
     internal long WriteBytes => _writeBytes;
 
-    /// <summary>Bulk-upsert documents and reconcile dependencies with three SQL commands, bounded by count and bytes.</summary>
+    /// <summary>
+    /// Bulk-upsert documents and reconcile dependencies with three ordered SQL statements, bounded by count and bytes.
+    /// When the provider supports ADO.NET batches the statements share one round trip.
+    /// </summary>
     public async ValueTask UpsertManyAsync(IReadOnlyList<ProjectionDocumentWrite> documents,
         CancellationToken cancellationToken = default)
     {
@@ -106,26 +119,28 @@ public sealed class ProjectionWriteContext
         }
 
         var batch = Encoding.UTF8.GetString(buffer.WrittenSpan);
-        await ExecuteAsync($"""
+        (string Name, object Value)[] parameters = [("batch", batch)];
+        await ExecutePipelinedAsync(cancellationToken,
+            ($"""
             INSERT INTO {_schema}.documents(projection, version, tenant_id, document_key, payload)
             SELECT @projection, @version, i.tenant_id, i.document_key, decode(i.payload, 'base64')
             FROM jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(tenant_id text, document_key text, payload text)
             ON CONFLICT(projection, version, tenant_id, document_key) DO UPDATE SET payload = EXCLUDED.payload
-            """, cancellationToken, ("batch", batch)).ConfigureAwait(false);
-        await ExecuteAsync($"""
+            """, parameters),
+            ($"""
             DELETE FROM {_schema}.dependencies d USING jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(tenant_id text, document_key text, dependencies jsonb)
             WHERE d.projection = @projection AND d.version = @version AND d.tenant_id = i.tenant_id AND d.document_key = i.document_key
                 AND NOT EXISTS (
                     SELECT 1 FROM jsonb_to_recordset(i.dependencies) AS wanted(table_id text, key_id text)
                     WHERE wanted.table_id = d.table_id AND wanted.key_id = d.key_id)
-            """, cancellationToken, ("batch", batch)).ConfigureAwait(false);
-        await ExecuteAsync($"""
+            """, parameters),
+            ($"""
             INSERT INTO {_schema}.dependencies(projection, version, tenant_id, document_key, table_id, key_id)
             SELECT @projection, @version, i.tenant_id, i.document_key, d.table_id, d.key_id
             FROM jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(tenant_id text, document_key text, dependencies jsonb)
             CROSS JOIN LATERAL jsonb_to_recordset(i.dependencies) AS d(table_id text, key_id text)
             ON CONFLICT(projection, version, tenant_id, document_key, table_id, key_id) DO NOTHING
-            """, cancellationToken, ("batch", batch)).ConfigureAwait(false);
+            """, parameters)).ConfigureAwait(false);
     }
 
     public ValueTask UpsertJsonAsync<T>(string tenantId, string key, T value, JsonTypeInfo<T> jsonTypeInfo,
@@ -221,10 +236,18 @@ public sealed class ProjectionWriteContext
             """, ("tenant", tenantId), ("table", dependency.TableId), ("dependency_key", dependency.KeyId),
             ("after", afterDocumentKey ?? string.Empty), ("limit", checked(maximumDocuments + 1)));
         var keys = new List<string>();
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        try
         {
-            keys.Add(reader.GetString(0));
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                keys.Add(reader.GetString(0));
+            }
+        }
+        catch
+        {
+            ForgetSources();
+            throw;
         }
 
         var hasMore = keys.Count > maximumDocuments;
@@ -289,6 +312,10 @@ public sealed class ProjectionWriteContext
             FROM jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(tenant_id text, table_id text, key_id text, payload text)
             ON CONFLICT(projection, version, tenant_id, table_id, key_id) DO UPDATE SET payload = EXCLUDED.payload
             """, cancellationToken, ("batch", Encoding.UTF8.GetString(buffer.WrittenSpan))).ConfigureAwait(false);
+        if (_sources is not null)
+        {
+            foreach (var source in sources) { RememberSource(source.TenantId, source.SourceKey, source.Payload.ToArray()); }
+        }
     }
 
     public async ValueTask DeleteSourcesAsync(IReadOnlyList<ProjectionSourceDelete> sources, CancellationToken cancellationToken = default)
@@ -321,6 +348,7 @@ public sealed class ProjectionWriteContext
             DELETE FROM {_schema}.source_rows d USING jsonb_to_recordset(CAST(@batch AS jsonb)) AS i(tenant_id text, table_id text, key_id text)
             WHERE d.projection = @projection AND d.version = @version AND d.tenant_id = i.tenant_id AND d.table_id = i.table_id AND d.key_id = i.key_id
             """, cancellationToken, ("batch", Encoding.UTF8.GetString(buffer.WrittenSpan))).ConfigureAwait(false);
+        foreach (var source in sources) { RememberSource(source.TenantId, source.SourceKey, null); }
     }
 
     private void ValidateSourceBatchCount(int count)
@@ -349,6 +377,7 @@ public sealed class ProjectionWriteContext
             ON CONFLICT (projection, version, tenant_id, table_id, key_id) DO UPDATE SET payload = EXCLUDED.payload
             """, cancellationToken, ("tenant", tenantId), ("table", sourceKey.TableId), ("key", sourceKey.KeyId),
             ("payload", payload.ToArray())).ConfigureAwait(false);
+        if (_sources is not null) { RememberSource(tenantId, sourceKey, payload.ToArray()); }
     }
 
     public async ValueTask DeleteSourceAsync(string tenantId, ProjectionDependency sourceKey, CancellationToken cancellationToken = default)
@@ -360,19 +389,47 @@ public sealed class ProjectionWriteContext
         await ExecuteAsync($"""
             DELETE FROM {_schema}.source_rows WHERE projection = @projection AND version = @version AND tenant_id = @tenant AND table_id = @table AND key_id = @key
             """, cancellationToken, ("tenant", tenantId), ("table", sourceKey.TableId), ("key", sourceKey.KeyId)).ConfigureAwait(false);
+        RememberSource(tenantId, sourceKey, null);
     }
 
+    /// <summary>
+    /// Read a source mirror row in this transaction. A row this context already read or wrote is served from
+    /// its exact transaction-scoped image without another round trip.
+    /// </summary>
     public async ValueTask<ReadOnlyMemory<byte>?> ReadSourceAsync(string tenantId, ProjectionDependency sourceKey,
         CancellationToken cancellationToken = default)
     {
         EnsureActive();
         ProjectionValidation.Key(tenantId, nameof(tenantId));
         ArgumentNullException.ThrowIfNull(sourceKey);
+        if (_sources is not null && _sources.TryGetValue((tenantId, sourceKey.TableId, sourceKey.KeyId), out var remembered))
+        {
+            // Each call returns a private array, exactly like a repeated database read.
+            return remembered is null ? (ReadOnlyMemory<byte>?)null : new ReadOnlyMemory<byte>(remembered.AsSpan().ToArray());
+        }
+
         await using var command = Command($"""
             SELECT payload FROM {_schema}.source_rows WHERE projection = @projection AND version = @version AND tenant_id = @tenant AND table_id = @table AND key_id = @key
             """, ("tenant", tenantId), ("table", sourceKey.TableId), ("key", sourceKey.KeyId));
-        var result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-        return result is byte[] bytes ? new ReadOnlyMemory<byte>(bytes) : (ReadOnlyMemory<byte>?)null;
+        object? result;
+        try
+        {
+            result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            ForgetSources();
+            throw;
+        }
+
+        if (result is byte[] bytes)
+        {
+            if (_sources is not null) { RememberSource(tenantId, sourceKey, bytes.AsSpan().ToArray()); }
+            return new ReadOnlyMemory<byte>(bytes);
+        }
+
+        RememberSource(tenantId, sourceKey, null);
+        return null;
     }
 
     /// <summary>Apply an exact decimal aggregate delta alongside source mirrors, documents, and checkpoint.</summary>
@@ -397,8 +454,16 @@ public sealed class ProjectionWriteContext
         await using var command = Command($"""
             SELECT value FROM {_schema}.aggregates WHERE projection = @projection AND version = @version AND tenant_id = @tenant AND group_key = @group_key AND metric = @metric
             """, ("tenant", tenantId), ("group_key", groupKey), ("metric", metric));
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? reader.GetDecimal(0) : 0;
+        try
+        {
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            return await reader.ReadAsync(cancellationToken).ConfigureAwait(false) ? reader.GetDecimal(0) : 0;
+        }
+        catch
+        {
+            ForgetSources();
+            throw;
+        }
     }
 
     internal void Close() => _closed = true;
@@ -465,6 +530,79 @@ public sealed class ProjectionWriteContext
     private async ValueTask ExecuteAsync(string sql, CancellationToken cancellationToken, params (string Name, object Value)[] parameters)
     {
         await using var command = Command(sql, parameters);
-        _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            ForgetSources();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Execute ordered statements in one round trip when the provider supports ADO.NET batches. Statement order,
+    /// transaction and failure semantics match sequential execution: the first error fails the call and aborts
+    /// the transaction. The batch keeps the sequential worst-case time bound of one command timeout per statement.
+    /// </summary>
+    private async ValueTask ExecutePipelinedAsync(CancellationToken cancellationToken,
+        params (string Sql, (string Name, object Value)[] Parameters)[] statements)
+    {
+        EnsureActive();
+        var batch = ProjectionSql.Batch(_connection, _transaction, _options.CommandTimeoutSeconds, statements,
+            ("projection", _identity.Name), ("version", _identity.Version));
+        if (batch is null)
+        {
+            foreach (var (sql, parameters) in statements)
+            {
+                await ExecuteAsync(sql, cancellationToken, parameters).ConfigureAwait(false);
+            }
+
+            return;
+        }
+
+        await using (batch.ConfigureAwait(false))
+        {
+            try
+            {
+                _ = await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                ForgetSources();
+                throw;
+            }
+        }
+    }
+
+    private void ForgetSources()
+    {
+        _sources = null;
+        _sourceBytes = 0;
+    }
+
+    private void RememberSource(string tenantId, ProjectionDependency sourceKey, byte[]? payload)
+    {
+        if (_sources is null)
+        {
+            return;
+        }
+
+        var key = (tenantId, sourceKey.TableId, sourceKey.KeyId);
+        if (_sources.Remove(key, out var prior))
+        {
+            _sourceBytes -= prior?.Length ?? 0;
+        }
+
+        var length = payload?.Length ?? 0;
+        if (_sources.Count >= MaximumRememberedSources || _sourceBytes + length > _options.MaximumWriteBatchBytes)
+        {
+            // Not remembered: a later read uses the authoritative database row.
+            return;
+        }
+
+        _sources.Add(key, payload);
+        _sourceBytes += length;
     }
 }

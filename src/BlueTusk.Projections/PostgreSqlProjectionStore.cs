@@ -375,14 +375,18 @@ public sealed partial class PostgreSqlProjectionStore
             }
         }
 
-        await CheckpointAsync(connection, targetTransaction, lease, transaction.CommitEndPosition, cancellationToken).ConfigureAwait(false);
-        if (control is not null)
+        if (control is null)
         {
+            await CheckpointAndPublishAsync(connection, targetTransaction, lease, transaction.CommitEndPosition, cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            await CheckpointAsync(connection, targetTransaction, lease, transaction.CommitEndPosition, cancellationToken).ConfigureAwait(false);
             await AcknowledgeProjectionControlAsync(connection, targetTransaction, lease,
                 protectedRetention!, control, transaction, locked.State, cancellationToken).ConfigureAwait(false);
+            await ExecuteAsync(connection, targetTransaction, PublicationRevisionSql,
+                cancellationToken, ("projection", lease.Identity.Name), ("version", lease.Identity.Version)).ConfigureAwait(false);
         }
-        await ExecuteAsync(connection, targetTransaction, $"UPDATE {_schema}.heads SET publication_revision = publication_revision + 1 WHERE projection = @projection AND active_version = @version",
-            cancellationToken, ("projection", lease.Identity.Name), ("version", lease.Identity.Version)).ConfigureAwait(false);
         await targetTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         if (context is not null) { ProjectionsDiagnostics.Commit("cdc", context); }
         return new ProjectionApplyResult(true, transaction.CommitEndPosition, checked(locked.State.Generation + 1));
@@ -559,16 +563,53 @@ public sealed partial class PostgreSqlProjectionStore
             reader.IsDBNull(14) ? null : new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(14), DateTimeKind.Utc)));
     }
 
+    private string CheckpointSql => $"""
+        UPDATE {_schema}.state SET checkpoint = @checkpoint, generation = generation + 1
+        WHERE projection = @projection AND version = @version AND owner_id = @owner AND fencing_token = @token AND expires_at > clock_timestamp()
+        """;
+
+    private string PublicationRevisionSql =>
+        $"UPDATE {_schema}.heads SET publication_revision = publication_revision + 1 WHERE projection = @projection AND active_version = @version";
+
     private async ValueTask CheckpointAsync(DbConnection connection, DbTransaction transaction, ProjectionLease lease,
         BlueTuskLogSequenceNumber checkpoint, CancellationToken cancellationToken)
     {
-        await using var command = LeaseCommand(connection, transaction, lease, $"""
-            UPDATE {_schema}.state SET checkpoint = @checkpoint, generation = generation + 1
-            WHERE projection = @projection AND version = @version AND owner_id = @owner AND fencing_token = @token AND expires_at > clock_timestamp()
-            """, ("checkpoint", (decimal)checkpoint.Value));
+        await using var command = LeaseCommand(connection, transaction, lease, CheckpointSql, ("checkpoint", (decimal)checkpoint.Value));
         if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
         {
             throw new ProjectionFencedException();
+        }
+    }
+
+    /// <summary>
+    /// Fenced checkpoint followed by the active version's publication revision, in that order. With ADO.NET batch
+    /// support both statements share one round trip; a fenced checkpoint still throws before commit, so the
+    /// already row-locked head update is rolled back with the rest of the transaction.
+    /// </summary>
+    private async ValueTask CheckpointAndPublishAsync(DbConnection connection, DbTransaction transaction, ProjectionLease lease,
+        BlueTuskLogSequenceNumber checkpoint, CancellationToken cancellationToken)
+    {
+        var batch = ProjectionSql.Batch(connection, transaction, _options.CommandTimeoutSeconds,
+            [
+                (CheckpointSql, [("owner", lease.OwnerId), ("token", lease.FencingToken), ("checkpoint", (decimal)checkpoint.Value)]),
+                (PublicationRevisionSql, [])
+            ],
+            ("projection", lease.Identity.Name), ("version", lease.Identity.Version));
+        if (batch is null)
+        {
+            await CheckpointAsync(connection, transaction, lease, checkpoint, cancellationToken).ConfigureAwait(false);
+            await ExecuteAsync(connection, transaction, PublicationRevisionSql, cancellationToken,
+                ("projection", lease.Identity.Name), ("version", lease.Identity.Version)).ConfigureAwait(false);
+            return;
+        }
+
+        await using (batch.ConfigureAwait(false))
+        {
+            _ = await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            if (batch.BatchCommands[0].RecordsAffected != 1)
+            {
+                throw new ProjectionFencedException();
+            }
         }
     }
 

@@ -184,4 +184,54 @@ internal static class ProjectionSql
 
         return command;
     }
+
+    /// <summary>
+    /// Create one provider batch for ordered statements that then share a single round trip, or return null
+    /// when the provider has no ADO.NET batch/batch-parameter support so callers execute them sequentially.
+    /// Every statement receives the shared parameters first. The batch timeout keeps the sequential worst case
+    /// of one command timeout per statement.
+    /// </summary>
+    internal static DbBatch? Batch(DbConnection connection, DbTransaction? transaction, int timeout,
+        IReadOnlyList<(string Sql, (string Name, object Value)[] Parameters)> statements,
+        params (string Name, object Value)[] shared)
+    {
+        if (!connection.CanCreateBatch)
+        {
+            return null;
+        }
+
+        var batch = connection.CreateBatch();
+        try
+        {
+            batch.Transaction = transaction;
+            batch.Timeout = checked(timeout * statements.Count);
+            foreach (var (sql, parameters) in statements)
+            {
+                var command = batch.CreateBatchCommand();
+                if (!command.CanCreateParameter)
+                {
+                    batch.Dispose();
+                    return null;
+                }
+
+                command.CommandText = sql;
+                foreach (var entry in shared.Concat(parameters))
+                {
+                    var parameter = command.CreateParameter();
+                    parameter.ParameterName = entry.Name;
+                    parameter.Value = entry.Value;
+                    command.Parameters.Add(parameter);
+                }
+
+                batch.BatchCommands.Add(command);
+            }
+
+            return batch;
+        }
+        catch
+        {
+            batch.Dispose();
+            throw;
+        }
+    }
 }
