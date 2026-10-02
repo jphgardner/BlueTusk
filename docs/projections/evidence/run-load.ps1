@@ -8,7 +8,8 @@ param(
     [int]$DockerMemoryMiB = 2048,
     [ValidateSet(128,4096,65536)][int]$SmokePayloadBytes = 128,
     [string]$OutputDirectory,
-    [switch]$NoBuild
+    [switch]$NoBuild,
+    [switch]$Diagnostics
 )
 $ErrorActionPreference = 'Stop'
 if ($Seconds -eq 0) { $Seconds = if ($Profile -in @('soak','capacity')) { 600 } else { 5 } }
@@ -24,7 +25,12 @@ $owner = 'bluetusk.projections.load'
 $image = 'postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873'
 $campaign = 'projections-load-' + [guid]::NewGuid().ToString('N').Substring(0,16)
 $artifactDirectory = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { Join-Path $root "artifacts/projections-load/$campaign" } else { [System.IO.Path]::GetFullPath($OutputDirectory) }
-$environmentNames = @('BLUETUSK_PROJECTIONS_LOAD_CONNECTION_STRING','BLUETUSK_PROJECTIONS_LOAD_STANDBY','BLUETUSK_PROJECTIONS_LOAD_PRIMARY_CONTAINER','BLUETUSK_PROJECTIONS_LOAD_STANDBY_CONTAINER','BLUETUSK_PROJECTIONS_LOAD_FIXTURE','BLUETUSK_PROJECTIONS_LOAD_DOCKER')
+$environmentNames = @('BLUETUSK_PROJECTIONS_LOAD_CONNECTION_STRING','BLUETUSK_PROJECTIONS_LOAD_STANDBY','BLUETUSK_PROJECTIONS_LOAD_PRIMARY_CONTAINER','BLUETUSK_PROJECTIONS_LOAD_STANDBY_CONTAINER','BLUETUSK_PROJECTIONS_LOAD_FIXTURE','BLUETUSK_PROJECTIONS_LOAD_DOCKER','BLUETUSK_PROJECTIONS_LOAD_SERVER_SAMPLES')
+# Cheap WAL I/O timing feeds pg_stat_io; checkpoint logging is explicit although PostgreSQL 18 enables it by default.
+$serverSettings = @('-c','track_wal_io_timing=on','-c','log_checkpoints=on')
+# -Diagnostics also logs every autovacuum, samples server wait events/I/O counters from a separate session
+# and retains this exact fixture's raw server log beside the run. It is not used by the verifier.
+if ($Diagnostics) { $serverSettings += @('-c','log_autovacuum_min_duration=0') }
 $priorEnvironment = @{}
 foreach ($name in $environmentNames) { $priorEnvironment[$name] = [System.Environment]::GetEnvironmentVariable($name,[System.EnvironmentVariableTarget]::Process) }
 function InvokeDocker([string[]]$Arguments) {
@@ -56,6 +62,16 @@ function WaitReady([string]$Container) {
         Start-Sleep -Milliseconds 200
     }
     throw 'Owned PostgreSQL fixture did not become ready.'
+}
+function SaveServerLog([string]$Container,[string]$Fixture,[string]$Path) {
+    # -Diagnostics only: the raw PostgreSQL log (checkpoint/autovacuum timing) of this exact labelled
+    # disposable fixture is retained beside its run for correlation with the delivery trace. Docker's
+    # receive timestamps are prefixed. Never used by the verifier; default runs persist no raw logs.
+    $labels = & $dockerCommand inspect $Container --format '{{json .Config.Labels}}' 2>$null
+    if ($LASTEXITCODE -ne 0) { return }
+    $actual = $labels | ConvertFrom-Json
+    if ($actual.'bluetusk.owner' -ne $owner -or $actual.'bluetusk.fixture' -ne $Fixture) { throw "Refusing log capture outside owned fixture: $Container" }
+    Start-Process -FilePath $dockerCommand -ArgumentList @('logs','--timestamps',$Container) -NoNewWindow -Wait -RedirectStandardError $Path -RedirectStandardOutput "$Path.stdout"
 }
 function SaveFailureState([string]$Container,[string]$Fixture,[string]$Path) {
     # Diagnostic data stays within this exact disposable fixture; no raw server logs, SQL,
@@ -142,6 +158,7 @@ try {
         $primary = "$fixture-primary"; $standby = "$fixture-standby"; $helper = "$fixture-basebackup"
         $network = "$fixture-network"; $primaryVolume = "$fixture-primary-data"; $standbyVolume = "$fixture-standby-data"
         $statsProcess = $null; $statsFile = $null; $statsCopy = $null; $statsError = $null
+        $hostSampler = $null; $allStatsProcess = $null; $allStatsFile = $null; $allStatsCopy = $null; $allStatsError = $null
         try {
             foreach ($port in @($PrimaryPort,$StandbyPort)) {
                 $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback,$port)
@@ -149,10 +166,10 @@ try {
             }
             InvokeDocker -Arguments @('network','create','--label',"bluetusk.owner=$owner",'--label',"bluetusk.fixture=$fixture",$network) | Out-Null
             InvokeDocker -Arguments @('volume','create','--label',"bluetusk.owner=$owner",'--label',"bluetusk.fixture=$fixture",$primaryVolume) | Out-Null
-            InvokeDocker -Arguments @('run','-d','--name',$primary,'--label',"bluetusk.owner=$owner",'--label',"bluetusk.fixture=$fixture",'--network',$network,
+            InvokeDocker -Arguments (@('run','-d','--name',$primary,'--label',"bluetusk.owner=$owner",'--label',"bluetusk.fixture=$fixture",'--network',$network,
                 '--cpus',"$DockerCpus",'--memory',"${DockerMemoryMiB}m",
                 '-p',"127.0.0.1:${PrimaryPort}:5432",'-v',"${primaryVolume}:/var/lib/postgresql/data",'-e','PGDATA=/var/lib/postgresql/data/pgdata','-e','POSTGRES_PASSWORD=postgres',$image, # ggignore
-                'postgres','-c','wal_level=logical','-c','max_wal_senders=12','-c','max_replication_slots=12','-c','max_slot_wal_keep_size=8192MB','-c','shared_buffers=128MB') | Out-Null
+                'postgres','-c','wal_level=logical','-c','max_wal_senders=12','-c','max_replication_slots=12','-c','max_slot_wal_keep_size=8192MB','-c','shared_buffers=128MB') + $serverSettings) | Out-Null
             WaitReady $primary
             Query $primary 'CREATE DATABASE bluetusk_load' | Out-Null
             if ($Profile -eq 'promotion') {
@@ -162,10 +179,10 @@ try {
                 InvokeDocker -Arguments @('run','--rm','--name',$helper,'--label',"bluetusk.owner=$owner",'--label',"bluetusk.fixture=$fixture",'--network',$network,
                     '-v',"${standbyVolume}:/var/lib/postgresql/data",'-e','PGPASSWORD=postgres','--entrypoint','sh',$image,'-c', # ggignore
                     "mkdir -p /var/lib/postgresql/data/pgdata && chown postgres:postgres /var/lib/postgresql/data/pgdata && exec gosu postgres pg_basebackup -d 'host=$primary user=postgres application_name=bluetusk_load_standby' -D /var/lib/postgresql/data/pgdata -c fast -X stream -R -C -S bluetusk_load_physical") | Out-Null
-                InvokeDocker -Arguments @('run','-d','--name',$standby,'--label',"bluetusk.owner=$owner",'--label',"bluetusk.fixture=$fixture",'--network',$network,
+                InvokeDocker -Arguments (@('run','-d','--name',$standby,'--label',"bluetusk.owner=$owner",'--label',"bluetusk.fixture=$fixture",'--network',$network,
                     '--cpus',"$DockerCpus",'--memory',"${DockerMemoryMiB}m",
                     '-p',"127.0.0.1:${StandbyPort}:5432",'-v',"${standbyVolume}:/var/lib/postgresql/data",'-e','PGDATA=/var/lib/postgresql/data/pgdata','-e','PGPASSWORD=postgres',$image, # ggignore
-                    'postgres','-c','wal_level=logical','-c','max_wal_senders=12','-c','max_replication_slots=12') | Out-Null
+                    'postgres','-c','wal_level=logical','-c','max_wal_senders=12','-c','max_replication_slots=12') + $serverSettings) | Out-Null
                 WaitReady $standby
                 Query $primary "ALTER SYSTEM SET synchronous_standby_names='FIRST 1 (bluetusk_load_standby)'" | Out-Null
                 Query $primary "ALTER SYSTEM SET synchronous_commit='remote_apply'" | Out-Null
@@ -181,6 +198,7 @@ try {
             $env:BLUETUSK_PROJECTIONS_LOAD_STANDBY = "Host=127.0.0.1;Port=$StandbyPort;Username=postgres;Password=postgres;Database=bluetusk_load;SSL Mode=Disable;Channel Binding=Disable" # ggignore
             $env:BLUETUSK_PROJECTIONS_LOAD_PRIMARY_CONTAINER=$primary; $env:BLUETUSK_PROJECTIONS_LOAD_STANDBY_CONTAINER=$standby
             $env:BLUETUSK_PROJECTIONS_LOAD_FIXTURE=$fixture; $env:BLUETUSK_PROJECTIONS_LOAD_DOCKER=$dockerCommand
+            $env:BLUETUSK_PROJECTIONS_LOAD_SERVER_SAMPLES = if ($Diagnostics) { '1' } else { '0' }
             # The child Docker client only observes this fixture. Its bounded-duration JSONL stream
             # records server CPU/memory/block/network observations without application payloads.
             $statsStart=[System.Diagnostics.ProcessStartInfo]::new($dockerCommand)
@@ -191,6 +209,32 @@ try {
             $statsFile=[System.IO.File]::Create((Join-Path $artifactDirectory "run-$run-docker-stats.jsonl"))
             $statsCopy=$statsProcess.StandardOutput.BaseStream.CopyToAsync($statsFile)
             $statsError=$statsProcess.StandardError.ReadToEndAsync()
+            if ($Diagnostics) {
+                # Host contention is a confounder on a shared workstation: every 5 s record host CPU and
+                # .NET build/test process CPU time, plus Docker statistics for every running container
+                # (read-only observation; other containers are never stopped or altered).
+                $hostSampler = Start-ThreadJob -ArgumentList (Join-Path $artifactDirectory "run-$run-host-processes.jsonl") -ScriptBlock {
+                    param($Path)
+                    $writer = [System.IO.StreamWriter]::new($Path, $false, [System.Text.UTF8Encoding]::new($false))
+                    try {
+                        while ($true) {
+                            $cpu = (Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -Filter "Name='_Total'").PercentProcessorTime
+                            $processes = @(Get-Process dotnet,testhost,VBCSCompiler,MSBuild,BlueTusk.Projections.LoadHarness -ErrorAction SilentlyContinue | ForEach-Object {
+                                [ordered]@{ Name=$_.Name; Id=$_.Id; CpuSeconds=[math]::Round($_.TotalProcessorTime.TotalSeconds,2); WorkingSetMiB=[math]::Round($_.WorkingSet64/1MB) } })
+                            $writer.WriteLine((ConvertTo-Json -Compress -Depth 4 ([ordered]@{ Utc=[datetime]::UtcNow.ToString('o'); HostCpuPercent=$cpu; Processes=$processes })))
+                            $writer.Flush()
+                            Start-Sleep -Seconds 5
+                        }
+                    } finally { $writer.Dispose() }
+                }
+                $allStatsStart=[System.Diagnostics.ProcessStartInfo]::new($dockerCommand)
+                $allStatsStart.UseShellExecute=$false; $allStatsStart.CreateNoWindow=$true; $allStatsStart.RedirectStandardOutput=$true; $allStatsStart.RedirectStandardError=$true
+                foreach ($argument in @('stats','--format','{{json .}}')) { $allStatsStart.ArgumentList.Add($argument) }
+                $allStatsProcess=[System.Diagnostics.Process]::Start($allStatsStart)
+                $allStatsFile=[System.IO.File]::Create((Join-Path $artifactDirectory "run-$run-docker-stats-all.jsonl"))
+                $allStatsCopy=$allStatsProcess.StandardOutput.BaseStream.CopyToAsync($allStatsFile)
+                $allStatsError=$allStatsProcess.StandardError.ReadToEndAsync()
+            }
             & dotnet run --no-build --project benchmarks/BlueTusk.Projections.LoadHarness/BlueTusk.Projections.LoadHarness.csproj -c Release -- $Profile $Seconds (Join-Path $artifactDirectory "run-$run.json") $SmokePayloadBytes
             if ($LASTEXITCODE -ne 0) {
                 try { SaveFailureState $primary $fixture (Join-Path $artifactDirectory "run-$run-failure-state.json") }
@@ -206,6 +250,18 @@ try {
                 if (-not $statsProcess.HasExited) { $statsProcess.Kill() }
                 $statsProcess.WaitForExit(); $statsCopy.GetAwaiter().GetResult() | Out-Null; $statsError.GetAwaiter().GetResult() | Out-Null
                 $statsFile.Dispose(); $statsProcess.Dispose()
+            }
+            if ($null -ne $hostSampler) { Stop-Job -Job $hostSampler; Remove-Job -Job $hostSampler -Force; $hostSampler = $null }
+            if ($null -ne $allStatsProcess) {
+                if (-not $allStatsProcess.HasExited) { $allStatsProcess.Kill() }
+                $allStatsProcess.WaitForExit(); $allStatsCopy.GetAwaiter().GetResult() | Out-Null; $allStatsError.GetAwaiter().GetResult() | Out-Null
+                $allStatsFile.Dispose(); $allStatsProcess.Dispose(); $allStatsProcess = $null
+            }
+            if ($Diagnostics) {
+                foreach ($server in @(@($primary,'primary'),@($standby,'standby'))) {
+                    try { SaveServerLog $server[0] $fixture (Join-Path $artifactDirectory "run-$run-$($server[1]).log") }
+                    catch { Write-Warning "Diagnostic $($server[1]) server log was not captured: $($_.Exception.GetType().Name)" }
+                }
             }
             RemoveOwned 'container' $standby; RemoveOwned 'container' $helper; RemoveOwned 'container' $primary
             RemoveOwned 'volume' $standbyVolume; RemoveOwned 'volume' $primaryVolume; RemoveOwned 'network' $network
