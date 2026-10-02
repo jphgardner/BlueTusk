@@ -15,12 +15,44 @@ public sealed class BlueTuskComplexTypesTrackingTest(
         testOutputHelper)
 {
     [ConditionalTheory]
-    public override void Can_remove_from_complex_record_collection_with_nested_complex_collection(bool trackFromQuery)
+    public override void Can_mark_complex_record_array_collection_properties_modified(System.Boolean trackFromQuery)
+        => base.Can_mark_complex_record_array_collection_properties_modified(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_mark_complex_type_array_collection_properties_modified(System.Boolean trackFromQuery)
+        => base.Can_mark_complex_type_array_collection_properties_modified(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_read_original_values_for_properties_of_complex_record_array_collections(System.Boolean trackFromQuery)
+        => base.Can_read_original_values_for_properties_of_complex_record_array_collections(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_read_original_values_for_properties_of_complex_type_array_collections(System.Boolean trackFromQuery)
+        => base.Can_read_original_values_for_properties_of_complex_type_array_collections(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_remove_from_complex_record_collection_with_nested_complex_collection(System.Boolean trackFromQuery)
         => base.Can_remove_from_complex_record_collection_with_nested_complex_collection(trackFromQuery);
 
     [ConditionalTheory]
-    public override void Can_remove_from_complex_record_field_collection_with_nested_complex_collection(bool trackFromQuery)
+    public override void Can_remove_from_complex_record_field_collection_with_nested_complex_collection(System.Boolean trackFromQuery)
         => base.Can_remove_from_complex_record_field_collection_with_nested_complex_collection(trackFromQuery);
+
+    [ConditionalTheory]
+    public override Task Can_track_entity_with_complex_record_array_collections(Microsoft.EntityFrameworkCore.EntityState state, System.Boolean async)
+        => base.Can_track_entity_with_complex_record_array_collections(state, async);
+
+    [ConditionalTheory]
+    public override Task Can_track_entity_with_complex_type_array_collections(Microsoft.EntityFrameworkCore.EntityState state, System.Boolean async)
+        => base.Can_track_entity_with_complex_type_array_collections(state, async);
+
+    [ConditionalTheory]
+    public override void Can_write_original_values_for_properties_of_complex_record_array_collections(System.Boolean trackFromQuery)
+        => base.Can_write_original_values_for_properties_of_complex_record_array_collections(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_write_original_values_for_properties_of_complex_type_array_collections(System.Boolean trackFromQuery)
+        => base.Can_write_original_values_for_properties_of_complex_type_array_collections(trackFromQuery);
 
     [ConditionalFact]
     public void JSON_mapped_complex_properties_have_value_reader_writers()

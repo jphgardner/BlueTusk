@@ -24,12 +24,15 @@ these official suites:
   by EF Core itself. PostgreSQL's rejection of implicit arbitrary text-to-JSONB
   casts is asserted explicitly in the three applicable cases rather than
   skipped;
-- `RelationalModelBuilderTest`: 682 passing offline generic model-building
+- `RelationalModelBuilderTest`: 746 passing offline generic model-building
   contracts covering non-relationship mappings, primitive-collection element
-  facets, complex types and collections, inheritance, one-to-many,
-  many-to-one, one-to-one, many-to-many, and owned types. The remaining 66
-  cases retain EF Core's own `#35613` and `#31411` skip declarations. This gate
-  found and closed BlueTusk's missing `decimal`/`numeric` array-element mapping;
+  facets, complex types and collections (including shadow properties on
+  reference complex types, which EF Core skips for `#35613`), inheritance,
+  one-to-many, many-to-one, one-to-one, many-to-many, and owned types. Two
+  cases retain EF Core's own skip declarations: a value-type (tuple) complex
+  collection (`#31411`) and a complex discriminator without an explicit value.
+  This gate found and closed BlueTusk's missing `decimal`/`numeric`
+  array-element mapping;
 - `DataAnnotationRelationalTestBase`: 97 live model, validation, concurrency,
   transaction, and data-annotation cases;
 - `CompositeKeyEndToEndTestBase`: all three live composite-key cases;
@@ -44,11 +47,12 @@ these official suites:
   generated-value, batching, filtered-index, and identifier-length contracts;
 - `StoreGeneratedFixupRelationalTestBase`: all 119 live temporary-key,
   generated-key, relationship-fixup, and composite-key contracts; and
-- `ComplexTypesTrackingRelationalTestBase`: 235 passing inherited live
-  tracking, mutation, JSON persistence, and JSON-query contracts, 50 skips
-  declared by EF Core itself for open complex-struct collection scenarios, and
-  one provider regression that recursively verifies every nested JSON scalar
-  has an EF JSON reader/writer;
+- `ComplexTypesTrackingRelationalTestBase`: 268 passing inherited live
+  tracking, mutation, JSON persistence, and JSON-query contracts, including
+  array-typed complex collections that EF Core skips; 40 skips declared by EF
+  Core itself for open complex-struct collection scenarios; and one provider
+  regression that recursively verifies every nested JSON scalar has an EF JSON
+  reader/writer;
 - `ComplexTypeQueryRelationalTestBase`: 146 passing live filtering,
   projection, ordering, grouping, equality, set-operation, optional-navigation,
   constructor-binding, bulk update, and class/struct complex-type query
@@ -106,8 +110,20 @@ This replaces the whole-method discovery conditions that also removed supported
 stored-column rows. Fresh captures must retain an execution result for every
 discovered row; the historical table above does not qualify the current source.
 
-The strict Core release collector still rejects the 124 inherited upstream skip
-declarations. Passing the ordinary specification suite with those skips is not
+BlueTusk extends EF Core 10 so shadow properties on reference complex types
+work end to end, which EF Core rejects (`#35613`): the model validator accepts
+them, query materialization reads them into the tracked snapshot from columns
+or from JSON, snapshot factories keep their original values, and fixed-size
+(array) complex collections are snapshotted by index. Shadow properties on
+value-type complex types remain rejected. `ComplexTypeShadowPropertyTests`
+round-trips table-split, JSON and JSON-collection-element shadow values through
+PostgreSQL. A single PostgreSQL 18 run of the full assembly with these
+extensions discovered 2,135 cases: 2,089 passed, no failures, and 46 retain EF
+Core's own skip declarations (40 complex-struct collection, four
+complex-collection property-values and the two model-building cases above).
+
+The strict Core release collector still rejects every inherited upstream skip
+declaration. Passing the ordinary specification suite with those skips is not
 zero-skip Core compatibility evidence and does not authorize stable publication.
 
 Run the gate directly with:
