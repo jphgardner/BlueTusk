@@ -7701,8 +7701,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1884,
-    "readMinutes": 9,
+    "wordCount": 2142,
+    "readMinutes": 10,
     "searchText": "Workload and recovery qualification `benchmarks/BlueTusk.Projections.LoadHarness` is a standalone Release executable. It uses public Data, Events, Events.Streams, Streams, Projections and Projections.Live APIs. It does not introduce another CDC transport, intercept provider writes or depend on Npgsql/EF. This harness and its reports do not confer production qualification. Run from the checkout using PowerShell 7, .NET 10, Python 3 and Docker: `-NoBuild` executes an already-built Release binary. Use it for measured runs after compilation has finished. `-OutputDirectory` must resolve inside the checkout because the candidate fingerprint tool enforces that boundary; use a unique ignored `artifacts/projections-load/<campaign>` path for CI. The runner captures the whole candidate before and after execution and fails the candidate gate if any nonignored source input changed. Raw scenario results remain diagnostic evidence in that case. A dirty but unchanged tree is a measured candidate, not an approved immutable release. The fixture runner pins PostgreSQL 18 to `postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873`. It provisions a fresh private network, labelled named volumes, and localhost ports 55718/55719; optional port parameters must name unused distinct unprivileged ports. Default container limits are 4 CPUs and 2 GiB RAM with 128 MiB shared buffers. The client process runs on the host. Cleanup checks both owner and unique fixture labels before deleting exact objects. The runner restores all prior process environment values. It never restarts/checkpoints/vacuums the shared compatibility fixtures. The physical trial's checkpoint is confined to its new promoted container and materializes timeline evidence. Workload contract Every offered operation has a stable identifier. One caller-owned SQL transaction inserts an operation ledger entry, changes an order amount or customer name, and appends one immutable Events outbox row. An exact retry "
   },
   {
@@ -7737,6 +7737,11 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
+        "id": "production-topology-a-dedicated-delivery-pool",
+        "text": "Production topology: a dedicated delivery pool",
+        "level": 3
+      },
+      {
         "id": "consistent-bootstrap-and-rebuild",
         "text": "Consistent bootstrap and rebuild",
         "level": 2
@@ -7752,9 +7757,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2079,
-    "readMinutes": 10,
-    "searchText": "BlueTusk.Projections BlueTusk.Projections is an independent .NET 10 `0.1.0-preview.1` family for versioned, durable application read models. Its PostgreSQL destination stores source mirrors, joined output documents, dependency indexes, decimal aggregates, snapshot coverage, and CDC checkpoints in one database. It consumes **BlueTusk.Streams** snapshot and committed-transaction contracts. It has no EF persistence interception or Sync connector dependency, and no Npgsql runtime dependency. Definition and destination contract Implement `IProjectionDefinition` with an explicit name, version, immutable definition fingerprint, and Streams source identity. A registered `(name, version)` cannot be rebound to different code semantics or a different source. Change the version whenever serialization, joins, aggregates, tenant resolution, keys, dependency semantics, or mappings change. The fingerprint must represent those semantics, not an arbitrary per-process value. The definition receives a bounded `ProjectionWriteContext` inside a destination transaction. It can: Store each source table's current committed row image with `UpsertSourceAsync`/`DeleteSourceAsync`, or bounded `UpsertSourcesAsync`/`DeleteSourcesAsync` bulk operations using one SQL command per batch. Read source mirrors to calculate joins from exactly the CDC history being applied. Write typed output using source-generated `JsonTypeInfo<T>`, or persist an explicit byte payload. Replace output and dependencies in bulk using `UpsertManyAsync`: three SQL commands for a bounded batch, independent of document count. Find affected joined outputs with indexed, tenant-scoped, ordinal keyset dependency pages. Apply exact decimal aggregate deltas with `AddAggregateAsync` and read them in the same transaction. Use its borrowed connection/transaction for application-specific relational state. Stage **all** source rows from a committed transaction before resolving joins. A transaction may update both parent and child tables, "
+    "wordCount": 2425,
+    "readMinutes": 12,
+    "searchText": "BlueTusk.Projections BlueTusk.Projections is an independent .NET 10 `0.1.0-preview.1` family for versioned, durable application read models. Its PostgreSQL destination stores source mirrors, joined output documents, dependency indexes, decimal aggregates, snapshot coverage, and CDC checkpoints in one database. It consumes **BlueTusk.Streams** snapshot and committed-transaction contracts. It has no EF persistence interception or Sync connector dependency, and no Npgsql runtime dependency. Definition and destination contract Implement `IProjectionDefinition` with an explicit name, version, immutable definition fingerprint, and Streams source identity. A registered `(name, version)` cannot be rebound to different code semantics or a different source. Change the version whenever serialization, joins, aggregates, tenant resolution, keys, dependency semantics, or mappings change. The fingerprint must represent those semantics, not an arbitrary per-process value. The definition receives a bounded `ProjectionWriteContext` inside a destination transaction. It can: Store each source table's current committed row image with `UpsertSourceAsync`/`DeleteSourceAsync`, or bounded `UpsertSourcesAsync`/`DeleteSourcesAsync` bulk operations using one SQL command per batch. Read source mirrors to calculate joins from exactly the CDC history being applied. A row the context already read or wrote in the same transaction is served from an exact transaction-scoped image without another round trip. Touching the borrowed `Connection`/`Transaction` or any failed command discards the image, so raw SQL and aborted transactions behave exactly as before. Write typed output using source-generated `JsonTypeInfo<T>`, or persist an explicit byte payload. Replace output and dependencies in bulk using `UpsertManyAsync`: three ordered SQL statements for a bounded batch, independent of document count, sent as one ADO.NET batch round trip when the provider supports batches. Find affected joined outputs wit"
   },
   {
     "category": "operations",

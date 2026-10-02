@@ -85,12 +85,20 @@ fanout/payload combinations keep the complete authorized Live document window be
 Unchanged TOAST values in new update tuples are restored from historical FULL old tuples. Missing
 historical bytes fail closed; the definition never reconstructs past WAL from current source SQL.
 Backlog seeding uses caller-owned batches limited to 64 operations and 1 MiB of event admission.
-The 600-second profile combines 32 tenants, 16 writers, a six-connection pool, 4 KiB payloads,
-10,000 initial pending operations, fanout 64 and 1,500 scheduled offers/second. Overload rejection,
-backlog recovery and per-tenant service are reported explicitly; this is not a promise of fairness or
-latency under every application-defined hot-key lock pattern.
+The 600-second profile combines 32 tenants, 16 writers, a six-connection application pool plus a
+two-connection delivery pool (eight backends total), 4 KiB payloads, 10,000 initial pending operations,
+fanout 64 and 1,500 scheduled offers/second. Overload rejection, backlog recovery and per-tenant
+service are reported explicitly; this is not a promise of fairness or latency under every
+application-defined hot-key lock pattern.
 
-The separate `capacity` profile uses the same 32 tenants, 16 writers, six-connection pool, 4 KiB
+In every profile the application pool (`PoolSize`) is shared by the writers, Live publishers and
+probes. The single ordered CDC delivery path (projection apply, Events inbox and lease rotation) uses
+its own `DeliveryPoolSize` (two) pool, the recommended production topology described in the
+Projections README. It is passed through the existing `DbDataSource` constructor arguments of
+`PostgreSqlProjectionStore` and `PostgreSqlEventDeliveryProcessor`. Campaigns captured before this
+change used one shared six-connection pool for all of these paths.
+
+The separate `capacity` profile uses the same 32 tenants, 16 writers, application and delivery pools, 4 KiB
 payloads, fanout 64 and ten-hot-to-one-cold offer mix, but starts without a backlog and schedules
 20 operations/second. It preserves the complete SQL/Streams/Events/Live pipeline and final exact-state
 verification. Its lower offered rate is a conservative candidate for steady-service latency measurement,

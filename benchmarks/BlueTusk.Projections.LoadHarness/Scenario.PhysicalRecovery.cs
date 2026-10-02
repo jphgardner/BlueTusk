@@ -32,6 +32,8 @@ internal sealed partial class Scenario
         await Sql.ExecuteAsync(_source, "ALTER SYSTEM SET synchronous_commit='on'", token);
         await Sql.ExecuteAsync(_source, "SELECT pg_reload_conf(); CHECKPOINT", token); // Exclusive fresh fixture only; updates timeline control evidence.
         _routing.Target = _source;
+        _originalDeliverySource = _deliverySource; _deliverySource = CreateDeliverySource(standbyConnection, _configuration);
+        _deliveryRouting.Target = _deliverySource;
         var afterSystem = await IdentifyAsync(_source, token);
         Program.Check(beforeSystem.SystemIdentifier == afterSystem.SystemIdentifier && afterSystem.Timeline > beforeSystem.Timeline, "actual same-system physical timeline promotion");
         Program.Check((await _store.ReadStateAsync(oldLease.Identity, token)).Checkpoint == oldCheckpoint, "acknowledged target checkpoint preserved synchronously");
@@ -158,7 +160,7 @@ internal sealed partial class Scenario
         await using (var command = Sql.Command(connection, null, $"SELECT (SELECT count(*) FROM \"{_eventsSchema}\".outbox),(SELECT count(*) FROM \"{_eventsSchema}\".inbox),(SELECT count(*) FROM \"{_eventsSchema}\".effects)"))
         await using (var reader = await command.ExecuteReaderAsync(token))
         { Program.Check(await reader.ReadAsync(token) && reader.GetInt64(0) == pending && reader.GetInt64(1) == pending && reader.GetInt64(2) == pending, "permanent event/inbox identities survive safe derived retention"); }
-        _processor = new(_routing, _events, new(_eventsSchema, _eventLimit), "load-wal", _identity,
+        _processor = new(_deliveryRouting, _events, new(_eventsSchema, _eventLimit), "load-wal", _identity,
             new() { MaximumEvents = 64, MaximumPayloadBytes = 1_048_576, MaximumSourceChanges = 256 });
         return new("Hard-fenced synchronous standby promotion; explicit fresh-snapshot/retained-WAL operator rebuild; preserved outbox repaired with bounded durable Events replay; recovery is not transparent.",
             beforeSystem.Timeline, afterSystem.Timeline, pending, pending, promotionMilliseconds, Stopwatch.GetElapsedTime(rebuild).TotalMilliseconds,

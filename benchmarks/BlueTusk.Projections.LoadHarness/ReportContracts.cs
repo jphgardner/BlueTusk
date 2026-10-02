@@ -5,7 +5,8 @@ using BlueTusk.Projections.Live;
 namespace BlueTusk.Projections.LoadHarness;
 
 internal sealed record LoadCase(string Name, int Seconds, int PayloadBytes, int Tenants, int Writers,
-    int Backlog, int Fanout, int OfferedPerSecond, int PoolSize, int QueueCapacity, int MaximumOperations, int DrainSeconds)
+    int Backlog, int Fanout, int OfferedPerSecond, int PoolSize, int QueueCapacity, int MaximumOperations, int DrainSeconds,
+    int DeliveryPoolSize = 2)
 {
     public int MaximumPendingOperations => Math.Max(4096, Backlog);
 }

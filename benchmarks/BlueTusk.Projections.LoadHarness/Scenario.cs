@@ -28,6 +28,13 @@ internal sealed partial class Scenario : IAsyncDisposable
     private BlueTuskDataSource _source;
     private readonly RoutedDataSource _routing;
     private BlueTuskDataSource? _originalSource;
+    // The serial CDC delivery path (projection apply, Events inbox, lease rotation) owns a separate small
+    // pool, as a production projection worker would: application writers saturating their own pool
+    // during a storage stall must not queue the single ordered consumer behind them.
+    private BlueTuskDataSource _deliverySource;
+    private readonly RoutedDataSource _deliveryRouting;
+    private BlueTuskDataSource? _originalDeliverySource;
+    private readonly PostgreSqlProjectionStore _deliveryStore;
     private readonly string _schema = "proj_load_" + Guid.NewGuid().ToString("N")[..16];
     private readonly string _eventsSchema;
     private readonly string _publication;
@@ -75,14 +82,18 @@ internal sealed partial class Scenario : IAsyncDisposable
         { MaximumPoolSize = configuration.PoolSize, ApplicationName = "BlueTuskProjectionsLoadHarness" };
         _source = BlueTuskDataSource.Create(settings.ConnectionString);
         _routing = new(_source);
-        _store = new(_routing, new()
+        _deliverySource = CreateDeliverySource(connection, configuration);
+        _deliveryRouting = new(_deliverySource);
+        PostgreSqlProjectionsOptions StoreOptions() => new()
         {
             Schema = _schema,
             MaximumSnapshotBatchRows = 64,
             MaximumInvalidationsPerTransaction = 4096,
             MaximumWriteOperationsPerTransaction = 16_384,
             MaximumResetBatchRows = 37
-        });
+        };
+        _store = new(_routing, StoreOptions());
+        _deliveryStore = new(_deliveryRouting, StoreOptions());
         _eventLimit = configuration.PayloadBytes + 1024;
         _events = new(_routing, new() { Schema = _eventsSchema, MaximumEventBytes = _eventLimit, MaximumAppendBytes = 1_048_576 });
         _offered = new long[configuration.Tenants]; _rejected = new long[configuration.Tenants];
@@ -104,6 +115,10 @@ internal sealed partial class Scenario : IAsyncDisposable
         using var lifetime = new CancellationTokenSource(TimeSpan.FromSeconds(configuration.Seconds + configuration.DrainSeconds + 1200));
         return await scenario.RunCoreAsync(promotion, lifetime.Token);
     }
+
+    private static BlueTuskDataSource CreateDeliverySource(string connection, LoadCase configuration) =>
+        BlueTuskDataSource.Create(new BlueTuskConnectionStringBuilder(connection)
+        { MaximumPoolSize = configuration.DeliveryPoolSize, ApplicationName = "BlueTuskProjectionsLoadHarness" }.ConnectionString);
 
     private static string Tenant(int index) => "tenant_" + index.ToString("D3", CultureInfo.InvariantCulture);
     private static string Order(int index) => index.ToString("D4", CultureInfo.InvariantCulture);
@@ -265,7 +280,7 @@ internal sealed partial class Scenario : IAsyncDisposable
         var consumer = new StreamsProjectionConsumer(_store, _lease, _definition);
         await PopulateSnapshotAsync(consumer, _snapshot, token);
         await _store.PromoteAsync(_lease, _snapshot.Epoch.ConsistentPosition, null, token);
-        _processor = new(_routing, _events, new(_eventsSchema, _eventLimit), "load-wal", _identity,
+        _processor = new(_deliveryRouting, _events, new(_eventsSchema, _eventLimit), "load-wal", _identity,
             new() { MaximumEvents = 64, MaximumPayloadBytes = 1_048_576, MaximumSourceChanges = 256 });
     }
 
@@ -382,6 +397,7 @@ internal sealed partial class Scenario : IAsyncDisposable
                 if (!more) { break; }
                 var received = Stopwatch.GetTimestamp();
                 var pool = _source.GetPoolStatistics();
+                var deliveryPool = _deliverySource.GetPoolStatistics();
                 var delivery = _walReader.Current;
                 await using (delivery)
                 {
@@ -398,7 +414,7 @@ internal sealed partial class Scenario : IAsyncDisposable
                     }
                     var decoded = Stopwatch.GetTimestamp();
                     var apply = DeliveryTrace.Begin();
-                    await _store.ApplyAsync(_lease!, _definition!, delivery.Transaction, token);
+                    await _deliveryStore.ApplyAsync(_lease!, _definition!, delivery.Transaction, token);
                     DeliveryTrace.End();
                     var projected = Stopwatch.GetTimestamp();
                     foreach (var row in events) { if (Interlocked.CompareExchange(ref row.Projected, projected, 0) == 0) { _livePending[row.Tenant].Enqueue(row); } }
@@ -415,16 +431,16 @@ internal sealed partial class Scenario : IAsyncDisposable
                     {
                         lease = DeliveryTrace.Begin();
                         leaseStarted = Stopwatch.GetTimestamp();
-                        var stale = _lease!; Program.Check(await _store.ReleaseAsync(stale, token), "release projection owner");
-                        _lease = await _store.AcquireAsync(stale.Identity, "recovered-" + count.ToString(CultureInfo.InvariantCulture), TimeSpan.FromHours(2), token)
+                        var stale = _lease!; Program.Check(await _deliveryStore.ReleaseAsync(stale, token), "release projection owner");
+                        _lease = await _deliveryStore.AcquireAsync(stale.Identity, "recovered-" + count.ToString(CultureInfo.InvariantCulture), TimeSpan.FromHours(2), token)
                             ?? throw new InvalidOperationException("Replacement projection lease unavailable.");
-                        Program.Check(!await _store.RenewAsync(stale, TimeSpan.FromMinutes(1), token), "stale projection owner rejected");
-                        Program.Check(!(await _store.ApplyAsync(_lease, _definition!, delivery.Transaction, token)).WasApplied, "durable WAL redelivery checkpoint deduplicates");
+                        Program.Check(!await _deliveryStore.RenewAsync(stale, TimeSpan.FromMinutes(1), token), "stale projection owner rejected");
+                        Program.Check(!(await _deliveryStore.ApplyAsync(_lease, _definition!, delivery.Transaction, token)).WasApplied, "durable WAL redelivery checkpoint deduplicates");
                         Interlocked.Increment(ref _leaseRecoveries);
                         DeliveryTrace.End();
                         leaseEnded = Stopwatch.GetTimestamp();
                     }
-                    TraceTransaction(count, delivery.Transaction, events, pool, receive, waitStarted, received, decoded,
+                    TraceTransaction(count, delivery.Transaction, events, pool, deliveryPool, receive, waitStarted, received, decoded,
                         apply, projected, process, inbox, lease, leaseStarted, leaseEnded);
                 }
             }
@@ -433,6 +449,7 @@ internal sealed partial class Scenario : IAsyncDisposable
     }
 
     private void TraceTransaction(long count, ChangeTransaction transaction, List<Operation> events, BlueTuskPoolStatistics pool,
+        BlueTuskPoolStatistics deliveryPool,
         DeliveryTrace.Phase receive, long waitStarted, long received, long decoded, DeliveryTrace.Phase apply, long projected,
         DeliveryTrace.Phase process, long inbox, DeliveryTrace.Phase? lease, long leaseStarted, long leaseEnded)
     {
@@ -450,6 +467,8 @@ internal sealed partial class Scenario : IAsyncDisposable
             writer.WriteBoolean("cust", events.Exists(static row => row.CustomerChange));
             writer.WriteNumber("poolBusy", pool.Busy);
             writer.WriteNumber("poolWaiting", pool.Waiting);
+            writer.WriteNumber("deliveryPoolBusy", deliveryPool.Busy);
+            writer.WriteNumber("deliveryPoolWaiting", deliveryPool.Waiting);
             writer.WriteNumber("wait0", DeliveryTrace.Round(trace.Milliseconds(waitStarted)));
             writer.WriteNumber("recv", DeliveryTrace.Round(trace.Milliseconds(received)));
             writer.WriteNumber("msgs", receive.Messages);
@@ -558,7 +577,13 @@ internal sealed partial class Scenario : IAsyncDisposable
                 using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 await Sql.ExecuteAsync(_source, $"SELECT pg_drop_replication_slot(slot_name) FROM pg_replication_slots WHERE slot_name IN ('{_slot}','{_slot}_rebuild'); DROP PUBLICATION IF EXISTS \"{_publication}\"; DROP SCHEMA IF EXISTS \"{_eventsSchema}\" CASCADE; DROP SCHEMA IF EXISTS \"{_schema}\" CASCADE", cleanup.Token);
             }
-            finally { _readers.Dispose(); _walCancellation?.Dispose(); await _routing.DisposeAsync(); await _source.DisposeAsync(); if (_originalSource is not null) { await _originalSource.DisposeAsync(); } }
+            finally
+            {
+                _readers.Dispose(); _walCancellation?.Dispose(); await _routing.DisposeAsync(); await _source.DisposeAsync();
+                if (_originalSource is not null) { await _originalSource.DisposeAsync(); }
+                await _deliveryRouting.DisposeAsync(); await _deliverySource.DisposeAsync();
+                if (_originalDeliverySource is not null) { await _originalDeliverySource.DisposeAsync(); }
+            }
         }
     }
 }
