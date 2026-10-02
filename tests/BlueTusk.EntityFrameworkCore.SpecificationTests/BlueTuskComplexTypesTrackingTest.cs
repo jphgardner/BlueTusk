@@ -54,6 +54,22 @@ public sealed class BlueTuskComplexTypesTrackingTest(
     public override void Can_write_original_values_for_properties_of_complex_type_array_collections(System.Boolean trackFromQuery)
         => base.Can_write_original_values_for_properties_of_complex_type_array_collections(trackFromQuery);
 
+    [ConditionalTheory]
+    public override Task Can_track_entity_with_complex_readonly_structs_with_fields(Microsoft.EntityFrameworkCore.EntityState state, System.Boolean async)
+        => base.Can_track_entity_with_complex_readonly_structs_with_fields(state, async);
+
+    [ConditionalTheory]
+    public override void Can_mark_complex_readonly_readonly_struct_properties_modified_with_fields(System.Boolean trackFromQuery)
+        => base.Can_mark_complex_readonly_readonly_struct_properties_modified_with_fields(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_read_original_values_for_properties_of_readonly_structs_with_fields(System.Boolean trackFromQuery)
+        => base.Can_read_original_values_for_properties_of_readonly_structs_with_fields(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_write_original_values_for_properties_of_readonly_structs_with_fields(System.Boolean trackFromQuery)
+        => base.Can_write_original_values_for_properties_of_readonly_structs_with_fields(trackFromQuery);
+
     [ConditionalFact]
     public void JSON_mapped_complex_properties_have_value_reader_writers()
     {
@@ -102,5 +118,28 @@ public sealed class BlueTuskComplexTypesTrackingTest(
 
         public override Task DisposeAsync()
             => BlueTuskTestStore.IsConfigured ? base.DisposeAsync() : Task.CompletedTask;
+
+        // EF Core comments this entity out until it can bind complex values to constructors (dotnet/efcore#31621);
+        // BlueTusk materializes such readonly structs by member assignment, so the upstream configuration is enabled.
+        protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
+        {
+            base.OnModelCreating(modelBuilder, context);
+            modelBuilder.Entity<FieldPubWithReadonlyStructs>(b =>
+            {
+                b.ComplexProperty(
+                    e => e.LunchtimeActivity, b =>
+                    {
+                        b.ComplexProperty(e => e!.Champions);
+                        b.ComplexProperty(e => e!.RunnersUp);
+                    });
+                b.ComplexProperty(
+                    e => e.EveningActivity, b =>
+                    {
+                        b.ComplexProperty(e => e.Champions);
+                        b.ComplexProperty(e => e.RunnersUp);
+                    });
+                b.ComplexProperty(e => e.FeaturedTeam);
+            });
+        }
     }
 }
