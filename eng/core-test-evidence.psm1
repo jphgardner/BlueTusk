@@ -276,7 +276,7 @@ function Get-CoreTestShardReport
         $assemblyPath = Get-CoreTestArtifact $root $row.assembly "${prefix}tests/$($project.name)/$($project.name).dll"
         $productVersion = Get-CoreTestAssemblyVersion $assemblyPath
         if ($productVersion -cne "1.1.0+$ExpectedCommit")
-        { throw "The retained test assembly identifies '$productVersion', not the exact 1.2 candidate commit." }
+        { throw "The retained test assembly identifies '$productVersion', not the exact 1.1 candidate commit." }
         $summary = Get-CoreTrxSummary $trx $discovery $project.name
         if ($row.discovered -ne $summary.Discovered -or $row.passed -ne $summary.Passed)
         { throw 'Recorded test counters do not agree with the retained discovery and raw TRX.' }

@@ -12,7 +12,7 @@ $families = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'Continuous
 $rcVersion = '1.1.0-rc.2'
 if ($contract.releaseTracksFile -cne 'eng/release-tracks.json')
 {
-    throw 'The 1.2 release contract must use the canonical family release tracks.'
+    throw 'The 1.1 release contract must use the canonical family release tracks.'
 }
 & (Join-Path $PSScriptRoot 'verify-release-track.ps1')
 
@@ -20,18 +20,18 @@ if ([int]$contract.schemaVersion -ne 1 -or
     [string]$contract.releaseVersion -ne '1.1.0' -or
     [string]$contract.baselineCommit -notmatch '^[0-9a-f]{40}$')
 {
-    throw 'The 1.2 release contract has an invalid schema, version, or baseline commit.'
+    throw 'The 1.1 release contract has an invalid schema, version, or baseline commit.'
 }
 $performanceContract = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw | ConvertFrom-Json
 if ($performanceContract.release -cne $contract.releaseVersion)
 {
-    throw 'The performance-leadership contract must identify the same 1.2 release.'
+    throw 'The performance-leadership contract must identify the same 1.1 release.'
 }
 if (@($contract.coordinatedFamilies).Count -ne $families.Count -or
     @(Compare-Object $families @($contract.coordinatedFamilies) -SyncWindow 0).Count -ne 0)
 {
-    throw 'The 1.2 release contract must coordinate all six product families in dependency order.'
+    throw 'The 1.1 release contract must coordinate all six product families in dependency order.'
 }
 
 $productFamiliesPath = Join-Path $PSScriptRoot 'product-families.json'
@@ -42,7 +42,7 @@ foreach ($family in $families)
     $definition = $productFamilies.families.PSObject.Properties[$family].Value
     if ($null -eq $definition -or $definition.publication.enabled -ne $false)
     {
-        throw "Stable publication for '$family' must remain disabled until every 1.2 gate passes."
+        throw "Stable publication for '$family' must remain disabled until every 1.1 gate passes."
     }
 
     [xml]$versionDocument = Get-Content -LiteralPath (
@@ -82,7 +82,7 @@ foreach ($entry in $nuGetProjects.GetEnumerator())
     if (-not (Test-Path -LiteralPath $projectPath -PathType Leaf) -or
         -not $solutionText.Contains($entry.Value, [StringComparison]::Ordinal))
     {
-        throw "New 1.2 package '$($entry.Key)' is absent from the source tree or solution."
+        throw "New 1.1 package '$($entry.Key)' is absent from the source tree or solution."
     }
 
     [xml]$project = Get-Content -LiteralPath $projectPath -Raw
@@ -111,13 +111,13 @@ foreach ($entry in $nuGetProjects.GetEnumerator())
     }
     if (-not $registered)
     {
-        throw "New 1.2 package '$($entry.Key)' is not assigned to a product family."
+        throw "New 1.1 package '$($entry.Key)' is not assigned to a product family."
     }
 }
 if (@($contract.newNuGetPackages).Count -ne $nuGetProjects.Count -or
     @(Compare-Object @($nuGetProjects.Keys) @($contract.newNuGetPackages)).Count -ne 0)
 {
-    throw 'The contract newNuGetPackages list does not exactly match the registered 1.2 additions.'
+    throw 'The contract newNuGetPackages list does not exactly match the registered 1.1 additions.'
 }
 
 $npmProjects = [ordered]@{
@@ -133,13 +133,13 @@ foreach ($entry in $npmProjects.GetEnumerator())
         [string]$manifest.version -ne [string]$contract.releaseVersion -or
         $entry.Value -notin @($liveDefinition.npmPackages))
     {
-        throw "New npm client '$($entry.Key)' is not an exact registered 1.2 Live package."
+        throw "New npm client '$($entry.Key)' is not an exact registered 1.1 Live package."
     }
 }
 if (@($contract.newNpmPackages).Count -ne $npmProjects.Count -or
     @(Compare-Object @($npmProjects.Keys) @($contract.newNpmPackages)).Count -ne 0)
 {
-    throw 'The contract newNpmPackages list does not exactly match the registered 1.2 additions.'
+    throw 'The contract newNpmPackages list does not exactly match the registered 1.1 additions.'
 }
 
 foreach ($flag in @(
@@ -154,7 +154,7 @@ foreach ($flag in @(
 {
     if ($contract.requiredProductWork.PSObject.Properties[$flag].Value -ne $true)
     {
-        throw "Required 1.2 product-work flag '$flag' is not complete."
+        throw "Required 1.1 product-work flag '$flag' is not complete."
     }
 }
 
@@ -178,7 +178,7 @@ foreach ($flag in @(
 {
     if ($gates.PSObject.Properties[$flag].Value -ne $true)
     {
-        throw "Required 1.2 release gate '$flag' is not enabled."
+        throw "Required 1.1 release gate '$flag' is not enabled."
     }
 }
 if ([int]$gates.streamsEnduranceHours -ne 72 -or
@@ -187,7 +187,7 @@ if ([int]$gates.streamsEnduranceHours -ne 72 -or
     [int]$gates.continuousGraphEnduranceHours -ne 24 -or
     [int]$gates.independentPilots -ne 2)
 {
-    throw 'The 1.2 endurance or independent-pilot minimums were weakened.'
+    throw 'The 1.1 endurance or independent-pilot minimums were weakened.'
 }
 
 $endurance = $contract.enduranceExecution
@@ -285,10 +285,10 @@ if ($contract.compatibility.continuousGraphRequiresQualifiedSqlPgqServer -ne $tr
     $contract.publication.sbomRequired -ne $true -or
     $contract.publication.dependencyOrderRequired -ne $true)
 {
-    throw 'The 1.2 compatibility or stable-publication boundary was weakened.'
+    throw 'The 1.1 compatibility or stable-publication boundary was weakened.'
 }
 
 Write-Output (
-    "Verified the BlueTusk 1.2 source-version contract: five core release tracks and Graph preview, " +
+    "Verified the BlueTusk 1.1 source-version contract: five core release tracks and Graph preview, " +
     "$($nuGetProjects.Count) new NuGet packages, $($npmProjects.Count) new npm packages, " +
     'guarded Kubernetes endurance, and disabled stable publication.')
