@@ -47,10 +47,11 @@ these official suites:
   generated-value, batching, filtered-index, and identifier-length contracts;
 - `StoreGeneratedFixupRelationalTestBase`: all 119 live temporary-key,
   generated-key, relationship-fixup, and composite-key contracts; and
-- `ComplexTypesTrackingRelationalTestBase`: 268 passing inherited live
+- `ComplexTypesTrackingRelationalTestBase`: 282 passing inherited live
   tracking, mutation, JSON persistence, and JSON-query contracts, including
-  array-typed complex collections that EF Core skips; 40 skips declared by EF
-  Core itself for open complex-struct collection scenarios; and one provider
+  array-typed complex collections and readonly structs whose constructors take
+  nested complex values, which EF Core skips; 36 skips declared by EF Core
+  itself for open complex-struct collection scenarios; and one provider
   regression that recursively verifies every nested JSON scalar has an EF JSON
   reader/writer;
 - `ComplexTypeQueryRelationalTestBase`: 146 passing live filtering,
@@ -115,11 +116,16 @@ work end to end, which EF Core rejects (`#35613`): the model validator accepts
 them, query materialization reads them into the tracked snapshot from columns
 or from JSON, snapshot factories keep their original values, and fixed-size
 (array) complex collections are snapshotted by index. Shadow properties on
-value-type complex types remain rejected. `ComplexTypeShadowPropertyTests`
+value-type complex types remain rejected. EF Core binds complex-type
+constructor parameters only to scalar properties (`#31621`); a value-type
+complex type whose constructor parameters all name mapped members, including
+nested complex values, is materialized with `default(T)` followed by member
+assignment, as EF Core already does for value types without constructors.
+Reference types with such constructors are still rejected. `ComplexTypeShadowPropertyTests`
 round-trips table-split, JSON and JSON-collection-element shadow values through
 PostgreSQL. A single PostgreSQL 18 run of the full assembly with these
-extensions discovered 2,135 cases: 2,089 passed, no failures, and 46 retain EF
-Core's own skip declarations (40 complex-struct collection, four
+extensions discovered 2,145 cases: 2,103 passed, no failures, and 42 retain EF
+Core's own skip declarations (36 complex-struct collection, four
 complex-collection property-values and the two model-building cases above).
 
 The strict Core release collector still rejects every inherited upstream skip

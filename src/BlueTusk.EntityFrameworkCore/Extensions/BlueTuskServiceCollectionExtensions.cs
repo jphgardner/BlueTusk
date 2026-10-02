@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using BlueTusk.Data.Internal;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
+using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Internal;
 using BlueTusk.EntityFrameworkCore.Query.Internal;
 using BlueTusk.EntityFrameworkCore.Storage.Internal;
@@ -37,6 +38,7 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IRelationalAnnotationProvider, BlueTuskAnnotationProvider>()
             .TryAdd<IModelValidator, BlueTuskModelValidator>()
             .TryAdd<IModelRuntimeInitializer, BlueTuskModelRuntimeInitializer>()
+            .TryAdd<IConstructorBindingFactory, BlueTuskConstructorBindingFactory>()
             .TryAdd<IProviderConventionSetBuilder, BlueTuskConventionSetBuilder>()
             .TryAdd<IMigrationsAnnotationProvider, BlueTuskMigrationsAnnotationProvider>()
             .TryAdd<IMigrationsModelDiffer, BlueTuskMigrationsModelDiffer>()
