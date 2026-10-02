@@ -63,7 +63,7 @@ try
     $ready = $false
     foreach ($attempt in 1..30)
     {
-        & docker exec $containerName pg_isready -U postgres -d bluetusk_app_test *> $null
+        & docker exec $containerName pg_isready -h 127.0.0.1 -U postgres -d bluetusk_app_test *> $null
         if ($LASTEXITCODE -eq 0) { $ready = $true; break }
         Start-Sleep -Seconds 1
     }

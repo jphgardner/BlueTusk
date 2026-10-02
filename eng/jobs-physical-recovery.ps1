@@ -59,7 +59,7 @@ function RemoveOwnedResource([string] $Kind, [string] $Name, [string] $Fixture) 
 function WaitOwnedReady([string] $Container) {
     $taskReady = $false
     for ($taskProbe = 0; $taskProbe -lt 100; $taskProbe++) {
-        & $taskDocker exec $Container pg_isready -U postgres *> $null
+        & $taskDocker exec $Container pg_isready -h 127.0.0.1 -U postgres *> $null
         if ($LASTEXITCODE -eq 0) { $taskReady = $true; break }
         Start-Sleep -Milliseconds 200
     }
