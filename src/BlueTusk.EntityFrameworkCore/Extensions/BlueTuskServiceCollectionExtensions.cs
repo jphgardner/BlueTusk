@@ -1,10 +1,12 @@
 using System.ComponentModel;
 using BlueTusk.Data.Internal;
+using BlueTusk.EntityFrameworkCore.ChangeTracking.Internal;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Internal;
 using BlueTusk.EntityFrameworkCore.Query.Internal;
 using BlueTusk.EntityFrameworkCore.Storage.Internal;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -30,6 +32,7 @@ public static class BlueTuskServiceCollectionExtensions
             ServiceDescriptor.Singleton<
                 IEvaluatableExpressionFilterPlugin,
                 BlueTuskEvaluatableExpressionFilterPlugin>());
+#pragma warning disable EF1001 // IChangeDetector is EF Core's internal change-detection service, extended by BlueTusk.
         new EntityFrameworkRelationalServicesBuilder(services)
             .TryAdd<LoggingDefinitions, BlueTuskLoggingDefinitions>()
             .TryAdd<IDatabaseProvider, DatabaseProvider<BlueTuskOptionsExtension>>()
@@ -39,6 +42,7 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IModelValidator, BlueTuskModelValidator>()
             .TryAdd<IModelRuntimeInitializer, BlueTuskModelRuntimeInitializer>()
             .TryAdd<IConstructorBindingFactory, BlueTuskConstructorBindingFactory>()
+            .TryAdd<IChangeDetector, BlueTuskChangeDetector>()
             .TryAdd<IProviderConventionSetBuilder, BlueTuskConventionSetBuilder>()
             .TryAdd<IMigrationsAnnotationProvider, BlueTuskMigrationsAnnotationProvider>()
             .TryAdd<IMigrationsModelDiffer, BlueTuskMigrationsModelDiffer>()
@@ -60,6 +64,7 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IRelationalConnection, BlueTuskRelationalConnection>()
             .TryAdd<IRelationalDatabaseCreator, BlueTuskDatabaseCreator>()
             .TryAddCoreServices();
+#pragma warning restore EF1001
 
         return services;
     }

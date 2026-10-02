@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 namespace Microsoft.EntityFrameworkCore;
 
 [BlueTuskLiveCondition]
-public sealed class BlueTuskComplexTypesTrackingTest(
+public sealed partial class BlueTuskComplexTypesTrackingTest(
     BlueTuskComplexTypesTrackingTest.BlueTuskComplexTypesTrackingFixture fixture,
     ITestOutputHelper testOutputHelper)
     : ComplexTypesTrackingRelationalTestBase<BlueTuskComplexTypesTrackingTest.BlueTuskComplexTypesTrackingFixture>(
@@ -69,6 +69,46 @@ public sealed class BlueTuskComplexTypesTrackingTest(
     [ConditionalTheory]
     public override void Can_write_original_values_for_properties_of_readonly_structs_with_fields(System.Boolean trackFromQuery)
         => base.Can_write_original_values_for_properties_of_readonly_structs_with_fields(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_detect_changes_to_nested_readonly_struct_teams_in_complex_type_collections(System.Boolean trackFromQuery)
+        => base.Can_detect_changes_to_nested_readonly_struct_teams_in_complex_type_collections(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_detect_changes_to_readonly_struct_collection_elements(System.Boolean trackFromQuery)
+        => base.Can_detect_changes_to_readonly_struct_collection_elements(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_mark_complex_readonly_struct_array_collection_properties_modified(System.Boolean trackFromQuery)
+        => base.Can_mark_complex_readonly_struct_array_collection_properties_modified(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_mark_complex_struct_array_collection_properties_modified(System.Boolean trackFromQuery)
+        => base.Can_mark_complex_struct_array_collection_properties_modified(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_read_original_values_for_properties_of_complex_readonly_struct_array_collections(System.Boolean trackFromQuery)
+        => base.Can_read_original_values_for_properties_of_complex_readonly_struct_array_collections(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_read_original_values_for_properties_of_complex_struct_array_collections(System.Boolean trackFromQuery)
+        => base.Can_read_original_values_for_properties_of_complex_struct_array_collections(trackFromQuery);
+
+    [ConditionalTheory]
+    public override Task Can_track_entity_with_complex_readonly_struct_array_collections(Microsoft.EntityFrameworkCore.EntityState state, System.Boolean async)
+        => base.Can_track_entity_with_complex_readonly_struct_array_collections(state, async);
+
+    [ConditionalTheory]
+    public override Task Can_track_entity_with_complex_struct_array_collections(Microsoft.EntityFrameworkCore.EntityState state, System.Boolean async)
+        => base.Can_track_entity_with_complex_struct_array_collections(state, async);
+
+    [ConditionalTheory]
+    public override void Can_write_original_values_for_properties_of_complex_readonly_struct_array_collections(System.Boolean trackFromQuery)
+        => base.Can_write_original_values_for_properties_of_complex_readonly_struct_array_collections(trackFromQuery);
+
+    [ConditionalTheory]
+    public override void Can_write_original_values_for_properties_of_complex_struct_array_collections(System.Boolean trackFromQuery)
+        => base.Can_write_original_values_for_properties_of_complex_struct_array_collections(trackFromQuery);
 
     [ConditionalFact]
     public void JSON_mapped_complex_properties_have_value_reader_writers()
@@ -137,6 +177,74 @@ public sealed class BlueTuskComplexTypesTrackingTest(
                     {
                         b.ComplexProperty(e => e.Champions);
                         b.ComplexProperty(e => e.RunnersUp);
+                    });
+                b.ComplexProperty(e => e.FeaturedTeam);
+            });
+
+            // EF Core comments these value-type complex collections out (dotnet/efcore#31411); BlueTusk supports them.
+            // The shapes are EF Core's own commented-out configuration, mapped to JSON as relational collections require.
+            modelBuilder.Entity<PubWithStructCollections>(b =>
+            {
+                b.ComplexCollection(
+                    e => e.Activities, b =>
+                    {
+                        b.ComplexCollection(e => e.Teams);
+                        b.ToJson();
+                    });
+                b.ComplexProperty(e => e.FeaturedTeam);
+            });
+
+            modelBuilder.Entity<PubWithReadonlyStructCollections>(b =>
+            {
+                b.ComplexCollection(
+                    e => e.Activities, b =>
+                    {
+                        b.ComplexCollection(e => e.Teams);
+                        b.ToJson();
+                    });
+                b.ComplexProperty(e => e.FeaturedTeam);
+            });
+
+            modelBuilder.Entity<PubWithStructArrayCollections>(b =>
+            {
+                b.ComplexCollection(
+                    e => e.Activities, b =>
+                    {
+                        b.ComplexCollection(e => e.Teams);
+                        b.ToJson();
+                    });
+                b.ComplexProperty(e => e.FeaturedTeam);
+            });
+
+            modelBuilder.Entity<PubWithReadonlyStructArrayCollections>(b =>
+            {
+                b.ComplexCollection(
+                    e => e.Activities, b =>
+                    {
+                        b.ComplexCollection(e => e.Teams);
+                        b.ToJson();
+                    });
+                b.ComplexProperty(e => e.FeaturedTeam);
+            });
+
+            modelBuilder.Entity<FieldPubWithStructCollections>(b =>
+            {
+                b.ComplexCollection(
+                    e => e.Activities, b =>
+                    {
+                        b.ComplexCollection(e => e.Teams);
+                        b.ToJson();
+                    });
+                b.ComplexProperty(e => e.FeaturedTeam);
+            });
+
+            modelBuilder.Entity<FieldPubWithReadonlyStructCollections>(b =>
+            {
+                b.ComplexCollection(
+                    e => e.Activities, b =>
+                    {
+                        b.ComplexCollection(e => e.Teams);
+                        b.ToJson();
                     });
                 b.ComplexProperty(e => e.FeaturedTeam);
             });

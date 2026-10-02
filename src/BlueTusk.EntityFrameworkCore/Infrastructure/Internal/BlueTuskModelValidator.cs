@@ -26,9 +26,30 @@ internal sealed class BlueTuskModelValidator(
         catch (InvalidOperationException exception) when (IsSupportedComplexTypeShadowProperty(complexProperty, exception))
         {
         }
+        catch (InvalidOperationException exception) when (IsValueTypeComplexCollection(complexProperty, exception))
+        {
+            // EF Core rejects value-type complex collections (dotnet/efcore#31411) before its final check, which
+            // rejects shadow properties on value-type complex types; that check still applies.
+            var complexType = complexProperty.ComplexType;
+            var shadowProperty = complexType.GetDeclaredProperties()
+                .FirstOrDefault(p => p.IsShadowProperty() && p != complexType.FindDiscriminatorProperty());
+            if (shadowProperty is not null)
+            {
+                throw new InvalidOperationException(
+                    CoreStrings.ComplexValueTypeShadowProperty(complexType.DisplayName(), shadowProperty.Name));
+            }
+        }
 
         ValidateRelationalComplexPropertyMapping(complexProperty);
     }
+
+    private static bool IsValueTypeComplexCollection(
+        IConventionComplexProperty complexProperty,
+        InvalidOperationException exception)
+        => complexProperty.IsCollection
+            && complexProperty.ComplexType.ClrType.IsValueType
+            && exception.Message == CoreStrings.ComplexValueTypeCollection(
+                complexProperty.DeclaringType.DisplayName(), complexProperty.Name);
 
     private static bool IsSupportedComplexTypeShadowProperty(
         IConventionComplexProperty complexProperty,
