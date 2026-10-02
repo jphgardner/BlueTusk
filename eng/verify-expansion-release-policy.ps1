@@ -36,6 +36,27 @@ if ([int]$manifest.schemaVersion -ne 2 -or
     throw 'Expansion release policy requires the supported manifest, policy and governance schemas.'
 }
 
+# Derive the reviewer mode exactly as verify-github-governance.ps1 does. Sole-maintainer mode
+# is valid only with the owner's recorded authorization and no active ruleset; any other
+# declared mode is rejected rather than treated as governed.
+$soleMaintainer = $null -ne $governance.PSObject.Properties['maintenancePolicy'] -and
+    [string]$governance.maintenancePolicy.mode -eq 'sole-maintainer'
+if ($null -ne $governance.PSObject.Properties['maintenancePolicy'] -and -not $soleMaintainer)
+{
+    throw 'Unknown governance maintenance policy.'
+}
+if ($soleMaintainer -and
+    ([string]$governance.maintenancePolicy.owner -ne ([string]$governance.repository).Split('/')[0] -or
+     [string]$governance.ruleset.enforcement -ne 'absent' -or
+     [string]::IsNullOrWhiteSpace([string]$governance.maintenancePolicy.authorizedOn)))
+{
+    throw 'Sole-maintainer governance requires the repository owner, recorded authorization, and absent ruleset policy.'
+}
+if (-not $soleMaintainer -and [string]$governance.ruleset.enforcement -ne 'active')
+{
+    throw 'Governed mode requires an active ruleset.'
+}
+
 $policyNames = @($policy.families.PSObject.Properties.Name)
 if ($policyNames.Count -ne $expansionFamilies.Count -or
     @(Compare-Object $expansionFamilies $policyNames).Count -ne 0 -or
@@ -166,7 +187,9 @@ foreach ($selectedFamily in $selectedFamilies)
         [string]$readinessEnvironments[0].workflow -cne
             '.github/workflows/expansion-candidate-readiness.yml' -or
         [int]$readinessEnvironments[0].minimumConfiguredReviewers -lt 1 -or
-        $readinessEnvironments[0].preventSelfReview -ne $true -or
+        $readinessEnvironments[0].preventSelfReview -isnot [bool] -or
+        $readinessEnvironments[0].preventSelfReview -ne (-not $soleMaintainer) -or
+        $readinessEnvironments[0].canAdminsBypass -isnot [bool] -or
         $readinessEnvironments[0].canAdminsBypass -ne $false)
     {
         throw "Expansion family '$selectedFamily' requires protected independent candidate readiness."
