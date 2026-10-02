@@ -58,7 +58,7 @@ try {
         '-e','POSTGRES_PASSWORD=postgres','-e','POSTGRES_DB=documents_load',$image,'postgres','-c','track_io_timing=on','-c','max_connections=40') | Out-Null # ggignore
     $ready = $false
     for ($attempt=0; $attempt -lt 150; $attempt++) {
-        & $dockerCommand exec $container pg_isready -U postgres -d documents_load *> $null
+        & $dockerCommand exec $container pg_isready -h 127.0.0.1 -U postgres -d documents_load *> $null
         if ($LASTEXITCODE -eq 0) { $ready=$true; break }
         Start-Sleep -Milliseconds 200
     }
