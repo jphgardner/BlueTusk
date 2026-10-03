@@ -190,6 +190,7 @@ jobs:
           ./eng/test-core-workflow-evidence.ps1
           ./eng/test-core-github-run-capture.ps1
           ./eng/test-core-github-artifact-capture.ps1
+          ./eng/test-core-github-job-log-binding.ps1
           ./eng/test-core-endurance-contract.ps1
           ./eng/test-core-candidate-bindings.ps1
           ./eng/test-core-test-evidence.ps1

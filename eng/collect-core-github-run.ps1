@@ -10,6 +10,9 @@ its GitHub digest/size and inventories safe member paths and decompressed hashes
 This delivery receipt does not authenticate product checkout or qualify payloads.
 Rejected API captures are retained and do not produce a run record. Use a fresh
 directory below this checkout's artifacts directory for every invocation.
+With JobId and ArtifactUploadStepName, retain the actual job log and bind its
+pinned checkout commit and upload digest/ID/size to the downloaded artifact.
+This scoped log observation still does not certify all execution or fixtures.
 .EXAMPLE
 ./eng/collect-core-github-run.ps1 -WorkflowFile security.yml -RunId 123 -RunAttempt 1 `
     -ExpectedCommit <full-candidate-sha> -OutputDirectory artifacts/core-security-capture
@@ -22,13 +25,20 @@ param([Parameter(Mandatory)][string] $WorkflowFile,
     [Parameter(Mandatory)][string] $OutputDirectory,
     [ValidatePattern('^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')][string] $ExpectedRepository = 'jphgardner/BlueTusk',
     [Parameter(Mandatory,ParameterSetName='Artifact')][ValidateRange(1,[long]::MaxValue)][long] $ArtifactId,
-    [Parameter(Mandatory,ParameterSetName='Artifact')][ValidateNotNullOrEmpty()][string] $ArtifactName)
+    [Parameter(Mandatory,ParameterSetName='Artifact')][ValidateNotNullOrEmpty()][string] $ArtifactName,
+    [ValidateRange(0,[long]::MaxValue)][long] $JobId = 0,
+    [string] $ArtifactUploadStepName = '')
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1')
 Import-Module (Join-Path $PSScriptRoot 'core-github-run-capture.psm1')
 Import-Module (Join-Path $PSScriptRoot 'core-github-artifact-capture.psm1')
+Import-Module (Join-Path $PSScriptRoot 'core-github-job-log-binding.psm1')
 $captureArtifact = $PSCmdlet.ParameterSetName -ceq 'Artifact'
+$captureJobLog = $JobId -gt 0
+if (($captureJobLog -and (-not $captureArtifact -or [string]::IsNullOrWhiteSpace($ArtifactUploadStepName))) -or
+    (-not $captureJobLog -and $ArtifactUploadStepName))
+{ throw 'Job log binding requires an artifact delivery, a positive JobId and its exact ArtifactUploadStepName.' }
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $contract = Get-CoreCandidateContract
 if ($WorkflowFile -cnotin $contract.requiredWorkflows) { throw 'Unknown Core producer workflow.' }
@@ -63,6 +73,8 @@ $recordPath = Join-Path $output 'record.json'
 $recordRetained = $false
 $artifactReceipt = $null
 $artifactValidated = $false
+$jobLogBinding = $null
+$jobLogValidated = $false
 
 function Write-Json([string] $Name, [object] $Value)
 {
@@ -80,7 +92,7 @@ function Capture-Api([string] $Endpoint, [string] $Name, [switch] $Pages)
     [IO.File]::WriteAllText($path, ($lines -join "`n") + "`n", [Text.UTF8Encoding]::new($false))
     return Read-CoreEvidenceJson $path -Array:$Pages
 }
-function Capture-Archive([string] $Endpoint)
+function Capture-Archive([string] $Endpoint, [string] $OutputName = 'artifact.zip', [long] $ByteLimit = 2GB)
 {
     # Binary stdout must never pass through PowerShell text redirection.
     # gh follows the API's download redirect; no signed URL or token is retained.
@@ -102,7 +114,7 @@ function Capture-Archive([string] $Endpoint)
         if (-not $process.Start()) { throw 'Artifact download process did not start.' }
         $processStarted = $true
         $stderr = $process.StandardError.ReadToEndAsync()
-        $destination = [IO.File]::Open((Join-Path $output 'artifact.zip'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+        $destination = [IO.File]::Open((Join-Path $output $OutputName), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
         $timer = [Diagnostics.Stopwatch]::StartNew()
         $buffer = [byte[]]::new(65536)
         $total = 0L
@@ -115,7 +127,7 @@ function Capture-Archive([string] $Endpoint)
             $count = $read.GetAwaiter().GetResult()
             if ($count -eq 0) { break }
             $total += $count
-            if ($total -gt 2GB) { throw 'Artifact download exceeded the two-GiB capture limit.' }
+            if ($total -gt $ByteLimit) { throw 'GitHub binary download exceeded its capture byte limit.' }
             $destination.Write($buffer, 0, $count)
         }
         $remaining = 300000 - [int]$timer.ElapsedMilliseconds
@@ -129,7 +141,8 @@ function Capture-Archive([string] $Endpoint)
         if ($null -ne $stderr)
         {
             $text = $(if ($stderr.Wait(3000)) { $stderr.GetAwaiter().GetResult() } else { 'stderr capture did not complete.' })
-            [IO.File]::WriteAllText((Join-Path $output 'artifact-download.stderr.log'), $text, [Text.UTF8Encoding]::new($false))
+            $stderrName = if ($OutputName -ceq 'artifact.zip') { 'artifact-download.stderr.log' } else { "$OutputName-download.stderr.log" }
+            [IO.File]::WriteAllText((Join-Path $output $stderrName), $text, [Text.UTF8Encoding]::new($false))
         }
         $process.Dispose()
     }
@@ -146,7 +159,14 @@ function Read-Snapshot([string] $Suffix)
     $identity = [ordered]@{ record=$record; workflowId=$workflow.id; createdUtc=$run.created_at
         startedUtc=$run.run_started_at; updatedUtc=$run.updated_at
         jobs=@($jobs | Select-Object id,run_id,run_attempt,head_sha,status,conclusion,started_at,completed_at,html_url) }
+    if ($captureJobLog)
+    {
+        $selected = @($jobs | Where-Object { $_.id -eq $JobId })
+        if ($selected.Count -ne 1) { throw 'Selected job is absent or duplicated in the actual attempt.' }
+        $identity.selectedJob = $selected[0]
+    }
     return [pscustomobject]@{ Record=$record; Run=$run; JobCount=$jobs.Count
+        Jobs=$jobs
         Fingerprint=($identity | ConvertTo-Json -Depth 16 -Compress) }
 }
 function Capture-Manifest([string] $Status, [bool] $Validated, [AllowNull()][object] $Record, [string] $Failure)
@@ -160,6 +180,7 @@ function Capture-Manifest([string] $Status, [bool] $Validated, [AllowNull()][obj
         startedUtc=$started; completedUtc=[DateTimeOffset]::UtcNow.ToString('O'); record=$Record
         files=$files; failure=$Failure; liveRunMetadataValidated=$Validated
         artifactReceipt=$artifactReceipt; artifactDeliveryIdentityValidated=($Validated -and $artifactValidated)
+        jobLogBinding=$jobLogBinding; jobLogBindingValidated=($Validated -and $jobLogValidated)
         checkoutIdentityValidated=$false; artifactIdentityValidated=$false; fixtureIdentityValidated=$false
         executionAuthenticityValidated=$false; allPayloadsValidated=$false; releaseApproved=$false}
 }
@@ -175,6 +196,14 @@ try
             -ExpectedRepository $ExpectedRepository
         Capture-Archive "repos/$ExpectedRepository/actions/artifacts/$ArtifactId/zip"
         $archive = Get-CoreGithubArtifactArchive -Metadata $metadataBefore -ArchivePath (Join-Path $output 'artifact.zip')
+    }
+    if ($captureJobLog)
+    {
+        Capture-Archive "repos/$ExpectedRepository/actions/jobs/$JobId/logs" -OutputName 'job.log' -ByteLimit 128MB
+        $selectedJob = @($before.Jobs | Where-Object { $_.id -eq $JobId })[0]
+        $jobLogBefore = ConvertTo-CoreGithubJobLogBinding -Job $selectedJob -LogPath (Join-Path $output 'job.log') `
+            -RunId $RunId -RunAttempt $RunAttempt -ExpectedCommit $ExpectedCommit -ArtifactMetadata $metadataBefore `
+            -UploadStepName $ArtifactUploadStepName -ExpectedRepository $ExpectedRepository
     }
     $after = Read-Snapshot 'after'
     if ($before.Fingerprint -cne $after.Fingerprint) { throw 'GitHub attempt or job metadata changed during capture.' }
@@ -197,6 +226,16 @@ try
             allPayloadsValidated=$false; releaseApproved=$false }
         $artifactValidated = $true
     }
+    if ($captureJobLog)
+    {
+        $selectedJob = @($after.Jobs | Where-Object { $_.id -eq $JobId })[0]
+        $jobLogBinding = ConvertTo-CoreGithubJobLogBinding -Job $selectedJob -LogPath (Join-Path $output 'job.log') `
+            -RunId $RunId -RunAttempt $RunAttempt -ExpectedCommit $ExpectedCommit -ArtifactMetadata $metadataAfter `
+            -UploadStepName $ArtifactUploadStepName -ExpectedRepository $ExpectedRepository
+        if (($jobLogBefore | ConvertTo-Json -Compress) -cne ($jobLogBinding | ConvertTo-Json -Compress))
+        { throw 'Job log binding changed during capture.' }
+        $jobLogValidated = $true
+    }
     if ((& git -C $repositoryRoot rev-parse HEAD).Trim() -cne $toolCommit -or
         @(& git -C $repositoryRoot status --porcelain --untracked-files=normal).Count -ne 0)
     { throw 'Collector tool source changed during capture.' }
@@ -216,6 +255,7 @@ try
         CandidateCommit=$ExpectedCommit; JobCount=$after.JobCount; RecordPath=$recordPath
         LiveRunMetadataValidated=$true; CheckoutIdentityValidated=$false; ArtifactIdentityValidated=$false
         ArtifactDeliveryIdentityValidated=$artifactValidated
+        JobLogBindingValidated=$jobLogValidated
         ExecutionAuthenticityValidated=$false; AllPayloadsValidated=$false; ReleaseApproved=$false})
 }
 catch
