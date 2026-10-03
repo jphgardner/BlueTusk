@@ -13,6 +13,7 @@ public sealed record BlueTuskXLogData(
     ReadOnlyMemory<byte> Data) : BlueTuskReplicationMessage
 {
     private bool _ownsData;
+    private BlueTuskReplicationConnection? _origin;
 
     /// <summary>The position immediately after this message's data.</summary>
     public BlueTuskLogSequenceNumber WalEnd
@@ -22,6 +23,17 @@ public sealed record BlueTuskXLogData(
     }
 
     internal bool OwnsData => _ownsData;
+
+    // The streaming connection that received this message. Consumers that settle work decoded
+    // from it report completed positions back to the same WAL sender.
+    internal BlueTuskReplicationConnection? Origin => _origin;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal BlueTuskXLogData BindOrigin(BlueTuskReplicationConnection origin)
+    {
+        _origin = origin;
+        return this;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal BlueTuskXLogData MarkDataOwned()
