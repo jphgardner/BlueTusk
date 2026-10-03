@@ -90,15 +90,6 @@ outside a query, or in a part of the query EF Core evaluates on the client.
 
 **Fix:** Use these methods only inside LINQ queries that go to the database.
 
-### "Expression '@ids' in the SQL tree does not have a type mapping assigned."
-
-**Cause:** The context uses
-`UseParameterizedCollectionMode(ParameterTranslationMode.Parameter)`, and the
-query uses `Contains` on a captured collection. This mode is not supported yet.
-
-**Fix:** Remove the option to use the default (`MultipleParameters`), or use
-`ParameterTranslationMode.Constant`.
-
 ## Enums and types
 
 ### "'Pending' is not a catalogue label for PostgreSQL enum app.order_status."
@@ -113,22 +104,22 @@ or `[EnumMember(Value = "pending")]`, or pass a `labels` dictionary to
 
 ### "invalid input value for enum app.order_status" in a query with an enum constant
 
-**Cause:** A literal enum value written in a LINQ query, such as
-`o.Status == OrderStatus.Shipped`, is sent as the CLR member name
-(`'Shipped'`), even when you configured a different label.
+**Cause:** A LINQ query compares with an enum constant, such as
+`o.Status == OrderStatus.Shipped`, and the enum's PostgreSQL labels are set
+only in the `labels` dictionary of `MapEnum`. BlueTusk writes a constant into
+the SQL with the label from `[BlueTuskName]`, then `[EnumMember]`, then the CLR
+member name. It cannot see the `labels` dictionary, so it sends `'Shipped'`.
 
-**Fix:** Compare with a variable, which is sent as a parameter with the
-correct label:
+**Fix:** Put the labels on the enum members with `[BlueTuskName("shipped")]`
+or `[EnumMember(Value = "shipped")]`. Or compare with a variable, which is sent
+as a parameter and uses the data source's labels:
 
 ```csharp
-var status = OrderStatus.Pending;
-var tag = "gift";
+var status = OrderStatus.Shipped;
 var orders = await db.Orders
-    .Where(o => o.Status == status && o.Tags.Contains(tag))
+    .Where(o => o.Status == status)
     .ToListAsync();
 ```
-
-Or keep the PostgreSQL labels identical to the CLR member names.
 
 ### "PostgreSQL type OID ... requires a registered codec or string/byte payload."
 
@@ -138,17 +129,19 @@ Or keep the PostgreSQL labels identical to the CLR member names.
 **Fix:** Add the mapping to the data source builder, and pass that data
 source to `UseBlueTusk`.
 
-### "Named codec registration for PostgreSQL type ... resolved to 0 catalogue types."
+### "PostgreSQL type app.order_status is not present in the loaded type catalogue."
 
-**Cause:** The data source maps a type with `MapEnum` or `MapComposite`, but
-the type does not exist in the database yet. This happens when the migration
-that creates the type runs through the same data source, for example
-`dotnet ef database update` against a new database.
+**Cause:** The data source loaded its type catalogue before the type existed,
+and nothing reloaded it. `Migrate` and `MigrateAsync` reload the catalogue of
+the data source they run on, but only in their own process. So this happens
+when the type was created while the application was already running: by a SQL
+script, by `dotnet ef database update` or another process's migration, or by
+`ExecuteSqlRaw`. The message comes from an `InvalidOperationException`, often
+inside a `DbUpdateException`.
 
-**Fix:** Create the type before a mapped data source connects. Apply the
-migration with a script (`dotnet ef migrations script --idempotent`) or with
-a context whose data source does not map the type, then start the
-application. Also check the schema and name in `MapEnum` match the database.
+**Fix:** Call `await dataSource.ReloadTypesAsync()` on the application's data
+source after the type is created, or restart the application. Also check that
+the schema and name in `MapEnum` or `MapComposite` match the database.
 
 ### Values read back as `DateTimeKind.Unspecified`
 

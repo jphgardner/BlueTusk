@@ -61,5 +61,7 @@ If your app needs ambient or distributed transactions, output parameters,
 `SchemaOnly` or `KeyInfo`, keep it on a provider that implements them.
 
 Also review connection strings when you migrate: BlueTusk has no keyword
-aliases, ignores unknown keywords and defaults to `SSL Mode=VerifyFull`. See
+aliases, ignores unknown keywords by default (Npgsql rejects them; see
+[Reject unknown keywords](configuration.md#reject-unknown-keywords)) and
+defaults to `SSL Mode=VerifyFull`. See
 [Configuration](configuration.md#how-the-connection-string-is-parsed).

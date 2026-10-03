@@ -131,6 +131,7 @@ Rules:
 | Limit | Default | What it limits | On expiry |
 | --- | --- | --- | --- |
 | `Timeout` keyword | 15 s | Resolving and connecting the socket to one host | Connection error |
+| `Timeout` keyword | 15 s | Waiting for a free pooled connection when the pool is full | `TimeoutException` |
 | `CommandTimeout` | 30 s (`0` = none) | One command's execution | `TimeoutException` |
 | Your `CancellationToken` | none | Whatever you pass it to | `OperationCanceledException` |
 
@@ -139,9 +140,10 @@ request on a separate connection, then reads the original connection until it
 is idle again. The connection stays usable. Inside a transaction, the
 transaction is now aborted and must be rolled back.
 
-Waiting for a free pooled connection is not covered by `Timeout` or
-`CommandTimeout`. When the pool is full, an open waits until a connection is
-returned or its token is cancelled. Pass a token with a deadline.
+When the pool is full, an open waits until a connection is returned, its
+token is cancelled, or `Timeout` expires. **Behaviour change in 1.1.0:** in
+1.0.0 and 1.1.0-rc.1 this wait had no time limit. See
+[What happens when the pool is full?](pooling.md#what-happens-when-the-pool-is-full).
 
 ## Pooling and reset
 
@@ -191,7 +193,9 @@ needs `PostgreSqlTypeName = "pg_catalog.jsonb"`. `TimeSpan` maps to `time`, not
 `interval`.
 
 Map your own enums and composites once on the builder with `MapEnum` and
-`MapComposite`. If you create or change a type while the app runs, call
+`MapComposite`. The type does not have to exist yet when the data source
+first connects; only a value that uses it fails until it does. If you create
+or change a type while the app runs, call
 `dataSource.ReloadTypesAsync()`. Until then, values of the new type are read as
 an opaque `BlueTuskUnknownValue`, and `PostgreSqlTypeName` cannot find it. See
 [PostgreSQL types](../types/README.md).

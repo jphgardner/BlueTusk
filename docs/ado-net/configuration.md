@@ -46,9 +46,10 @@ builder.Services.AddDataSource(
   (`SSL Mode`, not `SslMode`).
 - There are **no aliases**. `Server`, `User ID`, `UID`, `Pwd` and `SslMode`
   are not recognized.
-- **Unknown keywords are ignored without an error.** A misspelled keyword
+- **Unknown keywords are ignored by default.** A misspelled keyword
   silently falls back to the default. For example, `SslMode=Disable` leaves
-  `SSL Mode` at `VerifyFull`. Check spelling against the tables below.
+  `SSL Mode` at `VerifyFull`. Check spelling against the tables below, or
+  [turn on rejection](#reject-unknown-keywords).
 - Enum values are case-insensitive, and `-`, `_` and spaces are ignored, so
   `read-write`, `ReadWrite` and `read_write` are the same. An invalid value
   throws `ArgumentException` (for example
@@ -73,6 +74,33 @@ await using var dataSource = new BlueTuskDataSourceBuilder(settings.ConnectionSt
     .Build();
 ```
 
+### Reject unknown keywords
+
+For compatibility with 1.0.0, BlueTusk accepts and ignores keywords it does
+not recognize, such as Npgsql's `Command Timeout` or a misspelled `Usernme`.
+To make them an error, as Npgsql does, turn on the
+`BlueTusk.Data.RejectUnknownConnectionStringKeywords` AppContext switch in
+your application's project file:
+
+```xml
+<ItemGroup>
+  <RuntimeHostConfigurationOption Include="BlueTusk.Data.RejectUnknownConnectionStringKeywords" Value="true" />
+</ItemGroup>
+```
+
+Or set it in code before you create any data source or connection:
+
+```csharp
+AppContext.SetSwitch("BlueTusk.Data.RejectUnknownConnectionStringKeywords", true);
+```
+
+Creating a data source or a `BlueTuskConnection` then throws an
+`ArgumentException` that names the keyword (in lower case) but not its value:
+
+```text
+The connection-string keyword 'usernme' is not supported by BlueTusk. (Parameter 'ConnectionString')
+```
+
 ## Connection
 
 | Keyword | Property | Type | Default | Meaning |
@@ -82,7 +110,7 @@ await using var dataSource = new BlueTuskDataSourceBuilder(settings.ConnectionSt
 | `Database` | `Database` | string | none (required) | Database to connect to. Opening fails if it is empty. |
 | `Username` | `Username` | string | none (required) | PostgreSQL role. Opening fails if it is empty. |
 | `Application Name` | `ApplicationName` | string | `BlueTusk` | Sent as `application_name`; visible in `pg_stat_activity` and server logs. |
-| `Timeout` | `Timeout` | seconds (> 0) | `15` | Time allowed to resolve and connect the network socket to one host. It does not limit TLS, authentication or waiting for a pooled connection. |
+| `Timeout` | `Timeout` | seconds (> 0) | `15` | Time allowed to resolve and connect the network socket to one host. It also limits how long an open waits for a free connection when the pool is full (see [Pooling](#pooling)). It does not limit TLS or authentication. |
 
 ## Security and TLS
 
@@ -120,7 +148,9 @@ password file. See [Authentication](authentication.md).
 | `Connection Idle Lifetime` | `ConnectionIdleLifetime` | seconds (>= 0) | `300` | An idle connection older than this is closed instead of reused. `0` turns idle expiry off. |
 | `Connection Lifetime` | `ConnectionLifetime` | seconds (>= 0) | `3600` | A connection older than this is closed when it is next checked out or returned. `0` turns it off. |
 
-See [Connection pooling](pooling.md).
+When every connection is in use, an open waits for one to be returned, for at
+most `Timeout` seconds. It then throws `TimeoutException`. See
+[Connection pooling](pooling.md#what-happens-when-the-pool-is-full).
 
 ## Commands and preparation
 

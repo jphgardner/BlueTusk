@@ -65,7 +65,7 @@ are EF Core relational options with BlueTusk's defaults.
 | `MigrationsHistoryTable(string tableName, string? schema = null)` | `__EFMigrationsHistory`, unqualified (so usually in `public`) | Name and schema of the history table. |
 | `UseQuerySplittingBehavior(QuerySplittingBehavior)` | `SingleQuery` | Load collections with one query or one query per collection. |
 | `UseRelationalNulls(bool useRelationalNulls = true)` | `false` | `true` uses SQL null comparison semantics instead of C# semantics. |
-| `UseParameterizedCollectionMode(ParameterTranslationMode)` | `MultipleParameters` | How a captured collection in `Contains` is sent: `IN (@ids1, @ids2, ...)` by default, or inline constants with `Constant`. `Parameter` is not supported yet (see [Troubleshooting](troubleshooting.md#queries)). |
+| `UseParameterizedCollectionMode(ParameterTranslationMode)` | `MultipleParameters` | How a captured collection in `Contains` is sent: `IN (@ids1, @ids2, ...)` by default, inline constants with `Constant`, or one typed PostgreSQL array parameter with `Parameter` (`IN (SELECT ... FROM unnest(@ids) ...)`, element type taken from the compared column). |
 | `UseAdminDatabase(string databaseName)` | `postgres` (`template1` when the target is `postgres`) | Existing database used to create or drop the target database. |
 | `ContextOptionsBuilder` (property) | | The underlying `DbContextOptionsBuilder`. Extension packages use it. |
 
@@ -234,7 +234,9 @@ CREATE INDEX "IX_Orders_Tags" ON "app"."Orders" USING "gin" ("Tags");
 ```
 
 The application's data source must also map the enum:
-`.MapEnum<OrderStatus>("app.order_status")`. See
+`.MapEnum<OrderStatus>("app.order_status")`. It can map it before this
+migration has run: `dotnet ef database update` and `Migrate` work through the
+same data source and reload its type catalogue afterwards. See
 [Concepts](concepts.md#postgresql-enums-need-three-pieces).
 
 ## Design-time setup

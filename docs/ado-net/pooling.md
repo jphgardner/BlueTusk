@@ -51,13 +51,7 @@ Every keyword is described in [Configuration](configuration.md#pooling).
 | `Connection Idle Lifetime` | 5 minutes | Maximum idle age checked before reuse; zero disables idle expiry. |
 | `Connection Lifetime` | 1 hour | Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry. |
 | `Multiplexing` | `false` | Enables statement multiplexing; pooling must also be enabled. |
-
-When the pool is at its maximum, opens wait in order for a connection to be returned. There is no built-in limit on this wait: `Timeout` and `CommandTimeout` do not apply to it. Pass a cancellation token with a deadline; cancelling it ends the wait without using a slot:
-
-```csharp
-using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-await using var connection = await dataSource.OpenConnectionAsync(timeout.Token);
-```
+| `Timeout` | 15 seconds | Limits connecting to the server and waiting for a free connection when the pool is full. |
 
 Watch the pool from your own health or metrics code:
 
@@ -68,6 +62,33 @@ Console.WriteLine(
 ```
 
 Multi-host data sources own one pool per configured endpoint. Checkout tries available capacity across the selected host order, and role-targeted checkouts revalidate primary/standby and read-only state. `Minimum Pool Size` and `Maximum Pool Size` apply to each endpoint pool. `GetHostPoolStatistics()` exposes each partition; `GetPoolStatistics()` reports their aggregate.
+
+## What happens when the pool is full?
+
+When every connection is in use, `Open`, `OpenAsync` and data-source commands
+wait in order for a connection to be returned. The connection-string `Timeout`
+(default 15 seconds, also reported as `DbConnection.ConnectionTimeout`) limits
+this wait. When it expires, the open throws a `TimeoutException` that names
+the endpoint, `Maximum Pool Size` and `Timeout`:
+
+```text
+The connection pool for db.example.com:5432 is exhausted: no connection became available within the 15-second Timeout. Close connections sooner, or raise 'Maximum Pool Size' (currently 100) or 'Timeout' in the connection string.
+```
+
+The caller leaves the queue without using a slot. A cancellation token ends
+the wait sooner, with `OperationCanceledException`:
+
+```csharp
+using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+await using var connection = await dataSource.OpenConnectionAsync(timeout.Token);
+```
+
+In a [multi-host](multi-host.md) data source each endpoint pool applies the
+limit, and a full endpoint pool is not marked as unavailable.
+
+> **Note:** **Behaviour change in 1.1.0.** In 1.0.0 and 1.1.0-rc.1 an open
+> waited for a free pooled connection with no time limit. If your application
+> relied on that, raise `Timeout`.
 
 ## Reset and validation
 

@@ -51,6 +51,11 @@ var tags = reader.GetFieldValue<string[]>(2);
 | `json`, `jsonb`        | JSON/string mapping       | Choose an explicit application representation. |
 | `type[]`               | `T[]`                     | Element mapping must also be known.            |
 
+`ExecuteScalarAsync<T>()` converts its result with the same rules as
+`GetFieldValue<T>()`, so `ExecuteScalarAsync<decimal>()` reads a `numeric`
+result. For a column that can be `NULL`, ask for a nullable type such as
+`decimal?` or `int?`: a non-nullable `T` returns its default value instead.
+
 ## Null values need a type
 
 PostgreSQL cannot always infer the intended type of a null parameter. State it
@@ -85,9 +90,14 @@ builder.MapComposite<Address>("app.address");
 await using var dataSource = builder.Build();
 ```
 
-Without a labels dictionary, `MapEnum` expects the PostgreSQL labels to match
-the CLR member names exactly (`Paid`, not `paid`). `MapComposite` matches
-members to fields by snake_case name (`HouseNumber` to `house_number`).
+Without a labels dictionary, `MapEnum` takes each member's label from
+`[BlueTuskName("paid")]` (namespace `BlueTusk.TypeSystem`), then from
+`[EnumMember(Value = "paid")]`, and otherwise uses the CLR member name exactly
+(`Paid`, not `paid`). With EF Core, prefer the attributes: LINQ writes an enum
+constant with its attribute label but cannot see a labels dictionary (see
+[EF Core enums](../ef-core/concepts.md#postgresql-enums-need-three-pieces)).
+`MapComposite` matches members to fields by snake_case name (`HouseNumber` to
+`house_number`).
 
 A mapped type does not have to exist when the data source first connects.
 Until the catalogue contains it, the mapping stays unresolved and only a value

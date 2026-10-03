@@ -44,9 +44,7 @@ Outer message: `Could not open a PostgreSQL connection matching Any across 1 con
 | `BlueTuskServerException`: `database "orders" does not exist` | Wrong database name. | Create the database or fix `Database`. |
 | `ArgumentException`: `... (Parameter 'Database')` or `(Parameter 'Username')` | The keyword is missing. Aliases such as `User ID` are not recognized. | Use `Database=` and `Username=`. See [parsing rules](configuration.md#how-the-connection-string-is-parsed). |
 | `ObjectDisposedException`: `... 'BlueTusk.Data.BlueTuskConnectionPool'` | The data source was disposed. | Keep one for the app's lifetime. |
-
-> **Note:** Unknown keywords are ignored, so check spelling in
-> [Configuration](configuration.md).
+| `ArgumentException`: `The connection-string keyword 'usernme' is not supported by BlueTusk.` | You turned on [rejection of unknown keywords](configuration.md#reject-unknown-keywords); by default they are ignored. | Fix or remove the keyword. |
 
 ## TLS failures
 
@@ -70,7 +68,7 @@ Outer message: `Could not open a PostgreSQL connection matching Any across 1 con
 
 | Symptom or error | Cause | Fix |
 | --- | --- | --- |
-| `OpenConnectionAsync` or a data-source command never returns under load. | Every pooled connection is busy. The wait has **no timeout**: `Timeout` and `CommandTimeout` do not apply. | Dispose connections, readers and transactions. Pass a token with a deadline. Watch `GetPoolStatistics().Waiting` or the `bluetusk.pool.waiters` metric. |
+| `TimeoutException`: `The connection pool for db:5432 is exhausted: no connection became available within the 15-second Timeout. ...` | Every pooled connection stayed busy for `Timeout` (default 15 s). **Behaviour change in 1.1.0:** earlier versions waited forever. See [Pooling](pooling.md#what-happens-when-the-pool-is-full). | Dispose connections, readers and transactions promptly. Watch the `bluetusk.pool.waiters` metric. Raise `Maximum Pool Size` or `Timeout` if the load is expected. |
 | `TimeoutException`: `The command exceeded its 30-second timeout.` (inner: `canceling statement due to user request`) | The statement ran longer than `CommandTimeout`. | Tune the query or raise `CommandTimeout` (`0` = no limit). |
 | `OperationCanceledException`: `The PostgreSQL operation was cancelled.` | Your token was cancelled; the server statement was cancelled too. | Expected. In a transaction, roll back next. |
 | `sorry, too many clients already` (SQLSTATE `53300`) | `Maximum Pool Size` times app instances exceeds the server's `max_connections`. | Lower `Maximum Pool Size`, or use PgBouncer. |
@@ -95,13 +93,12 @@ See [Connection pooling](pooling.md) and [timeouts](concepts.md#timeouts-and-can
 | Error or symptom | Cause | Fix |
 | --- | --- | --- |
 | `A null parameter requires DbType, PostgreSqlTypeOid, or PostgreSqlTypeName so PostgreSQL can determine its type.` | A `null` or `DBNull.Value` parameter has no type, even in `BlueTuskParameter<string?>`. | Set `DbType` or `PostgreSqlTypeName`. |
-| `PostgreSQL type app.order_status is not present in the loaded type catalogue.`, or values read back as `BlueTuskUnknownValue` | The type was created after the catalogue loaded, or the name is wrong. | Call `await dataSource.ReloadTypesAsync()` after `CREATE TYPE` or `ALTER TYPE`. |
+| `PostgreSQL type app.order_status is not present in the loaded type catalogue.`, `CLR type ... does not have a BlueTusk parameter encoder yet. ...` for a mapped enum, or values read back as `BlueTuskUnknownValue` | The type was created after the data source loaded its catalogue (a data source can start before a mapped type exists), or the name is wrong. | Call `await dataSource.ReloadTypesAsync()` after `CREATE TYPE` or `ALTER TYPE`, or restart. EF Core `Migrate` and `MigrateAsync` reload it for you. |
 | `FormatException`: `PostgreSQL type name 'jsonb' must be qualified as schema.name.` | `PostgreSqlTypeName` needs a schema. | Use `pg_catalog.jsonb`, `pg_catalog.text[]`, `app.order_status`. |
 | `CLR type System.String[] does not have a BlueTusk parameter encoder yet. ...` | `string[]` is ambiguous. | Set `PostgreSqlTypeName = "pg_catalog.text[]"`. |
 | `column "payload" is of type jsonb but expression is of type text` (SQLSTATE `42804`) | A `string` is sent as `text`. | Set `PostgreSqlTypeName = "pg_catalog.jsonb"`. |
 | `'Paid' is not a catalogue label for PostgreSQL enum app.order_status.` | `MapEnum` without labels uses member names unchanged. | Pass a labels dictionary. |
 | `PostgreSQL time must be between 00:00:00 and 24:00:00.` | `TimeSpan` maps to `time`. | For `interval`, use `BlueTuskInterval`. |
-| `InvalidCastException`: `Object must implement IConvertible.` from `ExecuteScalarAsync<decimal>()` | Known 1.1.0 issue with `numeric` scalars. | Use a data reader and `GetDecimal(0)`. |
 | `ExecuteScalarAsync<int>()` returns `0` for SQL `NULL` | A non-nullable `T` gets its default. | Use `ExecuteScalarAsync<int?>()`. |
 
 See [PostgreSQL types](../types/README.md).

@@ -85,12 +85,15 @@ To use a PostgreSQL enum:
 2. Point the property at it:
    `order.Property(o => o.Status).HasColumnType("app.order_status");`
 3. Register the CLR type on the data source:
-   `.MapEnum<OrderStatus>("app.order_status")`.
+   `.MapEnum<OrderStatus>("app.order_status")`. The type does not have to
+   exist yet (see [migrations](#how-do-migrations-work)).
 
 BlueTusk sends each enum member's **CLR name** as the label unless you
 override it. Match lower-case labels with `[BlueTuskName("pending")]` (from
 `BlueTusk.TypeSystem`), `[EnumMember(Value = "pending")]`, or the `labels`
-dictionary of `MapEnum`. Composites follow the same pattern (`HasComposite`
+dictionary of `MapEnum`. Prefer the attributes: LINQ enum constants such as
+`OrderStatus.Shipped` use them, but cannot see the `labels` dictionary.
+Composites follow the same pattern (`HasComposite`
 and `MapComposite`). Domains need only `HasDomain` and `HasColumnType`. See
 [PostgreSQL types](../types/README.md) and the
 [full reference](reference.md#postgresql-type-mappings).
@@ -185,7 +188,8 @@ else
 ```
 
 Both methods return `null` when the row no longer exists. For an entity
-without complex collections they return the same result as EF Core's methods.
+without complex collections they return the same result as EF Core's methods
+([full reference](reference.md#store-values-for-complex-collections)).
 
 ## How do transactions and retries work?
 
@@ -273,10 +277,12 @@ For production, generate a reviewed script with
 using a role allowed to change the schema. Do not let every application
 replica migrate at startup.
 
-> **Note:** A data source that maps a PostgreSQL enum or composite with
-> `MapEnum` or `MapComposite` needs that type to exist when it first connects.
-> Create the type (run the migration) before the application's data source
-> opens. See [Troubleshooting](troubleshooting.md#enums-and-types).
+A data source that maps an enum or composite can connect before the type
+exists, so `dotnet ef database update` and `Migrate` can create the type
+through your application's own data source. `Migrate` and `MigrateAsync` then
+reload that data source's type catalogue. An instance that was already running
+must call `ReloadTypesAsync()` or restart. See
+[Troubleshooting](troubleshooting.md#enums-and-types).
 
 ## How do I start from an existing database?
 
