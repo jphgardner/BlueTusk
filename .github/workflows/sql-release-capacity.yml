@@ -1,0 +1,88 @@
+name: Sql exact-candidate release capacity
+
+run-name: Sql capacity at ${{ inputs.candidate_sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character lowercase commit SHA containing this Sql gate; dispatch from a ref whose head is that commit
+        required: true
+        type: string
+      confirmation:
+        description: Type RUN-SQL-RELEASE-CAPACITY to start two full campaigns
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bluetusk-reference-host
+  cancel-in-progress: false
+
+jobs:
+  qualify:
+    name: Isolated Windows Sql capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 180
+    env:
+      EVIDENCE_ROOT: artifacts/sql-release-capacity/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify exact candidate, reference host and Sql contract
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Sql capacity requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-SQL-RELEASE-CAPACITY') { throw 'The exact manual Sql confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) { throw 'Sql capacity runs are bound by head_sha; dispatch from a ref whose head is the candidate.' }
+          python --version
+          if ($LASTEXITCODE -ne 0) { throw 'Python is required for exact source capture.' }
+          ./eng/verify-expansion-capacity.ps1 -Mode Preflight -Family Sql -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Run two exact-candidate Sql campaigns on owned digest-pinned PostgreSQL
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Run -Family Sql -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Sql evidence, raw samples and every SHA-256 binding
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Verify -Family Sql -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Sql capacity evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-sql-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sql-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Sql fixtures
+        if: always()
+        shell: pwsh
+        run: |
+          $filters = @('--filter', 'label=bluetusk.owner=sql-release-capacity', '--filter', "label=bluetusk.run=$env:GITHUB_RUN_ID", '--filter', 'label=bluetusk.family=Sql')
+          $containers = @(docker container ls -a -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Sql fixtures.' }
+          if ($containers.Count -gt 0) { docker rm -f @containers; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Sql fixture.' } }
+          $volumes = @(docker volume ls -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Sql volumes.' }
+          if ($volumes.Count -gt 0) { docker volume rm @volumes; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Sql volume.' } }

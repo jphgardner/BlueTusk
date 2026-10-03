@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "family": "Schema",
+  "qualification": "manual-exact-candidate-schema-capacity",
+  "workload": "schema-eight-module-relation-and-catalog-capture-under-dml",
+  "referenceProcessor": "AMD Ryzen 7 5800X",
+  "postgreSqlImage": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "postgreSqlMajorVersion": 18,
+  "fixture": { "cpus": 4, "memoryMiB": 2048, "maxConnections": 100 },
+  "repetitions": 2,
+  "secondsPerRun": 1800,
+  "sampleIntervalSeconds": 5,
+  "parameters": {
+    "modules": 8,
+    "tablesPerModule": 32,
+    "rowsPerTable": 256,
+    "maximumPoolSize": 32
+  },
+  "operations": {
+    "capture-relations": {
+      "workers": 4,
+      "offerIntervalMilliseconds": 250,
+      "minimumAcceptedPerSecond": 15.2,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0.02,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 1000
+    },
+    "capture-catalog": {
+      "workers": 2,
+      "offerIntervalMilliseconds": 1000,
+      "minimumAcceptedPerSecond": 1.9,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0.02,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 5000
+    },
+    "application-write": {
+      "workers": 4,
+      "offerIntervalMilliseconds": 50,
+      "minimumAcceptedPerSecond": 76,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 500
+    }
+  },
+  "series": {},
+  "metrics": {},
+  "counters": {
+    "verifiedRelationCaptures": { "equalsOperationAccepted": "capture-relations" },
+    "verifiedCatalogCaptures": { "equalsOperationAccepted": "capture-catalog" }
+  },
+  "storage": {
+    "maximumOwnedRelationBytes": 1073741824,
+    "maximumDatabaseBytes": 8589934592,
+    "maximumLateOwnedGrowthBytesPerMinute": 16777216
+  },
+  "requiredInvariants": [
+    "deterministic-relation-fingerprints",
+    "deterministic-catalog-fingerprints",
+    "serialization-round-trip",
+    "compare-reports-no-change",
+    "relation-limit-fails-closed",
+    "application-rows-exact"
+  ],
+  "rationale": {
+    "scope": "Budgets were fixed from documented guarantees and peer ceilings before any Schema capacity measurement; they are never tuned to an observed result. docs/schema/README.md publishes no performance numbers ('performance qualification and release evidence' is listed as remaining work).",
+    "workload": "Capture is the only runtime hot path against PostgreSQL (compare, plan and serialize are in-memory; the deployment coordinator is a low-frequency journal). Eight application modules of 32 related tables (enum, domain, foreign keys, checks, indexes, row security, a view and a function) are captured repeatedly while fixed-cardinality application DML keeps the database live, as an operator or Studio would capture a running system. Every capture must reproduce the baseline fingerprint (README: the canonical fingerprint excludes transient OIDs and normalizes order).",
+    "durationAndRepeats": "Two clean exact-candidate runs of 30 minutes each, the minimum every other expansion capacity gate requires.",
+    "offeredRates": "16 relation captures/s and 2 catalog captures/s, each catalog capture holding two pooled connections (README: 'The pool must admit two simultaneous capture connections'); application DML at 80 updates/s.",
+    "minimumAcceptedPerSecond": "95% of each fixed offered rate (Edge maximumSkippedFraction 0.05, the strictest peer schedule-skip ceiling).",
+    "maximumRejectedFraction": "0.02 for captures: catalogue attestation documentedly fails closed with SchemaConcurrentDdlException when catalogue rows change concurrently (catalogue-attestation.md: 'unrelated catalogue changes may also reject capture'). The ceiling equals Search's maximumMaintenancePruneRejectionFraction for its analogous fail-closed lock conflicts. Application DML has no admission control: zero.",
+    "maximumErrors": "Zero for every operation; a fingerprint mismatch aborts the run.",
+    "capture-relations.maximumP99Milliseconds": "1000 ms: Studio's GET /schema runs this capture under QueryTimeoutSeconds (default 10 s); a tenth of that deadline leaves headroom for serialization and the reply.",
+    "capture-catalog.maximumP99Milliseconds": "5000 ms: catalogue capture attests 28 global catalogues and may retry up to three times inside its own deadline; half the Studio deadline, equal to Search's read ceiling (maximumReadP99Milliseconds 5000).",
+    "application-write.maximumP99Milliseconds": "500 ms: the background DML is a single-row durable update and inherits the Documents save ceiling; a breach means captures were measured on an unhealthy fixture.",
+    "maximumOwnedRelationBytes": "1 GiB: Search's owned-relation ceiling for a fixed-cardinality corpus.",
+    "maximumLateOwnedGrowthBytesPerMinute": "16 MiB/min: Documents' fixed-cardinality maximumLateGrowthBytesPerMinute; capture writes nothing and the DML updates a fixed row set, so late growth may only be bounded MVCC churn.",
+    "maximumDatabaseBytes": "8 GiB: the Search and Documents whole-database ceiling."
+  }
+}
