@@ -340,11 +340,12 @@ finally
 
 if (-not $SkipProbeBuild)
 {
+    # One artifacts root lets the shared provider projects build once for all nine probes.
     $project = Join-Path $PSScriptRoot 'ExpansionUpgradeProbe/ExpansionUpgradeProbe.csproj'
     foreach ($family in $families)
     {
         & dotnet build $project -c Release "-p:UpgradeFamily=$family" "-p:FamilySourceRoot=$root/" `
-            --artifacts-path (Join-Path $root "artifacts/expansion-upgrade-probe-policy-build/$($family.ToLowerInvariant())")
+            --artifacts-path (Join-Path $root 'artifacts/expansion-upgrade-probe-policy-build')
         if ($LASTEXITCODE -ne 0) { throw "The candidate $family upgrade probe failed to compile without a database." }
     }
 }
