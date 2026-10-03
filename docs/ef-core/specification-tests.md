@@ -43,15 +43,21 @@ these official suites:
   change-tracking cases;
 - `WithConstructorsTestBase`: 41 live materialization and constructor-binding
   cases; and
-- `PropertyValuesRelationalTestBase`: 198 passing live current, original,
-  store, inheritance, complex-type, and structural-JSON value cases, plus four
-  skips declared by EF Core itself (`#31411`). Those four read
-  complex-collection store values through `EntityEntry.GetDatabaseValues()`.
-  In EF Core 10, and on EF Core's main branch, that method builds the store
-  values from scalar columns only, and the store-values object is created
-  inside `EntityEntry`, so no provider service can add complex-collection
-  values. They need an EF Core change and are the only skips left in the
-  assembly;
+- `PropertyValuesRelationalTestBase`: all 202 live current, original, store,
+  inheritance, complex-type, and structural-JSON value cases, plus seven
+  BlueTusk store-value regressions. This includes the four cases EF Core skips
+  (`#31411`), which read complex-collection store values. In EF Core 10, and on
+  EF Core's main branch, `EntityEntry.GetDatabaseValues()` builds the store
+  values from scalar columns only, inside `EntityEntry`, so no provider service
+  can add complex-collection values. BlueTusk therefore provides
+  `GetCompleteDatabaseValues()` and `GetCompleteDatabaseValuesAsync()`, which
+  read the same scalar values and every complex collection in one statement.
+  The four skipped cases and the two store-value `ToObject` cases run as ported
+  copies that call these methods. The ports also seed the School that EF Core's
+  shared fixture leaves commented out pending `#31411`, and read `Departments`
+  through `ComplexCollectionProperties` instead of the scalar-only
+  `Properties`. A BlueTusk regression pins EF Core's own `GetDatabaseValues()`
+  behaviour, so the ports are revisited when EF Core fixes it;
 - `UpdatesRelationalTestBase`: all 36 live insert, update, delete, concurrency,
   generated-value, batching, filtered-index, and identifier-length contracts;
 - `StoreGeneratedFixupRelationalTestBase`: all 119 live temporary-key,
@@ -90,17 +96,16 @@ Without live credentials, the executable gate is 803 passing tests with no
 skips. EF Core 10.0.11 declares 117 static skips in the adopted test bases (65
 model-building cases for issue `#35613`, one model-building case for issue
 `#31411`, 50 from its complex-struct collection backlog, and one from its
-duplicate complex-projection pushdown backlog); BlueTusk runs all of them
-except the four complex-collection store-value cases described above. No
+duplicate complex-projection pushdown backlog); BlueTusk runs all of them; the
+four complex-collection store-value cases run as the ports described above. No
 BlueTusk test is skipped to hide a provider failure.
 Every virtual migration test is overridden because EF Core's own compliance
 test fails when a provider inherits a generator case without asserting its
 generated SQL.
 
-The adopted live gate discovers 1,422 cases: 1,418 pass and the four
-store-value cases are reported as EF Core's skips. Combined with the offline
-gate, the assembly discovers 2,225 cases: 2,221 pass, none fail, and four
-retain their upstream skip declarations. The data-annotation fixture follows
+The adopted live gate discovers 1,429 cases and all of them pass. Combined with
+the offline gate, the assembly discovers 2,232 cases: all 2,232 pass, none
+fail, and none are skipped. The data-annotation fixture follows
 PostgreSQL provider semantics by overriding the three relational expectations
 that require a length exception or SQL Server-style rowversion behavior; these
 are provider-specific no-op assertions, matching the reference PostgreSQL
@@ -159,13 +164,12 @@ detector. Shadow properties on value-type complex types remain rejected.
 nested struct collections through PostgreSQL with tracking, no-tracking and
 projection queries, and checks removal, insertion and in-place changes.
 
-A single PostgreSQL 18 run of the full assembly at this source discovered 2,225
-cases: 2,221 passed, none failed, and four retain EF Core's skip declarations
-(the complex-collection store-value cases above).
+A single PostgreSQL 18 run of the full assembly at this source discovered 2,232
+cases: 2,232 passed, none failed, and none were skipped or left unexecuted.
 
-The strict Core release collector still rejects every inherited upstream skip
-declaration. Passing the ordinary specification suite with those skips is not
-zero-skip Core compatibility evidence and does not authorize stable publication.
+The strict Core release collector rejects any skipped or unexecuted case. This
+local run is diagnostic; release qualification comes only from the collector's
+own exact-candidate runs.
 
 Run the gate directly with:
 
@@ -189,7 +193,7 @@ The Visual Studio test adapter discovers and runs both.
 
 This is the adopted official-suite coverage required by BlueTusk's product
 specification, not a claim that every test base published in Microsoft's entire
-relational specification assembly is inherited. The official gate (2,225 cases
+relational specification assembly is inherited. The official gate (2,232 cases
 on PostgreSQL 18 at this source), with its capability-adjusted form on older
 servers, is paired with BlueTusk's native provider project (349 cases at this
 source) on each PostgreSQL 15–19 server. The latter covers PostgreSQL-specific
