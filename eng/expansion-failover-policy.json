@@ -695,6 +695,397 @@
         "persistent-storage-corruption-or-loss",
         "independent-host-fleet"
       ]
+    },
+    "Schema": {
+      "qualification": "manual-exact-candidate-schema-failover",
+      "failoverSemantics": "Schema has no replicated runtime of its own, so its failover semantics are restart and fencing safety of the deployment journal. A transactional SQL step commits its DDL and its completed journal record in one transaction under a database-clock lease with a persistent fencing token; a retry after an unknown commit reads the durable record, a rolled-back step leaves no record, and only the newest owner may finish a step (docs/schema/README.md). Two independent journals stand in for tenants.",
+      "fixture": {
+        "database": "bluetusk_failover",
+        "standbyApplicationName": "bluetusk_failover_standby",
+        "walLevel": "replica",
+        "primaryPort": 55653,
+        "standbyPort": 55654
+      },
+      "sourceRoots": [
+        "src/BlueTusk.Schema",
+        "benchmarks/BlueTusk.Ecosystem.FailoverHarness"
+      ],
+      "steps": [
+        {
+          "name": "harness",
+          "kind": "harness",
+          "project": "benchmarks/BlueTusk.Ecosystem.FailoverHarness/BlueTusk.Ecosystem.FailoverHarness.csproj",
+          "requiredBinaries": [
+            "BlueTusk.Ecosystem.FailoverHarness.dll",
+            "BlueTusk.Schema.dll",
+            "BlueTusk.Data.dll"
+          ]
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "backend-termination",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "in-flight backend terminated",
+            "interrupted operation reported failure to its caller",
+            "interrupted step left neither its DDL nor a completed journal record",
+            "successor holds a newer fence",
+            "stale owner cannot renew or run a step",
+            "a repeated step retry reads the durable record",
+            "every acknowledged step stayed completed exactly once with its DDL",
+            "the interrupted step completed exactly once after recovery",
+            "no cross-journal deployments",
+            "exactly one applied column and one completed record per step",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "host-process-kill",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "workload process hard-killed while blocked",
+            "interrupted step left neither its DDL nor a completed journal record",
+            "successor holds a newer fence",
+            "stale owner cannot renew or run a step",
+            "a repeated step retry reads the durable record",
+            "every acknowledged step stayed completed exactly once with its DDL",
+            "the interrupted step completed exactly once after recovery",
+            "no cross-journal deployments",
+            "exactly one applied column and one completed record per step",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "primary-crash-restart",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "synchronous standby reattached after restart",
+            "interrupted step left neither its DDL nor a completed journal record",
+            "successor holds a newer fence",
+            "stale owner cannot renew or run a step",
+            "a repeated step retry reads the durable record",
+            "every acknowledged step stayed completed exactly once with its DDL",
+            "the interrupted step completed exactly once after recovery",
+            "no cross-journal deployments",
+            "exactly one applied column and one completed record per step",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "synchronous-standby-promotion",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 1,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "interrupted step left neither its DDL nor a completed journal record",
+            "successor holds a newer fence",
+            "stale owner cannot renew or run a step",
+            "a repeated step retry reads the durable record",
+            "every acknowledged step stayed completed exactly once with its DDL",
+            "the interrupted step completed exactly once after recovery",
+            "no cross-journal deployments",
+            "exactly one applied column and one completed record per step",
+            "same system promoted to the next timeline"
+          ]
+        }
+      ],
+      "unqualifiedDisturbances": [
+        "asynchronous-replication-loss",
+        "split-brain",
+        "old-primary-rejoin",
+        "external-step-reconciliation-after-host-death",
+        "concurrent-index-build-under-promotion",
+        "schema-tool-cli",
+        "persistent-storage-corruption-or-loss",
+        "independent-host-fleet"
+      ]
+    },
+    "Sql": {
+      "qualification": "manual-exact-candidate-sql-failover",
+      "failoverSemantics": "Sql has no durable state and no failover semantics of its own: it streams typed rows from a caller-owned connection and never commits, retries or owns a transaction (docs/sql/README.md). Its gate qualifies restart safety only: an interrupted typed read must fail rather than return a truncated success, every yielded row must be an exact prefix, no disturbed session may linger, the generated result contract must still validate on the recovered server and a caller retry must return every application-acknowledged row exactly. There is no owner to fence, so no fence is claimed.",
+      "fixture": {
+        "database": "bluetusk_failover",
+        "standbyApplicationName": "bluetusk_failover_standby",
+        "walLevel": "replica",
+        "primaryPort": 55655,
+        "standbyPort": 55656
+      },
+      "sourceRoots": [
+        "src/BlueTusk.Sql",
+        "src/BlueTusk.Sql.SourceGeneration",
+        "benchmarks/BlueTusk.Ecosystem.FailoverHarness"
+      ],
+      "steps": [
+        {
+          "name": "harness",
+          "kind": "harness",
+          "project": "benchmarks/BlueTusk.Ecosystem.FailoverHarness/BlueTusk.Ecosystem.FailoverHarness.csproj",
+          "requiredBinaries": [
+            "BlueTusk.Ecosystem.FailoverHarness.dll",
+            "BlueTusk.Sql.dll",
+            "BlueTusk.Data.dll"
+          ]
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "backend-termination",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": false,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": false,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "in-flight backend terminated",
+            "interrupted operation reported failure to its caller",
+            "interrupted read yielded only an exact prefix and left no blocked session",
+            "the generated result contract validates on the recovered server",
+            "every acknowledged row is read back exactly",
+            "no cross-tenant reads",
+            "no lost or duplicated rows",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "host-process-kill",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": false,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": false,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "workload process hard-killed while blocked",
+            "interrupted read yielded only an exact prefix and left no blocked session",
+            "the generated result contract validates on the recovered server",
+            "every acknowledged row is read back exactly",
+            "no cross-tenant reads",
+            "no lost or duplicated rows",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "primary-crash-restart",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": false,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": false,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "synchronous standby reattached after restart",
+            "interrupted read yielded only an exact prefix and left no blocked session",
+            "the generated result contract validates on the recovered server",
+            "every acknowledged row is read back exactly",
+            "no cross-tenant reads",
+            "no lost or duplicated rows",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "synchronous-standby-promotion",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": false,
+          "timelineAdvance": 1,
+          "inFlightMustCommit": false,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "interrupted read yielded only an exact prefix and left no blocked session",
+            "the generated result contract validates on the recovered server",
+            "every acknowledged row is read back exactly",
+            "no cross-tenant reads",
+            "no lost or duplicated rows",
+            "same system promoted to the next timeline"
+          ]
+        }
+      ],
+      "unqualifiedDisturbances": [
+        "asynchronous-replication-loss",
+        "split-brain",
+        "old-primary-rejoin",
+        "sql-tool-cli-receipts",
+        "catalogue-attestation-across-promotion",
+        "persistent-storage-corruption-or-loss",
+        "independent-host-fleet"
+      ]
+    },
+    "Studio": {
+      "qualification": "manual-exact-candidate-studio-failover",
+      "failoverSemantics": "Studio runs inside the application's web host; its PostgreSQL state is the durable audit trail and the cross-replica admission gate. A lost admission connection releases its advisory slots, an identical audit retry is a no-op while a reused identity with different fields is rejected, and a completion-audit failure leaves an uncertain outcome that the restarted host reconciles by operation identity (docs/studio/README.md). There is no lease owner to fence; the conflicting-retry rejection is a required check instead.",
+      "fixture": {
+        "database": "bluetusk_failover",
+        "standbyApplicationName": "bluetusk_failover_standby",
+        "walLevel": "replica",
+        "primaryPort": 55657,
+        "standbyPort": 55658
+      },
+      "sourceRoots": [
+        "src/BlueTusk.Studio",
+        "benchmarks/BlueTusk.Ecosystem.FailoverHarness"
+      ],
+      "steps": [
+        {
+          "name": "harness",
+          "kind": "harness",
+          "project": "benchmarks/BlueTusk.Ecosystem.FailoverHarness/BlueTusk.Ecosystem.FailoverHarness.csproj",
+          "requiredBinaries": [
+            "BlueTusk.Ecosystem.FailoverHarness.dll",
+            "BlueTusk.Studio.dll",
+            "BlueTusk.Data.dll"
+          ]
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "backend-termination",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": false,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "in-flight backend terminated",
+            "interrupted operation reported failure to its caller",
+            "interrupted completion audit left no record and the attempt audit survived",
+            "a reused operation identity with different fields is rejected",
+            "the scope slot is available after reconciliation",
+            "the per-scope cap still holds after recovery",
+            "another scope is admitted independently",
+            "every acknowledged operation kept exactly one attempt and one completion audit",
+            "no audit record crossed scopes",
+            "the interrupted operation was reconciled exactly once",
+            "no lost or duplicated audit records",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "host-process-kill",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": false,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "workload process hard-killed while blocked",
+            "interrupted completion audit left no record and the attempt audit survived",
+            "a reused operation identity with different fields is rejected",
+            "the scope slot is available after reconciliation",
+            "the per-scope cap still holds after recovery",
+            "another scope is admitted independently",
+            "every acknowledged operation kept exactly one attempt and one completion audit",
+            "no audit record crossed scopes",
+            "the interrupted operation was reconciled exactly once",
+            "no lost or duplicated audit records",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "primary-crash-restart",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": false,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "synchronous standby reattached after restart",
+            "interrupted completion audit left no record and the attempt audit survived",
+            "a reused operation identity with different fields is rejected",
+            "the scope slot is available after reconciliation",
+            "the per-scope cap still holds after recovery",
+            "another scope is admitted independently",
+            "every acknowledged operation kept exactly one attempt and one completion audit",
+            "no audit record crossed scopes",
+            "the interrupted operation was reconciled exactly once",
+            "no lost or duplicated audit records",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "synchronous-standby-promotion",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": false,
+          "timelineAdvance": 1,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "interrupted completion audit left no record and the attempt audit survived",
+            "a reused operation identity with different fields is rejected",
+            "the scope slot is available after reconciliation",
+            "the per-scope cap still holds after recovery",
+            "another scope is admitted independently",
+            "every acknowledged operation kept exactly one attempt and one completion audit",
+            "no audit record crossed scopes",
+            "the interrupted operation was reconciled exactly once",
+            "no lost or duplicated audit records",
+            "same system promoted to the next timeline"
+          ]
+        }
+      ],
+      "unqualifiedDisturbances": [
+        "asynchronous-replication-loss",
+        "split-brain",
+        "old-primary-rejoin",
+        "studio-http-endpoints-and-browser-session",
+        "user-query-cancellation-on-admission-loss",
+        "control-plane-and-events-adapters",
+        "persistent-storage-corruption-or-loss",
+        "independent-host-fleet"
+      ]
     }
   }
 }
