@@ -277,6 +277,424 @@
         "exactly-once-external-side-effects",
         "independent-host-fleet"
       ]
+    },
+    "Search": {
+      "qualification": "manual-exact-candidate-search-failover",
+      "failoverSemantics": "Search keeps one current version per document: a higher version replaces every chunk in one transaction, an identical same-version replay is idempotent, a lower version is ignored and a conflicting same-version write fails (docs/search/README.md). Ingestion is at least once by caller retry; the version fence makes the indexed state exactly once. External embedding calls are at least once and are not exercised here; the gate uses full-text indexing only.",
+      "fixture": {
+        "database": "bluetusk_failover",
+        "standbyApplicationName": "bluetusk_failover_standby",
+        "walLevel": "replica",
+        "primaryPort": 55647,
+        "standbyPort": 55648
+      },
+      "sourceRoots": [
+        "src/BlueTusk.Search",
+        "benchmarks/BlueTusk.Ecosystem.FailoverHarness"
+      ],
+      "steps": [
+        {
+          "name": "harness",
+          "kind": "harness",
+          "project": "benchmarks/BlueTusk.Ecosystem.FailoverHarness/BlueTusk.Ecosystem.FailoverHarness.csproj",
+          "requiredBinaries": [
+            "BlueTusk.Ecosystem.FailoverHarness.dll",
+            "BlueTusk.Search.dll",
+            "BlueTusk.Data.dll"
+          ]
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "backend-termination",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "in-flight backend terminated",
+            "interrupted operation reported failure to its caller",
+            "interrupted replacement rolled back whole; version 1 stays searchable",
+            "repeated same-version replay is idempotent",
+            "the retried version is current",
+            "delayed version-1 writer ignored",
+            "every acknowledged document is searchable at its exact version",
+            "no cross-tenant reads",
+            "no document mixes chunks from two versions",
+            "no lost, duplicated or partial documents",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "host-process-kill",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "workload process hard-killed while blocked",
+            "interrupted replacement rolled back whole; version 1 stays searchable",
+            "repeated same-version replay is idempotent",
+            "the retried version is current",
+            "delayed version-1 writer ignored",
+            "every acknowledged document is searchable at its exact version",
+            "no cross-tenant reads",
+            "no document mixes chunks from two versions",
+            "no lost, duplicated or partial documents",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "primary-crash-restart",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "synchronous standby reattached after restart",
+            "interrupted replacement rolled back whole; version 1 stays searchable",
+            "repeated same-version replay is idempotent",
+            "the retried version is current",
+            "delayed version-1 writer ignored",
+            "every acknowledged document is searchable at its exact version",
+            "no cross-tenant reads",
+            "no document mixes chunks from two versions",
+            "no lost, duplicated or partial documents",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "synchronous-standby-promotion",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 1,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "interrupted replacement rolled back whole; version 1 stays searchable",
+            "repeated same-version replay is idempotent",
+            "the retried version is current",
+            "delayed version-1 writer ignored",
+            "every acknowledged document is searchable at its exact version",
+            "no cross-tenant reads",
+            "no document mixes chunks from two versions",
+            "no lost, duplicated or partial documents",
+            "same system promoted to the next timeline"
+          ]
+        }
+      ],
+      "unqualifiedDisturbances": [
+        "asynchronous-replication-loss",
+        "split-brain",
+        "old-primary-rejoin",
+        "embedding-provider-outage-during-failover",
+        "search-jobs-ingestion-worker-failover",
+        "opensearch-and-pgvector-adapters",
+        "persistent-storage-corruption-or-loss",
+        "independent-host-fleet"
+      ]
+    },
+    "Edge": {
+      "qualification": "manual-exact-candidate-edge-failover",
+      "failoverSemantics": "Edge clients retain mutations in a local outbox and deliver them at least once over HTTP; caller-stable mutation identities make the server apply each mutation and its business effect exactly once, and an ordered stream refuses (410) a retry at or below its admitted sequence (docs/edge/README.md). The host-process kill kills the Edge server process while the SQLite clients survive, as devices would. The verified-recovery ceiling keeps the product's own 120-second fault-recovery budget (eng/edge-capacity-budgets.json maximumFaultRecoverySeconds).",
+      "fixture": {
+        "database": "bluetusk_failover",
+        "standbyApplicationName": "bluetusk_failover_standby",
+        "walLevel": "replica",
+        "primaryPort": 55649,
+        "standbyPort": 55650
+      },
+      "sourceRoots": [
+        "src/BlueTusk.Edge",
+        "src/BlueTusk.Edge.AspNetCore",
+        "src/BlueTusk.Edge.Http",
+        "src/BlueTusk.Edge.Server",
+        "src/BlueTusk.Edge.Sqlite",
+        "benchmarks/BlueTusk.Ecosystem.FailoverHarness"
+      ],
+      "steps": [
+        {
+          "name": "harness",
+          "kind": "harness",
+          "project": "benchmarks/BlueTusk.Ecosystem.FailoverHarness/BlueTusk.Ecosystem.FailoverHarness.csproj",
+          "requiredBinaries": [
+            "BlueTusk.Ecosystem.FailoverHarness.dll",
+            "BlueTusk.Edge.dll",
+            "BlueTusk.Edge.Server.dll",
+            "BlueTusk.Edge.AspNetCore.dll",
+            "BlueTusk.Edge.Http.dll",
+            "BlueTusk.Edge.Sqlite.dll",
+            "BlueTusk.Data.dll"
+          ]
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "backend-termination",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 120000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "in-flight backend terminated",
+            "interrupted operation reported failure to its caller",
+            "interrupted synchronization reported failure to the client",
+            "interrupted apply rolled back whole and the client outbox retained the mutation",
+            "every client checkpoint reached the server head",
+            "every acknowledged mutation survived with one business effect and a converged client cache",
+            "no cross-tenant reads",
+            "the retained mutation was applied exactly once after recovery",
+            "the server feed advanced by exactly the recovered mutation",
+            "a confirmed ordered retry is refused",
+            "exactly one business effect per acknowledged mutation",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "host-process-kill",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 120000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "workload process hard-killed while blocked",
+            "interrupted synchronization reported failure to the client",
+            "interrupted apply rolled back whole and the client outbox retained the mutation",
+            "every client checkpoint reached the server head",
+            "every acknowledged mutation survived with one business effect and a converged client cache",
+            "no cross-tenant reads",
+            "the retained mutation was applied exactly once after recovery",
+            "the server feed advanced by exactly the recovered mutation",
+            "a confirmed ordered retry is refused",
+            "exactly one business effect per acknowledged mutation",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "primary-crash-restart",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 120000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "synchronous standby reattached after restart",
+            "interrupted synchronization reported failure to the client",
+            "interrupted apply rolled back whole and the client outbox retained the mutation",
+            "every client checkpoint reached the server head",
+            "every acknowledged mutation survived with one business effect and a converged client cache",
+            "no cross-tenant reads",
+            "the retained mutation was applied exactly once after recovery",
+            "the server feed advanced by exactly the recovered mutation",
+            "a confirmed ordered retry is refused",
+            "exactly one business effect per acknowledged mutation",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "synchronous-standby-promotion",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 1,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 120000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "interrupted synchronization reported failure to the client",
+            "interrupted apply rolled back whole and the client outbox retained the mutation",
+            "every client checkpoint reached the server head",
+            "every acknowledged mutation survived with one business effect and a converged client cache",
+            "no cross-tenant reads",
+            "the retained mutation was applied exactly once after recovery",
+            "the server feed advanced by exactly the recovered mutation",
+            "a confirmed ordered retry is refused",
+            "exactly one business effect per acknowledged mutation",
+            "same system promoted to the next timeline"
+          ]
+        }
+      ],
+      "unqualifiedDisturbances": [
+        "asynchronous-replication-loss",
+        "split-brain",
+        "old-primary-rejoin",
+        "client-process-kill-with-one-minute-claim-lease-expiry",
+        "browser-indexeddb-client",
+        "clock-skew-and-device-suspend",
+        "persistent-storage-corruption-or-loss",
+        "independent-host-fleet"
+      ]
+    },
+    "Events": {
+      "qualification": "manual-exact-candidate-events-failover",
+      "failoverSemantics": "Events stores appends in the caller's transaction and delivers them at least once; the inbox makes each consumer's database effect exactly once, and a replay lease with a persisted fencing token keeps the checkpoint across owner replacement and restart (docs/events/README.md). External side effects are not made exactly once by the inbox and are not claimed here.",
+      "fixture": {
+        "database": "bluetusk_failover",
+        "standbyApplicationName": "bluetusk_failover_standby",
+        "walLevel": "replica",
+        "primaryPort": 55651,
+        "standbyPort": 55652
+      },
+      "sourceRoots": [
+        "src/BlueTusk.Events",
+        "benchmarks/BlueTusk.Ecosystem.FailoverHarness"
+      ],
+      "steps": [
+        {
+          "name": "harness",
+          "kind": "harness",
+          "project": "benchmarks/BlueTusk.Ecosystem.FailoverHarness/BlueTusk.Ecosystem.FailoverHarness.csproj",
+          "requiredBinaries": [
+            "BlueTusk.Ecosystem.FailoverHarness.dll",
+            "BlueTusk.Events.dll",
+            "BlueTusk.Data.dll"
+          ]
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "backend-termination",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "in-flight backend terminated",
+            "interrupted operation reported failure to its caller",
+            "interrupted replay batch rolled back whole, including its staged effect",
+            "replacement owner holds a newer fence",
+            "stale owner cannot replay or renew",
+            "every acknowledged append is present without gaps",
+            "every tenant checkpoint reached its last event",
+            "every acknowledged event survived with its exact identity, order and payload",
+            "no cross-tenant reads",
+            "retried appends are recognised as already stored",
+            "the interrupted batch was redelivered and applied after recovery",
+            "exactly one effect per acknowledged event",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "host-process-kill",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 45000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "workload process hard-killed while blocked",
+            "interrupted replay batch rolled back whole, including its staged effect",
+            "replacement owner holds a newer fence",
+            "stale owner cannot replay or renew",
+            "every acknowledged append is present without gaps",
+            "every tenant checkpoint reached its last event",
+            "every acknowledged event survived with its exact identity, order and payload",
+            "no cross-tenant reads",
+            "retried appends are recognised as already stored",
+            "the interrupted batch was redelivered and applied after recovery",
+            "exactly one effect per acknowledged event",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "primary-crash-restart",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 0,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "synchronous standby reattached after restart",
+            "interrupted replay batch rolled back whole, including its staged effect",
+            "replacement owner holds a newer fence",
+            "stale owner cannot replay or renew",
+            "every acknowledged append is present without gaps",
+            "every tenant checkpoint reached its last event",
+            "every acknowledged event survived with its exact identity, order and payload",
+            "no cross-tenant reads",
+            "retried appends are recognised as already stored",
+            "the interrupted batch was redelivered and applied after recovery",
+            "exactly one effect per acknowledged event",
+            "same server and timeline"
+          ]
+        },
+        {
+          "name": "synchronous-standby-promotion",
+          "step": "harness",
+          "acknowledgedOperations": 16,
+          "fenced": true,
+          "timelineAdvance": 1,
+          "inFlightMustCommit": true,
+          "maximumFaultToFirstSuccessMilliseconds": 60000,
+          "maximumFaultToVerifiedMilliseconds": 180000,
+          "requiredChecks": [
+            "remote_apply synchronous standby before fault",
+            "interrupted operation reported failure to its caller",
+            "interrupted replay batch rolled back whole, including its staged effect",
+            "replacement owner holds a newer fence",
+            "stale owner cannot replay or renew",
+            "every acknowledged append is present without gaps",
+            "every tenant checkpoint reached its last event",
+            "every acknowledged event survived with its exact identity, order and payload",
+            "no cross-tenant reads",
+            "retried appends are recognised as already stored",
+            "the interrupted batch was redelivered and applied after recovery",
+            "exactly one effect per acknowledged event",
+            "same system promoted to the next timeline"
+          ]
+        }
+      ],
+      "unqualifiedDisturbances": [
+        "asynchronous-replication-loss",
+        "split-brain",
+        "old-primary-rejoin",
+        "exactly-once-external-side-effects",
+        "streams-adapter-delivery-under-promotion",
+        "persistent-storage-corruption-or-loss",
+        "independent-host-fleet"
+      ]
     }
   }
 }
