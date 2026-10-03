@@ -158,6 +158,35 @@ catch (DbUpdateConcurrencyException conflict)
 Standard EF Core concurrency tokens (`IsConcurrencyToken()` or
 `[ConcurrencyCheck]` on your own column) also work.
 
+### Read the current database values, including complex collections
+
+**New in 1.1.0.** EF Core's `GetDatabaseValues()` and
+`GetDatabaseValuesAsync()` read scalar columns only, so the values they return
+have no complex collections. Use BlueTusk's `GetCompleteDatabaseValues()` or
+`GetCompleteDatabaseValuesAsync()` instead. They read the scalar columns and
+every complex collection in one statement, so all values come from the same
+database snapshot:
+
+```csharp
+var entry = db.Entry(order);
+
+// GetDatabaseValuesAsync reads scalar columns only. This also reads
+// complex collections, all from one database snapshot.
+var current = await entry.GetCompleteDatabaseValuesAsync();
+if (current is null)
+{
+    Console.WriteLine("The order was deleted.");
+}
+else
+{
+    var latest = (Order)current.ToObject();
+    Console.WriteLine($"The database has {latest.Lines.Count} lines.");
+}
+```
+
+Both methods return `null` when the row no longer exists. For an entity
+without complex collections they return the same result as EF Core's methods.
+
 ## How do transactions and retries work?
 
 Each `SaveChanges` call runs in a transaction, so either all of its batches
