@@ -279,15 +279,18 @@ internal static class PerformanceEvidenceSelfTests
                 });
                 for (var trial = 0; trial < trials; trial++)
                 {
-                    var trialEnvironment = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(environment.GetRawText())!;
-                    trialEnvironment["syntheticTrial"] = JsonSerializer.SerializeToElement(trial);
                     foreach (var provider in new[] { "bluetusk", "npgsql" })
                     {
                         var window = SyntheticWindow(concurrency, perWorker, provider == "bluetusk" ? factor : 1.0);
                         var capture = new ProviderRequestAnalysis.Capture(1, "provider-individual-request-capture", true, commit,
-                            provider, feature, concurrency, 0.1, 0.1, perWorker, JsonSerializer.SerializeToElement(trialEnvironment), method, window);
+                            provider, feature, concurrency, 0.1, 0.1, perWorker, environment, method, window);
+                        // Synthetic fixtures retain identical environment metadata and constant metric
+                        // values. This explicit test marker distinguishes their raw bytes; it is not
+                        // proof of independently executed real trials. Synthetic output cannot qualify.
+                        var syntheticCapture = JsonSerializer.SerializeToNode(capture, JsonOptions)!.AsObject();
+                        syntheticCapture["syntheticTrial"] = trial;
                         var name = $"{feature}-c{concurrency}-trial{trial}-{provider}.json";
-                        var hash = await SaveAsync(Path.Combine(directory, name), capture);
+                        var hash = await SaveAsync(Path.Combine(directory, name), syntheticCapture);
                         entries.Add(new(key, trial, provider, name, hash, window.CompletedOperations));
                     }
                 }
