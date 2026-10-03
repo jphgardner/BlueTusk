@@ -13,6 +13,8 @@
 //   the BlueTusk fixture seeds exactly the School that the upstream CreateSchool() builds.
 // - Store_values_can_be_cloned reads "Departments" through PropertyValues.Properties, which holds scalar properties
 //   only; the port reads it through ComplexCollectionProperties.
+// The two already-enabled store-value ToObject cases also use the complete API: seeding School makes their
+// previously empty schoolValues branch execute, and the scalar-only EF Core API cannot materialize its collections.
 // The private EF Core helpers below are copied unchanged (renamed with a "Ported" prefix) because they cannot be called
 // from a derived class.
 
@@ -37,6 +39,14 @@ public sealed partial class BlueTuskPropertyValuesTest
     [ConditionalFact]
     public override Task Store_values_can_be_cloned_asynchronously()
         => PortedStore_values_can_be_cloned_implementation(async e => (await e.GetCompleteDatabaseValuesAsync())!);
+
+    [ConditionalFact]
+    public override Task Store_values_can_be_copied_to_object_using_ToObject()
+        => PortedStore_values_can_be_copied_to_object_using_ToObject_implementation(e => Task.FromResult(e.GetCompleteDatabaseValues()!));
+
+    [ConditionalFact]
+    public override Task Store_values_can_be_copied_to_object_using_ToObject_asynchronously()
+        => PortedStore_values_can_be_copied_to_object_using_ToObject_implementation(async e => (await e.GetCompleteDatabaseValuesAsync())!);
 
     [ConditionalTheory]
     [InlineData(false)]
@@ -234,6 +244,50 @@ public sealed partial class BlueTuskPropertyValuesTest
             Assert.Equal(5, courses[1].Credits);
             Assert.Equal("Modified Course 2", courses[1].Name);
             Assert.Equal(5, courses[1].Credits);
+        }
+    }
+
+    private async Task PortedStore_values_can_be_copied_to_object_using_ToObject_implementation(
+        Func<EntityEntry, Task<PropertyValues>> getPropertyValues)
+    {
+        using var context = CreateContext();
+        var building = context.Set<Building>().Single(b => b.Name == "Building One");
+
+        building.Name = "Building One Prime";
+        building.Value = 1500001m;
+        context.Entry(building).Property("Shadow1").CurrentValue = 12;
+        context.Entry(building).Property("Shadow2").CurrentValue = "Pine Walk";
+
+        var values = await getPropertyValues(context.Entry(building));
+        var copy = (Building)values.ToObject();
+
+        Assert.Equal("Building One", copy.Name);
+        Assert.Equal(1500000m, copy.Value);
+        Assert.Equal(building.BuildingId, copy.BuildingId);
+        Assert.True(copy.CreatedCalled);
+        Assert.True(copy.InitializingCalled);
+        Assert.True(copy.InitializedCalled);
+
+        if (context.Model.FindEntityType(typeof(School)) != null)
+        {
+            var school = PortedCreateSchool();
+            context.Set<School>().Attach(school);
+            school.Name = "Modified School";
+            school.Departments[0].Name = "Modified Department";
+            school.Departments[0].Courses[0].Name = "Modified Course";
+            school.Departments[0].Courses[0].Credits = 999;
+
+            var schoolValues = await getPropertyValues(context.Entry(school));
+            Assert.NotNull(schoolValues);
+            var schoolCopy = (School)schoolValues.ToObject();
+
+            Assert.Equal("Test School", schoolCopy.Name);
+            Assert.Equal(school.Id, schoolCopy.Id);
+            Assert.Equal(2, schoolCopy.Departments.Count);
+            Assert.Equal("Computer Science", schoolCopy.Departments[0].Name);
+            Assert.Equal(2, schoolCopy.Departments[0].Courses.Count);
+            Assert.Equal("Data Structures", schoolCopy.Departments[0].Courses[0].Name);
+            Assert.Equal(3, schoolCopy.Departments[0].Courses[0].Credits);
         }
     }
 
