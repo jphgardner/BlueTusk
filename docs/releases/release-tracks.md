@@ -245,6 +245,21 @@ The complete artifact set, nested payloads, fixtures, execution authenticity and
 release eligibility still require independent verification. Their flags remain
 false. The artifact guard tests use synthetic inputs and cannot qualify a release.
 
+To bind the delivery to one producing job, additionally supply its actual
+`-JobId` and exact `-ArtifactUploadStepName`. The collector retains that job's
+binary `job.log`, checks the complete successful step metadata before and after
+capture, and requires the pinned checkout action to report the candidate commit.
+Inside the selected pinned upload step, the artifact name, ID, byte count and
+SHA-256 must match the independently downloaded ZIP. Binding observations must
+carry GitHub timestamps inside their respective step windows. Multiline action
+input continuations remain hashed but cannot supply binding observations.
+
+`JobLogBindingValidated=true` covers these log observations only. It does not
+prove source remained unchanged during every later operation, authenticate live
+fixtures, qualify nested payloads or approve release. Those broader flags remain
+false. `eng/test-core-github-job-log-binding.ps1` tests substitutions with
+synthetic logs; it cannot establish a live producing-job identity.
+
 ```powershell
 ./eng/test-core-test-evidence.ps1
 ./eng/verify-core-test-evidence.ps1 -Kind Regression `
