@@ -180,6 +180,7 @@ jobs:
           ./eng/test-expansion-readiness-evidence.ps1
           ./eng/test-expansion-candidate-readiness.ps1
           ./eng/test-jobs-release-capacity-contract.ps1
+          ./eng/test-expansion-capacity-contract.ps1
           ./eng/test-jobs-release-failover-policy.ps1
           ./eng/test-jobs-release-upgrade-policy.ps1
           ./eng/test-core-approval-evidence.ps1
