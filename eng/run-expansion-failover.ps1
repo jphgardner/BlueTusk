@@ -36,7 +36,8 @@ if ($database -cnotmatch '^[a-z_]+$' -or $standbyName -cnotmatch '^[a-z_]+$' -or
 {
     throw 'The failover fixture policy names are not plain identifiers.'
 }
-$campaign = "$($Family.ToLowerInvariant())-failover-" + [Guid]::NewGuid().ToString('N')
+# Container names double as DNS labels on the fixture network, so every name stays below 63 characters.
+$campaign = "$($Family.ToLowerInvariant())-fo-" + [Guid]::NewGuid().ToString('N').Substring(0, 20)
 $captureScript = Join-Path $PSScriptRoot 'capture-ecosystem-source.py'
 
 function Resolve-Under([string] $Path)

@@ -91,7 +91,7 @@ function New-SyntheticReport([string] $Family)
     $slug = $Family.ToLowerInvariant()
     $runs = for ($run = 1; $run -le [int]$policy.repetitions; $run++)
     {
-        $fixture = "$slug-failover-$(Hex $run 32)-run$run"
+        $fixture = "$slug-fo-$(Hex $run 20)-run$run"
         $steps = foreach ($step in @($familyPolicy.steps))
         {
             $files = @($step.requiredBinaries | ForEach-Object -Begin { $seed = 10 } -Process { $seed++; [ordered]@{ Name = [string]$_; Bytes = 100 + $seed; Sha256 = Hex $seed 64 } })

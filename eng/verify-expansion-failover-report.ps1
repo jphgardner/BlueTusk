@@ -66,7 +66,7 @@ for ($index = 1; $index -le $repetitions; $index++)
     $run = $matching[0]
     $label = "$Family failover repetition $index"
     $fixture = [string]$run.Metadata.Fixture
-    Require ($fixtures.Add($fixture) -and $fixture -cmatch "^$slug-failover-[0-9a-f]{32}-run$index$") "$label reused or misnamed its fixture."
+    Require ($fixtures.Add($fixture) -and $fixture -cmatch "^$slug-fo-[0-9a-f]{20}-run$index$") "$label reused or misnamed its fixture."
     Require ([string]$run.Metadata.ImageDigest -ceq $image -and
         @($run.Metadata.ImageInspect.RepoDigests | Where-Object { [string]$_ -ceq $image }).Count -gt 0) "$label used an unverified PostgreSQL image."
     $settings = @($run.Metadata.BeforePrimarySettings | ForEach-Object { [string]$_ })
