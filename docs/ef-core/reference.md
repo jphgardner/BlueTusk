@@ -8,7 +8,7 @@ gate are recorded in [EF Core relational specification tests](specification-test
 
 ## SaveChanges batching
 
-The 1.2 candidate batches tracked inserts, updates and deletes automatically.
+Starting with 1.1.0, SaveChanges batches tracked inserts, updates and deletes automatically.
 One batch normally carries up to **42 modification commands**, not necessarily
 42 entities: an entity mapped to several tables can need several commands.
 EF still chooses command order from relationship and generated-value
