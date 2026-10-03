@@ -119,9 +119,22 @@ if (-not $applicationTemplate.Contains(
 
 $homeTemplate = Get-Content -LiteralPath (
     Join-Path $websiteRoot 'src/app/home/home.html') -Raw
+
+# The hero image must declare its intrinsic size (read from the PNG header) so its layout is reserved.
+$architectureImage = [System.IO.File]::ReadAllBytes(
+    (Join-Path $websiteRoot 'public/bluetusk-architecture.png'))
+if ($architectureImage.Length -lt 24 -or
+    [System.Text.Encoding]::ASCII.GetString($architectureImage, 12, 4) -cne 'IHDR')
+{
+    throw 'The architecture image must be a PNG.'
+}
+$architectureWidth = ([int]$architectureImage[16] -shl 24) -bor ([int]$architectureImage[17] -shl 16) -bor
+    ([int]$architectureImage[18] -shl 8) -bor [int]$architectureImage[19]
+$architectureHeight = ([int]$architectureImage[20] -shl 24) -bor ([int]$architectureImage[21] -shl 16) -bor
+    ([int]$architectureImage[22] -shl 8) -bor [int]$architectureImage[23]
 foreach ($requiredImageAttribute in @(
-        'width="1376"',
-        'height="768"',
+        "width=`"$architectureWidth`"",
+        "height=`"$architectureHeight`"",
         'loading="eager"',
         'fetchpriority="high"',
         'decoding="async"'))
