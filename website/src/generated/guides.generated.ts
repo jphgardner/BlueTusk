@@ -1565,7 +1565,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 1619,
+    "wordCount": 1663,
     "readMinutes": 8,
     "searchText": "EF Core relational specification tests BlueTusk consumes Microsoft's provider-facing EF Core relational specification package directly. The package is pinned to the same `10.0.11` version as the provider's runtime and design dependencies, so an EF upgrade cannot silently move the contract suite independently of the provider. The executable harness lives in `tests/BlueTusk.EntityFrameworkCore.SpecificationTests`. It currently adopts these official suites: `RelationalServiceCollectionExtensionsTestBase`: all three provider-service registration, idempotency, isolation, and lifetime contracts; `MigrationsSqlGeneratorTestBase`: all inherited generator cases, including provider-specific golden SQL for PostgreSQL column facets, foreign keys, renames, seed insert/update/delete operations, multiline defaults, sequence restart operations, unsupported store-type diagnostics, and PostGIS spatial literals; `MigrationsTestBase`: all 134 live schema-evolution and catalogue round-trip contracts covering tables, columns, keys, indexes, sequences, comments, collations, generated columns, JSON mappings, primitive collections (including the converted required-collection cases EF Core skips), seed data, migration snapshot compilation, and database-model reverse engineering. PostgreSQL's rejection of implicit arbitrary text-to-JSONB casts is asserted explicitly in the three applicable cases rather than skipped; `RelationalModelBuilderTest`: all 748 offline generic model-building contracts covering non-relationship mappings, primitive-collection element facets, complex types and collections, inheritance, one-to-many, many-to-one, one-to-one, many-to-many, and owned types. This includes the cases EF Core skips: shadow properties on reference complex types (`#35613`) and value-type (tuple) complex collections (`#31411`). Two of those run as ported copies because they cannot pass as written: EF Core's tuple-collection test omits the `ToJson()` configuration that every sibling relational comp"
   },
@@ -1639,6 +1639,11 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       {
         "id": "postgresql-query-constructs",
         "text": "PostgreSQL query constructs",
+        "level": 2
+      },
+      {
+        "id": "store-values-for-complex-collections",
+        "text": "Store values for complex collections",
         "level": 2
       },
       {
@@ -1762,8 +1767,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 14625,
-    "readMinutes": 67,
+    "wordCount": 14756,
+    "readMinutes": 68,
     "searchText": "Entity Framework Core `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings. Microsoft's provider-facing relational test package is consumed by a dedicated test assembly. The exact adopted suites, commands, and completed 1.0 coverage gate are recorded in [EF Core relational specification tests](specification-tests.md). SaveChanges batching The 1.2 candidate batches tracked inserts, updates and deletes automatically. One batch normally carries up to **42 modification commands**, not necessarily 42 entities: an entity mapped to several tables can need several commands. EF still chooses command order from relationship and generated-value dependencies; batching never relaxes that ordering. Omit the option for the default, or set `MaxBatchSize(1)` for the former one-command behavior. A larger configured limit does not remove the aggregate bounds: a batch is split before exceeding 65,536 SQL characters or 32,767 parameters. These are aggregation limits, not a maximum entity size. EF permits one unusually wide command to run alone; PostgreSQL's own limits still apply. Each statement has locally bound parameters and a corresponding result in command order. Server-generated IDs, computed columns and concurrency-token checks remain associated with the correct tracked entries, including batches that mix client-generated and server-generated keys. Batches use the normal EF command execution path, including logging and `DbCommandInterceptor` callbacks. An interceptor now observes a batch rather than necessarily one callback per entity. When no command-reader interceptor or custom update SQL generator is registered, writes without server-generated values use PostgreSQL's command-completion count instead of alloc"
   },
   {
