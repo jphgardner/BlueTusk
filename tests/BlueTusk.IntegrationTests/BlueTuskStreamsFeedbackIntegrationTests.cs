@@ -201,7 +201,8 @@ public sealed class BlueTuskStreamsFeedbackIntegrationTests(LogicalSlotDatabaseF
             System = system;
             TableName = $"bluetusk_feedback_{suffix}";
             PublicationName = $"bluetusk_feedback_publication_{suffix}";
-            SlotName = $"bluetusk_feedback_slot_{suffix}";
+            // PostgreSQL truncates names to 63 bytes, and DropSlotAsync matches the full name.
+            SlotName = $"bt_feedback_slot_{suffix}";
             QuotedTable = BlueTuskSql.QuoteIdentifier(TableName);
         }
 
