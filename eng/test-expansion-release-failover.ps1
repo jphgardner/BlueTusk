@@ -21,6 +21,7 @@ $commit = 'a' * 40
 $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ('bluetusk-expansion-failover-' + [Guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($temporaryRoot) | Out-Null
 $fixturePath = Join-Path $temporaryRoot 'report.json'
+$script:rejected = 0
 
 function Fail([string] $Message) { throw "Expansion failover self-test: $Message" }
 function Copy-Deep($Value) { return $Value | ConvertTo-Json -Depth 100 | ConvertFrom-Json -Depth 100 }
@@ -139,6 +140,7 @@ function Assert-Rejected([string] $Family, $Report, [string] $Expected, [string]
     {
         Fail "$Family '$Case' expected a rejection containing '$Expected'; received '$failure'."
     }
+    $script:rejected++
 }
 function Mutate([string] $Family, [string] $Case, [string] $Expected, [scriptblock] $Change)
 {
@@ -277,7 +279,7 @@ try
         try { Get-ExpansionRoleVerifier -Family $family -Role 'failover' | Out-Null } catch { $failure = $_.Exception.Message }
         if ($null -eq $failure -or -not $failure.Contains('fails closed')) { Fail "$family failover must fail closed until its gate exists." }
     }
-    Write-Output 'Expansion failover self-test passed on synthetic evidence; no disturbance was run or qualified.'
+    Write-Output "Expansion failover self-test passed with $script:rejected rejected substitutions on synthetic evidence; no disturbance was run or qualified."
 }
 finally
 {
