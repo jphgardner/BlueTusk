@@ -3,11 +3,28 @@ param(
     [ValidateSet('Preflight', 'Run', 'Verify')][string]$Mode = 'Verify',
     [Parameter(Mandatory)][string]$ExpectedCommit,
     [string]$EvidenceRoot = 'artifacts/ecosystem-performance',
-    [ValidateSet('All', 'Jobs')][string]$Product = 'All'
+    # Documents, Projections and Workflows are the per-family release capacity scopes. 'All' is
+    # the combined diagnostic campaign and 'Jobs' the Jobs-only gate (verify-jobs-release-capacity.ps1).
+    [ValidateSet('All', 'Jobs', 'Documents', 'Projections', 'Workflows', IgnoreCase = $false)][string]$Product = 'All',
+    # Archived re-verification only: the GitHub run that produced the evidence, so a Jobs fixture
+    # owner is bound to that exact run rather than to the verifying run.
+    [ValidateRange(1, [long]::MaxValue)][long]$ProducerRunId
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'ecosystem-capacity-scope.psm1') -Force
+$scope = Get-EcosystemCapacityScope -Product $Product
+$producerRun = if ($PSBoundParameters.ContainsKey('ProducerRunId')) { [string]$ProducerRunId } else { '' }
+if (-not [string]::IsNullOrEmpty($producerRun) -and $Mode -ne 'Verify') {
+    throw 'ProducerRunId applies only to archived Verify mode.'
+}
+$harnessProjects = [ordered]@{
+    jobs = 'benchmarks/BlueTusk.Workflows.LoadHarness'
+    projections = 'benchmarks/BlueTusk.Projections.LoadHarness'
+    documents = 'benchmarks/BlueTusk.Documents.LoadHarness'
+}
+$runsJobsCampaign = $scope.Campaigns -contains 'jobs' -or $scope.Campaigns -contains 'jobs-workflows'
 $repository = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $evidence = [IO.Path]::GetFullPath((Join-Path $repository $EvidenceRoot))
 $budgetFile = if ($Product -eq 'Jobs') {
@@ -44,11 +61,8 @@ function CaptureSource([string]$Path) {
     Require ($LASTEXITCODE -eq 0) 'Candidate source capture failed.'
 }
 function SnapshotBinaries([string]$Root) {
-    $projects = [ordered]@{ jobs = 'benchmarks/BlueTusk.Workflows.LoadHarness' }
-    if ($Product -eq 'All') {
-        $projects.projections = 'benchmarks/BlueTusk.Projections.LoadHarness'
-        $projects.documents = 'benchmarks/BlueTusk.Documents.LoadHarness'
-    }
+    $projects = [ordered]@{}
+    foreach ($harness in $scope.Harnesses) { $projects[$harness] = $harnessProjects[$harness] }
     $records = @()
     foreach ($name in $projects.Keys) {
         $project = $projects[$name]
@@ -73,10 +87,9 @@ function SnapshotBinaries([string]$Root) {
 function VerifyLiveBinaries([string]$Root) {
     $records = @( (Json (Join-Path $Root 'binaries.json')).Files )
     Require ($records.Count -gt 0) 'The binary snapshot manifest is empty.'
-    $projects = @{ jobs = 'benchmarks/BlueTusk.Workflows.LoadHarness'; projections = 'benchmarks/BlueTusk.Projections.LoadHarness'; documents = 'benchmarks/BlueTusk.Documents.LoadHarness' }
     foreach ($entry in $records) {
-        Require ($projects.ContainsKey([string]$entry.Product) -and [string]$entry.Name -match '^[A-Za-z0-9_.-]+$' -and [string]$entry.Name -notin @('.', '..')) 'Binary snapshot entry is invalid.'
-        $live = Join-Path $repository "$($projects[[string]$entry.Product])/bin/Release/net10.0/$($entry.Name)"
+        Require ([string]$entry.Product -cin $scope.Harnesses -and [string]$entry.Name -match '^[A-Za-z0-9_.-]+$' -and [string]$entry.Name -notin @('.', '..')) 'Binary snapshot entry is invalid.'
+        $live = Join-Path $repository "$($harnessProjects[[string]$entry.Product])/bin/Release/net10.0/$($entry.Name)"
         $copy = Join-Path $Root "$($entry.Product)/$($entry.Name)"
         Require ((Test-Path -LiteralPath $live -PathType Leaf) -and (Test-Path -LiteralPath $copy -PathType Leaf)) 'A candidate binary is missing.'
         Require ((Hash $live) -ceq $entry.Sha256 -and (Hash $copy) -ceq $entry.Sha256) 'A candidate binary changed during measurement.'
@@ -87,8 +100,7 @@ function VerifyArchivedBinaries([string]$Root) {
     Require ($records.Count -gt 0) 'The archived binary snapshot is empty.'
     $seen = @{}
     foreach ($entry in $records) {
-        $allowedProducts = if ($Product -eq 'Jobs') { @('jobs') } else { @('jobs', 'projections', 'documents') }
-        Require ([string]$entry.Product -in $allowedProducts) 'The archived binary product is unknown.'
+        Require ([string]$entry.Product -cin $scope.Harnesses) 'The archived binary product is unknown.'
         Require ([string]$entry.Name -match '^[A-Za-z0-9_.-]+$' -and [string]$entry.Name -notin @('.', '..')) 'The archived binary name is unsafe.'
         $key = "$($entry.Product)/$($entry.Name)"
         Require (-not $seen.ContainsKey($key)) 'The archived binary list contains duplicate entries.'
@@ -128,7 +140,10 @@ function VerifyJobs($Root, $Configuration, $Run, [string]$ExpectedImage) {
         $runKind = if ($null -eq $kindProperty) { 'github' } else { [string]$kindProperty.Value }
         Require (($runKind -ceq 'github' -and [string]$environment.FixtureRunId -match '^[0-9]+$') -or
             ($runKind -ceq 'local' -and [string]$environment.FixtureRunId -cmatch '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')) "Jobs run $Run has an invalid fixture owner identity."
-        if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) {
+        if (-not [string]::IsNullOrEmpty($producerRun)) {
+            # Readiness re-verifies archived evidence from another run: bind the fixture to that run.
+            Require ($runKind -ceq 'github' -and $environment.FixtureRunId -ceq $producerRun) "Jobs run $Run used a fixture from another workflow run."
+        } elseif (-not [string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) {
             Require ($runKind -ceq 'github' -and $environment.FixtureRunId -ceq $env:GITHUB_RUN_ID) "Jobs run $Run used a fixture from another workflow run."
         } elseif (-not [string]::IsNullOrWhiteSpace($env:BLUETUSK_LOCAL_CAMPAIGN_ID)) {
             Require ($runKind -ceq 'local' -and $environment.FixtureRunId -ceq $env:BLUETUSK_LOCAL_CAMPAIGN_ID) "Jobs run $Run used a fixture from another local campaign."
@@ -335,15 +350,23 @@ function VerifyEvidence($Source) {
     Require ($budget.repetitions -ge 2) 'The gate requires repeat campaigns.'
     $jobFingerprints = @()
     for ($run = 1; $run -le $budget.repetitions; $run++) {
-        $jobsDirectory = if ($Product -eq 'Jobs') { "run-$run/jobs" } else { "run-$run/jobs-workflows" }
-        $jobFingerprints += VerifyJobs (Join-Path $evidence $jobsDirectory) $budget.jobsWorkflows $run $budget.postgreSql15Image
-        if ($Product -eq 'All') {
+        if ($runsJobsCampaign) {
+            $jobsDirectory = if ($Product -eq 'Jobs') { "run-$run/jobs" } else { "run-$run/jobs-workflows" }
+            $jobFingerprints += VerifyJobs (Join-Path $evidence $jobsDirectory) $budget.jobsWorkflows $run $budget.postgreSql15Image
+        }
+        if ($scope.Campaigns -contains 'projections-capacity') {
             VerifyProjections (Join-Path $evidence "run-$run/projections-capacity") $budget.projections $run $Source 'capacity'
+        }
+        if ($scope.Campaigns -contains 'projections-overload') {
             VerifyProjections (Join-Path $evidence "run-$run/projections-overload") $budget.projections $run $Source 'soak'
+        }
+        if ($scope.Campaigns -contains 'documents') {
             VerifyDocuments (Join-Path $evidence "run-$run/documents") $budget.documents $run
         }
     }
-    Require (@($jobFingerprints | Sort-Object -Unique).Count -eq 1) 'Jobs/Workflows repeats used different source fingerprints.'
+    if ($runsJobsCampaign) {
+        Require (@($jobFingerprints | Sort-Object -Unique).Count -eq 1) 'Jobs/Workflows repeats used different source fingerprints.'
+    }
 }
 
 Push-Location -LiteralPath $repository
@@ -361,11 +384,11 @@ try {
         [string]$budget.qualification -ceq $expectedQualification) 'Unsupported capacity budget contract.'
     $processor = [string](Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name)
     Require ($processor.Contains([string]$budget.referenceProcessor, [StringComparison]::OrdinalIgnoreCase)) 'This is not the specified ecosystem performance reference processor.'
-    $durations = if ($Product -eq 'Jobs') {
-        @($budget.jobsWorkflows.secondsPerProduct)
-    } else {
-        @($budget.jobsWorkflows.secondsPerProduct, $budget.projections.secondsPerRun, $budget.documents.sustainedSeconds)
-    }
+    $durations = @()
+    if ($runsJobsCampaign) { $durations += $budget.jobsWorkflows.secondsPerProduct }
+    if ($scope.Campaigns -contains 'projections-capacity') { $durations += $budget.projections.secondsPerRun }
+    if ($scope.Campaigns -contains 'documents') { $durations += $budget.documents.sustainedSeconds }
+    Require ($durations.Count -gt 0) 'The capacity scope selects no sustained campaign.'
     foreach ($seconds in $durations) {
         Require ($seconds -ge 1800) 'Qualification requires at least 30 minutes per sustained product/run.'
     }
@@ -385,38 +408,42 @@ try {
         SnapshotBinaries (Join-Path $evidence 'binary-snapshot')
         for ($run = 1; $run -le $budget.repetitions; $run++) {
             $runRoot = Join-Path $evidence "run-$run"
-            $jobsDirectory = if ($Product -eq 'Jobs') { 'jobs' } else { 'jobs-workflows' }
-            $campaignDirectories = if ($Product -eq 'Jobs') { @('jobs') } else { @('jobs-workflows', 'projections-capacity', 'projections-overload', 'documents') }
-            foreach ($name in $campaignDirectories) { New-Item -ItemType Directory -Path (Join-Path $runRoot $name) -Force | Out-Null }
-            $jobs = Join-Path $runRoot $jobsDirectory
-            $jobsOutput = if ($Product -eq 'Jobs') { 'jobs.json' } else { 'jobs-workflows.json' }
-            InvokeCampaign "$Product Jobs run $run" {
-                if ($Product -eq 'Jobs') {
-                    & ./eng/jobs-storage-campaign.ps1 -Version 15 -Seconds $budget.jobsWorkflows.secondsPerProduct -PayloadMode SeededHighEntropy -Product Jobs -FixtureName bluetusk-jobs-release-pg15 -NoBuild -Output (Join-Path $jobs $jobsOutput)
-                } else {
-                    & ./eng/jobs-storage-campaign.ps1 -Version 15 -Seconds $budget.jobsWorkflows.secondsPerProduct -PayloadMode SeededHighEntropy -NoBuild -Output (Join-Path $jobs $jobsOutput)
-                }
-            } (Join-Path $jobs 'campaign.log')
-            [void](VerifyJobs $jobs $budget.jobsWorkflows $run $budget.postgreSql15Image)
-            VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
-            if ($Product -eq 'Jobs') { continue }
-            foreach ($profile in @('capacity', 'soak')) {
-                $name = if ($profile -eq 'capacity') { 'projections-capacity' } else { 'projections-overload' }
-                $projections = Join-Path $runRoot $name
-                InvokeCampaign "Projections $profile run $run" {
-                    & ./docs/projections/evidence/run-load.ps1 -Profile $profile -Seconds $budget.projections.secondsPerRun -Repetitions 1 -NoBuild -OutputDirectory $projections
-                } (Join-Path $projections 'campaign.log')
-                VerifyProjections $projections $budget.projections $run $source $profile
+            foreach ($name in $scope.Campaigns) { New-Item -ItemType Directory -Path (Join-Path $runRoot $name) -Force | Out-Null }
+            if ($runsJobsCampaign) {
+                $jobsDirectory = if ($Product -eq 'Jobs') { 'jobs' } else { 'jobs-workflows' }
+                $jobs = Join-Path $runRoot $jobsDirectory
+                $jobsOutput = if ($Product -eq 'Jobs') { 'jobs.json' } else { 'jobs-workflows.json' }
+                InvokeCampaign "$Product Jobs run $run" {
+                    if ($Product -eq 'Jobs') {
+                        & ./eng/jobs-storage-campaign.ps1 -Version 15 -Seconds $budget.jobsWorkflows.secondsPerProduct -PayloadMode SeededHighEntropy -Product Jobs -FixtureName bluetusk-jobs-release-pg15 -NoBuild -Output (Join-Path $jobs $jobsOutput)
+                    } else {
+                        & ./eng/jobs-storage-campaign.ps1 -Version 15 -Seconds $budget.jobsWorkflows.secondsPerProduct -PayloadMode SeededHighEntropy -NoBuild -Output (Join-Path $jobs $jobsOutput)
+                    }
+                } (Join-Path $jobs 'campaign.log')
+                [void](VerifyJobs $jobs $budget.jobsWorkflows $run $budget.postgreSql15Image)
                 VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
             }
-            $documents = Join-Path $runRoot 'documents'
-            InvokeCampaign "Documents run $run" {
-                & ./eng/run-documents-load.ps1 -CellSeconds $budget.documents.cellSeconds -SustainedSeconds $budget.documents.sustainedSeconds `
-                    -MaximumDatabaseBytes $budget.documents.maximumDatabaseBytes -MinimumFilesystemAvailableBytes $budget.documents.minimumFilesystemAvailableBytes `
-                    -IdleDrainSeconds $budget.documents.idleDrainSeconds -StorageMode $budget.documents.storageMode -NoBuild -OutputDirectory $documents
-            } (Join-Path $documents 'campaign.log')
-            VerifyDocuments $documents $budget.documents $run
-            VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
+            if ($scope.Campaigns -contains 'projections-capacity') {
+                foreach ($profile in @('capacity', 'soak')) {
+                    $name = if ($profile -eq 'capacity') { 'projections-capacity' } else { 'projections-overload' }
+                    $projections = Join-Path $runRoot $name
+                    InvokeCampaign "Projections $profile run $run" {
+                        & ./docs/projections/evidence/run-load.ps1 -Profile $profile -Seconds $budget.projections.secondsPerRun -Repetitions 1 -NoBuild -OutputDirectory $projections
+                    } (Join-Path $projections 'campaign.log')
+                    VerifyProjections $projections $budget.projections $run $source $profile
+                    VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
+                }
+            }
+            if ($scope.Campaigns -contains 'documents') {
+                $documents = Join-Path $runRoot 'documents'
+                InvokeCampaign "Documents run $run" {
+                    & ./eng/run-documents-load.ps1 -CellSeconds $budget.documents.cellSeconds -SustainedSeconds $budget.documents.sustainedSeconds `
+                        -MaximumDatabaseBytes $budget.documents.maximumDatabaseBytes -MinimumFilesystemAvailableBytes $budget.documents.minimumFilesystemAvailableBytes `
+                        -IdleDrainSeconds $budget.documents.idleDrainSeconds -StorageMode $budget.documents.storageMode -NoBuild -OutputDirectory $documents
+                } (Join-Path $documents 'campaign.log')
+                VerifyDocuments $documents $budget.documents $run
+                VerifyLiveBinaries (Join-Path $evidence 'binary-snapshot')
+            }
         }
         CaptureSource (Join-Path $evidence 'source-after.json')
         VerifySource $source (Json (Join-Path $evidence 'source-after.json'))
@@ -432,8 +459,9 @@ try {
     } else {
         $manifest = Json (Join-Path $evidence 'manifest.json')
         Require ($manifest.SchemaVersion -eq 1 -and $manifest.CandidateSha -ceq $head -and $manifest.QualifiedLocalCapacity -eq $true -and $manifest.ProductionQualified -eq $false) 'Invalid or mismatched gate manifest.'
-        Require (($Product -eq 'All' -and [string]$manifest.Family -in @('', 'All')) -or
-            ($Product -eq 'Jobs' -and [string]$manifest.Family -ceq 'Jobs')) 'Capacity manifest has the wrong product scope.'
+        # Exact declared family and layout: a combined 'All' campaign, or another family's
+        # campaigns relabelled, can never verify as a single family's capacity evidence.
+        Assert-EcosystemCapacityEvidenceScope -EvidenceRoot $evidence -Product $Product -Repetitions $budget.repetitions
         Require ((Hash (Join-Path $evidence 'budgets.json')) -ceq $manifest.BudgetSha256) 'Budget snapshot hash differs from manifest.'
         Require ((Hash $budgetPath) -ceq $manifest.BudgetSha256) 'Candidate budget differs from evidence budget.'
         $runner = Json (Join-Path $evidence 'runner.json')

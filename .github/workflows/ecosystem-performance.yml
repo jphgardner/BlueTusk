@@ -1,12 +1,23 @@
 name: Ecosystem exact-candidate performance
 
+run-name: Ecosystem capacity (${{ inputs.family }}) at ${{ inputs.candidate_sha }}
+
 on:
   workflow_dispatch:
     inputs:
       candidate_sha:
-        description: Full 40-character commit SHA containing this gate
+        description: Full 40-character lowercase commit SHA containing this gate; dispatch from a ref whose head is that commit
         required: true
         type: string
+      family:
+        description: Family to qualify; All is the combined diagnostic campaign and never satisfies release readiness
+        required: true
+        type: choice
+        options:
+          - Documents
+          - Projections
+          - Workflows
+          - All
       confirmation:
         description: Type RUN-ECOSYSTEM-PERFORMANCE to start the multi-hour campaign
         required: true
@@ -27,6 +38,7 @@ jobs:
     env:
       EVIDENCE_ROOT: artifacts/ecosystem-performance/${{ github.run_id }}-${{ github.run_attempt }}
       CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CAPACITY_FAMILY: ${{ inputs.family }}
       CONFIRMATION: ${{ inputs.confirmation }}
 
     steps:
@@ -38,13 +50,20 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Verify full clean candidate SHA and gate contract
+      - name: Verify full clean candidate SHA, family scope and gate contract
         shell: pwsh
         run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Ecosystem capacity requires a lowercase full candidate SHA.' }
           if ($env:CONFIRMATION -cne 'RUN-ECOSYSTEM-PERFORMANCE') { throw 'The exact manual gate confirmation is required.' }
-          ./eng/verify-ecosystem-performance.ps1 -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+          if ($env:CAPACITY_FAMILY -cnotin @('Documents', 'Projections', 'Workflows', 'All')) { throw 'Choose Documents, Projections, Workflows or the diagnostic All campaign.' }
+          if ($env:CAPACITY_FAMILY -cne 'All' -and $env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Family capacity runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "CAPACITY_SLUG=$($env:CAPACITY_FAMILY.ToLowerInvariant())" -Encoding utf8
+          ./eng/verify-ecosystem-performance.ps1 -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT -Product $env:CAPACITY_FAMILY
 
       - name: Start dedicated digest-pinned PostgreSQL 15 for Jobs and Workflows
+        if: inputs.family == 'Workflows' || inputs.family == 'All'
         shell: pwsh
         run: |
           $name = 'bluetusk-ecosystem-pg15'
@@ -64,16 +83,34 @@ jobs:
           }
           if (-not $ready) { throw 'Dedicated Jobs/Workflows fixture did not become ready.' }
 
-      - name: Run repeated Jobs, Workflows, Projections and Documents qualification
+      - name: Run the selected scope's repeated qualification campaigns
         shell: pwsh
-        run: ./eng/verify-ecosystem-performance.ps1 -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+        run: ./eng/verify-ecosystem-performance.ps1 -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT -Product $env:CAPACITY_FAMILY
 
-      - name: Recheck archived evidence and every SHA-256 binding
+      - name: Recheck archived evidence, exact family scope and every SHA-256 binding
         shell: pwsh
-        run: ./eng/verify-ecosystem-performance.ps1 -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+        run: ./eng/verify-ecosystem-performance.ps1 -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT -Product $env:CAPACITY_FAMILY
 
-      - name: Upload raw campaigns and qualification manifest
-        if: always()
+      - name: Upload qualified family capacity evidence
+        if: inputs.family != 'All'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-${{ env.CAPACITY_SLUG }}-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial family diagnostics separately on failure
+        if: failure() && inputs.family != 'All'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ env.CAPACITY_SLUG }}-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload the combined diagnostic campaign, which is never release evidence
+        if: always() && inputs.family == 'All'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ecosystem-performance-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -82,7 +119,7 @@ jobs:
           retention-days: 90
 
       - name: Remove only this run's Jobs and Workflows fixture
-        if: always()
+        if: always() && (inputs.family == 'Workflows' || inputs.family == 'All')
         shell: pwsh
         run: |
           $name = 'bluetusk-ecosystem-pg15'

@@ -2,7 +2,9 @@
 param(
     [ValidateSet('Preflight', 'Run', 'Verify')][string] $Mode = 'Verify',
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{40}$')][string] $ExpectedCommit,
-    [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{40}$')][string] $OldCommit,
+    # The old commit is resolved deterministically by resolve-jobs-upgrade-baseline.ps1. An
+    # explicit value is only an acknowledgement and must equal that baseline.
+    [ValidatePattern('^[0-9a-fA-F]{40}$')][string] $OldCommit,
     [string] $EvidenceRoot = 'artifacts/jobs-release-upgrade/local'
 )
 
@@ -106,6 +108,11 @@ function AssertReport
         [string]$report.CandidateJobsTree -ceq $candidateJobsTree -and
         [string]$report.ProbeSha256 -ceq (Hash $probeSource) -and
         [string]$report.VerifierSha256 -ceq (Hash (Join-Path $PSScriptRoot 'verify-jobs-release-upgrade.ps1'))) 'Jobs upgrade source provenance changed.'
+    $recordedBaseline = $report.PSObject.Properties['Baseline']
+    Require ($null -ne $recordedBaseline -and $null -ne $recordedBaseline.Value -and
+        [string]$report.BaselineResolverSha256 -ceq (Hash (Join-Path $PSScriptRoot 'resolve-jobs-upgrade-baseline.ps1')) -and
+        (($recordedBaseline.Value | ConvertTo-Json -Depth 5 -Compress) -ceq ($baseline | ConvertTo-Json -Depth 5 -Compress))) (
+        'Jobs upgrade evidence does not record the deterministic baseline resolution for this candidate.')
     $oldPackagePath = Join-Path $evidence ([string]$report.OldJobsPackagePath)
     $candidatePackagePath = Join-Path $evidence ([string]$report.CandidateJobsPackagePath)
     Require ([string]$report.OldJobsPackagePath -cmatch '^old-package/BlueTusk\.Jobs\.[A-Za-z0-9_.-]+\.nupkg$' -and
@@ -147,6 +154,17 @@ Require ($evidence.StartsWith($allowedRoot, [StringComparison]::OrdinalIgnoreCas
 $head = (Invoke-GitCommand -Arguments @('rev-parse', 'HEAD')).Trim()
 Require ($head -ieq $ExpectedCommit -and $OldCommit -ine $ExpectedCommit) 'Jobs upgrade requires distinct exact old and candidate commits.'
 Require (@(& git -C $repository status --porcelain --untracked-files=normal).Count -eq 0) 'Jobs upgrade requires a clean candidate checkout.'
+# Jobs has never been published, so the rehearsal upgrades from the deterministic baseline:
+# the state immediately before the most recent change to the Jobs-owned sources.
+$baseline = & (Join-Path $PSScriptRoot 'resolve-jobs-upgrade-baseline.ps1') -CandidateCommit $head -RepositoryRoot $repository
+Require ($null -ne $baseline -and [string]$baseline.CandidateCommit -ceq $head.ToLowerInvariant() -and
+    [string]$baseline.BaselineCommit -cmatch '^[0-9a-f]{40}$') 'Jobs upgrade baseline resolution did not identify the candidate and one old commit.'
+if (-not [string]::IsNullOrWhiteSpace($OldCommit))
+{
+    Require ($OldCommit -ieq [string]$baseline.BaselineCommit) (
+        "Requested old commit $OldCommit is not the deterministic Jobs upgrade baseline $($baseline.BaselineCommit).")
+}
+$OldCommit = [string]$baseline.BaselineCommit
 & git -C $repository cat-file -e "$OldCommit`^{commit}"
 RequireExit 'Old Jobs commit lookup'
 & git -C $repository merge-base --is-ancestor $OldCommit $ExpectedCommit
@@ -160,7 +178,10 @@ Require (Test-Path -LiteralPath $probeSource -PathType Leaf) 'Jobs upgrade probe
 if ($Mode -eq 'Preflight')
 {
     Require (-not (Test-Path -LiteralPath $evidence)) 'Jobs upgrade requires a fresh evidence directory.'
-    Write-Output "Clean candidate $head and immutable old commit $OldCommit verified; no database was used."
+    Write-Output (
+        "Clean candidate $head and deterministic old commit $OldCommit (first parent of Jobs-owned " +
+        "change $($baseline.ChangeCommit); Jobs trees $($baseline.BaselineJobsTree) -> " +
+        "$($baseline.CandidateJobsTree)) verified; no database was used.")
     return
 }
 
@@ -259,6 +280,8 @@ if ($Mode -eq 'Run')
         CandidateSourceTree = $candidateTree
         OldJobsTree = $oldJobsTree
         CandidateJobsTree = $candidateJobsTree
+        Baseline = $baseline
+        BaselineResolverSha256 = Hash (Join-Path $PSScriptRoot 'resolve-jobs-upgrade-baseline.ps1')
         OldArchiveSha256 = Hash $oldArchive
         ProbeSha256 = Hash $probeSource
         VerifierSha256 = Hash (Join-Path $PSScriptRoot 'verify-jobs-release-upgrade.ps1')
@@ -307,4 +330,6 @@ foreach ($entry in $listed)
     Require ([string]$entry.Sha256 -ieq (Hash $path)) 'A Jobs upgrade artifact file hash changed.'
 }
 AssertReport | Out-Null
-Write-Output "Archived Jobs old/candidate/rollback evidence verified for $ExpectedCommit; publication remains disabled."
+Write-Output (
+    "Archived Jobs old/candidate/rollback evidence verified for $ExpectedCommit against deterministic " +
+    "baseline $OldCommit; publication remains disabled.")

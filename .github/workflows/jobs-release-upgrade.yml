@@ -4,11 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       candidate_sha:
-        description: Full 40-character candidate commit containing this gate
-        required: true
-        type: string
-      old_sha:
-        description: Full 40-character earlier Jobs preview commit reachable from the candidate
+        description: Full 40-character lowercase candidate commit containing this gate; dispatch from a ref whose head is that commit
         required: true
         type: string
       confirmation:
@@ -31,7 +27,6 @@ jobs:
     env:
       EVIDENCE_ROOT: artifacts/jobs-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
       CANDIDATE_SHA: ${{ inputs.candidate_sha }}
-      OLD_SHA: ${{ inputs.old_sha }}
       CONFIRMATION: ${{ inputs.confirmation }}
 
     steps:
@@ -43,14 +38,15 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Verify clean commits and manual confirmation
+      - name: Verify clean candidate, deterministic Jobs baseline and manual confirmation
         shell: pwsh
         run: |
-          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$' -or $env:OLD_SHA -cnotmatch '^[0-9a-f]{40}$') {
-            throw 'Jobs upgrade requires two lowercase full commit SHAs.'
-          }
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Jobs upgrade requires a lowercase full candidate SHA.' }
           if ($env:CONFIRMATION -cne 'RUN-JOBS-RELEASE-UPGRADE') { throw 'Exact manual Jobs upgrade confirmation is required.' }
-          ./eng/verify-jobs-release-upgrade.ps1 -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -OldCommit $env:OLD_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Jobs upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-jobs-release-upgrade.ps1 -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
 
       - name: Create disposable fixture credential
         shell: pwsh
@@ -80,11 +76,11 @@ jobs:
 
       - name: Build both immutable binaries and rehearse old/new overlap and rollback
         shell: pwsh
-        run: ./eng/verify-jobs-release-upgrade.ps1 -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -OldCommit $env:OLD_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+        run: ./eng/verify-jobs-release-upgrade.ps1 -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
 
-      - name: Recheck archived source, packages, binaries and phase evidence
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
         shell: pwsh
-        run: ./eng/verify-jobs-release-upgrade.ps1 -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -OldCommit $env:OLD_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+        run: ./eng/verify-jobs-release-upgrade.ps1 -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
 
       - name: Upload qualified Jobs upgrade evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

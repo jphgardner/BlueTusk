@@ -110,28 +110,78 @@ try
         -Encoding utf8
     Assert-Rejected -ExpectedMessage 'protected independent candidate readiness' -Arguments $arguments
 
+    # The committed governance is the owner-authorized sole-maintainer mode, so the
+    # readiness environment must follow it exactly: self-review is permitted there.
     $governance = Get-Content -LiteralPath $governancePath -Raw |
         ConvertFrom-Json -AsHashtable
-    $governance.environments += @{
+    if ([string]$governance.maintenancePolicy.mode -cne 'sole-maintainer')
+    {
+        throw 'This self-test expects the committed sole-maintainer governance mode.'
+    }
+    $readinessEnvironment = @{
         name = 'expansion-candidate-readiness'
         workflow = '.github/workflows/expansion-candidate-readiness.yml'
         minimumConfiguredReviewers = 1
         preventSelfReview = $true
         canAdminsBypass = $false
     }
+    $governance.environments += $readinessEnvironment
     $testGovernance = Join-Path $temporaryRoot 'governance.json'
-    $governance | ConvertTo-Json -Depth 20 |
-        Set-Content -LiteralPath $testGovernance -Encoding utf8
+    function Write-Governance
+    {
+        $governance | ConvertTo-Json -Depth 20 |
+            Set-Content -LiteralPath $testGovernance -Encoding utf8
+    }
+    Write-Governance
     $arguments.GovernancePath = $testGovernance
+    # Sole-maintainer mismatch: a governed-mode reviewer flag cannot be declared here.
+    Assert-Rejected -ExpectedMessage 'protected independent candidate readiness' -Arguments $arguments
+    $readinessEnvironment.preventSelfReview = $false
+    $readinessEnvironment.canAdminsBypass = $true
+    Write-Governance
+    Assert-Rejected -ExpectedMessage 'protected independent candidate readiness' -Arguments $arguments
+    $readinessEnvironment.canAdminsBypass = $false
+    $readinessEnvironment.minimumConfiguredReviewers = 0
+    Write-Governance
+    Assert-Rejected -ExpectedMessage 'protected independent candidate readiness' -Arguments $arguments
+    $readinessEnvironment.minimumConfiguredReviewers = 1
+    $readinessEnvironment.preventSelfReview = 'false'
+    Write-Governance
+    Assert-Rejected -ExpectedMessage 'protected independent candidate readiness' -Arguments $arguments
+    $readinessEnvironment.preventSelfReview = $false
+    Write-Governance
     Assert-Rejected -ExpectedMessage "exact 'jobs-v1.0.0' protected production tag pattern" -Arguments $arguments
 
     $production = @($governance.environments | Where-Object name -eq 'package-production')[0]
     $production.deploymentBranchPolicy.requiredPatterns += 'jobs-v1.0.0'
-    $governance | ConvertTo-Json -Depth 20 |
-        Set-Content -LiteralPath $testGovernance -Encoding utf8
+    Write-Governance
     & $verifier @arguments | Out-Null
 
-    Write-Output 'Expansion release policy self-test passed: disabled preview, stable-version, exact workflow, independent-readiness and protected-tag gates.'
+    $maintenancePolicy = $governance.maintenancePolicy
+    $maintenancePolicy.authorizedOn = ''
+    Write-Governance
+    Assert-Rejected -ExpectedMessage 'Sole-maintainer governance requires' -Arguments $arguments
+    $maintenancePolicy.authorizedOn = '2026-09-30'
+    $maintenancePolicy.mode = 'unreviewed'
+    Write-Governance
+    Assert-Rejected -ExpectedMessage 'Unknown governance maintenance policy' -Arguments $arguments
+
+    # Governed mode, as verify-github-governance.ps1 restores it: no maintenance policy,
+    # an active ruleset, and independent reviewers who cannot approve their own runs.
+    $governance.Remove('maintenancePolicy')
+    Write-Governance
+    Assert-Rejected -ExpectedMessage 'Governed mode requires an active ruleset' -Arguments $arguments
+    $governance.ruleset.enforcement = 'active'
+    foreach ($environment in $governance.environments) { $environment.preventSelfReview = $true }
+    $readinessEnvironment.preventSelfReview = $false
+    Write-Governance
+    # Governed mismatch: sole-maintainer self-review cannot survive the restored policy.
+    Assert-Rejected -ExpectedMessage 'protected independent candidate readiness' -Arguments $arguments
+    $readinessEnvironment.preventSelfReview = $true
+    Write-Governance
+    & $verifier @arguments | Out-Null
+
+    Write-Output 'Expansion release policy self-test passed: disabled preview, stable-version, exact workflow, mode-aligned independent-readiness and protected-tag gates.'
 }
 finally
 {
