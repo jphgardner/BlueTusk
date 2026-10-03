@@ -1671,6 +1671,8 @@ public sealed class PostgreSqlRelayChangeDeliveryObserver : IChangeDeliveryObser
     private readonly IReplicationFeedbackSender _feedback;
     private readonly TimeSpan _leaseDuration;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly CancellationTokenSource _renewalStop = new();
+    private readonly Task _renewal;
     private ChangeStreamLease _lease;
     private int _disposed;
 
@@ -1686,11 +1688,15 @@ public sealed class PostgreSqlRelayChangeDeliveryObserver : IChangeDeliveryObser
         _lease = lease;
         _leaseDuration = leaseDuration;
         _feedback = feedback;
+        _renewal = ChangeStreamLeaseRenewal.RunAsync(
+            leaseDuration,
+            RenewOnScheduleAsync,
+            _renewalStop.Token);
     }
 
     public ChangeRelaySourceRegistration Source { get; }
 
-    public ChangeStreamLease Lease => _lease;
+    public ChangeStreamLease Lease => Volatile.Read(ref _lease);
 
     public static async ValueTask<PostgreSqlRelayChangeDeliveryObserver> AcquireAsync(
         PostgreSqlDurableChangeRelay relay,
@@ -1767,6 +1773,7 @@ public sealed class PostgreSqlRelayChangeDeliveryObserver : IChangeDeliveryObser
             return;
         }
 
+        await ChangeStreamLeaseRenewal.StopAsync(_renewalStop, _renewal).ConfigureAwait(false);
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
@@ -1776,6 +1783,29 @@ public sealed class PostgreSqlRelayChangeDeliveryObserver : IChangeDeliveryObser
         {
             _gate.Release();
             _gate.Dispose();
+        }
+    }
+
+    // Keeps the source lease alive while the slot is quiet; a lost lease is reported by the next
+    // append, which fails with ChangeRelayLeaseLostException.
+    private async ValueTask<bool> RenewOnScheduleAsync(CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var renewed = await _relay.RenewSourceLeaseAsync(_lease, _leaseDuration, cancellationToken)
+                .ConfigureAwait(false);
+            if (renewed is null)
+            {
+                return false;
+            }
+
+            Volatile.Write(ref _lease, renewed);
+            return true;
+        }
+        finally
+        {
+            _gate.Release();
         }
     }
 }

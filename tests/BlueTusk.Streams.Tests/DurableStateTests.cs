@@ -188,6 +188,93 @@ public sealed class DurableStateTests
         Assert.Equal(ChangeLeaseAcquireStatus.Acquired, acquired.Status);
     }
 
+    [Fact]
+    public async Task Idle_consumer_keeps_its_lease_without_acknowledging()
+    {
+        var leaseDuration = TimeSpan.FromMilliseconds(900);
+        var store = new MemoryChangeStreamStateStore();
+        var identity = CheckpointIdentity();
+        var key = ChangeStreamStateKey.Create(identity.Source, "orders");
+        await using var observer = await CheckpointingChangeDeliveryObserver.AcquireAsync(
+            store,
+            key,
+            "worker-1",
+            leaseDuration,
+            identity,
+            new RecordingFeedbackSender());
+        var delivery = await ReadDeliveryAsync(observer);
+
+        // A slow destination: three lease periods pass before the delivery is acknowledged.
+        await Task.Delay(leaseDuration * 3);
+
+        var contender = await store.AcquireAsync(key, "worker-2", leaseDuration);
+        Assert.Equal(ChangeLeaseAcquireStatus.HeldByAnotherOwner, contender.Status);
+        Assert.Equal("worker-1", contender.Lease?.OwnerId);
+        await delivery.AcknowledgeAsync();
+        Assert.Equal(Lsn(21), observer.Checkpoint?.AcknowledgedCommitPosition);
+        Assert.True(observer.Lease.ExpiresAt > DateTimeOffset.UtcNow);
+    }
+
+    [Fact]
+    public async Task Lease_renewal_stops_when_the_observer_is_disposed()
+    {
+        var leaseDuration = TimeSpan.FromMilliseconds(300);
+        var store = new RecordingStateStore();
+        var identity = CheckpointIdentity();
+        var key = ChangeStreamStateKey.Create(identity.Source, "orders");
+        var observer = await CheckpointingChangeDeliveryObserver.AcquireAsync(
+            store,
+            key,
+            "worker-1",
+            leaseDuration,
+            identity,
+            new RecordingFeedbackSender());
+        await WaitUntilAsync(() => store.RenewCount >= 2);
+
+        await observer.DisposeAsync();
+        var renewalsAtDispose = store.RenewCount;
+        await Task.Delay(leaseDuration * 2);
+
+        Assert.Equal(renewalsAtDispose, store.RenewCount);
+        var next = await store.AcquireAsync(key, "worker-2", leaseDuration);
+        Assert.Equal(ChangeLeaseAcquireStatus.Acquired, next.Status);
+    }
+
+    [Fact]
+    public async Task Lost_lease_still_fails_the_next_acknowledgement()
+    {
+        var clock = new ManualTimeProvider(Timestamp);
+        var store = new MemoryChangeStreamStateStore(clock);
+        var identity = CheckpointIdentity();
+        var key = ChangeStreamStateKey.Create(identity.Source, "orders");
+        var feedback = new RecordingFeedbackSender();
+        await using var observer = await CheckpointingChangeDeliveryObserver.AcquireAsync(
+            store,
+            key,
+            "worker-1",
+            TimeSpan.FromMinutes(1),
+            identity,
+            feedback);
+        var delivery = await ReadDeliveryAsync(observer);
+
+        clock.Advance(TimeSpan.FromMinutes(2));
+        _ = await store.AcquireAsync(key, "worker-2", TimeSpan.FromMinutes(1));
+
+        await Assert.ThrowsAsync<ChangeStreamLeaseLostException>(
+            () => delivery.AcknowledgeAsync().AsTask());
+        Assert.Null(await store.ReadAsync(key));
+        Assert.Empty(feedback.Positions);
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        while (!condition())
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(20), timeout.Token);
+        }
+    }
+
     private static ChangeStreamCheckpoint CheckpointIdentity() =>
         ChangeStreamCheckpoint.CreateInitial(
             new ChangeSourceIdentity("739463", "app", "orders_slot", "public:orders"),
@@ -303,8 +390,11 @@ public sealed class DurableStateTests
     {
         private readonly List<string> _events = events ?? [];
         private readonly MemoryChangeStreamStateStore _inner = new();
+        private int _renewCount;
 
         public int CheckpointWriteCount { get; private set; }
+
+        public int RenewCount => Volatile.Read(ref _renewCount);
 
         public bool RejectWrites { get; set; }
 
@@ -352,8 +442,11 @@ public sealed class DurableStateTests
         public ValueTask<ChangeStreamLease?> RenewAsync(
             ChangeStreamLease lease,
             TimeSpan duration,
-            CancellationToken cancellationToken = default) =>
-            _inner.RenewAsync(lease, duration, cancellationToken);
+            CancellationToken cancellationToken = default)
+        {
+            Interlocked.Increment(ref _renewCount);
+            return _inner.RenewAsync(lease, duration, cancellationToken);
+        }
 
         public ValueTask<bool> ReleaseAsync(
             ChangeStreamLease lease,
