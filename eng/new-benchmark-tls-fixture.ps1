@@ -1,5 +1,8 @@
 [CmdletBinding()]
-param([Parameter(Mandatory)][string] $OutputPath)
+param(
+    [Parameter(Mandatory)][string] $OutputPath,
+    # Extra server names, such as a Docker network alias used by a containerized client.
+    [ValidatePattern('^[a-z0-9][a-z0-9.-]{0,62}$')][string[]] $DnsName = @('localhost'))
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -34,7 +37,7 @@ try
     $request.CertificateExtensions.Add(
         [Security.Cryptography.X509Certificates.X509BasicConstraintsExtension]::new($false, $false, 0, $true))
     $san = [Security.Cryptography.X509Certificates.SubjectAlternativeNameBuilder]::new()
-    $san.AddDnsName('localhost')
+    foreach ($name in (@('localhost') + $DnsName | Select-Object -Unique)) { $san.AddDnsName($name) }
     $san.AddIpAddress([Net.IPAddress]::Loopback)
     $request.CertificateExtensions.Add($san.Build())
     $eku = [Security.Cryptography.OidCollection]::new()

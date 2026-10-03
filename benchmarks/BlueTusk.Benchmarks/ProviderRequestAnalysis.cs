@@ -21,7 +21,18 @@ internal static class ProviderRequestAnalysis
 
     internal sealed record Index(int SchemaVersion, string SourceCommit, bool SourceDirty, bool Diagnostic,
         string HarnessSha256, string Os, string Variant, string PostgreSqlImage, int Trials,
-        double WarmupSeconds, double MeasurementSeconds, Entry[] Records, bool LeadershipGatePassed);
+        double WarmupSeconds, double MeasurementSeconds, Entry[] Records, bool LeadershipGatePassed,
+        string? CaptureProfile = null, string? ClientOs = null, bool? RequireTls = null,
+        string? NetworkProfile = null, string[]? ContainerImageDigests = null, bool Synthetic = false)
+    {
+        /// <summary>The operating system of the measured client process; the host OS unless a profile says otherwise.</summary>
+        public string EffectiveClientOs => ClientOs ?? Os;
+
+        /// <summary>Legacy indexes derive TLS from the variant name; profiled indexes state it explicitly.</summary>
+        public bool EffectiveRequireTls => RequireTls ?? Variant == "tls";
+    }
+
+    internal static readonly string[] Variants = ["windows", "linux", "tls", "constrained-network"];
     internal sealed record Entry(string WorkloadKey, int Trial, string Provider, string Path,
         string Sha256, long CompletedOperations);
     internal sealed record Capture(int SchemaVersion, string EvidenceKind, bool Diagnostic, string SourceCommit,
@@ -93,7 +104,7 @@ internal static class ProviderRequestAnalysis
         var root = Path.GetDirectoryName(absoluteIndex)!;
         var (index, indexHash) = await ReadAsync<Index>(absoluteIndex, 8 * 1024 * 1024);
         if (index.SchemaVersion != 1 || index.SourceCommit != expectedCommit || index.Trials is < 1 or > 50 ||
-            index.Os is not ("windows" or "linux") || index.Variant != "tls" && index.Variant != index.Os ||
+            index.Os is not ("windows" or "linux") || !IsKnownVariant(index) ||
             index.Records is not { Length: > 0 and <= 4800 } || index.LeadershipGatePassed ||
             !Regex.IsMatch(index.HarnessSha256, "^[0-9a-f]{64}$", RegexOptions.CultureInvariant) ||
             !Regex.IsMatch(index.PostgreSqlImage, "^postgres:[^@\\s]+@sha256:[0-9a-f]{64}$", RegexOptions.CultureInvariant) ||
@@ -139,10 +150,11 @@ internal static class ProviderRequestAnalysis
             {
                 throw new InvalidDataException("Contention capture must preserve the four-slot pool and requested multiplexing mode.");
             }
-            if (environment.GetProperty("os").GetString() != index.Os ||
+            if (environment.GetProperty("os").GetString() != index.EffectiveClientOs ||
                 environment.GetProperty("architecture").GetString() != "x64" ||
                 environment.GetProperty("postgreSqlImage").GetString() != index.PostgreSqlImage ||
-                environment.GetProperty("tlsActive").GetBoolean() != (index.Variant == "tls") ||
+                environment.GetProperty("tlsActive").GetBoolean() != index.EffectiveRequireTls ||
+                !NetworkShapingMatches(capture.Method, index.NetworkProfile) ||
                 !Regex.IsMatch(environment.GetProperty("referenceAssembly").GetString()!, "^10\\.0\\.3(?:\\+|$)", RegexOptions.CultureInvariant) ||
                 !index.Diagnostic && (!environment.GetProperty("harnessAssembly").GetString()!.EndsWith("+" + expectedCommit, StringComparison.Ordinal) ||
                     !environment.GetProperty("candidateAssembly").GetString()!.EndsWith("+" + expectedCommit, StringComparison.Ordinal)))
@@ -184,6 +196,21 @@ internal static class ProviderRequestAnalysis
             comparisons.Add(new(group.Key, index.Trials, metrics, numericalTarget));
         }
         return new(index, indexHash, trials.ToArray(), comparisons.ToArray());
+    }
+
+    private static bool IsKnownVariant(Index index) => index.CaptureProfile is null
+        // Legacy indexes predate profiles: only the same-OS and TLS meanings existed.
+        ? index.Variant == "tls" || index.Variant == index.Os
+        : Variants.Contains(index.Variant, StringComparer.Ordinal) &&
+            index.EffectiveClientOs is "windows" or "linux" &&
+            Regex.IsMatch(index.CaptureProfile, "^[a-z][a-z0-9-]{0,63}$", RegexOptions.CultureInvariant);
+
+    private static bool NetworkShapingMatches(JsonElement method, string? networkProfile)
+    {
+        var shaping = method.TryGetProperty("networkShaping", out var value) ? value.GetString() : null;
+        return networkProfile is null
+            ? shaping is null or "not configured by this adapter"
+            : shaping == networkProfile;
     }
 
     internal static string ResolveArtifact(string root, string relative)

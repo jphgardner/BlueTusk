@@ -49,30 +49,41 @@ and full scaling comparisons still need capture adapters. A successful run of
 that workflow is therefore supporting evidence, not a leadership-gate pass.
 The same-SHA ratio/confidence and external-reference gates remain mandatory.
 `verify-performance-leadership-evidence.ps1` expands this contract into 886
-exact environment/workload comparisons, rejects missing or duplicate cases,
-and evaluates both the observed ratio and the conservative 95% confidence
-bound. Schema 2 also requires retained, nonempty artifacts, verifies their
-SHA-256 hashes, checks the environment manifests against an explicitly supplied
-candidate SHA, and rejects non-finite metrics. Its self-test uses synthetic
-fixtures to test rejection paths; those fixtures are not performance evidence.
+exact environment/workload comparisons: 536 for the Core scope and 350 for the
+Continuous Graph preview. It rejects missing or duplicate cases and evaluates
+both the observed ratio and the conservative 95% confidence bound. Schema 3
+also requires retained, nonempty artifacts and verifies their SHA-256 hashes. It
+checks the environment manifests against an explicitly supplied candidate SHA,
+and rejects non-finite metrics and any `diagnostic` or `synthetic` label. Its
+self-test uses synthetic fixtures to test rejection paths; those fixtures are
+not performance evidence.
 
-The verifier currently evaluates **declared** summary statistics and confidence
-bounds. It does not recompute them from raw samples. A reproducible statistics
-generator and an independent raw-to-summary consistency check remain required
-before treating this as an end-to-end leadership gate. The existing provider
-budget gate permits ratios up to 1.00 or 1.05 depending on the workload; passing
-it does not establish this programme's stricter 0.98 leadership threshold.
+The verifier evaluates **declared** summary statistics and confidence bounds.
+The [Core performance-evidence pipeline](core-performance-evidence.md) now
+produces them reproducibly. A generator derives every metric from retained raw
+samples. It uses a seeded, commit-bound, conservative studentized bootstrap of
+per-trial means to give separate candidate and reference bounds. An
+independent, BCL-only checker then recomputes every trial value and bound from
+the raw files before the schema-3 assembler runs. The manual
+[`core-performance-evidence.yml`](../../.github/workflows/core-performance-evidence.yml)
+workflow, or its local producer record, supplies
+`performance/performance-leadership-evidence.json` to Core readiness. The
+existing provider budget gate permits ratios up to 1.00 or 1.05 depending on the
+workload; passing it does not establish this programme's stricter 0.98
+leadership threshold.
 
-The [Provider request-level capture adapter](provider-request-capture.md) now
+The [Provider request-level capture adapter](provider-request-capture.md)
 provides all 16 feature adapters with a shared pool, independent workers,
-individual-request samples, process counters, and observed TLS state. It is a
-separate capture path; the full leadership workflow has not yet been switched
-to an end-to-end raw-to-verdict pipeline. Diagnostic adapter tests do not fill
-the missing dedicated-runner or cross-product evidence requirements.
-Its raw-data analyzer now recomputes Provider metrics and approximate paired
-trial confidence intervals, retaining hashes and a readable report. This is
-not yet integrated with the consolidated verifier's separate-bound schema;
-neither diagnostic captures nor standalone numerical passes certify release.
+individual-request samples, process counters, and observed TLS state. It now
+also captures the constrained-network variant through a digest-pinned
+Toxiproxy. The cross-OS Provider variants have no adopted meaning yet (see the
+[proposal](../../eng/performance-cross-os-proposal.md)), so they fail
+closed and are reported as missing. Streams, Sync, Live, Control Plane and
+primary hot-path harnesses are planned workflow legs that fail closed until
+they are implemented. The pipeline therefore cannot yet produce passing Core
+evidence. Diagnostic captures are labelled and can never pass the verifier.
+The paired log-t interval of the Provider analyzer is a different quantity. It
+is not relabelled as the verifier's separate bounds.
 
 - Provider: 16 features at concurrency 1, 64, and 256, including TLS and
   constrained-network variants, against Npgsql 10.0.3.
@@ -103,10 +114,12 @@ counters, verifier self-tests, and this readable consolidation.
 
 ## Remaining evidence before release
 
-1. Complete the external-reference and full-matrix capture adapters, derive
-   statistics reproducibly from retained samples, and independently verify
-   raw-to-summary consistency. Capture exact-final-SHA Windows and Linux
-   evidence and run the ratio/confidence verifier.
+1. Complete the external-reference capture adapters (Debezium Server, SignalR,
+   BlueTusk 1.0.0 and the primary hot paths), and resolve the cross-OS Provider
+   variant decision. Statistics derivation and the independent raw-to-summary
+   check now exist in the [Core pipeline](core-performance-evidence.md). Capture
+   exact-final-SHA Windows and Linux evidence and run the ratio/confidence
+   verifier.
 2. Archive Streams 72-hour, then Sync 24-hour, Live/Control Plane 24-hour, and,
    after PostgreSQL 19 GA, Continuous Graph 24-hour endurance evidence.
 3. Run PostgreSQL 15–19, TLS, trimming, NativeAOT, package-consumer, Angular,
@@ -121,11 +134,11 @@ Until those items pass, 1.2 is a performance-engineered candidate—not a blanke
 
 ## Evidence artifact validation
 
-Run the schema-2 verifier with the full SHA of the candidate being assessed:
+Run the schema-3 verifier with the full SHA of the candidate being assessed:
 
 ```powershell
 ./eng/verify-performance-leadership-evidence.ps1 `
-    -EvidencePath artifacts/performance-leadership/evidence.json `
+    -EvidencePath artifacts/core-performance/performance/performance-leadership-evidence.json `
     -ExpectedCommit $candidateSha
 ```
 
@@ -137,6 +150,9 @@ traverse symbolic links/junctions. Every referenced file must exist, contain
 data, and match its corresponding SHA-256 field. Environment JSON must include
 matching `sourceCommit`, `os`, `architecture`, and `containerImageDigests`.
 
-Old schema-1 documents containing only hash-shaped strings are not accepted.
+The assembler also binds each environment's `summary.json` and independent
+`check-report.json`. Documents labelled `diagnostic` or `synthetic`, at the top
+level or in an environment manifest, are rejected. Old schema-1 and schema-2
+documents are not accepted.
 Retaining a file and matching its hash proves artifact integrity, not the
 correctness of its contents or the completeness of the measurement method.

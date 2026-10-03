@@ -1,0 +1,261 @@
+name: Core performance-leadership evidence
+
+# Manual, exact-SHA producer of performance/performance-leadership-evidence.json for Core readiness.
+# Runner topology (docs/operations/core-performance-evidence.md): one physical measurement host with an
+# ephemeral self-hosted Windows runner and a Linux runner in a container. Legs never overlap
+# (max-parallel: 1 plus the shared reference-host concurrency group). Raw samples stay in the host
+# evidence store (BLUETUSK_EVIDENCE_STORE); only the hash-bound summaries and the evidence document are
+# uploaded, so the verifier can run anywhere while the checker recomputes from raw on the host.
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character commit SHA to measure
+        required: true
+        type: string
+      confirmation:
+        description: Type CAPTURE-1.1-PERFORMANCE-EVIDENCE to start the dedicated measurement host
+        required: true
+        type: string
+      evidence_class:
+        description: qualification (exact full contract) or diagnostic (labelled; never release evidence)
+        required: true
+        type: choice
+        options: [qualification, diagnostic]
+        default: qualification
+      trials:
+        description: Process trials per provider and workload (qualification minimum 30)
+        required: true
+        type: string
+        default: '30'
+      families:
+        description: Diagnostic subset, comma separated; qualification always plans every leg
+        required: false
+        type: string
+        default: Provider,Streams,Sync,Live,ControlPlane,primary-hot-path
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bluetusk-reference-host
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan exact-candidate legs
+    if: inputs.confirmation == 'CAPTURE-1.1-PERFORMANCE-EVIDENCE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      capture: ${{ steps.plan.outputs.capture }}
+      environments: ${{ steps.plan.outputs.environments }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - name: Verify candidate and contract, then plan from the data-driven tables
+        id: plan
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          EVIDENCE_CLASS: ${{ inputs.evidence_class }}
+          FAMILIES: ${{ inputs.families }}
+          TRIALS: ${{ inputs.trials }}
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'candidate_sha must be a full lowercase Git SHA.' }
+          if ((git rev-parse HEAD).Trim() -cne $env:CANDIDATE_SHA) { throw 'Checked-out commit differs from candidate_sha.' }
+          if ($env:TRIALS -notmatch '^\d{1,2}$' -or [int]$env:TRIALS -gt 50 -or
+              ($env:EVIDENCE_CLASS -eq 'qualification' -and [int]$env:TRIALS -lt 30) -or [int]$env:TRIALS -lt 3) {
+            throw 'Trials must be 30..50 for qualification and 3..50 for diagnostics.'
+          }
+          ./eng/verify-performance-leadership-contract.ps1
+          $plan = ./eng/get-core-performance-capture-plan.ps1 -EvidenceClass $env:EVIDENCE_CLASS -Families $env:FAMILIES | ConvertFrom-Json
+          if ($env:EVIDENCE_CLASS -eq 'qualification') {
+            $unavailable = @($plan.capture.include | Where-Object { $_.status -cnotin @('ready', 'implemented') })
+            if ($unavailable.Count -ne 0) {
+              throw "Qualification producers are incomplete: $(($unavailable | ForEach-Object { $_.leg + ': ' + $_.status }) -join '; '). No measurement jobs will start."
+            }
+          }
+          "capture=$($plan.capture | ConvertTo-Json -Depth 6 -Compress)" >> $env:GITHUB_OUTPUT
+          "environments=$($plan.environments | ConvertTo-Json -Depth 6 -Compress)" >> $env:GITHUB_OUTPUT
+          $plan.capture.include | ForEach-Object { "$($_.leg): $($_.status)" }
+
+  capture:
+    name: Capture ${{ matrix.leg }}
+    needs: plan
+    strategy:
+      fail-fast: true
+      # One physical measurement host: legs must never overlap, including Windows and Linux legs.
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.plan.outputs.capture) }}
+    runs-on: ${{ fromJSON(matrix.runner) }}
+    timeout-minutes: 1440
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Verify candidate, runner OS, leg status and evidence store
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          EXPECTED_OS: ${{ matrix.os }}
+          LEG: ${{ matrix.leg }}
+          LEG_STATUS: ${{ matrix.status }}
+        run: |
+          if ((git rev-parse HEAD).Trim() -cne $env:CANDIDATE_SHA) { throw 'Checked-out commit differs from candidate_sha.' }
+          $os = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { 'other' }
+          if ($os -cne $env:EXPECTED_OS) { throw "Leg $env:LEG needs a $env:EXPECTED_OS runner; this is $os." }
+          if (-not $env:BLUETUSK_EVIDENCE_STORE) { throw 'Configure BLUETUSK_EVIDENCE_STORE on the runner (host-persistent raw evidence store).' }
+          if ($env:LEG_STATUS -cne 'ready' -and $env:LEG_STATUS -cne 'implemented') {
+            Write-Output "Leg $env:LEG status: $env:LEG_STATUS. It fails closed below; nothing is substituted."
+          }
+      - name: Build the Release benchmark harness
+        shell: pwsh
+        run: dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release
+      - name: Capture raw evidence for this leg
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          EVIDENCE_CLASS: ${{ inputs.evidence_class }}
+          TRIALS: ${{ inputs.trials }}
+          LEG_OS: ${{ matrix.os }}
+          LEG_KIND: ${{ matrix.kind }}
+          LEG_VARIANT: ${{ matrix.variant }}
+          LEG_FAMILY: ${{ matrix.family }}
+          LEG_CONCURRENCY: ${{ matrix.concurrency }}
+        run: |
+          $providerArguments = @{}
+          if ($env:LEG_KIND -eq 'provider') { $providerArguments.Concurrency = @([int]$env:LEG_CONCURRENCY) }
+          ./eng/invoke-core-performance-capture.ps1 `
+            @providerArguments `
+            -Os $env:LEG_OS -Kind $env:LEG_KIND -Variant $env:LEG_VARIANT -Family $env:LEG_FAMILY `
+            -ExpectedCommit $env:CANDIDATE_SHA `
+            -EvidenceStore (Join-Path $env:BLUETUSK_EVIDENCE_STORE "$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT") `
+            -RunId "r$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT" `
+            -Trials ([int]$env:TRIALS) `
+            -Diagnostic:($env:EVIDENCE_CLASS -eq 'diagnostic')
+      - name: Remove this run's fixture containers
+        if: always()
+        shell: pwsh
+        run: |
+          $prefix = "r$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT-"
+          docker ps --all --filter label=bluetusk.owner=core-performance-evidence --format '{{.ID}} {{.Label "bluetusk.run"}}' |
+            ForEach-Object { $id, $run = $_.Split(' ', 2); if ($run.StartsWith($prefix)) { docker rm --force --volumes $id | Out-Null } }
+
+  summarize:
+    name: Generate and independently check ${{ matrix.os }}
+    needs: [plan, capture]
+    strategy:
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.plan.outputs.environments) }}
+    runs-on: ${{ fromJSON(matrix.runner) }}
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Generate, describe the environment, and check from raw samples
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          EVIDENCE_OS: ${{ matrix.os }}
+        run: |
+          if ((git rev-parse HEAD).Trim() -cne $env:CANDIDATE_SHA) { throw 'Checked-out commit differs from candidate_sha.' }
+          dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release
+          if ($LASTEXITCODE -ne 0) { throw 'Benchmark build failed.' }
+          dotnet build eng/PerformanceEvidenceChecker/PerformanceEvidenceChecker.csproj --configuration Release
+          if ($LASTEXITCODE -ne 0) { throw 'Checker build failed.' }
+          $osRoot = Join-Path $env:BLUETUSK_EVIDENCE_STORE "$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/$env:EVIDENCE_OS"
+          dotnet benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll --performance-evidence-generate `
+            $osRoot $env:CANDIDATE_SHA $env:EVIDENCE_OS eng/performance-leadership-contract.json eng/performance-variant-map.json
+          if ($LASTEXITCODE -ne 0) { throw 'Summary generation failed.' }
+          $topology = if ($env:EVIDENCE_OS -eq 'windows') {
+            'Windows runner process -> 127.0.0.1 published Docker Desktop (WSL2) port -> Linux PostgreSQL container'
+          } else { 'Linux runner container -> fixture Docker network -> Linux PostgreSQL container (same physical host)' }
+          ./eng/write-performance-environment-manifest.ps1 -OsRoot $osRoot -ExpectedCommit $env:CANDIDATE_SHA -Os $env:EVIDENCE_OS -Topology $topology
+          dotnet eng/PerformanceEvidenceChecker/bin/Release/net10.0/PerformanceEvidenceChecker.dll check `
+            $osRoot $env:CANDIDATE_SHA $env:EVIDENCE_OS eng/performance-variant-map.json
+          if ($LASTEXITCODE -ne 0) { throw 'The independent raw-to-summary check failed.' }
+          $upload = "artifacts/core-performance-upload/$env:EVIDENCE_OS"
+          New-Item -ItemType Directory -Path $upload -Force | Out-Null
+          foreach ($name in 'summary.json', 'raw-samples.json', 'check-report.json', 'environment-manifest.json') {
+            Copy-Item -LiteralPath (Join-Path $osRoot $name) -Destination $upload
+          }
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: performance-${{ matrix.os }}
+          path: artifacts/core-performance-upload/${{ matrix.os }}
+          if-no-files-found: error
+          retention-days: 90
+
+  assemble:
+    name: Assemble and verify schema-3 evidence
+    needs: [plan, summarize]
+    runs-on: ["self-hosted","windows","x64","bluetusk-benchmark"]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: performance-*
+          path: artifacts/core-performance-download
+      - name: Run verifier and pipeline self-tests, assemble, and verify
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          EVIDENCE_CLASS: ${{ inputs.evidence_class }}
+        run: |
+          if ((git rev-parse HEAD).Trim() -cne $env:CANDIDATE_SHA) { throw 'Checked-out commit differs from candidate_sha.' }
+          dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release
+          if ($LASTEXITCODE -ne 0) { throw 'Benchmark build failed.' }
+          $performance = 'artifacts/core-performance/performance'
+          New-Item -ItemType Directory -Path $performance -Force | Out-Null
+          Get-ChildItem artifacts/core-performance-download -Directory | ForEach-Object {
+            Move-Item -LiteralPath $_.FullName -Destination (Join-Path $performance ($_.Name -replace '^performance-', ''))
+          }
+          $log = 'artifacts/core-performance/verifier-self-tests.log'
+          & {
+            ./eng/verify-performance-leadership-contract.ps1
+            ./eng/test-performance-leadership-evidence-verifier.ps1
+            dotnet benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll --performance-evidence-self-test eng/performance-leadership-contract.json eng/performance-variant-map.json
+            if ($LASTEXITCODE -ne 0) { throw 'The generator self-test failed.' }
+            ./eng/test-performance-evidence-pipeline.ps1
+          } *>&1 | Tee-Object -FilePath $log
+          if ($LASTEXITCODE -ne 0) { throw 'A verifier or pipeline self-test failed.' }
+          $diagnostic = $env:EVIDENCE_CLASS -eq 'diagnostic'
+          ./eng/assemble-performance-leadership-evidence.ps1 -EvidenceRoot $performance -ExpectedCommit $env:CANDIDATE_SHA `
+            -VerifierSelfTestLogPath $log -Diagnostic:$diagnostic
+          if ($diagnostic) {
+            $accepted = $false
+            try {
+              ./eng/verify-performance-leadership-evidence.ps1 -EvidencePath "$performance/diagnostic-performance-leadership-evidence.json" -ExpectedCommit $env:CANDIDATE_SHA
+              $accepted = $true
+            } catch { Write-Output "Expected diagnostic rejection: $($_.Exception.Message)" }
+            if ($accepted) { throw 'Diagnostic evidence passed the release verifier.' }
+          } else {
+            ./eng/verify-performance-leadership-evidence.ps1 -EvidencePath "$performance/performance-leadership-evidence.json" -ExpectedCommit $env:CANDIDATE_SHA
+          }
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: core-performance-evidence-${{ inputs.evidence_class }}-${{ inputs.candidate_sha }}-${{ github.run_id }}
+          path: artifacts/core-performance
+          if-no-files-found: error
+          retention-days: 90

@@ -17,6 +17,37 @@ if (args is ["--provider-request-analyze", var captureIndexPath, var captureComm
     return;
 }
 
+if (args is ["--performance-evidence-generate", var evidenceOsRoot, var evidenceCommit, var evidenceOs,
+    var evidenceContract, var evidenceVariantMap])
+{
+    await PerformanceEvidenceGenerator.RunAsync(evidenceOsRoot, evidenceCommit, evidenceOs, evidenceContract,
+        evidenceVariantMap, allowSynthetic: false);
+    return;
+}
+
+// Self-test entry points only: synthetic fixtures are always labelled synthetic and diagnostic.
+if (args is ["--performance-evidence-generate-synthetic", var syntheticOsRoot, var syntheticCommit, var syntheticOs,
+    var syntheticContract, var syntheticVariantMap])
+{
+    await PerformanceEvidenceGenerator.RunAsync(syntheticOsRoot, syntheticCommit, syntheticOs, syntheticContract,
+        syntheticVariantMap, allowSynthetic: true);
+    return;
+}
+
+if (args is ["--performance-evidence-synthesize", var fixtureOsRoot, var fixtureCommit, var fixtureOs, var fixtureOutcome,
+    var fixtureContract, var fixtureVariantMap])
+{
+    await PerformanceEvidenceSelfTests.SynthesizeAsync(fixtureOsRoot, fixtureCommit, fixtureOs, fixtureOutcome,
+        fixtureContract, fixtureVariantMap);
+    return;
+}
+
+if (args is ["--performance-evidence-self-test", var selfTestContract, var selfTestVariantMap])
+{
+    await PerformanceEvidenceSelfTests.RunAsync(selfTestContract, selfTestVariantMap);
+    return;
+}
+
 if (args is ["--provider-request-self-test"])
 {
     await ProviderRequestCaptureSelfTests.RunAsync();

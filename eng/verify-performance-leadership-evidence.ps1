@@ -174,6 +174,21 @@ if ($evidence.schemaVersion -ne 3 -or $evidence.release -ne $contract.release -o
     throw 'Performance evidence identity, release, commit, scope, or confidence level is invalid.'
 }
 
+function Assert-NotDiagnostic
+{
+    param([Parameter(Mandatory)][object] $Document, [Parameter(Mandatory)][string] $Description)
+    # Diagnostic and synthetic pipeline output is labelled; a label other than false never qualifies.
+    foreach ($label in @('diagnostic', 'synthetic'))
+    {
+        $property = $Document.PSObject.Properties[$label]
+        if ($null -ne $property -and -not ($property.Value -is [bool] -and $property.Value -eq $false))
+        {
+            throw "$Description is diagnostic or synthetic output, which is never release evidence."
+        }
+    }
+}
+Assert-NotDiagnostic $evidence 'Performance evidence'
+
 $null = Assert-EvidenceArtifact $evidence.consolidatedReportPath `
     $evidence.consolidatedReportSha256 'Consolidated report'
 $null = Assert-EvidenceArtifact $evidence.verifierSelfTestsPath `
@@ -203,6 +218,7 @@ foreach ($environmentName in $environmentNames)
         throw "Environment '$environmentName' has missing or mutable container image evidence."
     }
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    Assert-NotDiagnostic $manifest "Environment manifest '$environmentName'"
     if ($manifest.sourceCommit -cne $ExpectedCommit -or
         $manifest.os -cne $environmentName -or $manifest.architecture -cne 'x64' -or
         @($manifest.containerImageDigests).Count -ne $digests.Count -or
