@@ -1,82 +1,85 @@
-# BlueTusk real-time platform
+# Choose a real-time product
 
-BlueTusk can react after PostgreSQL commits a change. Start with the outcome you
-need; most applications do not need every product.
+BlueTusk's real-time products let your application react after PostgreSQL
+commits a change. Use this page to pick the product you need. Most
+applications need only one or two of them.
 
-## Choose one starting point
+## Pick by outcome
 
-| You need to…                                                              | Start with                                        | What it gives you                                                                    |
-| ------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Process committed changes in .NET                                         | [Streams](../streams/README.md)                   | Complete transactions, checkpointing, leases, spooling, and snapshots.               |
-| Feed several independent consumers from one slot                          | [Durable relay](../streams/durable-relay.md)      | Retained transactions and independently acknowledged groups.                         |
-| Keep Redis, OpenSearch, NATS, Kafka, PostgreSQL, S3, or a webhook current | [Sync](../sync/README.md)                         | Transforms, destination guarantees, retries, reconciliation, and rebuilds.           |
-| Push a bounded query result to connected users                            | [Live](../live/README.md)                         | Authorized queries, keyed diffs, replay, resume tokens, and browser clients.         |
-| Maintain a changing graph result                                          | [Continuous Graph](../continuous-graph/README.md) | Incremental and authoritative SQL/PGQ maintenance under the original security scope. |
-| Inspect and operate the deployment                                        | [Control Plane](../control-plane/README.md)       | Redacted inventory, drill-down dashboard, authorization, and audit.                  |
+| You want to | Use | Start with |
+| --- | --- | --- |
+| Run .NET code for every committed change, in commit order | [Streams](../streams/README.md) | [Streams quick start](../streams/quickstart.md) |
+| Feed several independent consumers from one replication slot | Streams [durable relay](../streams/durable-relay.md) | [Durable relay](../streams/durable-relay.md) |
+| Keep another PostgreSQL database, Redis, NATS, OpenSearch, Kafka, S3 or a webhook up to date | [Sync](../sync/README.md) | [Sync quick start](../sync/quickstart.md) |
+| Show users a query result that updates by itself | [Live](../live/README.md) | [Live quick start](../live/quickstart.md) |
+| See and operate the running components | [Control Plane](../control-plane/README.md) | [Control Plane quick start](../control-plane/quickstart.md) |
+| Keep a graph query result current (preview) | [Continuous Graph](../continuous-graph/README.md) | [Graph guide](../graph/README.md) |
 
-## How the pieces connect
+Not sure? Start with Streams. Sync and Live are built on it, and the Streams
+quick start teaches the setup every real-time product needs.
+
+## How the products connect
 
 ```text
-PostgreSQL 15–19
-       ↓
-Data / COPY / Replication / pgoutput
-       ↓
-BlueTusk Streams ─→ PostgreSQL durable relay
-       ├──────────→ BlueTusk Sync
-       └──────────→ BlueTusk Live ─→ Continuous Graph
-                              ↑
-                    Control Plane / Dashboard
+PostgreSQL (wal_level = logical)
+        │  logical replication
+        ▼
+     Streams ──────────► durable relay (optional, in PostgreSQL)
+        │
+        ├──► Sync ──────► another database, cache, broker, index or webhook
+        │
+        ├──► Live ──────► browsers and .NET clients
+        │
+        └──► Continuous Graph (preview)
+
+ Control Plane shows and operates all of them.
 ```
 
-Build and prove Streams first. Add a relay when more than one independently
-recoverable consumer needs the feed. Add Sync, Live, or Continuous Graph only
-for the corresponding outcome.
+- **Streams** is the only product that reads PostgreSQL's replication
+  protocol. It turns the write-ahead log into complete, ordered, committed
+  transactions.
+- **Sync** and **Live** consume Streams. They never read the replication
+  protocol directly.
+- The **durable relay** stores committed transactions in PostgreSQL so several
+  consumers can share one replication slot and acknowledge independently.
+- **Control Plane** does not process changes. It shows the inventory and
+  health of the other products and runs audited operations on them.
 
-Streams is the only application-level CDC boundary. Sync, Live, and Continuous
-Graph consume Streams deliveries or relay cursors; they do not reach into
-replication protocol internals.
+Build and test your Streams setup first. Add a relay when more than one
+consumer needs the same changes. Add Sync or Live only for the outcome you need.
 
-## Correctness contract
+## What every product guarantees
 
-- Delivery is ordered, transaction-preserving, and at least once. Exactly once is not claimed.
-- Durable downstream handling precedes checkpoint persistence; checkpoint persistence precedes PostgreSQL feedback.
-- Checkpoints are monotonic compare-and-swap records bound to a source identity and lease fencing token.
-- Direct groups own independent slots. Streams also includes PostgreSQL relay
-  fan-out from one slot.
-- All memory, transaction, spool, acknowledgement-age, and WAL-lag queues are bounded.
-- Exported snapshots restart with a new epoch after exporter/session loss; an expired snapshot is not resumable.
-- Live uses CDC as invalidation and reruns an authorised bounded EF query before emitting client-visible data.
-- Sync advances only after a destination confirms durable handling of the complete source transaction.
+All real-time products share one delivery model:
 
-See the [public contracts](contracts.md), [delivery phases](delivery-plan.md), and accepted [architecture decisions](../architecture/decisions).
+- Changes arrive as **whole transactions**, in **commit order**.
+- Delivery is **at least once**. After a crash, the last unacknowledged
+  transaction can arrive again. Every change has a stable identity so you can
+  detect the repeat. BlueTusk does not claim "exactly once".
+- A transaction is **acknowledged** only after its effect is durable, and the
+  **checkpoint** moves only after that.
+- A checkpoint belongs to one **source identity** (cluster, database, slot and
+  publication). BlueTusk refuses to resume from a checkpoint that belongs to a
+  different source, for example after a restore into a new cluster.
+- Every queue, buffer and spool has a configured limit. When a limit is
+  reached, BlueTusk pauses instead of dropping changes.
+- **Live** uses a change only as a signal. It re-runs the registered query
+  with the subscriber's permissions before it sends anything to a client.
+- **Sync** moves its checkpoint only after the destination confirms it has
+  stored the whole source transaction.
 
-## Release trains
+[Delivery guarantees](contracts.md) defines each rule exactly.
+[Core concepts](../getting-started/concepts.md) explains the vocabulary.
 
-The release manifest is `eng/product-families.json`; version properties live under `eng/versions`. A product project declares its train with `BlueTuskProductFamily`. Release tags are independently named `provider-v*`, `streams-v*`, `sync-v*`, `live-v*`, `control-plane-v*`, and `continuous-graph-v*`.
+## Before production
 
-An empty family is valid during architecture work but cannot be packaged. This prevents placeholder NuGet packages from implying implemented behavior.
+- [Recovery and rebuilds](operations.md): restart, replay, rebuild and
+  failover procedures.
+- [Security](../security.md): roles, replication privileges and what each
+  product exposes.
+- [Observability](../operations/observability.md): metrics, traces and
+  alerts.
+- [Production checklist](../operations/production-checklist.md).
 
-Each family declares its cross-family release dependencies and an explicit
-schema-2 publication policy. During preparation all policies are disabled; in
-the immutable candidate all six are armed. Exact stable channels, tag prefixes,
-dependency order, and required exact-commit workflow evidence are
-machine-enforced. Every package
-project is listed explicitly, so a new project cannot silently enter a release
-train. `-Candidate` can build a gated verification
-artifact without opening its publication gate. Families with npm artifacts
-always run a clean locked install, vulnerability audit, client build, and
-client tests before any tarball is created. See the
-[release process](../release-process.md).
-
-Implementation status: all six families are published at stable
-`1.0.0`. [Streams](../streams/release-notes-1.0.0.md) has its complete CDC and
-relay contracts; [Sync](../sync/release-notes-1.0.0.md) has all four
-destinations on one conformance contract; [Live](../live/release-notes-1.0.0.md)
-has its PostgreSQL stores, transports, and NuGet/npm clients; the
-[Control Plane and Dashboard](../control-plane/release-notes-1.0.0.md) provide
-authorised inventory, operations, audit, and versioned v1 APIs; and
-[ContinuousGraph](../continuous-graph/release-notes-1.0.0.md) has bounded
-incremental maintenance plus authoritative repair. Publication remains
-disabled during preparation. After PostgreSQL 19 GA, a reviewed arming PR to
-`main` creates the immutable candidate; tags and protected production approval
-remain the publication boundary.
+For the design history, see the [architecture decisions](../architecture/decisions/)
+and the [delivery plan](delivery-plan.md).
