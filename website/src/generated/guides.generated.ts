@@ -1916,13 +1916,18 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
+        "id": "position-feedback-without-an-observer",
+        "text": "Position feedback without an observer",
+        "level": 3
+      },
+      {
         "id": "performance-baseline",
         "text": "Performance baseline",
         "level": 2
       }
     ],
-    "wordCount": 1024,
-    "readMinutes": 5,
+    "wordCount": 1254,
+    "readMinutes": 6,
     "searchText": "BlueTusk Streams BlueTusk Streams turns PostgreSQL logical replication into complete committed transactions an application can process and acknowledge. It handles large transaction spooling, source identity, checkpoints, leases, restart, and a no-gap initial snapshot. Use Streams when application code needs a reliable change feed. Use the lower level [replication API](../replication/README.md) only when you need raw protocol messages. Run the sample The sample creates a hosted snapshot-then-stream consumer and prints each committed transaction: Create the PostgreSQL publication and replication role first. The TLS-disabled connection is for an isolated local database only. The processing rule Do not acknowledge before the downstream effect and checkpoint are durable. A crash can redeliver the last unconfirmed transaction, so the downstream write must use stable change identities or an atomic checkpoint. For a new data set, use [snapshot and catch-up](snapshot-bootstrap.md) rather than combining an unrelated table export with a later WAL position. What Streams provides immutable source, relation, column, row, transaction, change, and stable change-ID models; explicit value, database-null, not-published, unavailable-old-value, unchanged-TOAST, and decoding-failure column states; exact/unknown changed-column sets that require a complete old row before claiming exactness; ordinary, streamed, and opt-in prepared transaction assembly by PostgreSQL transaction ID; insert, update, delete, truncate, transactional/nontransactional logical message, origin, timestamp, LSN, and ordering preservation; bounded change, relation, transaction-memory, individual-record, and total spool-storage accounting; versioned disk envelopes with completion footers, per-record CRC32 integrity, atomic `.partial` to `.ready` publication, and pluggable at-rest protection; restart-safe spool accounting that includes pre-existing `.partial` and `.ready` artifacts in the configured disk ceiling; streami"
   },
   {
@@ -3196,9 +3201,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 247,
+    "wordCount": 281,
     "readMinutes": 2,
-    "searchText": "Snapshot-then-stream sample The `BlueTusk.Samples.Streams` worker demonstrates the complete first-run path: an exported PostgreSQL snapshot, bounded binary COPY batches, transition to the matching `pgoutput` position, and transaction acknowledgement by a hosted consumer. Create the sample table and provision the publication. The snapshot source must create the logical slot itself so it can export the matching snapshot; therefore this setup deliberately uses `--skip-slot`. The sample logs raw snapshot batches and CDC change types. A real destination must durably and idempotently apply a complete source transaction before it acknowledges the delivery. Configure a checkpoint store and feedback observer as described in [state stores](state-stores.md); memory state is only suitable for tests and ephemeral development. The sample explicitly enables `RestartSnapshot` recovery. If the process stops after creating its slot, the next process verifies that the slot is inactive, logical, `pgoutput`, and bound to the configured database before replacing it. The consumer then receives `ResetSnapshotAsync` with a new epoch; an idempotent destination must discard or supersede the abandoned epoch. The sample's table shape is intentionally fixed so binary column ordinals and PostgreSQL type OIDs remain explicit. Production mappings should use the typed mapping builder or the [EF-derived mapping adapter](typed-mappings.md)."
+    "searchText": "Snapshot-then-stream sample The `BlueTusk.Samples.Streams` worker demonstrates the complete first-run path: an exported PostgreSQL snapshot, bounded binary COPY batches, transition to the matching `pgoutput` position, and transaction acknowledgement by a hosted consumer. Create the sample table and provision the publication. The snapshot source must create the logical slot itself so it can export the matching snapshot; therefore this setup deliberately uses `--skip-slot`. The sample logs raw snapshot batches and CDC change types. A real destination must durably and idempotently apply a complete source transaction before it acknowledges the delivery. The sample passes no delivery observer, so the stream confirms each acknowledged commit position to PostgreSQL itself and the slot releases WAL as the sample runs. To resume from a durable position after a restart, configure a checkpoint store and `CheckpointingChangeDeliveryObserver` as described in [state stores](state-stores.md); memory state is only suitable for tests and ephemeral development. The sample explicitly enables `RestartSnapshot` recovery. If the process stops after creating its slot, the next process verifies that the slot is inactive, logical, `pgoutput`, and bound to the configured database before replacing it. The consumer then receives `ResetSnapshotAsync` with a new epoch; an idempotent destination must discard or supersede the abandoned epoch. The sample's table shape is intentionally fixed so binary column ordinals and PostgreSQL type OIDs remain explicit. Production mappings should use the typed mapping builder or the [EF-derived mapping adapter](typed-mappings.md)."
   },
   {
     "category": "real-time",
@@ -3398,8 +3403,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 4840,
-    "readMinutes": 22,
+    "wordCount": 4997,
+    "readMinutes": 23,
     "searchText": "BlueTusk Sync BlueTusk Sync materialises transaction-preserving Streams deliveries into external destinations. It consumes `BlueTusk.Streams` only; it never reaches logical-replication wire messages. Release compatibility is specified in the [public API compatibility](api-compatibility.md) and [durable format compatibility](format-compatibility.md) contracts. The [release-endurance guide](release-endurance.md) defines the mandatory 24-hour four-connector gate. The core pipeline owns the provisioning, snapshotting, catching-up, running, paused, rebuilding, reconciling, faulted, and stopped states. A source transaction is transformed and offered to a destination as one immutable batch. The Streams delivery is acknowledged only after the destination returns the exact commit-end position as durably handled. Duplicate delivery is safe when a destination reports the same position as already applied. The delivery guarantee BlueTusk guarantees that an acknowledged source transaction is never skipped. If a worker stops after writing a destination but before saving source progress, the last unconfirmed transaction is delivered again with the same source, transaction, commit-position, and change identities. Every official Sync connector provides a tested replay-safety mechanism, but the durable boundary depends on the destination. For NATS, the downstream consumer must retain the stable identity beyond JetStream's configured deduplication window: Destination Guarantee What happens during recovery PostgreSQL Atomic state and checkpoint The complete mutation and checkpoint commit in one PostgreSQL transaction. Recovery sees both or neither. Redis Atomic state and checkpoint One same-slot Lua operation validates and writes the complete mutation plus checkpoint. Recovery sees both or neither. OpenSearch Replay-safe materialisation A failed or ambiguous bulk is replayed with the same external versions. Older source versions cannot replace newer materialized state, and the checkpoin"
   },
   {

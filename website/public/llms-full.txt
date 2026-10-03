@@ -2793,6 +2793,14 @@ await using var acknowledgement =
 
 Only the active fenced lease may mutate a checkpoint. Backward positions, stale generations, incompatible source/mapping identities, and expired owners fail closed. If feedback fails after the checkpoint is durable, retry sends feedback from the stored position without rewriting or advancing the checkpoint. A nack never advances either checkpoint or feedback.
 
+The observer renews its lease on a timer, three times per lease duration, independently of acknowledgements, so an idle consumer or a slow destination keeps ownership. Each acknowledgement still renews and verifies the lease first; if the store reports the lease lost, the acknowledgement fails with `ChangeStreamLeaseLostException` before any checkpoint is written. Disposing the observer stops renewal and releases the lease. `PostgreSqlRelayChangeDeliveryObserver` renews its source lease the same way.
+
+### Position feedback without an observer
+
+A `PgOutputChangeStream` reading from a BlueTusk replication connection reports progress to PostgreSQL even when no delivery observer is attached. This covers streams created directly over `StartReplicationAsync(...).DecodePgOutputAsync()` and the stream created by `PostgreSqlConsistentSnapshotSource`, so hosted Streams consumers and direct Sync pipelines without an `observerFactory` are included. After `AcknowledgeAsync` completes, the stream confirms that transaction's commit-end position to the WAL sender that delivered it. The slot's `confirmed_flush_lsn` then advances and PostgreSQL can release the WAL behind it. Feedback is at-least-once: a delivery that is nacked, disposed or never acknowledged is not confirmed, and PostgreSQL redelivers it after a restart.
+
+When an observer is attached, the observer owns position feedback, as `CheckpointingChangeDeliveryObserver` and `PostgreSqlRelayChangeDeliveryObserver` do after their durable write. A custom observer that never sends feedback still holds WAL. Without an observer there is no durable checkpoint, so a restart cannot resume from a known position. Use an observer and a checkpoint store when a consumer must resume.
+
 See [checkpoint and lease stores](state-stores.md) for backend guarantees, file-store deployment constraints, and the custom-store conformance kit.
 
 See the [PostgreSQL durable relay](durable-relay.md) for source append ordering, group fan-out/replay, retention, storage bounds, and health signals.
