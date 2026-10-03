@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
@@ -13,6 +14,40 @@ namespace BlueTusk.Data;
     Justification = "DbConnectionStringBuilder defines the required non-generic collection contract.")]
 public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
 {
+    /// <summary>
+    /// The AppContext switch that makes validation reject connection-string keywords BlueTusk
+    /// does not recognise. 1.x accepts and ignores them by default for 1.0 compatibility.
+    /// </summary>
+    internal const string RejectUnknownKeywordsSwitch =
+        "BlueTusk.Data.RejectUnknownConnectionStringKeywords";
+
+    private static readonly FrozenSet<string> KnownKeywords = new[]
+    {
+        "Host",
+        "Port",
+        "Database",
+        "Username",
+        "Password",
+        "Passfile",
+        "Timeout",
+        "Pooling",
+        "Multiplexing",
+        "Persist Security Info",
+        "Application Name",
+        "SSL Mode",
+        "Channel Binding",
+        "Kerberos Service Name",
+        "Allow Unencrypted Password",
+        "Target Session Attributes",
+        "Load Balance Hosts",
+        "Minimum Pool Size",
+        "Maximum Pool Size",
+        "Connection Idle Lifetime",
+        "Connection Lifetime",
+        "Max Auto Prepare",
+        "Auto Prepare Min Usages",
+    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
     public BlueTuskConnectionStringBuilder()
     {
     }
@@ -281,6 +316,7 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
 
     internal void Validate()
     {
+        ValidateKeywords();
         _ = Host;
         _ = HostEndpoints;
         _ = Timeout;
@@ -313,6 +349,25 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         if (Multiplexing && !Pooling)
         {
             throw new ArgumentException("Multiplexing requires connection pooling.");
+        }
+    }
+
+    private void ValidateKeywords()
+    {
+        if (!AppContext.TryGetSwitch(RejectUnknownKeywordsSwitch, out var reject) || !reject)
+        {
+            return;
+        }
+
+        foreach (string keyword in Keys)
+        {
+            if (!KnownKeywords.Contains(keyword))
+            {
+                // Name only the keyword: its value may be a credential.
+                throw new ArgumentException(
+                    $"The connection-string keyword '{keyword}' is not supported by BlueTusk.",
+                    nameof(ConnectionString));
+            }
         }
     }
 

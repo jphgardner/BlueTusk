@@ -45,8 +45,9 @@ var value = await command.ExecuteScalarAsync<int>();
 | `Connection Idle Lifetime` | 5 minutes | Maximum idle age checked before reuse; zero disables idle expiry. |
 | `Connection Lifetime` | 1 hour | Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry. |
 | `Multiplexing` | `false` | Enables bounded statement multiplexing; pooling must also be enabled. |
+| `Timeout` | 15 seconds | Bounds connection establishment and the wait for capacity in an exhausted pool. |
 
-When the pool is at its maximum, asynchronous opens wait in order for returned capacity. The caller's cancellation token cancels that wait without consuming a slot.
+When the pool is at its maximum, opens wait in order for returned capacity. The wait is bounded by the connection-string `Timeout`, the same `DbConnection.ConnectionTimeout` that bounds establishing a physical connection. When it expires, the open throws a `TimeoutException` that names the endpoint, `Maximum Pool Size`, and `Timeout`; the waiter leaves the queue without consuming a slot. The caller's cancellation token cancels the wait earlier with `OperationCanceledException`. In a multi-host data source each endpoint pool applies the bound, and an exhausted endpoint is not marked unavailable.
 
 Multi-host data sources own one pool per configured endpoint. Checkout tries available capacity across the selected host order, and role-targeted checkouts revalidate primary/standby and read-only state. `Minimum Pool Size` and `Maximum Pool Size` apply to each endpoint pool. `GetHostPoolStatistics()` exposes each partition; `GetPoolStatistics()` reports their aggregate.
 

@@ -127,6 +127,51 @@ public sealed class BlueTuskPoolingIntegrationTests
     }
 
     [Fact]
+    public async Task Exhausted_pool_wait_times_out_after_the_connection_timeout()
+    {
+        await using var dataSource = CreateDataSource(maximumPoolSize: 1, timeout: TimeSpan.FromSeconds(1));
+        await using var first = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        var firstBackend = await GetBackendProcessIdAsync(first);
+        var started = System.Diagnostics.Stopwatch.StartNew();
+
+        var asynchronous = await Assert.ThrowsAnyAsync<TimeoutException>(
+            () => dataSource.OpenConnectionAsync(CancellationToken.None).AsTask()
+                .WaitAsync(TimeSpan.FromSeconds(30)));
+        var asynchronousElapsed = started.Elapsed;
+        var synchronous = await Task.Run(
+            () => Assert.ThrowsAny<TimeoutException>(() => dataSource.OpenConnection()))
+            .WaitAsync(TimeSpan.FromSeconds(30));
+
+        Assert.InRange(asynchronousElapsed, TimeSpan.FromMilliseconds(900), TimeSpan.FromSeconds(10));
+        foreach (var failure in new[] { asynchronous, synchronous })
+        {
+            Assert.Contains("exhausted", failure.Message, StringComparison.Ordinal);
+            Assert.Contains("'Maximum Pool Size' (currently 1)", failure.Message, StringComparison.Ordinal);
+            Assert.Contains("1-second Timeout", failure.Message, StringComparison.Ordinal);
+        }
+
+        Assert.Equal(0, dataSource.GetPoolStatistics().Waiting);
+        Assert.Equal(1, dataSource.GetPoolStatistics().Busy);
+        await first.DisposeAsync();
+        await using var reused = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        Assert.Equal(firstBackend, await GetBackendProcessIdAsync(reused));
+    }
+
+    [Fact]
+    public async Task Exhausted_pool_wait_honours_cancellation_before_the_connection_timeout()
+    {
+        await using var dataSource = CreateDataSource(maximumPoolSize: 1, timeout: TimeSpan.FromSeconds(30));
+        await using var first = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        using var cancellationSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => dataSource.OpenConnectionAsync(cancellationSource.Token).AsTask()
+                .WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Equal(0, dataSource.GetPoolStatistics().Waiting);
+        Assert.Equal(1, dataSource.GetPoolStatistics().Busy);
+    }
+
+    [Fact]
     public async Task Clearing_a_pool_rotates_active_connections_when_they_return()
     {
         await using var dataSource = CreateDataSource(maximumPoolSize: 1);
@@ -229,7 +274,8 @@ public sealed class BlueTuskPoolingIntegrationTests
     private static BlueTuskDataSource CreateDataSource(
         bool pooling = true,
         int minimumPoolSize = 0,
-        int maximumPoolSize = 10)
+        int maximumPoolSize = 10,
+        TimeSpan? timeout = null)
     {
         var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
         {
@@ -237,6 +283,11 @@ public sealed class BlueTuskPoolingIntegrationTests
             MinimumPoolSize = minimumPoolSize,
             MaximumPoolSize = maximumPoolSize,
         };
+        if (timeout is { } connectionTimeout)
+        {
+            settings.Timeout = connectionTimeout;
+        }
+
         return BlueTuskDataSource.Create(settings.ConnectionString);
     }
 

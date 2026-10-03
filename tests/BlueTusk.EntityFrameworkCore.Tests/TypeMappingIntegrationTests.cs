@@ -288,6 +288,85 @@ public sealed class TypeMappingIntegrationTests
     }
 
     [Fact]
+    public async Task Enum_literals_use_mapped_labels_and_parameter_collections_translate_contains()
+    {
+        var connectionString = GetConnectionString();
+        await ExecuteNonQueryAsync(
+            connectionString,
+            """
+            DROP TABLE IF EXISTS "ef_enum_literal_values";
+            DROP TYPE IF EXISTS public.ef_enum_literal_status;
+            CREATE TYPE public.ef_enum_literal_status AS ENUM ('pending', 'in-progress', 'Complete');
+            CREATE TABLE "ef_enum_literal_values" (
+                "Id" integer PRIMARY KEY,
+                "Name" character varying(32) NOT NULL,
+                "Status" public.ef_enum_literal_status NOT NULL);
+            INSERT INTO "ef_enum_literal_values" VALUES
+                (1, 'first', 'pending'),
+                (2, 'second', 'in-progress'),
+                (3, 'third', 'Complete');
+            """);
+
+        try
+        {
+            await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+                .MapEnum<EfOrderStatus>("public.ef_enum_literal_status")
+                .Build();
+            var options = new DbContextOptionsBuilder<EnumLiteralContext>()
+                .UseBlueTusk(
+                    dataSource,
+                    provider => provider.UseParameterizedCollectionMode(ParameterTranslationMode.Parameter))
+                .Options;
+            await using var context = new EnumLiteralContext(options);
+
+            var literalQuery = context.Values.Where(value => value.Status == EfOrderStatus.InProgress);
+            Assert.Contains(
+                "'in-progress'::public.ef_enum_literal_status",
+                literalQuery.ToQueryString(),
+                StringComparison.Ordinal);
+            Assert.Equal(2, Assert.Single(await literalQuery.AsNoTracking().ToListAsync()).Id);
+            Assert.Equal(
+                [1, 3],
+                await context.Values
+                    .Where(value => value.Status != EfOrderStatus.InProgress)
+                    .OrderBy(value => value.Id)
+                    .Select(value => value.Id)
+                    .ToListAsync());
+
+            int[] ids = [1, 3, 99];
+            List<string> names = ["second", "third"];
+            EfOrderStatus[] statuses = [EfOrderStatus.InProgress, EfOrderStatus.Complete];
+            var containsQuery = context.Values
+                .Where(value => ids.Contains(value.Id)
+                    && names.Contains(value.Name)
+                    && statuses.Contains(value.Status))
+                .Select(value => value.Id);
+            var containsSql = containsQuery.ToQueryString();
+            Assert.Contains("unnest(@ids)", containsSql, StringComparison.Ordinal);
+            Assert.Contains("unnest(@statuses)", containsSql, StringComparison.Ordinal);
+            Assert.Equal([3], await containsQuery.ToListAsync());
+
+            int[] noIds = [];
+            Assert.Empty(await context.Values.Where(value => noIds.Contains(value.Id)).ToListAsync());
+            Assert.Equal(
+                [2],
+                await context.Values
+                    .Where(value => new[] { EfOrderStatus.InProgress }.Contains(value.Status))
+                    .Select(value => value.Id)
+                    .ToListAsync());
+        }
+        finally
+        {
+            await ExecuteNonQueryAsync(
+                connectionString,
+                """
+                DROP TABLE IF EXISTS "ef_enum_literal_values";
+                DROP TYPE IF EXISTS public.ef_enum_literal_status
+                """);
+        }
+    }
+
+    [Fact]
     public async Task Runtime_registered_enums_domains_composites_and_arrays_round_trip_through_EF_Core()
     {
         var connectionString = GetConnectionString();
@@ -1151,6 +1230,28 @@ public sealed class TypeMappingIntegrationTests
             value.HasKey(entity => entity.Id);
             value.Property(entity => entity.Id).ValueGeneratedNever();
         }
+    }
+
+    private sealed class EnumLiteralContext(DbContextOptions<EnumLiteralContext> options)
+        : DbContext(options)
+    {
+        public DbSet<EnumLiteralValue> Values => Set<EnumLiteralValue>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            var value = modelBuilder.Entity<EnumLiteralValue>();
+            value.ToTable("ef_enum_literal_values");
+            value.Property(entity => entity.Id).ValueGeneratedNever();
+            value.Property(entity => entity.Name).HasMaxLength(32);
+            value.Property(entity => entity.Status).HasColumnType("public.ef_enum_literal_status");
+        }
+    }
+
+    private sealed class EnumLiteralValue
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public EfOrderStatus Status { get; set; }
     }
 
     private sealed class UserTypeValueContext(

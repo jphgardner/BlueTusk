@@ -41,6 +41,51 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     }
 
     [Fact]
+    public async Task Typed_scalar_reads_numeric_like_GetFieldValue_on_every_execution_path()
+    {
+        const decimal expected = 12345.6789m;
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+
+        // Parameterless Auto commands use the simple protocol and text results.
+        await using (var simple = new BlueTuskCommand("SELECT 12345.6789::numeric", connection))
+        {
+            Assert.Equal(expected, await simple.ExecuteScalarAsync<decimal>(CancellationToken.None));
+            Assert.Equal(expected, await simple.ExecuteScalarAsync<decimal?>(CancellationToken.None));
+        }
+
+        // A parameter selects the extended protocol and binary results.
+        await using (var extended = new BlueTuskCommand("SELECT $1::numeric(18,4)", connection))
+        {
+            extended.Parameters.Add(new BlueTuskParameter<decimal>(expected));
+            Assert.Equal(expected, await extended.ExecuteScalarAsync<decimal>(CancellationToken.None));
+            await using var reader = await extended.ExecuteReaderAsync(CancellationToken.None);
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            Assert.Equal(expected, reader.GetFieldValue<decimal>(0));
+        }
+
+        await using (var prepared = new BlueTuskCommand("SELECT $1::numeric * 2", connection))
+        {
+            prepared.Parameters.Add(new BlueTuskParameter<decimal>(expected));
+            await prepared.PrepareAsync(CancellationToken.None);
+            Assert.Equal(expected * 2, await prepared.ExecuteScalarAsync<decimal>(CancellationToken.None));
+        }
+
+        await using (var nullValue = new BlueTuskCommand("SELECT NULL::numeric", connection))
+        {
+            Assert.Null(await nullValue.ExecuteScalarAsync<decimal?>(CancellationToken.None));
+            Assert.Equal(0m, await nullValue.ExecuteScalarAsync<decimal>(CancellationToken.None));
+        }
+
+        await using var dataSource = new BlueTuskDataSourceBuilder(GetConnectionString())
+            .EnableMultiplexing()
+            .Build();
+        await using var multiplexed = dataSource.CreateCommand("SELECT $1::numeric");
+        multiplexed.Parameters.Add(new BlueTuskParameter<decimal>(expected));
+        Assert.Equal(expected, await multiplexed.ExecuteScalarAsync<decimal>(CancellationToken.None));
+    }
+
+    [Fact]
     public async Task AdoNet_decodes_opaque_extended_statistics_values()
     {
         await using var connection = new BlueTuskConnection(GetConnectionString());

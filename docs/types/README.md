@@ -77,8 +77,13 @@ builder.MapComposite<Address>("app.address");
 await using var dataSource = builder.Build();
 ```
 
-After creating or changing a type while the application is running, call
-`ReloadTypesAsync()` on the data source before using the new catalogue shape.
+A mapped type does not have to exist when the data source first connects.
+Until the catalogue contains it, the mapping stays unresolved and only a value
+that uses it fails. EF Core migrations reload the catalogue after they run, so
+an application can map `app.order_status` before the migration that creates it.
+After creating or changing a type any other way while the application is
+running, call `ReloadTypesAsync()` on the data source before using the new
+catalogue shape.
 
 ## Production rules
 

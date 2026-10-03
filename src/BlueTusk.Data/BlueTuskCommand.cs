@@ -1781,27 +1781,22 @@ public sealed class BlueTuskCommand : DbCommand
         in BlueTuskResolvedField resolved,
         BlueTuskScalarQueryResult result)
     {
-        if (result.Value is not null &&
-            resolved.Type is not null &&
-            resolved.Codec is BlueTusk.TypeSystem.IBlueTuskCodec<T>)
-        {
-            return BlueTuskValueDecoder.DecodeTyped<T>(resolved, result.Value);
-        }
-
-        var value = BlueTuskValueDecoder.Decode(resolved, result.Value);
-        if (value is null or DBNull)
+        if (result.Value is null)
         {
             return typeof(T) == typeof(object)
                 ? (T)(object)DBNull.Value
                 : default;
         }
 
-        return value is T typed
-            ? typed
-            : (T)Convert.ChangeType(
-                value,
-                typeof(T),
-                System.Globalization.CultureInfo.InvariantCulture);
+        if (typeof(T) == typeof(object))
+        {
+            return (T)BlueTuskValueDecoder.Decode(resolved, result.Value);
+        }
+
+        // A typed scalar follows the same conversion rules as
+        // BlueTuskDataReader.GetFieldValue<T>, so numeric reads as decimal and
+        // nullable targets convert through their underlying type.
+        return BlueTuskDataReader.DecodeFieldValue<T>(resolved, result.Value);
     }
 
     private static int GetRecordsAffected(BlueTuskQueryResult result)

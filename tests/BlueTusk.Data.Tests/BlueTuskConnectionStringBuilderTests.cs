@@ -5,6 +5,10 @@ namespace BlueTusk.Data.Tests;
 
 public sealed class BlueTuskConnectionStringBuilderTests
 {
+    // The documented AppContext switch name is a compatibility contract.
+    private const string RejectUnknownKeywordsSwitch =
+        "BlueTusk.Data.RejectUnknownConnectionStringKeywords";
+
     [Fact]
     public void Uses_safe_defaults()
     {
@@ -146,6 +150,48 @@ public sealed class BlueTuskConnectionStringBuilderTests
             [new BlueTuskHostEndpoint("db-a", 5544), new BlueTuskHostEndpoint("db-b", 5544)],
             shared.HostEndpoints);
         Assert.Throws<InvalidOperationException>(() => _ = paired.Port);
+    }
+
+    [Fact]
+    public void Unknown_keywords_remain_accepted_by_default_for_1_0_compatibility()
+    {
+        var builder = new BlueTuskConnectionStringBuilder(
+            "Host=db.example;Username=app;Command Timeout=30;Include Error Detail=true");
+
+        builder.Validate();
+
+        Assert.Equal("db.example", builder.Host);
+    }
+
+    [Fact]
+    public void Unknown_keywords_are_rejected_by_name_when_the_compatibility_switch_is_enabled()
+    {
+        var known = new BlueTuskConnectionStringBuilder(
+            "Host=db-a,db-b;Port=5432;Database=app;Username=app;Password=secret;Passfile=;" +
+            "Timeout=5;Pooling=true;Multiplexing=false;Persist Security Info=false;" +
+            "Application Name=app;SSL Mode=Disable;Channel Binding=Disable;" +
+            "Kerberos Service Name=postgres;Allow Unencrypted Password=false;" +
+            "Target Session Attributes=any;Load Balance Hosts=disable;Minimum Pool Size=0;" +
+            "Maximum Pool Size=10;Connection Idle Lifetime=60;Connection Lifetime=600;" +
+            "Max Auto Prepare=0;Auto Prepare Min Usages=5");
+        var typo = new BlueTuskConnectionStringBuilder(
+            "Host=db.example;Usernme=app;Password=do-not-echo");
+
+        AppContext.SetSwitch(RejectUnknownKeywordsSwitch, true);
+        try
+        {
+            known.Validate();
+            var error = Assert.Throws<ArgumentException>(typo.Validate);
+
+            Assert.Contains("'usernme'", error.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("do-not-echo", error.Message, StringComparison.Ordinal);
+            Assert.Throws<ArgumentException>(
+                () => new BlueTuskConnection("Host=db.example;Server=other"));
+        }
+        finally
+        {
+            AppContext.SetSwitch(RejectUnknownKeywordsSwitch, false);
+        }
     }
 
     [Fact]

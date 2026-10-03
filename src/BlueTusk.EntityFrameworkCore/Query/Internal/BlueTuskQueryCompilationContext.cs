@@ -14,6 +14,12 @@ internal sealed class BlueTuskQueryCompilationContext : RelationalQueryCompilati
     {
     }
 
+    /// <summary>
+    /// Whether translation expanded a collection parameter that has no type mapping yet, so
+    /// type-mapping postprocessing must complete it.
+    /// </summary>
+    internal bool HasUntypedCollectionParameters { get; set; }
+
     public override bool IsBuffering =>
         base.IsBuffering || QuerySplittingBehavior == Microsoft.EntityFrameworkCore.QuerySplittingBehavior.SplitQuery;
 }

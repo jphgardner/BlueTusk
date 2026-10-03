@@ -207,8 +207,16 @@ internal static class BlueTuskDoctor
         output.WriteLine($"Result: {(failures == 0 ? "READY" : "NOT READY")} ({failures} failed, {warnings} warning). ");
     }
 
+    // server_version_num is major * 10000 + minor from PostgreSQL 10 (180006 is 18.6), and
+    // major * 10000 + minor * 100 + patch before it (90624 is 9.6.24).
     private static string FormatVersion(int versionNumber) =>
-        $"{versionNumber / 10000}.{versionNumber / 100 % 100}";
+        versionNumber >= 100000
+            ? string.Create(
+                CultureInfo.InvariantCulture,
+                $"{versionNumber / 10000}.{versionNumber % 10000}")
+            : string.Create(
+                CultureInfo.InvariantCulture,
+                $"{versionNumber / 10000}.{versionNumber / 100 % 100}.{versionNumber % 100}");
 
     private static string Sanitize(string message, string connectionString) =>
         string.IsNullOrEmpty(connectionString)

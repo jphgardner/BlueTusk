@@ -45,6 +45,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
     private readonly TimeProvider _timeProvider;
     private readonly TimeSpan _idleLifetime;
     private readonly TimeSpan _connectionLifetime;
+    private readonly TimeSpan _acquisitionTimeout;
     private readonly SemaphoreSlim _warmUpLock = new(1, 1);
     private readonly CancellationTokenSource _shutdown = new();
     private readonly object _stateSync = new();
@@ -78,6 +79,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         _endpoint = settings.HostEndpoints.Single();
         _idleLifetime = settings.ConnectionIdleLifetime;
         _connectionLifetime = settings.ConnectionLifetime;
+        _acquisitionTimeout = settings.Timeout;
         _timeProvider = timeProvider ?? TimeProvider.System;
         var configuration = clientConfiguration ?? BlueTuskClientConfiguration.Empty;
         _sessionFactory = sessionFactory ?? (token => BlueTuskPhysicalSession.OpenAsync(settings, configuration, token));
@@ -115,6 +117,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         }
 
         var started = StartCheckoutMeasurement();
+        long? waitStarted = null;
         try
         {
             while (true)
@@ -123,7 +126,8 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                     TryAcquireAvailableOrReserveCreation(allowPendingReset);
                 if (!hasSlot && !creationReserved)
                 {
-                    slot = ReadAvailable();
+                    waitStarted ??= _timeProvider.GetTimestamp();
+                    slot = ReadAvailable(waitStarted.Value);
                     hasSlot = true;
                 }
 
@@ -237,13 +241,17 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         bool allowPendingReset,
         CancellationToken cancellationToken)
     {
+        long? waitStarted = null;
         try
         {
             while (true)
             {
                 if (!hasSlot && !creationReserved)
                 {
-                    slot = await ReadAvailableAsync(cancellationToken).ConfigureAwait(false);
+                    waitStarted ??= _timeProvider.GetTimestamp();
+                    slot = await ReadAvailableAsync(
+                        GetRemainingAcquisitionTime(waitStarted.Value),
+                        cancellationToken).ConfigureAwait(false);
                     hasSlot = true;
                     cleanLease = false;
                 }
@@ -756,10 +764,13 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
     }
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
-    private async ValueTask<BlueTuskPoolSlot> ReadAvailableAsync(CancellationToken cancellationToken)
+    private async ValueTask<BlueTuskPoolSlot> ReadAvailableAsync(
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _waiting);
         BlueTuskDiagnostics.PoolWaiters.Add(1);
+        CancellationTokenSource? timeoutSource = null;
         try
         {
             PoolWaiter waiter;
@@ -772,10 +783,17 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
                 waiter = _cachedWaiters.TryPop(out var cached) ? cached : new PoolWaiter(this);
                 _asyncWaiters.AddLast(waiter.Node);
+                // The acquisition timer is allocated only for a wait on an
+                // exhausted pool; checkouts with free capacity never reach here.
+                timeoutSource = timeout == Timeout.InfiniteTimeSpan
+                    ? null
+                    : new CancellationTokenSource(timeout, _timeProvider);
                 // Register before the waiter can be handed off and recycled.
                 // Already-cancelled registration can complete inline here, but
                 // its ValueTask has not yet been exposed to any consumer.
-                waiter.RegisterCancellation(cancellationToken);
+                waiter.RegisterCancellation(
+                    cancellationToken,
+                    timeoutSource?.Token ?? CancellationToken.None);
             }
 
             return await waiter.WaitAsync().ConfigureAwait(false);
@@ -787,12 +805,13 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         }
         finally
         {
+            timeoutSource?.Dispose();
             Interlocked.Decrement(ref _waiting);
             BlueTuskDiagnostics.PoolWaiters.Add(-1);
         }
     }
 
-    private BlueTuskPoolSlot ReadAvailable()
+    private BlueTuskPoolSlot ReadAvailable(long waitStarted)
     {
         Interlocked.Increment(ref _waiting);
         BlueTuskDiagnostics.PoolWaiters.Add(1);
@@ -809,7 +828,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                     }
                     if (Volatile.Read(ref _fastSession) is not null) { return default; }
 
-                    Monitor.Wait(_stateSync);
+                    _ = Monitor.Wait(_stateSync, GetRemainingAcquisitionTime(waitStarted));
                 }
             }
         }
@@ -1223,6 +1242,28 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         recipient?.Complete(default);
     }
 
+    private TimeSpan GetRemainingAcquisitionTime(long waitStarted)
+    {
+        var remaining = _acquisitionTimeout - _timeProvider.GetElapsedTime(waitStarted);
+        if (remaining <= TimeSpan.Zero)
+        {
+            throw CreateAcquisitionTimeoutException();
+        }
+
+        // Timers and Monitor.Wait accept at most int.MaxValue milliseconds; a
+        // longer configured Timeout is an effectively unbounded wait.
+        return remaining.TotalMilliseconds < int.MaxValue
+            ? remaining
+            : Timeout.InfiniteTimeSpan;
+    }
+
+    private BlueTuskPoolAcquisitionTimeoutException CreateAcquisitionTimeoutException() =>
+        new(
+            $"The connection pool for {_endpoint.Host}:{_endpoint.Port} is exhausted: no connection " +
+            $"became available within the {_acquisitionTimeout.TotalSeconds:0.###}-second Timeout. " +
+            $"Close connections sooner, or raise 'Maximum Pool Size' (currently {_maximumSize}) " +
+            "or 'Timeout' in the connection string.");
+
     private void ThrowDisposedInsteadOfCancellation(CancellationToken callerToken)
         => ObjectDisposedException.ThrowIf(
             _shutdown.IsCancellationRequested && !callerToken.IsCancellationRequested,
@@ -1236,6 +1277,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         private readonly BlueTuskConnectionPool _owner;
         private ManualResetValueTaskSourceCore<BlueTuskPoolSlot> _completion;
         private CancellationTokenRegistration _cancellationRegistration;
+        private CancellationTokenRegistration _timeoutRegistration;
         private CancellationToken _callerToken;
 
         internal PoolWaiter(BlueTuskConnectionPool owner)
@@ -1246,11 +1288,15 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
         internal LinkedListNode<PoolWaiter> Node { get; }
 
-        internal void RegisterCancellation(CancellationToken callerToken)
+        internal void RegisterCancellation(
+            CancellationToken callerToken,
+            CancellationToken timeoutToken)
         {
             _callerToken = callerToken;
             _cancellationRegistration = callerToken.UnsafeRegister(
                 static state => ((PoolWaiter)state!).Cancel(), this);
+            _timeoutRegistration = timeoutToken.UnsafeRegister(
+                static state => ((PoolWaiter)state!).TimeOut(), this);
         }
 
         internal ValueTask<BlueTuskPoolSlot> WaitAsync() => new(this, _completion.Version);
@@ -1272,6 +1318,18 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             _completion.SetException(new OperationCanceledException(_callerToken));
         }
 
+        private void TimeOut()
+        {
+            lock (_owner._stateSync)
+            {
+                // The same node-removal claim as cancellation: a waiter that
+                // already received a slot cannot also time out.
+                if (Node.List is null) { return; }
+                _owner._asyncWaiters.Remove(Node);
+            }
+            _completion.SetException(_owner.CreateAcquisitionTimeoutException());
+        }
+
         public BlueTuskPoolSlot GetResult(short token)
         {
             if (_completion.GetStatus(token) == ValueTaskSourceStatus.Pending)
@@ -1286,6 +1344,8 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 // references; only internal, single-consumption ValueTasks use it.
                 _cancellationRegistration.Dispose();
                 _cancellationRegistration = default;
+                _timeoutRegistration.Dispose();
+                _timeoutRegistration = default;
                 _callerToken = default;
                 _completion.Reset();
                 lock (_owner._stateSync)
@@ -1307,6 +1367,13 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 }
 
 internal readonly record struct BlueTuskPoolSlot(BlueTuskPooledSession? Session);
+
+/// <summary>
+/// Reports that an exhausted pool supplied no connection within the connection-string Timeout.
+/// Callers observe a <see cref="TimeoutException"/>; the distinct type lets multi-host
+/// routing tell local pool exhaustion apart from an unavailable endpoint.
+/// </summary>
+internal sealed class BlueTuskPoolAcquisitionTimeoutException(string message) : TimeoutException(message);
 
 internal sealed class BlueTuskPooledSession(
     IBlueTuskPhysicalSession session,

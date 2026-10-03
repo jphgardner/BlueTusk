@@ -1128,7 +1128,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator,
         return DecodeFieldValue<long>(resolved, raw);
     }
 
-    private static T DecodeFieldValue<T>(
+    internal static T DecodeFieldValue<T>(
         in BlueTuskResolvedField resolved,
         ReadOnlyMemory<byte>? raw)
     {

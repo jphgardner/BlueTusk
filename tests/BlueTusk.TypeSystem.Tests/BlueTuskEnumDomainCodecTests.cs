@@ -78,6 +78,51 @@ public sealed class BlueTuskEnumDomainCodecTests
     }
 
     [Fact]
+    public void Catalogue_without_a_mapped_type_keeps_the_mapping_until_a_reload_finds_it()
+    {
+        var configured = new BlueTuskTypeRegistryBuilder()
+            .Register("app", "order_status", new BlueTuskEnumCodec<OrderStatus>())
+            .Register("app", "address", new BlueTuskCompositeCodec<MissingAddress>())
+            .Build();
+        BlueTuskCatalogueType[] withoutMappedTypes =
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.Int4.Id,
+                Schema = "pg_catalog",
+                Name = "int4",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'N',
+            },
+        ];
+
+        // Before the migration that creates the types: building must not fail.
+        var beforeMigration = BlueTuskTypeCatalogue.BuildRegistry(withoutMappedTypes, configured);
+        Assert.False(beforeMigration.TryGetType(new BlueTuskTypeName("app", "order_status"), out _, out _));
+
+        var afterMigration = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            .. withoutMappedTypes,
+            new BlueTuskCatalogueType
+            {
+                Id = StatusType.Id,
+                Schema = StatusType.Schema,
+                Name = StatusType.Name,
+                PostgreSqlKind = 'e',
+                PostgreSqlCategory = 'E',
+                EnumLabels = StatusType.EnumLabels,
+            },
+        ], configured);
+        Assert.True(afterMigration.TryGetType(
+            new BlueTuskTypeName("app", "order_status"),
+            out _,
+            out var enumCodec));
+        Assert.IsType<BlueTuskEnumCodec<OrderStatus>>(enumCodec);
+    }
+
+    private sealed record MissingAddress(int Number);
+
+    [Fact]
     public void Catalogue_composes_mapped_enum_domain_and_their_arrays()
     {
         var configured = new BlueTuskTypeRegistryBuilder()
