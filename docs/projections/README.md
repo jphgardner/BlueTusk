@@ -1,5 +1,9 @@
 # BlueTusk.Projections
 
+> **Preview.** This family is `0.1.0-preview.1` and is not published to a
+> package feed yet. It is not part of the 1.1.0 release and its API may change.
+> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
+
 BlueTusk.Projections is an independent .NET 10 `0.1.0-preview.1` family for versioned, durable
 application read models. Its PostgreSQL destination stores source mirrors, joined output documents,
 dependency indexes, decimal aggregates, snapshot coverage, and CDC checkpoints in one database.

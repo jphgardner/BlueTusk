@@ -1,5 +1,9 @@
 # BlueTusk Studio
 
+> **Preview.** This family is `0.1.0-preview.1` and is not published to a
+> package feed yet. It is not part of the 1.1.0 release and its API may change.
+> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
+
 New preview ASP.NET Core developer workspace: an embedded SQL editor, schema
 browser, query-plan viewer, authorized event traces, Live inspection and audited
 quarantine replay. SQL/schema, Events and Control Plane integrations are separate

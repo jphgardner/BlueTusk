@@ -1,5 +1,9 @@
 # BlueTusk.Events
 
+> **Preview.** This family is `0.1.0-preview.1` and is not published to a
+> package feed yet. It is not part of the 1.1.0 release and its API may change.
+> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
+
 BlueTusk.Events is an independent `0.1.0-preview.1` family targeting .NET 10. It records typed,
 versioned business intent in the same PostgreSQL transaction as business data, deduplicates database
 effects in a consumer inbox, and replays an ordered tenant stream with durable fenced checkpoints.

@@ -1,5 +1,10 @@
 # Query a PostgreSQL property graph
 
+> **Preview, not part of 1.1.0.** Graph needs a PostgreSQL server that
+> provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so this
+> feature waits for a PostgreSQL release that ships it. Do not use it in
+> production. See [product status](../getting-started/install.md#product-status).
+
 PostgreSQL SQL/PGQ lets you describe vertices and edges over ordinary tables
 and query relationships with `GRAPH_TABLE`. BlueTusk supports raw parameterized
 SQL, typed schema discovery, EF model/migrations, and a bounded typed EF query

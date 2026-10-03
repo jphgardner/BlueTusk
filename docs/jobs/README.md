@@ -1,5 +1,9 @@
 # BlueTusk.Jobs
 
+> **Preview.** This family is `0.1.0-preview.1` and is not published to a
+> package feed yet. It is not part of the 1.1.0 release and its API may change.
+> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
+
 BlueTusk.Jobs is a PostgreSQL durable execution library built on BlueTusk.Data.
 The current package version is `0.1.0-preview.1`, targeting .NET 10. It is an
 implemented preview; production qualification and performance leadership are
