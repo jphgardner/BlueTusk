@@ -93,7 +93,7 @@ if (
 }
 if (
   !llmsFull.includes('# BlueTusk curated documentation') ||
-  !llmsFull.includes('# Quickstart: run the first query') ||
+  !llmsFull.includes('# 5-minute first app') ||
   llmsFull.includes('# Independent V1 release review handoff')
 ) {
   throw new Error('llms-full.txt does not contain the curated BlueTusk guide set.');

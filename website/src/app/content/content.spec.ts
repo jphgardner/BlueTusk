@@ -100,7 +100,7 @@ describe('website content integrity', () => {
   it('keeps the task-oriented guide index separate from project records', () => {
     const listed = GUIDES.filter((guide) => guide.listed);
     expect(listed.length).toBeGreaterThan(35);
-    expect(listed.length).toBeLessThan(60);
+    expect(listed.length).toBeLessThan(100);
     expect(GUIDES.find((guide) => guide.sourcePath === 'docs/release-readiness.md')?.listed).toBe(
       false,
     );

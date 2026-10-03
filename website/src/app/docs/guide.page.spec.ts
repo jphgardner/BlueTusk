@@ -29,7 +29,7 @@ describe('GuidePage', () => {
   });
 
   it('keeps on-page links on the current guide route', async () => {
-    const harness = await RouterTestingHarness.create('/documentation/ef-core/overview');
+    const harness = await RouterTestingHarness.create('/documentation/ef-core/quickstart');
     harness.fixture.detectChanges();
     await harness.fixture.whenStable();
 
@@ -37,24 +37,24 @@ describe('GuidePage', () => {
       harness.routeNativeElement?.querySelectorAll<HTMLAnchorElement>('.guide-toc nav a') ?? [],
     );
     const link = links.find(
-      (candidate) => candidate.textContent?.trim() === '2. Create the model and context',
+      (candidate) => candidate.textContent?.trim() === '2. Create the app and add packages',
     );
 
     expect(link).toBeTruthy();
     expect(link?.getAttribute('href')).toBe(
-      '/documentation/ef-core/overview#2-create-the-model-and-context',
+      '/documentation/ef-core/quickstart#2-create-the-app-and-add-packages',
     );
 
     link?.click();
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe(
-      '/documentation/ef-core/overview#2-create-the-model-and-context',
+      '/documentation/ef-core/quickstart#2-create-the-app-and-add-packages',
     );
   });
 
   it('renders collapsible section and page indexes for small screens', async () => {
-    const harness = await RouterTestingHarness.create('/documentation/ef-core/overview');
+    const harness = await RouterTestingHarness.create('/documentation/ef-core/quickstart');
     harness.fixture.detectChanges();
     await harness.fixture.whenStable();
 
@@ -62,9 +62,9 @@ describe('GuidePage', () => {
     const pageIndex = harness.routeNativeElement?.querySelector('.guide-mobile-toc');
 
     expect(sectionIndex?.textContent).toContain('IN THIS SECTION');
-    expect(sectionIndex?.textContent).toContain('Entity Framework Core');
+    expect(sectionIndex?.textContent).toContain('EF Core quick start');
     expect(pageIndex?.textContent).toContain('ON THIS PAGE');
-    expect(pageIndex?.textContent).toContain('2. Create the model and context');
+    expect(pageIndex?.textContent).toContain('2. Create the app and add packages');
   });
 
   it('keeps readers oriented within the library and a guided path', async () => {
@@ -89,7 +89,7 @@ describe('GuidePage', () => {
     harness.fixture.detectChanges();
     await harness.fixture.whenStable();
 
-    expect(document.title).toBe('Quickstart: run the first query — BlueTusk');
+    expect(document.title).toBe('5-minute first app — BlueTusk');
     expect(document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
       'https://bluetusk.io/documentation/getting-started/quickstart',
     );
