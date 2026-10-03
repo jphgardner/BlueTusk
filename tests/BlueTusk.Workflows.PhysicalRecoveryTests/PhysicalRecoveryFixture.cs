@@ -47,7 +47,9 @@ internal sealed class PhysicalRecoveryFixture
     private async Task VerifyOwnedAsync(string name, CancellationToken token)
     {
         string actual = (await DockerAsync(["inspect", name, "--format", "{{index .Config.Labels \"bluetusk.owner\"}}|{{index .Config.Labels \"bluetusk.fixture\"}}"], token)).Trim();
-        Assert.Equal(Owner + "|" + Fixture, actual);
+        // The release gate runner may label its fixtures with its own owner; the default is eng/jobs-physical-recovery.ps1.
+        string owner = Environment.GetEnvironmentVariable("BLUETUSK_JOBS_RECOVERY_OWNER") is { Length: > 0 } configured ? configured : Owner;
+        Assert.Equal(owner + "|" + Fixture, actual);
     }
 
     private static async Task<string> DockerAsync(IReadOnlyList<string> arguments, CancellationToken token)

@@ -144,6 +144,8 @@ foreach ($case in $mutations.GetEnumerator())
 foreach ($pair in @('Jobs/capacity', 'Jobs/failover', 'Jobs/upgrade', 'Search/capacity', 'Edge/capacity',
     'Documents/capacity', 'Projections/capacity', 'Workflows/capacity',
     'Events/capacity', 'Schema/capacity', 'Sql/capacity', 'Studio/capacity',
+    'Documents/failover', 'Projections/failover', 'Workflows/failover', 'Search/failover', 'Edge/failover',
+    'Events/failover', 'Schema/failover', 'Sql/failover', 'Studio/failover',
     'Events/upgrade', 'Documents/upgrade', 'Schema/upgrade', 'Projections/upgrade', 'Search/upgrade',
     'Sql/upgrade', 'Studio/upgrade', 'Edge/upgrade', 'Workflows/upgrade'))
 {
@@ -156,8 +158,8 @@ $eventsCapacity = Get-ExpansionRoleVerifier -Family 'Events' -Role 'capacity'
 if ($eventsCapacity.Script -cne 'verify-expansion-capacity.ps1' -or $eventsCapacity.Arguments.Family -cne 'Events' -or
     $eventsCapacity.Arguments.Mode -cne 'Verify' -or $eventsCapacity.ProducerRunParameter -cne 'ProducerRunId')
 { throw 'Events capacity must re-verify archived evidence in Verify mode, scoped to its family and producing run.' }
-Assert-Rejected 'unimplemented-role' { Get-ExpansionRoleVerifier -Family 'Events' -Role 'failover' } 'fails closed'
-Assert-Rejected 'unimplemented-failover' { Get-ExpansionRoleVerifier -Family 'Documents' -Role 'failover' } 'fails closed'
+Assert-Rejected 'unknown-role' { Get-ExpansionRoleVerifier -Family 'Events' -Role 'diagnostic' } 'Unknown expansion family role'
+Assert-Rejected 'preview-family-role' { Get-ExpansionRoleVerifier -Family 'Graph' -Role 'upgrade' } 'Unknown expansion family role'
 
 # Readiness record binds exactly the three roles by workflow, artifact, run and digest.
 function Bindings { foreach ($role in $jobs.Roles) { [pscustomobject]@{ Role = $role.Role; WorkflowFile = $role.WorkflowFile
