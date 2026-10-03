@@ -17,7 +17,9 @@ internal sealed class DurableBoundaryFeedbackObserver(
     public async ValueTask AcknowledgeAsync(ChangeTransaction transaction, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(transaction);
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
         await _sender.SendFeedbackAsync(transaction.CommitEndPosition, cancellationToken);
+        DeliveryTrace.RecordAck(System.Diagnostics.Stopwatch.GetElapsedTime(started));
         onFeedback();
     }
 

@@ -85,12 +85,20 @@ fanout/payload combinations keep the complete authorized Live document window be
 Unchanged TOAST values in new update tuples are restored from historical FULL old tuples. Missing
 historical bytes fail closed; the definition never reconstructs past WAL from current source SQL.
 Backlog seeding uses caller-owned batches limited to 64 operations and 1 MiB of event admission.
-The 600-second profile combines 32 tenants, 16 writers, a six-connection pool, 4 KiB payloads,
-10,000 initial pending operations, fanout 64 and 1,500 scheduled offers/second. Overload rejection,
-backlog recovery and per-tenant service are reported explicitly; this is not a promise of fairness or
-latency under every application-defined hot-key lock pattern.
+The 600-second profile combines 32 tenants, 16 writers, a six-connection application pool plus a
+two-connection delivery pool (eight backends total), 4 KiB payloads, 10,000 initial pending operations,
+fanout 64 and 1,500 scheduled offers/second. Overload rejection, backlog recovery and per-tenant
+service are reported explicitly; this is not a promise of fairness or latency under every
+application-defined hot-key lock pattern.
 
-The separate `capacity` profile uses the same 32 tenants, 16 writers, six-connection pool, 4 KiB
+In every profile the application pool (`PoolSize`) is shared by the writers, Live publishers and
+probes. The single ordered CDC delivery path (projection apply, Events inbox and lease rotation) uses
+its own `DeliveryPoolSize` (two) pool, the recommended production topology described in the
+Projections README. It is passed through the existing `DbDataSource` constructor arguments of
+`PostgreSqlProjectionStore` and `PostgreSqlEventDeliveryProcessor`. Campaigns captured before this
+change used one shared six-connection pool for all of these paths.
+
+The separate `capacity` profile uses the same 32 tenants, 16 writers, application and delivery pools, 4 KiB
 payloads, fanout 64 and ten-hot-to-one-cold offer mix, but starts without a backlog and schedules
 20 operations/second. It preserves the complete SQL/Streams/Events/Live pipeline and final exact-state
 verification. Its lower offered rate is a conservative candidate for steady-service latency measurement,
@@ -141,6 +149,20 @@ maximum drain. The probe includes the fixture's projection and Events schemas; `
 includes each relation's TOAST and index storage.
 Only the fresh exclusive fixture makes server-global deltas attributable to this campaign. Other host
 workloads must still be disclosed, since container CPU limits do not isolate the client or host storage.
+
+Every scenario also writes an additive diagnostic `run-N-<scenario>-delivery.jsonl`; no report field or
+verifier input changes. Its header and trailer carry the UTC anchor and measured PostgreSQL clock
+offset. One line per delivered WAL transaction records the receive wait, decode, projection apply,
+inbox processing/acknowledgement and periodic lease-rotation durations, each attributed to provider pool
+checkouts, pool waits, resets and command round trips (`other` time is mostly `COMMIT`). After the drain,
+one line per accepted operation records its offered, committed, projected, inbox and Live timestamps. The
+fixture always enables `track_wal_io_timing` and `log_checkpoints`. `-Diagnostics` additionally logs every
+autovacuum, samples server wait events (10 Hz) and WAL/relation I/O, checkpointer and replication
+counters (1 Hz) from one separate session into `run-N-<scenario>-server.jsonl`, records host CPU and .NET
+build/test process CPU time plus Docker statistics for every running container, and retains the exact
+fixture's raw server log as `run-N-primary.log`. The JSONL files contain no SQL text, parameters or
+payloads; the raw server log is unfiltered PostgreSQL output, so keep `-Diagnostics` output in an ignored
+directory. The verifier never reads any of these files.
 
 Events identities, outbox and inbox rows persist permanently in these runs. Their linear storage growth
 is measured, not disguised as bounded retention. Projection derived-version cleanup in the physical

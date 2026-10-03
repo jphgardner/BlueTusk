@@ -18,10 +18,14 @@ The definition receives a bounded `ProjectionWriteContext` inside a destination 
 
 - Store each source table's current committed row image with `UpsertSourceAsync`/`DeleteSourceAsync`,
   or bounded `UpsertSourcesAsync`/`DeleteSourcesAsync` bulk operations using one SQL command per batch.
-- Read source mirrors to calculate joins from exactly the CDC history being applied.
+- Read source mirrors to calculate joins from exactly the CDC history being applied. A row the context
+  already read or wrote in the same transaction is served from an exact transaction-scoped image without
+  another round trip. Touching the borrowed `Connection`/`Transaction` or any failed command discards the
+  image, so raw SQL and aborted transactions behave exactly as before.
 - Write typed output using source-generated `JsonTypeInfo<T>`, or persist an explicit byte payload.
-- Replace output and dependencies in bulk using `UpsertManyAsync`: three SQL commands for a bounded
-  batch, independent of document count.
+- Replace output and dependencies in bulk using `UpsertManyAsync`: three ordered SQL statements for a
+  bounded batch, independent of document count, sent as one ADO.NET batch round trip when the provider
+  supports batches.
 - Find affected joined outputs with indexed, tenant-scoped, ordinal keyset dependency pages.
 - Apply exact decimal aggregate deltas with `AddAggregateAsync` and read them in the same transaction.
 - Use its borrowed connection/transaction for application-specific relational state.
@@ -69,6 +73,31 @@ missing source transaction from a numeric LSN gap. Never concurrently dispatch d
 positions to the same version; concurrent duplicate deliveries are safely deduplicated. Parallelize
 independent projection versions/source partitions. Two-phase, synthetic, wrong-source, and typed
 mapped transactions fail closed in this preview; use raw committed Streams row contracts.
+
+### Production topology: a dedicated delivery pool
+
+Give the serial delivery path its own small connection pool. Construct the `PostgreSqlProjectionStore`
+used for CDC apply and lease renewal or rotation, and the `PostgreSqlEventDeliveryProcessor` for the
+same source, with a `DbDataSource` that application request and writer traffic does not share. Live
+reads and other application work keep their own data source. Both the store and the processor
+already take their data source as a constructor argument, so this is configuration, not a separate
+mode.
+
+Why: a leased version applies one source transaction at a time, and every transaction needs at least
+one pool checkout for its projection commit (plus one for an Events inbox commit). Application writers
+hold their pooled connections for the whole of their own transactions. When storage briefly stalls
+`COMMIT` (for example during checkpoint or background-writer bursts on a slow or virtualized disk),
+writers that serialize on a hot row, such as one event stream's sequence, keep every shared connection
+busy while waiting on each other. The single ordered consumer then queues behind them. The capacity
+harness measured individual delivery checkouts waiting 1.2–1.8 s behind 12 queued writers with a shared
+six-connection pool. That wait turns a seconds-long stall into a backlog that dominates projection and
+inbox p99, and it recurs after every stall.
+
+Sizing: one serial consumer uses at most one connection at a time, because apply, inbox and lease work
+run sequentially. Use two connections per concurrently delivered projection version or source
+partition: one for the active transaction and one spare, so replacing an expired or broken pooled
+session never queues the consumer. The data source must address the projection store's (and the
+inbox store's) database. Budget the extra backends in `max_connections` alongside the application pool.
 
 ## Consistent bootstrap and rebuild
 

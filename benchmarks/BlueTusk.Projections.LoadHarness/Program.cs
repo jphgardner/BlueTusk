@@ -44,7 +44,7 @@ internal static class Program
             foreach (var value in cases)
             {
                 Console.WriteLine($"Starting {value.Name}: tenants={value.Tenants}, payload={value.PayloadBytes}, writers={value.Writers}, backlog={value.Backlog}, hot fanout={value.Fanout}.");
-                reports.Add(await Scenario.RunAsync(connection, value, profile == "promotion"));
+                reports.Add(await Scenario.RunAsync(connection, value, profile == "promotion", output));
                 await SaveAsync(output, new(started, DateTimeOffset.UtcNow, profile, Environment.Version.ToString(),
                     Environment.OSVersion.ToString(), false, true, reports.ToArray(), null));
                 Console.WriteLine($"Passed {value.Name}: committed={reports[^1].Committed}, rejected={reports[^1].Rejected}, elapsed={reports[^1].MeasuredSeconds:F2}s.");
