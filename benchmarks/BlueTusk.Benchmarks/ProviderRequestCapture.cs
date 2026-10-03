@@ -31,6 +31,9 @@ internal static class ProviderRequestCapture
         public required string OutputPath { get; init; }
         public required bool Diagnostic { get; init; }
 
+        /// <summary>Retained network-shaping profile identity, such as <c>toxiproxy-constrained-v1@sha256:...</c>.</summary>
+        public string? NetworkProfile { get; init; }
+
         public void Validate()
         {
             if (Provider is not ("bluetusk" or "npgsql") ||
@@ -41,7 +44,9 @@ internal static class ProviderRequestCapture
                 MaximumSamplesPerWorker is < 1 or > 16_000_000 ||
                 (long)Concurrency * MaximumSamplesPerWorker > 32_000_000 ||
                 !Regex.IsMatch(SourceCommit, "^[0-9a-f]{40}$", RegexOptions.CultureInvariant) ||
-                !Regex.IsMatch(PostgreSqlImage, "^postgres:[^@\\s]+@sha256:[0-9a-f]{64}$", RegexOptions.CultureInvariant))
+                !Regex.IsMatch(PostgreSqlImage, "^postgres:[^@\\s]+@sha256:[0-9a-f]{64}$", RegexOptions.CultureInvariant) ||
+                NetworkProfile is not null && !Regex.IsMatch(NetworkProfile,
+                    "^[a-z0-9][a-z0-9.-]{0,63}@sha256:[0-9a-f]{64}$", RegexOptions.CultureInvariant))
             {
                 throw new ArgumentException("Invalid provider capture options; use bounded windows, samples, concurrency, and immutable source/image identities.");
             }
@@ -143,7 +148,7 @@ internal static class ProviderRequestCapture
                     SampleBufferCapacityBytes = (long)options.MaximumSamplesPerWorker * options.Concurrency * sizeof(long),
                     Fairness = "yield to the scheduler every 64 requests, outside individual latency timing; included in throughput and process counters",
                     Durability = fixture.Durability,
-                    NetworkShaping = "not configured by this adapter",
+                    NetworkShaping = options.NetworkProfile ?? "not configured by this adapter",
                     EfUpdateKeys = "disjoint worker keys; hot-row contention is a separate workload",
                     ContentionProbe = fixture.IsContention,
                     CommandLifetime = fixture.IsContention

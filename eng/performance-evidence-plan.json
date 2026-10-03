@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "release": "1.1.0",
+  "scope": "Core",
+  "workflowFile": "core-performance-evidence.yml",
+  "confirmationToken": "CAPTURE-1.1-PERFORMANCE-EVIDENCE",
+  "variantMap": "eng/performance-variant-map.json",
+  "networkProfiles": "eng/performance-network-profiles.json",
+  "statistics": {
+    "method": "expanded-percentile-bootstrap-of-trial-means/1",
+    "confidenceLevel": 0.95,
+    "resamples": 10000,
+    "seedPrefix": "bluetusk-performance-bootstrap/v1|",
+    "minimumQualificationTrials": 10,
+    "minimumDiagnosticTrials": 3,
+    "maximumTrials": 50
+  },
+  "timing": {
+    "qualificationWarmupSeconds": 5,
+    "qualificationMeasurementSeconds": 10,
+    "maximumTotalSamples": 16000000,
+    "estimatedSecondsPerProcessRun": 20
+  },
+  "fixture": {
+    "postgreSqlImage": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+    "maxConnections": 600,
+    "sharedMemory": "1g",
+    "linuxClientImage": "mcr.microsoft.com/dotnet/aspnet:10.0@sha256:222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4"
+  },
+  "runners": {
+    "windows": ["self-hosted", "windows", "x64", "bluetusk-benchmark"],
+    "linux": ["self-hosted", "linux", "x64", "bluetusk-benchmark"],
+    "linuxRunnerBaseImage": "ghcr.io/actions/actions-runner:2.337.0@sha256:e5496277be5d09bc968b3d64911b74e219ac4a3f2edce956a3ecf9271bea1ef4"
+  },
+  "families": {
+    "Provider": {
+      "status": "implemented",
+      "format": "provider-request-capture-index/1",
+      "reference": "Npgsql 10.0.3",
+      "method": "same-runtime"
+    },
+    "Streams": {
+      "status": "stub-fails-closed",
+      "format": "performance-trial-index/1",
+      "reference": "Debezium Server 3.6.1.Final",
+      "referenceImage": "quay.io/debezium/server:3.6.1.Final@sha256:4e8fe56b859d799eb2e793d0ef5d0f0052b3df84fc835ebb021323043e917039",
+      "method": "cross-runtime"
+    },
+    "Sync": {
+      "status": "stub-fails-closed",
+      "format": "performance-trial-index/1",
+      "reference": "Debezium Server 3.6.1.Final plus native destination clients",
+      "referenceImage": "quay.io/debezium/server:3.6.1.Final@sha256:4e8fe56b859d799eb2e793d0ef5d0f0052b3df84fc835ebb021323043e917039",
+      "method": "cross-runtime"
+    },
+    "Live": {
+      "status": "stub-fails-closed",
+      "format": "performance-trial-index/1",
+      "reference": "ASP.NET Core SignalR 10",
+      "method": "cross-runtime"
+    },
+    "ControlPlane": {
+      "status": "stub-fails-closed",
+      "format": "performance-trial-index/1",
+      "reference": "BlueTusk 1.0.0 plus absolute scaling budgets",
+      "method": "unique"
+    }
+  },
+  "primaryHotPaths": {
+    "status": "proposed-awaiting-owner-confirmation",
+    "reference": "BlueTusk 1.0.0 on the same workload, same runtime, same host",
+    "definitions": {
+      "Provider": "parameterized-scalar at concurrency 64, native variant",
+      "Streams": "commit-to-delivery with 1-change transactions",
+      "Sync": "1 mutation to the postgresql destination",
+      "Live": "affected-key-update with 1,000 results and 64 subscribers",
+      "ControlPlane": "inventory read with 100 sources and 32 API clients"
+    }
+  }
+}
