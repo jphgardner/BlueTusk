@@ -1,6 +1,8 @@
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -66,6 +68,71 @@ public sealed class MigrationsIntegrationTests
             await ExecuteNonQueryAsync(connectionString, "DROP TABLE IF EXISTS \"ef_migration_lifecycle\"");
             await ExecuteNonQueryAsync(connectionString, "DROP SEQUENCE IF EXISTS \"ef_migration_sequence\"");
             await ExecuteNonQueryAsync(connectionString, "DROP TABLE IF EXISTS \"__EFMigrationsHistory\"");
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Data_source_enum_mapping_can_precede_the_migration_that_creates_the_enum(
+        bool asynchronous)
+    {
+        var connectionString = GetConnectionString();
+        const string cleanup = """
+            DROP TABLE IF EXISTS "ef_mapped_enum_values";
+            DROP TABLE IF EXISTS "ef_mapped_enum_history";
+            DROP TYPE IF EXISTS public.ef_mapped_enum_mood
+            """;
+        await ExecuteNonQueryAsync(connectionString, cleanup);
+
+        try
+        {
+            await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+                .MapEnum<MappedEnumMood>("public.ef_mapped_enum_mood")
+                .Build();
+            var options = new DbContextOptionsBuilder<MappedEnumMigrationContext>()
+                .UseBlueTusk(
+                    dataSource,
+                    provider => provider.MigrationsHistoryTable("ef_mapped_enum_history"))
+                .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning))
+                .Options;
+
+            await using (var context = new MappedEnumMigrationContext(options))
+            {
+                if (asynchronous)
+                {
+                    await context.Database.MigrateAsync();
+                }
+                else
+                {
+                    context.Database.Migrate();
+                }
+
+                context.Values.Add(new MappedEnumValue { Id = 1, Mood = MappedEnumMood.Happy });
+                context.Values.Add(new MappedEnumValue { Id = 2, Mood = MappedEnumMood.Sad });
+                Assert.Equal(2, await context.SaveChangesAsync());
+            }
+
+            await using (var context = new MappedEnumMigrationContext(options))
+            {
+                var sad = MappedEnumMood.Sad;
+                Assert.Equal(
+                    1,
+                    Assert.Single(await context.Values
+                        .Where(value => value.Mood == MappedEnumMood.Happy)
+                        .ToListAsync()).Id);
+                Assert.Equal(
+                    2,
+                    Assert.Single(await context.Values.Where(value => value.Mood == sad).ToListAsync()).Id);
+            }
+
+            await using var command = dataSource.CreateCommand(
+                "SELECT string_agg(\"Mood\"::text, ',' ORDER BY \"Id\") FROM \"ef_mapped_enum_values\"");
+            Assert.Equal("happy-ish,sad", await command.ExecuteScalarAsync<string>(CancellationToken.None));
+        }
+        finally
+        {
+            await ExecuteNonQueryAsync(connectionString, cleanup);
         }
     }
 
@@ -359,6 +426,62 @@ internal sealed class MigrationLifecycleExpanded : Migration
         migrationBuilder.DropColumn(
             name: "Score",
             table: "ef_migration_lifecycle");
+    }
+}
+
+internal enum MappedEnumMood
+{
+    [BlueTuskName("happy-ish")]
+    Happy,
+
+    [BlueTuskName("sad")]
+    Sad,
+}
+
+internal sealed class MappedEnumValue
+{
+    public int Id { get; set; }
+
+    public MappedEnumMood Mood { get; set; }
+}
+
+internal sealed class MappedEnumMigrationContext(DbContextOptions<MappedEnumMigrationContext> options)
+    : DbContext(options)
+{
+    public const string CreateMoodMigrationId = "20261003000100_CreateMappedEnumMood";
+
+    public DbSet<MappedEnumValue> Values => Set<MappedEnumValue>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        var value = modelBuilder.Entity<MappedEnumValue>();
+        value.ToTable("ef_mapped_enum_values");
+        value.Property(entity => entity.Id).ValueGeneratedNever();
+        value.Property(entity => entity.Mood).HasColumnType("public.ef_mapped_enum_mood");
+    }
+}
+
+[DbContext(typeof(MappedEnumMigrationContext))]
+[Migration(MappedEnumMigrationContext.CreateMoodMigrationId)]
+internal sealed class CreateMappedEnumMood : Migration
+{
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.Sql("CREATE TYPE public.ef_mapped_enum_mood AS ENUM ('happy-ish', 'sad');");
+        migrationBuilder.CreateTable(
+            name: "ef_mapped_enum_values",
+            columns: table => new
+            {
+                Id = table.Column<int>(type: "integer", nullable: false),
+                Mood = table.Column<MappedEnumMood>(type: "public.ef_mapped_enum_mood", nullable: false),
+            },
+            constraints: table => table.PrimaryKey("PK_ef_mapped_enum_values", entity => entity.Id));
+    }
+
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable(name: "ef_mapped_enum_values");
+        migrationBuilder.Sql("DROP TYPE public.ef_mapped_enum_mood;");
     }
 }
 

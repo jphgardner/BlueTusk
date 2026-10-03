@@ -65,6 +65,32 @@ public sealed class BlueTuskCliTests
     }
 
     [Fact]
+    public async Task Doctor_reports_the_server_major_and_minor_version()
+    {
+        var connectionString = ConnectionString();
+        int versionNumber;
+        await using (var connection = new BlueTuskConnection(connectionString))
+        {
+            await connection.OpenAsync(CancellationToken.None);
+            await using var command = new BlueTuskCommand(
+                "SELECT current_setting('server_version_num')::int4",
+                connection);
+            versionNumber = await command.ExecuteScalarAsync<int>(CancellationToken.None);
+        }
+
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+        var result = BlueTuskCli.Run(["doctor", "--connection", connectionString], output, error);
+
+        // PostgreSQL 10+ reports major * 10000 + minor, for example 180006 for 18.6.
+        var expected = string.Create(
+            System.Globalization.CultureInfo.InvariantCulture,
+            $"PostgreSQL {versionNumber / 10000}.{versionNumber % 10000};");
+        Assert.Equal(0, result);
+        Assert.Contains(expected, output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Scaffold_command_writes_filtered_secure_by_default_models()
     {
         var connectionString = ConnectionString();

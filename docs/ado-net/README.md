@@ -42,6 +42,29 @@ excluded ADO.NET, Dapper, dependency-injection, schema, and routine surfaces.
 
 Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths.
 
+### Connection-string keywords
+
+BlueTusk recognizes `Host`, `Port`, `Database`, `Username`, `Password`,
+`Passfile`, `Timeout`, `Pooling`, `Multiplexing`, `Persist Security Info`,
+`Application Name`, `SSL Mode`, `Channel Binding`, `Kerberos Service Name`,
+`Allow Unencrypted Password`, `Target Session Attributes`, `Load Balance Hosts`,
+`Minimum Pool Size`, `Maximum Pool Size`, `Connection Idle Lifetime`,
+`Connection Lifetime`, `Max Auto Prepare`, and `Auto Prepare Min Usages`.
+`Timeout` (seconds, default 15) bounds both connection establishment and the
+wait for an exhausted pool; see [connection pooling](pooling.md).
+
+For 1.x compatibility, other keywords (for example Npgsql's `Command Timeout`
+or a misspelt `Usernme`) are accepted and ignored. To reject them, as Npgsql
+does, enable the `BlueTusk.Data.RejectUnknownConnectionStringKeywords`
+AppContext switch. Creating a connection or data source then throws an
+`ArgumentException` that names the keyword but not its value:
+
+```xml
+<ItemGroup>
+  <RuntimeHostConfigurationOption Include="BlueTusk.Data.RejectUnknownConnectionStringKeywords" Value="true" />
+</ItemGroup>
+```
+
 Authentication defaults to TLS certificate verification with SCRAM-SHA-256 and prefers
 SCRAM channel binding when PostgreSQL offers it. PostgreSQL GSSAPI/Kerberos and SSPI
 requests use the operating system security context with mutual authentication. Legacy PostgreSQL MD5 challenges are

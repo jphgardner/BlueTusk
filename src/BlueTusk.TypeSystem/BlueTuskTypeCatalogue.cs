@@ -70,11 +70,7 @@ public static class BlueTuskTypeCatalogue
         {
             RegisterMissingDescriptors(builder, descriptors, configuredTypes);
             RegisterCodecs(builder, descriptors, configuredTypes, replace: true);
-            RegisterNamedCodecs(
-                builder,
-                descriptors,
-                configuredTypes,
-                requireResolution: hasDiscoveredTypes);
+            RegisterNamedCodecs(builder, descriptors, configuredTypes);
             if (hasDiscoveredTypes)
             {
                 deferredCodecs = ResolveDeferredCodecs(descriptors, configuredTypes);
@@ -175,8 +171,7 @@ public static class BlueTuskTypeCatalogue
     private static void RegisterNamedCodecs(
         BlueTuskTypeRegistryBuilder builder,
         IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors,
-        BlueTuskTypeRegistry source,
-        bool requireResolution)
+        BlueTuskTypeRegistry source)
     {
         foreach (var registration in source.NamedCodecs)
         {
@@ -187,8 +182,12 @@ public static class BlueTuskTypeCatalogue
                 .ToArray();
             if (matches.Length != 1)
             {
-                if (!requireResolution && matches.Length == 0)
+                if (matches.Length == 0)
                 {
+                    // A mapped type can legitimately be absent from the catalogue, for example
+                    // before the EF Core migration that creates it has run. The registration
+                    // stays unresolved until a later type reload finds the type; using the
+                    // mapping before then fails at that use instead of on every connection.
                     builder.RegisterNamedCodec(registration.Key, registration.Value);
                     continue;
                 }
@@ -216,10 +215,13 @@ public static class BlueTuskTypeCatalogue
                 continue;
             }
 
-            var match = descriptors.Values.Single(type =>
+            var match = descriptors.Values.SingleOrDefault(type =>
                 string.Equals(type.Schema, registration.Key.Schema, StringComparison.Ordinal) &&
                 string.Equals(type.Name, registration.Key.Name, StringComparison.Ordinal));
-            result.Add(match.Id, deferred);
+            if (match is not null)
+            {
+                result.Add(match.Id, deferred);
+            }
         }
 
         return result;

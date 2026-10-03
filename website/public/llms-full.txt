@@ -650,6 +650,29 @@ excluded ADO.NET, Dapper, dependency-injection, schema, and routine surfaces.
 
 Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths.
 
+### Connection-string keywords
+
+BlueTusk recognizes `Host`, `Port`, `Database`, `Username`, `Password`,
+`Passfile`, `Timeout`, `Pooling`, `Multiplexing`, `Persist Security Info`,
+`Application Name`, `SSL Mode`, `Channel Binding`, `Kerberos Service Name`,
+`Allow Unencrypted Password`, `Target Session Attributes`, `Load Balance Hosts`,
+`Minimum Pool Size`, `Maximum Pool Size`, `Connection Idle Lifetime`,
+`Connection Lifetime`, `Max Auto Prepare`, and `Auto Prepare Min Usages`.
+`Timeout` (seconds, default 15) bounds both connection establishment and the
+wait for an exhausted pool; see [connection pooling](pooling.md).
+
+For 1.x compatibility, other keywords (for example Npgsql's `Command Timeout`
+or a misspelt `Usernme`) are accepted and ignored. To reject them, as Npgsql
+does, enable the `BlueTusk.Data.RejectUnknownConnectionStringKeywords`
+AppContext switch. Creating a connection or data source then throws an
+`ArgumentException` that names the keyword but not its value:
+
+```xml
+<ItemGroup>
+  <RuntimeHostConfigurationOption Include="BlueTusk.Data.RejectUnknownConnectionStringKeywords" Value="true" />
+</ItemGroup>
+```
+
 Authentication defaults to TLS certificate verification with SCRAM-SHA-256 and prefers
 SCRAM channel binding when PostgreSQL offers it. PostgreSQL GSSAPI/Kerberos and SSPI
 requests use the operating system security context with mutual authentication. Legacy PostgreSQL MD5 challenges are
@@ -1308,8 +1331,9 @@ var value = await command.ExecuteScalarAsync<int>();
 | `Connection Idle Lifetime` | 5 minutes | Maximum idle age checked before reuse; zero disables idle expiry. |
 | `Connection Lifetime` | 1 hour | Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry. |
 | `Multiplexing` | `false` | Enables bounded statement multiplexing; pooling must also be enabled. |
+| `Timeout` | 15 seconds | Bounds connection establishment and the wait for capacity in an exhausted pool. |
 
-When the pool is at its maximum, asynchronous opens wait in order for returned capacity. The caller's cancellation token cancels that wait without consuming a slot.
+When the pool is at its maximum, opens wait in order for returned capacity. The wait is bounded by the connection-string `Timeout`, the same `DbConnection.ConnectionTimeout` that bounds establishing a physical connection. When it expires, the open throws a `TimeoutException` that names the endpoint, `Maximum Pool Size`, and `Timeout`; the waiter leaves the queue without consuming a slot. The caller's cancellation token cancels the wait earlier with `OperationCanceledException`. In a multi-host data source each endpoint pool applies the bound, and an exhausted endpoint is not marked unavailable.
 
 Multi-host data sources own one pool per configured endpoint. Checkout tries available capacity across the selected host order, and role-targeted checkouts revalidate primary/standby and read-only state. `Minimum Pool Size` and `Maximum Pool Size` apply to each endpoint pool. `GetHostPoolStatistics()` exposes each partition; `GetPoolStatistics()` reports their aggregate.
 
@@ -2009,8 +2033,13 @@ builder.MapComposite<Address>("app.address");
 await using var dataSource = builder.Build();
 ```
 
-After creating or changing a type while the application is running, call
-`ReloadTypesAsync()` on the data source before using the new catalogue shape.
+A mapped type does not have to exist when the data source first connects.
+Until the catalogue contains it, the mapping stays unresolved and only a value
+that uses it fails. EF Core migrations reload the catalogue after they run, so
+an application can map `app.order_status` before the migration that creates it.
+After creating or changing a type any other way while the application is
+running, call `ReloadTypesAsync()` on the data source before using the new
+catalogue shape.
 
 ## Production rules
 

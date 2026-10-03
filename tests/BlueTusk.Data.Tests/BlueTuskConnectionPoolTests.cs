@@ -121,6 +121,73 @@ public sealed class BlueTuskConnectionPoolTests
     }
 
     [Fact]
+    public async Task Exhausted_pool_waits_time_out_after_the_connection_timeout()
+    {
+        await using var pool = CreatePool(maximumSize: 1, timeout: TimeSpan.FromSeconds(1));
+        var lease = await pool.RentAsync(CancellationToken.None);
+        var started = System.Diagnostics.Stopwatch.StartNew();
+
+        var asynchronous = await Assert.ThrowsAnyAsync<TimeoutException>(
+            () => pool.RentAsync(CancellationToken.None).AsTask().WaitAsync(TimeSpan.FromSeconds(30)));
+        var elapsed = started.Elapsed;
+        var synchronous = await Task.Run(() => Assert.ThrowsAny<TimeoutException>(() => pool.Rent()))
+            .WaitAsync(TimeSpan.FromSeconds(30));
+
+        Assert.InRange(elapsed, TimeSpan.FromMilliseconds(900), TimeSpan.FromSeconds(10));
+        Assert.Equal(asynchronous.Message, synchronous.Message);
+        Assert.Contains("localhost:5432", asynchronous.Message, StringComparison.Ordinal);
+        Assert.Contains("'Maximum Pool Size' (currently 1)", asynchronous.Message, StringComparison.Ordinal);
+        Assert.Contains("1-second Timeout", asynchronous.Message, StringComparison.Ordinal);
+        Assert.Equal(0, pool.Statistics.Waiting);
+        Assert.Equal(1, pool.Statistics.Busy);
+
+        // A timed-out waiter leaves the queue, so a returned session reaches the next caller.
+        var next = pool.RentAsync(CancellationToken.None).AsTask();
+        await WaitUntilAsync(() => pool.Statistics.Waiting == 1);
+        pool.Return(lease);
+        pool.Return(await next.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.Equal(1, pool.Statistics.Idle);
+        Assert.Equal(0, pool.Statistics.Busy);
+    }
+
+    [Fact]
+    public async Task Exhausted_pool_cancellation_wins_over_a_later_timeout()
+    {
+        await using var pool = CreatePool(maximumSize: 1, timeout: TimeSpan.FromSeconds(30));
+        var lease = await pool.RentAsync(CancellationToken.None);
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => pool.RentAsync(cancellation.Token).AsTask().WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Equal(0, pool.Statistics.Waiting);
+        pool.Return(lease);
+    }
+
+    [Fact]
+    public async Task Timeout_racing_handoff_cannot_complete_a_recycled_waiter()
+    {
+        await using var pool = CreatePool(maximumSize: 1, timeout: TimeSpan.FromSeconds(1));
+        for (var iteration = 0; iteration < 8; iteration++)
+        {
+            var held = await pool.RentAsync(CancellationToken.None);
+            var waiting = pool.RentAsync(CancellationToken.None).AsTask();
+            // Return the session around the moment the 1-second wait expires.
+            await Task.Delay(TimeSpan.FromMilliseconds(985 + (iteration * 5)));
+            pool.Return(held);
+            try { pool.Return(await waiting.WaitAsync(TimeSpan.FromSeconds(5))); }
+            catch (TimeoutException) { }
+
+            var next = await pool.RentAsync(CancellationToken.None);
+            var nextWaiting = pool.RentAsync(CancellationToken.None).AsTask();
+            pool.Return(next);
+            pool.Return(await nextWaiting.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Equal(0, pool.Statistics.Waiting);
+            Assert.Equal(0, pool.Statistics.Busy);
+            Assert.Equal(1, pool.Statistics.Total);
+        }
+    }
+
+    [Fact]
     public async Task Returning_a_session_satisfies_an_existing_waiter_before_a_new_checkout()
     {
         await using var pool = CreatePool(maximumSize: 1);
@@ -664,7 +731,8 @@ public sealed class BlueTuskConnectionPoolTests
         TimeSpan? idleLifetime = null,
         TimeSpan? connectionLifetime = null,
         Func<CancellationToken, ValueTask<IBlueTuskPhysicalSession>>? factory = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        TimeSpan? timeout = null)
     {
         var settings = new BlueTuskConnectionStringBuilder
         {
@@ -672,6 +740,7 @@ public sealed class BlueTuskConnectionPoolTests
             MaximumPoolSize = maximumSize,
             ConnectionIdleLifetime = idleLifetime ?? TimeSpan.FromMinutes(5),
             ConnectionLifetime = connectionLifetime ?? TimeSpan.FromHours(1),
+            Timeout = timeout ?? TimeSpan.FromSeconds(15),
         };
         return new BlueTuskConnectionPool(
             settings,

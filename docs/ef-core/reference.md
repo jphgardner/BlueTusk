@@ -107,6 +107,14 @@ services.AddDbContext<AppDbContext>(options =>
     options.UseBlueTusk(dataSource));
 ```
 
+The mapped types may be created by a migration: the data source tolerates
+types missing from the catalogue, and `Migrate`/`MigrateAsync` reload the data
+source's catalogue after applying migrations. LINQ enum constants are rendered
+with the same labels as the codec: `[BlueTuskName]`, then `[EnumMember]`, then
+the CLR name. Labels supplied only through the `MapEnum` label dictionary are
+not visible to SQL generation, so prefer the attributes or pass the value as a
+query parameter.
+
 Optional extensions keep their ADO.NET and EF registrations separate. For
 example, `citext` uses `BlueTusk.Extensions.Citext` for the data-source codec and
 `BlueTusk.Extensions.Citext.EntityFrameworkCore` for EF scalar/array mappings

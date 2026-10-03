@@ -618,7 +618,9 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         // bounded unambiguous cause chain, including normalized connect timeouts.
         for (var depth = 0; depth < 16; depth++)
         {
+            // An exhausted local pool timing out is not evidence that the endpoint is down.
             if (exception is BlueTuskAuthenticationException or OperationCanceledException or
+                BlueTuskPoolAcquisitionTimeoutException or
                 System.Security.Authentication.AuthenticationException) { return false; }
             if (exception is BlueTuskTransportException) { return true; }
             if (exception is BlueTuskServerException server)

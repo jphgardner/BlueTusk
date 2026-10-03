@@ -642,11 +642,21 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         }
 
         var elementType = Nullable.GetUnderlyingType(elementClrType) ?? elementClrType;
+        // A collection parameter (ParameterTranslationMode.Parameter) has no type mapping yet.
+        // Its element mapping is inferred from the comparison it takes part in, such as a
+        // Contains against a column, and BlueTuskTypeMappingPostprocessor then applies the
+        // matching array mapping to the parameter, falling back to the CLR default.
+        var deferElementMapping = sqlExpression is SqlParameterExpression { TypeMapping: null };
         var elementTypeMapping = (RelationalTypeMapping?)sqlExpression.TypeMapping?.ElementTypeMapping
-            ?? _typeMappingSource.FindMapping(elementType);
-        if (elementTypeMapping is null)
+            ?? (deferElementMapping ? null : _typeMappingSource.FindMapping(elementType));
+        if (elementTypeMapping is null && !deferElementMapping)
         {
             return null;
+        }
+
+        if (deferElementMapping && _queryCompilationContext is BlueTuskQueryCompilationContext context)
+        {
+            context.HasUntypedCollectionParameters = true;
         }
 
         var isElementNullable = property?.GetElementType()?.IsNullable
@@ -671,7 +681,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 typeof(string),
                 _typeMappingSource.FindMapping(typeof(string)),
                 isElementNullable);
-            if (!elementTypeMapping.StoreType.Equals("text", StringComparison.OrdinalIgnoreCase))
+            if (!elementTypeMapping!.StoreType.Equals("text", StringComparison.OrdinalIgnoreCase))
             {
                 elementProjection = RelationalDependencies.SqlExpressionFactory.Convert(
                     elementProjection,
