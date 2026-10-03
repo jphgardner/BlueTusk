@@ -1065,19 +1065,19 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                     options,
                     CanMutate(context.User, options),
                     context.User.IsInRole(options.AdministratorRole))));
+        // Deployment IDs may contain '/', for example Kubernetes "namespace/name" IDs. A
+        // catch-all parameter accepts the raw form, and FindDeployment accepts the escaped
+        // form that the dashboard's own links produce ("namespace%2Fname"), which the server
+        // deliberately leaves undecoded in the request path.
         group.MapGet(
-            "/deployments/{deploymentId}",
+            "/deployments/{**deploymentId}",
             async (string deploymentId,
                     HttpContext context,
                     IControlPlaneFleetQueryService queries,
                     CancellationToken cancellationToken) =>
             {
                 var overview = await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false);
-                var deployment = overview.Deployments.FirstOrDefault(
-                    candidate => string.Equals(
-                        candidate.DeploymentId,
-                        deploymentId,
-                        StringComparison.Ordinal));
+                var deployment = FindDeployment(overview, deploymentId);
                 return deployment is null
                     ? Results.NotFound()
                     : Html(RenderDeployment(
