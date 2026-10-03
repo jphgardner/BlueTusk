@@ -1450,7 +1450,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1142,
+    "order": 1141,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1627,7 +1627,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1174,
+    "order": 1173,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",

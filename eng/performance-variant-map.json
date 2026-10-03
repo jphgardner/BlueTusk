@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "contract": "eng/performance-leadership-contract.json",
-  "proposal": "docs/qualification/provider-cross-os-variant-proposal.md",
+  "proposal": "eng/performance-cross-os-proposal.md",
   "crossOsProfile": "unresolved",
   "profiles": {
     "native": {

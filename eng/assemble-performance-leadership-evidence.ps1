@@ -218,7 +218,7 @@ $null = $report.AppendLine().AppendLine("## Missing contract workloads ($($missi
 if ($missing.Count -eq 0) { $null = $report.AppendLine('None.') }
 else
 {
-    $null = $report.AppendLine('Missing evidence fails the verifier. Cross-OS Provider variants stay missing until the owner adopts a meaning (see `docs/qualification/provider-cross-os-variant-proposal.md`).').AppendLine()
+    $null = $report.AppendLine('Missing evidence fails the verifier. Cross-OS Provider variants stay missing until the owner adopts a meaning (see `eng/performance-cross-os-proposal.md`).').AppendLine()
     foreach ($group in @($missing | Group-Object { $_.Split('|')[0] + '|' + $_.Split('|')[1] } | Sort-Object Name))
     { $null = $report.AppendLine("- ``$($group.Name)``: $($group.Count)") }
 }

@@ -3486,11 +3486,11 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     ],
     "wordCount": 1921,
     "readMinutes": 9,
-    "searchText": "Core performance-leadership evidence pipeline This pipeline produces `performance/performance-leadership-evidence.json` (schema 3). Core readiness binds it as `performanceManifest`, from producer `core-performance-evidence.yml`. It measures the contract in [`eng/performance-leadership-contract.json`](../../eng/performance-leadership-contract.json) **as written**. The contract is not relaxed anywhere in the pipeline. **Status:** pipeline implemented; evidence not yet producible. Provider capture works for the same-OS, TLS and constrained-network variants. The cross-OS Provider variants are unresolved (see the [proposal](../qualification/provider-cross-os-variant-proposal.md)). The Streams, Sync, Live, Control Plane and primary hot-path harnesses are planned legs that fail closed. Until all of these exist, a qualification run fails and the verifier reports the missing workloads. That is the intended outcome. Qualification planning reports every missing producer and fails before starting measurement jobs. Provider jobs are split by concurrency level, each with a separate raw input directory; assembly still requires every original workload key exactly once. Data flow Each OS directory is laid out as `performance/<os>/{summary,raw-samples,check-report,environment-manifest}.json`. The raw files stay under `<evidence store>/<run>/<os>/raw/`. `raw-samples.json` binds every raw file by path, size and SHA-256. The checker rejects any file that is unbound, missing or changed. Family-pluggable inputs Each `raw/<input-id>/` directory holds exactly one index: Format Index Raw file per trial Used by `provider-request-capture-index/1` `capture-index.json` Provider request capture Provider variants `performance-trial-index/1` `trial-index.json` `bluetusk-performance-trial` Streams, Sync, Live, Control Plane, primary hot paths To add a family, write a harness that emits the family-neutral format. The generator, checker and assembler need no change. A `trial-index.json` has `schemaVer",
+    "searchText": "Core performance-leadership evidence pipeline This pipeline produces `performance/performance-leadership-evidence.json` (schema 3). Core readiness binds it as `performanceManifest`, from producer `core-performance-evidence.yml`. It measures the contract in [`eng/performance-leadership-contract.json`](../../eng/performance-leadership-contract.json) **as written**. The contract is not relaxed anywhere in the pipeline. **Status:** pipeline implemented; evidence not yet producible. Provider capture works for the same-OS, TLS and constrained-network variants. The cross-OS Provider variants are unresolved (see the [proposal](../../eng/performance-cross-os-proposal.md)). The Streams, Sync, Live, Control Plane and primary hot-path harnesses are planned legs that fail closed. Until all of these exist, a qualification run fails and the verifier reports the missing workloads. That is the intended outcome. Qualification planning reports every missing producer and fails before starting measurement jobs. Provider jobs are split by concurrency level, each with a separate raw input directory; assembly still requires every original workload key exactly once. Data flow Each OS directory is laid out as `performance/<os>/{summary,raw-samples,check-report,environment-manifest}.json`. The raw files stay under `<evidence store>/<run>/<os>/raw/`. `raw-samples.json` binds every raw file by path, size and SHA-256. The checker rejects any file that is unbound, missing or changed. Family-pluggable inputs Each `raw/<input-id>/` directory holds exactly one index: Format Index Raw file per trial Used by `provider-request-capture-index/1` `capture-index.json` Provider request capture Provider variants `performance-trial-index/1` `trial-index.json` `bluetusk-performance-trial` Streams, Sync, Live, Control Plane, primary hot paths To add a family, write a harness that emits the family-neutral format. The generator, checker and assembler need no change. A `trial-index.json` has `schemaVersion: 1`, `e",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Core performance-leadership evidence pipeline</h1>\n<p>This pipeline produces <code>performance/performance-leadership-evidence.json</code> (schema 3). Core\nreadiness binds it as <code>performanceManifest</code>, from producer <code>core-performance-evidence.yml</code>. It\nmeasures the contract in\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-leadership-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/performance-leadership-contract.json</code></a> <strong>as\nwritten</strong>. The contract is not relaxed anywhere in the pipeline.</p>\n<p><strong>Status:</strong> pipeline implemented; evidence not yet producible. Provider capture works for the\nsame-OS, TLS and constrained-network variants. The cross-OS Provider variants are unresolved (see\nthe <a href=\"/documentation/operations/qualification-provider-cross-os-variant-proposal\">proposal</a>). The Streams, Sync, Live,\nControl Plane and primary hot-path harnesses are planned legs that fail closed. Until all of these\nexist, a qualification run fails and the verifier reports the missing workloads. That is the\nintended outcome.\nQualification planning reports every missing producer and fails before starting measurement\njobs. Provider jobs are split by concurrency level, each with a separate raw input directory;\nassembly still requires every original workload key exactly once.</p>\n<h2>Data flow</h2>\n"
+        "html": "<h1>Core performance-leadership evidence pipeline</h1>\n<p>This pipeline produces <code>performance/performance-leadership-evidence.json</code> (schema 3). Core\nreadiness binds it as <code>performanceManifest</code>, from producer <code>core-performance-evidence.yml</code>. It\nmeasures the contract in\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-leadership-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/performance-leadership-contract.json</code></a> <strong>as\nwritten</strong>. The contract is not relaxed anywhere in the pipeline.</p>\n<p><strong>Status:</strong> pipeline implemented; evidence not yet producible. Provider capture works for the\nsame-OS, TLS and constrained-network variants. The cross-OS Provider variants are unresolved (see\nthe <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-cross-os-proposal.md\" target=\"_blank\" rel=\"noreferrer\">proposal</a>). The Streams, Sync, Live,\nControl Plane and primary hot-path harnesses are planned legs that fail closed. Until all of these\nexist, a qualification run fails and the verifier reports the missing workloads. That is the\nintended outcome.\nQualification planning reports every missing producer and fails before starting measurement\njobs. Provider jobs are split by concurrency level, each with a separate raw input directory;\nassembly still requires every original workload key exactly once.</p>\n<h2>Data flow</h2>\n"
       },
       {
         "kind": "code",
@@ -3902,13 +3902,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1231,
+    "wordCount": 1232,
     "readMinutes": 6,
     "searchText": "BlueTusk 1.2 performance leadership programme **Historical 1.1 RC basis:** `2e735ed46aec11d5009158a00ca7b862f9ec12af` **Target release:** 1.2.0 across Provider, Streams, Sync, Live, Control Plane, and Continuous Graph **Stable publication:** disabled until every exact-candidate 1.2 gate passes, including digest-pinned PostgreSQL 19 GA. Earlier RC artifacts and measurements retain their original identities; they are not recertified as 1.2 evidence. This page keeps its original URL so existing links continue to work. The programme's thresholds and workload matrix carry forward unchanged into 1.2. Current verdict Earlier Provider evidence passed the legacy 16-pair and saturated-pool budgets. That does not establish the stricter programme target for the current 1.2 candidate. The complete leadership claim is **not yet earned**: final-stable-SHA Windows/Linux comparisons, confidence intervals, and endurance evidence remain mandatory. Missing evidence and ties fail. Local diagnostic improvements are not a substitute for those release gates. Implemented hot paths Family Implementation carried forward from 1.1 Provider Integrates the `ac702d7` command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix. Streams Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay. Sync Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering. Live Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications. Control Plane Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>BlueTusk 1.2 performance leadership programme</h1>\n<p><strong>Historical 1.1 RC basis:</strong> <code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code></p>\n<p><strong>Target release:</strong> 1.2.0 across Provider, Streams, Sync, Live, Control Plane, and\nContinuous Graph</p>\n<p><strong>Stable publication:</strong> disabled until every exact-candidate 1.2 gate passes,\nincluding digest-pinned PostgreSQL 19 GA. Earlier RC artifacts and measurements\nretain their original identities; they are not recertified as 1.2 evidence.</p>\n<p>This page keeps its original URL so existing links continue to work. The\nprogramme’s thresholds and workload matrix carry forward unchanged into 1.2.</p>\n<h2>Current verdict</h2>\n<p>Earlier Provider evidence passed the legacy 16-pair and saturated-pool budgets.\nThat does not establish the stricter programme target for the current 1.2\ncandidate. The complete leadership claim is <strong>not yet earned</strong>:\nfinal-stable-SHA Windows/Linux comparisons, confidence intervals, and endurance\nevidence remain mandatory. Missing evidence and ties fail. Local diagnostic\nimprovements are not a substitute for those release gates.</p>\n<h2>Implemented hot paths</h2>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>Implementation carried forward from 1.1</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Provider</td>\n<td>Integrates the <code>ac702d7</code> command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix.</td>\n</tr>\n<tr>\n<td>Streams</td>\n<td>Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay.</td>\n</tr>\n<tr>\n<td>Sync</td>\n<td>Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering.</td>\n</tr>\n<tr>\n<td>Live</td>\n<td>Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications.</td>\n</tr>\n<tr>\n<td>Control Plane</td>\n<td>Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache, and source-generated API JSON metadata.</td>\n</tr>\n<tr>\n<td>Continuous Graph</td>\n<td>Uses immutable compiler impact plans, trusted CDC projection only behind a complete explicit trust contract, automatic key-scoped authoritative queries, ordered affected-candidate merges, and fail-closed full repair.</td>\n</tr>\n</tbody>\n</table>\n<h2>Required measurement matrix</h2>\n<p>The machine-readable authority is\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-leadership-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/performance-leadership-contract.json</code></a>.\nIt requires identical datasets, payloads, durability boundaries, warm-up, and\nobservation windows on dedicated Windows x64 and Linux x64 runners.\nThe manual-only\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/.github/workflows/performance-leadership.yml\" target=\"_blank\" rel=\"noreferrer\"><code>performance-leadership.yml</code></a>\nchecks out one full SHA on both runner classes, starts the digest-pinned current\nPostgreSQL 19 development milestone, executes the existing provider and\nmicrobenchmark capture, and archives each environment independently. It does\n<strong>not</strong> currently capture all 886 leadership comparisons or run the complete\nleadership evidence verifier. Debezium, native destination, SignalR, network,\nand full scaling comparisons still need capture adapters. A successful run of\nthat workflow is therefore supporting evidence, not a leadership-gate pass.\nThe same-SHA ratio/confidence and external-reference gates remain mandatory.\n<code>verify-performance-leadership-evidence.ps1</code> expands this contract into 886\nexact environment/workload comparisons: 536 for the Core scope and 350 for the\nContinuous Graph preview. It rejects missing or duplicate cases and evaluates\nboth the observed ratio and the conservative 95% confidence bound. Schema 3\nalso requires retained, nonempty artifacts and verifies their SHA-256 hashes. It\nchecks the environment manifests against an explicitly supplied candidate SHA,\nand rejects non-finite metrics and any <code>diagnostic</code> or <code>synthetic</code> label. Its\nself-test uses synthetic fixtures to test rejection paths; those fixtures are\nnot performance evidence.</p>\n<p>The verifier evaluates <strong>declared</strong> summary statistics and confidence bounds.\nThe <a href=\"/documentation/operations/operations-core-performance-evidence\">Core performance-evidence pipeline</a> now\nproduces them reproducibly. A generator derives every metric from retained raw\nsamples. It uses a seeded, commit-bound, expanded-percentile bootstrap of\nper-trial means to give separate candidate and reference bounds. An\nindependent, BCL-only checker then recomputes every trial value and bound from\nthe raw files before the schema-3 assembler runs. The manual\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/.github/workflows/core-performance-evidence.yml\" target=\"_blank\" rel=\"noreferrer\"><code>core-performance-evidence.yml</code></a>\nworkflow, or its local producer record, supplies\n<code>performance/performance-leadership-evidence.json</code> to Core readiness. The\nexisting provider budget gate permits ratios up to 1.00 or 1.05 depending on the\nworkload; passing it does not establish this programme’s stricter 0.98\nleadership threshold.</p>\n<p>The <a href=\"/documentation/operations/operations-provider-request-capture\">Provider request-level capture adapter</a>\nprovides all 16 feature adapters with a shared pool, independent workers,\nindividual-request samples, process counters, and observed TLS state. It now\nalso captures the constrained-network variant through a digest-pinned\nToxiproxy. The cross-OS Provider variants have no adopted meaning yet (see the\n<a href=\"/documentation/operations/qualification-provider-cross-os-variant-proposal\">proposal</a>), so they fail\nclosed and are reported as missing. Streams, Sync, Live, Control Plane and\nprimary hot-path harnesses are planned workflow legs that fail closed until\nthey are implemented. The pipeline therefore cannot yet produce passing Core\nevidence. Diagnostic captures are labelled and can never pass the verifier.\nThe paired log-t interval of the Provider analyzer is a different quantity. It\nis not relabelled as the verifier’s separate bounds.</p>\n<ul>\n<li>Provider: 16 features at concurrency 1, 64, and 256, including TLS and\nconstrained-network variants, against Npgsql 10.0.3.</li>\n<li>Streams: 1/1,000-change transactions, 4 MiB spill, snapshot/catch-up, and\ncommit-to-delivery against digest-pinned Debezium Server 3.6.1.Final.</li>\n<li>Sync: 1/100/1,000 mutations to NATS, Redis, OpenSearch, and PostgreSQL against\nDebezium plus each native destination client.</li>\n<li>Live: 10/1,000/100,000 rows and 1/64/1,000/10,000 subscribers, with churn and\nslow clients, against ASP.NET Core SignalR 10.</li>\n<li>Control Plane: 1/100/1,000 sources with 32/256 clients, compared with 1.0 and\nabsolute scale budgets.</li>\n<li>Continuous Graph: 1K/100K/1M edges, top-N 10/100/1,000, all three tiers, and\ninsert/update/delete/rank/truncate/two-phase/schema-drift scenarios, against\nprepared raw <code>GRAPH_TABLE</code> and 1.0 full requery.</li>\n</ul>\n<h2>Non-negotiable gates</h2>\n<p>Same-runtime mean, P95, P99, and allocation ratios must each be at most 0.98.\nCross-runtime throughput must be at least 1.05x and P95, P99, CPU/event, and\npeak RSS ratios at most 0.95. The 95% confidence interval must establish the\nwin. Unique workloads may regress no more than 2% from 1.0 and each family’s\nprimary hot path must improve P95 and allocation by at least 20%.</p>\n<p>Trusted CDC graph deltas must use at most 10% of full-requery P95 and allocation;\nauthoritative scoped deltas at most 35%. Every result set must retain raw\nsamples, commit SHA, environment and image manifests, allocation/CPU/RSS/GC\ncounters, verifier self-tests, and this readable consolidation.</p>\n<h2>Remaining evidence before release</h2>\n<ol>\n<li>Complete the external-reference capture adapters (Debezium Server, SignalR,\nBlueTusk 1.0.0 and the primary hot paths), and resolve the cross-OS Provider\nvariant decision. Statistics derivation and the independent raw-to-summary\ncheck now exist in the <a href=\"/documentation/operations/operations-core-performance-evidence\">Core pipeline</a>. Capture\nexact-final-SHA Windows and Linux evidence and run the ratio/confidence\nverifier.</li>\n<li>Archive Streams 72-hour, then Sync 24-hour, Live/Control Plane 24-hour, and,\nafter PostgreSQL 19 GA, Continuous Graph 24-hour endurance evidence.</li>\n<li>Run PostgreSQL 15–19, TLS, trimming, NativeAOT, package-consumer, Angular,\nsupply-chain, provenance, SBOM, install, and smoke gates.</li>\n<li>Obtain the independent coverage-guided CI handoff after the final branch\nupdate. This implementation does not trigger or iterate that workflow.</li>\n<li>Enable publication only after all evidence resolves to the same immutable\ncommit and PostgreSQL 19 GA image digest.</li>\n</ol>\n<p>Until those items pass, 1.2 is a performance-engineered candidate—not a blanket\n“faster everywhere” release claim.</p>\n<h2>Evidence artifact validation</h2>\n<p>Run the schema-3 verifier with the full SHA of the candidate being assessed:</p>\n"
+        "html": "<h1>BlueTusk 1.2 performance leadership programme</h1>\n<p><strong>Historical 1.1 RC basis:</strong> <code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code></p>\n<p><strong>Target release:</strong> 1.2.0 across Provider, Streams, Sync, Live, Control Plane, and\nContinuous Graph</p>\n<p><strong>Stable publication:</strong> disabled until every exact-candidate 1.2 gate passes,\nincluding digest-pinned PostgreSQL 19 GA. Earlier RC artifacts and measurements\nretain their original identities; they are not recertified as 1.2 evidence.</p>\n<p>This page keeps its original URL so existing links continue to work. The\nprogramme’s thresholds and workload matrix carry forward unchanged into 1.2.</p>\n<h2>Current verdict</h2>\n<p>Earlier Provider evidence passed the legacy 16-pair and saturated-pool budgets.\nThat does not establish the stricter programme target for the current 1.2\ncandidate. The complete leadership claim is <strong>not yet earned</strong>:\nfinal-stable-SHA Windows/Linux comparisons, confidence intervals, and endurance\nevidence remain mandatory. Missing evidence and ties fail. Local diagnostic\nimprovements are not a substitute for those release gates.</p>\n<h2>Implemented hot paths</h2>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>Implementation carried forward from 1.1</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Provider</td>\n<td>Integrates the <code>ac702d7</code> command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix.</td>\n</tr>\n<tr>\n<td>Streams</td>\n<td>Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay.</td>\n</tr>\n<tr>\n<td>Sync</td>\n<td>Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering.</td>\n</tr>\n<tr>\n<td>Live</td>\n<td>Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications.</td>\n</tr>\n<tr>\n<td>Control Plane</td>\n<td>Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache, and source-generated API JSON metadata.</td>\n</tr>\n<tr>\n<td>Continuous Graph</td>\n<td>Uses immutable compiler impact plans, trusted CDC projection only behind a complete explicit trust contract, automatic key-scoped authoritative queries, ordered affected-candidate merges, and fail-closed full repair.</td>\n</tr>\n</tbody>\n</table>\n<h2>Required measurement matrix</h2>\n<p>The machine-readable authority is\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-leadership-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/performance-leadership-contract.json</code></a>.\nIt requires identical datasets, payloads, durability boundaries, warm-up, and\nobservation windows on dedicated Windows x64 and Linux x64 runners.\nThe manual-only\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/.github/workflows/performance-leadership.yml\" target=\"_blank\" rel=\"noreferrer\"><code>performance-leadership.yml</code></a>\nchecks out one full SHA on both runner classes, starts the digest-pinned current\nPostgreSQL 19 development milestone, executes the existing provider and\nmicrobenchmark capture, and archives each environment independently. It does\n<strong>not</strong> currently capture all 886 leadership comparisons or run the complete\nleadership evidence verifier. Debezium, native destination, SignalR, network,\nand full scaling comparisons still need capture adapters. A successful run of\nthat workflow is therefore supporting evidence, not a leadership-gate pass.\nThe same-SHA ratio/confidence and external-reference gates remain mandatory.\n<code>verify-performance-leadership-evidence.ps1</code> expands this contract into 886\nexact environment/workload comparisons: 536 for the Core scope and 350 for the\nContinuous Graph preview. It rejects missing or duplicate cases and evaluates\nboth the observed ratio and the conservative 95% confidence bound. Schema 3\nalso requires retained, nonempty artifacts and verifies their SHA-256 hashes. It\nchecks the environment manifests against an explicitly supplied candidate SHA,\nand rejects non-finite metrics and any <code>diagnostic</code> or <code>synthetic</code> label. Its\nself-test uses synthetic fixtures to test rejection paths; those fixtures are\nnot performance evidence.</p>\n<p>The verifier evaluates <strong>declared</strong> summary statistics and confidence bounds.\nThe <a href=\"/documentation/operations/operations-core-performance-evidence\">Core performance-evidence pipeline</a> now\nproduces them reproducibly. A generator derives every metric from retained raw\nsamples. It uses a seeded, commit-bound, conservative studentized bootstrap of\nper-trial means to give separate candidate and reference bounds. An\nindependent, BCL-only checker then recomputes every trial value and bound from\nthe raw files before the schema-3 assembler runs. The manual\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/.github/workflows/core-performance-evidence.yml\" target=\"_blank\" rel=\"noreferrer\"><code>core-performance-evidence.yml</code></a>\nworkflow, or its local producer record, supplies\n<code>performance/performance-leadership-evidence.json</code> to Core readiness. The\nexisting provider budget gate permits ratios up to 1.00 or 1.05 depending on the\nworkload; passing it does not establish this programme’s stricter 0.98\nleadership threshold.</p>\n<p>The <a href=\"/documentation/operations/operations-provider-request-capture\">Provider request-level capture adapter</a>\nprovides all 16 feature adapters with a shared pool, independent workers,\nindividual-request samples, process counters, and observed TLS state. It now\nalso captures the constrained-network variant through a digest-pinned\nToxiproxy. The cross-OS Provider variants have no adopted meaning yet (see the\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-cross-os-proposal.md\" target=\"_blank\" rel=\"noreferrer\">proposal</a>), so they fail\nclosed and are reported as missing. Streams, Sync, Live, Control Plane and\nprimary hot-path harnesses are planned workflow legs that fail closed until\nthey are implemented. The pipeline therefore cannot yet produce passing Core\nevidence. Diagnostic captures are labelled and can never pass the verifier.\nThe paired log-t interval of the Provider analyzer is a different quantity. It\nis not relabelled as the verifier’s separate bounds.</p>\n<ul>\n<li>Provider: 16 features at concurrency 1, 64, and 256, including TLS and\nconstrained-network variants, against Npgsql 10.0.3.</li>\n<li>Streams: 1/1,000-change transactions, 4 MiB spill, snapshot/catch-up, and\ncommit-to-delivery against digest-pinned Debezium Server 3.6.1.Final.</li>\n<li>Sync: 1/100/1,000 mutations to NATS, Redis, OpenSearch, and PostgreSQL against\nDebezium plus each native destination client.</li>\n<li>Live: 10/1,000/100,000 rows and 1/64/1,000/10,000 subscribers, with churn and\nslow clients, against ASP.NET Core SignalR 10.</li>\n<li>Control Plane: 1/100/1,000 sources with 32/256 clients, compared with 1.0 and\nabsolute scale budgets.</li>\n<li>Continuous Graph: 1K/100K/1M edges, top-N 10/100/1,000, all three tiers, and\ninsert/update/delete/rank/truncate/two-phase/schema-drift scenarios, against\nprepared raw <code>GRAPH_TABLE</code> and 1.0 full requery.</li>\n</ul>\n<h2>Non-negotiable gates</h2>\n<p>Same-runtime mean, P95, P99, and allocation ratios must each be at most 0.98.\nCross-runtime throughput must be at least 1.05x and P95, P99, CPU/event, and\npeak RSS ratios at most 0.95. The 95% confidence interval must establish the\nwin. Unique workloads may regress no more than 2% from 1.0 and each family’s\nprimary hot path must improve P95 and allocation by at least 20%.</p>\n<p>Trusted CDC graph deltas must use at most 10% of full-requery P95 and allocation;\nauthoritative scoped deltas at most 35%. Every result set must retain raw\nsamples, commit SHA, environment and image manifests, allocation/CPU/RSS/GC\ncounters, verifier self-tests, and this readable consolidation.</p>\n<h2>Remaining evidence before release</h2>\n<ol>\n<li>Complete the external-reference capture adapters (Debezium Server, SignalR,\nBlueTusk 1.0.0 and the primary hot paths), and resolve the cross-OS Provider\nvariant decision. Statistics derivation and the independent raw-to-summary\ncheck now exist in the <a href=\"/documentation/operations/operations-core-performance-evidence\">Core pipeline</a>. Capture\nexact-final-SHA Windows and Linux evidence and run the ratio/confidence\nverifier.</li>\n<li>Archive Streams 72-hour, then Sync 24-hour, Live/Control Plane 24-hour, and,\nafter PostgreSQL 19 GA, Continuous Graph 24-hour endurance evidence.</li>\n<li>Run PostgreSQL 15–19, TLS, trimming, NativeAOT, package-consumer, Angular,\nsupply-chain, provenance, SBOM, install, and smoke gates.</li>\n<li>Obtain the independent coverage-guided CI handoff after the final branch\nupdate. This implementation does not trigger or iterate that workflow.</li>\n<li>Enable publication only after all evidence resolves to the same immutable\ncommit and PostgreSQL 19 GA image digest.</li>\n</ol>\n<p>Until those items pass, 1.2 is a performance-engineered candidate—not a blanket\n“faster everywhere” release claim.</p>\n<h2>Evidence artifact validation</h2>\n<p>Run the schema-3 verifier with the full SHA of the candidate being assessed:</p>\n"
       },
       {
         "kind": "code",
@@ -4619,92 +4619,6 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
-    "slug": "qualification-provider-cross-os-variant-proposal",
-    "summary": "Status: proposal for the contract owner. Nothing here is adopted. The committed variant map keeps \"crossOsProfile\": \"unresolved\", so the",
-    "keywords": [
-      "docs",
-      "qualification",
-      "provider",
-      "cross",
-      "os",
-      "variant",
-      "proposal"
-    ],
-    "order": 1128,
-    "title": "Proposal: meaning of the cross-OS Provider variants",
-    "sourcePath": "docs/qualification/provider-cross-os-variant-proposal.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/qualification/provider-cross-os-variant-proposal.md",
-    "headings": [
-      {
-        "id": "proposal-meaning-of-the-cross-os-provider-variants",
-        "text": "Proposal: meaning of the cross-OS Provider variants",
-        "level": 1
-      },
-      {
-        "id": "the-problem",
-        "text": "The problem",
-        "level": 2
-      },
-      {
-        "id": "options-considered",
-        "text": "Options considered",
-        "level": 2
-      },
-      {
-        "id": "proposal",
-        "text": "Proposal",
-        "level": 2
-      },
-      {
-        "id": "adopting-the-windows-half-one-line-change",
-        "text": "Adopting the Windows half (one-line change)",
-        "level": 3
-      },
-      {
-        "id": "contract-change-needed-for-the-linux-half-proposal-only-not-applied",
-        "text": "Contract change needed for the Linux half (proposal only; not applied)",
-        "level": 3
-      },
-      {
-        "id": "fairness-notes-for-the-container-client",
-        "text": "Fairness notes for the container client",
-        "level": 2
-      }
-    ],
-    "wordCount": 760,
-    "readMinutes": 4,
-    "searchText": "Proposal: meaning of the cross-OS Provider variants **Status:** proposal for the contract owner. Nothing here is adopted. The committed [variant map](../../eng/performance-variant-map.json) keeps `\"crossOsProfile\": \"unresolved\"`, so the two cross-OS capture legs fail closed and those workloads are reported as missing. The problem [`performance-leadership-contract.json`](../../eng/performance-leadership-contract.json) lists the Provider variants `windows`, `linux`, `tls` and `constrained-network`. [`verify-performance-leadership-evidence.ps1`](../../eng/verify-performance-leadership-evidence.ps1) crosses **every** environment with **every** variant. That produces four workload keys per feature, concurrency and environment: Environment `variant=windows` `variant=linux` `variant=tls` `variant=constrained-network` windows same-OS baseline **undefined** defined defined linux **undefined** same-OS baseline defined defined The 96 cross-OS keys (16 features x 3 concurrency levels x 2 environments) have no unambiguous meaning on one host. They are part of the 384 Provider comparisons that the verifier requires. **Rule kept by the pipeline:** these keys are never filled with copies of same-OS data. The generator rejects them while the map says `unresolved`. The generator and the independent checker also require each raw capture's own `environment.os` to equal the profile's client OS, and they reject two trials with identical bytes. A relabelled copy of a same-OS capture therefore fails, even with a changed map. Options considered **The variant names the PostgreSQL server OS.** This would need PostgreSQL running natively on Windows next to the Linux container image. That is a different server build and configuration, so it measures the server, not the Provider. It would also need a Windows server on the Linux runner. Rejected. **The variant names the client runtime OS** (proposed). The server is always the same digest-pinned Linux PostgreSQL container. The variant says which O",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>Proposal: meaning of the cross-OS Provider variants</h1>\n<p><strong>Status:</strong> proposal for the contract owner. Nothing here is adopted. The committed\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-variant-map.json\" target=\"_blank\" rel=\"noreferrer\">variant map</a> keeps <code>&quot;crossOsProfile&quot;: &quot;unresolved&quot;</code>, so the\ntwo cross-OS capture legs fail closed and those workloads are reported as missing.</p>\n<h2>The problem</h2>\n<p><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-leadership-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>performance-leadership-contract.json</code></a> lists the\nProvider variants <code>windows</code>, <code>linux</code>, <code>tls</code> and <code>constrained-network</code>.\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/verify-performance-leadership-evidence.ps1\" target=\"_blank\" rel=\"noreferrer\"><code>verify-performance-leadership-evidence.ps1</code></a>\ncrosses <strong>every</strong> environment with <strong>every</strong> variant. That produces four workload keys per feature,\nconcurrency and environment:</p>\n<table>\n<thead>\n<tr>\n<th>Environment</th>\n<th><code>variant=windows</code></th>\n<th><code>variant=linux</code></th>\n<th><code>variant=tls</code></th>\n<th><code>variant=constrained-network</code></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>windows</td>\n<td>same-OS baseline</td>\n<td><strong>undefined</strong></td>\n<td>defined</td>\n<td>defined</td>\n</tr>\n<tr>\n<td>linux</td>\n<td><strong>undefined</strong></td>\n<td>same-OS baseline</td>\n<td>defined</td>\n<td>defined</td>\n</tr>\n</tbody>\n</table>\n<p>The 96 cross-OS keys (16 features x 3 concurrency levels x 2 environments) have no unambiguous\nmeaning on one host. They are part of the 384 Provider comparisons that the verifier requires.</p>\n<p><strong>Rule kept by the pipeline:</strong> these keys are never filled with copies of same-OS data. The\ngenerator rejects them while the map says <code>unresolved</code>. The generator and the independent checker\nalso require each raw capture’s own <code>environment.os</code> to equal the profile’s client OS, and they\nreject two trials with identical bytes. A relabelled copy of a same-OS capture therefore fails,\neven with a changed map.</p>\n<h2>Options considered</h2>\n<ol>\n<li><strong>The variant names the PostgreSQL server OS.</strong> This would need PostgreSQL running natively on\nWindows next to the Linux container image. That is a different server build and configuration,\nso it measures the server, not the Provider. It would also need a Windows server on the Linux\nrunner. Rejected.</li>\n<li><strong>The variant names the client runtime OS</strong> (proposed). The server is always the same\ndigest-pinned Linux PostgreSQL container. The variant says which OS the measured .NET client\nprocess runs on.</li>\n<li><strong>Remove the cross-OS keys</strong> (contract change). The four variants become three per environment.</li>\n</ol>\n<h2>Proposal</h2>\n<p>Adopt option 2 for the Windows environment now. Make a contract change for the Linux environment,\nbecause a Windows client cannot run on a Linux host.</p>\n<table>\n<thead>\n<tr>\n<th>Key</th>\n<th>Meaning under this proposal</th>\n<th>Producible on the single Windows PC?</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>windows|…|variant=windows</code></td>\n<td>Windows-native client, Linux PostgreSQL container</td>\n<td>Yes (<code>native</code> profile)</td>\n</tr>\n<tr>\n<td><code>windows|…|variant=linux</code></td>\n<td>The same Release build runs in a digest-pinned <code>mcr.microsoft.com/dotnet/aspnet:10.0</code> Linux container on the Windows host’s Docker (WSL2), on the fixture network, against the same server</td>\n<td>Yes (<code>linux-container-client</code> profile, already implemented)</td>\n</tr>\n<tr>\n<td><code>linux|…|variant=linux</code></td>\n<td>Native Linux client in the Linux runner, Linux PostgreSQL container</td>\n<td>Yes (<code>native</code> profile)</td>\n</tr>\n<tr>\n<td><code>linux|…|variant=windows</code></td>\n<td>A Windows client against the Linux runner’s server</td>\n<td><strong>No.</strong> Windows containers need a Windows kernel. It would need a second, Windows, machine that drives the Linux leg’s server.</td>\n</tr>\n</tbody>\n</table>\n<h3>Adopting the Windows half (one-line change)</h3>\n<p>In <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-variant-map.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/performance-variant-map.json</code></a>, change:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "-  \"crossOsProfile\": \"unresolved\",\n+  \"crossOsProfile\": \"linux-container-client\",\n",
-        "highlighted": "<span class=\"hljs-deletion\">-  &quot;crossOsProfile&quot;: &quot;unresolved&quot;,</span>\n<span class=\"hljs-addition\">+  &quot;crossOsProfile&quot;: &quot;linux-container-client&quot;,</span>\n",
-        "language": "diff"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The plan, capture, generator, checker and assembler all read this table. The\n<code>linux-container-client</code> profile declares <code>hostOs: [&quot;windows&quot;]</code>. The <code>windows-provider-linux</code> leg\ntherefore becomes runnable. The <code>linux-provider-windows</code> leg is planned as <code>unavailable-on-host</code>\nand still fails closed.</p>\n<h3>Contract change needed for the Linux half (proposal only; not applied)</h3>\n<p>The contract and verifier are deliberately unchanged in this PR. One minimal change that keeps\nevery other gate intact is to make variants per environment:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": " \"Provider\": {\n   ...\n-  \"variants\": [\"windows\", \"linux\", \"tls\", \"constrained-network\"]\n+  \"variants\": [\"windows\", \"linux\", \"tls\", \"constrained-network\"],\n+  \"variantsByEnvironment\": {\n+    \"windows\": [\"windows\", \"linux\", \"tls\", \"constrained-network\"],\n+    \"linux\": [\"linux\", \"tls\", \"constrained-network\"]\n+  }\n }\n",
-        "highlighted": " &quot;Provider&quot;: {\n   ...\n<span class=\"hljs-deletion\">-  &quot;variants&quot;: [&quot;windows&quot;, &quot;linux&quot;, &quot;tls&quot;, &quot;constrained-network&quot;]</span>\n<span class=\"hljs-addition\">+  &quot;variants&quot;: [&quot;windows&quot;, &quot;linux&quot;, &quot;tls&quot;, &quot;constrained-network&quot;],</span>\n<span class=\"hljs-addition\">+  &quot;variantsByEnvironment&quot;: {</span>\n<span class=\"hljs-addition\">+    &quot;windows&quot;: [&quot;windows&quot;, &quot;linux&quot;, &quot;tls&quot;, &quot;constrained-network&quot;],</span>\n<span class=\"hljs-addition\">+    &quot;linux&quot;: [&quot;linux&quot;, &quot;tls&quot;, &quot;constrained-network&quot;]</span>\n<span class=\"hljs-addition\">+  }</span>\n }\n",
-        "language": "diff"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Then <code>verify-performance-leadership-evidence.ps1</code> would iterate\n<code>variantsByEnvironment.&lt;os&gt;</code> instead of <code>variants</code>. The Core Provider count would fall from 384 to\n336 (Core total from 536 to 488). The contract verifier would pin the new table, and the verifier\nself-test would expand it the same way. The owner may prefer the simpler symmetric alternative,\n<code>[&quot;native&quot;, &quot;tls&quot;, &quot;constrained-network&quot;]</code> for both environments (288 Provider comparisons). That\ndrops the container-client measurement completely.</p>\n<p>Either change must update the contract, the contract verifier, the evidence verifier, its\nself-test and <code>PerformanceEvidenceGenerator.ExpectedCoreWorkloads</code> together. The assembler and\nchecker derive their expectations from the same expansion.</p>\n<h2>Fairness notes for the container client</h2>\n<ul>\n<li>Candidate and reference run the same harness build, the same options and the same process\nrestarts inside the same container image. Ratios therefore compare like with like.</li>\n<li>The container client reaches PostgreSQL over the Docker bridge network. The Windows-native client\nreaches it through a published loopback port. Absolute latencies are not comparable between those\ntwo variants, and the evidence never compares them with each other.</li>\n<li>The WSL2 VM’s CPU and memory allocation is recorded by the environment manifest\n(<code>docker info</code> CPU and memory). It must not change during a capture.</li>\n</ul>\n"
-      }
-    ]
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
     "slug": "release-process",
     "summary": "BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish.",
     "keywords": [
@@ -4712,7 +4626,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "process"
     ],
-    "order": 1133,
+    "order": 1132,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -4760,7 +4674,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1135,
+    "order": 1134,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -4811,7 +4725,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1136,
+    "order": 1135,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -4896,7 +4810,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1137,
+    "order": 1136,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -4941,7 +4855,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1139,
+    "order": 1138,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -4989,7 +4903,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1140,
+    "order": 1139,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -5091,7 +5005,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "schema",
       "README"
     ],
-    "order": 1144,
+    "order": 1143,
     "title": "BlueTusk Schema",
     "sourcePath": "docs/schema/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
@@ -5214,7 +5128,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "catalogue",
       "attestation"
     ],
-    "order": 1145,
+    "order": 1144,
     "title": "Catalogue consistency attestation",
     "sourcePath": "docs/schema/catalogue-attestation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
@@ -5276,7 +5190,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "README"
     ],
-    "order": 1146,
+    "order": 1145,
     "title": "BlueTusk.Search",
     "sourcePath": "docs/search/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
@@ -5388,7 +5302,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "capacity"
     ],
-    "order": 1147,
+    "order": 1146,
     "title": "Search mixed ingestion and retrieval capacity campaign",
     "sourcePath": "docs/search/capacity.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/capacity.md",
@@ -5445,7 +5359,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sql",
       "README"
     ],
-    "order": 1149,
+    "order": 1148,
     "title": "BlueTusk Sql",
     "sourcePath": "docs/sql/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
@@ -5527,7 +5441,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "studio",
       "README"
     ],
-    "order": 1166,
+    "order": 1165,
     "title": "BlueTusk Studio",
     "sourcePath": "docs/studio/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
@@ -5619,7 +5533,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1175,
+    "order": 1174,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -5677,7 +5591,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1176,
+    "order": 1175,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -5724,7 +5638,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "workflows",
       "README"
     ],
-    "order": 1177,
+    "order": 1176,
     "title": "BlueTusk.Workflows",
     "sourcePath": "docs/workflows/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",

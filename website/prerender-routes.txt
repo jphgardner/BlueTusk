@@ -170,7 +170,6 @@
 /documentation/operations/projections-recovery
 /documentation/operations/projections-evidence
 /documentation/operations/provider-release-notes-1-0-0
-/documentation/operations/qualification-provider-cross-os-variant-proposal
 /documentation/operations/release-process
 /documentation/operations/release-review-handoff
 /documentation/operations/releases-1-0-0-publication-record

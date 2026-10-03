@@ -8,7 +8,7 @@ written**. The contract is not relaxed anywhere in the pipeline.
 
 **Status:** pipeline implemented; evidence not yet producible. Provider capture works for the
 same-OS, TLS and constrained-network variants. The cross-OS Provider variants are unresolved (see
-the [proposal](../qualification/provider-cross-os-variant-proposal.md)). The Streams, Sync, Live,
+the [proposal](../../eng/performance-cross-os-proposal.md)). The Streams, Sync, Live,
 Control Plane and primary hot-path harnesses are planned legs that fail closed. Until all of these
 exist, a qualification run fails and the verifier reports the missing workloads. That is the
 intended outcome.

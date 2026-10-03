@@ -61,7 +61,7 @@ not performance evidence.
 The verifier evaluates **declared** summary statistics and confidence bounds.
 The [Core performance-evidence pipeline](core-performance-evidence.md) now
 produces them reproducibly. A generator derives every metric from retained raw
-samples. It uses a seeded, commit-bound, expanded-percentile bootstrap of
+samples. It uses a seeded, commit-bound, conservative studentized bootstrap of
 per-trial means to give separate candidate and reference bounds. An
 independent, BCL-only checker then recomputes every trial value and bound from
 the raw files before the schema-3 assembler runs. The manual
@@ -77,7 +77,7 @@ provides all 16 feature adapters with a shared pool, independent workers,
 individual-request samples, process counters, and observed TLS state. It now
 also captures the constrained-network variant through a digest-pinned
 Toxiproxy. The cross-OS Provider variants have no adopted meaning yet (see the
-[proposal](../qualification/provider-cross-os-variant-proposal.md)), so they fail
+[proposal](../../eng/performance-cross-os-proposal.md)), so they fail
 closed and are reported as missing. Streams, Sync, Live, Control Plane and
 primary hot-path harnesses are planned workflow legs that fail closed until
 they are implemented. The pipeline therefore cannot yet produce passing Core

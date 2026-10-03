@@ -1,14 +1,14 @@
 # Proposal: meaning of the cross-OS Provider variants
 
 **Status:** proposal for the contract owner. Nothing here is adopted. The committed
-[variant map](../../eng/performance-variant-map.json) keeps `"crossOsProfile": "unresolved"`, so the
+[variant map](performance-variant-map.json) keeps `"crossOsProfile": "unresolved"`, so the
 two cross-OS capture legs fail closed and those workloads are reported as missing.
 
 ## The problem
 
-[`performance-leadership-contract.json`](../../eng/performance-leadership-contract.json) lists the
+[`performance-leadership-contract.json`](performance-leadership-contract.json) lists the
 Provider variants `windows`, `linux`, `tls` and `constrained-network`.
-[`verify-performance-leadership-evidence.ps1`](../../eng/verify-performance-leadership-evidence.ps1)
+[`verify-performance-leadership-evidence.ps1`](verify-performance-leadership-evidence.ps1)
 crosses **every** environment with **every** variant. That produces four workload keys per feature,
 concurrency and environment:
 
@@ -51,7 +51,7 @@ because a Windows client cannot run on a Linux host.
 
 ### Adopting the Windows half (one-line change)
 
-In [`eng/performance-variant-map.json`](../../eng/performance-variant-map.json), change:
+In [`eng/performance-variant-map.json`](performance-variant-map.json), change:
 
 ```diff
 -  "crossOsProfile": "unresolved",
