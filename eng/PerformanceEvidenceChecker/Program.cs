@@ -38,9 +38,10 @@ internal sealed class CheckFailedException(string message) : Exception(message);
 
 internal static class Checker
 {
-    private const string Method = "expanded-percentile-bootstrap-of-trial-means/1";
+    private const string Method = "conservative-studentized-bootstrap-of-trial-means/2";
     private const int Resamples = 10_000;
-    private const string SeedPrefix = "bluetusk-performance-bootstrap/v1|";
+    private const string SeedPrefix = "bluetusk-performance-bootstrap/v2|";
+    private const double TailProbability = 0.005;
     private const double Tolerance = 1e-9;
     private static readonly string[] Metrics =
         ["throughput", "mean", "p95", "p99", "allocatedBytes", "cpuPerEvent", "peakRss", "gcCounters"];
@@ -80,7 +81,7 @@ internal static class Checker
 
         var statistics = summary.GetProperty("statistics");
         var seed = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(SeedPrefix + commit)));
-        Require(Str(statistics, "method") == Method && Dbl(statistics, "confidenceLevel") == 0.95 &&
+        Require(Str(statistics, "method") == Method && Dbl(statistics, "confidenceLevel") == 0.95 && Dbl(statistics, "intervalConfidenceLevel") == 0.99 &&
             Int(statistics, "resamples") == Resamples && Str(statistics, "seed") == seed,
             "Summary statistics method, confidence, resample count or commit-bound seed differs from the specification.");
 
@@ -149,7 +150,7 @@ internal static class Checker
         Require(trials.Select(trial => trial.Sha256).Distinct(StringComparer.Ordinal).Count() == trials.Count,
             "Two trials share identical raw content; copied captures are not separate measurements.");
 
-        var alphaTable = statistics.GetProperty("expandedAlphaByTrials");
+        Require(Dbl(statistics, "tailProbability") == TailProbability, "Statistics tail probability differs from 0.005.");
         var plans = new Dictionary<int, int[]>();
         var comparisons = summary.GetProperty("comparisons").EnumerateArray().ToArray();
         var groups = trials.GroupBy(trial => trial.Key, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
@@ -175,17 +176,15 @@ internal static class Checker
             var n = candidate.Length;
             Require(Str(comparison, "mode") == mode && Dbl(comparison, "confidenceLevel") == 0.95 && Int(comparison, "trials") == n &&
                 Str(comparison, "inputId") == owner[key], $"Comparison '{key}' mode, confidence, trial count or input differs.");
-            Require(n == reference.Length && n + reference.Length == group.Length && n >= (diagnostic ? 3 : 10) && n <= 50 &&
+            Require(n == reference.Length && n + reference.Length == group.Length && n >= (diagnostic ? 3 : 30) && n <= 50 &&
                 candidate.Select(trial => trial.Trial).SequenceEqual(Enumerable.Range(0, n)) &&
                 reference.Select(trial => trial.Trial).SequenceEqual(Enumerable.Range(0, n)),
                 $"Comparison '{key}' does not have complete matched trials.");
             CompareTrials(key, "candidate", candidate, comparison.GetProperty("candidateTrials"));
             CompareTrials(key, "reference", reference, comparison.GetProperty("referenceTrials"));
 
-            var alpha = Dbl(comparison, "expandedAlpha");
-            Require(Math.Abs(alpha - ExpandedAlpha(n)) <= 1e-6 &&
-                Dbl(alphaTable, n.ToString(CultureInfo.InvariantCulture)) == alpha,
-                $"Comparison '{key}' expanded alpha differs from the independent Student-t/normal derivation.");
+            Require(Dbl(comparison, "tailProbability") == TailProbability,
+                $"Comparison '{key}' tail probability differs from 0.005.");
             if (!plans.TryGetValue(n, out var plan))
             {
                 plan = Plan(seed, n);
@@ -198,7 +197,7 @@ internal static class Checker
                 var value = metrics.GetProperty(metric);
                 foreach (var (role, roleTrials) in new[] { ("candidate", candidate), ("reference", reference) })
                 {
-                    var (point, lower, upper) = Bootstrap(roleTrials.Select(trial => trial.Values[metric]).ToArray(), plan, alpha);
+                    var (point, lower, upper) = Bootstrap(roleTrials.Select(trial => trial.Values[metric]).ToArray(), plan);
                     Near(Dbl(value, role), point, $"{key} {metric} {role}");
                     Near(Dbl(value, role + "CiLower"), lower, $"{key} {metric} {role} lower bound");
                     Near(Dbl(value, role + "CiUpper"), upper, $"{key} {metric} {role} upper bound");
@@ -430,25 +429,53 @@ internal static class Checker
         return plan;
     }
 
-    private static (double Point, double Lower, double Upper) Bootstrap(double[] values, int[] plan, double alpha)
+    private static (double Point, double Lower, double Upper) Bootstrap(double[] values, int[] plan)
     {
         var n = values.Length;
+        Require(n >= 2 && n <= 50 && plan.Length == n * Resamples && values.All(value => double.IsFinite(value) && value >= 0) &&
+            plan.All(index => index >= 0 && index < n), "Invalid studentized bootstrap inputs.");
         var point = values.Sum() / n;
-        var means = new double[Resamples];
+        Require(double.IsFinite(point), "Trial mean overflowed.");
+        double Error(double[] sample)
+        {
+            // Independent implementation: Welford's online sample variance.
+            double mean = 0, squared = 0;
+            for (var i = 0; i < sample.Length; i++)
+            {
+                var difference = sample[i] - mean;
+                mean += difference / (i + 1);
+                squared += difference * (sample[i] - mean);
+            }
+            var error = Math.Sqrt(squared / (sample.Length * (sample.Length - 1.0)));
+            Require(double.IsFinite(error), "Trial standard error overflowed.");
+            return error;
+        }
+        var originalError = Error(values);
+        if (originalError == 0) return (point, point, point);
+        var pivots = new double[Resamples];
+        var sample = new double[n];
         for (var b = 0; b < Resamples; b++)
         {
             var total = 0d;
-            for (var j = 0; j < n; j++) total += values[plan[b * n + j]];
-            means[b] = total / n;
+            for (var j = 0; j < n; j++)
+            {
+                sample[j] = values[plan[b * n + j]];
+                total += sample[j];
+            }
+            var mean = total / n;
+            var error = Error(sample);
+            pivots[b] = error == 0
+                ? mean == point ? 0 : Math.CopySign(double.PositiveInfinity, mean - point)
+                : (mean - point) / error;
         }
-        Array.Sort(means);
-        var lower = Math.Clamp((int)Math.Floor(Resamples * (alpha / 2)), 0, Resamples - 1);
-        var upper = Math.Clamp((int)Math.Ceiling(Resamples * (1 - alpha / 2)) - 1, 0, Resamples - 1);
-        return (point, Math.Min(means[lower], point), Math.Max(means[upper], point));
+        Array.Sort(pivots);
+        var lowerIndex = (int)Math.Floor(Resamples * TailProbability);
+        var upperIndex = (int)Math.Ceiling(Resamples * (1 - TailProbability)) - 1;
+        var lower = point - pivots[upperIndex] * originalError;
+        var upper = point - pivots[lowerIndex] * originalError;
+        Require(double.IsFinite(lower) && double.IsFinite(upper), "Studentized interval is unbounded; more independent trials are required.");
+        return (point, Math.Max(0, Math.Min(lower, point)), Math.Max(upper, point));
     }
-
-    private static double ExpandedAlpha(int n) =>
-        2 * NormalCdf(-Math.Sqrt(n / (n - 1.0)) * StudentT975[n - 2]);
 
     // Hart (1968) / West (2005) double-precision cumulative normal.
     private static double NormalCdf(double x)
@@ -511,11 +538,11 @@ internal static class Checker
         Require(Math.Abs(NormalCdf(-1.959963984540054) - 0.025) < 1e-12 && Math.Abs(NormalCdf(1) - 0.841344746068543) < 1e-12 &&
             Math.Abs(NormalCdf(-3) - 0.0013498980316301) < 1e-14, "Cumulative normal reference values differ.");
         // 3. Percentile arithmetic and nearest rank.
-        var plan = Plan(new string('0', 64), 4);
-        Require(plan.All(index => index is >= 0 and < 4), "Plan indices must be in range.");
-        var (point, lower, upper) = Bootstrap([1, 2, 3, 4], plan, 0.05);
-        Require(point == 2.5 && lower < 2.5 && upper > 2.5 && lower >= 1 && upper <= 4, "Bootstrap bounds must bracket the mean.");
-        var constant = Bootstrap([5, 5, 5, 5], plan, 0.05);
+        var plan = Plan(new string('0', 64), 10);
+        Require(plan.All(index => index is >= 0 and < 10), "Plan indices must be in range.");
+        var (point, lower, upper) = Bootstrap(Enumerable.Range(1, 10).Select(value => (double)value).ToArray(), plan);
+        Require(point == 5.5 && lower < 5.5 && upper > 5.5 && lower >= 0, "Bootstrap bounds must bracket the mean.");
+        var constant = Bootstrap(Enumerable.Repeat(5d, 10).ToArray(), plan);
         Require(constant == (5, 5, 5), "Constant samples need degenerate bounds.");
         var scan = Scan(Encoding.UTF8.GetBytes(
             "{\"measurement\":{\"workers\":[{\"requestTicks\":[3,1,2],\"count\":3},{\"requestTicks\":[4],\"count\":1}],\"gcCollections\":[1,0,0]," +

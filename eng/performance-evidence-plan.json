@@ -7,11 +7,13 @@
   "variantMap": "eng/performance-variant-map.json",
   "networkProfiles": "eng/performance-network-profiles.json",
   "statistics": {
-    "method": "expanded-percentile-bootstrap-of-trial-means/1",
+    "method": "conservative-studentized-bootstrap-of-trial-means/2",
     "confidenceLevel": 0.95,
+    "intervalConfidenceLevel": 0.99,
+    "tailProbability": 0.005,
     "resamples": 10000,
-    "seedPrefix": "bluetusk-performance-bootstrap/v1|",
-    "minimumQualificationTrials": 10,
+    "seedPrefix": "bluetusk-performance-bootstrap/v2|",
+    "minimumQualificationTrials": 30,
     "minimumDiagnosticTrials": 3,
     "maximumTrials": 50
   },

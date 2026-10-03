@@ -25,10 +25,10 @@ on:
         options: [qualification, diagnostic]
         default: qualification
       trials:
-        description: Process trials per provider and workload (qualification minimum 10)
+        description: Process trials per provider and workload (qualification minimum 30)
         required: true
         type: string
-        default: '10'
+        default: '30'
       families:
         description: Diagnostic subset, comma separated; qualification always plans every leg
         required: false
@@ -68,11 +68,17 @@ jobs:
           if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'candidate_sha must be a full lowercase Git SHA.' }
           if ((git rev-parse HEAD).Trim() -cne $env:CANDIDATE_SHA) { throw 'Checked-out commit differs from candidate_sha.' }
           if ($env:TRIALS -notmatch '^\d{1,2}$' -or [int]$env:TRIALS -gt 50 -or
-              ($env:EVIDENCE_CLASS -eq 'qualification' -and [int]$env:TRIALS -lt 10) -or [int]$env:TRIALS -lt 3) {
-            throw 'Trials must be 10..50 for qualification and 3..50 for diagnostics.'
+              ($env:EVIDENCE_CLASS -eq 'qualification' -and [int]$env:TRIALS -lt 30) -or [int]$env:TRIALS -lt 3) {
+            throw 'Trials must be 30..50 for qualification and 3..50 for diagnostics.'
           }
           ./eng/verify-performance-leadership-contract.ps1
           $plan = ./eng/get-core-performance-capture-plan.ps1 -EvidenceClass $env:EVIDENCE_CLASS -Families $env:FAMILIES | ConvertFrom-Json
+          if ($env:EVIDENCE_CLASS -eq 'qualification') {
+            $unavailable = @($plan.capture.include | Where-Object { $_.status -cnotin @('ready', 'implemented') })
+            if ($unavailable.Count -ne 0) {
+              throw "Qualification producers are incomplete: $(($unavailable | ForEach-Object { $_.leg + ': ' + $_.status }) -join '; '). No measurement jobs will start."
+            }
+          }
           "capture=$($plan.capture | ConvertTo-Json -Depth 6 -Compress)" >> $env:GITHUB_OUTPUT
           "environments=$($plan.environments | ConvertTo-Json -Depth 6 -Compress)" >> $env:GITHUB_OUTPUT
           $plan.capture.include | ForEach-Object { "$($_.leg): $($_.status)" }
@@ -123,8 +129,12 @@ jobs:
           LEG_KIND: ${{ matrix.kind }}
           LEG_VARIANT: ${{ matrix.variant }}
           LEG_FAMILY: ${{ matrix.family }}
+          LEG_CONCURRENCY: ${{ matrix.concurrency }}
         run: |
+          $providerArguments = @{}
+          if ($env:LEG_KIND -eq 'provider') { $providerArguments.Concurrency = @([int]$env:LEG_CONCURRENCY) }
           ./eng/invoke-core-performance-capture.ps1 `
+            @providerArguments `
             -Os $env:LEG_OS -Kind $env:LEG_KIND -Variant $env:LEG_VARIANT -Family $env:LEG_FAMILY `
             -ExpectedCommit $env:CANDIDATE_SHA `
             -EvidenceStore (Join-Path $env:BLUETUSK_EVIDENCE_STORE "$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT") `

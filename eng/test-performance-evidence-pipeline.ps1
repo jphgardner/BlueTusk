@@ -38,10 +38,22 @@ function Assert-Workflow
     $plan = & (Join-Path $PSScriptRoot 'get-core-performance-capture-plan.ps1') | ConvertFrom-Json
     $legs = @($plan.capture.include)
     $contract = Get-Content -LiteralPath $contractPath -Raw | ConvertFrom-Json
-    $expectedLegs = 2 * (@($contract.workloads.Provider.variants).Count + 5)
-    if ($legs.Count -ne $expectedLegs -or @($legs | Where-Object { $_.status -eq 'unresolved' }).Count -ne 2 -or
-        @($legs | Where-Object { $_.leg -eq 'windows-provider-linux' -and $_.status -eq 'unresolved' }).Count -ne 1)
+    $levels = @($contract.workloads.Provider.concurrency)
+    $expectedLegs = 2 * (@($contract.workloads.Provider.variants).Count * $levels.Count + 5)
+    if ($legs.Count -ne $expectedLegs -or @($legs | Where-Object { $_.status -eq 'unresolved' }).Count -ne 2 * $levels.Count -or
+        @($legs | Where-Object { $_.leg -eq 'windows-provider-linux-c1' -and $_.status -eq 'unresolved' }).Count -ne 1)
     { throw 'The qualification plan must keep every leg, with unresolved cross-OS legs failing closed.' }
+    foreach ($os in @('windows', 'linux')) {
+        foreach ($variant in $contract.workloads.Provider.variants) {
+            $chunks = @($legs | Where-Object { $_.os -ceq $os -and $_.kind -ceq 'provider' -and $_.variant -ceq $variant })
+            $actualLevels = ($chunks.concurrency | Sort-Object) -join ','
+            $expectedLevels = ($levels | Sort-Object) -join ','
+            if ($chunks.Count -ne $levels.Count -or $actualLevels -cne $expectedLevels)
+            { throw 'Provider concurrency chunks must cover each committed level exactly once.' }
+        }
+    }
+    if (-not $workflow.Contains('Qualification producers are incomplete:') -or -not $workflow.Contains('No measurement jobs will start.'))
+    { throw 'Incomplete qualification must fail before reserving runners or starting measurements.' }
 }
 
 function Invoke-Dotnet([string[]] $Arguments)
@@ -188,6 +200,21 @@ try
         [IO.File]::WriteAllText($summary, $text)
         Invoke-Dotnet @($checker, 'check', (Join-Path $copy 'windows'), $commit, 'windows', $testMap)
     } 'differs from recomputed'
+    foreach ($mutation in @(
+        @{ Name = 'obsolete-percentile-method'; Property = 'method'; Value = 'expanded-percentile-bootstrap-of-trial-means/1' },
+        @{ Name = 'narrower-interval-confidence'; Property = 'intervalConfidenceLevel'; Value = 0.95 },
+        @{ Name = 'edited-interval-tail'; Property = 'tailProbability'; Value = 0.025 }))
+    {
+        Assert-Rejected $mutation.Name {
+            $copy = Copy-Fixture $win $mutation.Name
+            [IO.File]::Delete((Join-Path $copy 'windows/check-report.json'))
+            $path = Join-Path $copy 'windows/summary.json'
+            $summary = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json -AsHashtable
+            $summary.statistics[$mutation.Property] = $mutation.Value
+            $summary | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $path -Encoding utf8NoBOM
+            Invoke-Dotnet @($checker, 'check', (Join-Path $copy 'windows'), $commit, 'windows', $testMap)
+        } $(if ($mutation.Property -eq 'tailProbability') { 'tail probability differs' } else { 'statistics method, confidence' })
+    }
     Assert-Rejected 'raw-sample-replaced' {
         $copy = Copy-Fixture $win 'raw-replaced'
         [IO.File]::Delete((Join-Path $copy 'windows/check-report.json'))

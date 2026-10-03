@@ -36,8 +36,13 @@ foreach ($environment in @($contract.environments | Sort-Object { if ($_.os -eq 
                 else { 'ready' }
             # Diagnostic runs skip legs that cannot run; qualification keeps them so the run fails closed.
             if ($EvidenceClass -eq 'diagnostic' -and $status -ne 'ready') { continue }
-            $legs.Add([ordered]@{ leg = "$os-provider-$variant"; os = $os; runner = $runner; kind = 'provider'
-                variant = $variant; family = 'Provider'; profile = $profileName; status = $status })
+            foreach ($concurrency in $contract.workloads.Provider.concurrency)
+            {
+                # Bound one job to 16 workload keys, including at the optional 50-trial maximum.
+                # Each independently measured concurrency chunk retains a distinct raw input directory.
+                $legs.Add([ordered]@{ leg = "$os-provider-$variant-c$concurrency"; os = $os; runner = $runner; kind = 'provider'
+                    variant = $variant; family = 'Provider'; profile = $profileName; status = $status; concurrency = [int]$concurrency })
+            }
         }
     }
     foreach ($family in @($selected | Where-Object { $_ -cne 'Provider' }))

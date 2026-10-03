@@ -12,6 +12,9 @@ the [proposal](../qualification/provider-cross-os-variant-proposal.md)). The Str
 Control Plane and primary hot-path harnesses are planned legs that fail closed. Until all of these
 exist, a qualification run fails and the verifier reports the missing workloads. That is the
 intended outcome.
+Qualification planning reports every missing producer and fails before starting measurement
+jobs. Provider jobs are split by concurrency level, each with a separate raw input directory;
+assembly still requires every original workload key exactly once.
 
 ## Data flow
 
@@ -78,21 +81,34 @@ The generator implements this method, and the checker re-implements it separatel
   - `gcCounters` = gen0 collections (every GC) per 1,000 operations. This is reported, not gated.
 - **Point estimate.** The arithmetic mean of the per-trial values, separately for the candidate
   and the reference.
-- **Interval.** A percentile bootstrap of the trial means with B = 10,000 resamples, widened by
-  Hesterberg's expanded percentile because trial counts are small:
-  - `alpha' = round9(2 * Phi(-sqrt(n/(n-1)) * t(0.975, n-1)))`;
-  - lower bound = `sorted[floor(B * alpha'/2)]`;
-  - upper bound = `sorted[ceil(B * (1 - alpha'/2)) - 1]`;
-  - both bounds are widened, if needed, to contain the point estimate.
-- **Deterministic plan.** The seed is `SHA-256("bluetusk-performance-bootstrap/v1|" + sourceCommit)`.
+- **Interval.** A studentized bootstrap of the arithmetic trial means with B = 10,000 resamples.
+  The contract requires 95% comparisons; the producer uses nominal 99% intervals and at least
+  30 trials to provide additional margin for finite-sample error. The separately reported
+  `intervalConfidenceLevel` is 0.99; the contract `confidenceLevel` stays 0.95.
+  - `SE = sample standard deviation / sqrt(n)`, using the `n - 1` variance divisor;
+  - each resample produces `t* = (mean* - mean) / SE*`;
+  - quantiles are the sorted pivots at `floor(B * 0.005)` and `ceil(B * 0.995) - 1`;
+  - the interval is `(mean - upperQuantile * SE, mean - lowerQuantile * SE)`;
+  - singular resamples remain in the appropriate infinite tail; they are never discarded or
+    assigned a substitute standard error. Unbounded intervals fail generation and checking;
+  - all-constant trials have zero observed variation and a point interval;
+  - bounds are intersected with the nonnegative parameter space and widened, if needed, to
+    contain the point estimate. No observations are trimmed or transformed.
+  See [Hesterberg's bootstrap-t derivation, section 4.3](https://pmc.ncbi.nlm.nih.gov/articles/PMC4784504/).
+- **Deterministic plan.** The seed is `SHA-256("bluetusk-performance-bootstrap/v2|" + sourceCommit)`.
   Each draw is `UInt64LE(SHA-256(seed || Int32LE(n) || Int32LE(b) || Int32LE(j))[0..8]) mod n`.
   The seed depends only on the commit, so it cannot be chosen after the data is seen.
-- **Trials.** Qualification needs at least 10 trials per provider and workload; diagnostics need at
-  least 3.
-- **Simulated coverage.** The generator self-test measures coverage of the true mean at n = 10:
-  0.943 for normal data and 0.918 for lognormal (sigma 0.5) data, against a nominal 0.95. The
-  verifier combines a 97.5% one-sided candidate bound with a 97.5% one-sided reference bound. That
-  combination is more conservative than either interval alone.
+- **Trials.** Qualification needs 30–50 independent trials per role and workload. Diagnostics
+  need at least 3, but sparse or very small captures may have unbounded intervals and remain
+  raw diagnostic captures. They cannot qualify a release.
+- **Calibration.** The self-test checks 2,000 samples from each of normal, lognormal (sigma 0.5
+  and 1) and exponential populations at n = 30. It checks total coverage and each tail against
+  the contract's 95% level, using a predetermined three-standard-error Monte Carlo tolerance.
+  These checks exercise finite-sample behavior on these populations; they are not a proof for
+  arbitrary latency distributions. The method assumes independent process trials, a stable
+  workload and finite variance. The verifier combines a candidate bound with a reference bound;
+  their underlying nominal intervals use 0.5% tails. Original undercoverage failures are retained
+  separately from subsequent calibration results.
 - **Multiplicity.** These are separate bounds per provider and metric. The pipeline makes no
   simultaneous confidence claim across the full matrix.
 
@@ -149,10 +165,12 @@ The only measurement host is one Windows 11 PC, so both contract environments ru
   fixtures attach it to their network.
 
 [`eng/runners/start-benchmark-runner.ps1`](../../eng/runners/start-benchmark-runner.ps1) registers
-either runner with `--ephemeral` and re-registers it after each job. Registering a runner is an
-**owner action**. The owner supplies a registration token in `BLUETUSK_RUNNER_REGISTRATION_TOKEN`
-for that process only. Registration tokens expire after one hour, so for a multi-day capture the
-owner supplies a fresh token, or a just-in-time runner configuration, for each re-registration.
+either runner with `--ephemeral` and re-registers it after each job. Runner registration requires
+repository administration permission. For this release programme the owner has authorized
+ephemeral runners on this PC, registered only while a dispatched job runs. An authorized
+operator supplies a registration token in `BLUETUSK_RUNNER_REGISTRATION_TOKEN` for that process
+only. Tokens expire after one hour; obtain a fresh token or just-in-time runner configuration for
+each later registration and never retain the token in evidence.
 
 Both runners need:
 
@@ -195,20 +213,24 @@ The record's single `environment.hostOs` names the physical host (`windows`), wi
 `dockerOs=linux`. Both measured environments are bound inside the performance evidence through
 their environment manifests.
 
-## Host-time estimate (qualification, 10 trials, 5 s warm-up, 10 s window)
+## Host-time estimate (qualification, 30 trials, 5 s warm-up, 10 s window)
 
 The estimate assumes about 20 s per process run, including process start, fixture schema, warm-up,
 measurement, in-flight drain and sample serialization. Each OS has 48 Provider workloads per
 variant (16 features x 3 concurrency levels) and 2 providers. One variant therefore needs
-48 x 2 x 10 = 960 process runs, which is about 5.3 hours.
+48 x 2 x 30 = 2,880 process runs, which is about 16 hours. The variant is split into three
+concurrency jobs: about 5.3 hours each at 30 trials and 8.9 hours each at 50 trials. This keeps
+each Provider job below the workflow's 24-hour limit and the GitHub token lifetime.
 
 | Per OS | Windows | Linux |
 |---|---:|---:|
-| Provider: same-OS, TLS and constrained network | 16.0 h | 16.0 h |
-| Provider: cross-OS (after adoption; Windows only) | +5.3 h | not producible |
-| Streams, Sync, Live, Control Plane and primary hot paths, when implemented (76 workloads, about 45 s per run) | ~19 h | ~19 h |
+| Provider: same-OS, TLS and constrained network | 48 h | 48 h |
+| Provider: cross-OS (after definition and implementation) | +16 h | +16 h; currently unproducible |
+| Streams, Sync, Live, Control Plane and primary hot paths, when implemented (76 workloads, assumed 45 s per run) | ~57 h | ~57 h |
 | Generation and independent check | < 1 h | < 1 h |
-| **Total** | **~36–42 h** | **~36 h** |
+| **Total, if every producer becomes executable** | **~122 h** | **~122 h** |
 
 The two OS legs run one after the other on the same PC, so a full qualification takes about
-3–3.5 days of exclusive host time. Endurance runs need the same host and cannot overlap with it.
+roughly 10 days of exclusive host time under these assumptions. This is a planning estimate,
+not a measured completion time. The missing family producers need bounded job chunks before
+they can be enabled, especially at 50 trials. Endurance needs the same host and cannot overlap.

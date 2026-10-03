@@ -207,8 +207,8 @@ if ($isDiagnostic)
 }
 $null = $report.AppendLine("Candidate: ``$ExpectedCommit``. Release $($contract.release), scope Core. Contract SHA-256 ``$contractHash``.")
 $null = $report.AppendLine("Variant map SHA-256 ``$mapHash`` (committed map: $(if ($mapHash -ceq $committedMapHash) { 'yes' } else { 'NO' })).").AppendLine()
-$null = $report.AppendLine('Pipeline: raw captures -> generator (seeded expanded-percentile bootstrap of per-trial means) -> independent checker (recomputed from raw) -> this assembler -> `verify-performance-leadership-evidence.ps1`.')
-$null = $report.AppendLine('Bounds are separate two-sided 95% intervals per provider; the verifier gates candidate upper / reference lower (lower-better) and candidate lower / reference upper (throughput). Ties fail.').AppendLine()
+$null = $report.AppendLine('Pipeline: raw captures -> generator (seeded studentized bootstrap of per-trial means) -> independent checker (recomputed from raw) -> this assembler -> `verify-performance-leadership-evidence.ps1`.')
+$null = $report.AppendLine('Bounds are separate nominal 99% studentized intervals per role, with at least 30 independent qualification trials. The contract remains at 95%; the verifier gates candidate upper / reference lower (lower-better) and candidate lower / reference upper (throughput). Ties fail.').AppendLine()
 $null = $report.AppendLine('| OS | Comparisons | Missing | Trials | Cross-OS profile | Diagnostic |').AppendLine('|---|---:|---:|---|---|---|')
 foreach ($row in $reportRows) { $null = $report.AppendLine($row) }
 $null = $report.AppendLine().AppendLine("## Comparisons not meeting their gate ($($failing.Count))").AppendLine()
@@ -238,7 +238,7 @@ $evidence = [ordered]@{
     verifierSelfTestsPath = 'verifier-self-tests.log'
     verifierSelfTestsSha256 = Get-Sha256 (Join-Path $root 'verifier-self-tests.log')
     pipeline = [ordered]@{
-        statisticsMethod = 'expanded-percentile-bootstrap-of-trial-means/1'
+        statisticsMethod = 'conservative-studentized-bootstrap-of-trial-means/2'
         contractSha256 = $contractHash
         variantMapSha256 = $mapHash
         crossOsProfile = @($crossOsProfiles)

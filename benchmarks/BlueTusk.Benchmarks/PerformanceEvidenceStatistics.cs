@@ -5,18 +5,20 @@ using System.Text;
 namespace BlueTusk.Benchmarks;
 
 /// <summary>
-/// Deterministic, seeded, expanded-percentile bootstrap of per-trial means.
+/// Deterministic, seeded, studentized bootstrap of per-trial means.
 /// One independently restarted process is one trial; requests inside a process are never
 /// treated as independent observations. The method is specified in
 /// docs/operations/core-performance-evidence.md so an independent checker can reproduce it.
 /// </summary>
 internal static class PerformanceEvidenceStatistics
 {
-    internal const string Method = "expanded-percentile-bootstrap-of-trial-means/1";
+    internal const string Method = "conservative-studentized-bootstrap-of-trial-means/2";
     internal const int Resamples = 10_000;
     internal const double ConfidenceLevel = 0.95;
-    internal const string SeedPrefix = "bluetusk-performance-bootstrap/v1|";
-    internal const int MinimumQualificationTrials = 10;
+    internal const double IntervalConfidenceLevel = 0.99;
+    internal const string SeedPrefix = "bluetusk-performance-bootstrap/v2|";
+    internal const double TailProbability = 0.005;
+    internal const int MinimumQualificationTrials = 30;
     internal const int MinimumDiagnosticTrials = 3;
     internal const int MaximumTrials = 50;
 
@@ -54,35 +56,18 @@ internal static class PerformanceEvidenceStatistics
         return plan;
     }
 
-    /// <summary>
-    /// Hesterberg's expanded percentile interval: alpha' = 2 * Phi(-sqrt(n / (n - 1)) * t(1 - alpha / 2, n - 1)),
-    /// rounded to nine decimals so independent implementations select identical order statistics.
-    /// </summary>
-    internal static double ExpandedAlpha(int trials)
+    internal static (int Lower, int Upper) PercentileIndices(int resamples)
     {
-        if (trials is < 2 or > MaximumTrials)
-        {
-            throw new ArgumentOutOfRangeException(nameof(trials));
-        }
-        var alpha = 1 - ConfidenceLevel;
-        var t = StudentTQuantile(1 - alpha / 2, trials - 1);
-        var z = Math.Sqrt(trials / (trials - 1.0)) * t;
-        return Math.Round(2 * NormalCdf(-z), 9, MidpointRounding.ToEven);
-    }
-
-    internal static (int Lower, int Upper) PercentileIndices(double expandedAlpha, int resamples)
-    {
-        var half = expandedAlpha / 2;
-        var lower = (int)Math.Floor(resamples * half);
-        var upper = (int)Math.Ceiling(resamples * (1 - half)) - 1;
+        var lower = (int)Math.Floor(resamples * TailProbability);
+        var upper = (int)Math.Ceiling(resamples * (1 - TailProbability)) - 1;
         return (Math.Clamp(lower, 0, resamples - 1), Math.Clamp(upper, 0, resamples - 1));
     }
 
-    internal static Interval Estimate(IReadOnlyList<double> values, int[] plan, double expandedAlpha, int resamples = Resamples)
+    internal static Interval Estimate(IReadOnlyList<double> values, int[] plan, int resamples = Resamples)
     {
         var trials = values.Count;
         if (trials is < 2 or > MaximumTrials || plan.Length != trials * resamples ||
-            values.Any(value => !double.IsFinite(value) || value < 0))
+            values.Any(value => !double.IsFinite(value) || value < 0) || plan.Any(index => index < 0 || index >= trials))
         {
             throw new InvalidDataException("Bootstrap inputs must be 2..50 finite, nonnegative trial values with a matching plan.");
         }
@@ -92,21 +77,47 @@ internal static class PerformanceEvidenceStatistics
             sum += values[index];
         }
         var point = sum / trials;
-        var means = new double[resamples];
+        if (!double.IsFinite(point)) throw new InvalidDataException("Trial mean overflowed.");
+        var standardError = StandardError(values, point);
+        if (standardError == 0) return new(point, point, point);
+        var pivots = new double[resamples];
+        var sample = new double[trials];
         for (var resample = 0; resample < resamples; resample++)
         {
             var total = 0d;
             var offset = resample * trials;
             for (var draw = 0; draw < trials; draw++)
             {
-                total += values[plan[offset + draw]];
+                sample[draw] = values[plan[offset + draw]];
+                total += sample[draw];
             }
-            means[resample] = total / trials;
+            var mean = total / trials;
+            var error = StandardError(sample, mean);
+            // Keep singular draws in their correct tail, rather than discard them or substitute an SE.
+            pivots[resample] = error == 0
+                ? mean == point ? 0 : Math.CopySign(double.PositiveInfinity, mean - point)
+                : (mean - point) / error;
         }
-        Array.Sort(means);
-        var (lowerIndex, upperIndex) = PercentileIndices(expandedAlpha, resamples);
+        Array.Sort(pivots);
+        var (lowerIndex, upperIndex) = PercentileIndices(resamples);
+        var lower = point - pivots[upperIndex] * standardError;
+        var upper = point - pivots[lowerIndex] * standardError;
+        if (!double.IsFinite(lower) || !double.IsFinite(upper))
+        {
+            throw new InvalidDataException("Studentized interval is unbounded; retain the capture and collect more independent trials.");
+        }
         // Always bracket the point estimate; the verifier rejects bounds that do not.
-        return new(point, Math.Min(means[lowerIndex], point), Math.Max(means[upperIndex], point));
+        // Every reported metric is nonnegative, so intersect the interval with its parameter space.
+        return new(point, Math.Max(0, Math.Min(lower, point)), Math.Max(upper, point));
+    }
+
+    private static double StandardError(IReadOnlyList<double> values, double mean)
+    {
+        var squared = 0d;
+        foreach (var value in values) squared += (value - mean) * (value - mean);
+        var error = Math.Sqrt(squared / (values.Count * (values.Count - 1.0)));
+        if (!double.IsFinite(error)) throw new InvalidDataException("Trial standard error overflowed.");
+        return error;
     }
 
     internal static double StudentTCdf(double t, int degreesOfFreedom)

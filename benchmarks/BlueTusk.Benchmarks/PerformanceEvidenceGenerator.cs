@@ -127,7 +127,6 @@ internal static class PerformanceEvidenceGenerator
 
         var seed = PerformanceEvidenceStatistics.DeriveSeed(expectedCommit);
         var plans = new Dictionary<int, int[]>();
-        var alphas = new SortedDictionary<int, double>();
         var workloadInputs = new Dictionary<string, string>(StringComparer.Ordinal);
         var comparisons = new List<object>();
         foreach (var group in trials.GroupBy(trial => trial.WorkloadKey, StringComparer.Ordinal).OrderBy(group => group.Key, StringComparer.Ordinal))
@@ -159,14 +158,12 @@ internal static class PerformanceEvidenceGenerator
             {
                 plan = PerformanceEvidenceStatistics.CreatePlan(seed, count);
                 plans[count] = plan;
-                alphas[count] = PerformanceEvidenceStatistics.ExpandedAlpha(count);
             }
-            var alpha = alphas[count];
             var metrics = new Dictionary<string, object>(StringComparer.Ordinal);
             foreach (var metric in MetricNames)
             {
-                var c = PerformanceEvidenceStatistics.Estimate(candidate.Select(trial => trial.Values[metric]).ToArray(), plan, alpha);
-                var r = PerformanceEvidenceStatistics.Estimate(reference.Select(trial => trial.Values[metric]).ToArray(), plan, alpha);
+                var c = PerformanceEvidenceStatistics.Estimate(candidate.Select(trial => trial.Values[metric]).ToArray(), plan);
+                var r = PerformanceEvidenceStatistics.Estimate(reference.Select(trial => trial.Values[metric]).ToArray(), plan);
                 metrics[metric] = new Dictionary<string, double>(StringComparer.Ordinal)
                 {
                     ["candidate"] = c.Point,
@@ -184,7 +181,7 @@ internal static class PerformanceEvidenceGenerator
                 Mode = mode,
                 ConfidenceLevel = PerformanceEvidenceStatistics.ConfidenceLevel,
                 Trials = count,
-                ExpandedAlpha = alpha,
+                PerformanceEvidenceStatistics.TailProbability,
                 InputId = owners[0],
                 CandidateTrials = candidate.Select(TrialView).ToArray(),
                 ReferenceTrials = reference.Select(TrialView).ToArray(),
@@ -245,17 +242,19 @@ internal static class PerformanceEvidenceGenerator
             {
                 PerformanceEvidenceStatistics.Method,
                 PerformanceEvidenceStatistics.ConfidenceLevel,
+                PerformanceEvidenceStatistics.IntervalConfidenceLevel,
                 PerformanceEvidenceStatistics.Resamples,
                 Seed = seed,
                 SeedDerivation = "lowercase hex SHA-256 of UTF-8 '" + PerformanceEvidenceStatistics.SeedPrefix + "' + sourceCommit",
                 Plan = "index[b,j] = UInt64LE(SHA-256(seed32 || Int32LE(n) || Int32LE(b) || Int32LE(j))[0..8]) mod n",
                 PointEstimate = "arithmetic mean of per-trial values; one trial is one independently restarted process",
-                Interval = "Hesterberg expanded percentile of the bootstrap means; alpha' = round9(2 * Phi(-sqrt(n/(n-1)) * t(0.975, n-1))); " +
-                    "lower = sorted[floor(B * alpha'/2)], upper = sorted[ceil(B * (1 - alpha'/2)) - 1]; widened to contain the point estimate",
+                Interval = "studentized bootstrap of trial means; SE = sample SD / sqrt(n); t* = (mean* - mean) / SE*; " +
+                    "bounds = mean - quantiles(t*, 0.995 and 0.005) * SE; singular draws retained; unbounded intervals rejected; " +
+                    "intersected with nonnegative parameter space and widened to contain the point estimate",
                 PerformanceEvidenceStatistics.MinimumQualificationTrials,
                 PerformanceEvidenceStatistics.MinimumDiagnosticTrials,
-                ExpandedAlphaByTrials = alphas.ToDictionary(pair => pair.Key.ToString(System.Globalization.CultureInfo.InvariantCulture), pair => pair.Value),
-                Multiplicity = "separate two-sided 95% bounds per provider and metric; no simultaneous full-matrix confidence claim",
+                PerformanceEvidenceStatistics.TailProbability,
+                Multiplicity = "nominal 99% intervals support the contract's 95% comparison with additional margin; no simultaneous full-matrix confidence claim",
             },
             MetricDefinitions = new Dictionary<string, string>(StringComparer.Ordinal)
             {

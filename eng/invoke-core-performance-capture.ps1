@@ -8,7 +8,7 @@ param(
     # Host-persistent store shared by the capture and summarize jobs of one OS (ephemeral runners lose workspaces).
     [Parameter(Mandatory)][string] $EvidenceStore,
     [Parameter(Mandatory)][ValidatePattern('^[a-z0-9][a-z0-9-]{2,24}$')][string] $RunId,
-    [ValidateRange(1, 50)][int] $Trials = 10,
+    [ValidateRange(1, 50)][int] $Trials = 30,
     [switch] $Diagnostic,
     [string[]] $Features = @(),
     [int[]] $Concurrency = @(1, 64, 256),
@@ -22,10 +22,14 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $runtimeOs = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { 'other' }
 if ($runtimeOs -cne $Os) { throw "The $Os leg is running on a $runtimeOs host." }
-$inputId = if ($Kind -eq 'provider') { "provider-$Variant" } else { $Family.ToLowerInvariant() }
+$inputId = if ($Kind -eq 'provider') {
+    "provider-$Variant" + $(if ($Concurrency.Count -eq 1) { "-c$($Concurrency[0])" } else { '' })
+} else { $Family.ToLowerInvariant() }
 $store = [IO.Path]::GetFullPath($EvidenceStore)
 $output = Join-Path $store "$Os/raw/$inputId"
 $plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-plan.json') -Raw | ConvertFrom-Json
+if ($Trials -lt $(if ($Diagnostic) { [int]$plan.statistics.minimumDiagnosticTrials } else { [int]$plan.statistics.minimumQualificationTrials }))
+{ throw 'The requested independent trial count is below the committed evidence plan minimum.' }
 
 # Optional host-wide measurement lock shared with other agents and workflows on this machine.
 $lock = $env:BLUETUSK_HOST_MEASUREMENT_LOCK

@@ -22,7 +22,7 @@ internal static class PerformanceEvidenceSelfTests
         var coverage = TestCoverage();
         await TestGeneratorAsync(contractPath, variantMapPath);
         Console.WriteLine("Performance evidence self-tests passed: Student-t and normal references, deterministic SHA-256 plans, " +
-            $"expanded-percentile bounds, simulated coverage (normal {coverage.Normal:0.000}, lognormal {coverage.Lognormal:0.000} at n=10), " +
+            $"studentized bounds, simulated coverage (normal {coverage.Normal:0.000}, lognormal {coverage.Lognormal:0.000} at n=30), " +
             "and generator rejection of unresolved variants, copies, partial pairs, short runs, unbound files, out-of-contract keys and unlabelled synthetic data.");
     }
 
@@ -36,11 +36,6 @@ internal static class PerformanceEvidenceSelfTests
         Assert(Math.Abs(PerformanceEvidenceStatistics.NormalCdf(-1.959963984540054) - 0.025) < 1e-9, "Normal tail is wrong.");
         Assert(Math.Abs(PerformanceEvidenceStatistics.NormalCdf(1) - 0.841344746068543) < 1e-9, "Normal CDF is wrong.");
         Assert(Math.Abs(PerformanceEvidenceStatistics.NormalCdf(0) - 0.5) < 1e-12, "Normal median is wrong.");
-        var alpha10 = PerformanceEvidenceStatistics.ExpandedAlpha(10);
-        var alpha50 = PerformanceEvidenceStatistics.ExpandedAlpha(50);
-        Assert(alpha10 is > 0.015 and < 0.02 && alpha50 is > 0.04 and < 0.05 && alpha10 < alpha50,
-            "Expanded alpha must widen small-sample intervals and approach the nominal level.");
-
         var seed = PerformanceEvidenceStatistics.DeriveSeed(Commit);
         Assert(seed == PerformanceEvidenceStatistics.DeriveSeed(Commit) && seed != PerformanceEvidenceStatistics.DeriveSeed(new string('3', 40)),
             "Seeds must be deterministic and bound to the commit.");
@@ -52,38 +47,69 @@ internal static class PerformanceEvidenceSelfTests
         foreach (var index in plan) counts[index]++;
         Assert(counts.All(count => Math.Abs(count - 10_000) < 600), "Resampling plan draws must be approximately uniform.");
 
-        var constant = PerformanceEvidenceStatistics.Estimate(Enumerable.Repeat(7d, 10).ToArray(), plan, alpha10);
+        var constant = PerformanceEvidenceStatistics.Estimate(Enumerable.Repeat(7d, 10).ToArray(), plan);
         Assert(constant.Point == 7 && constant.Lower == 7 && constant.Upper == 7, "Constant trials need a degenerate interval.");
-        var ramp = PerformanceEvidenceStatistics.Estimate(Enumerable.Range(1, 10).Select(value => (double)value).ToArray(), plan, alpha10);
-        Assert(ramp.Point == 5.5 && ramp.Lower < 5.5 && ramp.Upper > 5.5 && ramp.Lower >= 1 && ramp.Upper <= 10,
+        var ramp = PerformanceEvidenceStatistics.Estimate(Enumerable.Range(1, 10).Select(value => (double)value).ToArray(), plan);
+        Assert(ramp.Point == 5.5 && ramp.Lower < 5.5 && ramp.Upper > 5.5 && ramp.Lower >= 0,
             "Bootstrap bounds must bracket the trial mean.");
-        Reject(() => PerformanceEvidenceStatistics.Estimate([1, double.NaN], PerformanceEvidenceStatistics.CreatePlan(seed, 2), 0.01));
-        Reject(() => PerformanceEvidenceStatistics.Estimate([1, -1], PerformanceEvidenceStatistics.CreatePlan(seed, 2), 0.01));
-        Reject(() => PerformanceEvidenceStatistics.Estimate([1, 2, 3], plan, alpha10));
+        Reject(() => PerformanceEvidenceStatistics.Estimate([1, double.NaN], PerformanceEvidenceStatistics.CreatePlan(seed, 2)));
+        Reject(() => PerformanceEvidenceStatistics.Estimate([1, -1], PerformanceEvidenceStatistics.CreatePlan(seed, 2)));
+        Reject(() => PerformanceEvidenceStatistics.Estimate([1, 2, 3], plan));
+        Reject(() => PerformanceEvidenceStatistics.Estimate([1, 1, 2], PerformanceEvidenceStatistics.CreatePlan(seed, 3)));
+        Reject(() => PerformanceEvidenceStatistics.Estimate([1, 2], Enumerable.Repeat(2, 20_000).ToArray()));
     }
 
     private static (double Normal, double Lognormal) TestCoverage()
     {
-        // Simulated coverage of the true mean at the qualification minimum of ten trials.
-        const int Trials = 10, Repetitions = 600;
+        // Simulated coverage of the true mean at the strengthened qualification minimum.
+        const int Trials = PerformanceEvidenceStatistics.MinimumQualificationTrials, Repetitions = 2_000;
         var plan = PerformanceEvidenceStatistics.CreatePlan(PerformanceEvidenceStatistics.DeriveSeed(Commit), Trials);
-        var alpha = PerformanceEvidenceStatistics.ExpandedAlpha(Trials);
         var random = new Random(20261003);
         double Gaussian() => Math.Sqrt(-2 * Math.Log(1 - random.NextDouble())) * Math.Cos(2 * Math.PI * random.NextDouble());
-        int normal = 0, lognormal = 0;
+        int normal = 0, lognormal = 0, normalLower = 0, normalUpper = 0, lognormalLower = 0, lognormalUpper = 0;
         var lognormalMean = Math.Exp(0.5 * 0.5 * 0.5);
         for (var repetition = 0; repetition < Repetitions; repetition++)
         {
             var a = PerformanceEvidenceStatistics.Estimate(
-                Enumerable.Range(0, Trials).Select(_ => 100 + 10 * Gaussian()).ToArray(), plan, alpha);
+                Enumerable.Range(0, Trials).Select(_ => 100 + 10 * Gaussian()).ToArray(), plan);
             if (a.Lower <= 100 && a.Upper >= 100) normal++;
+            if (a.Lower > 100) normalLower++;
+            if (a.Upper < 100) normalUpper++;
             var b = PerformanceEvidenceStatistics.Estimate(
-                Enumerable.Range(0, Trials).Select(_ => Math.Exp(0.5 * Gaussian())).ToArray(), plan, alpha);
+                Enumerable.Range(0, Trials).Select(_ => Math.Exp(0.5 * Gaussian())).ToArray(), plan);
             if (b.Lower <= lognormalMean && b.Upper >= lognormalMean) lognormal++;
+            if (b.Lower > lognormalMean) lognormalLower++;
+            if (b.Upper < lognormalMean) lognormalUpper++;
         }
         var result = ((double)normal / Repetitions, (double)lognormal / Repetitions);
-        Assert(result.Item1 >= 0.92, $"Normal-data coverage {result.Item1:0.000} is too low for a 95% claim.");
-        Assert(result.Item2 >= 0.88, $"Skewed-data coverage {result.Item2:0.000} is unexpectedly low.");
+        // Predetermined three-standard-error Monte Carlo tolerance, including each 2.5% tail.
+        // This checks calibration on these two populations; it is not a universal coverage proof.
+        var minimumCoverage = 0.95 - 3 * Math.Sqrt(0.95 * 0.05 / Repetitions);
+        var maximumTail = 0.025 + 3 * Math.Sqrt(0.025 * 0.975 / Repetitions);
+        Console.WriteLine($"Calibration: normal {result.Item1:0.0000} ({normalLower}/{normalUpper} tail misses), " +
+            $"lognormal {result.Item2:0.0000} ({lognormalLower}/{lognormalUpper} tail misses), N={Repetitions}.");
+        Assert(result.Item1 >= minimumCoverage && result.Item2 >= minimumCoverage,
+            "Nominal 95% mean-interval coverage failed the predetermined Monte Carlo calibration tolerance.");
+        Assert(new[] { normalLower, normalUpper, lognormalLower, lognormalUpper }.All(count => (double)count / Repetitions <= maximumTail),
+            "A nominal 2.5% interval tail failed the predetermined Monte Carlo calibration tolerance.");
+        foreach (var (name, mean, sample) in new (string Name, double Mean, Func<double> Sample)[]
+        {
+            ("exponential", 1, () => -Math.Log(1 - random.NextDouble())),
+            ("lognormal-sigma-1", Math.Exp(0.5), () => Math.Exp(Gaussian())),
+        })
+        {
+            int lowerMisses = 0, upperMisses = 0;
+            for (var repetition = 0; repetition < Repetitions; repetition++)
+            {
+                var interval = PerformanceEvidenceStatistics.Estimate(Enumerable.Range(0, Trials).Select(_ => sample()).ToArray(), plan);
+                if (interval.Lower > mean) lowerMisses++;
+                if (interval.Upper < mean) upperMisses++;
+            }
+            var covered = 1 - (lowerMisses + upperMisses) / (double)Repetitions;
+            Console.WriteLine($"Calibration: {name} {covered:0.0000} ({lowerMisses}/{upperMisses} tail misses), N={Repetitions}.");
+            Assert(covered >= minimumCoverage && lowerMisses / (double)Repetitions <= maximumTail && upperMisses / (double)Repetitions <= maximumTail,
+                $"Conservative interval for {name} failed the contract's predetermined 95% coverage/tail calibration tolerance.");
+        }
         return result;
     }
 
@@ -203,7 +229,6 @@ internal static class PerformanceEvidenceSelfTests
         using var map = JsonDocument.Parse(await File.ReadAllBytesAsync(variantMapPath));
         var expected = PerformanceEvidenceGenerator.ExpectedCoreWorkloads(contract.RootElement, os)
             .Where(pair => filter?.Invoke(pair.Key) ?? true).Select(pair => pair.Key).ToArray();
-        var random = new Random(os == "windows" ? 101 : 202);
         var factor = outcome == "win" ? 0.7 : 1.0;
 
         foreach (var variantGroup in expected.Where(key => key.Split('|') is [_, "Provider", _, _, _])
@@ -254,11 +279,13 @@ internal static class PerformanceEvidenceSelfTests
                 });
                 for (var trial = 0; trial < trials; trial++)
                 {
+                    var trialEnvironment = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(environment.GetRawText())!;
+                    trialEnvironment["syntheticTrial"] = JsonSerializer.SerializeToElement(trial);
                     foreach (var provider in new[] { "bluetusk", "npgsql" })
                     {
-                        var window = SyntheticWindow(random, concurrency, perWorker, provider == "bluetusk" ? factor : 1.0);
+                        var window = SyntheticWindow(concurrency, perWorker, provider == "bluetusk" ? factor : 1.0);
                         var capture = new ProviderRequestAnalysis.Capture(1, "provider-individual-request-capture", true, commit,
-                            provider, feature, concurrency, 0.1, 0.1, perWorker, environment, method, window);
+                            provider, feature, concurrency, 0.1, 0.1, perWorker, JsonSerializer.SerializeToElement(trialEnvironment), method, window);
                         var name = $"{feature}-c{concurrency}-trial{trial}-{provider}.json";
                         var hash = await SaveAsync(Path.Combine(directory, name), capture);
                         entries.Add(new(key, trial, provider, name, hash, window.CompletedOperations));
@@ -287,7 +314,7 @@ internal static class PerformanceEvidenceSelfTests
                         var file = new PerformanceEvidenceGenerator.TrialFile(1, "bluetusk-performance-trial", family, key, role, trial,
                             commit, true, true, role == "candidate" ? "BlueTusk synthetic" : "Reference synthetic",
                             JsonSerializer.SerializeToElement(new { os, architecture = "x64", runtime = "synthetic-test-only" }),
-                            1_000_000, SyntheticWindow(random, 4, 16, role == "candidate" ? factor : 1.0));
+                            1_000_000, SyntheticWindow(4, 16, role == "candidate" ? factor : 1.0));
                         var name = $"w{serial:D4}-trial{trial}-{role}.json";
                         var hash = await SaveAsync(Path.Combine(directory, name), file);
                         records.Add(new(key, trial, role, name, hash));
@@ -301,16 +328,16 @@ internal static class PerformanceEvidenceSelfTests
         }
     }
 
-    private static ProviderRequestCapture.Window SyntheticWindow(Random random, int workers, int perWorker, double factor)
+    private static ProviderRequestCapture.Window SyntheticWindow(int workers, int perWorker, double factor)
     {
-        // Trial-level jitter of about 2%, plus a spread of request latencies inside each trial.
-        double Jitter() => 1 + (random.NextDouble() - 0.5) * 0.04;
-        var level = factor * Jitter();
+        // Constant trial values keep full-matrix binding/shape tests small. Nonconstant and singular
+        // intervals are exercised separately by TestStatistics/TestCoverage, never these synthetic fixtures.
+        var level = factor;
         var samples = Enumerable.Range(0, workers).Select(worker => new ProviderRequestCapture.WorkerSamples(
             Enumerable.Range(0, perWorker).Select(index => Math.Max(1L, (long)Math.Round((100 + 2 * index + worker % 7) * level))).ToArray(),
             perWorker)).ToArray();
         var operations = (long)workers * perWorker;
-        return new((long)Math.Round(150_000 * factor * Jitter()), operations, (long)Math.Round(operations * 1_000 * level),
+        return new((long)Math.Round(150_000 * factor), operations, (long)Math.Round(operations * 1_000 * level),
             operations * 0.05 * level, (long)Math.Round(100_000_000 * level), [(int)Math.Round(operations * level), 0, 0], samples);
     }
 
