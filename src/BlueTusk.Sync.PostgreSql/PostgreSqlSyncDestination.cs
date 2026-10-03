@@ -11,7 +11,8 @@ public sealed class PostgreSqlSyncDestination :
     ISyncQuarantineStore,
     ISyncQuarantineReplayDestination,
     ISyncReconciliationReader,
-    ISyncRepairSink
+    ISyncRepairSink,
+    ISyncRetryClassifier
 {
     public const int CurrentSchemaVersion = 2;
 
@@ -54,6 +55,15 @@ public sealed class PostgreSqlSyncDestination :
         (_ownsDefaultDocuments
             ? SyncDestinationCapabilities.Reconciliation
             : SyncDestinationCapabilities.None);
+
+    // SyncPipeline uses a destination that classifies its own failures when no explicit
+    // classifier is configured. Every destination operation runs in one database transaction
+    // and applies idempotently, so a retried attempt never duplicates work.
+    bool ISyncRetryClassifier.IsTransient(SyncRetryContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        return PostgreSqlSyncRetryClassification.IsTransient(context.Exception);
+    }
 
     public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
     {
