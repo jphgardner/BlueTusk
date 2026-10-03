@@ -25,6 +25,7 @@ command.Parameters.Add(new BlueTuskParameter<DateTimeOffset>(DateTimeOffset.UtcN
 command.Parameters.Add(new BlueTuskParameter<string[]>(["paid", "priority"])
 {
     ParameterName = "tags",
+    PostgreSqlTypeName = "pg_catalog.text[]",
 });
 
 await using var reader = await command.ExecuteReaderAsync();
@@ -64,7 +65,10 @@ command.Parameters.Add(new BlueTuskParameter(null)
 ```
 
 Use `DbType`, `PostgreSqlTypeOid`, or `PostgreSqlTypeName`; do not rely on an
-ambiguous server guess.
+ambiguous server guess. `PostgreSqlTypeName` must include the schema, for
+example `pg_catalog.jsonb` or `app.order_status`. The same applies to a
+`string[]` parameter, as in the first example: give it
+`PostgreSqlTypeName = "pg_catalog.text[]"`.
 
 ## Map application-defined types once
 
@@ -72,10 +76,18 @@ Register enums and composites before building the long-lived data source:
 
 ```csharp
 var builder = new BlueTuskDataSourceBuilder(connectionString);
-builder.MapEnum<OrderStatus>("app.order_status");
+builder.MapEnum("app.order_status", new Dictionary<OrderStatus, string>
+{
+    [OrderStatus.Pending] = "pending",
+    [OrderStatus.Paid] = "paid",
+});
 builder.MapComposite<Address>("app.address");
 await using var dataSource = builder.Build();
 ```
+
+Without a labels dictionary, `MapEnum` expects the PostgreSQL labels to match
+the CLR member names exactly (`Paid`, not `paid`). `MapComposite` matches
+members to fields by snake_case name (`HouseNumber` to `house_number`).
 
 A mapped type does not have to exist when the data source first connects.
 Until the catalogue contains it, the mapping stays unresolved and only a value

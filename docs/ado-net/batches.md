@@ -1,5 +1,8 @@
 # Batches
 
+This page helps you send several SQL statements to PostgreSQL in one round
+trip, either as a `BlueTuskBatch` or as one multi-statement command.
+
 `BlueTuskBatch` implements the .NET `DbBatch` abstraction and sends every command through one PostgreSQL extended-query protocol cycle. Each command has its own text and parameter collection; positional and named placeholders use the same safe rewriting and encoding rules as `BlueTuskCommand`.
 
 ```csharp
@@ -19,7 +22,7 @@ await using var reader = await batch.ExecuteReaderAsync();
 await reader.NextResultAsync();
 while (await reader.ReadAsync())
 {
-    Console.WriteLine($"{reader.GetGuid(0)} — {reader.GetString(1)}");
+    Console.WriteLine($"{reader.GetGuid(0)}: {reader.GetString(1)}");
 }
 
 Console.WriteLine(insert.RecordsAffected);
@@ -33,9 +36,10 @@ Set `Transaction` to enlist the complete protocol cycle in the connection's acti
 
 ## Several statements in one command
 
-The 1.2 candidate also supports ordinary parameterized, semicolon-separated
-statements in a buffered `BlueTuskCommand`. This is the path used by EF's
-automatic write batches:
+> **Note:** New in 1.1.0. Not available in 1.0.0 or 1.1.0-rc.1.
+
+A buffered `BlueTuskCommand` also accepts ordinary parameterized,
+semicolon-separated statements. EF Core uses this path for its write batches:
 
 ```csharp
 await using var command = new BlueTuskCommand(

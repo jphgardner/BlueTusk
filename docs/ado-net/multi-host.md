@@ -1,5 +1,8 @@
 # Multi-host connections
 
+This page helps you connect to a primary and its standbys with one connection
+string, and route work to the server role you need.
+
 BlueTusk accepts PostgreSQL's keyword/value multi-host form. `Host` is a comma-separated ordered list; `Port` can contain one shared port or a positionally matching list.
 
 ```text
@@ -40,8 +43,7 @@ The interval is local to one data source and is not configurable in the current
 API. `ClearPool`/`ClearPoolAsync` clears its failure observations and restores
 the configured preference on the next checkout. Unpooled connections continue
 trying their configured host sequence independently. This routing policy does
-not establish cluster fencing, replication durability or an availability budget;
-applications must budget connection attempts, pool waiting and command latency
-when choosing worker leases and heartbeat intervals.
+not provide cluster fencing or replication durability. Plan your own timeouts
+for connection attempts, pool waits and commands.
 
 `GetPoolStatistics()` aggregates all endpoint pools. `GetHostPoolStatistics()` returns the same counters keyed by `BlueTuskHostEndpoint`. Pool-size settings apply per endpoint, so a three-host data source with `Maximum Pool Size=20` has an aggregate maximum of 60 physical sessions.

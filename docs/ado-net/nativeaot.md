@@ -1,51 +1,38 @@
 # NativeAOT and trimming
 
-The provider core supports trimmed and NativeAOT applications across
-`BlueTusk.Transport`, `BlueTusk.Protocol`, `BlueTusk.Security`,
-`BlueTusk.TypeSystem`, `BlueTusk.Client`, `BlueTusk.Diagnostics`, and
-`BlueTusk.Data`. `BlueTusk.Extensions.Abstractions`, a required Data dependency,
-is covered by the same gate.
+This page helps you publish a trimmed or NativeAOT application that uses
+`BlueTusk.Data`, and lists the few features that need a JIT runtime.
 
-The repository verifies this support by publishing and executing two
-self-contained offline applications:
+## What is supported
 
-- `BlueTusk.TrimSmoke` uses full trimming.
-- `BlueTusk.NativeAotSmoke` uses NativeAOT.
+The provider core supports full trimming and NativeAOT. That covers
+`BlueTusk.Data` and the packages it depends on: `BlueTusk.Client`,
+`BlueTusk.Protocol`, `BlueTusk.Transport`, `BlueTusk.Security`,
+`BlueTusk.TypeSystem`, `BlueTusk.Diagnostics` and
+`BlueTusk.Extensions.Abstractions`. Connection strings, SCRAM authentication,
+data sources, commands, built-in types and one-dimensional arrays all work.
 
-Both applications exercise endpoint and protocol construction, SCRAM,
-connection-string parsing, diagnostics, data-source and command construction,
-built-in arrays, a source-generated composite, and the
-reflection-based composite fallback. The smoke does not contact PostgreSQL, so
-it is deterministic and does not need credentials.
+Every build of the provider is published and run as a trimmed app and as a
+NativeAOT app on Windows x64 and Linux x64. Those smoke apps do not contact a
+server, so test your own app against PostgreSQL after publishing.
 
-Run the complete publish and measurement gate for the current platform:
+## Set up your project
 
-```powershell
-dotnet restore tests/BlueTusk.TrimSmoke/BlueTusk.TrimSmoke.csproj -r win-x64
-dotnet restore tests/BlueTusk.NativeAotSmoke/BlueTusk.NativeAotSmoke.csproj -r win-x64
-./eng/verify-provider-core-publish.ps1 -RuntimeIdentifier win-x64 -NoRestore
+Turn on NativeAOT and add the composite source generator:
+
+```xml
+<PropertyGroup>
+  <PublishAot>true</PublishAot>
+</PropertyGroup>
 ```
 
-The gate records total output size, deployable size (excluding optional PDB and
-XML documentation files), executable size, cold process wall-clock, and
-second-pass managed allocation in
-`artifacts/provider-core-smoke/<rid>/report.json`. The checked-in budgets are
-regression limits, not claims about application startup or allocation under a
-real database workload. CI publishes and executes `win-x64` and `linux-x64`
-variants and archives each report.
+```powershell
+dotnet add package BlueTusk.Data
+dotnet add package BlueTusk.SourceGeneration
+```
 
-The first checked-in Windows x64 observation is:
-
-| Mode | Deployable bytes | Cold wall-clock | Second-pass managed allocation |
-| --- | ---: | ---: | ---: |
-| Full trim | 21,993,850 | 248.994 ms | 327,144 B |
-| NativeAOT | 5,783,552 | 18.327 ms | 343,392 B |
-
-These values come from the offline smoke on .NET 10.0.9 and Windows
-10.0.26200. They establish regression evidence, not a comparison with Npgsql or
-a real connection. Both are below their checked-in budgets, so this slice does
-not introduce a separate slim builder. That decision remains evidence-driven
-and can be revisited after representative application measurements.
+`PublishAot` also turns on the trimming and AOT analyzers at build time, so
+unsupported patterns show up as build warnings.
 
 ## Composite and enum mappings
 
@@ -54,13 +41,20 @@ applications. It produces direct member access and avoids reflection during
 normal encoding and decoding:
 
 ```csharp
+using BlueTusk.Data;
+using BlueTusk.TypeSystem;
+
+var builder = new BlueTuskDataSourceBuilder(connectionString);
+Address.RegisterCodec(builder.Types);
+await using var dataSource = builder.Build();
+
 [BlueTuskComposite("app", "address")]
 internal sealed partial record Address(int HouseNumber, string Street);
-
-var dataSource = new BlueTuskDataSourceBuilder(connectionString)
-    .ConfigureTypes(Address.RegisterCodec)
-    .Build();
 ```
+
+The generator adds a static `RegisterCodec` method to every `partial` type
+marked with `[BlueTuskComposite]`. Members match composite fields by snake_case
+name (`HouseNumber` matches `house_number`).
 
 `MapComposite<T>` remains available for statically known public constructors,
 properties, and fields. Its generic annotations preserve those members during
@@ -105,10 +99,8 @@ available in a JIT deployment. NativeAOT installs an unsupported codec that
 fails explicitly when materialisation is attempted; applications can instead
 register their own statically implemented codec.
 
-## Scope
+## Other BlueTusk packages
 
-The publish gate covers the provider core only. EF Core, extensions, Streams,
-Sync, Live, the Control Plane, and Continuous Graph are not currently declared
-NativeAOT-compatible by this gate. Applications must evaluate those packages
-separately and must not infer whole-application NativeAOT support from the
-provider-core result.
+Only the provider core is NativeAOT-compatible. EF Core, extensions, Streams,
+Sync, Live, the Control Plane and Continuous Graph are not. Check each package
+your app uses before you publish with NativeAOT.

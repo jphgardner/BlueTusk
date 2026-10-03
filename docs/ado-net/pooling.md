@@ -1,6 +1,10 @@
 # Connection pooling
 
-`BlueTuskDataSource` owns an independent bounded physical connection pool. Connections created directly with `new BlueTuskConnection(...)` remain unpooled; applications that want pooling should keep one data source for each distinct connection string and open logical connections from it.
+This page helps you size, warm up and monitor the connection pool, and
+understand what happens to a connection between uses.
+
+`BlueTuskDataSource` owns its own pool of physical connections, limited by
+`Maximum Pool Size`. Connections created directly with `new BlueTuskConnection(...)` remain unpooled; applications that want pooling should keep one data source for each distinct connection string and open logical connections from it.
 
 ```csharp
 var settings = new BlueTuskConnectionStringBuilder(connectionString)
@@ -17,7 +21,7 @@ await dataSource.WarmUpAsync();
 await using var connection = await dataSource.OpenConnectionAsync();
 ```
 
-For high-concurrency, session-neutral commands, enable the bounded statement
+For high-concurrency, session-neutral commands, enable the statement
 multiplexer and create commands directly from the data source:
 
 ```csharp
@@ -37,6 +41,8 @@ var value = await command.ExecuteScalarAsync<int>();
 
 ## Settings
 
+Every keyword is described in [Configuration](configuration.md#pooling).
+
 | Setting | Default | Meaning |
 |---|---:|---|
 | `Pooling` | `true` | Enables the data source's physical connection pool. |
@@ -44,10 +50,22 @@ var value = await command.ExecuteScalarAsync<int>();
 | `Maximum Pool Size` | `100` | Hard limit for physical sessions in each host endpoint pool. |
 | `Connection Idle Lifetime` | 5 minutes | Maximum idle age checked before reuse; zero disables idle expiry. |
 | `Connection Lifetime` | 1 hour | Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry. |
-| `Multiplexing` | `false` | Enables bounded statement multiplexing; pooling must also be enabled. |
-| `Timeout` | 15 seconds | Bounds connection establishment and the wait for capacity in an exhausted pool. |
+| `Multiplexing` | `false` | Enables statement multiplexing; pooling must also be enabled. |
 
-When the pool is at its maximum, opens wait in order for returned capacity. The wait is bounded by the connection-string `Timeout`, the same `DbConnection.ConnectionTimeout` that bounds establishing a physical connection. When it expires, the open throws a `TimeoutException` that names the endpoint, `Maximum Pool Size`, and `Timeout`; the waiter leaves the queue without consuming a slot. The caller's cancellation token cancels the wait earlier with `OperationCanceledException`. In a multi-host data source each endpoint pool applies the bound, and an exhausted endpoint is not marked unavailable.
+When the pool is at its maximum, opens wait in order for a connection to be returned. There is no built-in limit on this wait: `Timeout` and `CommandTimeout` do not apply to it. Pass a cancellation token with a deadline; cancelling it ends the wait without using a slot:
+
+```csharp
+using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+await using var connection = await dataSource.OpenConnectionAsync(timeout.Token);
+```
+
+Watch the pool from your own health or metrics code:
+
+```csharp
+var stats = dataSource.GetPoolStatistics();
+Console.WriteLine(
+    $"total={stats.Total} idle={stats.Idle} busy={stats.Busy} waiting={stats.Waiting}");
+```
 
 Multi-host data sources own one pool per configured endpoint. Checkout tries available capacity across the selected host order, and role-targeted checkouts revalidate primary/standby and read-only state. `Minimum Pool Size` and `Maximum Pool Size` apply to each endpoint pool. `GetHostPoolStatistics()` exposes each partition; `GetPoolStatistics()` reports their aggregate.
 
@@ -82,8 +100,8 @@ metadata loading retain the conservative reset-before-lease path.
 
 ## Statement multiplexing
 
-Multiplexing uses persistent, bounded worker lanes rather than assigning one
-physical session to every logical command. The automatic worker count reserves
+Multiplexing uses a fixed number of long-lived workers rather than assigning
+one physical session to every logical command. The automatic worker count reserves
 at most half of the configured pool and never selects more than four workers.
 The default queue holds 1,024 commands, a pipeline flush contains at most 64
 independently synchronized commands, and a lane is recycled after 65,536
@@ -97,19 +115,16 @@ includes transaction control, `SET`/`RESET`, temporary objects, LISTEN, COPY,
 cursors and sequential readers, explicit PREPARE/EXECUTE, large-object
 routines, session advisory locks, `SHOW`/`current_setting`, and `set_config`.
 `CALL`, `DO`, and notification statements are conservatively affine too. Set
-`MultiplexingMode` to `Require` to reject every fallback—including explicit
-connections and sequential readers—or `Disable` for a trusted user-defined
+`MultiplexingMode` to `Require` to reject every fallback (including explicit
+connections and sequential readers), or `Disable` for a trusted user-defined
 routine whose statefulness cannot be inferred from SQL text.
 
 Every command ends at its own PostgreSQL `Sync` boundary. Server errors,
 per-command timeouts, and caller cancellation are isolated from neighbouring
-commands. Queue, pipeline, lease, and shutdown bounds are enforced independently.
-See [ADR 0013](../architecture/decisions/0013-bounded-statement-multiplexing.md).
+commands. Queue, pipeline, lease and shutdown limits are enforced separately.
+The design is recorded in
+[ADR 0013](../architecture/decisions/0013-bounded-statement-multiplexing.md).
 The complete routing, PgBouncer, failure, and verification matrix is in
 [Multiplexing compatibility](multiplexing-compatibility.md).
 
 The `BlueTusk.Diagnostics` meter publishes connection, lease, waiter, reuse, reset, discard, and checkout-duration instruments. Multi-host retries and non-first-host selections have separate counters. Statistics are scoped to one data source; meter instruments are process-wide aggregates. See [Diagnostics and observability](../observability.md) for names, dimensions, and redaction rules.
-
-The pooling production gate, its failure invariants, live version matrix, stress
-coverage, and multiplexing boundary are recorded in
-[Runtime release readiness](../release-readiness.md).

@@ -1,7 +1,11 @@
 # Cloud identity
 
-BlueTusk keeps cloud SDK dependencies out of the core provider. Install only
-the adapter for the database service in use:
+This page helps you connect to AWS RDS and Aurora, Azure Database for
+PostgreSQL, or Google Cloud SQL with a cloud identity instead of a stored
+password.
+
+The cloud SDKs are kept out of the core provider. Install only the adapter for
+the service you use:
 
 ```powershell
 dotnet add package BlueTusk.Identity.Aws
@@ -13,8 +17,8 @@ Each adapter installs an access-token callback on the data-source builder and
 requires TLS before the callback is invoked. A token is acquired for every new
 physical connection. Checking an existing physical connection out of the pool
 does not acquire another token because PostgreSQL does not authenticate that
-session again. Connection lifetime and pool clearing therefore bound how long
-an authenticated session can remain reusable independently of token expiry.
+session again. An authenticated session can outlive its token; `Connection
+Lifetime` and `ClearPoolAsync()` limit how long it stays in use.
 
 Provider exceptions and token values are not attached to BlueTusk's
 authentication errors. Tokens are never placed in the connection string or
@@ -102,21 +106,3 @@ source. Configure Cloud SQL IAM database authentication and grant
 This adapter handles identity only. Use an authorized public or private route,
 or the Cloud SQL Auth Proxy, for network connectivity. See Google's
 [IAM database login guide](https://docs.cloud.google.com/sql/docs/postgres/iam-logins).
-
-## Live acceptance tests
-
-Deterministic tests validate token generation or scope selection, TLS policy,
-sync/async behavior, and secret non-disclosure without contacting a cloud.
-Account-backed acceptance is opt-in and reads these complete connection
-strings:
-
-```powershell
-$env:BLUETUSK_AWS_RDS_TEST_CONNECTION_STRING = "Host=...;Database=...;Username=...;SSL Mode=VerifyFull"
-$env:BLUETUSK_AZURE_POSTGRESQL_TEST_CONNECTION_STRING = "Host=...;Database=...;Username=...;SSL Mode=VerifyFull"
-$env:BLUETUSK_GOOGLE_CLOUD_SQL_TEST_CONNECTION_STRING = "Host=...;Database=...;Username=...;SSL Mode=VerifyFull"
-dotnet test tests/BlueTusk.Identity.Tests
-```
-
-The AWS and Azure tests use their default SDK identity chains. The Google test
-uses application default credentials. Missing variables skip only the matching
-external-account test; no cloud credential belongs in source control.
