@@ -2,7 +2,7 @@
 
 Each expansion family has a manual exact-candidate failover workflow named in
 [`eng/expansion-release-policy.json`](../../eng/expansion-release-policy.json).
-This page covers the shared gate used by Projections, Documents and Workflows.
+This page covers the shared gate used by every expansion family except Jobs.
 Jobs keeps its own [physical promotion gate](../jobs/failover.md). Adding a
 workflow records no passing run. Only a successful `workflow_dispatch` run at
 the candidate SHA, with its retained `expansion-<family>-failover-<sha>`
@@ -97,6 +97,67 @@ singular workflow effects, four fenced activity leases with stale completion
 and effect rejection, six matching replays, timers, signals, compensation and
 tenant isolation.
 
+**Search** interrupts a version-2 document replacement after the version fence
+and the old-chunk deletion are staged. Each scenario checks that:
+
+- version 1 stays searchable whole;
+- the documented same-version retry applies version 2 once, and a repeat is
+  idempotent;
+- a delayed version-1 writer is ignored;
+- no document mixes chunks from two versions;
+- tenants stay isolated.
+
+**Edge** interrupts the server while it applies an ordered client mutation
+whose business effect is already staged. The host-process kill kills the
+Edge server process; the SQLite clients survive, as devices would. Each
+scenario checks that:
+
+- the client outbox retains the mutation and delivers it exactly once;
+- every acknowledged mutation keeps one business effect;
+- each client checkpoint reaches the server head;
+- a confirmed ordered retry gets 410;
+- each tenant may read only its own scope.
+
+**Events** interrupts a replay batch after its first inbox effect is staged.
+Each scenario checks that:
+
+- the batch rolls back with its checkpoint;
+- the old lease can neither replay nor renew;
+- a newer fence resumes the stream;
+- every acknowledged event has exactly one effect;
+- retried appends are recognised as already stored;
+- tenants' streams stay apart.
+
+**Schema** has no replicated runtime, so its gate qualifies restart and
+fencing safety of the deployment journal. It interrupts a column-adding
+transactional step while PostgreSQL rewrites the table. Each scenario checks
+that:
+
+- the step leaves neither the column nor a completed record;
+- the old owner is fenced;
+- the successor completes the step exactly once.
+
+Two journals stand in for tenants.
+
+**Sql** has no durable state and no owner to fence. Its gate qualifies
+restart safety only:
+
+- an interrupted typed read fails rather than returning a truncated success;
+- any yielded rows are an exact prefix;
+- no session lingers;
+- the generated contract still validates on the recovered server;
+- a caller retry returns every application-acknowledged row exactly.
+
+**Studio** interrupts an admitted operation whose completion audit insert is
+blocked while it holds an admission slot. Each scenario checks that:
+
+- the slot is released to another replica;
+- the attempt audit survives;
+- the interrupted completion is reconciled exactly once by operation
+  identity;
+- a reused identity with different fields is rejected;
+- the per-scope caps still hold.
+
 ## Recovery ceilings
 
 No expansion family documents a recovery-time objective. All ceilings below
@@ -115,6 +176,9 @@ adjusted to an observed result:
   timeout 1 s. That totals 46 s, rounded up to the next whole minute.
 - **Projections promotion: 120 s.** The rehearsal keeps its own tighter work
   deadline.
+- **Edge: 120 s.** Edge keeps its own fault-recovery budget
+  (`maximumFaultRecoverySeconds` in `eng/edge-capacity-budgets.json`) as its
+  verified ceiling. The 45 s and 60 s first-success ceilings still apply.
 
 The core-family production RTOs in `eng/v1-production-slos.json` (15 to 60
 minutes) are far looser and are not used.

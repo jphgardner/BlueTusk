@@ -43,8 +43,8 @@ Events, Schema, Sql, Studio and Edge still need dedicated capacity workflows. Ev
 needs a dedicated failover and upgrade workflow, plus the protected expansion
 candidate aggregator. Jobs now has a source-bound synchronous-promotion
 failover workflow and an old/new/old binary upgrade workflow, but neither has
-a passing exact-candidate release run. Projections, Documents and Workflows
-now have failover workflows on the shared exact-candidate gate described in
+a passing exact-candidate release run. Every other family now has a
+failover workflow on the shared exact-candidate gate described in
 [failover qualification](failover-qualification.md); none has a passing
 release run either. The protected aggregator and the other
 families' required readers are not implemented yet. An arming edit is therefore
