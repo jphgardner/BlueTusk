@@ -205,6 +205,16 @@ jobs:
       - name: Test individual-request performance capture machinery
         run: dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --provider-request-self-test
 
+      - name: Test the Core performance-evidence pipeline with synthetic fixtures
+        # Synthetic fixtures exercise generator, independent checker, assembler and verifier guards; they are never evidence.
+        shell: pwsh
+        run: |
+          dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --performance-evidence-self-test eng/performance-leadership-contract.json eng/performance-variant-map.json
+          if ($LASTEXITCODE -ne 0) { throw 'Performance evidence generator self-test failed.' }
+          dotnet format eng/PerformanceEvidenceChecker/PerformanceEvidenceChecker.csproj --verify-no-changes
+          if ($LASTEXITCODE -ne 0) { throw 'The independent checker is not formatted.' }
+          ./eng/test-performance-evidence-pipeline.ps1
+
       - name: Verify core release-track policy
         shell: pwsh
         run: ./eng/verify-release-track.ps1

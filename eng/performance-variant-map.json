@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "contract": "eng/performance-leadership-contract.json",
+  "proposal": "eng/performance-cross-os-proposal.md",
+  "crossOsProfile": "unresolved",
+  "profiles": {
+    "native": {
+      "clientOs": "host",
+      "tls": false,
+      "networkProfile": null,
+      "hostOs": ["windows", "linux"],
+      "description": "Client process runs natively on the runner OS against the digest-pinned Linux PostgreSQL container."
+    },
+    "tls": {
+      "clientOs": "host",
+      "tls": true,
+      "networkProfile": null,
+      "hostOs": ["windows", "linux"],
+      "description": "As native, with an observed encrypted session and VerifyFull against a disposable private CA."
+    },
+    "constrained-network": {
+      "clientOs": "host",
+      "tls": false,
+      "networkProfile": "toxiproxy-constrained-v1",
+      "hostOs": ["windows", "linux"],
+      "description": "As native, through a digest-pinned Toxiproxy with the retained eng/performance-network-profiles.json profile."
+    },
+    "linux-container-client": {
+      "clientOs": "linux",
+      "tls": false,
+      "networkProfile": null,
+      "hostOs": ["windows"],
+      "description": "Proposal only: the same build runs in a digest-pinned Linux .NET container on the Windows runner against the same server."
+    }
+  },
+  "variants": {
+    "windows": {
+      "windows": "native",
+      "linux": "crossOsProfile",
+      "tls": "tls",
+      "constrained-network": "constrained-network"
+    },
+    "linux": {
+      "linux": "native",
+      "windows": "crossOsProfile",
+      "tls": "tls",
+      "constrained-network": "constrained-network"
+    }
+  }
+}

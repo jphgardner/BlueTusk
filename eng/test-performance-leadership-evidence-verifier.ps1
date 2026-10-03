@@ -316,6 +316,29 @@ try
         param($changed)
         $changed.comparisons[0].metrics.mean.candidateCiUpper = 'NaN'
     } 'finite JSON number'
+    foreach ($label in @('diagnostic', 'synthetic'))
+    {
+        foreach ($value in @($true, 'false', 1))
+        {
+            Test-RejectedEvidence "$label-evidence-$script:rejectionCount" {
+                param($changed)
+                $changed[$label] = $value
+            } 'never release evidence'
+        }
+        Test-RejectedEvidence "$label-environment-manifest" {
+            param($changed)
+            $manifestPath = Join-Path $temporaryRoot "$label-environment.json"
+            [ordered]@{
+                sourceCommit = $commit
+                os = $changed.environments[0].os
+                architecture = 'x64'
+                containerImageDigests = @($changed.environments[0].containerImageDigests)
+                $label = $true
+            } | ConvertTo-Json | Set-Content -LiteralPath $manifestPath -Encoding utf8
+            $changed.environments[0].environmentManifestPath = "$label-environment.json"
+            $changed.environments[0].environmentManifestSha256 = (Get-FileHash $manifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        } 'never release evidence'
+    }
     Test-RejectedEvidence 'confidence-tie' {
         param($changed)
         $changed.comparisons[0].metrics.mean.candidateCiUpper = 99.0
