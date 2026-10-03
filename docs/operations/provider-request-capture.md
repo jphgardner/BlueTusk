@@ -28,7 +28,7 @@ dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj -c Releas
     -PostgreSqlImage $observedImageWithDigest `
     -OutputPath artifacts/provider-request-windows `
     -Concurrency 1,64,256 `
-    -Trials 5 `
+    -Trials 10 `
     -WarmupSeconds 5 `
     -MeasurementSeconds 10 `
     -MaximumTotalSamples 16000000
@@ -37,8 +37,21 @@ dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj -c Releas
 The default feature set is the full 16-feature list from
 [`performance-leadership-contract.json`](../../eng/performance-leadership-contract.json).
 For focused diagnosis, pass `-Features prepared-scalar,ef-update`. A subset does
-not satisfy full-matrix coverage. Use `-Diagnostic` for dirty working trees or
-shorter smoke-test windows; those captures are explicitly labelled diagnostic.
+not satisfy full-matrix coverage. Use `-Diagnostic` for dirty working trees,
+fewer than ten trials or shorter windows; those captures are explicitly
+labelled diagnostic and can never pass the leadership verifier.
+
+Pipeline captures pass `-Variant` (`windows`, `linux`, `tls` or
+`constrained-network`) and `-FixturePath` from `eng/start-performance-fixture.ps1`.
+The variant is resolved through the single table in
+[`eng/performance-variant-map.json`](../../eng/performance-variant-map.json). A
+cross-OS variant with no adopted meaning fails closed before anything runs. The
+wrapper also checks the fixture's `max_connections` before the first process
+starts (`2 * concurrency + 10` for notification delivery, `concurrency + 10`
+otherwise, 14 for the contention probes). The fixture starts PostgreSQL with
+`max_connections=600` and a 1 GiB `/dev/shm`. The capture index records the
+variant, capture profile, client OS, TLS requirement, network profile and every
+fixture image digest.
 The wrapper rejects mismatched candidate SHAs, existing output directories,
 duplicate cases, wrong reference versions, incomplete raw samples and failed
 child processes. Non-diagnostic captures also check assembly commit metadata.
@@ -149,10 +162,19 @@ a two-day disposable CA and localhost server certificate/key for isolated smoke
 tests. It does not change the system trust store or configure a server. Keep the
 private server key confined to that disposable test environment.
 
-Constrained-network capture is **not implemented by this adapter**. A TLS run
-is not evidence of controlled latency, bandwidth, jitter or packet loss. A
-separate digest-pinned network-shaping fixture and retained configuration are
-required before claiming that variant.
+## Constrained network
+
+`start-performance-fixture.ps1 -CaptureProfile constrained-network` places a
+digest-pinned Toxiproxy (`eng/performance-network-profiles.json`) between the
+client and PostgreSQL and applies the named profile. It then reads the
+configuration back from Toxiproxy and retains it as `network-profile.json`. The
+profile identity `name@sha256:<hash of that file>` is written into every raw
+capture (`method.networkShaping`) and the index. The generator and checker reject
+a capture whose identity, retained file or Toxiproxy image do not match.
+`toxiproxy-constrained-v1` adds 1 ms per direction and caps each direction at
+100 Mbit/s. Toxiproxy shapes TCP streams; it does not model packet loss. A
+TLS run is not evidence of network constraints, and a constrained run is not
+evidence of TLS.
 
 ## Artifacts and remaining verification
 
@@ -163,7 +185,8 @@ measured harness hash. Failed runs retain their partial files but have no
 completed index. Output directories are never overwritten.
 
 The index deliberately sets `leadershipGatePassed` to `false`. It is not the
-schema-2 consolidated leadership evidence document. An image digest supplied
+schema-3 consolidated leadership evidence document; the
+[Core pipeline](core-performance-evidence.md) generates that from these files. An image digest supplied
 to this wrapper is a declared identity; retain the actual container/runtime
 inspection that binds it to the measured server.
 
@@ -214,10 +237,11 @@ Even when a workload meets the numerical 0.98 point/upper-confidence target for
 all four latency/allocation measures, **the analyzer does not certify a release
 gate**. Diagnostic runs remain diagnostic. Isolated-runner and image provenance,
 statistical validation, final-SHA evidence and all remaining product/OS/network
-workloads are still required. This output does not feed the schema-2 consolidated
-verifier yet: that verifier's separate candidate/reference bounds are not the
-same quantity as this analyzer's paired-ratio interval. Integration must preserve
-that distinction, not relabel one type of interval as the other.
+workloads are still required. This output does not feed the schema-3 consolidated
+verifier: that verifier's separate candidate/reference bounds are not the
+same quantity as this analyzer's paired-ratio interval. The
+[Core pipeline](core-performance-evidence.md) computes those separate bounds
+with its own bootstrap and never relabels this interval.
 
 The no-database self-test runs with `--provider-request-self-test` and is included
 in the build workflow. It covers real worker concurrency, synchronous-operation

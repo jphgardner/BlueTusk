@@ -152,6 +152,7 @@
 /documentation/operations/jobs-upgrade
 /documentation/operations/operations-application-platform-health
 /documentation/operations/operations-approval-evidence
+/documentation/operations/operations-core-performance-evidence
 /documentation/operations/operations-endurance-disturbance-evidence
 /documentation/operations/operations-fuzz-finding-handoff
 /documentation/operations/operations-observability
@@ -168,6 +169,7 @@
 /documentation/operations/projections-recovery
 /documentation/operations/projections-evidence
 /documentation/operations/provider-release-notes-1-0-0
+/documentation/operations/qualification-provider-cross-os-variant-proposal
 /documentation/operations/release-process
 /documentation/operations/release-review-handoff
 /documentation/operations/releases-1-0-0-publication-record

@@ -1364,7 +1364,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1123,
+    "order": 1124,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1402,7 +1402,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1124,
+    "order": 1125,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1450,7 +1450,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1139,
+    "order": 1141,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1627,7 +1627,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1171,
+    "order": 1173,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
