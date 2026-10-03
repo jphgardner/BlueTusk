@@ -15,4 +15,7 @@ BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder.Undirected<TEdge
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder.UndirectedPath<TEdge>(string! variable, int minimumHops, int maximumHops, string? elementTableAlias = null) -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPatternBuilder!
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphVertexPattern.LabelExpression.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression?
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphVertexPattern.LabelExpression.init -> void
+Microsoft.EntityFrameworkCore.BlueTuskEntityEntryExtensions
 static BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression.AnyOf(params string![]! labels) -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression!
+static Microsoft.EntityFrameworkCore.BlueTuskEntityEntryExtensions.GetCompleteDatabaseValues(this Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry! entry) -> Microsoft.EntityFrameworkCore.ChangeTracking.PropertyValues?
+static Microsoft.EntityFrameworkCore.BlueTuskEntityEntryExtensions.GetCompleteDatabaseValuesAsync(this Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry! entry, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.EntityFrameworkCore.ChangeTracking.PropertyValues?>!
