@@ -29,6 +29,14 @@ foreach ($family in @('Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'S
     if ($contract.Roles.Count -ne 3 -or $contract.ReadinessArtifactName -cne "expansion-readiness-$slug-$commit" -or
         @($contract.Roles | Where-Object { $_.ArtifactName -cne "expansion-$slug-$($_.Role)-$commit" }).Count -ne 0)
     { throw "Contract for '$family' does not use the exact per-family artifact names." }
+    foreach ($role in $contract.Roles)
+    {
+        if ((Get-ExpansionWorkflowArtifactName -Contract $contract -WorkflowFile $role.WorkflowFile) -cne $role.ArtifactName)
+        { throw "Release selection does not bind '$family' $($role.Role) to its exact artifact." }
+    }
+    if ((Get-ExpansionWorkflowArtifactName -Contract $contract -WorkflowFile $contract.ReadinessWorkflow) -cne $contract.ReadinessArtifactName -or
+        $null -ne (Get-ExpansionWorkflowArtifactName -Contract $contract -WorkflowFile 'build.yml'))
+    { throw "Release selection does not distinguish '$family' readiness from ordinary CI." }
 }
 Assert-Rejected 'unknown-family' { Get-ExpansionReadinessContract -Family 'Graph' -Commit $commit } 'Unknown expansion family'
 Assert-Rejected 'lowercase-family' { Get-ExpansionReadinessContract -Family 'jobs' -Commit $commit } 'Unknown expansion family'
@@ -59,6 +67,34 @@ Assert-Rejected 'ambiguous-artifact' {
 Assert-Rejected 'duplicate-listing' {
     Select-ExpansionQualificationRun -Runs @((Run 10), (Run 10)) -WorkflowFile $capacity.WorkflowFile -Commit $commit `
         -ArtifactName $capacity.ArtifactName -GetRunArtifacts $lookup } 'more than once'
+
+# A later successful shared workflow for another family must not displace this family's
+# capacity or readiness run. Combined diagnostics must not displace it either.
+$documents = Get-ExpansionReadinessContract -Family 'Documents' -Commit $commit
+$workflows = Get-ExpansionReadinessContract -Family 'Workflows' -Commit $commit
+$sharedWorkflow = ($documents.Roles | Where-Object Role -ceq 'capacity').WorkflowFile
+$documentsCapacity = Get-ExpansionWorkflowArtifactName -Contract $documents -WorkflowFile $sharedWorkflow
+$workflowsCapacity = Get-ExpansionWorkflowArtifactName -Contract $workflows -WorkflowFile $sharedWorkflow
+$sharedArtifacts = @{
+    61 = @([pscustomobject]@{ name = $documentsCapacity; expired = $false })
+    62 = @([pscustomobject]@{ name = $workflowsCapacity; expired = $false })
+    63 = @([pscustomobject]@{ name = "ecosystem-performance-$commit-63-1"; expired = $false })
+    71 = @([pscustomobject]@{ name = $documents.ReadinessArtifactName; expired = $false })
+    72 = @([pscustomobject]@{ name = $workflows.ReadinessArtifactName; expired = $false })
+}
+$sharedLookup = { param($runId, $name) $sharedArtifacts[[int]$runId] }
+$selected = Select-ExpansionQualificationRun -Runs @((Run 61 -Workflow $sharedWorkflow), (Run 62 -Workflow $sharedWorkflow), (Run 63 -Workflow $sharedWorkflow)) `
+    -WorkflowFile $sharedWorkflow -Commit $commit -ArtifactName $documentsCapacity -GetRunArtifacts $sharedLookup
+if ($selected.Run.runId -ne 61) { throw 'A later foreign family or combined capacity run displaced Documents.' }
+$selected = Select-ExpansionQualificationRun -Runs @((Run 71 -Workflow $documents.ReadinessWorkflow), (Run 72 -Workflow $documents.ReadinessWorkflow)) `
+    -WorkflowFile $documents.ReadinessWorkflow -Commit $commit `
+    -ArtifactName (Get-ExpansionWorkflowArtifactName -Contract $documents -WorkflowFile $documents.ReadinessWorkflow) `
+    -GetRunArtifacts $sharedLookup
+if ($selected.Run.runId -ne 71) { throw 'A later foreign family readiness run displaced Documents.' }
+Assert-Rejected 'shared-workflow-only-foreign-or-combined' {
+    Select-ExpansionQualificationRun -Runs @((Run 62 -Workflow $sharedWorkflow), (Run 63 -Workflow $sharedWorkflow)) `
+        -WorkflowFile $sharedWorkflow -Commit $commit -ArtifactName $documentsCapacity -GetRunArtifacts $sharedLookup
+} 'retains an unexpired'
 
 # Run record validation against one complete, successful attempt.
 $candidateUtc = [DateTimeOffset]::Parse('2026-10-01T00:00:00Z')
