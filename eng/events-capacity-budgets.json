@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "family": "Events",
+  "qualification": "manual-exact-candidate-events-capacity",
+  "workload": "events-eight-tenant-append-read-leased-catch-up",
+  "referenceProcessor": "AMD Ryzen 7 5800X",
+  "postgreSqlImage": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "postgreSqlMajorVersion": 18,
+  "fixture": { "cpus": 4, "memoryMiB": 2048, "maxConnections": 100 },
+  "repetitions": 2,
+  "secondsPerRun": 1800,
+  "sampleIntervalSeconds": 5,
+  "parameters": {
+    "tenants": 8,
+    "streamsPerTenant": 4,
+    "eventsPerAppend": 4,
+    "payloadBytes": 1024,
+    "readMaximumEvents": 64,
+    "replayMaximumEvents": 256,
+    "replayLeaseSeconds": 60,
+    "maximumPoolSize": 32
+  },
+  "operations": {
+    "append": {
+      "workers": 8,
+      "offerIntervalMilliseconds": 200,
+      "minimumAcceptedPerSecond": 38,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 500
+    },
+    "read": {
+      "workers": 4,
+      "offerIntervalMilliseconds": 100,
+      "minimumAcceptedPerSecond": 38,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 500
+    },
+    "replay": {
+      "workers": 8,
+      "offerIntervalMilliseconds": 100,
+      "minimumAcceptedPerSecond": 76,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 1000
+    }
+  },
+  "series": {
+    "delivery": { "countCounter": "acceptedEvents", "maximumP99Milliseconds": 2000 }
+  },
+  "metrics": {
+    "replayDrainSeconds": { "maximum": 60 }
+  },
+  "counters": {
+    "acceptedEvents": { "minimumPerSecond": 152 },
+    "deliveredEvents": { "equalsCounter": "acceptedEvents" }
+  },
+  "storage": {
+    "unitCounter": "acceptedEvents",
+    "maximumOwnedRelationBytes": 2147483648,
+    "maximumDatabaseBytes": 8589934592,
+    "maximumOwnedGrowthBytesPerUnit": 4096,
+    "maximumWalBytesPerUnit": 16384
+  },
+  "requiredInvariants": [
+    "every-commit-delivered-once",
+    "stream-heads-exact",
+    "outbox-and-identities-exact",
+    "inbox-and-checkpoints-exact",
+    "idempotent-retry",
+    "rollback-gap-free"
+  ],
+  "rationale": {
+    "scope": "Budgets were fixed from documented guarantees and peer ceilings before any Events capacity measurement; they are never tuned to an observed result. docs/events/README.md publishes no throughput or p99 numbers, so every ceiling is inherited from a peer path that contains or resembles the Events hot path.",
+    "workload": "The documented hot path is a caller-transaction append (one stream lock, one duplicate lookup, one bulk insert, one head update; README 'Batch cost'), bounded reads, and leased pull-based catch-up into the inbox. Eight tenants x four streams keep appenders on distinct streams (README: one stream deliberately serializes writers). 1 KiB seeded high-entropy payloads are well inside the 1 MiB event and 8 MiB batch limits.",
+    "durationAndRepeats": "Two clean exact-candidate runs of 30 minutes each, the same minimum every other expansion capacity gate (Search, Edge, Jobs, Documents, Projections) requires.",
+    "offeredRates": "Appenders offer 40 transactions/s (160 events/s), readers 40/s and consumers 80 batches/s. Projections qualifies 20 business commits/s that each contain one Events append, and Jobs 20 completions/s; the Events component must sustain at least twice that composite rate.",
+    "minimumAcceptedPerSecond": "95% of each fixed offered rate: Edge's maximumSkippedFraction of 0.05 is the strictest peer schedule-skip ceiling, and Events has no admission control that may reject.",
+    "maximumRejectedFractionAndErrors": "Zero. PostgreSqlEventStore has no backpressure rejection; any exception is an error, and invariant violations abort the run.",
+    "append.maximumP99Milliseconds": "500 ms: an append is one durable transaction, so it inherits the Documents single-document save ceiling (maximumSaveP99Milliseconds 500). It is stricter than the Projections business-commit ceiling (1000 ms), which contains an Events append plus projection work.",
+    "read.maximumP99Milliseconds": "500 ms: a bounded indexed read of at most 64 events must not be slower than the cheapest peer durable write ceiling (Documents save, 500 ms).",
+    "replay.maximumP99Milliseconds": "1000 ms: one catch-up batch is one store-owned transaction that runs the handler, inbox inserts and checkpoint advance for up to 256 events, the same shape as the Projections business commit (maximumCommitP99Milliseconds 1000).",
+    "delivery.maximumP99Milliseconds": "2000 ms commit-to-checkpoint: Projections bounds commit-to-inbox delivery at maximumInboxP99Milliseconds 2000; pull-based Events catch-up must deliver no slower.",
+    "replayDrainSeconds": "60 s: Projections capacity bounds post-offer drain at maximumDrainSeconds 60.",
+    "acceptedEvents.minimumPerSecond": "152 events/s = 4 events x 38 accepted append transactions/s.",
+    "maximumOwnedGrowthBytesPerUnit": "4096 bytes per accepted event = 4 x payloadBytes. README 'Retention' documents linear growth with event count (identity, stream, checkpoint and inbox rows are kept; retention is off by default); the payload is stored once in the outbox, and the 4x factor bounds identity, inbox and index amplification.",
+    "maximumWalBytesPerUnit": "16384 bytes per accepted event. Jobs admits 65536 bytes of cluster WAL per accepted job across four durable row transitions (enqueue, claim, complete, prune), i.e. 16 KiB per durable transition; an accepted event is one outbox/identity insert plus one inbox insert.",
+    "maximumOwnedRelationBytes": "2 GiB: the Projections capacity owned-storage ceiling, which already includes its Events outbox.",
+    "maximumDatabaseBytes": "8 GiB: the Search and Documents whole-database ceiling."
+  }
+}

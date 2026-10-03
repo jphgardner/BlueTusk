@@ -1,7 +1,11 @@
+using System.Runtime.CompilerServices;
+
 namespace BlueTusk.Data.Tests;
 
 public sealed class BlueTuskCommandTagParserTests
 {
+    private static object? _allocationControl;
+
     [Theory]
     [InlineData("INSERT 0 2", 2)]
     [InlineData("UPDATE 0", 0)]
@@ -19,19 +23,48 @@ public sealed class BlueTuskCommandTagParserTests
     [Fact]
     public void Count_parsing_does_not_allocate_per_command()
     {
+        var (sum, allocated) = MeasureAllocations(static () =>
+            BlueTuskCommandTagParser.TryGetRecordsAffected("INSERT 0 42", out var count) ? count : 0);
+        Assert.Equal(420000, sum);
+        Assert.Equal(0, allocated);
+    }
+
+    [Fact]
+    public void Allocation_measurement_detects_an_allocating_operation()
+    {
+        try
+        {
+            var (sum, allocated) = MeasureAllocations(static () =>
+            {
+                Volatile.Write(ref _allocationControl, new object());
+                return 42;
+            });
+            Assert.Equal(420000, sum);
+            Assert.True(allocated >= 10000 * IntPtr.Size);
+        }
+        finally
+        {
+            Volatile.Write(ref _allocationControl, null);
+        }
+    }
+
+    // Compile the measurement boundary before entering it, and keep assertions in the caller.
+    // Every operation allocation still counts; no samples are discarded or budget subtracted.
+    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
+    private static (int Sum, long Allocated) MeasureAllocations(Func<int> operation)
+    {
         for (var iteration = 0; iteration < 100; iteration++)
         {
-            _ = BlueTuskCommandTagParser.TryGetRecordsAffected("INSERT 0 42", out _);
+            _ = operation();
         }
         var start = GC.GetAllocatedBytesForCurrentThread();
         var sum = 0;
         for (var iteration = 0; iteration < 10000; iteration++)
         {
-            if (BlueTuskCommandTagParser.TryGetRecordsAffected("INSERT 0 42", out var count)) { sum += count; }
+            sum += operation();
         }
         var allocated = GC.GetAllocatedBytesForCurrentThread() - start;
-        Assert.Equal(420000, sum);
-        Assert.Equal(0, allocated);
+        return (sum, allocated);
     }
 
     [Theory]

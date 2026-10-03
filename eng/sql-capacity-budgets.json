@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "family": "Sql",
+  "qualification": "manual-exact-candidate-sql-capacity",
+  "workload": "sql-eight-tenant-typed-reads-over-live-orders",
+  "referenceProcessor": "AMD Ryzen 7 5800X",
+  "postgreSqlImage": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "postgreSqlMajorVersion": 18,
+  "fixture": { "cpus": 4, "memoryMiB": 2048, "maxConnections": 100 },
+  "repetitions": 2,
+  "secondsPerRun": 1800,
+  "sampleIntervalSeconds": 5,
+  "parameters": {
+    "tenants": 8,
+    "ordersPerTenant": 20000,
+    "noteBytes": 192,
+    "pageRows": 100,
+    "maximumPoolSize": 32
+  },
+  "operations": {
+    "point-lookup": {
+      "workers": 8,
+      "offerIntervalMilliseconds": 16,
+      "minimumAcceptedPerSecond": 475,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 500
+    },
+    "range-page": {
+      "workers": 4,
+      "offerIntervalMilliseconds": 40,
+      "minimumAcceptedPerSecond": 95,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 500
+    },
+    "aggregate": {
+      "workers": 2,
+      "offerIntervalMilliseconds": 200,
+      "minimumAcceptedPerSecond": 9.5,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 1000
+    },
+    "application-write": {
+      "workers": 4,
+      "offerIntervalMilliseconds": 25,
+      "minimumAcceptedPerSecond": 152,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 500
+    }
+  },
+  "series": {},
+  "metrics": {},
+  "counters": {
+    "verifiedRows": { "minimumPerSecond": 9975 }
+  },
+  "storage": {
+    "maximumOwnedRelationBytes": 1073741824,
+    "maximumDatabaseBytes": 8589934592,
+    "maximumLateOwnedGrowthBytesPerMinute": 16777216
+  },
+  "requiredInvariants": [
+    "contracts-validate",
+    "row-limit-fails-closed",
+    "contract-mismatch-fails-closed",
+    "write-statement-refused",
+    "application-rows-exact"
+  ],
+  "rationale": {
+    "scope": "Budgets were fixed from documented guarantees and peer ceilings before any Sql capacity measurement; they are never tuned to an observed result. docs/sql/README.md publishes no latency or overhead guarantee ('performance/endurance and release qualification' remain).",
+    "workload": "The runtime hot path is SqlQuery<TArguments,TResult>.ReadAsync: statement admission, the bounded outer LIMIT wrapper, result-shape validation, per-field byte admission and the typed projector, over a caller-owned BlueTusk.Data connection. The harness uses the public constructor with the same bind/read delegates the source generator emits (BlueTuskParameter<T> binding, GetFieldValue<T> reads), over eight tenants of 20,000 live orders while fixed-cardinality DML keeps rows changing. Every returned row is checked for tenant, ordering and an in-row checksum.",
+    "durationAndRepeats": "Two clean exact-candidate runs of 30 minutes each, the minimum every other expansion capacity gate requires.",
+    "offeredRates": "500 point lookups/s, 100 100-row pages/s and 10 tenant aggregates/s. A read path must sustain at least the Documents family's minimumTransitionsPerSecond of 500 on its primary operation.",
+    "minimumAcceptedPerSecond": "95% of each fixed offered rate (Edge maximumSkippedFraction 0.05).",
+    "maximumRejectedFractionAndErrors": "Zero. Sql has no admission control; SqlResultLimitException and SqlContractMismatchException are fail-closed guards that must never fire on the declared contracts.",
+    "point-lookup.maximumP99Milliseconds": "500 ms: a bounded indexed read must not be slower than the cheapest peer durable write ceiling (Documents maximumSaveP99Milliseconds 500).",
+    "range-page.maximumP99Milliseconds": "500 ms: the same bounded-read rule; the page is limited to 100 rows by both the query and maximumRows.",
+    "aggregate.maximumP99Milliseconds": "1000 ms: Studio executes the same admitted, LIMIT-wrapped read under QueryTimeoutSeconds (default 10 s); a tenth of that deadline, equal to the Projections business-commit ceiling.",
+    "application-write.maximumP99Milliseconds": "500 ms: single-row durable update, the Documents save ceiling; a breach means reads were measured on an unhealthy fixture.",
+    "verifiedRows.minimumPerSecond": "9975 rows/s = 475 point rows + 95 pages x 100 rows: the minimum accepted rates must return their full declared rows, not empty results.",
+    "maximumOwnedRelationBytes": "1 GiB: Search's owned-relation ceiling for a fixed-cardinality corpus.",
+    "maximumLateOwnedGrowthBytesPerMinute": "16 MiB/min: Documents' fixed-cardinality late-growth ceiling; reads write nothing and DML updates a fixed row set.",
+    "maximumDatabaseBytes": "8 GiB: the Search and Documents whole-database ceiling."
+  }
+}

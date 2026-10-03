@@ -143,6 +143,7 @@ foreach ($case in $mutations.GetEnumerator())
 # Verifier mapping: implemented roles resolve to existing scripts; every other role fails closed.
 foreach ($pair in @('Jobs/capacity', 'Jobs/failover', 'Jobs/upgrade', 'Search/capacity', 'Edge/capacity',
     'Documents/capacity', 'Projections/capacity', 'Workflows/capacity',
+    'Events/capacity', 'Schema/capacity', 'Sql/capacity', 'Studio/capacity',
     'Events/upgrade', 'Documents/upgrade', 'Schema/upgrade', 'Projections/upgrade', 'Search/upgrade',
     'Sql/upgrade', 'Studio/upgrade', 'Edge/upgrade', 'Workflows/upgrade'))
 {
@@ -151,7 +152,11 @@ foreach ($pair in @('Jobs/capacity', 'Jobs/failover', 'Jobs/upgrade', 'Search/ca
     if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $verifier.Script)))
     { throw "Verifier '$($verifier.Script)' for $pair does not exist." }
 }
-Assert-Rejected 'unimplemented-role' { Get-ExpansionRoleVerifier -Family 'Events' -Role 'capacity' } 'fails closed'
+$eventsCapacity = Get-ExpansionRoleVerifier -Family 'Events' -Role 'capacity'
+if ($eventsCapacity.Script -cne 'verify-expansion-capacity.ps1' -or $eventsCapacity.Arguments.Family -cne 'Events' -or
+    $eventsCapacity.Arguments.Mode -cne 'Verify' -or $eventsCapacity.ProducerRunParameter -cne 'ProducerRunId')
+{ throw 'Events capacity must re-verify archived evidence in Verify mode, scoped to its family and producing run.' }
+Assert-Rejected 'unimplemented-role' { Get-ExpansionRoleVerifier -Family 'Events' -Role 'failover' } 'fails closed'
 Assert-Rejected 'unimplemented-failover' { Get-ExpansionRoleVerifier -Family 'Documents' -Role 'failover' } 'fails closed'
 
 # Readiness record binds exactly the three roles by workflow, artifact, run and digest.
