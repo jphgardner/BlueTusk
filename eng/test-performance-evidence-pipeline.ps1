@@ -291,3 +291,9 @@ finally
         Remove-Item -LiteralPath $temporary -Recurse -Force
     }
 }
+
+# GitHub's pwsh wrapper exits with LASTEXITCODE after this script returns.
+# Expected native rejections above retain their exit codes for assertions, but
+# must not leak the final rejection as the status of a fully passed self-test.
+# This line is reached only after every assertion and cleanup have succeeded.
+$global:LASTEXITCODE = 0
