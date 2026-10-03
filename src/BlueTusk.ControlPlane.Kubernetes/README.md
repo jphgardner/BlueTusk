@@ -13,6 +13,11 @@ only non-sensitive state and diagnostic codes to the status subresource. A
 protected deployment keeps its finalizer during deletion until an independently
 authorised operator removes protection.
 
+Each reconcile pass isolates its resources. A `BlueTuskDeployment` whose spec
+fails validation is reported as `Failed` with a stable diagnostic code on its
+own status subresource, and every other resource in the pass is still
+reconciled.
+
 Install the packaged CRD and minimum RBAC before starting a host that uses
 `KubernetesManagedDeploymentOperator`. Configure the supplied `HttpClient` with
 the Kubernetes API base address, service-account bearer token, and cluster CA;

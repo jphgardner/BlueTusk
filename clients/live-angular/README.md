@@ -19,7 +19,7 @@ lifetime, for example `destroyRef.onDestroy(() => query.destroy())`. Destruction
 is idempotent, cancels queued signal publication, and prevents restarting the
 destroyed adapter. `stop()` is for a temporary pause of an otherwise live owner.
 
-The current candidate batches events in the [core client](../live/README.md)
+The [core client](../live/README.md) batches events
 before materializing results; this adapter then coalesces signal updates in one
 microtask. Tests use actual Angular signals, environment-provider injection and
 a 100,000-row core-client SSE journey. Run `npm run check:clients` from the

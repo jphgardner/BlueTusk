@@ -12,6 +12,8 @@ public sealed class KubernetesApiManagedDeploymentClient : IKubernetesManagedDep
     public const string ApiVersion = "v1alpha1";
     public const string Plural = "bluetuskdeployments";
 
+    private const ManagedWorkloadKind UnsupportedWorkloadKind = (ManagedWorkloadKind)(-1);
+
     private readonly HttpClient _httpClient;
     private readonly string _collectionPath;
 
@@ -163,12 +165,17 @@ public sealed class KubernetesApiManagedDeploymentClient : IKubernetesManagedDep
             throw new JsonException("Kubernetes custom-resource generation must be positive.");
         }
 
+        // The desired spec is deliberately not validated here. A list page holds every
+        // BlueTuskDeployment, so rejecting one invalid spec would hide all of them from the
+        // reconcile pass. KubernetesManagedDeploymentOperator validates each spec and reports
+        // an invalid one through that resource's status subresource.
         var workloads = document.Spec.Workloads.Select(workload =>
         {
             if (!Enum.TryParse<ManagedWorkloadKind>(workload.Kind, ignoreCase: false, out var kind) ||
                 !Enum.IsDefined(kind))
             {
-                throw new JsonException($"Unsupported managed workload kind '{workload.Kind}'.");
+                // An undefined kind fails ManagedDeploymentValidation as workload-kind-invalid.
+                kind = UnsupportedWorkloadKind;
             }
 
             return new ManagedWorkloadSpec(
@@ -195,7 +202,6 @@ public sealed class KubernetesApiManagedDeploymentClient : IKubernetesManagedDep
             document.Spec.DeleteProtection,
             Array.AsReadOnly(workloads),
             new Dictionary<string, string>(document.Spec.Labels, StringComparer.Ordinal));
-        ManagedDeploymentValidation.Validate(desired);
         return new KubernetesManagedDeploymentResource(
             document.Metadata.Namespace,
             document.Metadata.Name,

@@ -63,9 +63,46 @@ public sealed class KubernetesManagedDeploymentOperator
             },
             async (index, token) =>
             {
-                results[index] = await ReconcileAsync(resources[index], token).ConfigureAwait(false);
+                results[index] = await ReconcileIsolatedAsync(resources[index], token).ConfigureAwait(false);
             }).ConfigureAwait(false);
         return Array.AsReadOnly(results);
+    }
+
+    /// <summary>
+    /// Reconciles one resource of a pass so that its failure cannot stop the others. An
+    /// exception that <see cref="ReconcileAsync"/> does not already report becomes a failed
+    /// result, and a best-effort Failed status, for that resource only. Cancellation of the
+    /// pass itself still propagates.
+    /// </summary>
+    private async ValueTask<KubernetesManagedDeploymentReconcileResult> ReconcileIsolatedAsync(
+        KubernetesManagedDeploymentResource resource,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await ReconcileAsync(resource, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (
+            exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            var code = exception is ArgumentException ? "resource-invalid" : "reconcile-failed";
+            try
+            {
+                await ReportFailureAsync(resource, code, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception reportFailure) when (
+                reportFailure is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+            {
+                // The status subresource may be the failing dependency (for example a stale
+                // resourceVersion); the returned result still carries the diagnostic code.
+            }
+
+            return new KubernetesManagedDeploymentReconcileResult(
+                resource.DeploymentId,
+                succeeded: false,
+                changed: false,
+                diagnosticCode: code);
+        }
     }
 
     public async ValueTask<KubernetesManagedDeploymentReconcileResult> ReconcileAsync(
@@ -147,24 +184,32 @@ public sealed class KubernetesManagedDeploymentOperator
                                           ManagedDeploymentLeaseException or
                                           KeyNotFoundException)
         {
-            var existing = await _store.GetAsync(current.DeploymentId, cancellationToken)
-                .ConfigureAwait(false);
             var code = DiagnosticCode(exception);
-            await _client.ReplaceStatusAsync(
-                current,
-                new KubernetesManagedDeploymentStatus(
-                    current.Generation,
-                    existing?.Spec.Generation ?? 0,
-                    ManagedDeploymentState.Failed,
-                    code,
-                    _timeProvider.GetUtcNow()),
-                cancellationToken).ConfigureAwait(false);
+            await ReportFailureAsync(current, code, cancellationToken).ConfigureAwait(false);
             return new KubernetesManagedDeploymentReconcileResult(
                 current.DeploymentId,
                 succeeded: false,
                 changed: false,
                 diagnosticCode: code);
         }
+    }
+
+    private async ValueTask ReportFailureAsync(
+        KubernetesManagedDeploymentResource resource,
+        string code,
+        CancellationToken cancellationToken)
+    {
+        var existing = await _store.GetAsync(resource.DeploymentId, cancellationToken)
+            .ConfigureAwait(false);
+        await _client.ReplaceStatusAsync(
+            resource,
+            new KubernetesManagedDeploymentStatus(
+                resource.Generation,
+                existing?.Spec.Generation ?? 0,
+                ManagedDeploymentState.Failed,
+                code,
+                _timeProvider.GetUtcNow()),
+            cancellationToken).ConfigureAwait(false);
     }
 
     private static ManagedDeploymentSpec GetDesired(
@@ -176,7 +221,17 @@ public sealed class KubernetesManagedDeploymentOperator
             DeploymentId = resource.DeploymentId,
             Generation = existing?.Spec.Generation ?? 1,
         };
-        ManagedDeploymentValidation.Validate(candidate);
+        try
+        {
+            ManagedDeploymentValidation.Validate(candidate);
+        }
+        catch (ArgumentException exception)
+        {
+            // Validation rejects a missing or blank identifier with ArgumentException; report
+            // it through status with the same stable code as any other invalid identifier.
+            throw new ManagedDeploymentValidationException("identifier-invalid", exception.Message);
+        }
+
         if (existing is null)
         {
             return candidate;

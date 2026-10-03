@@ -1,9 +1,11 @@
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using BlueTusk.Dashboard;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -91,6 +93,10 @@ public sealed class DashboardEndpointTests
         Assert.Contains("Production &lt;west&gt;", overviewHtml, StringComparison.Ordinal);
         Assert.Contains("Live source &lt;script&gt;alert(&#x27;no&#x27;)&lt;/script&gt;", overviewHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("<script>alert('no')</script>", overviewHtml, StringComparison.Ordinal);
+        Assert.Contains(
+            $"<span>BlueTusk {ExpectedDashboardVersion()} control plane</span></footer>",
+            overviewHtml,
+            StringComparison.Ordinal);
 
         var sourceDetail = Assert.Single(
             endpoints,
@@ -295,7 +301,7 @@ public sealed class DashboardEndpointTests
         var deploymentDetail = Assert.Single(
             endpoints,
             endpoint => endpoint.RoutePattern.RawText ==
-                "/operations/deployments/{deploymentId}");
+                "/operations/deployments/{**deploymentId}");
         var deploymentDetailHtml = await InvokeHtmlAsync(
             deploymentDetail,
             application.Services,
@@ -418,6 +424,85 @@ public sealed class DashboardEndpointTests
         Assert.Contains("operation-failed", failureResponse, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task Deployment_detail_resolves_ids_containing_a_slash_through_real_routing()
+    {
+        const string KubernetesId = "orders-prod/orders-api";
+        var builder = WebApplication.CreateSlimBuilder();
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.Services.AddAuthorization(options =>
+            options.AddPolicy("ops-read", policy => policy.RequireAssertion(static _ => true)));
+        builder.Services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
+        builder.Services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
+        builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
+        builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
+            new FakeContinuousGraphQueryService());
+        builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(
+            new FakeContinuousGraphExecutionService());
+        builder.Services.AddSingleton<IControlPlaneFleetQueryService>(
+            new FakeFleetQueryService("<deployment>", "plain-deployment", KubernetesId));
+        builder.Services.AddSingleton(
+            new ControlPlaneOperationExecutor(
+                new RoleControlPlaneAuthorizer(),
+                new RecordingAuditStore(),
+                new RecordingOperationHandler()));
+        await using var application = builder.Build();
+        application.MapBlueTuskDashboard(options =>
+        {
+            options.RoutePrefix = "/operations";
+            options.ReadAuthorizationPolicy = "ops-read";
+        });
+        await application.StartAsync(TestContext.Current.CancellationToken);
+        using var client = new HttpClient { BaseAddress = new Uri(application.Urls.First()) };
+
+        async Task<(System.Net.HttpStatusCode Status, string Body)> GetAsync(string path)
+        {
+            using var response = await client.GetAsync(
+                new Uri(path, UriKind.Relative),
+                TestContext.Current.CancellationToken);
+            return (response.StatusCode, await response.Content.ReadAsStringAsync(
+                TestContext.Current.CancellationToken));
+        }
+
+        // The fleet page links to the escaped ID; following that link must resolve.
+        var fleet = await GetAsync("/operations/deployments");
+        Assert.Equal(System.Net.HttpStatusCode.OK, fleet.Status);
+        Assert.Contains(
+            "/operations/deployments/orders-prod%2Forders-api",
+            fleet.Body,
+            StringComparison.Ordinal);
+
+        foreach (var path in new[]
+                 {
+                     "/operations/deployments/orders-prod%2Forders-api",
+                     "/operations/deployments/orders-prod%2forders-api",
+                     "/operations/deployments/orders-prod/orders-api",
+                 })
+        {
+            var detail = await GetAsync(path);
+            Assert.True(detail.Status == System.Net.HttpStatusCode.OK, $"{path} returned {detail.Status}.");
+            Assert.Contains("Deployment state", detail.Body, StringComparison.Ordinal);
+            Assert.Contains(KubernetesId, detail.Body, StringComparison.Ordinal);
+        }
+
+        // IDs without a slash keep working, including ones that need escaping.
+        var plain = await GetAsync("/operations/deployments/plain-deployment");
+        Assert.Equal(System.Net.HttpStatusCode.OK, plain.Status);
+        Assert.Contains("plain-deployment", plain.Body, StringComparison.Ordinal);
+        var escaped = await GetAsync("/operations/deployments/%3Cdeployment%3E");
+        Assert.Equal(System.Net.HttpStatusCode.OK, escaped.Status);
+        Assert.Contains("&lt;deployment&gt;", escaped.Body, StringComparison.Ordinal);
+
+        Assert.Equal(
+            System.Net.HttpStatusCode.NotFound,
+            (await GetAsync("/operations/deployments/orders-prod")).Status);
+        Assert.Equal(
+            System.Net.HttpStatusCode.NotFound,
+            (await GetAsync("/operations/deployments/orders-prod/orders-api/extra")).Status);
+
+        await application.StopAsync(TestContext.Current.CancellationToken);
+    }
+
     private sealed class FakeQueryService : IControlPlaneQueryService
     {
         public ValueTask<ControlPlaneOverview> GetOverviewAsync(
@@ -477,6 +562,23 @@ public sealed class DashboardEndpointTests
                             new DateTimeOffset(2026, 8, 3, 16, 1, 0, TimeSpan.Zero),
                             2)])]));
         }
+    }
+
+    /// <summary>
+    /// The footer must name the shipped package version (for example "1.1.0"), not a
+    /// hand-written release-line label: the package's three-part assembly version plus any
+    /// prerelease suffix, without the "+commit" build metadata.
+    /// </summary>
+    private static string ExpectedDashboardVersion()
+    {
+        var assembly = typeof(BlueTuskDashboardOptions).Assembly;
+        var packageVersion = assembly.GetName().Version!.ToString(3);
+        var informational = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+            .InformationalVersion
+            .Split('+')[0];
+        Assert.StartsWith(packageVersion, informational, StringComparison.Ordinal);
+        return informational;
     }
 
     private static async Task<string> InvokeHtmlAsync(
@@ -642,8 +744,12 @@ public sealed class DashboardEndpointTests
         }
     }
 
-    private sealed class FakeFleetQueryService : IControlPlaneFleetQueryService
+    private sealed class FakeFleetQueryService(params string[] deploymentIds) :
+        IControlPlaneFleetQueryService
     {
+        private readonly string[] _deploymentIds =
+            deploymentIds.Length == 0 ? ["<deployment>"] : deploymentIds;
+
         public ValueTask<ControlPlaneFleetOverview> GetFleetOverviewAsync(
             CancellationToken cancellationToken = default)
         {
@@ -651,26 +757,29 @@ public sealed class DashboardEndpointTests
             return ValueTask.FromResult(
                 new ControlPlaneFleetOverview(
                     new DateTimeOffset(2026, 8, 3, 16, 0, 0, TimeSpan.Zero),
-                    [new ControlPlaneManagedDeploymentSnapshot(
-                        "<deployment>",
-                        "tenant-a",
-                        "kubernetes",
-                        "uk-south",
-                        2,
-                        2,
-                        4,
-                        ManagedDeploymentState.Ready,
-                        false,
-                        true,
-                        2,
-                        [ManagedWorkloadKind.Streams, ManagedWorkloadKind.Sync],
-                        4,
-                        2000,
-                        4L * 1024 * 1024 * 1024,
-                        20L * 1024 * 1024 * 1024,
-                        null,
-                        new DateTimeOffset(2026, 8, 3, 15, 59, 0, TimeSpan.Zero))]));
+                    [.. _deploymentIds.Select(Deployment)]));
         }
+
+        private static ControlPlaneManagedDeploymentSnapshot Deployment(string deploymentId) =>
+            new(
+                deploymentId,
+                "tenant-a",
+                "kubernetes",
+                "uk-south",
+                2,
+                2,
+                4,
+                ManagedDeploymentState.Ready,
+                false,
+                true,
+                2,
+                [ManagedWorkloadKind.Streams, ManagedWorkloadKind.Sync],
+                4,
+                2000,
+                4L * 1024 * 1024 * 1024,
+                20L * 1024 * 1024 * 1024,
+                null,
+                new DateTimeOffset(2026, 8, 3, 15, 59, 0, TimeSpan.Zero));
     }
 
     private sealed class RecordingAuditStore : IControlPlaneAuditStore

@@ -597,10 +597,17 @@ export class BlueTuskLiveClient {
       throw new RangeError("BlueTusk Live retry settings are invalid.");
     }
 
-    this.#fetch = options.fetch ?? globalThis.fetch;
-    if (this.#fetch === undefined) {
+    // A browser's fetch is a WebIDL operation that throws "Illegal invocation" when it is
+    // called with any receiver other than the global object. Never let the client become
+    // the receiver: bind the default to globalThis and invoke a supplied implementation
+    // without a receiver, which is what a plain `fetch(...)` call in application code does.
+    const fetchImplementation = options.fetch ?? globalThis.fetch;
+    if (fetchImplementation === undefined) {
       throw new TypeError("No fetch implementation is available.");
     }
+    this.#fetch = options.fetch === undefined
+      ? fetchImplementation.bind(globalThis)
+      : (input, init) => fetchImplementation(input, init);
 
     this.#options = {
       ...options,

@@ -19,6 +19,22 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 StringComparison.Ordinal));
     }
 
+    private static ControlPlaneManagedDeploymentSnapshot? FindDeployment(
+        ControlPlaneFleetOverview overview,
+        string deploymentId)
+    {
+        // Prefer the value exactly as routed so an ID that itself contains an escape
+        // sequence keeps resolving, then fall back to the unescaped form.
+        return Find(deploymentId) ?? Find(Uri.UnescapeDataString(deploymentId));
+
+        ControlPlaneManagedDeploymentSnapshot? Find(string candidateId) =>
+            overview.Deployments.FirstOrDefault(
+                candidate => string.Equals(
+                    candidate.DeploymentId,
+                    candidateId,
+                    StringComparison.Ordinal));
+    }
+
     private static string RenderOverview(
         ControlPlaneOverview sources,
         ControlPlaneSyncOverview sync,

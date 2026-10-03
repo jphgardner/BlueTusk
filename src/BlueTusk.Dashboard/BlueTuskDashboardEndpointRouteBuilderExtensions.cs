@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -1065,19 +1066,19 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                     options,
                     CanMutate(context.User, options),
                     context.User.IsInRole(options.AdministratorRole))));
+        // Deployment IDs may contain '/', for example Kubernetes "namespace/name" IDs. A
+        // catch-all parameter accepts the raw form, and FindDeployment accepts the escaped
+        // form that the dashboard's own links produce ("namespace%2Fname"), which the server
+        // deliberately leaves undecoded in the request path.
         group.MapGet(
-            "/deployments/{deploymentId}",
+            "/deployments/{**deploymentId}",
             async (string deploymentId,
                     HttpContext context,
                     IControlPlaneFleetQueryService queries,
                     CancellationToken cancellationToken) =>
             {
                 var overview = await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false);
-                var deployment = overview.Deployments.FirstOrDefault(
-                    candidate => string.Equals(
-                        candidate.DeploymentId,
-                        deploymentId,
-                        StringComparison.Ordinal));
+                var deployment = FindDeployment(overview, deploymentId);
                 return deployment is null
                     ? Results.NotFound()
                     : Html(RenderDeployment(
@@ -1943,7 +1944,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             <main id="main-content">
               {{{DataProvenanceNotice(options)}}}
               {{{body}}}
-              <footer class="footer"><span>Observed <time datetime="{{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}">{{{E(observedAt.ToString("dd MMM yyyy, HH:mm:ss 'UTC'", CultureInfo.InvariantCulture))}}}</time></span><span>BlueTusk 1.2 control plane</span></footer>
+              <footer class="footer"><span>Observed <time datetime="{{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}">{{{E(observedAt.ToString("dd MMM yyyy, HH:mm:ss 'UTC'", CultureInfo.InvariantCulture))}}}</time></span><span>BlueTusk {{{E(ProductVersion)}}} control plane</span></footer>
             </main>
           </div>
         </div>
@@ -2015,6 +2016,33 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
     private static string ShortFingerprint(string value) => value.Length <= 12 ? value : value[..12];
 
     private static string E(string value) => HtmlEncoder.Default.Encode(value);
+
+    /// <summary>
+    /// The released package version shown in the page footer, for example "1.1.0". It is
+    /// read from the assembly so the label always matches the shipped package instead of a
+    /// hand-maintained release-line literal.
+    /// </summary>
+    private static string ProductVersion { get; } = GetProductVersion(
+        typeof(BlueTuskDashboardOptions).Assembly);
+
+    private static string GetProductVersion(Assembly assembly)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+        var informational = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion;
+        if (!string.IsNullOrWhiteSpace(informational))
+        {
+            // Drop SemVer build metadata such as the "+<commit>" source revision.
+            var metadata = informational.IndexOf('+', StringComparison.Ordinal);
+            return metadata < 0 ? informational : informational[..metadata];
+        }
+
+        var version = assembly.GetName().Version;
+        return version is null
+            ? "unknown"
+            : version.ToString(3);
+    }
 
     private static bool CanMutate(ClaimsPrincipal user, BlueTuskDashboardOptions options) =>
         user.IsInRole(options.OperatorRole) || user.IsInRole(options.AdministratorRole);
