@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "family": "Studio",
+  "qualification": "manual-exact-candidate-studio-capacity",
+  "workload": "studio-durably-audited-query-explain-schema-event-paging-http",
+  "referenceProcessor": "AMD Ryzen 7 5800X",
+  "postgreSqlImage": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "postgreSqlMajorVersion": 18,
+  "fixture": { "cpus": 4, "memoryMiB": 2048, "maxConnections": 100 },
+  "repetitions": 2,
+  "secondsPerRun": 1800,
+  "sampleIntervalSeconds": 5,
+  "parameters": {
+    "tenants": 8,
+    "ordersPerTenant": 2000,
+    "applicationTables": 16,
+    "queryRows": 50,
+    "eventStreams": 4,
+    "eventsPerStream": 2000,
+    "eventPayloadBytes": 512,
+    "eventPageSize": 100,
+    "maximumConcurrentQueries": 8,
+    "maximumConcurrentEventReads": 4,
+    "maximumPoolSize": 32
+  },
+  "operations": {
+    "query": {
+      "workers": 4,
+      "offerIntervalMilliseconds": 100,
+      "minimumAcceptedPerSecond": 38,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 1000
+    },
+    "explain": {
+      "workers": 1,
+      "offerIntervalMilliseconds": 500,
+      "minimumAcceptedPerSecond": 1.9,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 1000
+    },
+    "schema": {
+      "workers": 1,
+      "offerIntervalMilliseconds": 1000,
+      "minimumAcceptedPerSecond": 0.95,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 2000
+    },
+    "event-page": {
+      "workers": 2,
+      "offerIntervalMilliseconds": 200,
+      "minimumAcceptedPerSecond": 9.5,
+      "maximumScheduleSkippedFraction": 0.05,
+      "maximumRejectedFraction": 0,
+      "maximumErrors": 0,
+      "maximumP99Milliseconds": 1000
+    }
+  },
+  "series": {},
+  "metrics": {},
+  "counters": {
+    "auditRows": { "equalsCounter": "expectedAuditRows" }
+  },
+  "storage": {
+    "unitCounter": "auditRows",
+    "maximumOwnedRelationBytes": 1073741824,
+    "maximumDatabaseBytes": 8589934592,
+    "maximumOwnedGrowthBytesPerUnit": 1024,
+    "maximumWalBytesPerUnit": 16384
+  },
+  "requiredInvariants": [
+    "audit-rows-exact",
+    "read-only-enforced",
+    "multiple-statements-refused",
+    "row-limit-enforced",
+    "antiforgery-enforced",
+    "query-policy-enforced",
+    "schema-fingerprint-stable"
+  ],
+  "rationale": {
+    "scope": "Budgets were fixed from documented guarantees and peer ceilings before any Studio capacity measurement; they are never tuned to an observed result. docs/studio/README.md publishes no latency or rate guarantee ('load/fault campaigns' remain).",
+    "workload": "The primary operator paths over real Kestrel HTTP with fixture authentication, antiforgery and the durable PostgreSqlStudioAuditSink: POST /query (read-only RepeatableRead execution with an attempt and a completed audit row), POST /query with explain, GET /schema (PostgreSqlSchemaCapture) and GET /events paging over a seeded PostgreSqlEventStore (two audit rows per page). /operations/replay changes state and is excluded, as the README describes it as an audited quarantine action.",
+    "durationAndRepeats": "Two clean exact-candidate runs of 30 minutes each, the minimum every other expansion capacity gate requires.",
+    "offeredRates": "40 queries/s, 2 explains/s, 1 schema read/s and 10 event pages/s. Six query/schema workers stay below the default eight-slot local gate and two event workers below the four-slot event gate, so any 429 indicates leaked admission rather than intended overload.",
+    "minimumAcceptedPerSecond": "95% of each fixed offered rate (Edge maximumSkippedFraction 0.05).",
+    "maximumRejectedFractionAndErrors": "Zero: concurrency is below every documented nonqueued gate by construction (README: capacity rejection returns 429 without a durable attempt row).",
+    "query.maximumP99Milliseconds": "1000 ms: a tenth of QueryTimeoutSeconds (default 10 s), equal to the Projections business-commit ceiling; one query performs two durable audit inserts and one read-only transaction.",
+    "explain.maximumP99Milliseconds": "1000 ms: the same audited path; EXPLAIN never enables ANALYZE (README).",
+    "schema.maximumP99Milliseconds": "2000 ms: a fifth of the shared 10 s deadline; the Schema contract bounds the capture itself at 1000 ms and Studio adds snapshot serialization and HTTP.",
+    "event-page.maximumP99Milliseconds": "1000 ms: a tenth of StudioEventOptions.TimeoutSeconds (default 10 s); one bounded Events read (Events read ceiling 500 ms) plus two audit inserts.",
+    "auditRows": "Every accepted query, explain and event page writes exactly an attempt and a completed audit row (README 'Audit'); the durable count must equal that expectation.",
+    "maximumOwnedGrowthBytesPerUnit": "1024 bytes per audit row: the fixed-width audit record with its primary-key and time indexes is about 256 bytes; the same 4x amplification factor the Events contract applies. README: no automatic pruning runs in Studio, so growth is linear in audited operations.",
+    "maximumWalBytesPerUnit": "16384 bytes per audit row: the per-durable-row WAL ceiling derived from Jobs (65536 bytes per accepted job over four durable transitions).",
+    "maximumOwnedRelationBytes": "1 GiB: Search's owned-relation ceiling.",
+    "maximumDatabaseBytes": "8 GiB: the Search and Documents whole-database ceiling."
+  }
+}

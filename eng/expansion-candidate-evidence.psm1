@@ -283,6 +283,9 @@ function Get-ExpansionRoleVerifier
             'Schema/failover', 'Sql/failover', 'Studio/failover') } {
             @{ Script = 'verify-expansion-release-failover.ps1'; EvidenceParameter = 'EvidenceRoot'
                 Arguments = [ordered]@{ Family = $Family; Mode = 'Verify' }; ProducerRunParameter = $null } }
+        { $_ -cin @('Events/capacity', 'Schema/capacity', 'Sql/capacity', 'Studio/capacity') } {
+            @{ Script = 'verify-expansion-capacity.ps1'; EvidenceParameter = 'EvidenceRoot'
+                Arguments = [ordered]@{ Mode = 'Verify'; Family = $Family }; ProducerRunParameter = 'ProducerRunId' } }
         { $_ -cin @('Documents/capacity', 'Projections/capacity', 'Workflows/capacity') } {
             @{ Script = 'verify-ecosystem-performance.ps1'; EvidenceParameter = 'EvidenceRoot'
                 Arguments = [ordered]@{ Mode = 'Verify'; Product = $Family }; ProducerRunParameter = 'ProducerRunId' } }
