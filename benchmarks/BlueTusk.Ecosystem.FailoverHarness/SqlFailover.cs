@@ -48,7 +48,7 @@ internal sealed class SqlFailover : FailoverCase
 
     internal override async Task<int> AcknowledgeAsync(CancellationToken token)
     {
-        int acknowledged = await InsertAllAsync(_source, token, static (_, _) => Task.CompletedTask);
+        int acknowledged = await InsertAllAsync(_source, static (_, _) => Task.CompletedTask, token);
         await ReadLedger.Definition.ValidateAsync(_source, new(TenantIds[0], false), token);
         return acknowledged;
     }
@@ -109,7 +109,7 @@ internal sealed class SqlFailover : FailoverCase
         FailoverFixture.Check(role == "workload" && arguments.Length == 0, "Sql child arguments");
         await using var fixture = new FailoverFixture();
         await using var workload = new SqlFailover(fixture, ScenarioDriver.ChildApplication);
-        _ = await InsertAllAsync(workload._source, token, static (index, cancellation) => ScenarioDriver.AcknowledgeToParentAsync(index, cancellation));
+        _ = await InsertAllAsync(workload._source, static (index, cancellation) => ScenarioDriver.AcknowledgeToParentAsync(index, cancellation), token);
         await ScenarioDriver.BlockStartAsync(token);
         await workload.StartInFlightAsync(token);
         throw new InvalidOperationException("The child unexpectedly completed its parent-blocked read.");
@@ -123,7 +123,7 @@ internal sealed class SqlFailover : FailoverCase
         return rows;
     }
 
-    private static async Task<int> InsertAllAsync(BlueTuskDataSource source, CancellationToken token, Func<int, CancellationToken, Task> acknowledged)
+    private static async Task<int> InsertAllAsync(BlueTuskDataSource source, Func<int, CancellationToken, Task> acknowledged, CancellationToken token)
     {
         int count = 0;
         for (int tenant = 0; tenant < TenantIds.Length; tenant++)

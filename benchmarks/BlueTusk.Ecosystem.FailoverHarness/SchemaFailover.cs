@@ -73,7 +73,7 @@ internal sealed class SchemaFailover : FailoverCase
 
     internal override async Task<int> AcknowledgeAsync(CancellationToken token)
     {
-        int acknowledged = await DeployAllAsync(_coordinators, Target, token, static (_, _) => Task.CompletedTask);
+        int acknowledged = await DeployAllAsync(_coordinators, Target, static (_, _) => Task.CompletedTask, token);
         _oldLease = await BeginInFlightAsync(_coordinators[0], Target, "owner-before-fault", token);
         return acknowledged;
     }
@@ -156,7 +156,7 @@ internal sealed class SchemaFailover : FailoverCase
             prefix.StartsWith("fo_schema_", StringComparison.Ordinal) && prefix["fo_schema_".Length..].All(char.IsAsciiHexDigitLower), "parent-generated Schema prefix");
         await using var fixture = new FailoverFixture();
         await using var workload = new SchemaFailover(fixture, ScenarioDriver.ChildApplication, arguments[0]);
-        _ = await DeployAllAsync(workload._coordinators, workload.Target, token, static (index, cancellation) => ScenarioDriver.AcknowledgeToParentAsync(index, cancellation));
+        _ = await DeployAllAsync(workload._coordinators, workload.Target, static (index, cancellation) => ScenarioDriver.AcknowledgeToParentAsync(index, cancellation), token);
         string owner = "child-" + Guid.NewGuid().ToString("N")[..16];
         var lease = await BeginInFlightAsync(workload._coordinators[0], workload.Target, owner, token);
         Console.WriteLine("LEASE " + owner + " " + lease.FencingToken.ToString(CultureInfo.InvariantCulture));
@@ -165,8 +165,8 @@ internal sealed class SchemaFailover : FailoverCase
         throw new InvalidOperationException("The child unexpectedly completed its parent-blocked step.");
     }
 
-    private static async Task<int> DeployAllAsync(PostgreSqlSchemaDeploymentCoordinator[] coordinators, string target, CancellationToken token,
-        Func<int, CancellationToken, Task> acknowledged)
+    private static async Task<int> DeployAllAsync(PostgreSqlSchemaDeploymentCoordinator[] coordinators, string target,
+        Func<int, CancellationToken, Task> acknowledged, CancellationToken token)
     {
         int count = 0;
         for (int journal = 0; journal < Journals.Length; journal++)

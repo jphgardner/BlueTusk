@@ -60,7 +60,7 @@ internal sealed class StudioFailover : FailoverCase
             """, token);
     }
 
-    internal override Task<int> AcknowledgeAsync(CancellationToken token) => RunOperationsAsync(_audit, _admission, token, static (_, _) => Task.CompletedTask);
+    internal override Task<int> AcknowledgeAsync(CancellationToken token) => RunOperationsAsync(_audit, _admission, static (_, _) => Task.CompletedTask, token);
 
     internal override Task StartInFlightAsync(CancellationToken token)
     {
@@ -132,7 +132,7 @@ internal sealed class StudioFailover : FailoverCase
             schema.StartsWith("fo_studio_", StringComparison.Ordinal) && schema["fo_studio_".Length..].All(char.IsAsciiHexDigitLower), "parent-generated Studio schema");
         await using var fixture = new FailoverFixture();
         await using var workload = new StudioFailover(fixture, ScenarioDriver.ChildApplication, arguments[0]);
-        _ = await RunOperationsAsync(workload._audit, workload._admission, token, static (index, cancellation) => ScenarioDriver.AcknowledgeToParentAsync(index, cancellation));
+        _ = await RunOperationsAsync(workload._audit, workload._admission, static (index, cancellation) => ScenarioDriver.AcknowledgeToParentAsync(index, cancellation), token);
         var operation = Guid.CreateVersion7();
         Console.WriteLine("OPERATION " + operation.ToString("D"));
         await ScenarioDriver.BlockStartAsync(token);
@@ -140,8 +140,8 @@ internal sealed class StudioFailover : FailoverCase
         throw new InvalidOperationException("The child unexpectedly completed its parent-blocked operation.");
     }
 
-    private static async Task<int> RunOperationsAsync(PostgreSqlStudioAuditSink audit, PostgreSqlStudioAdmission admission, CancellationToken token,
-        Func<int, CancellationToken, Task> acknowledged)
+    private static async Task<int> RunOperationsAsync(PostgreSqlStudioAuditSink audit, PostgreSqlStudioAdmission admission,
+        Func<int, CancellationToken, Task> acknowledged, CancellationToken token)
     {
         int count = 0;
         for (int index = 0; index < OperationsPerScope; index++)
