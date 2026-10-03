@@ -99,6 +99,22 @@ function ConvertTo-ExpansionRunSummary
     }
 }
 
+function Get-ExpansionWorkflowArtifactName
+{
+    # Shared workflow files can execute for several families at one candidate SHA. Select
+    # their run by the exact family artifact, using the same contract as readiness.
+    param([Parameter(Mandatory)][object] $Contract,
+        [Parameter(Mandatory)][string] $WorkflowFile)
+    if ($WorkflowFile -ceq $Contract.ReadinessWorkflow)
+    {
+        return [string]$Contract.ReadinessArtifactName
+    }
+    $roles = @($Contract.Roles | Where-Object { $_.WorkflowFile -ceq $WorkflowFile })
+    Assert-ExpansionCondition ($roles.Count -le 1) 'Expansion workflow has ambiguous qualification roles.'
+    if ($roles.Count -eq 1) { return [string]$roles[0].ArtifactName }
+    return $null
+}
+
 function Select-ExpansionQualificationRun
 {
     # The single run-selection rule shared by readiness and the release gate: the latest
@@ -323,5 +339,5 @@ function New-ExpansionReadinessRecord
 }
 
 Export-ModuleMember -Function Get-ExpansionReadinessContract, Get-ExpansionReleaseIdentity,
-    ConvertTo-ExpansionRunSummary, Select-ExpansionQualificationRun, ConvertTo-ExpansionGithubRunRecord,
+    ConvertTo-ExpansionRunSummary, Get-ExpansionWorkflowArtifactName, Select-ExpansionQualificationRun, ConvertTo-ExpansionGithubRunRecord,
     Get-ExpansionRoleVerifier, New-ExpansionReadinessRecord

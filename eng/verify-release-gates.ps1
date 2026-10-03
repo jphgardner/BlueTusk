@@ -25,6 +25,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'expansion-candidate-evidence.psm1')
 
 function Get-FamilyVersion
 {
@@ -256,6 +257,13 @@ foreach ($dependency in @($definition.releaseDependencies))
 }
 
 $fixtureRuns = $null
+$fixtureArtifacts = @()
+$expansionContract = $null
+if ($Family -in @('Events', 'Jobs', 'Documents', 'Schema', 'Projections',
+    'Search', 'Sql', 'Studio', 'Edge', 'Workflows'))
+{
+    $expansionContract = Get-ExpansionReadinessContract -Family $Family -Commit $Commit.ToLowerInvariant()
+}
 if (-not [string]::IsNullOrWhiteSpace($EvidencePath))
 {
     $resolvedEvidencePath = (Resolve-Path -LiteralPath $EvidencePath).Path
@@ -266,11 +274,54 @@ if (-not [string]::IsNullOrWhiteSpace($EvidencePath))
     }
 
     $fixtureRuns = @($fixture.runs)
+    if ($null -ne $expansionContract)
+    {
+        $index = Get-Content -LiteralPath $fixture.artifactIndexPath -Raw | ConvertFrom-Json
+        if ($index.schemaVersion -ne 1) { throw 'Expected artifact-index fixture schema 1.' }
+        $fixtureArtifacts = @($index.artifacts)
+    }
 }
 elseif ([string]::IsNullOrWhiteSpace($Repository) -or
         [string]::IsNullOrWhiteSpace($Token))
 {
     throw 'Exact-commit workflow verification requires GITHUB_REPOSITORY and GITHUB_TOKEN.'
+}
+
+$headers = @{
+    Accept = 'application/vnd.github+json'
+    Authorization = "Bearer $Token"
+    'User-Agent' = 'BlueTusk-release-gate'
+    'X-GitHub-Api-Version' = '2022-11-28'
+}
+function Get-ReleaseApiItems([string] $Path, [string] $Property)
+{
+    $all = [Collections.Generic.List[object]]::new()
+    $total = $null
+    for ($page = 1; $page -le 100; $page++)
+    {
+        $join = if ($Path.Contains('?')) { '&' } else { '?' }
+        $uri = "https://api.github.com/repos/$Repository/$Path${join}per_page=100&page=$page"
+        $response = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers
+        if (($response.total_count -isnot [int] -and $response.total_count -isnot [long]) -or
+            $response.total_count -lt 0 -or $response.$Property -isnot [array])
+        {
+            throw "GitHub listing '$Path' has no valid total or item array."
+        }
+        if ($null -eq $total) { $total = [long]$response.total_count }
+        if ([long]$response.total_count -ne $total) { throw "GitHub listing '$Path' changed during pagination." }
+        foreach ($item in @($response.$Property)) { $all.Add($item) }
+        if ($all.Count -ge $total -or $response.$Property.Count -eq 0) { break }
+    }
+    if ($all.Count -ne $total) { throw "GitHub listing '$Path' is incomplete." }
+    return @($all.ToArray())
+}
+function Get-ReleaseRunArtifacts([long] $RunId, [string] $Name)
+{
+    if ($null -ne $fixtureRuns)
+    {
+        return @($fixtureArtifacts | Where-Object { [long]$_.workflow_run.id -eq $RunId })
+    }
+    return @(Get-ReleaseApiItems "actions/runs/$RunId/artifacts?name=$([Uri]::EscapeDataString($Name))" 'artifacts')
 }
 
 $verifiedRuns = [Collections.Generic.List[object]]::new()
@@ -295,31 +346,25 @@ foreach ($requirement in @($publication.requiredWorkflowEvidence))
     else
     {
         $encodedWorkflow = [Uri]::EscapeDataString($workflowFile)
-        $uri =
-            "https://api.github.com/repos/$Repository/actions/workflows/" +
-            "$encodedWorkflow/runs?head_sha=$Commit&status=completed&per_page=100"
-        $headers = @{
-            Accept = 'application/vnd.github+json'
-            Authorization = "Bearer $Token"
-            'User-Agent' = 'BlueTusk-release-gate'
-            'X-GitHub-Api-Version' = '2022-11-28'
-        }
-        $response = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers
-        @($response.workflow_runs | ForEach-Object {
-            [pscustomobject]@{
-                workflowFile = $workflowFile
-                headSha = [string]$_.head_sha
-                event = [string]$_.event
-                conclusion = [string]$_.conclusion
-                runId = [long]$_.id
-                runAttempt = [int]$_.run_attempt
-                url = [string]$_.html_url
-            }
+        @(Get-ReleaseApiItems "actions/workflows/$encodedWorkflow/runs?head_sha=$Commit&status=completed" 'workflow_runs' | ForEach-Object {
+            ConvertTo-ExpansionRunSummary -Run $_ -WorkflowFile $workflowFile
         })
     }
 
-    $successfulRun = $runs |
+    $artifactName = if ($null -ne $expansionContract) {
+        Get-ExpansionWorkflowArtifactName -Contract $expansionContract -WorkflowFile $workflowFile
+    } else { $null }
+    $successfulRun = if (-not [string]::IsNullOrEmpty([string]$artifactName))
+    {
+        (Select-ExpansionQualificationRun -Runs $runs -WorkflowFile $workflowFile `
+            -Commit $Commit.ToLowerInvariant() -ArtifactName $artifactName `
+            -GetRunArtifacts ${function:Get-ReleaseRunArtifacts}).Run
+    }
+    else
+    {
+        $runs |
         Where-Object {
+            [string]$_.workflowFile -ceq $workflowFile -and
             [string]::Equals(
                 [string]$_.headSha,
                 $Commit,
@@ -332,6 +377,7 @@ foreach ($requirement in @($publication.requiredWorkflowEvidence))
         } |
         Sort-Object runId -Descending |
         Select-Object -First 1
+    }
 
     if ($null -eq $successfulRun)
     {
