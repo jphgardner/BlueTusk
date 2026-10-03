@@ -2075,6 +2075,79 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "ecosystem-failover-qualification",
+    "summary": "Each expansion family has a manual exact-candidate failover workflow named in eng/expansion-release-policy.json. This page covers the shared gate used by every expansion family except Jobs.",
+    "keywords": [
+      "docs",
+      "ecosystem",
+      "failover",
+      "qualification"
+    ],
+    "order": 1064,
+    "title": "Expansion failover qualification",
+    "sourcePath": "docs/ecosystem/failover-qualification.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/failover-qualification.md",
+    "headings": [
+      {
+        "id": "expansion-failover-qualification",
+        "text": "Expansion failover qualification",
+        "level": 1
+      },
+      {
+        "id": "gate-shape",
+        "text": "Gate shape",
+        "level": 2
+      },
+      {
+        "id": "disturbances",
+        "text": "Disturbances",
+        "level": 2
+      },
+      {
+        "id": "families",
+        "text": "Families",
+        "level": 2
+      },
+      {
+        "id": "recovery-ceilings",
+        "text": "Recovery ceilings",
+        "level": 2
+      },
+      {
+        "id": "not-qualified",
+        "text": "Not qualified",
+        "level": 2
+      },
+      {
+        "id": "local-diagnostic-runs",
+        "text": "Local diagnostic runs",
+        "level": 2
+      }
+    ],
+    "wordCount": 1365,
+    "readMinutes": 7,
+    "searchText": "Expansion failover qualification Each expansion family has a manual exact-candidate failover workflow named in [`eng/expansion-release-policy.json`](../../eng/expansion-release-policy.json). This page covers the shared gate used by every expansion family except Jobs. Jobs keeps its own [physical promotion gate](../jobs/failover.md). Adding a workflow records no passing run. Only a successful `workflow_dispatch` run at the candidate SHA, with its retained `expansion-<family>-failover-<sha>` artifact, can count as release evidence. Gate shape Every workflow runs on `[self-hosted, windows, x64, bluetusk-benchmark]` and shares the `bluetusk-reference-host` concurrency group. It takes the full candidate SHA and an exact typed confirmation, checks out that commit, and runs [`eng/verify-expansion-release-failover.ps1`](../../eng/verify-expansion-release-failover.ps1) in three modes: `Preflight` requires the clean exact candidate and a fresh evidence directory. `Run` executes [`eng/run-expansion-failover.ps1`](../../eng/run-expansion-failover.ps1). That script provisions three fresh PostgreSQL 18 synchronous primary/standby pairs, one per repetition, from the digest-pinned image. Each pair has its own labelled network and volumes, `fsync=on`, `full_page_writes=on`, `synchronous_commit=remote_apply` and a verified streaming synchronous standby. The script runs the family's steps in policy order, captures the candidate source before and after, and hashes every step binary before and after each step. Run mode then archives the binaries and writes a file-hash manifest. `Verify` re-checks the archived artifact offline. Readiness uses the same mode through `Get-ExpansionRoleVerifier`. [`eng/verify-expansion-failover-report.ps1`](../../eng/verify-expansion-failover-report.ps1) judges the evidence against [`eng/expansion-failover-policy.json`](../../eng/expansion-failover-policy.json). It requires the exact clean candidate, three distinct fresh fixtures and PostgreSQL systems, the ",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Expansion failover qualification</h1>\n<p>Each expansion family has a manual exact-candidate failover workflow named in\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/expansion-release-policy.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/expansion-release-policy.json</code></a>.\nThis page covers the shared gate used by every expansion family except Jobs.\nJobs keeps its own <a href=\"/documentation/operations/jobs-failover\">physical promotion gate</a>. Adding a\nworkflow records no passing run. Only a successful <code>workflow_dispatch</code> run at\nthe candidate SHA, with its retained <code>expansion-&lt;family&gt;-failover-&lt;sha&gt;</code>\nartifact, can count as release evidence.</p>\n<h2>Gate shape</h2>\n<p>Every workflow runs on <code>[self-hosted, windows, x64, bluetusk-benchmark]</code> and\nshares the <code>bluetusk-reference-host</code> concurrency group. It takes the full\ncandidate SHA and an exact typed confirmation, checks out that commit, and runs\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/verify-expansion-release-failover.ps1\" target=\"_blank\" rel=\"noreferrer\"><code>eng/verify-expansion-release-failover.ps1</code></a>\nin three modes:</p>\n<ul>\n<li><code>Preflight</code> requires the clean exact candidate and a fresh evidence directory.</li>\n<li><code>Run</code> executes <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/run-expansion-failover.ps1\" target=\"_blank\" rel=\"noreferrer\"><code>eng/run-expansion-failover.ps1</code></a>.\nThat script provisions three fresh PostgreSQL 18 synchronous primary/standby\npairs, one per repetition, from the digest-pinned image. Each pair has its own\nlabelled network and volumes, <code>fsync=on</code>, <code>full_page_writes=on</code>,\n<code>synchronous_commit=remote_apply</code> and a verified streaming synchronous\nstandby. The script runs the family’s steps in policy order, captures the\ncandidate source before and after, and hashes every step binary before and\nafter each step. Run mode then archives the binaries and writes a file-hash\nmanifest.</li>\n<li><code>Verify</code> re-checks the archived artifact offline. Readiness uses the same\nmode through <code>Get-ExpansionRoleVerifier</code>.</li>\n</ul>\n<p><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/verify-expansion-failover-report.ps1\" target=\"_blank\" rel=\"noreferrer\"><code>eng/verify-expansion-failover-report.ps1</code></a>\njudges the evidence against\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/expansion-failover-policy.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/expansion-failover-policy.json</code></a>.\nIt requires the exact clean candidate, three distinct fresh fixtures and\nPostgreSQL systems, the pinned image, synchronous settings, and unchanged\nbinaries. Every scenario must run with its exact acknowledged work and without\nlost or duplicated effects. The verifier also checks atomic in-flight work,\nstale-owner rejection with a newer fence where the product has an owner, tenant\nisolation, the expected server timeline, and recovery inside the\npre-registered ceilings. Each harness scenario lists the assertions it ran;\nthe verifier requires exactly the policy’s assertion set, so a scenario cannot\nsilently drop one.</p>\n<h2>Disturbances</h2>\n<p>The cross-family harness <code>benchmarks/BlueTusk.Ecosystem.FailoverHarness</code>\nblocks a real product operation inside its open transaction at a PostgreSQL\nadvisory-lock barrier. It then applies one of four faults:</p>\n<table>\n<thead>\n<tr>\n<th>Scenario</th>\n<th>Fault</th>\n<th>Recovery path</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>backend-termination</code></td>\n<td><code>pg_terminate_backend</code> of the blocked session</td>\n<td>New connection on the same server</td>\n</tr>\n<tr>\n<td><code>host-process-kill</code></td>\n<td>Operating-system kill of a child process running product code</td>\n<td>Replacement owner, after lease expiry where the product leases work</td>\n</tr>\n<tr>\n<td><code>primary-crash-restart</code></td>\n<td><code>SIGKILL</code> of the primary, then restart of the same server</td>\n<td>WAL crash recovery, standby reattachment</td>\n</tr>\n<tr>\n<td><code>synchronous-standby-promotion</code></td>\n<td><code>SIGKILL</code> of the primary, then <code>pg_ctl promote</code> of the standby</td>\n<td>Public provider multihost route to the promoted server</td>\n</tr>\n</tbody>\n</table>\n<p>The product sources use the public multihost route: both endpoints, a\nread-write target and a one-second connect timeout. They are never re-pointed.\nPromotion runs last because it permanently removes the original primary.</p>\n<h2>Families</h2>\n<p><strong>Projections</strong> applies source WAL exactly once, using the durable checkpoint\nin the same transaction as the derived model. Three harness scenarios\ninterrupt a worker inside an apply that has already staged an additive\naggregate delta. Each checks that:</p>\n<ul>\n<li>the partial apply rolled back;</li>\n<li>the old lease can no longer renew;</li>\n<li>a newer fence resumes from the checkpoint;</li>\n<li>every tenant’s count and total equal the source exactly.</li>\n</ul>\n<p>A lost apply would lower the count and a repeated one would raise it.\nPromotion reuses the dedicated\n<a href=\"/documentation/operations/projections-recovery\"><code>BlueTusk.Projections.PhysicalRecoveryTests</code></a>\nrehearsal. A promotion changes the timeline, so recovery there is an explicit\noperator rebuild rather than transparent resumption.</p>\n<p><strong>Documents</strong> interrupts a two-document save after its first insert. Each\nscenario checks that:</p>\n<ul>\n<li>every acknowledged document survives with its exact value;</li>\n<li>the interrupted save is all-or-nothing;</li>\n<li>no document is lost, duplicated or partial;</li>\n<li>tenants stay isolated;</li>\n<li>a stale pre-fault revision cannot overwrite the compare-and-swap winner.</li>\n</ul>\n<p><strong>Workflows</strong> runs two existing harnesses:</p>\n<ul>\n<li>the Workflows load harness <code>faults</code> profile: real worker process death, a\ndropped commit acknowledgement, and network partitions;</li>\n<li>the Jobs/Workflows physical promotion rehearsal.</li>\n</ul>\n<p>The verifier judges only the Workflows evidence of the promotion: twelve\nsingular workflow effects, four fenced activity leases with stale completion\nand effect rejection, six matching replays, timers, signals, compensation and\ntenant isolation.</p>\n<p><strong>Search</strong> interrupts a version-2 document replacement after the version fence\nand the old-chunk deletion are staged. Each scenario checks that:</p>\n<ul>\n<li>version 1 stays searchable whole;</li>\n<li>the documented same-version retry applies version 2 once, and a repeat is\nidempotent;</li>\n<li>a delayed version-1 writer is ignored;</li>\n<li>no document mixes chunks from two versions;</li>\n<li>tenants stay isolated.</li>\n</ul>\n<p><strong>Edge</strong> interrupts the server while it applies an ordered client mutation\nwhose business effect is already staged. The host-process kill kills the\nEdge server process; the SQLite clients survive, as devices would. Each\nscenario checks that:</p>\n<ul>\n<li>the client outbox retains the mutation and delivers it exactly once;</li>\n<li>every acknowledged mutation keeps one business effect;</li>\n<li>each client checkpoint reaches the server head;</li>\n<li>a confirmed ordered retry gets 410;</li>\n<li>each tenant may read only its own scope.</li>\n</ul>\n<p><strong>Events</strong> interrupts a replay batch after its first inbox effect is staged.\nEach scenario checks that:</p>\n<ul>\n<li>the batch rolls back with its checkpoint;</li>\n<li>the old lease can neither replay nor renew;</li>\n<li>a newer fence resumes the stream;</li>\n<li>every acknowledged event has exactly one effect;</li>\n<li>retried appends are recognised as already stored;</li>\n<li>tenants’ streams stay apart.</li>\n</ul>\n<p><strong>Schema</strong> has no replicated runtime, so its gate qualifies restart and\nfencing safety of the deployment journal. It interrupts a column-adding\ntransactional step while PostgreSQL rewrites the table. Each scenario checks\nthat:</p>\n<ul>\n<li>the step leaves neither the column nor a completed record;</li>\n<li>the old owner is fenced;</li>\n<li>the successor completes the step exactly once.</li>\n</ul>\n<p>Two journals stand in for tenants.</p>\n<p><strong>Sql</strong> has no durable state and no owner to fence. Its gate qualifies\nrestart safety only:</p>\n<ul>\n<li>an interrupted typed read fails rather than returning a truncated success;</li>\n<li>any yielded rows are an exact prefix;</li>\n<li>no session lingers;</li>\n<li>the generated contract still validates on the recovered server;</li>\n<li>a caller retry returns every application-acknowledged row exactly.</li>\n</ul>\n<p><strong>Studio</strong> interrupts an admitted operation whose completion audit insert is\nblocked while it holds an admission slot. Each scenario checks that:</p>\n<ul>\n<li>the slot is released to another replica;</li>\n<li>the attempt audit survives;</li>\n<li>the interrupted completion is reconciled exactly once by operation\nidentity;</li>\n<li>a reused identity with different fields is rejected;</li>\n<li>the per-scope caps still hold.</li>\n</ul>\n<h2>Recovery ceilings</h2>\n<p>No expansion family documents a recovery-time objective. All ceilings below\nwere fixed from documented constants before any failover run, and none was\nadjusted to an observed result:</p>\n<ul>\n<li><strong>Fault to fully verified recovery: 180 s.</strong> This is the Jobs failover\npolicy’s ceiling, which is the 180-second work deadline of the Jobs/Workflows\npromotion rehearsal on the same image, pair and multihost route.</li>\n<li><strong>First success after a backend termination or host-process kill: 45 s.</strong>\nThis is the Jobs rehearsal’s drain-phase deadline. Neither fault makes the\ndatabase unavailable; leased products wait out a five-second lease.</li>\n<li><strong>First success after a crash/restart or promotion: 60 s.</strong> Readiness takes\n30 s (the runner startup deadline, or <code>pg_ctl promote -t 30</code>), the standby\nreconnect retry 5 s, the provider failed-host recheck 10 s and the connect\ntimeout 1 s. That totals 46 s, rounded up to the next whole minute.</li>\n<li><strong>Projections promotion: 120 s.</strong> The rehearsal keeps its own tighter work\ndeadline.</li>\n<li><strong>Edge: 120 s.</strong> Edge keeps its own fault-recovery budget\n(<code>maximumFaultRecoverySeconds</code> in <code>eng/edge-capacity-budgets.json</code>) as its\nverified ceiling. The 45 s and 60 s first-success ceilings still apply.</li>\n</ul>\n<p>The core-family production RTOs in <code>eng/v1-production-slos.json</code> (15 to 60\nminutes) are far looser and are not used.</p>\n<h2>Not qualified</h2>\n<p>Each family lists its untested disturbances in the policy. These include\nasynchronous-replication loss, split brain, old-primary rejoin, persistent\nstorage loss and independent-host fleets. One local host proves none of those.\n<code>ProductionQualified</code> stays false in every report.</p>\n<h2>Local diagnostic runs</h2>\n<p>Run from a clean committed checkout, with no host measurement lock present:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$sha = git rev-parse HEAD\n./eng/verify-expansion-release-failover.ps1 -Family Projections -Mode Run -ExpectedCommit $sha `\n    -EvidenceRoot artifacts/projections-release-failover/diagnostic -Owner <local-owner-label>\n./eng/verify-expansion-release-failover.ps1 -Family Projections -Mode Verify -ExpectedCommit $sha `\n    -EvidenceRoot artifacts/projections-release-failover/diagnostic\n",
+        "highlighted": "<span class=\"hljs-variable\">$sha</span> = git rev<span class=\"hljs-literal\">-parse</span> HEAD\n./eng/verify<span class=\"hljs-literal\">-expansion-release-failover</span>.ps1 <span class=\"hljs-literal\">-Family</span> Projections <span class=\"hljs-literal\">-Mode</span> Run <span class=\"hljs-literal\">-ExpectedCommit</span> <span class=\"hljs-variable\">$sha</span> `\n    <span class=\"hljs-literal\">-EvidenceRoot</span> artifacts/projections<span class=\"hljs-literal\">-release-failover</span>/diagnostic <span class=\"hljs-literal\">-Owner</span> &lt;local<span class=\"hljs-literal\">-owner-label</span>&gt;\n./eng/verify<span class=\"hljs-literal\">-expansion-release-failover</span>.ps1 <span class=\"hljs-literal\">-Family</span> Projections <span class=\"hljs-literal\">-Mode</span> Verify <span class=\"hljs-literal\">-ExpectedCommit</span> <span class=\"hljs-variable\">$sha</span> `\n    <span class=\"hljs-literal\">-EvidenceRoot</span> artifacts/projections<span class=\"hljs-literal\">-release-failover</span>/diagnostic\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>A local pass is diagnostic only. It is not a workflow artifact and does not\nqualify a release.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "ecosystem-implementation-programme",
     "summary": "The requested outcome is ten complete ecosystem products, built for large production workloads and qualified with measured efficiency and recovery evidence. Code, a successful build, and a production qualification are…",
     "keywords": [
@@ -2083,7 +2156,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "implementation",
       "programme"
     ],
-    "order": 1064,
+    "order": 1065,
     "title": "BlueTusk ecosystem expansion",
     "sourcePath": "docs/ecosystem/implementation-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/implementation-programme.md",
@@ -2135,7 +2208,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "ecosystem",
       "performance"
     ],
-    "order": 1065,
+    "order": 1066,
     "title": "Ecosystem performance qualification",
     "sourcePath": "docs/ecosystem/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/performance.md",
@@ -2167,7 +2240,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "ecosystem",
       "progress"
     ],
-    "order": 1066,
+    "order": 1067,
     "title": "Ecosystem expansion evidence ledger",
     "sourcePath": "docs/ecosystem/progress.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/progress.md",
@@ -2210,7 +2283,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "qualification"
     ],
-    "order": 1067,
+    "order": 1068,
     "title": "Expansion release qualification",
     "sourcePath": "docs/ecosystem/release-qualification.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/release-qualification.md",
@@ -2221,13 +2294,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 1120,
+    "wordCount": 1144,
     "readMinutes": 6,
     "searchText": "Expansion release qualification Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and Workflows are implemented preview products at `0.1.0-preview.1`. Their publication flags are disabled. The tagged release workflow recognizes their names so a future qualified candidate can use the same package, SBOM, provenance and protected-publication machinery as the established families. Recognizing a tag is not authority to publish it. `eng/verify-expansion-release-policy.ps1` is the fail-closed source contract. It checks all ten preview entries while disabled. If a future candidate arms a family, it requires a stable version of at least `1.0.0`, the complete exact manual workflow set in its family manifest, a protected independent `expansion-candidate-readiness` environment, and the exact versioned tag pattern in the `package-production` governance contract. The tagged workflow also runs `verify-release-gates.ps1`, which requires successful manual runs whose `head_sha` equals the tag commit, a readiness artifact bound to the exact family, commit, tag, version and qualification artifact digests, and verifies that exact-version release dependencies are already public. The protected publish job checks the live repository and environment settings before any registry write. A source-only governance declaration cannot substitute for those live settings. Source policy checks neither run outcomes nor report contents. The release verifier checks workflow identity, event, conclusion, commit and the readiness artifact's references to the exact qualification runs and their retained artifact digests. The future qualification workflows and protected candidate aggregator must validate their own raw measurements before a successful run can count. Each family must have its own capacity, failover and durable-format upgrade qualification. The required workflow identities are fixed in `eng/expansion-release-policy.json`. Jobs needs a dedicated `jobs-release-capacity.yml` w",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Expansion release qualification</h1>\n<p>Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and\nWorkflows are implemented preview products at <code>0.1.0-preview.1</code>. Their\npublication flags are disabled. The tagged release workflow recognizes their\nnames so a future qualified candidate can use the same package, SBOM,\nprovenance and protected-publication machinery as the established families.\nRecognizing a tag is not authority to publish it.</p>\n<p><code>eng/verify-expansion-release-policy.ps1</code> is the fail-closed source contract.\nIt checks all ten preview entries while disabled. If a future candidate arms a\nfamily, it requires a stable version of at least <code>1.0.0</code>, the complete exact\nmanual workflow set in its family manifest, a protected independent\n<code>expansion-candidate-readiness</code> environment, and the exact versioned tag\npattern in the <code>package-production</code> governance contract. The tagged workflow\nalso runs <code>verify-release-gates.ps1</code>, which requires successful manual runs\nwhose <code>head_sha</code> equals the tag commit, a readiness artifact bound to the exact\nfamily, commit, tag, version and qualification artifact digests, and verifies\nthat exact-version release dependencies are already public. The protected\npublish job checks the live repository and environment settings before any\nregistry write. A source-only governance declaration cannot substitute for\nthose live settings. Source policy\nchecks neither run outcomes nor report contents. The release verifier checks\nworkflow identity, event, conclusion, commit and the readiness artifact’s\nreferences to the exact qualification runs and their retained artifact digests.\nThe future qualification workflows and protected candidate aggregator must\nvalidate their own raw measurements before a successful run can count.</p>\n<p>Each family must have its own capacity, failover and durable-format upgrade\nqualification. The required workflow identities are fixed in\n<code>eng/expansion-release-policy.json</code>. Jobs needs a dedicated\n<code>jobs-release-capacity.yml</code> workflow; the combined <code>ecosystem-performance.yml</code>\ncampaign cannot qualify it alone. The Jobs-only workflow is implemented but\nhas no passing release evidence. Workflows, Projections and Documents share\nthat exact-candidate capacity campaign because it measures each explicitly.\nIt must emit a separate retained capacity artifact for each family before\nany can use it as release evidence. Its result alone is not a product\nrelease pass. Search now has a dedicated full-text local-capacity workflow,\nwhich requires two separate 1,800-second campaigns and retains an exact-candidate\nartifact only after its offline verifier passes. A prior local capacity pass\ndoes not qualify a later source commit or substitute for that workflow run.\nEvents, Schema, Sql and Studio now have dedicated exact-candidate capacity\nworkflows (<code>events-</code>, <code>schema-</code>, <code>sql-</code> and <code>studio-release-capacity.yml</code>). Each\nruns two 1,800-second campaigns of its family’s harness against a fresh,\ndigest-pinned PostgreSQL 18 fixture, records every operation as a raw sample,\nand passes <code>eng/verify-expansion-capacity.ps1</code> against the budgets and written\nrationale in <code>eng/&lt;family&gt;-capacity-budgets.json</code>. None of them has passing\nrelease evidence yet, and a reduced-duration diagnostic run never counts. Every family\nneeds a dedicated failover and upgrade workflow, plus the protected expansion\ncandidate aggregator. Jobs now has a source-bound synchronous-promotion\nfailover workflow and an old/new/old binary upgrade workflow, but neither has\na passing exact-candidate release run. The protected aggregator and the other\nfamilies’ required readers are not implemented yet. An arming edit is therefore\nrejected even if\ngeneric <code>build.yml</code>, <code>security.yml</code>, <code>performance.yml</code> and\n<code>ecosystem-build.yml</code> pass.</p>\n<p>The benchmark-host workflows share one repository-wide concurrency group so\nreference measurements and disturbance campaigns cannot run concurrently on\nthe labeled host through separate manual workflow dispatches. The benchmark\nrunner must still be provisioned and kept isolated from other host workloads;\nthe workflow definition alone is not a passing capacity run.</p>\n<p>The Jobs capacity workflow runs only the Jobs storage profile on a dedicated,\ndigest-pinned PostgreSQL 15 fixture. It requires two separate full 1,800-second\nhigh-entropy campaigns on the reference runner. The Jobs-only verifier checks\ndurable completions, hot and cold tenant p99 latency, exact accepted effects,\nexplicit overload rejection, pruning, physical storage samples, late growth\nand cluster WAL per accepted job against\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/jobs-release-capacity-budgets.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/jobs-release-capacity-budgets.json</code></a>.\nIt retains the raw reports, fixture observations, source captures, binary\nsnapshot and a file-hash manifest in the\n<code>expansion-jobs-capacity-&lt;full-sha&gt;</code> artifact. These are local reference-runner\nlimits, not claims about independent hosts or multi-day retention. No\ncapacity pass is recorded by adding the workflow.</p>\n<p>On the local reference host, <code>eng/run-ecosystem-capacity-local.ps1</code> runs the\nsame Preflight, Run and Verify modes from a clean exact-candidate checkout, for\nthe Jobs gate (<code>-Product Jobs</code>, the default) or the combined Jobs, Workflows,\nProjections and Documents gate (<code>-Product All</code>). It starts the same pinned\nPostgreSQL 15 fixture owned by a fresh local campaign UUID with\n<code>bluetusk.run-kind=local</code>, never a GitHub run identity, and removes only that\nfixture. The Jobs environment records <code>FixtureRunKind</code>; the verifier accepts a\nnumeric workflow run or a local UUID and rejects a fixture owned by another run\nor campaign. A local pass establishes local capacity only and is not a\nworkflow artifact.</p>\n<p>The Jobs failover workflow repeats three fresh PostgreSQL 18 synchronous\nprimary/standby promotions. Its verifier requires the exact candidate source,\nunchanged test binaries, a passing unskipped test for each pair, 66 preserved\nacknowledged Jobs/admissions and 66 singular Jobs effects per pair, newer\nattempt-two fences with stale completion/effect rejection, tenant isolation,\nand outage-to-recovery health. Raw reports, database logs, fixture samples,\nTRX results and binary snapshots are retained in\n<code>expansion-jobs-failover-&lt;full-sha&gt;</code>. The local hard-stop proves neither\nasynchronous-loss tolerance nor split-brain fencing, old-primary rejoin,\ncredential rotation during promotion, persistent storage failure or fleet\navailability. No failover pass is recorded by adding the workflow.</p>\n<p>The eventual workflows must bind reports, binary/source hashes, fixture\nversions and actual workload outcomes to the same full candidate SHA. Capacity\nmust cover sustained throughput, P50/P95/P99 latency, allocation, memory,\nconnections, WAL, physical storage, overload and retention under documented\npayload, tenant and concurrency distributions. Failover must check\nacknowledged-effect survival, exact recovery, stale-owner fences, tenant\nisolation and repeated disturbance. Upgrade must rehearse forward and rollback\npaths for durable formats and supported PostgreSQL/client versions, including\nin-flight state. Independent review must inspect those retained reports and\noperator runbooks. A workflow that exits successfully without these checks\nmust not be added to the family manifest as qualification evidence.</p>\n<p>The candidate-readiness run must upload one\n<code>expansion-readiness-&lt;lowercase-family&gt;-&lt;full-sha&gt;</code> artifact containing\n<code>readiness.json</code>. Its schema 1 record must state the exact <code>family</code>,\n<code>candidateCommit</code>, <code>tag</code>, <code>version</code>, <code>readinessRun.id</code> and\n<code>readinessRun.attempt</code>. Its <code>qualificationEvidence</code> must contain exactly one\n<code>capacity</code>, <code>failover</code> and <code>upgrade</code> entry. Each names the policy workflow,\nsuccessful exact-candidate run ID and attempt, and an\n<code>expansion-&lt;lowercase-family&gt;-&lt;role&gt;-&lt;full-sha&gt;</code> artifact with its SHA-256\ndigest. The tagged release verifier compares these entries with GitHub’s\nretained, unexpired run artifacts and verifies the downloaded readiness ZIP\ndigest. This binds the reviewed evidence set to one candidate; the readiness\nworkflow must still inspect the reports’ substance and get independent\napproval. No workflow currently produces this release artifact.</p>\n<p>Source arming necessarily changes the commit SHA. The reviewed arming commit\nis therefore the immutable candidate; its manual runs and approvals occur\nafter that commit, and a later source change invalidates them. Until the\nproduct-specific readers, protected environment, exact tag policies and\ncandidate evidence exist, leave <code>publication.enabled=false</code> for all ten\nfamilies. This document does not declare any expansion family stable or\nproduction qualified.</p>\n"
+        "html": "<h1>Expansion release qualification</h1>\n<p>Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and\nWorkflows are implemented preview products at <code>0.1.0-preview.1</code>. Their\npublication flags are disabled. The tagged release workflow recognizes their\nnames so a future qualified candidate can use the same package, SBOM,\nprovenance and protected-publication machinery as the established families.\nRecognizing a tag is not authority to publish it.</p>\n<p><code>eng/verify-expansion-release-policy.ps1</code> is the fail-closed source contract.\nIt checks all ten preview entries while disabled. If a future candidate arms a\nfamily, it requires a stable version of at least <code>1.0.0</code>, the complete exact\nmanual workflow set in its family manifest, a protected independent\n<code>expansion-candidate-readiness</code> environment, and the exact versioned tag\npattern in the <code>package-production</code> governance contract. The tagged workflow\nalso runs <code>verify-release-gates.ps1</code>, which requires successful manual runs\nwhose <code>head_sha</code> equals the tag commit, a readiness artifact bound to the exact\nfamily, commit, tag, version and qualification artifact digests, and verifies\nthat exact-version release dependencies are already public. The protected\npublish job checks the live repository and environment settings before any\nregistry write. A source-only governance declaration cannot substitute for\nthose live settings. Source policy\nchecks neither run outcomes nor report contents. The release verifier checks\nworkflow identity, event, conclusion, commit and the readiness artifact’s\nreferences to the exact qualification runs and their retained artifact digests.\nThe future qualification workflows and protected candidate aggregator must\nvalidate their own raw measurements before a successful run can count.</p>\n<p>Each family must have its own capacity, failover and durable-format upgrade\nqualification. The required workflow identities are fixed in\n<code>eng/expansion-release-policy.json</code>. Jobs needs a dedicated\n<code>jobs-release-capacity.yml</code> workflow; the combined <code>ecosystem-performance.yml</code>\ncampaign cannot qualify it alone. The Jobs-only workflow is implemented but\nhas no passing release evidence. Workflows, Projections and Documents share\nthat exact-candidate capacity campaign because it measures each explicitly.\nIt must emit a separate retained capacity artifact for each family before\nany can use it as release evidence. Its result alone is not a product\nrelease pass. Search now has a dedicated full-text local-capacity workflow,\nwhich requires two separate 1,800-second campaigns and retains an exact-candidate\nartifact only after its offline verifier passes. A prior local capacity pass\ndoes not qualify a later source commit or substitute for that workflow run.\nEvents, Schema, Sql and Studio now have dedicated exact-candidate capacity\nworkflows (<code>events-</code>, <code>schema-</code>, <code>sql-</code> and <code>studio-release-capacity.yml</code>). Each\nruns two 1,800-second campaigns of its family’s harness against a fresh,\ndigest-pinned PostgreSQL 18 fixture, records every operation as a raw sample,\nand passes <code>eng/verify-expansion-capacity.ps1</code> against the budgets and written\nrationale in <code>eng/&lt;family&gt;-capacity-budgets.json</code>. None of them has passing\nrelease evidence yet, and a reduced-duration diagnostic run never counts. Every family\nneeds a dedicated failover and upgrade workflow, plus the protected expansion\ncandidate aggregator. Jobs now has a source-bound synchronous-promotion\nfailover workflow and an old/new/old binary upgrade workflow, but neither has\na passing exact-candidate release run. Every other family now has a\nfailover workflow on the shared exact-candidate gate described in\n<a href=\"/documentation/operations/ecosystem-failover-qualification\">failover qualification</a>; none has a passing\nrelease run either. The protected aggregator and the other\nfamilies’ required readers are not implemented yet. An arming edit is therefore\nrejected even if\ngeneric <code>build.yml</code>, <code>security.yml</code>, <code>performance.yml</code> and\n<code>ecosystem-build.yml</code> pass.</p>\n<p>The benchmark-host workflows share one repository-wide concurrency group so\nreference measurements and disturbance campaigns cannot run concurrently on\nthe labeled host through separate manual workflow dispatches. The benchmark\nrunner must still be provisioned and kept isolated from other host workloads;\nthe workflow definition alone is not a passing capacity run.</p>\n<p>The Jobs capacity workflow runs only the Jobs storage profile on a dedicated,\ndigest-pinned PostgreSQL 15 fixture. It requires two separate full 1,800-second\nhigh-entropy campaigns on the reference runner. The Jobs-only verifier checks\ndurable completions, hot and cold tenant p99 latency, exact accepted effects,\nexplicit overload rejection, pruning, physical storage samples, late growth\nand cluster WAL per accepted job against\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/jobs-release-capacity-budgets.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/jobs-release-capacity-budgets.json</code></a>.\nIt retains the raw reports, fixture observations, source captures, binary\nsnapshot and a file-hash manifest in the\n<code>expansion-jobs-capacity-&lt;full-sha&gt;</code> artifact. These are local reference-runner\nlimits, not claims about independent hosts or multi-day retention. No\ncapacity pass is recorded by adding the workflow.</p>\n<p>On the local reference host, <code>eng/run-ecosystem-capacity-local.ps1</code> runs the\nsame Preflight, Run and Verify modes from a clean exact-candidate checkout, for\nthe Jobs gate (<code>-Product Jobs</code>, the default) or the combined Jobs, Workflows,\nProjections and Documents gate (<code>-Product All</code>). It starts the same pinned\nPostgreSQL 15 fixture owned by a fresh local campaign UUID with\n<code>bluetusk.run-kind=local</code>, never a GitHub run identity, and removes only that\nfixture. The Jobs environment records <code>FixtureRunKind</code>; the verifier accepts a\nnumeric workflow run or a local UUID and rejects a fixture owned by another run\nor campaign. A local pass establishes local capacity only and is not a\nworkflow artifact.</p>\n<p>The Jobs failover workflow repeats three fresh PostgreSQL 18 synchronous\nprimary/standby promotions. Its verifier requires the exact candidate source,\nunchanged test binaries, a passing unskipped test for each pair, 66 preserved\nacknowledged Jobs/admissions and 66 singular Jobs effects per pair, newer\nattempt-two fences with stale completion/effect rejection, tenant isolation,\nand outage-to-recovery health. Raw reports, database logs, fixture samples,\nTRX results and binary snapshots are retained in\n<code>expansion-jobs-failover-&lt;full-sha&gt;</code>. The local hard-stop proves neither\nasynchronous-loss tolerance nor split-brain fencing, old-primary rejoin,\ncredential rotation during promotion, persistent storage failure or fleet\navailability. No failover pass is recorded by adding the workflow.</p>\n<p>The eventual workflows must bind reports, binary/source hashes, fixture\nversions and actual workload outcomes to the same full candidate SHA. Capacity\nmust cover sustained throughput, P50/P95/P99 latency, allocation, memory,\nconnections, WAL, physical storage, overload and retention under documented\npayload, tenant and concurrency distributions. Failover must check\nacknowledged-effect survival, exact recovery, stale-owner fences, tenant\nisolation and repeated disturbance. Upgrade must rehearse forward and rollback\npaths for durable formats and supported PostgreSQL/client versions, including\nin-flight state. Independent review must inspect those retained reports and\noperator runbooks. A workflow that exits successfully without these checks\nmust not be added to the family manifest as qualification evidence.</p>\n<p>The candidate-readiness run must upload one\n<code>expansion-readiness-&lt;lowercase-family&gt;-&lt;full-sha&gt;</code> artifact containing\n<code>readiness.json</code>. Its schema 1 record must state the exact <code>family</code>,\n<code>candidateCommit</code>, <code>tag</code>, <code>version</code>, <code>readinessRun.id</code> and\n<code>readinessRun.attempt</code>. Its <code>qualificationEvidence</code> must contain exactly one\n<code>capacity</code>, <code>failover</code> and <code>upgrade</code> entry. Each names the policy workflow,\nsuccessful exact-candidate run ID and attempt, and an\n<code>expansion-&lt;lowercase-family&gt;-&lt;role&gt;-&lt;full-sha&gt;</code> artifact with its SHA-256\ndigest. The tagged release verifier compares these entries with GitHub’s\nretained, unexpired run artifacts and verifies the downloaded readiness ZIP\ndigest. This binds the reviewed evidence set to one candidate; the readiness\nworkflow must still inspect the reports’ substance and get independent\napproval. No workflow currently produces this release artifact.</p>\n<p>Source arming necessarily changes the commit SHA. The reviewed arming commit\nis therefore the immutable candidate; its manual runs and approvals occur\nafter that commit, and a later source change invalidates them. Until the\nproduct-specific readers, protected environment, exact tag policies and\ncandidate evidence exist, leave <code>publication.enabled=false</code> for all ten\nfamilies. This document does not declare any expansion family stable or\nproduction qualified.</p>\n"
       }
     ]
   },
@@ -2242,7 +2315,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "edge",
       "README"
     ],
-    "order": 1068,
+    "order": 1069,
     "title": "BlueTusk.Edge",
     "sourcePath": "docs/edge/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/README.md",
@@ -2354,7 +2427,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "edge",
       "capacity"
     ],
-    "order": 1069,
+    "order": 1070,
     "title": "Edge ordered offline capacity campaign",
     "sourcePath": "docs/edge/capacity.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/capacity.md",
@@ -2407,7 +2480,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "PUBLISHED",
       "RETENTION"
     ],
-    "order": 1073,
+    "order": 1074,
     "title": "Published outbox retention: required protocol",
     "sourcePath": "docs/events/PUBLISHED-RETENTION.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/PUBLISHED-RETENTION.md",
@@ -2439,7 +2512,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "events",
       "README"
     ],
-    "order": 1074,
+    "order": 1075,
     "title": "BlueTusk.Events",
     "sourcePath": "docs/events/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
@@ -2520,7 +2593,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "docs",
       "fuzzing"
     ],
-    "order": 1077,
+    "order": 1078,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -2612,7 +2685,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1083,
+    "order": 1084,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -2689,7 +2762,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "improvement",
       "audit"
     ],
-    "order": 1084,
+    "order": 1085,
     "title": "BlueTusk improvement audit and action record",
     "sourcePath": "docs/improvement-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
@@ -2746,7 +2819,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "README"
     ],
-    "order": 1085,
+    "order": 1086,
     "title": "BlueTusk.Jobs",
     "sourcePath": "docs/jobs/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
@@ -2824,7 +2897,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "durable",
       "format"
     ],
-    "order": 1086,
+    "order": 1087,
     "title": "Durable-format support and rehearsal",
     "sourcePath": "docs/jobs/durable-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
@@ -2856,7 +2929,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "failover"
     ],
-    "order": 1087,
+    "order": 1088,
     "title": "Jobs and Workflows physical promotion rehearsal",
     "sourcePath": "docs/jobs/failover.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
@@ -2928,7 +3001,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "hosting"
     ],
-    "order": 1088,
+    "order": 1089,
     "title": "Scoped Jobs and Workflows host readiness",
     "sourcePath": "docs/jobs/hosting.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
@@ -2980,7 +3053,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "maintenance"
     ],
-    "order": 1089,
+    "order": 1090,
     "title": "Durable storage maintenance contract",
     "sourcePath": "docs/jobs/maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
@@ -3012,7 +3085,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "performance"
     ],
-    "order": 1090,
+    "order": 1091,
     "title": "Jobs and Workflows capacity and recovery harness",
     "sourcePath": "docs/jobs/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
@@ -3119,7 +3192,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "jobs",
       "upgrade"
     ],
-    "order": 1091,
+    "order": 1092,
     "title": "Jobs binary upgrade and rollback gate",
     "sourcePath": "docs/jobs/upgrade.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/upgrade.md",
@@ -3153,7 +3226,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1099,
+    "order": 1100,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -3251,7 +3324,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1100,
+    "order": 1101,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -3360,7 +3433,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1102,
+    "order": 1103,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -3434,7 +3507,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1103,
+    "order": 1104,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -3491,7 +3564,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1105,
+    "order": 1106,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -3619,7 +3692,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1106,
+    "order": 1107,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -3704,7 +3777,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "1",
       "1"
     ],
-    "order": 1107,
+    "order": 1108,
     "title": "BlueTusk 1.2 performance leadership programme",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -3777,7 +3850,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1110,
+    "order": 1111,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -3936,7 +4009,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "request",
       "capture"
     ],
-    "order": 1111,
+    "order": 1112,
     "title": "Provider request-level performance capture",
     "sourcePath": "docs/operations/provider-request-capture.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
@@ -4025,7 +4098,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "candidate"
     ],
-    "order": 1114,
+    "order": 1115,
     "title": "V1 release candidate",
     "sourcePath": "docs/operations/v1-release-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/v1-release-candidate.md",
@@ -4058,7 +4131,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "website",
       "production"
     ],
-    "order": 1115,
+    "order": 1116,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -4125,7 +4198,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1117,
+    "order": 1118,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -4157,7 +4230,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LIVE"
     ],
-    "order": 1118,
+    "order": 1119,
     "title": "Published projections in Live",
     "sourcePath": "docs/projections/LIVE.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
@@ -4219,7 +4292,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "LOAD"
     ],
-    "order": 1119,
+    "order": 1120,
     "title": "Workload and recovery qualification",
     "sourcePath": "docs/projections/LOAD.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
@@ -4276,7 +4349,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "README"
     ],
-    "order": 1120,
+    "order": 1121,
     "title": "BlueTusk.Projections",
     "sourcePath": "docs/projections/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
@@ -4348,7 +4421,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "projections",
       "RECOVERY"
     ],
-    "order": 1121,
+    "order": 1122,
     "title": "Explicit source recovery and controlled DDL",
     "sourcePath": "docs/projections/RECOVERY.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
@@ -4386,7 +4459,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "evidence",
       "README"
     ],
-    "order": 1122,
+    "order": 1123,
     "title": "Local bounded workload evidence",
     "sourcePath": "docs/projections/evidence/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
@@ -4432,7 +4505,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1125,
+    "order": 1126,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -4464,7 +4537,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "process"
     ],
-    "order": 1130,
+    "order": 1131,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -4512,7 +4585,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1132,
+    "order": 1133,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -4563,7 +4636,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1133,
+    "order": 1134,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -4648,7 +4721,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1134,
+    "order": 1135,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -4693,7 +4766,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1136,
+    "order": 1137,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -4741,7 +4814,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "tracks"
     ],
-    "order": 1137,
+    "order": 1138,
     "title": "Core products and Graph preview",
     "sourcePath": "docs/releases/release-tracks.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
@@ -4843,7 +4916,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "schema",
       "README"
     ],
-    "order": 1141,
+    "order": 1142,
     "title": "BlueTusk Schema",
     "sourcePath": "docs/schema/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
@@ -4966,7 +5039,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "catalogue",
       "attestation"
     ],
-    "order": 1142,
+    "order": 1143,
     "title": "Catalogue consistency attestation",
     "sourcePath": "docs/schema/catalogue-attestation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
@@ -5028,7 +5101,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "README"
     ],
-    "order": 1143,
+    "order": 1144,
     "title": "BlueTusk.Search",
     "sourcePath": "docs/search/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
@@ -5140,7 +5213,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "search",
       "capacity"
     ],
-    "order": 1144,
+    "order": 1145,
     "title": "Search mixed ingestion and retrieval capacity campaign",
     "sourcePath": "docs/search/capacity.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/capacity.md",
@@ -5197,7 +5270,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sql",
       "README"
     ],
-    "order": 1146,
+    "order": 1147,
     "title": "BlueTusk Sql",
     "sourcePath": "docs/sql/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
@@ -5279,7 +5352,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "studio",
       "README"
     ],
-    "order": 1163,
+    "order": 1164,
     "title": "BlueTusk Studio",
     "sourcePath": "docs/studio/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
@@ -5371,7 +5444,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1172,
+    "order": 1173,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -5429,7 +5502,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1173,
+    "order": 1174,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
@@ -5476,7 +5549,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "workflows",
       "README"
     ],
-    "order": 1174,
+    "order": 1175,
     "title": "BlueTusk.Workflows",
     "sourcePath": "docs/workflows/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",

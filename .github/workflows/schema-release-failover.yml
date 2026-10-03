@@ -1,0 +1,72 @@
+name: Schema exact-candidate release failover
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character commit SHA containing this Schema gate
+        required: true
+        type: string
+      confirmation:
+        description: Type RUN-SCHEMA-RELEASE-FAILOVER for three fresh synchronous-pair disturbance campaigns
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bluetusk-reference-host
+  cancel-in-progress: false
+
+jobs:
+  qualify:
+    name: Isolated Windows Schema failover
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 150
+    env:
+      EVIDENCE_ROOT: artifacts/schema-release-failover/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean exact candidate and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Schema failover requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-SCHEMA-RELEASE-FAILOVER') { throw 'The exact manual Schema failover confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) { throw 'Failover runs are bound by head_sha; dispatch from a ref whose head is the exact candidate.' }
+          ./eng/verify-expansion-release-failover.ps1 -Family Schema -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Repeat Schema disturbances on three fresh synchronous pairs
+        shell: pwsh
+        run: ./eng/verify-expansion-release-failover.ps1 -Family Schema -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Schema effects, fences, budgets and hashes
+        shell: pwsh
+        run: ./eng/verify-expansion-release-failover.ps1 -Family Schema -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Schema failover evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-schema-failover-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: schema-failover-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
