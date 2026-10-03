@@ -37,7 +37,14 @@ public sealed class NatsSyncConformanceTests
         }
         finally
         {
-            _ = await jetStream.DeleteStreamAsync(streamName);
+            // Cleanup must not replace the suite's own failure: if provisioning failed, the stream never existed.
+            try
+            {
+                _ = await jetStream.DeleteStreamAsync(streamName);
+            }
+            catch (NatsJSApiException exception) when (exception.Error.ErrCode == 10059)
+            {
+            }
         }
     }
 
