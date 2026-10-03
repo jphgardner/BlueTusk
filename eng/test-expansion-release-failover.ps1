@@ -261,7 +261,11 @@ try
         Mutate $family 'reused-pair' 'distinct fresh PostgreSQL system' { param($r) foreach ($s in @(@($r.Runs[1].Steps | Where-Object { $_.Kind -ceq 'harness' })[0].Report.Scenarios)) { $s.BeforeSystemIdentifier = '769000000000000001'; $s.AfterSystemIdentifier = '769000000000000001' } }
         Mutate $family 'skipped-scenario' 'different scenario set' { param($r) $step = @($r.Runs[0].Steps | Where-Object { $_.Kind -ceq 'harness' })[0]; $step.Report.Scenarios = @($step.Report.Scenarios | Select-Object -Skip 1) }
         Mutate $family 'other-fixture-report' 'not bound to this fixture' { param($r) @($r.Runs[0].Steps | Where-Object { $_.Kind -ceq 'harness' })[0].Report.Fixture = $r.Runs[1].Metadata.Fixture }
-        Mutate $family 'family-substitution' 'not bound to this fixture' { param($r) @($r.Runs[2].Steps | Where-Object { $_.Kind -ceq 'harness' })[0].Report.Family = 'Search' }
+        Mutate $family 'family-substitution' 'not bound to this fixture' {
+            param($r)
+            $step = @($r.Runs[2].Steps | Where-Object { $_.Kind -ceq 'harness' })[0]
+            $step.Report.Family = if ($r.Family -ceq 'Search') { 'Documents' } else { 'Search' }
+        }
     }
     Mutate 'Projections' 'unrecovered-in-flight' 'partial or unrecovered in-flight work' { param($r) (Harness $r 1 'backend-termination').InFlightCommitted = $false }
     Mutate 'Documents' 'promotion-without-new-timeline' 'unexpected server or timeline' { param($r) (Harness $r 0 'synchronous-standby-promotion').AfterTimeline = 1 }
