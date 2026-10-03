@@ -9,12 +9,15 @@ using Xunit.Sdk;
 
 namespace BlueTusk.IntegrationTests;
 
-public sealed class BlueTuskReplicationIntegrationTests
+// Logical slots decode every transaction in their database, so this class creates them in a
+// database that the concurrently running test classes never write to (see LogicalSlotDatabaseFixture).
+public sealed class BlueTuskReplicationIntegrationTests(LogicalSlotDatabaseFixture database)
+    : IClassFixture<LogicalSlotDatabaseFixture>
 {
     [Fact]
     public async Task Exported_snapshot_and_matching_stream_have_no_concurrent_write_gap()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var suffix = Guid.NewGuid().ToString("N");
         var tableName = $"bluetusk_snapshot_{suffix}";
         var publicationName = $"bluetusk_snapshot_publication_{suffix}";
@@ -124,7 +127,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task New_process_can_explicitly_restart_an_inactive_snapshot_slot_with_a_new_epoch()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var suffix = Guid.NewGuid().ToString("N");
         var tableName = $"bluetusk_snapshot_restart_{suffix}";
         var publicationName = $"bluetusk_snapshot_restart_publication_{suffix}";
@@ -215,7 +218,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task Data_source_derived_replication_session_is_dedicated_and_unpooled()
     {
-        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
+        var settings = new BlueTuskConnectionStringBuilder(await GetConnectionStringAsync())
         {
             Pooling = true,
         };
@@ -232,7 +235,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task Physical_connection_discovers_slots_streams_wal_and_sends_feedback()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var slotName = $"bluetusk_physical_{Guid.NewGuid():N}";
         await using var replication =
             await BlueTuskPhysicalReplicationConnection.OpenAsync(connectionString);
@@ -282,7 +285,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task Logical_connection_uses_the_convenience_pgoutput_stream()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var suffix = Guid.NewGuid().ToString("N");
         var tableName = $"bluetusk_replication_{suffix}";
         var publicationName = $"bluetusk_publication_{suffix}";
@@ -388,7 +391,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task Streams_assembles_live_pgoutput_DML_as_one_ordered_transaction()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var suffix = Guid.NewGuid().ToString("N");
         var tableName = $"bluetusk_streams_{suffix}";
         var publicationName = $"bluetusk_streams_publication_{suffix}";
@@ -476,7 +479,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task Logical_replication_validates_and_resumes_durable_checkpoints_across_sessions()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var suffix = Guid.NewGuid().ToString("N");
         var tableName = $"bluetusk_resume_{suffix}";
         var publicationName = $"bluetusk_resume_publication_{suffix}";
@@ -629,7 +632,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task Pgoutput_streams_large_in_progress_transactions()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var suffix = Guid.NewGuid().ToString("N");
         var tableName = $"bluetusk_streaming_{suffix}";
         var publicationName = $"bluetusk_streaming_pub_{suffix}";
@@ -728,7 +731,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task Streams_stages_and_commits_a_live_prepared_transaction()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var suffix = Guid.NewGuid().ToString("N");
         var tableName = $"bluetusk_streams_twophase_{suffix}";
         var publicationName = $"bluetusk_streams_twophase_pub_{suffix}";
@@ -883,7 +886,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task Pgoutput_decodes_prepared_transaction_metadata()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var suffix = Guid.NewGuid().ToString("N");
         var tableName = $"bluetusk_twophase_{suffix}";
         var publicationName = $"bluetusk_twophase_pub_{suffix}";
@@ -1000,7 +1003,7 @@ public sealed class BlueTuskReplicationIntegrationTests
     [Fact]
     public async Task Logical_connection_streams_custom_output_plugin_payloads()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         var suffix = Guid.NewGuid().ToString("N");
         var tableName = $"bluetusk_custom_plugin_{suffix}";
         var slotName = $"bluetusk_custom_slot_{suffix}";
@@ -1219,7 +1222,10 @@ public sealed class BlueTuskReplicationIntegrationTests
         _ = await command.ExecuteNonQueryAsync(CancellationToken.None);
     }
 
-    private static string GetConnectionString()
+    private Task<string> GetConnectionStringAsync() =>
+        database.GetConnectionStringAsync(GetSharedConnectionString());
+
+    private static string GetSharedConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable(
             "BLUETUSK_TEST_CONNECTION_STRING");

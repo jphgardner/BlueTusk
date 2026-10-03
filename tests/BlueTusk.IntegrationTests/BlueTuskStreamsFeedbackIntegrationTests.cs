@@ -13,15 +13,18 @@ namespace BlueTusk.IntegrationTests;
 /// <summary>
 /// A consumer without a delivery observer must still report completed work to PostgreSQL;
 /// otherwise the slot's confirmed_flush_lsn never moves and the server retains all WAL.
+/// The slots are created in a database that the concurrently running test classes never
+/// write to (see <see cref="LogicalSlotDatabaseFixture"/>).
 /// </summary>
-public sealed class BlueTuskStreamsFeedbackIntegrationTests
+public sealed class BlueTuskStreamsFeedbackIntegrationTests(LogicalSlotDatabaseFixture database)
+    : IClassFixture<LogicalSlotDatabaseFixture>
 {
     private static readonly TimeSpan SlotProgressTimeout = TimeSpan.FromSeconds(20);
 
     [Fact]
     public async Task Snapshot_consumer_without_observer_confirms_acknowledged_work_and_releases_wal()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         await using var fixture = await FeedbackFixture.CreateAsync(connectionString, "consumer");
         var source = new PostgreSqlConsistentSnapshotSource(
             fixture.DataSource,
@@ -62,7 +65,7 @@ public sealed class BlueTuskStreamsFeedbackIntegrationTests
     [Fact]
     public async Task Direct_stream_without_observer_confirms_only_acknowledged_transactions()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         await using var fixture = await FeedbackFixture.CreateAsync(connectionString, "direct");
         await using var replication =
             await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
@@ -115,7 +118,7 @@ public sealed class BlueTuskStreamsFeedbackIntegrationTests
     [Fact]
     public async Task Direct_sync_pipeline_without_observer_confirms_applied_transactions()
     {
-        var connectionString = GetConnectionString();
+        var connectionString = await GetConnectionStringAsync();
         await using var fixture = await FeedbackFixture.CreateAsync(connectionString, "sync");
         var options = fixture.SnapshotOptions();
         var destination = new RecordingDestination();
@@ -153,7 +156,10 @@ public sealed class BlueTuskStreamsFeedbackIntegrationTests
         }
     }
 
-    private static string GetConnectionString()
+    private Task<string> GetConnectionStringAsync() =>
+        database.GetConnectionStringAsync(GetSharedConnectionString());
+
+    private static string GetSharedConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable(
             "BLUETUSK_TEST_CONNECTION_STRING");
