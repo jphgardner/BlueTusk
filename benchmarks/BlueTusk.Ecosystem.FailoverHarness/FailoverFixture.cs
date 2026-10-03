@@ -140,6 +140,11 @@ internal sealed class FailoverFixture : IAsyncDisposable
         await ScalarAsync<long>(_admin,
             "SELECT count(*) FILTER (WHERE pg_terminate_backend(pid)) FROM pg_stat_activity WHERE datname=current_database() AND application_name='" + application + "' AND pid<>pg_backend_pid()", token);
 
+    internal async Task<long> TerminateWaitingAsync(string application, CancellationToken token) =>
+        await ScalarAsync<long>(_admin,
+            "SELECT count(*) FILTER (WHERE pg_terminate_backend(pid)) FROM pg_stat_activity WHERE datname=current_database() AND application_name='" + application +
+            "' AND wait_event_type='Lock' AND lower(wait_event)='advisory'", token);
+
     internal async Task<long> TerminateIdleInTransactionAsync(string application, CancellationToken token) =>
         await ScalarAsync<long>(_admin,
             "SELECT count(*) FILTER (WHERE pg_terminate_backend(pid)) FROM pg_stat_activity WHERE datname=current_database() AND application_name='" + application + "' AND state='idle in transaction'", token);
