@@ -22,6 +22,9 @@ internal abstract class FailoverCase : IAsyncDisposable
     internal abstract int Tenants { get; }
     internal abstract long BarrierKey { get; }
 
+    /// <summary>The disturbance this instance is prepared for; set by the driver before preparation.</summary>
+    internal FaultKind Fault { get; set; }
+
     /// <summary>Creates owned schemas and product state on the writable primary.</summary>
     internal abstract Task PrepareAsync(CancellationToken token);
 
@@ -36,6 +39,9 @@ internal abstract class FailoverCase : IAsyncDisposable
 
     /// <summary>Reads the child's acknowledgements; returns the acknowledged operation count.</summary>
     internal abstract Task<int> ReadChildAcknowledgementsAsync(ChildProcess child, CancellationToken token);
+
+    /// <summary>Starts the in-flight work of a host-process-kill scenario; by default the child blocks by itself.</summary>
+    internal virtual Task StartChildInFlightAsync(ChildProcess child, CancellationToken token) => child.ExpectAsync("BLOCK_START", ScenarioDriver.Phase, token);
 
     /// <summary>Immediately after the fault: the interrupted work must have left no partial state.</summary>
     internal abstract Task CheckRolledBackAsync(ScenarioRecorder recorder, CancellationToken token);
@@ -83,6 +89,7 @@ internal static class ScenarioDriver
     private static async Task<ScenarioResult> RunAsync(FailoverFixture fixture, Func<FailoverCase> create, FaultKind fault, CancellationToken token)
     {
         await using var workload = create();
+        workload.Fault = fault;
         var recorder = new ScenarioRecorder(Name(fault), Describe(fault), workload.Semantics, workload.Tenants);
         await fixture.RequireSynchronousAsync(Phase, token);
         recorder.Check(true, "remote_apply synchronous standby before fault");
@@ -94,7 +101,7 @@ internal static class ScenarioDriver
         {
             await using var child = ChildProcess.Start(workload.Family, "workload", workload.ChildArguments);
             recorder.Acknowledged = await workload.ReadChildAcknowledgementsAsync(child, token);
-            await child.ExpectAsync("BLOCK_START", Phase, token);
+            await workload.StartChildInFlightAsync(child, token);
             await fixture.WaitForAdvisoryWaitAsync(ChildApplication, Phase, token);
             recorder.MarkFault();
             await child.KillAsync(token);

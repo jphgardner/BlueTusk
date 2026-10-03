@@ -16,7 +16,7 @@ $jobsPolicy = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'jobs-release-fa
 $verifier = Join-Path $PSScriptRoot 'verify-expansion-failover-report.ps1'
 $archiveVerifier = Join-Path $PSScriptRoot 'verify-expansion-release-failover.ps1'
 Import-Module (Join-Path $PSScriptRoot 'expansion-candidate-evidence.psm1') -Force
-$implemented = @('Projections', 'Documents', 'Workflows')
+$implemented = @('Projections', 'Documents', 'Workflows', 'Search', 'Edge', 'Events', 'Schema', 'Sql', 'Studio')
 $commit = 'a' * 40
 $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ('bluetusk-expansion-failover-' + [Guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($temporaryRoot) | Out-Null
@@ -175,7 +175,7 @@ try
         {
             $verified = [int]$scenario.maximumFaultToVerifiedMilliseconds
             $kind = if ($null -ne $scenario.PSObject.Properties['verifier']) { [string]$scenario.verifier } else { 'harness' }
-            $limit = if ($kind -ceq 'projections-physical-promotion') { 120000 } elseif ($kind -ceq 'workflows-fault') { 45000 } else { 180000 }
+            $limit = if ($kind -ceq 'projections-physical-promotion' -or $family -ceq 'Edge') { 120000 } elseif ($kind -ceq 'workflows-fault') { 45000 } else { 180000 }
             if ($verified -le 0 -or $verified -gt $limit) { Fail "$family '$($scenario.name)' weakened its verified-recovery ceiling." }
             if ($null -ne $scenario.PSObject.Properties['maximumFaultToFirstSuccessMilliseconds'])
             {
@@ -232,15 +232,23 @@ try
         }
     }
 
-    foreach ($family in @('Projections', 'Documents'))
+    foreach ($family in @('Projections', 'Documents', 'Search', 'Edge', 'Events', 'Schema', 'Sql', 'Studio'))
     {
         Mutate $family 'duplicated-effect' 'lost or duplicated committed effects' { param($r) (Harness $r 0 'backend-termination').ObservedEffects += 1 }
         Mutate $family 'lost-acknowledged' 'lost acknowledged work' { param($r) (Harness $r 1 'host-process-kill').VerifiedOperations -= 1 }
         Mutate $family 'smaller-admission' 'lost acknowledged work' { param($r) $s = Harness $r 2 'primary-crash-restart'; $s.AcknowledgedOperations -= 1; $s.VerifiedOperations -= 1 }
         Mutate $family 'partial-in-flight' 'partial or unrecovered in-flight work' { param($r) (Harness $r 0 'host-process-kill').InFlightAtomic = $false }
         Mutate $family 'cross-tenant' 'tenant isolation' { param($r) (Harness $r 1 'backend-termination').NoCrossTenantReads = $false }
-        Mutate $family 'stale-owner' 'stale owner' { param($r) (Harness $r 2 'host-process-kill').StaleOwnerRejected = $false }
-        Mutate $family 'fence-regressed' 'did not advance its fence' { param($r) (Harness $r 0 'primary-crash-restart').AfterFence = 1 }
+        if (@($policy.families.PSObject.Properties[$family].Value.scenarios | Where-Object { $_.step -ceq 'harness' -and $_.fenced -eq $true }).Count -gt 0)
+        {
+            Mutate $family 'stale-owner' 'stale owner' { param($r) (Harness $r 2 'host-process-kill').StaleOwnerRejected = $false }
+            Mutate $family 'fence-regressed' 'did not advance its fence' { param($r) (Harness $r 0 'primary-crash-restart').AfterFence = 1 }
+        }
+        else
+        {
+            # A family without an owner to fence must declare that in every scenario and still pass its other checks.
+            if (@($policy.families.PSObject.Properties[$family].Value.scenarios | Where-Object { $_.fenced -ne $false }).Count -ne 0) { Fail "$family mixes fenced and unfenced scenarios." }
+        }
         Mutate $family 'slow-first-success' 'pre-registered recovery ceiling' { param($r) (Harness $r 0 'backend-termination').FaultToFirstSuccessMilliseconds = 45001 }
         Mutate $family 'slow-restart' 'pre-registered recovery ceiling' { param($r) (Harness $r 1 'primary-crash-restart').FaultToFirstSuccessMilliseconds = 60001 }
         Mutate $family 'slow-verify' 'pre-registered recovery ceiling' { param($r) (Harness $r 2 'backend-termination').FaultToVerifiedMilliseconds = 180001 }
@@ -273,11 +281,15 @@ try
     Mutate 'Workflows' 'fault-slow' 'pre-registered recovery ceiling' { param($r) (Step $r 1 'fault-harness').Report.Faults[2].RecoveryMilliseconds = 45001 }
     Mutate 'Workflows' 'fault-other-server' 'different scenario set' { param($r) (Step $r 2 'fault-harness').Report.PostgreSqlVersion = 'PostgreSQL 15.4' }
 
-    foreach ($family in @('Events', 'Schema', 'Sql', 'Studio', 'Search', 'Edge'))
+    # Every expansion family now has a reviewed failover verifier; the fenced families keep their fences.
+    foreach ($family in @('Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search', 'Sql', 'Studio', 'Edge', 'Workflows'))
     {
-        $failure = $null
-        try { Get-ExpansionRoleVerifier -Family $family -Role 'failover' | Out-Null } catch { $failure = $_.Exception.Message }
-        if ($null -eq $failure -or -not $failure.Contains('fails closed')) { Fail "$family failover must fail closed until its gate exists." }
+        $mapped = Get-ExpansionRoleVerifier -Family $family -Role 'failover'
+        if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $mapped.Script) -PathType Leaf)) { Fail "$family failover verifier is missing." }
+    }
+    foreach ($family in @('Projections', 'Documents', 'Search', 'Edge', 'Events', 'Schema'))
+    {
+        if (@($policy.families.PSObject.Properties[$family].Value.scenarios | Where-Object { $_.step -ceq 'harness' -and $_.fenced -ne $true }).Count -ne 0) { Fail "$family dropped a stale-owner fence." }
     }
     Write-Output "Expansion failover self-test passed with $script:rejected rejected substitutions on synthetic evidence; no disturbance was run or qualified."
 }

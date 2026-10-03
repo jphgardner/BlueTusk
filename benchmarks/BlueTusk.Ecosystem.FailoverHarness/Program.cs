@@ -32,6 +32,12 @@ internal static class Program
             {
                 "Documents" => await DocumentsFailover.RunAsync(fixture, deadline.Token),
                 "Projections" => await ProjectionsFailover.RunAsync(fixture, deadline.Token),
+                "Search" => await SearchFailover.RunAsync(fixture, deadline.Token),
+                "Events" => await EventsFailover.RunAsync(fixture, deadline.Token),
+                "Edge" => await EdgeFailover.RunAsync(fixture, deadline.Token),
+                "Schema" => await SchemaFailover.RunAsync(fixture, deadline.Token),
+                "Sql" => await SqlFailover.RunAsync(fixture, deadline.Token),
+                "Studio" => await StudioFailover.RunAsync(fixture, deadline.Token),
                 _ => throw new InvalidOperationException("Unknown failover family."),
             };
             var report = new FamilyReport(1, family, FailoverFixture.Fixture, identity.Version, FailoverFixture.Image,
@@ -57,6 +63,12 @@ internal static class Program
     {
         "Documents" => DocumentsFailover.RunChildAsync(role, arguments, token),
         "Projections" => ProjectionsFailover.RunChildAsync(role, arguments, token),
+        "Search" => SearchFailover.RunChildAsync(role, arguments, token),
+        "Events" => EventsFailover.RunChildAsync(role, arguments, token),
+        "Edge" => EdgeFailover.RunChildAsync(role, arguments, token),
+        "Schema" => SchemaFailover.RunChildAsync(role, arguments, token),
+        "Sql" => SqlFailover.RunChildAsync(role, arguments, token),
+        "Studio" => StudioFailover.RunChildAsync(role, arguments, token),
         _ => throw new InvalidOperationException("Unknown failover child family."),
     };
 }

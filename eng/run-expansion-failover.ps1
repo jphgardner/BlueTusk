@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Documents', 'Projections', 'Workflows', IgnoreCase = $false)]
+    [ValidateSet('Documents', 'Projections', 'Workflows', 'Search', 'Edge', 'Events', 'Schema', 'Sql', 'Studio', IgnoreCase = $false)]
     [string] $Family,
     [ValidateRange(1, 5)][int] $Repetitions = 3,
     [Parameter(Mandatory)][string] $ArtifactDirectory,

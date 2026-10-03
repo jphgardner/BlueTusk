@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Documents', 'Projections', 'Workflows', IgnoreCase = $false)]
+    [ValidateSet('Documents', 'Projections', 'Workflows', 'Search', 'Edge', 'Events', 'Schema', 'Sql', 'Studio', IgnoreCase = $false)]
     [string] $Family,
     [Parameter(Mandatory)][string] $ReportPath,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{40}$')][string] $ExpectedCommit,
