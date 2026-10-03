@@ -71,6 +71,28 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
 
     public bool WithOrdinality { get; }
 
+    protected override Expression VisitChildren(ExpressionVisitor visitor)
+    {
+        // EF's base visitor constructs a plain TableValuedFunctionExpression when an
+        // argument changes, losing PostgreSQL's record columns and WITH ORDINALITY.
+        SqlExpression[]? visitedArguments = null;
+        for (var index = 0; index < Arguments.Count; index++)
+        {
+            var argument = (SqlExpression)visitor.Visit(Arguments[index]);
+            if (visitedArguments is null && !ReferenceEquals(argument, Arguments[index]))
+            {
+                visitedArguments = Arguments.ToArray();
+            }
+
+            if (visitedArguments is not null)
+            {
+                visitedArguments[index] = argument;
+            }
+        }
+
+        return visitedArguments is null ? this : Update(visitedArguments);
+    }
+
     public override BlueTuskSetReturningFunctionTableExpression Update(
         IReadOnlyList<SqlExpression> arguments)
         => arguments.Count == Arguments.Count

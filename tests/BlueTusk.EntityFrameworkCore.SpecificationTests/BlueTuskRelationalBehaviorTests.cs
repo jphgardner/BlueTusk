@@ -62,7 +62,7 @@ public sealed class BlueTuskWithConstructorsTest(BlueTuskWithConstructorsTest.Bl
 }
 
 [BlueTuskLiveCondition]
-public sealed class BlueTuskPropertyValuesTest(BlueTuskPropertyValuesTest.BlueTuskPropertyValuesFixture fixture)
+public sealed partial class BlueTuskPropertyValuesTest(BlueTuskPropertyValuesTest.BlueTuskPropertyValuesFixture fixture)
     : PropertyValuesRelationalTestBase<BlueTuskPropertyValuesTest.BlueTuskPropertyValuesFixture>(fixture)
 {
     public sealed class BlueTuskPropertyValuesFixture : PropertyValuesRelationalFixture
@@ -74,6 +74,15 @@ public sealed class BlueTuskPropertyValuesTest(BlueTuskPropertyValuesTest.BlueTu
 
         public override Task DisposeAsync()
             => BlueTuskTestStore.IsConfigured ? base.DisposeAsync() : Task.CompletedTask;
+
+        // The shared seed leaves the School that the complex-collection store-value tests read commented out
+        // (dotnet/efcore#31411); seed exactly the School that the upstream CreateSchool() builds.
+        protected override async Task SeedAsync(PoolableDbContext context)
+        {
+            await base.SeedAsync(context);
+            context.Add(PortedCreateSchool());
+            await context.SaveChangesAsync();
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
         {
