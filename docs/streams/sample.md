@@ -30,9 +30,12 @@ dotnet run --project samples/BlueTusk.Samples.Streams
 
 The sample logs raw snapshot batches and CDC change types. A real destination
 must durably and idempotently apply a complete source transaction before it
-acknowledges the delivery. Configure a checkpoint store and feedback observer as
-described in [state stores](state-stores.md); memory state is only suitable for
-tests and ephemeral development.
+acknowledges the delivery. The sample passes no delivery observer, so the stream
+confirms each acknowledged commit position to PostgreSQL itself and the slot
+releases WAL as the sample runs. To resume from a durable position after a
+restart, configure a checkpoint store and `CheckpointingChangeDeliveryObserver`
+as described in [state stores](state-stores.md); memory state is only suitable
+for tests and ephemeral development.
 
 The sample explicitly enables `RestartSnapshot` recovery. If the process stops
 after creating its slot, the next process verifies that the slot is inactive,

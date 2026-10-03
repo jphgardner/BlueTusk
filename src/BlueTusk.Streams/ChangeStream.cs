@@ -362,7 +362,7 @@ public sealed class PgOutputChangeStream : IChangeStream
                     continue;
                 }
 
-                outstanding = CreateDelivery(assembled);
+                outstanding = CreateDelivery(assembled, envelope.XLogData.Origin);
                 BlueTuskStreamsDiagnostics.RecordTransaction(assembled.Transaction);
                 yield return outstanding;
                 if (outstanding.State != ChangeDeliveryState.Acknowledged)
@@ -386,12 +386,29 @@ public sealed class PgOutputChangeStream : IChangeStream
         }
     }
 
-    private ChangeTransactionDelivery CreateDelivery(AssembledChangeTransaction assembled) =>
-        new(
+    private ChangeTransactionDelivery CreateDelivery(
+        AssembledChangeTransaction assembled,
+        BlueTusk.Replication.BlueTuskReplicationConnection? origin)
+    {
+        // An attached observer owns position reporting: it may first persist a checkpoint that a
+        // later resume validates against the slot. Without one, acknowledgement is the only
+        // completion signal, so the stream confirms the commit position on the WAL sender that
+        // delivered it. Otherwise the slot's confirmed_flush_lsn never moves and PostgreSQL
+        // retains WAL indefinitely.
+        var confirmOnAcknowledge = _observer is NullChangeDeliveryObserver ? origin : null;
+        return new(
             assembled.Transaction,
             async cancellationToken =>
             {
                 await _observer.AcknowledgeAsync(assembled.Transaction, cancellationToken).ConfigureAwait(false);
+                if (confirmOnAcknowledge is not null)
+                {
+                    await confirmOnAcknowledge.AdvanceStandbyStatusAsync(
+                            assembled.Transaction.CommitEndPosition,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+                }
+
                 await assembled.ReleaseAsync().ConfigureAwait(false);
             },
             async (failure, cancellationToken) =>
@@ -403,6 +420,7 @@ public sealed class PgOutputChangeStream : IChangeStream
             _replicationTimeline,
             _replicationDatabaseOid,
             _replicationPublicationOid);
+    }
 
     private sealed class NullChangeDeliveryObserver : IChangeDeliveryObserver
     {

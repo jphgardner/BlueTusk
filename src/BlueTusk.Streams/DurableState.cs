@@ -383,6 +383,8 @@ public sealed class CheckpointingChangeDeliveryObserver : IChangeDeliveryObserve
     private readonly TimeSpan _leaseDuration;
     private readonly IReplicationFeedbackSender _feedback;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly CancellationTokenSource _renewalStop = new();
+    private readonly Task _renewal;
     private ChangeStreamCheckpoint? _checkpoint;
     private ChangeStreamLease _lease;
     private int _disposed;
@@ -403,11 +405,15 @@ public sealed class CheckpointingChangeDeliveryObserver : IChangeDeliveryObserve
         _feedback = feedback;
         _checkpoint = checkpoint;
         _lease = lease;
+        _renewal = ChangeStreamLeaseRenewal.RunAsync(
+            leaseDuration,
+            RenewOnScheduleAsync,
+            _renewalStop.Token);
     }
 
     public ChangeStreamCheckpoint? Checkpoint => Volatile.Read(ref _checkpoint);
 
-    public ChangeStreamLease Lease => _lease;
+    public ChangeStreamLease Lease => Volatile.Read(ref _lease);
 
     public static async ValueTask<CheckpointingChangeDeliveryObserver> AcquireAsync(
         IChangeStreamStateStore store,
@@ -529,6 +535,7 @@ public sealed class CheckpointingChangeDeliveryObserver : IChangeDeliveryObserve
             return;
         }
 
+        await ChangeStreamLeaseRenewal.StopAsync(_renewalStop, _renewal).ConfigureAwait(false);
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
@@ -538,6 +545,95 @@ public sealed class CheckpointingChangeDeliveryObserver : IChangeDeliveryObserve
         {
             _gate.Release();
             _gate.Dispose();
+        }
+    }
+
+    // Keeps the lease alive while the consumer is idle or a delivery is still being processed.
+    // Returns false once the store reports the lease as lost; the next acknowledgement then fails
+    // with ChangeStreamLeaseLostException before it can write a checkpoint.
+    private async ValueTask<bool> RenewOnScheduleAsync(CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var renewed = await _store.RenewAsync(_lease, _leaseDuration, cancellationToken)
+                .ConfigureAwait(false);
+            if (renewed is null)
+            {
+                return false;
+            }
+
+            Volatile.Write(ref _lease, renewed);
+            return true;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+}
+
+/// <summary>Renews a fenced lease on a timer, independently of acknowledgements.</summary>
+internal static class ChangeStreamLeaseRenewal
+{
+    private static readonly TimeSpan MinimumInterval = TimeSpan.FromMilliseconds(1);
+    private static readonly TimeSpan MaximumInterval = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
+
+    // Renewing three times per lease period tolerates one missed or slow renewal.
+    internal static TimeSpan IntervalFor(TimeSpan leaseDuration)
+    {
+        var interval = leaseDuration / 3;
+        return interval < MinimumInterval
+            ? MinimumInterval
+            : interval > MaximumInterval
+                ? MaximumInterval
+                : interval;
+    }
+
+    internal static async Task RunAsync(
+        TimeSpan leaseDuration,
+        Func<CancellationToken, ValueTask<bool>> renew,
+        CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(IntervalFor(leaseDuration));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
+            {
+                bool current;
+                try
+                {
+                    current = await renew(cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception exception) when (exception is not OperationCanceledException ||
+                                                  !cancellationToken.IsCancellationRequested)
+                {
+                    // A transient store failure is retried on the next tick. If the lease expires
+                    // meanwhile, the next acknowledgement observes the loss and fails closed.
+                    continue;
+                }
+
+                if (!current)
+                {
+                    return;
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    internal static async ValueTask StopAsync(CancellationTokenSource stop, Task renewal)
+    {
+        await stop.CancelAsync().ConfigureAwait(false);
+        try
+        {
+            await renewal.ConfigureAwait(false);
+        }
+        finally
+        {
+            stop.Dispose();
         }
     }
 }

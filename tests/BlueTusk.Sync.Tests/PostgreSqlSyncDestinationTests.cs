@@ -343,6 +343,89 @@ public sealed class PostgreSqlSyncDestinationTests
         }
     }
 
+    [Fact]
+    public async Task PostgreSql_destination_classifies_transient_and_permanent_failures()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(
+            "Host=127.0.0.1;Database=unused;Username=unused");
+        var destination = new PostgreSqlSyncDestination(Options(dataSource, "unused"));
+        var classifier = Assert.IsAssignableFrom<ISyncRetryClassifier>(destination);
+
+        bool IsTransient(Exception exception) =>
+            classifier.IsTransient(new SyncRetryContext(
+                "orders",
+                destination.Name,
+                SyncPipelineOperation.ApplyTransaction,
+                1,
+                exception));
+
+        foreach (var sqlState in new[] { "40001", "40P01", "08006", "08003", "53300", "55P03", "57P01", "57P03" })
+        {
+            Assert.True(IsTransient(new SqlStateException(sqlState)), sqlState);
+        }
+
+        foreach (var sqlState in new[] { "23505", "23503", "42P01", "42501", "22P02", "08P01", "25006" })
+        {
+            Assert.False(IsTransient(new SqlStateException(sqlState)), sqlState);
+        }
+
+        Assert.True(IsTransient(new BlueTuskException("Connection lost.", new IOException("reset"))));
+        Assert.True(IsTransient(new TimeoutException()));
+        Assert.True(IsTransient(new SqlStateException(null, isTransient: true)));
+        Assert.False(IsTransient(new SqlStateException(null)));
+        Assert.False(IsTransient(new SyncDestinationDurabilityException("Rejected.")));
+        Assert.False(IsTransient(new PostgreSqlSyncException("Not provisioned.", new IOException())));
+        Assert.False(IsTransient(new SyncTransformVersionMismatchException("a", "b")));
+        Assert.False(IsTransient(new OperationCanceledException()));
+        Assert.False(IsTransient(new InvalidOperationException("Bug.")));
+    }
+
+    [Fact]
+    public async Task Pipeline_retries_a_PostgreSql_serialization_failure_without_a_configured_classifier()
+    {
+        var connectionString = GetConnectionString();
+        var schema = "bluetusk_sync_retry_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        var writer = new SerializationFailureOnceWriter(new PostgreSqlDocumentMutationWriter(schema));
+        var destination = new PostgreSqlSyncDestination(
+            Options(dataSource, schema) with { MutationWriter = writer });
+        var transform = new SingleDocumentTransform();
+        await using var pipeline = new SyncPipeline(
+            new SyncPipelineOptions
+            {
+                PipelineId = "orders",
+                Retry = new SyncRetryOptions
+                {
+                    InitialDelay = TimeSpan.Zero,
+                    MaximumDelay = TimeSpan.Zero,
+                },
+            },
+            Source,
+            transform,
+            destination);
+        try
+        {
+            await pipeline.ProvisionAsync();
+            await using var delivery = ChangeDeliveryTestFactory.CreateCommitted(
+                Source,
+                60,
+                Lsn(400));
+
+            await pipeline.ConsumeTransactionAsync(delivery);
+
+            Assert.Equal(ChangeDeliveryState.Acknowledged, delivery.State);
+            Assert.Equal(2, writer.Attempts);
+            Assert.Equal(1, pipeline.Status.RetryAttempts);
+            Assert.Equal(SyncPipelineState.Running, pipeline.Status.State);
+            Assert.Equal(400m, await ReadCheckpointAsync(dataSource, schema));
+            Assert.Equal(1L, await ReadCountAsync(dataSource, schema, "documents"));
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
     private static PostgreSqlSyncOptions Options(DbDataSource dataSource, string schema) =>
         new()
         {
@@ -444,5 +527,83 @@ public sealed class PostgreSqlSyncDestinationTests
             await inner.ApplyTransactionAsync(connection, transaction, batch, cancellationToken);
             throw new InvalidOperationException("Injected checkpoint-boundary failure.");
         }
+    }
+
+    private sealed class SerializationFailureOnceWriter(IPostgreSqlSyncMutationWriter inner)
+        : IPostgreSqlSyncMutationWriter
+    {
+        private int _attempts;
+
+        public int Attempts => Volatile.Read(ref _attempts);
+
+        public ValueTask ResetSnapshotAsync(
+            DbConnection connection,
+            DbTransaction transaction,
+            string pipelineId,
+            SnapshotReset reset,
+            CancellationToken cancellationToken = default) =>
+            inner.ResetSnapshotAsync(connection, transaction, pipelineId, reset, cancellationToken);
+
+        public ValueTask ApplySnapshotBatchAsync(
+            DbConnection connection,
+            DbTransaction transaction,
+            SyncSnapshotBatch batch,
+            CancellationToken cancellationToken = default) =>
+            inner.ApplySnapshotBatchAsync(connection, transaction, batch, cancellationToken);
+
+        public async ValueTask ApplyTransactionAsync(
+            DbConnection connection,
+            DbTransaction transaction,
+            SyncTransactionBatch batch,
+            CancellationToken cancellationToken = default)
+        {
+            await inner.ApplyTransactionAsync(connection, transaction, batch, cancellationToken);
+            if (Interlocked.Increment(ref _attempts) == 1)
+            {
+                // A genuine server error, as a concurrent serializable writer would cause.
+                await using var command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText =
+                    "DO $$ BEGIN RAISE EXCEPTION 'injected serialization failure' " +
+                    "USING ERRCODE = 'serialization_failure'; END $$";
+                _ = await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+        }
+    }
+
+    private sealed class SingleDocumentTransform : ISyncTransform
+    {
+        public SyncTransformVersion Version { get; } = SyncTransformVersion.Create("orders", "v1");
+
+        public ValueTask<IReadOnlyList<SyncMutation>> TransformTransactionAsync(
+            ChangeTransaction transaction,
+            CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult<IReadOnlyList<SyncMutation>>(
+            [
+                new SyncMutation(
+                    new ChangeId(
+                        transaction.Source,
+                        transaction.CommitEndPosition,
+                        transaction.TransactionId,
+                        0),
+                    SyncMutationKind.Upsert,
+                    "orders",
+                    transaction.TransactionId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    "{}"u8.ToArray(),
+                    "application/json"),
+            ]);
+
+        public ValueTask<IReadOnlyList<SyncSnapshotMutation>> TransformSnapshotBatchAsync(
+            ChangeSnapshotBatch batch,
+            CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult<IReadOnlyList<SyncSnapshotMutation>>([]);
+    }
+
+    private sealed class SqlStateException(string? sqlState, bool isTransient = false)
+        : DbException("Injected database failure.")
+    {
+        public override string? SqlState { get; } = sqlState;
+
+        public override bool IsTransient { get; } = isTransient;
     }
 }

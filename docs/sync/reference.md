@@ -195,9 +195,30 @@ propagates backpressure to Streams without an unbounded pipeline-owned queue and
 preserves the source transaction order.
 
 `SyncRetryOptions` applies a bounded exponential backoff with configurable
-jitter and a hard attempt ceiling. No exception is retried by default: an
-application must register `ISyncRetryClassifier`, or its destination must
-implement that interface, and explicitly classify each failure as transient.
+jitter and a hard attempt ceiling. A failure is retried only when it is
+classified as transient: by a registered `ISyncRetryClassifier`, or, when none
+is registered, by a destination that implements that interface. A registered
+classifier always takes precedence.
+
+`PostgreSqlSyncDestination` classifies its own failures. Lost or refused
+connections (SQLSTATE class `08`, except `08P01`), serialization failures
+(`40001`), deadlocks (`40P01`), lock timeouts (`55P03`), objects in use
+(`55006`), resource exhaustion (`53000`, `53200`, `53300`, `53400`), server
+shutdown or restart (`57P01`, `57P02`, `57P03`), idle-session timeouts
+(`57P05`), I/O errors (`58030`), a provider `DbException` marked
+`IsTransient`, and socket, I/O and timeout exceptions are transient. Every
+other failure is permanent. This includes constraint, permission, schema and
+data errors, and Sync durability, transform-version and source-identity
+violations. Each destination operation runs in one database transaction and
+applies idempotently, so a retry never duplicates work. Set
+`SyncRetryOptions.MaximumAttempts` to 1 to turn retries off.
+
+The other built-in destinations (NATS JetStream, Redis, OpenSearch, Kafka, S3
+and signed webhooks) do not classify their failures yet. Without a registered
+classifier, a pipeline using one of them faults on the first failure that
+reaches the pipeline. The signed webhook destination still retries transient
+HTTP responses itself, within its own `MaximumAttempts`.
+
 The transform runs once and every attempt receives the same immutable batch or
 quarantine record, including stable IDs and timestamps. Retry exhaustion faults
 the pipeline and nacks the active Streams delivery; the checkpoint cannot move
@@ -212,10 +233,10 @@ the transformed-byte limit but do not count as CDC transactions.
 Runtime status exposes cumulative retry attempts and throttle duration.
 `BlueTusk.Sync.DependencyInjection` publishes them through
 `bluetusk.sync.retries` and `bluetusk.sync.throttle.duration`; the health
-registry includes the same values for control-plane consumers. Retry classifiers
-are resolved from dependency injection and remain operator policy rather than a
-connector silently guessing whether a database, broker, or HTTP failure is safe
-to retry.
+registry includes the same values for control-plane consumers. A retry
+classifier registered in dependency injection replaces the destination's own
+classification, so operators can widen, narrow or disable retries per
+application.
 
 ## Shared destination conformance
 

@@ -197,6 +197,52 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
     }
 
     [Fact]
+    public async Task PostgreSql_relay_source_keeps_its_lease_while_the_slot_is_quiet()
+    {
+        var connectionString = GetConnectionString();
+        var schema = "bluetusk_relay_quiet_test_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        var relay = new PostgreSqlDurableChangeRelay(
+            new PostgreSqlStreamsStorageOptions
+            {
+                ControlDataSource = dataSource,
+                ControlSchema = schema,
+                MaxRelayStorageBytes = 1024 * 1024,
+            });
+        try
+        {
+            await relay.InitializeAsync();
+            var leaseDuration = TimeSpan.FromMilliseconds(900);
+            var feedback = new RecordingFeedbackSender();
+            await using var observer = await PostgreSqlRelayChangeDeliveryObserver.AcquireAsync(
+                relay,
+                SourceIdentity(),
+                "source-worker",
+                leaseDuration,
+                feedback);
+            await using var enumerator = CreateStream(SourceIdentity(), observer)
+                .ReadTransactionsAsync()
+                .GetAsyncEnumerator();
+            Assert.True(await enumerator.MoveNextAsync());
+
+            // No append happens for three lease periods.
+            await Task.Delay(leaseDuration * 3);
+
+            var contender = await relay.AcquireSourceLeaseAsync(
+                observer.Source,
+                "other-worker",
+                leaseDuration);
+            Assert.Equal(ChangeLeaseAcquireStatus.HeldByAnotherOwner, contender.Status);
+            await enumerator.Current.AcknowledgeAsync();
+            Assert.Equal(Lsn(21), Assert.Single(feedback.Positions));
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
+    [Fact]
     public async Task PostgreSql_relay_rejects_append_before_exceeding_storage_bound()
     {
         var connectionString = GetConnectionString();

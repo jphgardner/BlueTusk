@@ -160,6 +160,60 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Reports that all work up to <paramref name="position"/> is complete. The written, flushed
+    /// and applied positions only ever move forwards, so a position at or behind the last report
+    /// is ignored. Nothing is sent once streaming has stopped; the slot then keeps its last
+    /// confirmed position and PostgreSQL redelivers the unconfirmed work on the next start.
+    /// </summary>
+    internal async ValueTask AdvanceStandbyStatusAsync(
+        BlueTuskLogSequenceNumber position,
+        CancellationToken cancellationToken)
+    {
+        await _feedbackGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var channel = Volatile.Read(ref _activeChannel);
+            if (channel is null)
+            {
+                return;
+            }
+
+            BlueTuskStandbyStatus next;
+            lock (_statusSync)
+            {
+                var current = _standbyStatus;
+                next = new BlueTuskStandbyStatus(
+                    Max(current.Written, position),
+                    Max(current.Flushed, position),
+                    Max(current.Applied, position));
+                if (next == current with { ReplyRequested = false })
+                {
+                    return;
+                }
+            }
+
+            await channel.WriteAsync(
+                BlueTuskReplicationWireProtocol.EncodeStandbyStatus(
+                    next,
+                    DateTimeOffset.UtcNow),
+                cancellationToken).ConfigureAwait(false);
+            lock (_statusSync)
+            {
+                _standbyStatus = next;
+            }
+        }
+        finally
+        {
+            _feedbackGate.Release();
+        }
+
+        static BlueTuskLogSequenceNumber Max(
+            BlueTuskLogSequenceNumber left,
+            BlueTuskLogSequenceNumber right) =>
+            left >= right ? left : right;
+    }
+
     /// <summary>Sends transaction visibility feedback to a physical WAL sender.</summary>
     public async ValueTask SendHotStandbyFeedbackAsync(
         BlueTuskHotStandbyFeedback feedback,
@@ -242,6 +296,7 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
                 var message = BlueTuskReplicationWireProtocol.Decode(payload.Value);
                 if (message is BlueTuskXLogData xLogData)
                 {
+                    xLogData.BindOrigin(this);
                     RecordReceivedPosition(xLogData.WalEnd);
                     RecordReplicationLag(
                         xLogData.ServerClock,
