@@ -192,6 +192,7 @@ try
             $workflow -match '(?m)^  (?:push|pull_request|schedule|workflow_run|workflow_call):\s*$' -or
             $workflow -notmatch [regex]::Escape('runs-on: [self-hosted, windows, x64, bluetusk-benchmark]') -or
             $workflow -notmatch [regex]::Escape('ref: ${{ inputs.candidate_sha }}') -or
+            $workflow -notmatch [regex]::Escape('$env:GITHUB_SHA -cne $env:CANDIDATE_SHA') -or
             $workflow -notmatch [regex]::Escape('group: bluetusk-reference-host') -or
             $workflow -notmatch "RUN-$($family.ToUpperInvariant())-RELEASE-FAILOVER" -or
             $workflow -notmatch [regex]::Escape("EVIDENCE_ROOT: artifacts/$slug-release-failover/") -or

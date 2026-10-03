@@ -43,6 +43,7 @@ jobs:
         run: |
           if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Projections failover requires a lowercase full candidate SHA.' }
           if ($env:CONFIRMATION -cne 'RUN-PROJECTIONS-RELEASE-FAILOVER') { throw 'The exact manual Projections failover confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) { throw 'Failover runs are bound by head_sha; dispatch from a ref whose head is the exact candidate.' }
           ./eng/verify-expansion-release-failover.ps1 -Family Projections -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
 
       - name: Repeat Projections disturbances on three fresh synchronous pairs

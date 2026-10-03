@@ -1,14 +1,14 @@
-name: Events exact-candidate release failover
+name: Sql exact-candidate release failover
 
 on:
   workflow_dispatch:
     inputs:
       candidate_sha:
-        description: Full 40-character commit SHA containing this Events gate
+        description: Full 40-character commit SHA containing this Sql gate
         required: true
         type: string
       confirmation:
-        description: Type RUN-EVENTS-RELEASE-FAILOVER for three fresh synchronous-pair disturbance campaigns
+        description: Type RUN-SQL-RELEASE-FAILOVER for three fresh synchronous-pair disturbance campaigns
         required: true
         type: string
 
@@ -21,11 +21,11 @@ concurrency:
 
 jobs:
   qualify:
-    name: Isolated Windows Events failover
+    name: Isolated Windows Sql failover
     runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
     timeout-minutes: 150
     env:
-      EVIDENCE_ROOT: artifacts/events-release-failover/${{ github.run_id }}-${{ github.run_attempt }}
+      EVIDENCE_ROOT: artifacts/sql-release-failover/${{ github.run_id }}-${{ github.run_attempt }}
       CANDIDATE_SHA: ${{ inputs.candidate_sha }}
       CONFIRMATION: ${{ inputs.confirmation }}
 
@@ -41,23 +41,23 @@ jobs:
       - name: Verify clean exact candidate and manual confirmation
         shell: pwsh
         run: |
-          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Events failover requires a lowercase full candidate SHA.' }
-          if ($env:CONFIRMATION -cne 'RUN-EVENTS-RELEASE-FAILOVER') { throw 'The exact manual Events failover confirmation is required.' }
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Sql failover requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-SQL-RELEASE-FAILOVER') { throw 'The exact manual Sql failover confirmation is required.' }
           if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) { throw 'Failover runs are bound by head_sha; dispatch from a ref whose head is the exact candidate.' }
-          ./eng/verify-expansion-release-failover.ps1 -Family Events -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+          ./eng/verify-expansion-release-failover.ps1 -Family Sql -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
 
-      - name: Repeat Events disturbances on three fresh synchronous pairs
+      - name: Repeat Sql disturbances on three fresh synchronous pairs
         shell: pwsh
-        run: ./eng/verify-expansion-release-failover.ps1 -Family Events -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+        run: ./eng/verify-expansion-release-failover.ps1 -Family Sql -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
 
-      - name: Recheck archived Events effects, fences, budgets and hashes
+      - name: Recheck archived Sql effects, fences, budgets and hashes
         shell: pwsh
-        run: ./eng/verify-expansion-release-failover.ps1 -Family Events -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+        run: ./eng/verify-expansion-release-failover.ps1 -Family Sql -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
 
-      - name: Upload qualified Events failover evidence
+      - name: Upload qualified Sql failover evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: expansion-events-failover-${{ inputs.candidate_sha }}
+          name: expansion-sql-failover-${{ inputs.candidate_sha }}
           path: ${{ env.EVIDENCE_ROOT }}
           if-no-files-found: error
           retention-days: 90
@@ -66,7 +66,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: events-failover-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: sql-failover-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.EVIDENCE_ROOT }}
           if-no-files-found: ignore
           retention-days: 14
