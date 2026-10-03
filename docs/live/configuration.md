@@ -212,7 +212,6 @@ import { BlueTuskLiveClient } from "@bluetusk/live";
 
 const client = new BlueTuskLiveClient({
   endpoint: "/bluetusk/live/sse",           // required
-  fetch: (input, init) => fetch(input, init),
   headers: { authorization: `Bearer ${accessToken}` },
   credentials: "same-origin",
   initialRetryDelayMs: 250,
@@ -227,7 +226,7 @@ const client = new BlueTuskLiveClient({
 | Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `endpoint` | `string` | required | URL of the SSE endpoint. |
-| `fetch` | `typeof fetch` | `globalThis.fetch` | The fetch function. In browsers, pass `(input, init) => fetch(input, init)`; see [troubleshooting](troubleshooting.md#the-page-says-illegal-invocation). |
+| `fetch` | `typeof fetch` | `globalThis.fetch` | Optional. A custom fetch function, for example one that adds a fresh access token (see [troubleshooting](troubleshooting.md#unauthorized-or-forbidden)). The 1.0.0 and 1.1.0-rc.1 clients need `(input, init) => fetch(input, init)` here in a browser; see [troubleshooting](troubleshooting.md#the-page-says-illegal-invocation). |
 | `headers` | `Record<string, string>` | none | Extra request headers, for example `authorization`. |
 | `credentials` | `RequestCredentials` | `"same-origin"` | Use `"include"` to send cookies to another origin. |
 | `initialRetryDelayMs` | `number` | 250 | First reconnect delay. |

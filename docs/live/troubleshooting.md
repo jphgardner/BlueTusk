@@ -110,17 +110,14 @@ from `parameters`, and that the plan's tenant isolation is set. See
 
 The client's `phase` is `reconnecting` with
 `Failed to execute 'fetch' on 'Window': Illegal invocation`, and it never
-connects.
-
-The client calls its stored `fetch` function in a way browsers reject. Pass a
-wrapper when you create the client:
+connects. This happens only with the published 1.0.0 and 1.1.0-rc.1 versions
+of `@bluetusk/live` in a browser, including through the framework adapters.
+The fix ships in 1.1.0. Until you can upgrade, pass `fetch` when you create
+the client:
 
 ```typescript
 fetch: (input, init) => fetch(input, init)
 ```
-
-This affects every browser and every framework adapter, because they all use
-the core client.
 
 ## Reconnect loops
 

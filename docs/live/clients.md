@@ -26,14 +26,14 @@ module:
 import { BlueTuskLiveClient } from "@bluetusk/live";
 
 export const client = new BlueTuskLiveClient({
-  endpoint: "/bluetusk/live/sse",
-  fetch: (input, init) => fetch(input, init)
+  endpoint: "/bluetusk/live/sse"
 });
 ```
 
-Always pass `fetch` this way in a browser; without it the browser rejects the
-request with `Illegal invocation`. All client options are listed in
-[configuration](configuration.md#browser-client-options).
+All client options are listed in
+[configuration](configuration.md#browser-client-options). With the published
+1.0.0 or 1.1.0-rc.1 client, also pass `fetch: (input, init) => fetch(input, init)`;
+see [troubleshooting](troubleshooting.md#the-page-says-illegal-invocation).
 
 ## Angular
 

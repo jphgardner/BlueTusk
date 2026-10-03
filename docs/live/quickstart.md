@@ -316,8 +316,7 @@ interface Todo {
 
 const client = new BlueTuskLiveClient({
   endpoint: "/bluetusk/live/sse",
-  headers: { "X-Demo-User": "alice" },
-  fetch: (input, init) => fetch(input, init)
+  headers: { "X-Demo-User": "alice" }
 });
 
 const query = client.createQuery<Todo, number, object>({
@@ -342,8 +341,8 @@ query.subscribe((state) => {
 query.start();
 ```
 
-> **Note:** Always pass `fetch` as shown when you use the client in a browser.
-> Without it, the browser rejects the request with
+> **Note:** With the published 1.0.0 or 1.1.0-rc.1 client, add
+> `fetch: (input, init) => fetch(input, init)` to the options, or the page shows
 > `Illegal invocation`. See [troubleshooting](troubleshooting.md#the-page-says-illegal-invocation).
 
 Rows arrive with the C# property names (`Id`, `Title`), because the server

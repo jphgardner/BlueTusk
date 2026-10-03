@@ -78,7 +78,7 @@ All paths are relative to `RoutePrefix`.
 | `/pipelines`, `/pipelines/{pipelineId}` | Sync pipelines |
 | `/live`, `/live/{subscriptionFingerprint}` | Live subscriptions |
 | `/graphs`, `/graphs/{queryFingerprint}` | Continuous Graph queries (preview) |
-| `/deployments`, `/deployments/{deploymentId}` | Managed deployments. **New in 1.1.0** |
+| `/deployments`, `/deployments/{deploymentId}` | Managed deployments. An ID may contain `/`, such as Kubernetes `production/orders`; the dashboard links escape it as `%2F`. **New in 1.1.0** |
 | `/assets/dashboard.js` | The dashboard's script (same origin) |
 
 ### JSON API
@@ -254,6 +254,14 @@ client, maximumConcurrency, pageSize, timeProvider)`:
 | --- | --- | --- | --- |
 | `maximumConcurrency` | 4 | 1 to 64 | Resources reconciled at the same time |
 | `pageSize` | 100 | 1 to 500 | Resources per Kubernetes list request |
+
+`ReconcileAllAsync` reconciles each resource on its own and returns one
+result per resource. A resource that breaks a
+[desired state limit](#managed-deployments), has unusable metadata, or fails
+gets `Failed` with a diagnostic code on its own status; the rest of the pass
+continues. `ReconcileAllAsync` itself throws only when listing the resources
+fails, or when you cancel it. The codes are listed in
+[troubleshooting](troubleshooting.md#kubernetes-reconciler).
 
 `KubernetesApiManagedDeploymentClient(httpClient, resourceNamespace = null)`
 needs an `HttpClient` with an absolute `BaseAddress`, authentication and TLS

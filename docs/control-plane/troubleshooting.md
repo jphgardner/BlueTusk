@@ -48,7 +48,6 @@ example `/ops` instead of `ops/`.
 | Sync pipelines or Live subscriptions are empty | `HostedSyncControlPlaneQueryService` and `HostedLiveControlPlaneQueryService` read in-process state | Host the dashboard in the same process as the workers, or implement the query interface to fetch status from them |
 | Sync lag shows `source-head-unavailable` | The pipeline's source is not in the relay inventory | Add the relay instance that feeds the pipeline as a `ControlPlanePostgreSqlSource` |
 | Deployments are empty | The fleet service reads a different store or schema, or an in-memory store in another process | Point `ManagedDeploymentFleetQueryService` at the same `PostgreSqlManagedDeploymentStore` the controller uses |
-| `/deployments/{deploymentId}` returns `404` for IDs that contain `/`, such as Kubernetes `production/orders` | Known issue in 1.1.0: the detail route does not decode `%2F` | Use the `/deployments` list or `GET /api/v1/fleet` |
 
 ## Health looks stale or wrong
 
@@ -96,11 +95,19 @@ change an audit row. That is intended.
 
 ## Kubernetes reconciler
 
-The reconciler writes problems to the resource's `status.diagnosticCode` with
-`state: Failed`.
+The reconciler handles each resource on its own. A resource it cannot
+reconcile gets `state: Failed` and a code in `status.diagnosticCode`, and
+every other resource in the pass is still reconciled. The same code is in the
+`DiagnosticCode` of that resource's `ReconcileAllAsync` result.
 
 | Code | Cause | Fix |
 | --- | --- | --- |
+| `workload-version-invalid` | A `workloads[].version` does not start with a numeric version, for example `latest`. The CRD does not check this | Use a version such as `1.1.0` |
+| `identifier-invalid` | `spec.tenantId`, `spec.provider` or `spec.region` is only spaces or contains control characters | Fix the value |
+| `workload-kind-invalid` | A `workloads[].kind` is not one this package knows. The packaged CRD rejects unknown kinds, so the installed CRD is out of date or edited | Apply the CRD from the package, then fix `kind` |
+| Other `...-invalid` or `...-duplicate` codes, for example `replica-count-invalid` or `workload-kind-duplicate` | The resource breaks a [desired state limit](configuration.md#managed-deployments) that the CRD does not check | Fix the field the code names |
+| `resource-invalid` | The resource's metadata cannot be used: `<namespace>/<name>` is longer than 128 characters, or a namespace, name, UID, resource version or finalizer list is too long or contains control characters. The status may not be written; the code is always in the `ReconcileAllAsync` result | Use a shorter name, or fix the metadata |
+| `reconcile-failed` | Something else failed for this resource only: your provider threw (the stored deployment, and the dashboard, show `provider-failure`), a Kubernetes call for this resource failed, or a database conflict occurred while several new resources were stored at once. The exception is not logged or returned | The next pass retries. Log inside your provider to see its exceptions |
 | `tenant-quota-missing` | No quota for `spec.tenantId` and no default | Add the tenant to `ManagedDeploymentQuotaSource` |
 | `quota-deployments-exceeded`, `quota-replicas-exceeded`, `quota-cpu-exceeded`, `quota-memory-exceeded`, `quota-storage-exceeded` | The tenant's quota would be exceeded | Raise the quota or reduce the request |
 | `provider-not-registered` | No provider's `Name` matches `spec.provider` | Register one, or fix `spec.provider` |
@@ -111,20 +118,18 @@ The reconciler writes problems to the resource's `status.diagnosticCode` with
 
 Other symptoms:
 
-- **No status at all.** The host is not running, or a Kubernetes call failed.
-  `HttpRequestException` with `403 (Forbidden)` means RBAC is missing;
-  `404 (Not Found)` means the CRD is not installed. Apply both manifests.
-- **Every pass fails with `ManagedDeploymentValidationException`**, for
-  example `Workload versions must begin with a numeric semantic version.`,
-  and no resource gets a status. One resource passes the CRD's checks but
-  breaks a [desired state limit](configuration.md#managed-deployments). The
-  reconciler validates every resource while listing, so one bad resource
-  stops the pass for all of them. Fix that resource (most often a `version`
-  such as `latest`).
-- **The pass fails with the provider's exception type.** Provider failures
-  are not caught per resource: the pass stops, the stored status records
-  `provider-failure`, and the next pass retries. Keep the `try`/`catch`
-  around `ReconcileAllAsync`.
+- **`ReconcileAllAsync` throws.** Listing the resources failed, so nothing
+  was reconciled in that pass. `HttpRequestException` with `403 (Forbidden)`
+  means RBAC is missing; `404 (Not Found)` means the CRD is not installed.
+  Apply both manifests. Other errors, such as a network failure, clear on a
+  later pass. Keep the `try`/`catch` around `ReconcileAllAsync`.
+- **No status at all, and every result is `reconcile-failed`.** The host can
+  list resources but cannot patch them or their `status`. Apply the packaged
+  RBAC manifest.
+- **A `Failed` status appears only from the second pass.** On the first pass
+  the reconciler adds its finalizer, which changes the resource version. A
+  failure later in that pass can then not always be written to the status.
+  The next pass writes it.
 - **A pause made in the dashboard is undone.** The resource is the source of
   truth. Set `spec.paused` instead.
 - **The resource stays `Terminating`.** Delete protection is on. See

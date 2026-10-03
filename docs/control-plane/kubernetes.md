@@ -136,7 +136,7 @@ do
     }
     catch (Exception exception)
     {
-        // A provider or Kubernetes API failure stops this pass. Try again on the next tick.
+        // Listing the resources failed, so this pass did nothing. Try again on the next tick.
         Console.Error.WriteLine($"Reconcile pass failed: {exception.GetType().Name}");
     }
 }
@@ -297,13 +297,14 @@ spec:
 | `spec.labels` | No | | Up to 128 entries |
 | `spec.workloads[]` | Yes | | 1 to 32, at most one per `kind` |
 | `workloads[].kind` | Yes | | `Streams`, `Sync`, `Live`, `ControlPlane`, `Dashboard` or `ContinuousGraph` |
-| `workloads[].version` | Yes | | Starts with a numeric version, such as `1.1.0`. The CRD does not check this; a value such as `latest` stops every reconcile pass |
+| `workloads[].version` | Yes | | Starts with a numeric version, such as `1.1.0`. The CRD does not check this; a value such as `latest` makes the resource `Failed` with `workload-version-invalid` |
 | `workloads[].resources` | Yes | | `replicas` 1 to 256, `cpuMillicoresPerReplica` 10 to 1,000,000, `memoryBytesPerReplica` 16 MiB to 16 TiB, `storageBytes` 0 to 16 TiB |
 | `workloads[].secretReferences[]` | No | | `store`, `name`, optional `version`; up to 128 |
 | `workloads[].settings` | No | | Up to 256 string entries |
 
 The managed deployment ID is `<namespace>/<name>`, for example
-`production/orders`.
+`production/orders`. Keep it to 128 characters or fewer; a longer ID is
+reported as `resource-invalid`.
 
 ## 5. Apply it and read the status
 
@@ -332,6 +333,11 @@ status:
 | `managedGeneration` | The Control Plane's desired generation. It rises by one per real change, however many edits Kubernetes coalesced |
 | `state` | `Pending`, `Planning`, `Applying`, `Ready`, `Degraded`, `Paused`, `Deleting`, `Deleted` or `Failed` |
 | `diagnosticCode` | Present when something stopped reconciliation, for example `tenant-quota-missing` |
+
+Each resource is reconciled on its own. A resource that is invalid or fails
+gets `state: Failed` and a `diagnosticCode`; the others in the same pass are
+still reconciled. [Troubleshooting](troubleshooting.md#kubernetes-reconciler)
+lists every code.
 
 The deployment also appears on the dashboard's **Deployments** page when the
 dashboard host registers `ManagedDeploymentFleetQueryService` over the same
