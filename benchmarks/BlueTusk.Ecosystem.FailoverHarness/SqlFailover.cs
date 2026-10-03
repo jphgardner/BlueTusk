@@ -18,7 +18,7 @@ internal sealed class SqlFailover : FailoverCase
     private static readonly string[] TenantIds = ["tenant-a", "tenant-b"];
     private readonly FailoverFixture _fixture;
     private readonly BlueTuskDataSource _source;
-    private readonly List<ReadLedger.Row> _yielded = [];
+    private readonly List<Queries.ReadLedger.Row> _yielded = [];
 
     private SqlFailover(FailoverFixture fixture, string application)
     {
@@ -48,14 +48,14 @@ internal sealed class SqlFailover : FailoverCase
     internal override async Task<int> AcknowledgeAsync(CancellationToken token)
     {
         int acknowledged = await InsertAllAsync(_source, static (_, _) => Task.CompletedTask, token);
-        await ReadLedger.Definition.ValidateAsync(_source, new(TenantIds[0], false), token);
+        await Queries.ReadLedger.Definition.ValidateAsync(_source, new(TenantIds[0], false), token);
         return acknowledged;
     }
 
     internal override async Task StartInFlightAsync(CancellationToken token)
     {
         await using var connection = await _source.OpenConnectionAsync(token);
-        await foreach (var row in ReadLedger.Definition.ReadAsync(connection, new(TenantIds[0], true), cancellationToken: token))
+        await foreach (var row in Queries.ReadLedger.Definition.ReadAsync(connection, new(TenantIds[0], true), cancellationToken: token))
         {
             _yielded.Add(row);
         }
@@ -78,7 +78,7 @@ internal sealed class SqlFailover : FailoverCase
 
     internal override async Task VerifyAsync(ScenarioRecorder recorder, CancellationToken token)
     {
-        await ReadLedger.Definition.ValidateAsync(_source, new(TenantIds[1], false), token);
+        await Queries.ReadLedger.Definition.ValidateAsync(_source, new(TenantIds[1], false), token);
         recorder.Check(true, "the generated result contract validates on the recovered server");
         int verified = 0;
         bool isolated = true;
@@ -114,11 +114,11 @@ internal sealed class SqlFailover : FailoverCase
         throw new InvalidOperationException("The child unexpectedly completed its parent-blocked read.");
     }
 
-    private async Task<List<ReadLedger.Row>> ReadTenantAsync(int tenant, CancellationToken token)
+    private async Task<List<Queries.ReadLedger.Row>> ReadTenantAsync(int tenant, CancellationToken token)
     {
-        var rows = new List<ReadLedger.Row>();
+        var rows = new List<Queries.ReadLedger.Row>();
         await using var connection = await _source.OpenConnectionAsync(token);
-        await foreach (var row in ReadLedger.Definition.ReadAsync(connection, new(TenantIds[tenant], false), cancellationToken: token)) { rows.Add(row); }
+        await foreach (var row in Queries.ReadLedger.Definition.ReadAsync(connection, new(TenantIds[tenant], false), cancellationToken: token)) { rows.Add(row); }
         return rows;
     }
 
@@ -138,7 +138,7 @@ internal sealed class SqlFailover : FailoverCase
         return count;
     }
 
-    private static ReadLedger.Row Expected(int tenant, int index) => new(TenantIds[tenant], index + 1, (tenant + 1) * 1000L + index, "open");
+    private static Queries.ReadLedger.Row Expected(int tenant, int index) => new(TenantIds[tenant], index + 1, (tenant + 1) * 1000L + index, "open");
 
     public override async ValueTask DisposeAsync() => await _source.DisposeAsync();
 }
