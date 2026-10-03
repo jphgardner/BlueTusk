@@ -434,6 +434,7 @@ internal static class Checker
         var n = values.Length;
         Require(n >= 2 && n <= 50 && plan.Length == n * Resamples && values.All(value => double.IsFinite(value) && value >= 0) &&
             plan.All(index => index >= 0 && index < n), "Invalid studentized bootstrap inputs.");
+        if (values.All(value => value == values[0])) return (values[0], values[0], values[0]);
         var point = values.Sum() / n;
         Require(double.IsFinite(point), "Trial mean overflowed.");
         double Error(double[] sample)
@@ -451,7 +452,7 @@ internal static class Checker
             return error;
         }
         var originalError = Error(values);
-        if (originalError == 0) return (point, point, point);
+        Require(originalError > 0, "Nonconstant trial standard error underflowed.");
         var pivots = new double[Resamples];
         var sample = new double[n];
         for (var b = 0; b < Resamples; b++)

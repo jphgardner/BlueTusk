@@ -39,11 +39,20 @@ release pass. Search now has a dedicated full-text local-capacity workflow,
 which requires two separate 1,800-second campaigns and retains an exact-candidate
 artifact only after its offline verifier passes. A prior local capacity pass
 does not qualify a later source commit or substitute for that workflow run.
-Events, Schema, Sql, Studio and Edge still need dedicated capacity workflows. Every family
+Events, Schema, Sql and Studio now have dedicated exact-candidate capacity
+workflows (`events-`, `schema-`, `sql-` and `studio-release-capacity.yml`). Each
+runs two 1,800-second campaigns of its family's harness against a fresh,
+digest-pinned PostgreSQL 18 fixture, records every operation as a raw sample,
+and passes `eng/verify-expansion-capacity.ps1` against the budgets and written
+rationale in `eng/<family>-capacity-budgets.json`. None of them has passing
+release evidence yet, and a reduced-duration diagnostic run never counts. Every family
 needs a dedicated failover and upgrade workflow, plus the protected expansion
 candidate aggregator. Jobs now has a source-bound synchronous-promotion
 failover workflow and an old/new/old binary upgrade workflow, but neither has
-a passing exact-candidate release run. The protected aggregator and the other
+a passing exact-candidate release run. Every other family now has a
+failover workflow on the shared exact-candidate gate described in
+[failover qualification](failover-qualification.md); none has a passing
+release run either. The protected aggregator and the other
 families' required readers are not implemented yet. An arming edit is therefore
 rejected even if
 generic `build.yml`, `security.yml`, `performance.yml` and
@@ -90,6 +99,28 @@ TRX results and binary snapshots are retained in
 asynchronous-loss tolerance nor split-brain fencing, old-primary rejoin,
 credential rotation during promotion, persistent storage failure or fleet
 availability. No failover pass is recorded by adding the workflow.
+
+The other nine families each have a manual `<family>-release-upgrade.yml`
+workflow driven by `eng/verify-expansion-release-upgrade.ps1` in Preflight,
+Produce and Verify modes. No expansion family has been published, so
+`eng/resolve-expansion-upgrade-baseline.ps1` takes the first parent of the most
+recent commit that changed the family's package-project directories (read from
+`eng/product-families.json` at the candidate, Public API baselines excluded). It
+fails closed on shallow history or when that change introduced the family. The
+probe in `eng/ExpansionUpgradeProbe` is compiled against both source trees, and
+the packaged family assemblies installed into each build must differ. Three
+processes share one digest-pinned PostgreSQL fixture. The baseline seeds
+representative state, including in-flight leases, cursors, queued work or a
+half-finished migration, and stops. The candidate initializes the same schema
+and must read and process all of it exactly once. The baseline then reopens the
+candidate's state. `eng/expansion-upgrade-policy.json` fixes, per family, the
+documented behaviour rehearsed, the exact expected effects and whether the
+candidate may change the durable schema. Phase deadlines derive only from
+documented command deadlines and the probe's 60-second in-flight lease. Events
+is the only family whose candidate migrates its schema (version 5 to 6), so its
+rolled-back baseline must be refused initialization without changing the
+schema. No upgrade workflow has a passing exact-candidate run, and local
+diagnostic runs are not release evidence.
 
 The eventual workflows must bind reports, binary/source hashes, fixture
 versions and actual workload outcomes to the same full candidate SHA. Capacity

@@ -132,6 +132,7 @@
 /documentation/operations/documents-evidence-2026-09-28-attached-content-600s
 /documentation/operations/documents-evidence-2026-09-28-maintenance-pair
 /documentation/operations/documents-evidence
+/documentation/operations/ecosystem-failover-qualification
 /documentation/operations/ecosystem-implementation-programme
 /documentation/operations/ecosystem-performance
 /documentation/operations/ecosystem-progress

@@ -71,6 +71,7 @@ internal static class PerformanceEvidenceStatistics
         {
             throw new InvalidDataException("Bootstrap inputs must be 2..50 finite, nonnegative trial values with a matching plan.");
         }
+        if (values.All(value => value == values[0])) return new(values[0], values[0], values[0]);
         var sum = 0d;
         for (var index = 0; index < trials; index++)
         {
@@ -79,7 +80,7 @@ internal static class PerformanceEvidenceStatistics
         var point = sum / trials;
         if (!double.IsFinite(point)) throw new InvalidDataException("Trial mean overflowed.");
         var standardError = StandardError(values, point);
-        if (standardError == 0) return new(point, point, point);
+        if (standardError == 0) throw new InvalidDataException("Nonconstant trial standard error underflowed.");
         var pivots = new double[resamples];
         var sample = new double[trials];
         for (var resample = 0; resample < resamples; resample++)

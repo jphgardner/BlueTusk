@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "postgreSqlImage": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+  "postgreSqlMajor": 18,
+  "timeBudgetRule": "Budgets were fixed from documented guarantees before any rehearsal ran and are never tuned to observed durations. Each phase deadline is its deliberate documented wait plus ten worst-case command deadlines of the family store (its documented CommandTimeoutSeconds default). The rehearsal is functional: a healthy phase never approaches a command deadline, so the deadline is a hang guard, not a latency claim. The only deliberate wait is the in-flight lease the baseline leaves held when it stops: ExpansionUpgradeProbe sets it to 60 seconds, twice the documented 30-second command deadline that bounds the candidate's single initialization transaction, so a handoff that respects documented deadlines always observes the lease as still held, and the candidate then waits at most that lease for documented expiry-based takeover.",
+  "families": {
+    "Projections": {
+      "boundary": "projection-schema-seven-fenced-builder-takeover",
+      "documentation": [
+        "docs/projections/RECOVERY.md",
+        "docs/projections/LOAD.md",
+        "docs/projections/README.md"
+      ],
+      "documentedBehaviour": "RECOVERY.md requires earlier binaries to stop during a schema migration, states that current clients fail closed on unknown schema versions and that mixed-binary rolling maintenance is not certified; LOAD.md leaves old/new binary upgrade and rollback as a separate gate. The rehearsal stops each binary before the next starts, requires the candidate to keep schema version 7, the checkpoint, generation and published documents, honour the persisted build lease until it expires, fence the stale owner and ignore a duplicate delivery, and requires the baseline to reopen version 7 and continue from the candidate's checkpoint.",
+      "packagedProjects": [
+        "src/BlueTusk.Projections/BlueTusk.Projections.csproj"
+      ],
+      "schemaChange": "none",
+      "commandTimeoutSeconds": 30,
+      "phaseWaitSeconds": { "seed": 0, "upgrade": 60, "rollback": 0 },
+      "phaseTimeoutSeconds": { "seed": 300, "upgrade": 360, "rollback": 300 },
+      "timeRationale": "PostgreSqlProjectionsOptions.CommandTimeoutSeconds defaults to 30 seconds. The baseline leaves its build lease held for the 60-second in-flight lease; AcquireAsync documents that it returns null while an unexpired lease exists, so the candidate waits for that expiry once. No other deliberate wait exists.",
+      "observations": {
+        "seed": { "SchemaVersion": 7, "SnapshotRows": 3, "AppliedTransactions": 3, "ActiveVersion": 1, "ActiveDocuments": 3, "HeldLeases": 1 },
+        "upgrade": { "SchemaVersion": 7, "CheckpointPreserved": 1, "DocumentsRead": 3, "HeldLeaseHonoured": 1, "StaleLeaseRejected": 1, "DuplicateDeliveriesIgnored": 1, "AppliedTransactions": 2, "ActiveDocuments": 4, "NewerFormatRejected": 1 },
+        "rollback": { "SchemaVersion": 7, "CheckpointPreserved": 1, "DocumentsRead": 4, "DuplicateDeliveriesIgnored": 1, "AppliedTransactions": 1, "ActiveDocuments": 3 }
+      }
+    },
+    "Documents": {
+      "boundary": "documents-storage-one-partial-inline-migration",
+      "documentation": [
+        "docs/documents/README.md"
+      ],
+      "documentedBehaviour": "README.md: initialization validates the installed storage version and never overwrites unknown metadata; a replacement may explicitly upgrade a document's schema version but cannot downgrade it; inline-content migration pages commit atomically, replaying a cursor skips committed rows, and a null cursor starts another sweep. The rehearsal leaves an inline migration half done and an unlinked content row in storage version 1, then requires the candidate to read every document, finish the sweep without repeating rows, collect the orphan once and reject a stale revision and a newer storage version, and requires the baseline to reopen version 1, read the migrated documents and be refused a schema-version downgrade.",
+      "packagedProjects": [
+        "src/BlueTusk.Documents/BlueTusk.Documents.csproj"
+      ],
+      "schemaChange": "none",
+      "commandTimeoutSeconds": 30,
+      "phaseWaitSeconds": { "seed": 0, "upgrade": 0, "rollback": 0 },
+      "phaseTimeoutSeconds": { "seed": 300, "upgrade": 300, "rollback": 300 },
+      "timeRationale": "DocumentStoreOptions.CommandTimeoutSeconds defaults to 30 seconds. Documents has no leases or time-based state; the partially run migration is resumed by cursor, so no phase waits deliberately.",
+      "observations": {
+        "seed": { "StorageVersion": 1, "DocumentsWritten": 5, "MigratedDocuments": 1, "LinkedContent": 1, "OrphanedContent": 1 },
+        "upgrade": { "StorageVersion": 1, "DocumentsRead": 5, "MigratedDocuments": 3, "SecondSweepMigrated": 0, "ContentVerified": 4, "OrphanedContentCollected": 1, "StaleRevisionRejected": 1, "DocumentsWritten": 1, "NewerFormatRejected": 1 },
+        "rollback": { "StorageVersion": 1, "DocumentsRead": 6, "ContentVerified": 4, "DowngradeWriteRejected": 1, "DocumentsWritten": 1, "MigratedDocuments": 1 }
+      }
+    },
+    "Workflows": {
+      "boundary": "workflows-format-one-jobs-format-one-reclaimed-activities",
+      "documentation": [
+        "docs/workflows/README.md",
+        "docs/jobs/durable-format.md"
+      ],
+      "documentedBehaviour": "workflows/README.md: durable limits and format 1 are fingerprinted and incompatible stores fail initialization; a duplicate start key returns the original workflow. jobs/durable-format.md: Jobs and Workflows support durable format 1 only, with same-format restart and no cross-format migration or downgrade. The rehearsal leaves pending, failed-for-retry and lease-held activities in format 1, then requires the candidate to keep both formats, return the original workflows for duplicate starts, honour the held lease until expiry and execute every activity exactly once with replay matching persisted state, and requires the baseline to reopen format 1, read the results and run the candidate's pending workflow.",
+      "packagedProjects": [
+        "src/BlueTusk.Workflows/BlueTusk.Workflows.csproj"
+      ],
+      "schemaChange": "none",
+      "commandTimeoutSeconds": 30,
+      "phaseWaitSeconds": { "seed": 0, "upgrade": 60, "rollback": 0 },
+      "phaseTimeoutSeconds": { "seed": 300, "upgrade": 360, "rollback": 300 },
+      "timeRationale": "WorkflowOptions and JobStoreOptions default CommandTimeoutSeconds to 30 seconds. The baseline holds one activity lease for the 60-second in-flight lease; Jobs reclaims a running job only after its lease expires, so the candidate waits for that expiry once.",
+      "observations": {
+        "seed": { "WorkflowFormat": 1, "JobsFormat": 1, "WorkflowsStarted": 3, "RetriedActivities": 1, "HeldLeases": 1 },
+        "upgrade": { "WorkflowFormat": 1, "JobsFormat": 1, "DeduplicatedStarts": 3, "HeldLeaseHonoured": 1, "ActivityExecutions": 6, "DistinctActivityKeys": 6, "SucceededWorkflows": 3, "ReplayMatches": 3, "RetryHistoryPreserved": 1, "NewerFormatRejected": 1, "WorkflowsStarted": 1 },
+        "rollback": { "WorkflowFormat": 1, "JobsFormat": 1, "SucceededWorkflows": 4, "ActivityExecutions": 2, "DistinctActivityKeys": 2, "ReplayMatches": 4 }
+      }
+    },
+    "Search": {
+      "boundary": "search-storage-three-cursor-and-ingestion-handoff",
+      "documentation": [
+        "docs/search/README.md"
+      ],
+      "documentedBehaviour": "README.md: initialization upgrades storage versions 1 or 2 to 3, preserves existing cursors, and incompatible initialization fails; older Search hosts must be drained before upgrading because mixed-version serving cannot maintain the rank ledger. The rehearsal stops the baseline with an open cursor, queued and lease-held ingestion jobs, version fences and a tombstone in storage version 3, then requires the candidate to keep version 3, continue the baseline's cursor, honour the fences, process each queued ingestion once and reject a newer storage version, and requires the baseline to reopen version 3 and continue the candidate's cursor.",
+      "packagedProjects": [
+        "src/BlueTusk.Search/BlueTusk.Search.csproj",
+        "src/BlueTusk.Search.Jobs/BlueTusk.Search.Jobs.csproj"
+      ],
+      "schemaChange": "none",
+      "commandTimeoutSeconds": 30,
+      "phaseWaitSeconds": { "seed": 0, "upgrade": 60, "rollback": 0 },
+      "phaseTimeoutSeconds": { "seed": 300, "upgrade": 360, "rollback": 300 },
+      "timeRationale": "SearchStoreOptions.CommandTimeoutSeconds defaults to 30 seconds. The baseline holds one ingestion job lease for the 60-second in-flight lease, which the candidate waits out once. Cursors use the documented default two-minute QueryLifetime, longer than the handoff bound of two command deadlines, so no wait is needed to continue them.",
+      "observations": {
+        "seed": { "StorageVersion": 3, "AppliedIngestions": 4, "Tombstones": 1, "CursorsOpened": 1, "QueuedIngestions": 2, "HeldLeases": 1 },
+        "upgrade": { "StorageVersion": 3, "CursorContinued": 1, "FencedReplays": 3, "HeldLeaseHonoured": 1, "IngestionJobsProcessed": 2, "SearchableDocuments": 4, "NewerFormatRejected": 1, "CursorsOpened": 1 },
+        "rollback": { "StorageVersion": 3, "CursorContinued": 1, "AppliedIngestions": 1, "SearchableDocuments": 5 }
+      }
+    },
+    "Edge": {
+      "boundary": "edge-server-four-client-three-outbox-replay",
+      "documentation": [
+        "docs/edge/README.md"
+      ],
+      "documentedBehaviour": "README.md: server initialization upgrades storage versions 1 to 4 and validates the installed version and record-byte contract; the SQLite client provisions schema version 3, later versions preserve cache, checkpoints and queued writes, and unknown future versions are rejected; mutation receipts make replay idempotent. The rehearsal stops the baseline with a server-applied but unacknowledged leased mutation and a pending one, then requires the candidate to keep server version 4 and client version 3, honour the lease until expiry, replay without a second server effect, reject the stale lease and a newer server version, and requires the baseline to reopen both stores and push the candidate's queued write.",
+      "packagedProjects": [
+        "src/BlueTusk.Edge/BlueTusk.Edge.csproj",
+        "src/BlueTusk.Edge.Server/BlueTusk.Edge.Server.csproj",
+        "src/BlueTusk.Edge.Sqlite/BlueTusk.Edge.Sqlite.csproj"
+      ],
+      "schemaChange": "none",
+      "commandTimeoutSeconds": 30,
+      "phaseWaitSeconds": { "seed": 0, "upgrade": 60, "rollback": 0 },
+      "phaseTimeoutSeconds": { "seed": 300, "upgrade": 360, "rollback": 300 },
+      "timeRationale": "EdgeServerOptions.CommandTimeoutSeconds defaults to 30 seconds and bounds the server side; the SQLite client's busy timeout defaults to 5 seconds and is shorter. The baseline leaves one client mutation lease held for the 60-second in-flight lease; ClaimAsync documents lease expiry as the only takeover, so the candidate waits for it once.",
+      "observations": {
+        "seed": { "ServerVersion": 4, "ClientVersion": 3, "PushedMutations": 2, "ServerRecords": 3, "PendingMutations": 2, "HeldLeases": 1 },
+        "upgrade": { "ServerVersion": 4, "ClientVersion": 3, "HeldLeaseVisible": 1, "RevisionsPreserved": 1, "StaleLeaseRejected": 1, "ServerReceipts": 5, "ServerRecords": 5, "CachedRecords": 5, "PendingMutations": 1, "NewerFormatRejected": 1 },
+        "rollback": { "ServerVersion": 4, "ClientVersion": 3, "ServerReceipts": 6, "ServerRecords": 6, "CachedRecords": 6, "PendingMutations": 0 }
+      }
+    },
+    "Events": {
+      "boundary": "events-schema-five-to-six-rollback-rejected",
+      "documentation": [
+        "docs/events/README.md"
+      ],
+      "documentedBehaviour": "README.md: InitializeAsync runs during controlled deployment, unknown versions are rejected and no hot path migrates schemas; new outbox inserts write their identity record through a database trigger, including when an older application binary inserts the row. The candidate migrates schema version 5 to 6. The rehearsal stops the baseline with a held replay lease and a checkpoint behind the stream, then requires the candidate to migrate, keep every event, deduplicate a retried append, honour the lease until expiry, fence the stale owner and replay the rest exactly once, and requires the rolled-back baseline to be refused initialization on version 6 without changing it while its already-running writer path still appends with a trigger-recorded identity.",
+      "packagedProjects": [
+        "src/BlueTusk.Events/BlueTusk.Events.csproj"
+      ],
+      "schemaChange": "upgrade",
+      "commandTimeoutSeconds": 30,
+      "phaseWaitSeconds": { "seed": 0, "upgrade": 60, "rollback": 0 },
+      "phaseTimeoutSeconds": { "seed": 300, "upgrade": 360, "rollback": 300 },
+      "timeRationale": "PostgreSqlEventsOptions.CommandTimeoutSeconds defaults to 30 seconds. The baseline leaves its replay lease held for the 60-second in-flight lease; AcquireReplayAsync documents that it returns null while another unexpired lease exists, so the candidate waits for that expiry once.",
+      "observations": {
+        "seed": { "SchemaVersion": 5, "AppendedEvents": 3, "ReplayedEvents": 1, "Checkpoint": 1, "HeldLeases": 1 },
+        "upgrade": { "SchemaVersion": 6, "EventsRead": 3, "IdempotentRetries": 1, "HeldLeaseHonoured": 1, "StaleLeaseRejected": 1, "ReplayedEvents": 2, "Checkpoint": 3, "EffectsRecorded": 3, "AppendedEvents": 1, "NewerFormatRejected": 1 },
+        "rollback": { "SchemaVersion": 6, "InitializeRejected": 1, "AppendedEvents": 1, "IdentityRecorded": 1, "EventsRead": 5, "ReplayedEvents": 2, "Checkpoint": 5, "EffectsRecorded": 5 }
+      }
+    },
+    "Schema": {
+      "boundary": "schema-journal-one-pending-step-and-plan-identity",
+      "documentation": [
+        "docs/schema/README.md"
+      ],
+      "documentedBehaviour": "README.md: initialization checks a persistent format marker and journal shape and fails closed; registration persists plan and definition fingerprints and reusing a deployment ID with different input fails; only IsNew authorizes a new attempt, and a pending attempt is resumed under a newer lease; removed or changed indexes require review approval. The rehearsal stops the baseline with an expanded deployment whose verify-target attempt is pending under a held lease, then requires the candidate to keep journal format 1, honour the lease until expiry, resume the pending attempt, reject the stale fence and finish, and to refuse a deployment whose plan identity its rules changed, and requires the baseline to reopen the journal, read every completed step and refuse the candidate's changed plan identity in turn.",
+      "packagedProjects": [
+        "src/BlueTusk.Schema/BlueTusk.Schema.csproj"
+      ],
+      "schemaChange": "none",
+      "commandTimeoutSeconds": 30,
+      "phaseWaitSeconds": { "seed": 0, "upgrade": 60, "rollback": 0 },
+      "phaseTimeoutSeconds": { "seed": 300, "upgrade": 360, "rollback": 300 },
+      "timeRationale": "PostgreSqlSchemaDeploymentCoordinator defaults commandTimeoutSeconds to 30 seconds. The baseline leaves its deployment lease held for the 60-second in-flight lease (within the documented 1-second to 5-minute lease range); AcquireAsync only succeeds once that lease expires, so the candidate waits for it once.",
+      "observations": {
+        "seed": { "JournalFormat": 1, "CompletedSteps": 2, "PendingSteps": 1, "HeldLeases": 1, "RegisteredDeployments": 2 },
+        "upgrade": { "JournalFormat": 1, "CompletedStepsRead": 2, "HeldLeaseHonoured": 1, "PendingResumed": 1, "StaleLeaseRejected": 1, "CompletedSteps": 2, "ChangedPlanRejected": 1, "RegisteredDeployments": 1, "NewerFormatRejected": 1 },
+        "rollback": { "JournalFormat": 1, "CompletedStepsRead": 4, "LeaseAcquired": 1, "ChangedPlanRejected": 1 }
+      }
+    },
+    "Sql": {
+      "boundary": "sql-stateless-reads-bounded-server-production",
+      "documentation": [
+        "docs/sql/README.md"
+      ],
+      "documentedBehaviour": "README.md: BlueTusk SQL keeps no durable state of its own; runtime execution wraps each admitted read in an outer limit of MaximumRows + 1 so PostgreSQL sends at most the declared rows plus one overflow sentinel, and SQL forms that cannot run inside a derived table fail rather than running without the cap. The rehearsal reads the same application rows through the same typed contract with both binaries and requires identical results and query fingerprints, an unchanged application schema, a candidate overflow that stops the server at the sentinel row, and a candidate refusal of a non-read statement that leaves no effect.",
+      "packagedProjects": [
+        "src/BlueTusk.Sql/BlueTusk.Sql.csproj"
+      ],
+      "schemaChange": "none",
+      "commandTimeoutSeconds": 30,
+      "phaseWaitSeconds": { "seed": 0, "upgrade": 0, "rollback": 0 },
+      "phaseTimeoutSeconds": { "seed": 300, "upgrade": 300, "rollback": 300 },
+      "timeRationale": "SqlQuery commandTimeoutSeconds defaults to 30 seconds. Typed SQL has no leases, cursors or other time-based state across processes, so no phase waits deliberately.",
+      "observations": {
+        "seed": { "ContractsValidated": 1, "RowsRead": 3 },
+        "upgrade": { "ContractsValidated": 1, "RowsRead": 3, "ResultsIdentical": 1, "QueryFingerprintStable": 1, "OverflowRowsDelivered": 2, "ServerRowsProduced": 3, "NonReadRejected": 1 },
+        "rollback": { "ContractsValidated": 1, "RowsRead": 4, "QueryFingerprintStable": 1 }
+      }
+    },
+    "Studio": {
+      "boundary": "studio-audit-three-confirmed-unpruned-horizon",
+      "documentation": [
+        "docs/studio/README.md"
+      ],
+      "documentedBehaviour": "README.md: unknown durable versions reject initialization and append; retention is an explicit ordered operator action that seals a horizon, confirms the archive and prunes only rows through a confirmed horizon; old UUIDs are rejected once sealed. The rehearsal stops the baseline with a confirmed but unpruned horizon and a sealed but unconfirmed one in audit version 3, then requires the candidate to keep version 3, read every audit, accept an identical retry, reject a sealed retry, prune exactly the confirmed rows, confirm the pending and legacy archives and reject a newer version, and requires the baseline to reopen version 3 and prune only through the candidate's confirmation.",
+      "packagedProjects": [
+        "src/BlueTusk.Studio/BlueTusk.Studio.csproj"
+      ],
+      "schemaChange": "none",
+      "commandTimeoutSeconds": 10,
+      "phaseWaitSeconds": { "seed": 0, "upgrade": 0, "rollback": 0 },
+      "phaseTimeoutSeconds": { "seed": 100, "upgrade": 100, "rollback": 100 },
+      "timeRationale": "PostgreSqlStudioAuditSink defaults commandTimeoutSeconds to 10 seconds. Seals and confirmations are explicit operator actions with no leases; the probe's audit identities stay inside the documented five-minute writable window, so no phase waits deliberately.",
+      "observations": {
+        "seed": { "AuditVersion": 3, "RecordedAudits": 4, "ArchivedUnprunedRows": 2, "Archives": 1 },
+        "upgrade": { "AuditVersion": 3, "AuditsRead": 4, "IdempotentRetries": 1, "SealedRetryRejected": 1, "PrunedRows": 2, "Archives": 3, "LegacyArchiveConfirmed": 1, "RecordedAudits": 1, "NewerFormatRejected": 1 },
+        "rollback": { "AuditVersion": 3, "AuditsRead": 3, "PrunedRows": 1, "LegacyArchivedPreserved": 1, "RecordedAudits": 1 }
+      }
+    }
+  }
+}

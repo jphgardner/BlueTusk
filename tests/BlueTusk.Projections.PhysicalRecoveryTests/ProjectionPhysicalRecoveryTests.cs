@@ -348,7 +348,9 @@ public sealed class ProjectionPhysicalRecoveryTests(ITestOutputHelper output)
         var name = Environment.GetEnvironmentVariable(containerVariable) ?? throw new InvalidOperationException("Owned recovery fixture container is absent.");
         var fixture = Environment.GetEnvironmentVariable("BLUETUSK_RECOVERY_FIXTURE") ?? throw new InvalidOperationException("Owned recovery fixture label is absent.");
         var inspect = await DockerAsync(["inspect", name, "--format", "{{index .Config.Labels \"bluetusk.owner\"}}|{{index .Config.Labels \"bluetusk.fixture\"}}"], token);
-        Assert.Equal("bluetusk.projections.recovery|" + fixture, inspect.Trim());
+        // The release gate runner may label its fixtures with its own owner; the default is this rehearsal's runner.
+        var owner = Environment.GetEnvironmentVariable("BLUETUSK_RECOVERY_OWNER") is { Length: > 0 } configured ? configured : "bluetusk.projections.recovery";
+        Assert.Equal(owner + "|" + fixture, inspect.Trim());
         await DockerAsync([.. beforeContainer, name, .. afterContainer ?? []], token);
     }
     private static async Task<string> DockerAsync(IReadOnlyList<string> arguments, CancellationToken token)

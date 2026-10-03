@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Events</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <Import Project="..\..\eng\versions\Events.props" />
+  <ItemGroup>
+    <Compile Include="..\Shared\ExpansionCapacity\*.cs" Link="Shared\%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.Events\BlueTusk.Events.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+  </ItemGroup>
+</Project>

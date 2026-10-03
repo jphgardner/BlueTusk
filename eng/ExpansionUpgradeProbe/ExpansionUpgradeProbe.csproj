@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    One probe source set per expansion family, compiled twice: once against the deterministic
+    baseline source tree and once against the exact candidate tree. FamilySourceRoot is the root of
+    the checkout whose family projects are referenced (with a trailing separator); UpgradeFamily
+    selects the family probe. The two builds share PostgreSQL and small state files, never CLR types.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RootNamespace>BlueTusk.UpgradeProbe</RootNamespace>
+  </PropertyGroup>
+  <Target Name="RequireUpgradeProbeFamily" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(UpgradeFamily)' == '' Or '$(FamilySourceRoot)' == ''"
+           Text="Set UpgradeFamily and FamilySourceRoot for the expansion upgrade probe." />
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)$(UpgradeFamily)Probe.cs')"
+           Text="No expansion upgrade probe exists for family '$(UpgradeFamily)'." />
+  </Target>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="ProbeSupport.cs" />
+    <Compile Include="$(UpgradeFamily)Probe.cs" />
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Data/BlueTusk.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UpgradeFamily)' == 'Projections'">
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Projections/BlueTusk.Projections.csproj" />
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Streams.Testing/BlueTusk.Streams.Testing.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UpgradeFamily)' == 'Events'">
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Events/BlueTusk.Events.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UpgradeFamily)' == 'Documents'">
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Documents/BlueTusk.Documents.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UpgradeFamily)' == 'Workflows'">
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Workflows/BlueTusk.Workflows.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UpgradeFamily)' == 'Search'">
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Search/BlueTusk.Search.csproj" />
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Search.Jobs/BlueTusk.Search.Jobs.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UpgradeFamily)' == 'Edge'">
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Edge/BlueTusk.Edge.csproj" />
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Edge.Server/BlueTusk.Edge.Server.csproj" />
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Edge.Sqlite/BlueTusk.Edge.Sqlite.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UpgradeFamily)' == 'Schema'">
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Schema/BlueTusk.Schema.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UpgradeFamily)' == 'Sql'">
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Sql/BlueTusk.Sql.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UpgradeFamily)' == 'Studio'">
+    <ProjectReference Include="$(FamilySourceRoot)src/BlueTusk.Studio/BlueTusk.Studio.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,117 @@
+name: Studio exact-candidate binary upgrade and rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character lowercase candidate commit containing this gate; dispatch from a ref whose head is that commit
+        required: true
+        type: string
+      confirmation:
+        description: Type RUN-STUDIO-RELEASE-UPGRADE for a live baseline/candidate/baseline rehearsal
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bluetusk-reference-host
+  cancel-in-progress: false
+
+jobs:
+  qualify:
+    name: Isolated Windows Studio cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/studio-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Studio baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Studio upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-STUDIO-RELEASE-UPGRADE') { throw 'Exact manual Studio upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Studio upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Studio -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55439;Database=bluetusk_studio_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-studio-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Studio upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=studio-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55439:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_studio_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Studio upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_studio_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Studio upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Studio -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Studio -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Studio upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-studio-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: studio-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Studio fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-studio-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Studio upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'studio-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Studio fixture." }

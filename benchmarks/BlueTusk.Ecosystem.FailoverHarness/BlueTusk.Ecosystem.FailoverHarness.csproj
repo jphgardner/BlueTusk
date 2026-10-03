@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Documents\BlueTusk.Documents.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge\BlueTusk.Edge.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge.AspNetCore\BlueTusk.Edge.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge.Http\BlueTusk.Edge.Http.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge.Server\BlueTusk.Edge.Server.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Edge.Sqlite\BlueTusk.Edge.Sqlite.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Events\BlueTusk.Events.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Projections\BlueTusk.Projections.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Schema\BlueTusk.Schema.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Search\BlueTusk.Search.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sql\BlueTusk.Sql.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sql.SourceGeneration\BlueTusk.Sql.SourceGeneration.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\src\BlueTusk.Studio\BlueTusk.Studio.csproj" />
+    <AdditionalFiles Include="Queries\*.sql" />
+  </ItemGroup>
+</Project>

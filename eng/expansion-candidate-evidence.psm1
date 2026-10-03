@@ -279,9 +279,20 @@ function Get-ExpansionRoleVerifier
                 Arguments = [ordered]@{}; ProducerRunParameter = $null } }
         'Edge/capacity' { @{ Script = 'verify-edge-capacity.ps1'; EvidenceParameter = 'EvidenceDirectory'
                 Arguments = [ordered]@{}; ProducerRunParameter = $null } }
+        { $_ -cin @('Documents/failover', 'Projections/failover', 'Workflows/failover', 'Search/failover', 'Edge/failover', 'Events/failover',
+            'Schema/failover', 'Sql/failover', 'Studio/failover') } {
+            @{ Script = 'verify-expansion-release-failover.ps1'; EvidenceParameter = 'EvidenceRoot'
+                Arguments = [ordered]@{ Family = $Family; Mode = 'Verify' }; ProducerRunParameter = $null } }
+        { $_ -cin @('Events/capacity', 'Schema/capacity', 'Sql/capacity', 'Studio/capacity') } {
+            @{ Script = 'verify-expansion-capacity.ps1'; EvidenceParameter = 'EvidenceRoot'
+                Arguments = [ordered]@{ Mode = 'Verify'; Family = $Family }; ProducerRunParameter = 'ProducerRunId' } }
         { $_ -cin @('Documents/capacity', 'Projections/capacity', 'Workflows/capacity') } {
             @{ Script = 'verify-ecosystem-performance.ps1'; EvidenceParameter = 'EvidenceRoot'
                 Arguments = [ordered]@{ Mode = 'Verify'; Product = $Family }; ProducerRunParameter = 'ProducerRunId' } }
+        { $_ -cin @('Events/upgrade', 'Documents/upgrade', 'Schema/upgrade', 'Projections/upgrade', 'Search/upgrade',
+            'Sql/upgrade', 'Studio/upgrade', 'Edge/upgrade', 'Workflows/upgrade') } {
+            @{ Script = 'verify-expansion-release-upgrade.ps1'; EvidenceParameter = 'EvidenceRoot'
+                Arguments = [ordered]@{ Mode = 'Verify'; Family = $Family }; ProducerRunParameter = $null } }
     }
     Assert-ExpansionCondition ($null -ne $verifier) (
         "No reviewed archived-evidence verifier exists for the '$Family' $Role role; readiness fails closed.")
