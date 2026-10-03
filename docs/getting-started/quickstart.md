@@ -31,11 +31,11 @@ same container for the [Streams guide](../streams/README.md) later.
 ```powershell
 dotnet new console --framework net10.0 --name BlueTuskQuickstart
 cd BlueTuskQuickstart
-dotnet add package BlueTusk.Data --version 1.1.0-rc.1
+dotnet add package BlueTusk.Data
 ```
 
-`1.1.0-rc.1` is the latest public release candidate. Use `1.0.0` if you need
-the stable release. See [Install BlueTusk](install.md) to choose.
+This code works with every published BlueTusk version. See
+[Install BlueTusk](install.md) to choose and pin a version.
 
 ## 3. Set the connection string
 
@@ -104,7 +104,7 @@ The answer is 42
 | TLS or certificate error | For a local container only, keep `SSL Mode=Disable`. For a real server, configure TLS. |
 | Password authentication failed | Check `Username` and `Password`. |
 
-The [provider troubleshooting guide](../operations/troubleshooting.md) covers more
+The [ADO.NET troubleshooting guide](../ado-net/troubleshooting.md) covers more
 cases.
 
 ## Clean up

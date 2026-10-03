@@ -1,37 +1,62 @@
 # BlueTusk.Tool
 
-`BlueTusk.Tool` is the database-first command-line tool for the BlueTusk EF Core
-provider and the production preflight for BlueTusk applications. Install the
-packed .NET tool, then validate a target environment without changing it:
+`BlueTusk.Tool` installs the `bluetusk` command. Use it to scaffold an EF Core
+model from an existing PostgreSQL database, and to check that a server is ready
+for BlueTusk before you deploy.
+
+## Install
 
 ```powershell
-dotnet tool install --global BlueTusk.Tool --version 1.1.0
-$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Database=app;Username=app;Password=..."
+dotnet tool install --global BlueTusk.Tool
+```
+
+This installs the latest stable version. To pin a version, add
+`--version <version>`. See [Install BlueTusk](../../docs/getting-started/install.md)
+for the available versions.
+
+## Check a server with `bluetusk doctor`
+
+> **New in 1.1.0.** `bluetusk doctor` is not in 1.0.0 or 1.1.0-rc.1.
+
+Validate a target environment without changing it:
+
+```powershell
+$env:BLUETUSK_CONNECTION_STRING = "Host=db.example.com;Database=app;Username=app;Password=..."
 bluetusk doctor --require-tls --require-streams --extension pgcrypto
 ```
 
-`bluetusk doctor` checks the live PostgreSQL version, TLS session, logical-WAL
-settings, replication capacity, and required extensions. It uses a bounded
-timeout, never prints the connection string, returns a non-zero exit code for a
-release-blocking failure, and supports `--json` for CI, Helm preflight jobs, and
-Control Plane ingestion.
+`bluetusk doctor` checks the PostgreSQL version, the TLS session, logical WAL
+settings, replication capacity and required extensions. It never prints the
+connection string. It exits with a non-zero code when a check fails, so you can
+use it in CI or a deployment preflight job.
 
-Scaffold a PostgreSQL schema with:
+| Option | Meaning |
+| --- | --- |
+| `--connection <value>` | Connection string. Defaults to the `BLUETUSK_CONNECTION_STRING` environment variable. |
+| `--require-tls` | Fail unless the session uses TLS. |
+| `--require-streams` | Fail unless the server is ready for logical replication (Streams). |
+| `--extension <name>` | Fail unless the extension is installed. Repeat for several extensions. |
+| `--timeout <seconds>` | Time limit for the checks, from 1 to 120. Default: 10. |
+| `--json` | Write the result as JSON. |
+
+## Scaffold an EF Core model
+
+Generate entity classes and a `DbContext` from a PostgreSQL schema:
 
 ```powershell
-dotnet tool install --global BlueTusk.Tool --version 1.0.0
 $env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Database=app;Username=app;Password=..."
 bluetusk scaffold --schema app --output Models --context AppDbContext
 ```
 
-The connection string can instead be supplied with `--connection`. BlueTusk
-uses it for design-time discovery but does not write it into generated C# by
-default. Pass `--include-connection-string` only when that explicit convenience
-outweighs the risk of committing a secret.
+You can pass the connection string with `--connection` instead. BlueTusk uses
+it to read the schema but does not write it into the generated C# unless you
+pass `--include-connection-string`. Avoid that option if the code is committed,
+because it puts a secret in source control.
 
-Repeat `--schema` and `--table` to limit discovery. The `--include-graphs`,
-`--include-functions`, and `--include-views` switches are accepted for the
-product-spec command shape; BlueTusk retains those PostgreSQL objects by default
-so generated models do not silently lose provider semantics. Run
-`bluetusk scaffold --help` for naming, namespace, overwrite, and code-style
-options.
+Repeat `--schema` and `--table` to limit what is scaffolded. Views, functions
+and property graphs are kept by default; the `--include-views`,
+`--include-functions` and `--include-graphs` switches are accepted but not
+required. Run `bluetusk scaffold --help` for naming, namespace, overwrite and
+code-style options.
+
+See the [EF Core guide](../../docs/ef-core/README.md) for using the generated model.
