@@ -2,6 +2,7 @@ using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
 using BlueTusk.TypeSystem;
 using NATS.Client.Core;
+using NATS.Client.JetStream;
 using NATS.Net;
 using Xunit.Sdk;
 
@@ -144,7 +145,19 @@ public sealed class NatsSyncDestinationTests
         }
         finally
         {
+            await DeleteStreamIfPresentAsync(jetStream, streamName);
+        }
+    }
+
+    // Cleanup must not replace the test's own failure: if provisioning failed, the stream never existed.
+    private static async Task DeleteStreamIfPresentAsync(INatsJSContext jetStream, string streamName)
+    {
+        try
+        {
             _ = await jetStream.DeleteStreamAsync(streamName);
+        }
+        catch (NatsJSApiException exception) when (exception.Error.ErrCode == 10059)
+        {
         }
     }
 
