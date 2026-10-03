@@ -91,7 +91,7 @@ if (@($contract.workloads.Sync.destinations).Count -ne 7 -or
     @(Compare-Object @('nats', 'redis', 'opensearch', 'postgresql', 'kafka', 's3', 'webhooks') `
         @($contract.workloads.Sync.destinations) -SyncWindow 0).Count -ne 0)
 {
-    throw 'All seven 1.2 Sync destinations require performance coverage.'
+    throw 'All seven 1.1 Sync destinations require performance coverage.'
 }
 
 $workflowPath = Join-Path (
@@ -99,7 +99,7 @@ $workflowPath = Join-Path (
 $workflow = Get-Content -LiteralPath $workflowPath -Raw
 if ($workflow -notmatch '(?m)^\s*workflow_dispatch\s*:' -or
     $workflow -match '(?m)^\s*(push|pull_request|schedule)\s*:' -or
-    $workflow -notmatch 'CAPTURE-1\.2-PERFORMANCE-EVIDENCE' -or
+    $workflow -notmatch 'CAPTURE-1\.1-PERFORMANCE-EVIDENCE' -or
     $workflow -notmatch '\[\"self-hosted\",\"windows\",\"x64\",\"bluetusk-benchmark\"\]' -or
     $workflow -notmatch '\[\"self-hosted\",\"linux\",\"x64\",\"bluetusk-benchmark\"\]' -or
     $workflow -notmatch 'run-v1-performance-gate\.ps1' -or
@@ -109,4 +109,4 @@ if ($workflow -notmatch '(?m)^\s*workflow_dispatch\s*:' -or
     throw 'The manual exact-SHA Windows/Linux evidence capture workflow is incomplete.'
 }
 
-Write-Output 'Verified the complete BlueTusk 1.2 performance-leadership contract.'
+Write-Output 'Verified the complete BlueTusk 1.1 performance-leadership contract.'
