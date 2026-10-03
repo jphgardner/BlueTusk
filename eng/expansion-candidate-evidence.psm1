@@ -279,6 +279,9 @@ function Get-ExpansionRoleVerifier
                 Arguments = [ordered]@{}; ProducerRunParameter = $null } }
         'Edge/capacity' { @{ Script = 'verify-edge-capacity.ps1'; EvidenceParameter = 'EvidenceDirectory'
                 Arguments = [ordered]@{}; ProducerRunParameter = $null } }
+        { $_ -cin @('Documents/failover', 'Projections/failover', 'Workflows/failover') } {
+            @{ Script = 'verify-expansion-release-failover.ps1'; EvidenceParameter = 'EvidenceRoot'
+                Arguments = [ordered]@{ Family = $Family; Mode = 'Verify' }; ProducerRunParameter = $null } }
         { $_ -cin @('Documents/capacity', 'Projections/capacity', 'Workflows/capacity') } {
             @{ Script = 'verify-ecosystem-performance.ps1'; EvidenceParameter = 'EvidenceRoot'
                 Arguments = [ordered]@{ Mode = 'Verify'; Product = $Family }; ProducerRunParameter = 'ProducerRunId' } }
