@@ -1,0 +1,108 @@
+name: Expansion exact-candidate readiness
+
+run-name: Expansion readiness (${{ inputs.family }}) at ${{ inputs.candidate_sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      family:
+        description: Expansion family whose capacity, failover and upgrade runs are bound
+        required: true
+        type: choice
+        options:
+          - Events
+          - Jobs
+          - Documents
+          - Schema
+          - Projections
+          - Search
+          - Sql
+          - Studio
+          - Edge
+          - Workflows
+      candidate_sha:
+        description: Full 40-character lowercase candidate commit; dispatch from a ref whose head is that commit
+        required: true
+        type: string
+      confirmation:
+        description: Type VERIFY-EXPANSION-EXACT-CANDIDATE to enter the protected gate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: bluetusk-reference-host
+  cancel-in-progress: false
+
+jobs:
+  verify-candidate:
+    name: Bind and re-verify exact expansion qualification evidence
+    # The ecosystem and Jobs capacity verifiers recheck archived evidence only on the
+    # reference host, so readiness re-verification runs there too.
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 120
+    environment: expansion-candidate-readiness
+    env:
+      FAMILY: ${{ inputs.family }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      READINESS_ROOT: artifacts/expansion-readiness/${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact candidate dispatch and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Expansion readiness requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'VERIFY-EXPANSION-EXACT-CANDIDATE') { throw 'The exact manual readiness confirmation is required.' }
+          if ($env:FAMILY -cnotin @('Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search', 'Sql', 'Studio', 'Edge', 'Workflows')) {
+            throw 'Choose one expansion family.'
+          }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Readiness runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          $head = (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $head -cne $env:CANDIDATE_SHA) { throw 'Checkout differs from the requested candidate.' }
+          if (@(git status --porcelain --untracked-files=normal).Count -ne 0) { throw 'Expansion readiness requires a clean checkout.' }
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "FAMILY_SLUG=$($env:FAMILY.ToLowerInvariant())" -Encoding utf8
+
+      - name: Verify protected repository and deployment governance
+        shell: pwsh
+        env:
+          V1_GOVERNANCE_TOKEN: ${{ secrets.V1_GOVERNANCE_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:V1_GOVERNANCE_TOKEN)) {
+            throw 'The protected environment has no V1_GOVERNANCE_TOKEN secret.'
+          }
+          ./eng/verify-github-governance.ps1 `
+            -Mode Remote `
+            -Token $env:V1_GOVERNANCE_TOKEN
+
+      - name: Verify the armed exact-candidate release policy
+        shell: pwsh
+        run: ./eng/verify-expansion-release-policy.ps1 -Family $env:FAMILY -RequireArmed
+
+      - name: Bind and re-verify the three exact-candidate qualification runs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          ./eng/build-expansion-candidate-readiness.ps1
+          -Family $env:FAMILY
+          -CandidateCommit $env:CANDIDATE_SHA
+          -OutputDirectory $env:READINESS_ROOT
+
+      - name: Upload exact-candidate readiness evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-readiness-${{ env.FAMILY_SLUG }}-${{ inputs.candidate_sha }}
+          path: ${{ env.READINESS_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
