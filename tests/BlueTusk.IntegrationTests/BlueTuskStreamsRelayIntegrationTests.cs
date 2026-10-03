@@ -212,7 +212,10 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
         try
         {
             await relay.InitializeAsync();
-            var leaseDuration = TimeSpan.FromMilliseconds(900);
+            // The observer renews every third of the lease, so the lease only lapses if no renewal
+            // completes for two thirds of it. Six seconds leaves four seconds for host scheduling
+            // delays (900 ms left only 600 ms) while still renewing several times in the test.
+            var leaseDuration = TimeSpan.FromSeconds(6);
             var feedback = new RecordingFeedbackSender();
             await using var observer = await PostgreSqlRelayChangeDeliveryObserver.AcquireAsync(
                 relay,
@@ -224,9 +227,17 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
                 .ReadTransactionsAsync()
                 .GetAsyncEnumerator();
             Assert.True(await enumerator.MoveNextAsync());
+            var acquired = observer.Lease;
 
-            // No append happens for three lease periods.
-            await Task.Delay(leaseDuration * 3);
+            // No append happens while the acquired lease runs out. Renewal only succeeds while the
+            // lease is unexpired and sets the expiry to the database clock plus the lease duration,
+            // so an expiry more than one lease duration past the acquired one proves the lease was
+            // renewed after it would otherwise have expired, without ever lapsing.
+            var renewed = await WaitForLeaseAsync(
+                observer,
+                lease => lease.ExpiresAt > acquired.ExpiresAt + leaseDuration,
+                leaseDuration * 3);
+            Assert.Equal(acquired.FencingToken, renewed.FencingToken);
 
             var contender = await relay.AcquireSourceLeaseAsync(
                 observer.Source,
@@ -526,6 +537,29 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
             await DropSchemaAsync(dataSource, sourceSchema);
             await DropSchemaAsync(dataSource, restoredSchema);
         }
+    }
+
+    private static async Task<ChangeStreamLease> WaitForLeaseAsync(
+        PostgreSqlRelayChangeDeliveryObserver observer,
+        Func<ChangeStreamLease, bool> predicate,
+        TimeSpan timeout)
+    {
+        var deadline = DateTimeOffset.UtcNow + timeout;
+        var lease = observer.Lease;
+        while (!predicate(lease))
+        {
+            if (DateTimeOffset.UtcNow >= deadline)
+            {
+                throw new XunitException(
+                    $"The source lease was not renewed as expected within {timeout}; " +
+                    $"it expires at {lease.ExpiresAt:O}.");
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(50));
+            lease = observer.Lease;
+        }
+
+        return lease;
     }
 
     private static PgOutputChangeStream CreateStream(
