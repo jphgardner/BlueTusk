@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -92,6 +93,10 @@ public sealed class DashboardEndpointTests
         Assert.Contains("Production &lt;west&gt;", overviewHtml, StringComparison.Ordinal);
         Assert.Contains("Live source &lt;script&gt;alert(&#x27;no&#x27;)&lt;/script&gt;", overviewHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("<script>alert('no')</script>", overviewHtml, StringComparison.Ordinal);
+        Assert.Contains(
+            $"<span>BlueTusk {ExpectedDashboardVersion()} control plane</span></footer>",
+            overviewHtml,
+            StringComparison.Ordinal);
 
         var sourceDetail = Assert.Single(
             endpoints,
@@ -557,6 +562,23 @@ public sealed class DashboardEndpointTests
                             new DateTimeOffset(2026, 8, 3, 16, 1, 0, TimeSpan.Zero),
                             2)])]));
         }
+    }
+
+    /// <summary>
+    /// The footer must name the shipped package version (for example "1.1.0"), not a
+    /// hand-written release-line label: the package's three-part assembly version plus any
+    /// prerelease suffix, without the "+commit" build metadata.
+    /// </summary>
+    private static string ExpectedDashboardVersion()
+    {
+        var assembly = typeof(BlueTuskDashboardOptions).Assembly;
+        var packageVersion = assembly.GetName().Version!.ToString(3);
+        var informational = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+            .InformationalVersion
+            .Split('+')[0];
+        Assert.StartsWith(packageVersion, informational, StringComparison.Ordinal);
+        return informational;
     }
 
     private static async Task<string> InvokeHtmlAsync(

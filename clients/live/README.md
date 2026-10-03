@@ -18,7 +18,7 @@ Call `stop()` when the owning view is destroyed. The default `createQuery`
 path never sends SQL or expression trees; `query` is the name of a trusted
 server registration.
 
-## Bounded updates in the current 1.2 candidate
+## Bounded updates
 
 The client reduces up to 64 already available SSE frames before creating one
 ordered rows array and notifying subscribers. It still validates and applies
@@ -55,9 +55,8 @@ authoritative initial result. Explicit replay expiry/reset clears the token and
 requires a fresh authoritative result before deltas, including after a server
 restart with a lower sequence.
 
-These changes are development-candidate behavior, not a newly published package
-or a release-performance claim. Run `npm run check:clients` at the repository
-root to build and test all five clients.
+Batching is not a release-performance claim. Run `npm run check:clients` at the
+repository root to build and test all five clients.
 
 An application may separately expose a capability-secured client-query
 resolver. This is opt-in server policy, not an unrestricted database endpoint:
