@@ -51,7 +51,7 @@ function Hash([string] $Path) { return (Get-FileHash -LiteralPath $Path -Algorit
 function Json([string] $Path) { return Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json -Depth 64 }
 function Capture([string] $Path)
 {
-    & python eng/capture-ecosystem-source.py --output $Path
+    & python eng/capture-ecosystem-source.py --output $Path | Out-Host
     Require ($LASTEXITCODE -eq 0) 'Candidate source capture failed.'
     $capture = Json $Path
     Require ($capture.dirty -eq $false -and [string]$capture.commit -ceq $ExpectedCommit) 'Candidate source capture is not clean or exact.'
