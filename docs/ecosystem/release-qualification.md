@@ -100,6 +100,28 @@ asynchronous-loss tolerance nor split-brain fencing, old-primary rejoin,
 credential rotation during promotion, persistent storage failure or fleet
 availability. No failover pass is recorded by adding the workflow.
 
+The other nine families each have a manual `<family>-release-upgrade.yml`
+workflow driven by `eng/verify-expansion-release-upgrade.ps1` in Preflight,
+Produce and Verify modes. No expansion family has been published, so
+`eng/resolve-expansion-upgrade-baseline.ps1` takes the first parent of the most
+recent commit that changed the family's package-project directories (read from
+`eng/product-families.json` at the candidate, Public API baselines excluded). It
+fails closed on shallow history or when that change introduced the family. The
+probe in `eng/ExpansionUpgradeProbe` is compiled against both source trees, and
+the packaged family assemblies installed into each build must differ. Three
+processes share one digest-pinned PostgreSQL fixture. The baseline seeds
+representative state, including in-flight leases, cursors, queued work or a
+half-finished migration, and stops. The candidate initializes the same schema
+and must read and process all of it exactly once. The baseline then reopens the
+candidate's state. `eng/expansion-upgrade-policy.json` fixes, per family, the
+documented behaviour rehearsed, the exact expected effects and whether the
+candidate may change the durable schema. Phase deadlines derive only from
+documented command deadlines and the probe's 60-second in-flight lease. Events
+is the only family whose candidate migrates its schema (version 5 to 6), so its
+rolled-back baseline must be refused initialization without changing the
+schema. No upgrade workflow has a passing exact-candidate run, and local
+diagnostic runs are not release evidence.
+
 The eventual workflows must bind reports, binary/source hashes, fixture
 versions and actual workload outcomes to the same full candidate SHA. Capacity
 must cover sustained throughput, P50/P95/P99 latency, allocation, memory,

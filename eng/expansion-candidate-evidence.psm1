@@ -289,6 +289,10 @@ function Get-ExpansionRoleVerifier
         { $_ -cin @('Documents/capacity', 'Projections/capacity', 'Workflows/capacity') } {
             @{ Script = 'verify-ecosystem-performance.ps1'; EvidenceParameter = 'EvidenceRoot'
                 Arguments = [ordered]@{ Mode = 'Verify'; Product = $Family }; ProducerRunParameter = 'ProducerRunId' } }
+        { $_ -cin @('Events/upgrade', 'Documents/upgrade', 'Schema/upgrade', 'Projections/upgrade', 'Search/upgrade',
+            'Sql/upgrade', 'Studio/upgrade', 'Edge/upgrade', 'Workflows/upgrade') } {
+            @{ Script = 'verify-expansion-release-upgrade.ps1'; EvidenceParameter = 'EvidenceRoot'
+                Arguments = [ordered]@{ Mode = 'Verify'; Family = $Family }; ProducerRunParameter = $null } }
     }
     Assert-ExpansionCondition ($null -ne $verifier) (
         "No reviewed archived-evidence verifier exists for the '$Family' $Role role; readiness fails closed.")
