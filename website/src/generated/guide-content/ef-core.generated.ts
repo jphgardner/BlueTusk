@@ -415,7 +415,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 14756,
+    "wordCount": 14829,
     "readMinutes": 68,
     "searchText": "Entity Framework Core `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings. Microsoft's provider-facing relational test package is consumed by a dedicated test assembly. The exact adopted suites, commands, and completed 1.0 coverage gate are recorded in [EF Core relational specification tests](specification-tests.md). SaveChanges batching The 1.2 candidate batches tracked inserts, updates and deletes automatically. One batch normally carries up to **42 modification commands**, not necessarily 42 entities: an entity mapped to several tables can need several commands. EF still chooses command order from relationship and generated-value dependencies; batching never relaxes that ordering. Omit the option for the default, or set `MaxBatchSize(1)` for the former one-command behavior. A larger configured limit does not remove the aggregate bounds: a batch is split before exceeding 65,536 SQL characters or 32,767 parameters. These are aggregation limits, not a maximum entity size. EF permits one unusually wide command to run alone; PostgreSQL's own limits still apply. Each statement has locally bound parameters and a corresponding result in command order. Server-generated IDs, computed columns and concurrency-token checks remain associated with the correct tracked entries, including batches that mix client-generated and server-generated keys. Batches use the normal EF command execution path, including logging and `DbCommandInterceptor` callbacks. An interceptor now observes a batch rather than necessarily one callback per entity. When no command-reader interceptor or custom update SQL generator is registered, writes without server-generated values use PostgreSQL's command-completion count instead of alloc",
     "blocks": [
@@ -451,7 +451,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>Optional extensions keep their ADO.NET and EF registrations separate. For\nexample, <code>citext</code> uses <code>BlueTusk.Extensions.Citext</code> for the data-source codec and\n<code>BlueTusk.Extensions.Citext.EntityFrameworkCore</code> for EF scalar/array mappings\nand migration helpers:</p>\n"
+        "html": "<p>The mapped types may be created by a migration: the data source tolerates\ntypes missing from the catalogue, and <code>Migrate</code>/<code>MigrateAsync</code> reload the data\nsource’s catalogue after applying migrations. LINQ enum constants are rendered\nwith the same labels as the codec: <code>[BlueTuskName]</code>, then <code>[EnumMember]</code>, then\nthe CLR name. Labels supplied only through the <code>MapEnum</code> label dictionary are\nnot visible to SQL generation, so prefer the attributes or pass the value as a\nquery parameter.</p>\n<p>Optional extensions keep their ADO.NET and EF registrations separate. For\nexample, <code>citext</code> uses <code>BlueTusk.Extensions.Citext</code> for the data-source codec and\n<code>BlueTusk.Extensions.Citext.EntityFrameworkCore</code> for EF scalar/array mappings\nand migration helpers:</p>\n"
       },
       {
         "kind": "code",
