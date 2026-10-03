@@ -61,11 +61,11 @@ packages you add for specific needs.
 | Use EF Core | `BlueTusk.EntityFrameworkCore` | `BlueTusk.EntityFrameworkCore.Design` and `Microsoft.EntityFrameworkCore.Design` for migrations |
 | Use a PostgreSQL extension | `BlueTusk.Extensions.PgVector`, `.PostGIS`, `.TimescaleDB`, `.Citext`, `.HStore`, `.LTree` or `.PgTrgm` | The matching `.EntityFrameworkCore` package where one exists |
 | Sign in with a cloud identity | `BlueTusk.Identity.Aws`, `.Azure` or `.GoogleCloud` | |
-| React to committed changes | `BlueTusk.Streams.DependencyInjection` | One state store: `BlueTusk.Streams.Storage.PostgreSql`, `.Redis` or `.File` |
+| React to committed changes | `BlueTusk.Streams` and one state store: `BlueTusk.Streams.Storage.PostgreSql`, `.Redis` or `.File` | `BlueTusk.Streams.DependencyInjection` for hosting and health checks |
 | Copy changes to another system | `BlueTusk.Sync.DependencyInjection` | One destination: `BlueTusk.Sync.PostgreSql`, `.Redis`, `.Nats`, `.OpenSearch`, `.Kafka`, `.S3` or `.Webhooks` |
-| Push live query results to clients | `BlueTusk.Live.AspNetCore` | A transport: `BlueTusk.Live.SignalR`, `.ServerSentEvents` or `.Grpc`; `BlueTusk.Live.EntityFrameworkCore` for EF queries |
+| Push live query results to clients | `BlueTusk.Live.EntityFrameworkCore` and `BlueTusk.Live.DependencyInjection` | A transport: `BlueTusk.Live.ServerSentEvents`, `.SignalR` or `.Grpc` |
 | Use Live from a browser | `@bluetusk/live` | `@bluetusk/live-angular`, `-react`, `-vue` or `-svelte` |
-| Operate the products from a dashboard | `BlueTusk.ControlPlane` | `BlueTusk.Dashboard`; `BlueTusk.ControlPlane.Kubernetes` for Kubernetes |
+| Operate the products from a dashboard | `BlueTusk.Dashboard` (includes `BlueTusk.ControlPlane`) | `BlueTusk.ControlPlane.Kubernetes` for Kubernetes |
 | Run them under .NET Aspire | `BlueTusk.Streams.Aspire`, `BlueTusk.Sync.Aspire` or `BlueTusk.Live.Aspire` | |
 | Test your code | `BlueTusk.Streams.Testing`, `BlueTusk.Sync.Testing` or `BlueTusk.Live.Testing` | |
 
