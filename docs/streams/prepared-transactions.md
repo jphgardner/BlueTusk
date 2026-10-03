@@ -1,10 +1,22 @@
-# Prepared and two-phase transactions
+# Prepared (two-phase) transactions
 
-Prepared-transaction delivery is an opt-in Streams preview feature. The default
-`PreparedTransactionMode.Fail` behavior rejects every two-phase pgoutput message
-before changing assembler state. Enable `PreparedTransactionMode.Stage` only
-when the destination can durably stage source changes without making them
-visible.
+This guide shows you how to receive PostgreSQL prepared transactions
+(`PREPARE TRANSACTION`) as separate prepare, commit and rollback deliveries, so
+a destination can stage changes before they are final.
+
+> **Note:** This is a preview feature. It is off by default.
+
+Without two-phase decoding (the default), PostgreSQL sends a prepared
+transaction only when it commits, as an ordinary transaction. If two-phase
+messages arrive while `PreparedTransactionMode` is `Fail` (the default), Streams
+stops with `PreparedTransactionNotSupportedException`.
+
+Turn staging on only if your destination can store changes durably without
+making them visible, and later publish or discard them.
+
+## Turn it on
+
+Set the mode on the transaction assembly options:
 
 ```csharp
 var assembly = new TransactionAssemblyOptions
@@ -13,77 +25,111 @@ var assembly = new TransactionAssemblyOptions
 };
 ```
 
-`PostgreSqlConsistentSnapshotSource` automatically selects pgoutput protocol 3
-and enables the PostgreSQL `two_phase` option when staging is enabled. Code that
-manually composes a replication stream must configure both the replication
-request and decoder consistently:
+With the [snapshot source](snapshot-bootstrap.md), pass these options as
+`PostgreSqlConsistentSnapshotOptions.TransactionAssembly`. The source then
+creates the slot with two-phase decoding and uses pgoutput protocol 3.
+
+If you read a slot yourself, the slot must have two-phase decoding enabled, and
+the replication request and decoder must agree:
 
 ```csharp
-var source = replication.StartReplicationAsync(
-    new BlueTuskPgOutputReplicationOptions
-    {
-        SlotName = slotName,
-        PublicationNames = [publicationName],
-        ProtocolVersion = 3,
-        StreamingMode = BlueTuskLogicalStreamingMode.On,
-        TwoPhase = true,
-    }).DecodePgOutputAsync(
-    new BlueTuskPgOutputDecoderOptions
-    {
-        ProtocolVersion = 3,
-        StreamingMode = BlueTuskPgOutputStreamingMode.On,
-        TwoPhase = true,
-    });
+await replication.CreateReplicationSlotAsync(slotName, twoPhase: true);
 ```
 
-PostgreSQL can emit a two-phase transaction as one ordinary committed
-transaction, including its changes, when logical decoding did not process that
-transaction at `PREPARE TRANSACTION` time. This can occur while a consumer is
-starting or catching up. It is PostgreSQL's documented fallback and does not
-lose changes: consumers must always handle ordinary committed deliveries in
-addition to the staged lifecycle below. A workflow that must observe a staged
-delivery can first emit and consume a non-transactional logical message as a
-stream-readiness barrier before it begins the prepared transaction.
+```csharp
+var changes = new PgOutputChangeStream(
+    replication
+        .StartReplicationAsync(new BlueTuskPgOutputReplicationOptions
+        {
+            SlotName = slotName,
+            PublicationNames = [publicationName],
+            ProtocolVersion = 3,
+            StreamingMode = BlueTuskLogicalStreamingMode.On,
+            TwoPhase = true,
+        })
+        .DecodePgOutputAsync(new BlueTuskPgOutputDecoderOptions
+        {
+            ProtocolVersion = 3,
+            StreamingMode = BlueTuskPgOutputStreamingMode.On,
+            TwoPhase = true,
+        }),
+    sourceIdentity,
+    assembly);
+```
 
-## Lifecycle deliveries
+The source server also needs `max_prepared_transactions` above 0, or
+applications cannot run `PREPARE TRANSACTION` at all.
 
-Streams does not keep an acknowledged prepared transaction only in process
-memory. It exposes three ordered delivery states instead:
+## Handle the three lifecycle deliveries
 
-| `ChangeTransaction.Outcome` | Changes | Required destination action |
+A two-phase transaction arrives as two deliveries: the prepare, then either a
+commit or a rollback. Check `Outcome`:
+
+```csharp
+await foreach (var delivery in changes.ReadTransactionsAsync())
+{
+    var transaction = delivery.Transaction;
+    switch (transaction.Outcome)
+    {
+        case ChangeTransactionOutcome.Prepared:
+            // Stage every change under transaction.GlobalTransactionId; keep it hidden.
+            break;
+        case ChangeTransactionOutcome.Committed when transaction.IsTwoPhase:
+            // Make the staged changes for transaction.GlobalTransactionId visible.
+            break;
+        case ChangeTransactionOutcome.RolledBack:
+            // Discard the staged changes for transaction.GlobalTransactionId.
+            break;
+        default:
+            // An ordinary committed transaction: apply it as usual.
+            break;
+    }
+
+    await delivery.AcknowledgeAsync();
+}
+```
+
+| `Outcome` | `Changes` | What your destination must do before acknowledging |
 | --- | --- | --- |
-| `Prepared` | Complete source transaction | Durably stage all changes under the source identity, transaction ID, and `GlobalTransactionId`; do not expose them. |
-| `Committed` with `IsTwoPhase == true` | Empty | Atomically make the corresponding staged changes visible and record the final lifecycle delivery. |
-| `RolledBack` | Empty | Atomically discard the corresponding staged changes and record the final lifecycle delivery. |
+| `Prepared` | All of the transaction's changes | Store them durably under the `GlobalTransactionId`, hidden. |
+| `Committed` with `IsTwoPhase == true` | Empty | Make the staged changes visible, atomically. |
+| `RolledBack` | Empty | Discard the staged changes, atomically. |
+| `Committed` with `IsTwoPhase == false` | All changes | An ordinary transaction. Apply it as usual. |
 
-Ordinary commits and synthetic logical-message transactions have
-`Outcome == Committed`, a null `GlobalTransactionId`, and `IsTwoPhase == false`.
-Prepared, commit-prepared, and rollback-prepared deliveries preserve the
-PostgreSQL transaction ID and global transaction ID. Streamed prepared
-transactions use the same bounded memory and disk-spool limits as ordinary
-streamed transactions.
+`GlobalTransactionId` is the name given to `PREPARE TRANSACTION`, and is `null`
+for ordinary transactions. Each lifecycle delivery is acknowledged and
+checkpointed on its own, following the usual
+[acknowledgement rule](concepts.md#acknowledge-after-your-work-is-durable).
+Large prepared transactions are spooled to disk under the same limits as any
+other transaction.
 
-Acknowledgement means the lifecycle action is durable. For `Prepared`, the
-consumer must finish durable staging before acknowledging. For the two final
-states, it must atomically finalize or discard the staged state before
-acknowledging. The normal destination → checkpoint → replication-feedback
-ordering then applies independently to every lifecycle delivery.
+## Expect ordinary commits too
 
-Crashes can redeliver any state, so all three actions must be idempotent. A
-destination should retain a compact final-state tombstone for at least its
-configured replay/resume window. BlueTusk continues to advertise at-least-once
-delivery and does not infer cross-system exactly-once behavior from PostgreSQL
-two-phase commit.
+PostgreSQL may send a two-phase transaction as one ordinary committed
+transaction, with all its changes, if decoding had not reached the transaction
+when it was prepared. This happens while a consumer is starting or catching up.
+Nothing is lost, but your code must handle ordinary commits as well as the
+staged lifecycle. If a workflow must see the staged form, emit and consume a
+non-transactional logical message (`pg_logical_emit_message(false, ...)`) before
+it prepares the transaction, to be sure the consumer has caught up.
 
-## Relay compatibility
+## Make every step safe to repeat
 
-Transaction relay envelopes use format 2 for lifecycle outcome and global
-transaction ID metadata. The decoder continues to accept integrity-checked
-format 1 envelopes, treating them as ordinary committed transactions. New
-writers always emit format 2. Unknown future versions and invalid lifecycle
-combinations fail closed.
+After a crash, any of the three deliveries can arrive again. Make staging,
+publishing and discarding idempotent, keyed by `GlobalTransactionId`. Keep a
+small record of finished transactions for as long as a redelivery can happen.
+Delivery is at least once; PostgreSQL two-phase commit does not make it
+exactly once across systems.
 
-The feature is covered by fake ordinary and streamed pgoutput sequences, disk
-spilling, format 1-to-2 upgrade fixtures, and live PostgreSQL prepared-commit
-acceptance. It remains preview until the complete Streams 1.0 format-upgrade and
-72-hour fault-injected endurance gates pass.
+## Relay and stored formats
+
+The [durable relay](durable-relay.md) stores the outcome and global transaction
+ID using envelope format 2. It still reads format 1 envelopes written before
+this feature, as ordinary committed transactions. Unknown future formats stop
+the read with an error. See the
+[format compatibility registry](format-compatibility.md).
+
+## Related pages
+
+- [Concepts](concepts.md)
+- [Configuration: transaction assembly](configuration.md#transaction-assembly-and-spooling)
