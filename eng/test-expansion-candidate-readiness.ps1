@@ -142,7 +142,9 @@ foreach ($case in $mutations.GetEnumerator())
 
 # Verifier mapping: implemented roles resolve to existing scripts; every other role fails closed.
 foreach ($pair in @('Jobs/capacity', 'Jobs/failover', 'Jobs/upgrade', 'Search/capacity', 'Edge/capacity',
-    'Documents/capacity', 'Projections/capacity', 'Workflows/capacity'))
+    'Documents/capacity', 'Projections/capacity', 'Workflows/capacity',
+    'Events/upgrade', 'Documents/upgrade', 'Schema/upgrade', 'Projections/upgrade', 'Search/upgrade',
+    'Sql/upgrade', 'Studio/upgrade', 'Edge/upgrade', 'Workflows/upgrade'))
 {
     $family, $role = $pair.Split('/')
     $verifier = Get-ExpansionRoleVerifier -Family $family -Role $role

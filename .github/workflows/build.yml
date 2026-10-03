@@ -182,6 +182,7 @@ jobs:
           ./eng/test-jobs-release-capacity-contract.ps1
           ./eng/test-jobs-release-failover-policy.ps1
           ./eng/test-jobs-release-upgrade-policy.ps1
+          ./eng/test-expansion-release-upgrade-policy.ps1
           ./eng/test-core-approval-evidence.ps1
           ./eng/test-core-endurance-evidence.ps1
           ./eng/test-core-workflow-evidence.ps1
