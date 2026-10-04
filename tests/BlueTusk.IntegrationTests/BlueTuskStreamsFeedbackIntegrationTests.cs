@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Threading.Channels;
 using BlueTusk.Client;
 using BlueTusk.Data;
@@ -44,9 +45,28 @@ public sealed class BlueTuskStreamsFeedbackIntegrationTests(LogicalSlotDatabaseF
                 stop.Token);
             Assert.True(confirmedFirst.ConfirmedFlush > initial.ConfirmedFlush);
 
-            // A checkpoint logs a running-transactions record. Once a later commit is confirmed,
-            // PostgreSQL moves restart_lsn past it and stops retaining the earlier WAL.
-            await fixture.ExecuteAsync("CHECKPOINT");
+            // PostgreSQL only moves restart_lsn when the WAL sender decodes a running-transactions
+            // record (SnapBuildProcessRunningXacts). It serializes a snapshot there and proposes
+            // the restart_decoding_lsn of the oldest transaction in the reorder buffer, or that
+            // record's own snapshot when no transaction is open. ReorderBufferTXNByXid copies a
+            // transaction's restart_decoding_lsn from the last serialized snapshot when the
+            // transaction is first decoded, and the reorder buffer tracks every xid in the WAL, in
+            // all databases. LogicalIncreaseRestartDecodingForSlot ignores a proposal that is not
+            // newer than restart_lsn, and LogicalConfirmReceivedLocation applies a stored proposal
+            // once confirmed_flush_lsn passes the record. A bare CHECKPOINT therefore leaves
+            // restart_lsn where it is while any transaction in the cluster that first wrote WAL
+            // before the slot's latest serialized snapshot is still open.
+            //
+            // Remove that dependency. The first record is a serialization point after
+            // initial.Restart. Then wait until every transaction that could have written WAL
+            // before it has ended, and log a second record. Any transaction still open at the
+            // second record started after the first one, so the second record proposes at least
+            // the first record. A proposal stored earlier is already newer than restart_lsn.
+            // Confirming a commit after the second record applies one of them, so restart_lsn
+            // must move past initial.Restart.
+            await fixture.LogRunningTransactionsAsync();
+            await fixture.WaitForEarlierTransactionsAsync(stop.Token);
+            await fixture.LogRunningTransactionsAsync();
             var second = await fixture.InsertAndAwaitAsync(consumer, 2, stop.Token);
             var released = await fixture.WaitForSlotAsync(
                 slot => slot.ConfirmedFlush >= second && slot.Restart > initial.Restart,
@@ -184,6 +204,10 @@ public sealed class BlueTuskStreamsFeedbackIntegrationTests(LogicalSlotDatabaseF
 
     private sealed class FeedbackFixture : IAsyncDisposable
     {
+        // Other sessions' transactions are short; one held open for the whole test would also
+        // legitimately keep PostgreSQL from releasing the WAL it needs to decode it.
+        private static readonly TimeSpan TransactionDrainTimeout = TimeSpan.FromSeconds(60);
+
         private readonly BlueTuskConnection _administration;
         private readonly string _connectionString;
 
@@ -341,6 +365,54 @@ public sealed class BlueTuskStreamsFeedbackIntegrationTests(LogicalSlotDatabaseF
                     $"confirmed_flush_lsn {slot.ConfirmedFlush} confirmed unfinished work at {position}.");
                 await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
             }
+        }
+
+        // Writes an xl_running_xacts WAL record. A checkpoint also writes one, but
+        // pg_log_standby_snapshot (PostgreSQL 16 and later) does so without flushing buffers.
+        public async Task LogRunningTransactionsAsync()
+        {
+            var version = await ScalarAsync("SELECT pg_catalog.current_setting('server_version_num')");
+            await ExecuteAsync(
+                int.Parse(version, CultureInfo.InvariantCulture) >= 160000
+                    ? "SELECT pg_catalog.pg_log_standby_snapshot()"
+                    : "CHECKPOINT");
+        }
+
+        // Waits until every transaction that was assigned an xid before this call has ended.
+        // pg_current_snapshot's xmax is latestCompletedXid + 1, which can be below an xid that is
+        // still running, so the marker is a freshly assigned xid instead.
+        public async Task WaitForEarlierTransactionsAsync(CancellationToken cancellationToken)
+        {
+            var marker = BlueTuskSql.QuoteLiteral(
+                await ScalarAsync("SELECT pg_catalog.pg_current_xact_id()::text"));
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TransactionDrainTimeout);
+            while (await ScalarAsync(
+                       "SELECT (pg_catalog.pg_snapshot_xmin(pg_catalog.pg_current_snapshot()) > " +
+                       $"{marker}::xid8)::text") != "true")
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(100), timeout.Token);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    var holders = await ScalarAsync(
+                        "SELECT coalesce(string_agg(pid::text || ' xid ' || backend_xid::text, ', '), 'none') " +
+                        "FROM pg_catalog.pg_stat_activity WHERE backend_xid IS NOT NULL");
+                    throw new XunitException(
+                        $"Timed out waiting for transactions assigned before xid {marker} to end. " +
+                        $"Backends with an xid: {holders}. Prepared transactions also count.");
+                }
+            }
+        }
+
+        private async Task<string> ScalarAsync(string sql)
+        {
+            await using var command = new BlueTuskCommand(sql, _administration);
+            var value = await command.ExecuteScalarAsync(CancellationToken.None);
+            return Convert.ToString(value, CultureInfo.InvariantCulture) ??
+                throw new XunitException($"'{sql}' returned no value.");
         }
 
         public async Task ExecuteAsync(string sql)
