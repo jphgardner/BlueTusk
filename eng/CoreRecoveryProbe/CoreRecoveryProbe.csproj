@@ -15,10 +15,13 @@
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
-  <Target Name="RequireBlueTuskPackageVersion" BeforeTargets="CollectPackageReferences;PrepareForBuild">
-    <Error Condition="'$(BlueTuskPackageVersion)' == ''"
-           Text="Set BlueTuskPackageVersion to the exact BlueTusk Core package version under rehearsal." />
-  </Target>
+  <PropertyGroup>
+    <!--
+      The rehearsal always passes the version explicitly. The default (the published 1.0.0 release)
+      only lets repository-wide restores, such as GitHub dependency submission, evaluate the project.
+    -->
+    <BlueTuskPackageVersion Condition="'$(BlueTuskPackageVersion)' == ''">1.0.0</BlueTuskPackageVersion>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
     <PackageReference Include="BlueTusk.Data" Version="[$(BlueTuskPackageVersion)]" />
