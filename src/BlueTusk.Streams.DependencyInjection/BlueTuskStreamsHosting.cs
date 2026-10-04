@@ -112,19 +112,51 @@ public sealed class BlueTuskStreamsBuilder
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentNullException.ThrowIfNull(sourceFactory);
+        EnsureUniqueWorker(name);
+        Services.AddSingleton(new HostedConsumerRegistration(
+            name,
+            typeof(TConsumer),
+            sourceFactory,
+            options ?? new SnapshotThenStreamOptions(),
+            StreamFactory: null));
+        return this;
+    }
+
+    /// <summary>
+    /// Registers one hosted worker that consumes transactions from a change stream the application
+    /// opens, typically one that resumes from a durable checkpoint, without a snapshot.
+    /// </summary>
+    /// <remarks>
+    /// The host calls <paramref name="streamFactory"/> once when the worker starts and passes each
+    /// delivery to <typeparamref name="TConsumer"/>. When the worker stops or faults, the host disposes
+    /// the enumerator, so write the factory as an async iterator and open the replication connection
+    /// and delivery observer with <c>await using</c> inside it: they are released when the worker ends.
+    /// </remarks>
+    public BlueTuskStreamsBuilder AddHostedConsumer<TConsumer>(
+        string name,
+        Func<IServiceProvider, CancellationToken, IAsyncEnumerable<ChangeTransactionDelivery>> streamFactory)
+        where TConsumer : class, IChangeStreamConsumer
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(streamFactory);
+        EnsureUniqueWorker(name);
+        Services.AddSingleton(new HostedConsumerRegistration(
+            name,
+            typeof(TConsumer),
+            SourceFactory: null,
+            Options: null,
+            streamFactory));
+        return this;
+    }
+
+    private void EnsureUniqueWorker(string name)
+    {
         if (Services.Any(descriptor =>
                 descriptor.ImplementationInstance is HostedConsumerRegistration registration &&
                 string.Equals(registration.Name, name, StringComparison.Ordinal)))
         {
             throw new InvalidOperationException($"A BlueTusk Streams worker named {name} is already registered.");
         }
-
-        Services.AddSingleton(new HostedConsumerRegistration(
-            name,
-            typeof(TConsumer),
-            sourceFactory,
-            options ?? new SnapshotThenStreamOptions()));
-        return this;
     }
 }
 
@@ -148,8 +180,9 @@ public static class BlueTuskStreamsServiceCollectionExtensions
 internal sealed record HostedConsumerRegistration(
     string Name,
     Type ConsumerType,
-    Func<IServiceProvider, IConsistentSnapshotSource> SourceFactory,
-    SnapshotThenStreamOptions Options);
+    Func<IServiceProvider, IConsistentSnapshotSource>? SourceFactory,
+    SnapshotThenStreamOptions? Options,
+    Func<IServiceProvider, CancellationToken, IAsyncEnumerable<ChangeTransactionDelivery>>? StreamFactory);
 
 internal sealed class BlueTuskStreamsHostedService : BackgroundService
 {
@@ -179,12 +212,21 @@ internal sealed class BlueTuskStreamsHostedService : BackgroundService
         {
             var consumer = (IChangeStreamConsumer)_services.GetRequiredService(registration.ConsumerType);
             var observed = new HealthTrackingConsumer(registration.Name, consumer, _health);
-            var source = registration.SourceFactory(_services) ??
-                throw new InvalidOperationException(
-                    $"Source factory for BlueTusk Streams worker {registration.Name} returned null.");
-            await new SnapshotThenStreamCoordinator(source, registration.Options)
-                .RunAsync(observed, cancellationToken)
-                .ConfigureAwait(false);
+            if (registration.StreamFactory is { } streamFactory)
+            {
+                await ConsumeStreamAsync(registration.Name, streamFactory, observed, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                var source = registration.SourceFactory!(_services) ??
+                    throw new InvalidOperationException(
+                        $"Source factory for BlueTusk Streams worker {registration.Name} returned null.");
+                await new SnapshotThenStreamCoordinator(source, registration.Options)
+                    .RunAsync(observed, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             _health.Update(
                 registration.Name,
                 BlueTuskStreamWorkerState.Stopped,
@@ -200,6 +242,26 @@ internal sealed class BlueTuskStreamsHostedService : BackgroundService
         {
             _health.Update(registration.Name, BlueTuskStreamWorkerState.Faulted, error: exception);
             throw;
+        }
+    }
+
+    // A resuming worker has no snapshot: it is catching up from its checkpoint until it delivers
+    // a transaction. Disposing the enumerator releases what the factory opened.
+    private async Task ConsumeStreamAsync(
+        string name,
+        Func<IServiceProvider, CancellationToken, IAsyncEnumerable<ChangeTransactionDelivery>> streamFactory,
+        HealthTrackingConsumer observed,
+        CancellationToken cancellationToken)
+    {
+        var transactions = streamFactory(_services, cancellationToken) ??
+            throw new InvalidOperationException(
+                $"Stream factory for BlueTusk Streams worker {name} returned null.");
+        _health.Update(name, BlueTuskStreamWorkerState.CatchingUp);
+        await foreach (var delivery in transactions
+            .WithCancellation(cancellationToken)
+            .ConfigureAwait(false))
+        {
+            await observed.ConsumeTransactionAsync(delivery, cancellationToken).ConfigureAwait(false);
         }
     }
 

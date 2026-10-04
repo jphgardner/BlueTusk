@@ -4,6 +4,7 @@ BlueTusk.Streams.DependencyInjection.BlueTuskStreamHealthRegistry.BlueTuskStream
 BlueTusk.Streams.DependencyInjection.BlueTuskStreamHealthRegistry.GetStatuses() -> System.Collections.Generic.IReadOnlyList<BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus!>!
 BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder
 BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder.AddHostedConsumer<TConsumer>(string! name, System.Func<System.IServiceProvider!, BlueTusk.Streams.IConsistentSnapshotSource!>! sourceFactory, BlueTusk.Streams.SnapshotThenStreamOptions? options = null) -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder!
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder.AddHostedConsumer<TConsumer>(string! name, System.Func<System.IServiceProvider!, System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<BlueTusk.Streams.ChangeTransactionDelivery!>!>! streamFactory) -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder!
 BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 BlueTusk.Streams.DependencyInjection.BlueTuskStreamsHealthCheck
 BlueTusk.Streams.DependencyInjection.BlueTuskStreamsHealthCheck.BlueTuskStreamsHealthCheck(BlueTusk.Streams.DependencyInjection.BlueTuskStreamHealthRegistry! registry) -> void
