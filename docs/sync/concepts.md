@@ -134,7 +134,7 @@ on its own. You choose how to rebuild:
 | Destination | How to rebuild |
 | --- | --- |
 | OpenSearch | Zero-downtime: `SyncRebuildCoordinator` builds a new index generation, verifies it and swaps aliases atomically. Register the cutover with `AddRebuildCutover` or `AddPostgreSqlRelayRebuildCutover`. |
-| PostgreSQL | Use a new `PipelineId`, or delete the pipeline's row from `<ControlSchema>.pipelines` (its documents go with it) and restart. The pipeline is provisioned again and re-copies the source. |
+| PostgreSQL | Use a new `PipelineId`, or delete the pipeline's row from `<ControlSchema>.pipelines` (its documents go with it) and restart. A direct-slot pipeline is provisioned again and re-copies the source. A relay pipeline also needs a new relay consumer group, because the group's snapshot belongs to the old transform version. |
 | Redis, NATS, Kafka, S3 | Write the new version to a new `KeyPrefix`, stream, `TopicPrefix` or `Prefix`, then move readers. |
 | Webhooks | Your receiver decides; it returns its stored fingerprint in `BlueTusk-Transform-Fingerprint`. |
 

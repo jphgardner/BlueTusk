@@ -115,7 +115,7 @@ FROM pg_replication_slots;
 | --- | --- |
 | A consumer is stopped or slow. | Restart it or speed it up. With many consumers, use the [relay](durable-relay.md). |
 | A slot is no longer used. | Drop it: `SELECT pg_drop_replication_slot('<name>');` The slot must be inactive. Its consumer group must then start again from a snapshot. |
-| The consumer acknowledges, but `confirmed_flush_lsn` never moves. | A custom observer that never sends feedback replaces the stream's own confirmation. (On 1.0.0 and 1.1.0-rc.1, a stream without an observer never confirmed either.) | Send the position from your observer, or use a built-in one or none. See [how the slot releases WAL](concepts.md#how-the-slot-releases-wal). |
+| The consumer acknowledges, but `confirmed_flush_lsn` never moves: a custom observer that never sends feedback replaces the stream's own confirmation. (On 1.0.0 and 1.1.0-rc.1, a stream without an observer never confirmed either.) | Send the position from your observer, or use a built-in one or none. See [how the slot releases WAL](concepts.md#how-the-slot-releases-wal). |
 | A relay group is stopped. | The relay frees WAL anyway; check relay storage with `GetHealthAsync` instead. |
 
 As a safety net, set PostgreSQL's `max_slot_wal_keep_size` so a forgotten slot

@@ -62,7 +62,8 @@ All real-time products share one delivery model:
   publication). BlueTusk refuses to resume from a checkpoint that belongs to a
   different source, for example after a restore into a new cluster.
 - Every queue, buffer and spool has a configured limit. When a limit is
-  reached, BlueTusk pauses instead of dropping changes.
+  reached, BlueTusk stops with an error instead of dropping changes; Live
+  disconnects a client that cannot keep up.
 - **Live** uses a change only as a signal. It re-runs the registered query
   with the subscriber's permissions before it sends anything to a client.
 - **Sync** moves its checkpoint only after the destination confirms it has
