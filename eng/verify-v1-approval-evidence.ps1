@@ -180,6 +180,15 @@ if ($ReleaseTrack -eq 'Core')
     }
 }
 
+Import-Module (Join-Path $PSScriptRoot 'approval-release-tracks.psm1') -Force
+$trackGateIds = @(Get-ApprovalTrackGateIds -ReleaseTrack $ReleaseTrack)
+if ($ExpectedGateId -cnotin $trackGateIds)
+{
+    throw (
+        "Approval gate '$ExpectedGateId' is not required by the $ReleaseTrack release track " +
+        '(1.1.0 Core waives the independent pilots; see eng/v1.1-release-contract.json waivedReleaseGates).')
+}
+
 $gateMatches = @($contract.gates | Where-Object {
     [string]$_.id -eq $ExpectedGateId
 })

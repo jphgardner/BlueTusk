@@ -249,10 +249,12 @@ function Get-CoreCandidateBindingReport
         $payloads.performanceManifest.scope -isnot [string] -or $payloads.performanceManifest.scope -cne 'Core' -or
         $payloads.performanceManifest.release -isnot [string] -or $payloads.performanceManifest.release -cne '1.1.0')
     { throw 'Package or performance payload scope/version cannot substitute a preview or older release.' }
-    $approvalContract = Read-CoreEvidenceJson (Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json')
-    $ids = @($approvalContract.gates.id)
-    if ($ids.Count -ne 10 -or $Evidence.approvals.Count -ne 10)
-    { throw 'Core candidate must bind exactly ten canonical approval records.' }
+    # 1.1.0 Core binds the eight approval gates left after the recorded
+    # independent-pilot waiver; both recovery rehearsals remain required.
+    Import-Module (Join-Path $PSScriptRoot 'approval-release-tracks.psm1') -Force
+    $ids = @(Get-ApprovalTrackGateIds -ReleaseTrack Core)
+    if ($ids.Count -ne 8 -or $Evidence.approvals.Count -ne $ids.Count)
+    { throw 'Core candidate must bind exactly the eight canonical Core approval records.' }
     foreach ($id in $ids)
     {
         $matches = @($Evidence.approvals | Where-Object { $_.id -ceq $id })

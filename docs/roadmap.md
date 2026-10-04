@@ -18,8 +18,10 @@ field window, backup/restore and rollback rehearsal, and maintainer sign-off.
 The coordinated `1.1.0-rc.1` package train was published on 2026-08-29 from
 exact commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm
 packages passed registry availability and clean consumer verification. Stable
-`1.1.0` keeps the remaining hardening path above; public RC availability does
-not mark those gates complete.
+`1.1.0` keeps the remaining hardening path above, except the two independent
+pilots: on 2026-10-04 the repository owner delegated dropping them as a 1.1.0
+gate. Backup/restore and rollback rehearsals stay required. Public RC
+availability does not mark those gates complete.
 
 The three-application V1 RC suite, exact prerelease manifest and pack
 verification, GHCR image-evidence workflow, Kubernetes/Helm platform, fluent

@@ -77,10 +77,14 @@ candidate's package-consumer or remote evidence gates.
 
 Core packaging and approval readers accept an explicit `-ReleaseTrack Core`.
 The core package manifest contains exactly five families, all five npm clients,
-both SBOM formats and exact-commit provenance. Pilot approvals must collectively
-cover those five families, with exactly five 1.2 versions in maintainer signoff.
-All ten approval records, distinct pilot operators and independent review stay
-required. The owner cannot substitute self-approval for independent review.
+both SBOM formats and exact-commit provenance. Maintainer signoff must list
+exactly the five core versions. The Core track binds eight approval records:
+independent pilots are not a 1.1.0 gate (owner delegation of 2026-10-04,
+recorded in `eng/v1.1-release-contract.json` `waivedReleaseGates`), and the
+readers reject pilot files. Backup/restore and rollback rehearsals stay
+required and are run with `eng/run-core-recovery-rehearsal.ps1`. Independent
+review also stays required. The owner cannot substitute self-approval for
+independent review.
 
 Streams and Sync release endurance now use the same digest-pinned PostgreSQL
 18 image. Kubernetes uses a new `postgresql-core` StatefulSet and PVC; it does

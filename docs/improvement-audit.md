@@ -35,7 +35,7 @@ Update current support claims without rewriting historical measurements.
 | Dashboard scale and maintainability | Pending | Direct detail access, bounded server-side inventory queries, mobile/keyboard/large-inventory browser evidence, separated presentation assets |
 | Website availability | External blocker identified | DigitalOcean account unlocked; existing workers Ready; Traefik/site healthy; external HTTPS, CSS and documentation routes verified |
 | One current documentation truth | Pending | Stable/preview/candidate distinctions, generated support/version information, runnable package examples and guide journeys |
-| Final release evidence | Pending | One immutable candidate, required CI, consumers, supply chain, endurance, rehearsals, pilots and independent approval |
+| Final release evidence | Pending | One immutable candidate, required CI, consumers, supply chain, endurance, backup/restore and rollback rehearsals and independent approval; independent pilots are not a 1.1.0 gate (owner delegation, 2026-10-04) |
 
 ## First implementation evidence
 
@@ -61,7 +61,8 @@ that remaining publication gate.
 
 The evidence-producer slice separates actual producers and readers. Core packaging
 and approval verification no longer require Graph packages or Graph pilot
-coverage. Core endurance uses digest-pinned PostgreSQL 18, retaining the exact
+coverage. Since the 2026-10-04 owner delegation, 1.1.0 Core approval
+verification requires no pilot records at all. Core endurance uses digest-pinned PostgreSQL 18, retaining the exact
 72/24/24-hour sequence. The core Kubernetes database has separate storage and
 Graph preview has a separate candidate ConfigMap: no historical database volume
 is downgraded. Sync validation rejects duplicated or substituted projects even

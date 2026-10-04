@@ -1,15 +1,34 @@
 # V1 operational approval evidence
 
 BlueTusk treats operational acceptance as measured release evidence, not a
-collection of unchecked signatures. The protected candidate workflow requires
-ten JSON records for one immutable commit. Every record is SHA-256-bound by the
+collection of unchecked signatures. Every record is SHA-256-bound by the
 candidate manifest and validated against a gate-specific schema before stable
 publication can be authorised.
+
+The contract defines ten gate schemas. How many a release must bind depends on
+its track, declared in the contract's `releaseTracks` lists:
+
+| Track | Required approval records | Waived |
+| --- | --- | --- |
+| Legacy (historical 1.0.0 V1) | All ten | None |
+| Core (1.1.0) | Eight: independent review, security review, website acceptance, backup/restore rehearsal, rollback rehearsal, incident game day, SLO owner approval and maintainer sign-off | `application-pilot-a`, `application-pilot-b` |
+
+Independent pilots are not a 1.1.0 gate. The repository owner delegated
+release decision 3 to option (b) on 2026-10-04T00:43:03+01:00 ("do what needs
+to be done"): engineering cannot produce independent pilots and no pilot
+approval may be fabricated. The waiver is recorded once, in
+`eng/v1.1-release-contract.json` `waivedReleaseGates`. The backup/restore and
+rollback rehearsals stay required and must be run for real. The Core verifiers
+reject pilot files, and they fail if the approval-track lists and the recorded
+waiver disagree.
 
 The authoritative assets are:
 
 - `eng/v1-approval-evidence-contract.json`, which declares the exact fields,
-  types, minimums and pass values for all ten gates;
+  types, minimums and pass values for all ten gates, and the gates each
+  release track requires;
+- `eng/approval-release-tracks.psm1`, which resolves a track's required gates
+  and checks them against the waiver in `eng/v1.1-release-contract.json`;
 - `eng/v1-approval-evidence.examples.json`, which contains one complete
   structural example per gate;
 - `eng/verify-v1-workflow-evidence.ps1`, which validates the seven unique GitHub
@@ -17,7 +36,11 @@ The authoritative assets are:
   cutoff;
 - `eng/verify-v1-approval-evidence.ps1`, which validates one record; and
 - `eng/verify-v1-approval-evidence-set.ps1`, which validates the canonical
-  ten-file set, pilot independence and website hash binding; and
+  set for the selected `-ReleaseTrack` (ten Legacy files, or eight Core files),
+  pilot independence where pilots are required, and website hash binding;
+- `eng/test-core-approval-evidence.ps1`, which proves that Core sets without
+  pilots pass and that reintroduced pilot files, missing or failed rehearsals
+  and inconsistent waivers fail; and
 - `eng/test-v1-approval-evidence-verifier.ps1`, which proves that the examples
   pass and representative weak or inconsistent records fail.
 
@@ -99,7 +122,11 @@ must still be independently resolved or accepted and referenced here.
 
 ## Application pilots
 
-`application-pilot-a.json` and `application-pilot-b.json` each require:
+Pilot records apply to the historical Legacy (1.0.0) track only. The 1.1.0
+Core track waives them, as described above; do not create pilot files for a
+1.1.0 Core candidate.
+
+On the Legacy track, `application-pilot-a.json` and `application-pilot-b.json` each require:
 
 - a named application, operator organisation and acceptance owner;
 - an independent-operator attestation;
@@ -162,6 +189,10 @@ Retain the backup inventory, encryption/control record, timed operator log,
 source and restored hashes, checkpoint output and reconciliation report. Never
 restore over the source environment to manufacture this evidence.
 
+For the 1.1.0 Core candidate, run the rehearsal with
+`eng/run-core-recovery-rehearsal.ps1 -Rehearsal BackupRestore`; see
+[Core recovery rehearsals](core-recovery-rehearsals.md).
+
 ## Rollback rehearsal
 
 `rollback-rehearsal.json` names the candidate version, rollback version,
@@ -173,6 +204,10 @@ fencing and final reconciliation, with zero data-loss events.
 Rollback evidence must use packages reconstructed from the immutable candidate
 and the declared previous release. Replacing an archive in place or manually
 advancing a checkpoint is not a rollback.
+
+For the 1.1.0 Core candidate, run the rehearsal with
+`eng/run-core-recovery-rehearsal.ps1 -Rehearsal Rollback`; see
+[Core recovery rehearsals](core-recovery-rehearsals.md).
 
 ## Incident-response game day
 
@@ -218,14 +253,16 @@ requires:
 - a named rollback authority; and
 - a UTC release window.
 
-The sign-off is valid only after PostgreSQL 19 GA, every protected workflow,
-endurance and disturbance evidence, both pilots, all rehearsals, independent
-release review and every other approval pass for the same commit. Its
+The sign-off is valid only after every protected workflow, endurance and
+disturbance evidence, all rehearsals, independent release review and every
+other approval the track requires pass for the same commit. The Legacy track
+also requires PostgreSQL 19 GA and both pilots; the 1.1.0 Core track does not. Its
 `approvedUtc` must be at or after every other approval timestamp.
 
 ## Protected archive
 
-Place the ten files directly in an `approvals/` directory. Place the reviewed
+Place the track's files (ten Legacy, eight Core) directly in an `approvals/`
+directory. Place the reviewed
 operational-disturbance report and its 28 injection/recovery records in the
 sibling `disturbances/` directory. Create a ZIP containing those two top-level
 directories, base64-encode it outside CI logs, and store the result as the

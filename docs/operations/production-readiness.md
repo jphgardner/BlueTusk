@@ -373,7 +373,13 @@ in [application platform health and rollout acceptance](application-platform-hea
 
 ### Application pilots
 
-Run at least two independently operated, representative applications. Each
+This gate belongs to the historical 1.0.0 V1 (Legacy) track. It is not a
+1.1.0 gate: on 2026-10-04 the repository owner delegated dropping it for the
+1.1.0 Core candidate, because engineering cannot produce independent pilots
+and no pilot approval may be fabricated. The waiver is recorded in
+`eng/v1.1-release-contract.json`; the rehearsals below stay required.
+
+On the Legacy track, run at least two independently operated, representative applications. Each
 pilot record must define traffic and data shape, PostgreSQL topology, enabled
 families, duration, expected SLOs, upgrade/rollback path, observed resource
 limits, defects and acceptance owner. A demo or maintainer-only sample is not
@@ -398,14 +404,19 @@ LCP at most 2,500 ms, INP at most 200 ms and CLS at most 0.1.
 Restore into an empty isolated environment, not over the source. Record backup
 identifier and encryption, object/row counts, checkpoint positions, start/end
 times, RPO/RTO, reconciliation result, integrity hashes and operator. A backup
-that has not been restored is not evidence.
+that has not been restored is not evidence. For the 1.1.0 Core candidate,
+`eng/run-core-recovery-rehearsal.ps1 -Rehearsal BackupRestore` performs and
+records this rehearsal; see [Core recovery rehearsals](core-recovery-rehearsals.md).
 
 ### Rollback
 
 Exercise application/package rollback without mutating durable protocol
 formats. Confirm version compatibility, connection drain, relay/checkpoint
 ownership, Live client reset behavior, Control Plane fencing and post-rollback
-reconciliation. Record the trigger and decision authority.
+reconciliation. Record the trigger and decision authority. For the 1.1.0 Core
+candidate, `eng/run-core-recovery-rehearsal.ps1 -Rehearsal Rollback` rolls the
+candidate packages back to the published 1.0.0 packages against the same
+database and records the result.
 
 ### Incident game day
 

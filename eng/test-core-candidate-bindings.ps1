@@ -117,13 +117,14 @@ try
     $examples = (Read-CoreEvidenceJson (Join-Path $PSScriptRoot 'v1-approval-evidence.examples.json')).examples
     $metricsPath = Join-Path $baseRoot $contract.artifactBindings.websiteMetrics.path
     $metricsHash = (Get-FileHash -LiteralPath $metricsPath -Algorithm SHA256).Hash.ToLowerInvariant()
-    foreach ($record in $examples)
+    # 1.1.0 Core waives the independent pilots (owner delegation 2026-10-04);
+    # the eight remaining approvals, including both rehearsals, are bound.
+    $pilotExample = @($examples | Where-Object gateId -ceq 'application-pilot-a')[0]
+    foreach ($record in @($examples | Where-Object { $_.gateId -cnotlike 'application-pilot-*' }))
     {
         $record.approvedUtc = '2026-01-01T00:00:10Z'
         if ($record.gateId -eq 'independent-release-review') { $record.approvedUtc = '2026-01-01T00:00:15Z' }
         if ($record.gateId -eq 'maintainer-signoff') { $record.approvedUtc = '2026-01-01T00:00:20Z' }
-        if ($record.gateId -like 'application-pilot-*')
-        { $record.details.enabledProductFamilies = @($record.details.enabledProductFamilies | Where-Object { $_ -ne 'ContinuousGraph' }) }
         if ($record.gateId -eq 'independent-release-review') { $record.details.packageFamiliesReviewed = 5 }
         if ($record.gateId -eq 'website-deployment-acceptance') { $record.details.productionMetricsSha256 = $metricsHash }
         if ($record.gateId -eq 'maintainer-signoff')
@@ -136,7 +137,7 @@ try
     }
     $positive = & $builder -EvidenceRoot $baseRoot -ExpectedCommit $commit -CandidateCommitUtc $commitUtc
     if ($positive.Stage -cne 'CoreEvidenceBindings' -or $positive.WorkflowCount -ne 7 -or
-        $positive.ArtifactCount -ne 14 -or $positive.ApprovalCount -ne 10 -or
+        $positive.ArtifactCount -ne 14 -or $positive.ApprovalCount -ne 8 -or
         $positive.ApprovalPayloadsValidated -ne $true -or $positive.AllPayloadsValidated -ne $false -or
         $positive.RemoteIdentityValidated -ne $false -or $positive.ReleaseApproved -ne $false)
     { throw 'Binding-only report weakened coverage or claimed release qualification.' }
@@ -204,13 +205,19 @@ try
         @{ Name = 'boolean-performance-scope'; Error = 'scope/version'; Change = {param($e,$r) Edit-Payload $e $r performanceManifest {param($p) $p.scope = $true}} },
         @{ Name = 'old-performance-version'; Error = 'scope/version'; Change = {param($e,$r) Edit-Payload $e $r performanceManifest {param($p) $p.release = '1.0.0'}} },
         @{ Name = 'legacy-package-track'; Error = 'scope/version'; Change = {param($e,$r) Edit-Payload $e $r packageManifest {param($p) $p.releaseTrack = 'Legacy'}} },
-        @{ Name = 'missing-approval'; Error = 'ten canonical'; Change = {param($e,$r) $e.approvals = @($e.approvals | Select-Object -First 9)} },
-        @{ Name = 'duplicate-approval'; Error = 'exactly once'; Change = {param($e,$r) $e.approvals[9].id = $e.approvals[0].id} },
+        @{ Name = 'missing-approval'; Error = 'eight canonical'; Change = {param($e,$r) $e.approvals = @($e.approvals | Select-Object -First 7)} },
+        @{ Name = 'missing-rollback-rehearsal'; Error = 'eight canonical'; Change = {param($e,$r) $e.approvals = @($e.approvals | Where-Object id -cne 'rollback-rehearsal')} },
+        @{ Name = 'duplicate-approval'; Error = 'exactly once'; Change = {param($e,$r) $e.approvals[7].id = $e.approvals[0].id} },
         @{ Name = 'wrong-approval-hash'; Error = 'file hash'; Change = {param($e,$r) $e.approvals[0].sha256 = ('f' * 64)} },
         @{ Name = 'non-independent-review'; Error = 'reviewerIndependent'; Change = {param($e,$r) Edit-Approval $e $r independent-release-review {param($p) $p.details.reviewerIndependent = $false}} },
         @{ Name = 'wrong-website-approval'; Error = 'production-metrics'; Change = {param($e,$r) Edit-Approval $e $r website-deployment-acceptance {param($p) $p.details.productionMetricsSha256 = ('f' * 64)}} },
         @{ Name = 'stale-release-review'; Error = 'before|predate'; Change = {param($e,$r) Edit-Approval $e $r independent-release-review {param($p) $p.approvedUtc = '2026-01-01T00:00:00Z'}} },
-        @{ Name = 'extra-approval-file'; Error = 'exactly the ten'; Change = {param($e,$r) Write-FixtureJson (Join-Path $r 'approvals/unbound.json') @{fixture='synthetic'}} }
+        @{ Name = 'extra-approval-file'; Error = 'exactly the 8 canonical Core'; Change = {param($e,$r) Write-FixtureJson (Join-Path $r 'approvals/unbound.json') @{fixture='synthetic'}} },
+        @{ Name = 'waived-pilot-reintroduced'; Error = 'eight canonical'; Change = {param($e,$r)
+            Write-FixtureJson (Join-Path $r 'approvals/application-pilot-a.json') $pilotExample
+            $e.approvals += [pscustomobject]@{ id = 'application-pilot-a'; path = 'approvals/application-pilot-a.json'; sha256 = ('0' * 64); bytes = 0 }
+            Refresh-Binding $e.approvals[-1] $r } },
+        @{ Name = 'waived-pilot-file'; Error = 'exactly the 8 canonical Core'; Change = {param($e,$r) Write-FixtureJson (Join-Path $r 'approvals/application-pilot-a.json') $pilotExample} }
     )
     foreach ($case in $cases) { Reject-Fixture $case.Name $case.Change $case.Error }
 
@@ -358,7 +365,7 @@ try
         $rejected++
     }
     finally { Remove-Item -LiteralPath $rawLink -Force }
-    Write-Output "Core candidate binding self-test passed: synthetic remote and hybrid 7-producer/14-artifact/10-approval joins and $rejected rejected mutations. No payload qualification, execution authenticity, workflow execution or publication is certified."
+    Write-Output "Core candidate binding self-test passed: synthetic remote and hybrid 7-producer/14-artifact/8-approval joins (independent pilots waived for 1.1.0) and $rejected rejected mutations. No payload qualification, execution authenticity, workflow execution or publication is certified."
 }
 finally
 {
