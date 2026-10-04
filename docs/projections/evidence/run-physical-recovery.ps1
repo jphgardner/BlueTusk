@@ -1,4 +1,7 @@
-param([int]$PrimaryPort = 55618, [int]$StandbyPort = 55619, [string]$OutputDirectory)
+# Ports default to 0: Docker then assigns free loopback ports and the script reads them back.
+# Fixed defaults (formerly 55618/55619) sat inside the Linux ephemeral range, so an unrelated
+# outbound connection on a CI runner could hold one and fail the run.
+param([int]$PrimaryPort = 0, [int]$StandbyPort = 0, [string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $fixture = 'projection-recovery-' + [guid]::NewGuid().ToString('N').Substring(0, 16)
 $primary = "$fixture-primary"
@@ -24,6 +27,16 @@ function InvokeFixtureDocker([string[]]$Arguments) {
 function Query([string]$Container, [string]$Sql) {
     return InvokeFixtureDocker -Arguments @('exec', $Container, 'psql', '-U', 'postgres', '-d', 'postgres', '-At', '-v', 'ON_ERROR_STOP=1', '-c', $Sql)
 }
+function PortMapping([int]$Port) {
+    if ($Port -gt 0) { return "127.0.0.1:${Port}:5432" }
+    return '127.0.0.1::5432'
+}
+function PublishedPort([string]$Container) {
+    $mapping = @(InvokeFixtureDocker -Arguments @('port', $Container, '5432/tcp')) |
+        ForEach-Object { [string]$_ } | Where-Object { $_ -match '^127\.0\.0\.1:(\d+)$' } | Select-Object -First 1
+    if ($mapping -notmatch '^127\.0\.0\.1:(\d+)$') { throw "Owned container $Container has no loopback port mapping." }
+    return [int]$Matches[1]
+}
 function RemoveOwned([string]$Kind, [string]$Name) {
     $labels = & $dockerCommand $Kind inspect $Name --format '{{json .Labels}}' 2>$null
     if ($Kind -eq 'container') { $labels = & $dockerCommand inspect $Name --format '{{json .Config.Labels}}' 2>$null }
@@ -37,7 +50,7 @@ function RemoveOwned([string]$Kind, [string]$Name) {
 }
 try {
     New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
-    foreach ($port in @($PrimaryPort, $StandbyPort)) {
+    foreach ($port in @($PrimaryPort, $StandbyPort | Where-Object { $_ -gt 0 })) {
         $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $port)
         try { $listener.Start() } catch { throw "Fixture port $port is already in use." } finally { $listener.Stop() }
     }
@@ -46,7 +59,7 @@ try {
         InvokeFixtureDocker -Arguments @('volume', 'create', '--label', "bluetusk.owner=$owner", '--label', "bluetusk.fixture=$fixture", $volume) | Out-Null
     }
     InvokeFixtureDocker -Arguments @('run', '-d', '--name', $primary, '--label', "bluetusk.owner=$owner", '--label', "bluetusk.fixture=$fixture",
-        '--network', $network, '-p', "127.0.0.1:${PrimaryPort}:5432", '-v', "${primaryVolume}:/var/lib/postgresql/data",
+        '--network', $network, '-p', (PortMapping $PrimaryPort), '-v', "${primaryVolume}:/var/lib/postgresql/data",
         '-e', 'PGDATA=/var/lib/postgresql/data/pgdata', '-e', 'POSTGRES_PASSWORD=postgres', $image, # ggignore
         'postgres', '-c', 'wal_level=logical', '-c', 'max_wal_senders=12', '-c', 'max_replication_slots=12') | Out-Null
     $ready = $false
@@ -66,7 +79,7 @@ try {
         '--entrypoint', 'sh', $image, '-c',
         "mkdir -p /var/lib/postgresql/data/pgdata && chown postgres:postgres /var/lib/postgresql/data/pgdata && exec gosu postgres pg_basebackup -d 'host=$primary user=postgres application_name=bluetusk_recovery_standby' -D /var/lib/postgresql/data/pgdata -c fast -X stream -R -C -S bluetusk_recovery_physical") | Out-Null
     InvokeFixtureDocker -Arguments @('run', '-d', '--name', $standby, '--label', "bluetusk.owner=$owner", '--label', "bluetusk.fixture=$fixture",
-        '--network', $network, '-p', "127.0.0.1:${StandbyPort}:5432", '-v', "${standbyVolume}:/var/lib/postgresql/data",
+        '--network', $network, '-p', (PortMapping $StandbyPort), '-v', "${standbyVolume}:/var/lib/postgresql/data",
         '-e', 'PGDATA=/var/lib/postgresql/data/pgdata', '-e', 'PGPASSWORD=postgres', $image, # ggignore
         'postgres', '-c', 'wal_level=logical', '-c', 'max_wal_senders=12', '-c', 'max_replication_slots=12') | Out-Null
     $streaming = $false
@@ -84,6 +97,8 @@ try {
         Start-Sleep -Milliseconds 200
     }
     if (-not $synchronous) { throw 'Owned physical standby did not become synchronous.' }
+    $PrimaryPort = PublishedPort $primary
+    $StandbyPort = PublishedPort $standby
     $env:BLUETUSK_RECOVERY_PRIMARY = "Host=127.0.0.1;Port=$PrimaryPort;Username=postgres;Password=postgres;Database=bluetusk_recovery;SSL Mode=Disable;Channel Binding=Disable" # ggignore
     $env:BLUETUSK_RECOVERY_STANDBY = "Host=127.0.0.1;Port=$StandbyPort;Username=postgres;Password=postgres;Database=bluetusk_recovery;SSL Mode=Disable;Channel Binding=Disable" # ggignore
     $env:BLUETUSK_RECOVERY_PRIMARY_CONTAINER = $primary
