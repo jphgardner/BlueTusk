@@ -122,6 +122,32 @@ As a safety net, set PostgreSQL's `max_slot_wal_keep_size` so a forgotten slot
 cannot fill the disk. A slot that passes the limit loses WAL and must be
 recreated, and its consumers re-snapshotted.
 
+## A new slot fails with "could not map filenumber"
+
+A logical slot can be created in a broken state if a table is created or
+altered in the same database while the slot is being created. This is a
+PostgreSQL 15 to 19 limitation, not a BlueTusk defect. It needs three things
+at once: a transaction that changes a table and commits while the slot is
+being created, an older transaction still open elsewhere in the cluster, and a
+later write to that table.
+
+**Symptom:** reading the slot fails with a `BlueTuskServerException` such as
+`could not map filenumber "base/..." to relation OID` (PostgreSQL 15 says
+`filenode`), or `pg_attribute catalog is missing N attribute(s) for relation
+OID ...`. Reconnecting fails the same way, because the server decodes the same
+WAL again.
+
+**Avoid it:** create slots, including temporary ones, when nothing in that
+database is running migrations or creating tables. The risk ends when slot
+creation returns; later schema changes are decoded normally.
+
+**Recover:** drop the slot and create a new one. The new slot starts at a new
+WAL position, so rebuild derived state with
+[snapshot and catch-up](snapshot-bootstrap.md) instead of resuming from the old
+checkpoint. An upstream fix is under review (pgsql-hackers thread "Historic
+snapshot doesn't track txns committed in BUILDING_SNAPSHOT state", October
+2026).
+
 ## Related pages
 
 - [Configuration](configuration.md)

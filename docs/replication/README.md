@@ -31,7 +31,7 @@ bootstrap process. Give every consumer its own slot; two independent consumers
 must not race over one checkpoint. Do not create a slot while migrations or
 other table creation run in the same database: PostgreSQL can create a slot that
 then fails on every attempt to decode writes to the new tables. See
-[creating a slot while the schema changes](../streams/README.md#creating-a-slot-while-the-schema-changes)
+[creating a slot while the schema changes](../streams/troubleshooting.md#a-new-slot-fails-with-could-not-map-filenumber)
 for the symptoms and the recovery.
 
 ## 2. Open a dedicated session
