@@ -15,113 +15,374 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     ],
     "order": 10,
     "listed": true,
-    "title": "Use BlueTusk with Entity Framework Core",
+    "title": "EF Core provider",
     "sourcePath": "docs/ef-core/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/README.md",
     "headings": [
       {
-        "id": "use-bluetusk-with-entity-framework-core",
-        "text": "Use BlueTusk with Entity Framework Core",
+        "id": "ef-core-provider",
+        "text": "EF Core provider",
         "level": 1
       },
       {
-        "id": "what-you-will-build",
-        "text": "What you will build",
+        "id": "when-to-use-it",
+        "text": "When to use it",
         "level": 2
       },
       {
-        "id": "1-install-the-provider",
-        "text": "1. Install the provider",
+        "id": "what-it-supports",
+        "text": "What it supports",
         "level": 2
       },
       {
-        "id": "2-create-the-model-and-context",
-        "text": "2. Create the model and context",
+        "id": "packages",
+        "text": "Packages",
         "level": 2
       },
       {
-        "id": "3-register-it-once",
-        "text": "3. Register it once",
+        "id": "requirements-and-status",
+        "text": "Requirements and status",
         "level": 2
       },
       {
-        "id": "4-read-and-write-data",
-        "text": "4. Read and write data",
+        "id": "a-taste-of-the-code",
+        "text": "A taste of the code",
         "level": 2
       },
       {
-        "id": "save-several-changes-together",
-        "text": "Save several changes together",
-        "level": 3
-      },
-      {
-        "id": "5-create-and-apply-migrations",
-        "text": "5. Create and apply migrations",
+        "id": "guides",
+        "text": "Guides",
         "level": 2
       },
       {
-        "id": "verify-the-setup",
-        "text": "Verify the setup",
-        "level": 2
-      },
-      {
-        "id": "production-defaults",
-        "text": "Production defaults",
-        "level": 2
-      },
-      {
-        "id": "go-deeper-only-when-needed",
-        "text": "Go deeper only when needed",
+        "id": "next-steps",
+        "text": "Next steps",
         "level": 2
       }
     ],
-    "wordCount": 639,
-    "readMinutes": 3,
-    "searchText": "Use BlueTusk with Entity Framework Core Use this guide when an application already uses EF Core, or when you want LINQ, change tracking, and migrations on top of BlueTusk's PostgreSQL connection pool. If you only need SQL commands, start with the [ADO.NET guide](../ado-net/README.md). What you will build A normal ASP.NET Core application with: one application-owned `BlueTuskDataSource`; one scoped `DbContext` per unit of work; LINQ queries and `SaveChangesAsync`; and migrations run as a controlled deployment step. 1. Install the provider Keep all BlueTusk packages on the same exact version: See [installation](../getting-started/install.md) for stable and preview version selection. 2. Create the model and context 3. Register it once The data source is a singleton because it owns the physical connection pool. The context remains scoped: Do not create a new data source for every request. Doing so creates new pools instead of reusing healthy PostgreSQL sessions. 4. Read and write data Use `AsNoTracking` for read-only results. Keep a context inside one request or unit of work; it is not thread-safe. Save several changes together Add or change the entities first, then call `SaveChangesAsync` once: In the 1.2 candidate, BlueTusk automatically groups writes into bounded batches instead of sending each entity in a separate database round trip. The default is up to 42 modification commands per batch. Generated IDs and computed values still flow back to the correct entities. Normal EF logging, interceptors, optimistic-concurrency checks and transaction handling remain in use. This does not turn a `DbContext` into a parallel writer. Do not run overlapping operations on the same context. For large imports that do not need change tracking, consider [binary COPY](../ado-net/copy.md). You can retain one-command batches when diagnosing an application-specific issue: Leave the default in place until your own measurements justify another limit. See [batching, transactions and recovery",
+    "wordCount": 708,
+    "readMinutes": 4,
+    "searchText": "EF Core provider This page helps you decide whether to use BlueTusk's Entity Framework Core provider and where to start. The provider lets you use LINQ, change tracking, migrations and database-first scaffolding with PostgreSQL, on top of BlueTusk's own PostgreSQL driver. It does not use Npgsql. When to use it Use the EF Core provider when: your application already uses EF Core, or you want LINQ queries and change tracking instead of hand-written SQL; you want EF Core migrations to own your PostgreSQL schema, including PostgreSQL-only objects such as enums, extensions, `GIN` indexes and row-level security; or you want to generate entity classes from an existing database. Use the [ADO.NET provider](../ado-net/README.md) (`BlueTusk.Data`) instead when you only need SQL commands, binary `COPY`, notifications or replication. You can use both in one application: they share the same data source and connection pool. What it supports **Queries**: standard LINQ, plus PostgreSQL operators and functions through `EF.Functions` (arrays, ranges, JSON, full-text search, window functions and more). **PostgreSQL types**: arrays and `List<T>`, ranges and multiranges, `json` and `jsonb` (including EF's `ToJson()`), network, geometric and bit-string types, and your own enums, composites and domains. **Saving**: change tracking, generated keys (identity columns), sequences, `xmin` optimistic concurrency, transactions and savepoints. **New in 1.1.0:** `SaveChanges` sends inserts, updates and deletes in batches of up to 42 statements. In 1.0.0 and 1.1.0-rc.1 each statement was a separate command. **Migrations**: tables, keys, indexes and sequences, plus PostgreSQL enums, domains, extensions, collations, partitioning, triggers, views, functions, publications and row-level security. **Scaffolding**: `dotnet ef dbcontext scaffold` or the `bluetusk scaffold` command. Packages Package Install it when Notes `BlueTusk.EntityFrameworkCore` Always The provider. Brings in `BlueTusk.Data`. `BlueTusk",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Use BlueTusk with Entity Framework Core</h1>\n<p>Use this guide when an application already uses EF Core, or when you want LINQ,\nchange tracking, and migrations on top of BlueTusk’s PostgreSQL connection\npool. If you only need SQL commands, start with the\n<a href=\"/documentation/getting-started/provider-overview\">ADO.NET guide</a>.</p>\n<h2>What you will build</h2>\n<p>A normal ASP.NET Core application with:</p>\n<ul>\n<li>one application-owned <code>BlueTuskDataSource</code>;</li>\n<li>one scoped <code>DbContext</code> per unit of work;</li>\n<li>LINQ queries and <code>SaveChangesAsync</code>; and</li>\n<li>migrations run as a controlled deployment step.</li>\n</ul>\n<h2>1. Install the provider</h2>\n<p>Keep all BlueTusk packages on the same exact version:</p>\n"
+        "html": "<h1>EF Core provider</h1>\n<p>This page helps you decide whether to use BlueTusk’s Entity Framework Core\nprovider and where to start. The provider lets you use LINQ, change tracking,\nmigrations and database-first scaffolding with PostgreSQL, on top of BlueTusk’s\nown PostgreSQL driver. It does not use Npgsql.</p>\n<h2>When to use it</h2>\n<p>Use the EF Core provider when:</p>\n<ul>\n<li>your application already uses EF Core, or you want LINQ queries and change\ntracking instead of hand-written SQL;</li>\n<li>you want EF Core migrations to own your PostgreSQL schema, including\nPostgreSQL-only objects such as enums, extensions, <code>GIN</code> indexes and\nrow-level security; or</li>\n<li>you want to generate entity classes from an existing database.</li>\n</ul>\n<p>Use the <a href=\"/documentation/getting-started/provider-overview\">ADO.NET provider</a> (<code>BlueTusk.Data</code>) instead when\nyou only need SQL commands, binary <code>COPY</code>, notifications or replication. You can\nuse both in one application: they share the same data source and connection\npool.</p>\n<h2>What it supports</h2>\n<ul>\n<li><strong>Queries</strong>: standard LINQ, plus PostgreSQL operators and functions through\n<code>EF.Functions</code> (arrays, ranges, JSON, full-text search, window functions and\nmore).</li>\n<li><strong>PostgreSQL types</strong>: arrays and <code>List&lt;T&gt;</code>, ranges and multiranges, <code>json</code>\nand <code>jsonb</code> (including EF’s <code>ToJson()</code>), network, geometric and bit-string\ntypes, and your own enums, composites and domains.</li>\n<li><strong>Saving</strong>: change tracking, generated keys (identity columns), sequences,\n<code>xmin</code> optimistic concurrency, transactions and savepoints.\n<strong>New in 1.1.0:</strong> <code>SaveChanges</code> sends inserts, updates and deletes in\nbatches of up to 42 statements. In 1.0.0 and 1.1.0-rc.1 each statement was\na separate command.</li>\n<li><strong>Migrations</strong>: tables, keys, indexes and sequences, plus PostgreSQL enums,\ndomains, extensions, collations, partitioning, triggers, views, functions,\npublications and row-level security.</li>\n<li><strong>Scaffolding</strong>: <code>dotnet ef dbcontext scaffold</code> or the <code>bluetusk scaffold</code>\ncommand.</li>\n</ul>\n<h2>Packages</h2>\n<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>Install it when</th>\n<th>Notes</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTusk.EntityFrameworkCore</code></td>\n<td>Always</td>\n<td>The provider. Brings in <code>BlueTusk.Data</code>.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.EntityFrameworkCore.Design</code></td>\n<td>You use <code>dotnet ef</code> (migrations or scaffolding)</td>\n<td>Design-time services.</td>\n</tr>\n<tr>\n<td><code>Microsoft.EntityFrameworkCore.Design</code></td>\n<td>You use <code>dotnet ef</code></td>\n<td>Microsoft’s design-time package. Not installed for you.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Tool</code></td>\n<td>You want the <code>bluetusk scaffold</code> command</td>\n<td>A .NET tool, not a project package.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Extensions.*.EntityFrameworkCore</code></td>\n<td>You use PostGIS, pgvector, citext or TimescaleDB</td>\n<td>See <a href=\"/documentation/extensions/catalog\">PostgreSQL extensions</a>.</td>\n</tr>\n</tbody>\n</table>\n"
       },
       {
         "kind": "code",
-        "code": "dotnet add package BlueTusk.EntityFrameworkCore\ndotnet add package BlueTusk.EntityFrameworkCore.Design\ndotnet add package Microsoft.EntityFrameworkCore.Design\n",
-        "highlighted": "dotnet add package BlueTusk.EntityFrameworkCore\ndotnet add package BlueTusk.EntityFrameworkCore.Design\ndotnet add package Microsoft.EntityFrameworkCore.Design\n",
+        "code": "dotnet add package BlueTusk.EntityFrameworkCore\n",
+        "highlighted": "dotnet add package BlueTusk.EntityFrameworkCore\n",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>See <a href=\"/documentation/getting-started/install\">installation</a> for stable and preview version\nselection.</p>\n<h2>2. Create the model and context</h2>\n"
+        "html": "<p>Keep every BlueTusk package on the same version. See\n<a href=\"/documentation/getting-started/install\">Install BlueTusk</a> for release channels and\nversion pinning.</p>\n<h2>Requirements and status</h2>\n<ul>\n<li>.NET 10 (<code>net10.0</code>).</li>\n<li>EF Core <strong>10.0.11</strong>. Use version 10.0.11 for <code>Microsoft.EntityFrameworkCore.*</code>\npackages and the <code>dotnet-ef</code> tool.</li>\n<li>PostgreSQL 15, 16, 17 or 18. PostgreSQL 19 is preview only.</li>\n</ul>\n<p>The EF Core provider is part of the Core release line. <code>1.0.0</code> is the current\nstable release and <code>1.1.0-rc.1</code> is the release candidate. <code>1.1.0</code> is not\npublished yet. PostgreSQL 19 property-graph (SQL/PGQ) queries through EF Core\nare a <a href=\"/documentation/graph/sql-pgq\">preview feature</a>.</p>\n<h2>A taste of the code</h2>\n<p>Create one data source for the application, then give it to EF Core:</p>\n"
       },
       {
         "kind": "code",
-        "code": "using Microsoft.EntityFrameworkCore;\n\npublic sealed class Order\n{\n    public long Id { get; set; }\n    public string Customer { get; set; } = \"\";\n    public decimal Total { get; set; }\n    public DateTimeOffset CreatedAt { get; set; }\n}\n\npublic sealed class OrdersContext(DbContextOptions<OrdersContext> options)\n    : DbContext(options)\n{\n    public DbSet<Order> Orders => Set<Order>();\n\n    protected override void OnModelCreating(ModelBuilder modelBuilder)\n    {\n        modelBuilder.Entity<Order>(order =>\n        {\n            order.ToTable(\"orders\", \"app\");\n            order.HasKey(x => x.Id);\n            order.Property(x => x.Customer).HasMaxLength(200);\n            order.Property(x => x.Total).HasPrecision(18, 2);\n        });\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> Microsoft.EntityFrameworkCore;\n\n<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">Order</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">long</span> Id { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">string</span> Customer { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; } = <span class=\"hljs-string\">&quot;&quot;</span>;\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">decimal</span> Total { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> DateTimeOffset CreatedAt { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n}\n\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">OrdersContext</span>(<span class=\"hljs-params\">DbContextOptions&lt;OrdersContext&gt; options</span>)\n    : <span class=\"hljs-title\">DbContext</span>(<span class=\"hljs-params\">options</span>)</span>\n{\n    <span class=\"hljs-keyword\">public</span> DbSet&lt;Order&gt; Orders =&gt; Set&lt;Order&gt;();\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">void</span> <span class=\"hljs-title\">OnModelCreating</span>(<span class=\"hljs-params\">ModelBuilder modelBuilder</span>)</span>\n    {\n        modelBuilder.Entity&lt;Order&gt;(order =&gt;\n        {\n            order.ToTable(<span class=\"hljs-string\">&quot;orders&quot;</span>, <span class=\"hljs-string\">&quot;app&quot;</span>);\n            order.HasKey(x =&gt; x.Id);\n            order.Property(x =&gt; x.Customer).HasMaxLength(<span class=\"hljs-number\">200</span>);\n            order.Property(x =&gt; x.Total).HasPrecision(<span class=\"hljs-number\">18</span>, <span class=\"hljs-number\">2</span>);\n        });\n    }\n}\n",
+        "code": "using BlueTusk.Data;\nusing Microsoft.EntityFrameworkCore;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\n\nvar options = new DbContextOptionsBuilder<LibraryContext>()\n    .UseBlueTusk(dataSource)\n    .Options;\n\nawait using var db = new LibraryContext(options);\nvar classics = await db.Books\n    .Where(book => book.Published < 1970)\n    .OrderBy(book => book.Title)\n    .ToListAsync();\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> Microsoft.EntityFrameworkCore;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n\n<span class=\"hljs-keyword\">var</span> options = <span class=\"hljs-keyword\">new</span> DbContextOptionsBuilder&lt;LibraryContext&gt;()\n    .UseBlueTusk(dataSource)\n    .Options;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> db = <span class=\"hljs-keyword\">new</span> LibraryContext(options);\n<span class=\"hljs-keyword\">var</span> classics = <span class=\"hljs-keyword\">await</span> db.Books\n    .Where(book =&gt; book.Published &lt; <span class=\"hljs-number\">1970</span>)\n    .OrderBy(book =&gt; book.Title)\n    .ToListAsync();\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<h2>3. Register it once</h2>\n<p>The data source is a singleton because it owns the physical connection pool.\nThe context remains scoped:</p>\n"
+        "html": "<p><code>LibraryContext</code> is an ordinary <code>DbContext</code>. The\n<a href=\"/documentation/ef-core/quickstart\">quick start</a> builds it step by step.</p>\n<h2>Guides</h2>\n<table>\n<thead>\n<tr>\n<th>Task</th>\n<th>Where</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Register the provider in an app with dependency injection</td>\n<td><a href=\"/documentation/ef-core/concepts#how-long-should-the-data-source-and-dbcontext-live\">Concepts: data source and DbContext</a></td>\n</tr>\n<tr>\n<td>Create and apply migrations</td>\n<td><a href=\"/documentation/ef-core/quickstart\">Quick start</a> and <a href=\"/documentation/ef-core/concepts#how-do-migrations-work\">Concepts: migrations</a></td>\n</tr>\n<tr>\n<td>Generate a model from an existing database</td>\n<td><a href=\"/documentation/ef-core/concepts#how-do-i-start-from-an-existing-database\">Concepts: scaffolding</a> and <a href=\"/documentation/ef-core/configuration#scaffold-command-options\">scaffold options</a></td>\n</tr>\n<tr>\n<td>Map PostgreSQL enums, arrays, ranges and JSON</td>\n<td><a href=\"/documentation/ef-core/concepts#how-are-net-types-mapped-to-postgresql\">Concepts: type mapping</a> and <a href=\"/documentation/ef-core/configuration#model-configuration\">model configuration</a></td>\n</tr>\n<tr>\n<td>Handle concurrency conflicts and retries</td>\n<td><a href=\"/documentation/ef-core/concepts#how-do-i-detect-concurrent-updates\">Concepts: concurrency</a></td>\n</tr>\n<tr>\n<td>Use PostGIS, pgvector, citext or TimescaleDB</td>\n<td><a href=\"/documentation/extensions/catalog\">PostgreSQL extensions</a></td>\n</tr>\n<tr>\n<td>Look up a PostgreSQL function, operator or migration helper</td>\n<td><a href=\"/documentation/ef-core/ef-core-reference\">Full EF Core reference</a></td>\n</tr>\n</tbody>\n</table>\n<h2>Next steps</h2>\n<ol>\n<li><a href=\"/documentation/ef-core/quickstart\">Quick start</a>: build a working app with migrations in about\nten minutes.</li>\n<li><a href=\"/documentation/ef-core/concepts\">Concepts</a>: lifetimes, type mapping, batching, concurrency,\ntransactions and migrations.</li>\n<li><a href=\"/documentation/ef-core/configuration\">Configuration</a>: every <code>UseBlueTusk</code> option, model\nconfiguration method and scaffold option.</li>\n<li><a href=\"/documentation/ef-core/troubleshooting\">Troubleshooting</a>: common errors and how to fix them.</li>\n</ol>\n<p>The <a href=\"/documentation/ef-core/ef-core-reference\">full EF Core reference</a> covers every translated function,\noperator and migration feature in depth. The\n<a href=\"/documentation/ef-core/specification-tests\">specification-test record</a> is for provider\nmaintainers.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "quickstart",
+    "summary": "Define a DbContext, create and apply a migration, and query PostgreSQL with LINQ.",
+    "keywords": [
+      "quickstart",
+      "dbcontext",
+      "migrations",
+      "linq"
+    ],
+    "order": 11,
+    "listed": true,
+    "title": "EF Core quick start",
+    "sourcePath": "docs/ef-core/quickstart.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/quickstart.md",
+    "headings": [
+      {
+        "id": "ef-core-quick-start",
+        "text": "EF Core quick start",
+        "level": 1
+      },
+      {
+        "id": "before-you-start",
+        "text": "Before you start",
+        "level": 2
+      },
+      {
+        "id": "1-start-postgresql",
+        "text": "1. Start PostgreSQL",
+        "level": 2
+      },
+      {
+        "id": "2-create-the-app-and-add-packages",
+        "text": "2. Create the app and add packages",
+        "level": 2
+      },
+      {
+        "id": "3-install-the-ef-core-command-line-tool",
+        "text": "3. Install the EF Core command-line tool",
+        "level": 2
+      },
+      {
+        "id": "4-set-the-connection-string",
+        "text": "4. Set the connection string",
+        "level": 2
+      },
+      {
+        "id": "5-write-the-code",
+        "text": "5. Write the code",
+        "level": 2
+      },
+      {
+        "id": "6-create-the-database-with-a-migration",
+        "text": "6. Create the database with a migration",
+        "level": 2
+      },
+      {
+        "id": "7-run-it",
+        "text": "7. Run it",
+        "level": 2
+      },
+      {
+        "id": "what-just-happened",
+        "text": "What just happened",
+        "level": 2
+      },
+      {
+        "id": "if-it-fails",
+        "text": "If it fails",
+        "level": 2
+      },
+      {
+        "id": "clean-up",
+        "text": "Clean up",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 1074,
+    "readMinutes": 5,
+    "searchText": "EF Core quick start In this quick start you build a .NET console app that uses EF Core with PostgreSQL through BlueTusk. You define two entities, create the database with an EF Core migration, save data and query it with LINQ. It takes about ten minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 server you can use for testing. If you have Docker, step 1 starts one for you. 1. Start PostgreSQL Skip this step if you already have a test server. You do not need to create a database. The migration in step 6 creates the `library` database for you. 2. Create the app and add packages Package Why `BlueTusk.EntityFrameworkCore` The EF Core provider. `BlueTusk.EntityFrameworkCore.Design` Lets `dotnet ef` create migrations for PostgreSQL. `Microsoft.EntityFrameworkCore.Design` Required by `dotnet ef`. Version 10.0.11 matches the provider. `Microsoft.Extensions.Hosting` Dependency injection and configuration. `dotnet ef` also uses it to find your `DbContext`. See [Install BlueTusk](../getting-started/install.md) to choose a release channel for the BlueTusk packages. 3. Install the EF Core command-line tool If you already have `dotnet-ef`, run `dotnet tool update --global dotnet-ef --version 10.0.11` instead. 4. Set the connection string Keep credentials out of source code. .NET reads the environment variable `ConnectionStrings__Library` as the connection string named `Library`: On Linux or macOS, use `export ConnectionStrings__Library=\"...\"` instead. **Warning:** `SSL Mode=Disable` is only for a local test container. BlueTusk's default is `SSL Mode=VerifyFull`, which requires TLS and validates the server certificate. Keep that default everywhere else. 5. Write the code Create `Library.cs` with the entities and the `DbContext`: Replace the contents of `Program.cs`: 6. Create the database with a migration Create a migration from your model, then apply it: `migrations add` writes C# files to a `Mig",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>EF Core quick start</h1>\n<p>In this quick start you build a .NET console app that uses EF Core with\nPostgreSQL through BlueTusk. You define two entities, create the database with\nan EF Core migration, save data and query it with LINQ. It takes about ten\nminutes.</p>\n<h2>Before you start</h2>\n<p>You need:</p>\n<ul>\n<li>the <a href=\"https://dotnet.microsoft.com/download/dotnet/10.0\" target=\"_blank\" rel=\"noreferrer\">.NET 10 SDK</a>;</li>\n<li>a PostgreSQL 15, 16, 17 or 18 server you can use for testing. If you have\nDocker, step 1 starts one for you.</li>\n</ul>\n<h2>1. Start PostgreSQL</h2>\n<p>Skip this step if you already have a test server.</p>\n"
       },
       {
         "kind": "code",
-        "code": "using BlueTusk.Data;\nusing Microsoft.EntityFrameworkCore;\n\nbuilder.Services.AddSingleton(_ =>\n    new BlueTuskDataSourceBuilder(\n        builder.Configuration.GetConnectionString(\"PostgreSQL\")!)\n        .Build());\n\nbuilder.Services.AddDbContext<OrdersContext>((services, options) =>\n    options.UseBlueTusk(services.GetRequiredService<BlueTuskDataSource>()));\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> Microsoft.EntityFrameworkCore;\n\nbuilder.Services.AddSingleton(_ =&gt;\n    <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(\n        builder.Configuration.GetConnectionString(<span class=\"hljs-string\">&quot;PostgreSQL&quot;</span>)!)\n        .Build());\n\nbuilder.Services.AddDbContext&lt;OrdersContext&gt;((services, options) =&gt;\n    options.UseBlueTusk(services.GetRequiredService&lt;BlueTuskDataSource&gt;()));\n",
+        "code": "docker run --name bluetusk-postgres `\n  -e POSTGRES_PASSWORD=local-dev-only `\n  -p 5432:5432 `\n  -d postgres:18\n",
+        "highlighted": "docker run <span class=\"hljs-literal\">--name</span> bluetusk<span class=\"hljs-literal\">-postgres</span> `\n  <span class=\"hljs-literal\">-e</span> POSTGRES_PASSWORD=local<span class=\"hljs-literal\">-dev-only</span> `\n  <span class=\"hljs-literal\">-p</span> <span class=\"hljs-number\">5432</span>:<span class=\"hljs-number\">5432</span> `\n  <span class=\"hljs-literal\">-d</span> postgres:<span class=\"hljs-number\">18</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>You do not need to create a database. The migration in step 6 creates the\n<code>library</code> database for you.</p>\n<h2>2. Create the app and add packages</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet new console --framework net10.0 --name LibraryApp\ncd LibraryApp\ndotnet add package BlueTusk.EntityFrameworkCore\ndotnet add package BlueTusk.EntityFrameworkCore.Design\ndotnet add package Microsoft.EntityFrameworkCore.Design --version 10.0.11\ndotnet add package Microsoft.Extensions.Hosting\n",
+        "highlighted": "dotnet new console <span class=\"hljs-literal\">--framework</span> net10.<span class=\"hljs-number\">0</span> <span class=\"hljs-literal\">--name</span> LibraryApp\n<span class=\"hljs-built_in\">cd</span> LibraryApp\ndotnet add package BlueTusk.EntityFrameworkCore\ndotnet add package BlueTusk.EntityFrameworkCore.Design\ndotnet add package Microsoft.EntityFrameworkCore.Design <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">10.0</span>.<span class=\"hljs-number\">11</span>\ndotnet add package Microsoft.Extensions.Hosting\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>Why</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTusk.EntityFrameworkCore</code></td>\n<td>The EF Core provider.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.EntityFrameworkCore.Design</code></td>\n<td>Lets <code>dotnet ef</code> create migrations for PostgreSQL.</td>\n</tr>\n<tr>\n<td><code>Microsoft.EntityFrameworkCore.Design</code></td>\n<td>Required by <code>dotnet ef</code>. Version 10.0.11 matches the provider.</td>\n</tr>\n<tr>\n<td><code>Microsoft.Extensions.Hosting</code></td>\n<td>Dependency injection and configuration. <code>dotnet ef</code> also uses it to find your <code>DbContext</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a> to choose a release\nchannel for the BlueTusk packages.</p>\n<h2>3. Install the EF Core command-line tool</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet tool install --global dotnet-ef --version 10.0.11\n",
+        "highlighted": "dotnet tool install <span class=\"hljs-literal\">--global</span> dotnet<span class=\"hljs-literal\">-ef</span> <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">10.0</span>.<span class=\"hljs-number\">11</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>If you already have <code>dotnet-ef</code>, run\n<code>dotnet tool update --global dotnet-ef --version 10.0.11</code> instead.</p>\n<h2>4. Set the connection string</h2>\n<p>Keep credentials out of source code. .NET reads the environment variable\n<code>ConnectionStrings__Library</code> as the connection string named <code>Library</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:ConnectionStrings__Library = \"Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=library;SSL Mode=Disable;Channel Binding=Disable\"\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:ConnectionStrings__Library</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=library;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>On Linux or macOS, use <code>export ConnectionStrings__Library=&quot;...&quot;</code> instead.</p>\n<blockquote>\n<p><strong>Warning:</strong> <code>SSL Mode=Disable</code> is only for a local test container.\nBlueTusk’s default is <code>SSL Mode=VerifyFull</code>, which requires TLS and validates\nthe server certificate. Keep that default everywhere else.</p>\n</blockquote>\n<h2>5. Write the code</h2>\n<p>Create <code>Library.cs</code> with the entities and the <code>DbContext</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using Microsoft.EntityFrameworkCore;\n\npublic sealed class Author\n{\n    public int Id { get; set; }\n    public required string Name { get; set; }\n    public List<Book> Books { get; } = [];\n}\n\npublic sealed class Book\n{\n    public int Id { get; set; }\n    public required string Title { get; set; }\n    public int Published { get; set; }\n    public int AuthorId { get; set; }\n    public Author Author { get; set; } = null!;\n}\n\npublic sealed class LibraryContext(DbContextOptions<LibraryContext> options)\n    : DbContext(options)\n{\n    public DbSet<Author> Authors => Set<Author>();\n    public DbSet<Book> Books => Set<Book>();\n\n    protected override void OnModelCreating(ModelBuilder modelBuilder)\n    {\n        modelBuilder.Entity<Author>().Property(author => author.Name).HasMaxLength(200);\n        modelBuilder.Entity<Book>().Property(book => book.Title).HasMaxLength(300);\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> Microsoft.EntityFrameworkCore;\n\n<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">Author</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">int</span> Id { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">required</span> <span class=\"hljs-built_in\">string</span> Name { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> List&lt;Book&gt; Books { <span class=\"hljs-keyword\">get</span>; } = [];\n}\n\n<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">Book</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">int</span> Id { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">required</span> <span class=\"hljs-built_in\">string</span> Title { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">int</span> Published { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">int</span> AuthorId { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> Author Author { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; } = <span class=\"hljs-literal\">null</span>!;\n}\n\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">LibraryContext</span>(<span class=\"hljs-params\">DbContextOptions&lt;LibraryContext&gt; options</span>)\n    : <span class=\"hljs-title\">DbContext</span>(<span class=\"hljs-params\">options</span>)</span>\n{\n    <span class=\"hljs-keyword\">public</span> DbSet&lt;Author&gt; Authors =&gt; Set&lt;Author&gt;();\n    <span class=\"hljs-keyword\">public</span> DbSet&lt;Book&gt; Books =&gt; Set&lt;Book&gt;();\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">void</span> <span class=\"hljs-title\">OnModelCreating</span>(<span class=\"hljs-params\">ModelBuilder modelBuilder</span>)</span>\n    {\n        modelBuilder.Entity&lt;Author&gt;().Property(author =&gt; author.Name).HasMaxLength(<span class=\"hljs-number\">200</span>);\n        modelBuilder.Entity&lt;Book&gt;().Property(book =&gt; book.Title).HasMaxLength(<span class=\"hljs-number\">300</span>);\n    }\n}\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Do not create a new data source for every request. Doing so creates new pools\ninstead of reusing healthy PostgreSQL sessions.</p>\n<h2>4. Read and write data</h2>\n"
+        "html": "<p>Replace the contents of <code>Program.cs</code>:</p>\n"
       },
       {
         "kind": "code",
-        "code": "app.MapGet(\"/orders/{id:long}\", async (long id, OrdersContext db) =>\n    await db.Orders.AsNoTracking().SingleOrDefaultAsync(order => order.Id == id)\n        is { } order\n        ? Results.Ok(order)\n        : Results.NotFound());\n\napp.MapPost(\"/orders\", async (Order order, OrdersContext db) =>\n{\n    db.Orders.Add(order);\n    await db.SaveChangesAsync();\n    return Results.Created($\"/orders/{order.Id}\", order);\n});\n",
-        "highlighted": "app.MapGet(<span class=\"hljs-string\">&quot;/orders/{id:long}&quot;</span>, <span class=\"hljs-keyword\">async</span> (<span class=\"hljs-built_in\">long</span> id, OrdersContext db) =&gt;\n    <span class=\"hljs-keyword\">await</span> db.Orders.AsNoTracking().SingleOrDefaultAsync(order =&gt; order.Id == id)\n        <span class=\"hljs-keyword\">is</span> { } order\n        ? Results.Ok(order)\n        : Results.NotFound());\n\napp.MapPost(<span class=\"hljs-string\">&quot;/orders&quot;</span>, <span class=\"hljs-keyword\">async</span> (Order order, OrdersContext db) =&gt;\n{\n    db.Orders.Add(order);\n    <span class=\"hljs-keyword\">await</span> db.SaveChangesAsync();\n    <span class=\"hljs-keyword\">return</span> Results.Created(<span class=\"hljs-string\">$&quot;/orders/<span class=\"hljs-subst\">{order.Id}</span>&quot;</span>, order);\n});\n",
+        "code": "using BlueTusk.Data;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.Extensions.Configuration;\nusing Microsoft.Extensions.DependencyInjection;\nusing Microsoft.Extensions.Hosting;\n\nvar builder = Host.CreateApplicationBuilder(args);\n\nvar connectionString = builder.Configuration.GetConnectionString(\"Library\")\n    ?? throw new InvalidOperationException(\"Set ConnectionStrings__Library first.\");\n\n// One data source for the whole application: it owns the connection pool.\nbuilder.Services.AddSingleton(_ => new BlueTuskDataSourceBuilder(connectionString).Build());\n\n// One DbContext per unit of work, using the shared data source.\nbuilder.Services.AddDbContext<LibraryContext>((services, options) =>\n    options.UseBlueTusk(services.GetRequiredService<BlueTuskDataSource>()));\n\nusing var host = builder.Build();\n\n// Write: one SaveChangesAsync call inserts the author and both books.\nawait using (var scope = host.Services.CreateAsyncScope())\n{\n    var db = scope.ServiceProvider.GetRequiredService<LibraryContext>();\n\n    var author = new Author { Name = \"Ursula K. Le Guin\" };\n    author.Books.Add(new Book { Title = \"A Wizard of Earthsea\", Published = 1968 });\n    author.Books.Add(new Book { Title = \"The Left Hand of Darkness\", Published = 1969 });\n    db.Authors.Add(author);\n\n    await db.SaveChangesAsync();\n    Console.WriteLine($\"Saved author {author.Id} with {author.Books.Count} books.\");\n}\n\n// Read: a LINQ query that PostgreSQL runs as one SELECT with a join.\nawait using (var scope = host.Services.CreateAsyncScope())\n{\n    var db = scope.ServiceProvider.GetRequiredService<LibraryContext>();\n\n    var books = await db.Books\n        .AsNoTracking()\n        .Where(book => book.Published < 1970)\n        .OrderBy(book => book.Published)\n        .Select(book => new { book.Title, book.Published, Author = book.Author.Name })\n        .ToListAsync();\n\n    foreach (var book in books)\n    {\n        Console.WriteLine($\"{book.Published}: {book.Title} by {book.Author}\");\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> Microsoft.EntityFrameworkCore;\n<span class=\"hljs-keyword\">using</span> Microsoft.Extensions.Configuration;\n<span class=\"hljs-keyword\">using</span> Microsoft.Extensions.DependencyInjection;\n<span class=\"hljs-keyword\">using</span> Microsoft.Extensions.Hosting;\n\n<span class=\"hljs-keyword\">var</span> builder = Host.CreateApplicationBuilder(<span class=\"hljs-keyword\">args</span>);\n\n<span class=\"hljs-keyword\">var</span> connectionString = builder.Configuration.GetConnectionString(<span class=\"hljs-string\">&quot;Library&quot;</span>)\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Set ConnectionStrings__Library first.&quot;</span>);\n\n<span class=\"hljs-comment\">// One data source for the whole application: it owns the connection pool.</span>\nbuilder.Services.AddSingleton(_ =&gt; <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build());\n\n<span class=\"hljs-comment\">// One DbContext per unit of work, using the shared data source.</span>\nbuilder.Services.AddDbContext&lt;LibraryContext&gt;((services, options) =&gt;\n    options.UseBlueTusk(services.GetRequiredService&lt;BlueTuskDataSource&gt;()));\n\n<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> host = builder.Build();\n\n<span class=\"hljs-comment\">// Write: one SaveChangesAsync call inserts the author and both books.</span>\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> scope = host.Services.CreateAsyncScope())\n{\n    <span class=\"hljs-keyword\">var</span> db = scope.ServiceProvider.GetRequiredService&lt;LibraryContext&gt;();\n\n    <span class=\"hljs-keyword\">var</span> author = <span class=\"hljs-keyword\">new</span> Author { Name = <span class=\"hljs-string\">&quot;Ursula K. Le Guin&quot;</span> };\n    author.Books.Add(<span class=\"hljs-keyword\">new</span> Book { Title = <span class=\"hljs-string\">&quot;A Wizard of Earthsea&quot;</span>, Published = <span class=\"hljs-number\">1968</span> });\n    author.Books.Add(<span class=\"hljs-keyword\">new</span> Book { Title = <span class=\"hljs-string\">&quot;The Left Hand of Darkness&quot;</span>, Published = <span class=\"hljs-number\">1969</span> });\n    db.Authors.Add(author);\n\n    <span class=\"hljs-keyword\">await</span> db.SaveChangesAsync();\n    Console.WriteLine(<span class=\"hljs-string\">$&quot;Saved author <span class=\"hljs-subst\">{author.Id}</span> with <span class=\"hljs-subst\">{author.Books.Count}</span> books.&quot;</span>);\n}\n\n<span class=\"hljs-comment\">// Read: a LINQ query that PostgreSQL runs as one SELECT with a join.</span>\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> scope = host.Services.CreateAsyncScope())\n{\n    <span class=\"hljs-keyword\">var</span> db = scope.ServiceProvider.GetRequiredService&lt;LibraryContext&gt;();\n\n    <span class=\"hljs-keyword\">var</span> books = <span class=\"hljs-keyword\">await</span> db.Books\n        .AsNoTracking()\n        .Where(book =&gt; book.Published &lt; <span class=\"hljs-number\">1970</span>)\n        .OrderBy(book =&gt; book.Published)\n        .Select(book =&gt; <span class=\"hljs-keyword\">new</span> { book.Title, book.Published, Author = book.Author.Name })\n        .ToListAsync();\n\n    <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> book <span class=\"hljs-keyword\">in</span> books)\n    {\n        Console.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{book.Published}</span>: <span class=\"hljs-subst\">{book.Title}</span> by <span class=\"hljs-subst\">{book.Author}</span>&quot;</span>);\n    }\n}\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Use <code>AsNoTracking</code> for read-only results. Keep a context inside one request or\nunit of work; it is not thread-safe.</p>\n<h3>Save several changes together</h3>\n<p>Add or change the entities first, then call <code>SaveChangesAsync</code> once:</p>\n"
+        "html": "<h2>6. Create the database with a migration</h2>\n<p>Create a migration from your model, then apply it:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet ef migrations add InitialCreate\ndotnet ef database update\n",
+        "highlighted": "dotnet ef migrations add InitialCreate\ndotnet ef database update\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>migrations add</code> writes C# files to a <code>Migrations</code> folder. <code>database update</code>\ncreates the <code>library</code> database if it does not exist, creates the <code>Authors</code> and\n<code>Books</code> tables, and records the migration in <code>__EFMigrationsHistory</code>. The <code>Id</code>\ncolumns become <code>GENERATED BY DEFAULT AS IDENTITY</code> columns.</p>\n<p>To review the SQL before applying it, run <code>dotnet ef migrations script</code>.</p>\n<h2>7. Run it</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet run\n",
+        "highlighted": "dotnet run\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The host logs every SQL command at the <code>Information</code> level. Among the log lines\nyou should see:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "      INSERT INTO \"Books\" (\"AuthorId\", \"Published\", \"Title\")\n      VALUES (@p1, @p2, @p3)\n      RETURNING \"Id\";\n      INSERT INTO \"Books\" (\"AuthorId\", \"Published\", \"Title\")\n      VALUES (@p4, @p5, @p6)\n      RETURNING \"Id\";\nSaved author 1 with 2 books.\n...\n1968: A Wizard of Earthsea by Ursula K. Le Guin\n1969: The Left Hand of Darkness by Ursula K. Le Guin\n",
+        "highlighted": "      INSERT INTO &quot;Books&quot; (&quot;AuthorId&quot;, &quot;Published&quot;, &quot;Title&quot;)\n      VALUES (@p1, @p2, @p3)\n      RETURNING &quot;Id&quot;;\n      INSERT INTO &quot;Books&quot; (&quot;AuthorId&quot;, &quot;Published&quot;, &quot;Title&quot;)\n      VALUES (@p4, @p5, @p6)\n      RETURNING &quot;Id&quot;;\nSaved author 1 with 2 books.\n...\n1968: A Wizard of Earthsea by Ursula K. Le Guin\n1969: The Left Hand of Darkness by Ursula K. Le Guin\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Each run adds the author and books again, so later runs print more rows.</p>\n<h2>What just happened</h2>\n<ul>\n<li>The <strong>data source</strong> (<code>BlueTuskDataSource</code>) is a singleton that owns the\nconnection pool. Every <code>LibraryContext</code> borrows a connection from it.</li>\n<li><code>AddDbContext</code> registers <code>LibraryContext</code> as <strong>scoped</strong>: each scope gets its\nown context, used for one unit of work.</li>\n<li><code>SaveChangesAsync</code> inserted the author first (the books need its generated\n<code>Id</code>), then sent both book inserts in <strong>one batched command</strong>. Batching is\nnew in 1.1.0; see <a href=\"/documentation/ef-core/concepts#how-does-savechanges-batch-commands\">Concepts</a>.</li>\n<li>The LINQ query was translated to a single PostgreSQL <code>SELECT</code> with an\n<code>INNER JOIN</code>.</li>\n</ul>\n<h2>If it fails</h2>\n<table>\n<thead>\n<tr>\n<th>Error</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Set ConnectionStrings__Library first.</code></td>\n<td>Set the environment variable in the same terminal (step 4). <code>dotnet ef</code> needs it too.</td>\n</tr>\n<tr>\n<td><code>Could not load file or assembly 'BlueTusk.EntityFrameworkCore.Design'</code></td>\n<td>Add the <code>BlueTusk.EntityFrameworkCore.Design</code> package (step 2).</td>\n</tr>\n<tr>\n<td><code>The Entity Framework tools version '...' is older than that of the runtime '10.0.11'</code></td>\n<td>Update <code>dotnet-ef</code> to 10.0.11 (step 3).</td>\n</tr>\n<tr>\n<td>Connection refused or timeout</td>\n<td>Check that PostgreSQL is running and that <code>Host</code> and <code>Port</code> are correct.</td>\n</tr>\n</tbody>\n</table>\n<p>See <a href=\"/documentation/ef-core/troubleshooting\">Troubleshooting</a> for more.</p>\n<h2>Clean up</h2>\n<p>Drop the database and remove the container:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet ef database drop --force\ndocker rm --force bluetusk-postgres\n",
+        "highlighted": "dotnet ef database drop <span class=\"hljs-literal\">--force</span>\ndocker <span class=\"hljs-built_in\">rm</span> <span class=\"hljs-literal\">--force</span> bluetusk<span class=\"hljs-literal\">-postgres</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/ef-core/concepts\">Concepts</a>: lifetimes, type mapping, batching, concurrency and\nmigrations.</li>\n<li><a href=\"/documentation/ef-core/configuration\">Configuration</a>: every <code>UseBlueTusk</code> option and model\nconfiguration method.</li>\n<li><a href=\"/documentation/ef-core/ef-core-reference\">Full EF Core reference</a>: PostgreSQL functions, operators and\nmigration features.</li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "concepts",
+    "summary": "How the EF Core provider maps types, batches SaveChanges, handles transactions and builds migrations.",
+    "keywords": [
+      "concepts",
+      "mapping",
+      "batching",
+      "migrations"
+    ],
+    "order": 12,
+    "listed": true,
+    "title": "EF Core concepts",
+    "sourcePath": "docs/ef-core/concepts.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/concepts.md",
+    "headings": [
+      {
+        "id": "ef-core-concepts",
+        "text": "EF Core concepts",
+        "level": 1
+      },
+      {
+        "id": "how-long-should-the-data-source-and-dbcontext-live",
+        "text": "How long should the data source and DbContext live?",
+        "level": 2
+      },
+      {
+        "id": "how-are-net-types-mapped-to-postgresql",
+        "text": "How are .NET types mapped to PostgreSQL?",
+        "level": 2
+      },
+      {
+        "id": "postgresql-enums-need-three-pieces",
+        "text": "PostgreSQL enums need three pieces",
+        "level": 3
+      },
+      {
+        "id": "how-does-savechanges-batch-commands",
+        "text": "How does SaveChanges batch commands?",
+        "level": 2
+      },
+      {
+        "id": "how-do-i-detect-concurrent-updates",
+        "text": "How do I detect concurrent updates?",
+        "level": 2
+      },
+      {
+        "id": "read-the-current-database-values-including-complex-collections",
+        "text": "Read the current database values, including complex collections",
+        "level": 3
+      },
+      {
+        "id": "how-do-transactions-and-retries-work",
+        "text": "How do transactions and retries work?",
+        "level": 2
+      },
+      {
+        "id": "how-do-migrations-work",
+        "text": "How do migrations work?",
+        "level": 2
+      },
+      {
+        "id": "how-do-i-start-from-an-existing-database",
+        "text": "How do I start from an existing database?",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 1671,
+    "readMinutes": 8,
+    "searchText": "EF Core concepts This page explains the rules you need to use the BlueTusk EF Core provider well. For the shared vocabulary (data source, pool, type catalogue), read [Core concepts](../getting-started/concepts.md) first. How long should the data source and DbContext live? Create **one `BlueTuskDataSource`** per connection string and keep it for the life of the application. Create **one `DbContext` per unit of work**. `AddDbContext` registers it as scoped, which in ASP.NET Core means one per request. Pass the data source to `UseBlueTusk`. In an app with dependency injection, `AddDataSource` (package `BlueTusk.Data.DependencyInjection`) registers the singleton and a readiness health check: `UseBlueTusk` also accepts a connection string or an open `BlueTuskConnection` (see [Configuration](configuration.md#usebluetusk-overloads)), but avoid them in applications. With a connection string, each context creates its own **unpooled** connection, and enum or composite mappings registered on a data source are not available. See [Dependency injection](../ado-net/dependency-injection.md) for `AddDataSource`. How are .NET types mapped to PostgreSQL? When you do not choose a column type, BlueTusk uses these defaults: .NET type PostgreSQL type `bool` `boolean` `short`, `int`, `long` `smallint`, `integer`, `bigint` `float`, `double` `real`, `double precision` `decimal` `numeric` (`numeric(p,s)` with `HasPrecision`) `string` `text` (`character varying(n)` with `HasMaxLength`) `Guid` `uuid` `byte[]` `bytea` `DateTimeOffset` `timestamp with time zone` `DateTime` `timestamp without time zone` `DateOnly`, `TimeOnly` `date`, `time without time zone` `TimeSpan` `interval` `T[]`, `List<T>` of a supported `T` PostgreSQL array, for example `text[]` `BlueTuskRange<int>` (and `long`, `DateOnly`, `DateTime`, `DateTimeOffset`, `BlueTuskNumeric`) `int4range` (and the matching range type) Owned or complex type with `ToJson()` `jsonb` CLR `enum` its underlying integer type Rules worth knowing: **Use",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>EF Core concepts</h1>\n<p>This page explains the rules you need to use the BlueTusk EF Core provider\nwell. For the shared vocabulary (data source, pool,\ntype catalogue), read <a href=\"/documentation/getting-started/concepts\">Core concepts</a> first.</p>\n<h2>How long should the data source and DbContext live?</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "BlueTuskDataSource      singleton, app lifetime\n  ├─ connection pool    physical PostgreSQL sessions\n  └─ type catalogue     built-in types plus your MapEnum / MapComposite types\n        ▲\n        │ borrows a connection while a query or SaveChanges runs\n        │\nDbContext (scoped)      one per request or unit of work, never shared between threads\n",
+        "highlighted": "BlueTuskDataSource      singleton, app lifetime\n  ├─ connection pool    physical PostgreSQL sessions\n  └─ type catalogue     built-in types plus your MapEnum / MapComposite types\n        ▲\n        │ borrows a connection while a query or SaveChanges runs\n        │\nDbContext (scoped)      one per request or unit of work, never shared between threads\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li>Create <strong>one <code>BlueTuskDataSource</code></strong> per connection string and keep it for the\nlife of the application.</li>\n<li>Create <strong>one <code>DbContext</code> per unit of work</strong>. <code>AddDbContext</code> registers it as\nscoped, which in ASP.NET Core means one per request.</li>\n<li>Pass the data source to <code>UseBlueTusk</code>. In an app with dependency injection,\n<code>AddDataSource</code> (package <code>BlueTusk.Data.DependencyInjection</code>) registers the\nsingleton and a readiness health check:</li>\n</ul>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddDataSource(\n    builder.Configuration.GetConnectionString(\"Shop\")!,\n    dataSource => dataSource.MapEnum<OrderStatus>(\"app.order_status\"));\n\nbuilder.Services.AddDbContext<ShopContext>((services, options) =>\n    options.UseBlueTusk(services.GetRequiredService<BlueTuskDataSource>()));\n",
+        "highlighted": "builder.Services.AddDataSource(\n    builder.Configuration.GetConnectionString(<span class=\"hljs-string\">&quot;Shop&quot;</span>)!,\n    dataSource =&gt; dataSource.MapEnum&lt;OrderStatus&gt;(<span class=\"hljs-string\">&quot;app.order_status&quot;</span>));\n\nbuilder.Services.AddDbContext&lt;ShopContext&gt;((services, options) =&gt;\n    options.UseBlueTusk(services.GetRequiredService&lt;BlueTuskDataSource&gt;()));\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>UseBlueTusk</code> also accepts a connection string or an open <code>BlueTuskConnection</code>\n(see <a href=\"/documentation/ef-core/configuration#usebluetusk-overloads\">Configuration</a>), but avoid them\nin applications. With a connection string, each context creates its own\n<strong>unpooled</strong> connection, and enum or composite mappings registered on a data\nsource are not available.</p>\n<p>See <a href=\"/documentation/provider/dependency-injection\">Dependency injection</a> for <code>AddDataSource</code>.</p>\n<h2>How are .NET types mapped to PostgreSQL?</h2>\n<p>When you do not choose a column type, BlueTusk uses these defaults:</p>\n<table>\n<thead>\n<tr>\n<th>.NET type</th>\n<th>PostgreSQL type</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>bool</code></td>\n<td><code>boolean</code></td>\n</tr>\n<tr>\n<td><code>short</code>, <code>int</code>, <code>long</code></td>\n<td><code>smallint</code>, <code>integer</code>, <code>bigint</code></td>\n</tr>\n<tr>\n<td><code>float</code>, <code>double</code></td>\n<td><code>real</code>, <code>double precision</code></td>\n</tr>\n<tr>\n<td><code>decimal</code></td>\n<td><code>numeric</code> (<code>numeric(p,s)</code> with <code>HasPrecision</code>)</td>\n</tr>\n<tr>\n<td><code>string</code></td>\n<td><code>text</code> (<code>character varying(n)</code> with <code>HasMaxLength</code>)</td>\n</tr>\n<tr>\n<td><code>Guid</code></td>\n<td><code>uuid</code></td>\n</tr>\n<tr>\n<td><code>byte[]</code></td>\n<td><code>bytea</code></td>\n</tr>\n<tr>\n<td><code>DateTimeOffset</code></td>\n<td><code>timestamp with time zone</code></td>\n</tr>\n<tr>\n<td><code>DateTime</code></td>\n<td><code>timestamp without time zone</code></td>\n</tr>\n<tr>\n<td><code>DateOnly</code>, <code>TimeOnly</code></td>\n<td><code>date</code>, <code>time without time zone</code></td>\n</tr>\n<tr>\n<td><code>TimeSpan</code></td>\n<td><code>interval</code></td>\n</tr>\n<tr>\n<td><code>T[]</code>, <code>List&lt;T&gt;</code> of a supported <code>T</code></td>\n<td>PostgreSQL array, for example <code>text[]</code></td>\n</tr>\n<tr>\n<td><code>BlueTuskRange&lt;int&gt;</code> (and <code>long</code>, <code>DateOnly</code>, <code>DateTime</code>, <code>DateTimeOffset</code>, <code>BlueTuskNumeric</code>)</td>\n<td><code>int4range</code> (and the matching range type)</td>\n</tr>\n<tr>\n<td>Owned or complex type with <code>ToJson()</code></td>\n<td><code>jsonb</code></td>\n</tr>\n<tr>\n<td>CLR <code>enum</code></td>\n<td>its underlying integer type</td>\n</tr>\n</tbody>\n</table>\n<p>Rules worth knowing:</p>\n<ul>\n<li><strong>Use <code>DateTimeOffset</code> for points in time.</strong> <code>DateTime</code> maps to\n<code>timestamp without time zone</code> and reads back with\n<code>DateTimeKind.Unspecified</code>. This differs from Npgsql, which maps <code>DateTime</code>\nto <code>timestamptz</code>. <code>DateTimeOffset</code> values read back in UTC.</li>\n<li><strong>Choose another type with <code>HasColumnType</code></strong>, for example <code>&quot;jsonb&quot;</code> for a\n<code>string</code> or <code>&quot;cidr&quot;</code> for a <code>BlueTuskNetworkAddress</code>.</li>\n<li><strong>Complex collections of structs work.</strong> EF Core 10 rejects a collection of\nvalue-type complex objects; BlueTusk accepts it when the collection is mapped\nto JSON with <code>ToJson()</code>.</li>\n</ul>\n<h3>PostgreSQL enums need three pieces</h3>\n<p>A CLR enum is stored as an integer unless you map it to a PostgreSQL enum.\nTo use a PostgreSQL enum:</p>\n<ol>\n<li>Declare it in the model so migrations create it:\n<code>modelBuilder.HasEnum(&quot;order_status&quot;, [&quot;pending&quot;, &quot;shipped&quot;], schema: &quot;app&quot;);</code></li>\n<li>Point the property at it:\n<code>order.Property(o =&gt; o.Status).HasColumnType(&quot;app.order_status&quot;);</code></li>\n<li>Register the CLR type on the data source:\n<code>.MapEnum&lt;OrderStatus&gt;(&quot;app.order_status&quot;)</code>. The type does not have to\nexist yet (see <a href=\"#how-do-migrations-work\">migrations</a>).</li>\n</ol>\n<p>BlueTusk sends each enum member’s <strong>CLR name</strong> as the label unless you\noverride it. Match lower-case labels with <code>[BlueTuskName(&quot;pending&quot;)]</code> (from\n<code>BlueTusk.TypeSystem</code>), <code>[EnumMember(Value = &quot;pending&quot;)]</code>, or the <code>labels</code>\ndictionary of <code>MapEnum</code>. Prefer the attributes: LINQ enum constants such as\n<code>OrderStatus.Shipped</code> use them, but cannot see the <code>labels</code> dictionary.\nComposites follow the same pattern (<code>HasComposite</code>\nand <code>MapComposite</code>). Domains need only <code>HasDomain</code> and <code>HasColumnType</code>. See\n<a href=\"/documentation/provider/types\">PostgreSQL types</a> and the\n<a href=\"/documentation/ef-core/ef-core-reference#postgresql-type-mappings\">full reference</a>.</p>\n<h2>How does SaveChanges batch commands?</h2>\n<p><strong>New in 1.1.0.</strong> <code>SaveChanges</code> groups inserts, updates and deletes into\nbatches. One batch carries up to <strong>42 commands</strong> by default. In 1.0.0 and\n1.1.0-rc.1 every statement was sent as a separate command.</p>\n"
       },
       {
         "kind": "code",
@@ -131,37 +392,430 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>In the 1.2 candidate, BlueTusk automatically groups writes into bounded batches\ninstead of sending each entity in a separate database round trip. The default\nis up to 42 modification commands per batch. Generated IDs and computed values\nstill flow back to the correct entities. Normal EF logging, interceptors,\noptimistic-concurrency checks and transaction handling remain in use.</p>\n<p>This does not turn a <code>DbContext</code> into a parallel writer. Do not run overlapping\noperations on the same context. For large imports that do not need change\ntracking, consider <a href=\"/documentation/provider/copy\">binary COPY</a>.</p>\n<p>You can retain one-command batches when diagnosing an application-specific\nissue:</p>\n"
+        "html": "<ul>\n<li>EF Core still orders commands by their dependencies: a parent row is\ninserted before the rows that need its generated key.</li>\n<li>A batch is split before it exceeds 65,536 characters of SQL or 32,767\nparameters, whatever <code>MaxBatchSize</code> says.</li>\n<li>Generated keys, computed columns and concurrency checks still reach the\nright entities.</li>\n<li>Logging and <code>DbCommandInterceptor</code> see <strong>one command per batch</strong>. When a\ncommand interceptor is registered, BlueTusk keeps the older per-row result\nshape so the interceptor’s reader stays compatible.</li>\n<li>If a statement fails, <code>DbUpdateException.Entries</code> lists every entry in the\nfailing batch, not only the one that caused the error.</li>\n</ul>\n<p>To go back to one command per statement, set\n<code>provider =&gt; provider.MaxBatchSize(1)</code>. See\n<a href=\"/documentation/ef-core/configuration#bluetusk-options\">Configuration</a> and the\n<a href=\"/documentation/ef-core/ef-core-reference#savechanges-batching\">batching reference</a>.</p>\n<h2>How do I detect concurrent updates?</h2>\n<p>Use PostgreSQL’s <code>xmin</code> system column as a concurrency token. PostgreSQL\nchanges it on every update, so you do not need an extra column:</p>\n"
       },
       {
         "kind": "code",
-        "code": "options.UseBlueTusk(dataSource, provider => provider.MaxBatchSize(1));\n",
-        "highlighted": "options.UseBlueTusk(dataSource, provider =&gt; provider.MaxBatchSize(<span class=\"hljs-number\">1</span>));\n",
+        "code": "order.UseXminConcurrencyToken();\n",
+        "highlighted": "order.UseXminConcurrencyToken();\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Leave the default in place until your own measurements justify another limit.\nSee <a href=\"/documentation/ef-core/ef-core-reference#savechanges-batching\">batching, transactions and recovery</a>\nfor the bounds and failure behavior.</p>\n<h2>5. Create and apply migrations</h2>\n"
+        "html": "<p>This adds a shadow property named <code>xmin</code> (<code>BlueTuskSystemColumns.Xmin</code>).\nMigrations never create it, because PostgreSQL owns it. When a row changed\nsince you read it, <code>SaveChanges</code> throws <code>DbUpdateConcurrencyException</code>:</p>\n"
       },
       {
         "kind": "code",
-        "code": "dotnet ef migrations add InitialCreate\ndotnet ef migrations script --idempotent --output artifacts/database.sql\n",
-        "highlighted": "dotnet ef migrations add InitialCreate\ndotnet ef migrations script <span class=\"hljs-literal\">--idempotent</span> <span class=\"hljs-literal\">--output</span> artifacts/database.sql\n",
+        "code": "var order = await db.Orders.SingleAsync(o => o.Id == orderId);\norder.Status = OrderStatus.Shipped;\n\ntry\n{\n    await db.SaveChangesAsync();\n}\ncatch (DbUpdateConcurrencyException conflict)\n{\n    // Someone else changed the row since it was read. Here the database wins:\n    // reload the current values, then decide whether to apply the change again.\n    foreach (var entry in conflict.Entries)\n    {\n        await entry.ReloadAsync();\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> order = <span class=\"hljs-keyword\">await</span> db.Orders.SingleAsync(o =&gt; o.Id == orderId);\norder.Status = OrderStatus.Shipped;\n\n<span class=\"hljs-keyword\">try</span>\n{\n    <span class=\"hljs-keyword\">await</span> db.SaveChangesAsync();\n}\n<span class=\"hljs-keyword\">catch</span> (DbUpdateConcurrencyException conflict)\n{\n    <span class=\"hljs-comment\">// Someone else changed the row since it was read. Here the database wins:</span>\n    <span class=\"hljs-comment\">// reload the current values, then decide whether to apply the change again.</span>\n    <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> entry <span class=\"hljs-keyword\">in</span> conflict.Entries)\n    {\n        <span class=\"hljs-keyword\">await</span> entry.ReloadAsync();\n    }\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Standard EF Core concurrency tokens (<code>IsConcurrencyToken()</code> or\n<code>[ConcurrencyCheck]</code> on your own column) also work.</p>\n<h3>Read the current database values, including complex collections</h3>\n<p><strong>New in 1.1.0.</strong> EF Core’s <code>GetDatabaseValues()</code> and\n<code>GetDatabaseValuesAsync()</code> read scalar columns only, so the values they return\nhave no complex collections. Use BlueTusk’s <code>GetCompleteDatabaseValues()</code> or\n<code>GetCompleteDatabaseValuesAsync()</code> instead. They read the scalar columns and\nevery complex collection in one statement, so all values come from the same\ndatabase snapshot:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var entry = db.Entry(order);\n\n// GetDatabaseValuesAsync reads scalar columns only. This also reads\n// complex collections, all from one database snapshot.\nvar current = await entry.GetCompleteDatabaseValuesAsync();\nif (current is null)\n{\n    Console.WriteLine(\"The order was deleted.\");\n}\nelse\n{\n    var latest = (Order)current.ToObject();\n    Console.WriteLine($\"The database has {latest.Lines.Count} lines.\");\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> entry = db.Entry(order);\n\n<span class=\"hljs-comment\">// GetDatabaseValuesAsync reads scalar columns only. This also reads</span>\n<span class=\"hljs-comment\">// complex collections, all from one database snapshot.</span>\n<span class=\"hljs-keyword\">var</span> current = <span class=\"hljs-keyword\">await</span> entry.GetCompleteDatabaseValuesAsync();\n<span class=\"hljs-keyword\">if</span> (current <span class=\"hljs-keyword\">is</span> <span class=\"hljs-literal\">null</span>)\n{\n    Console.WriteLine(<span class=\"hljs-string\">&quot;The order was deleted.&quot;</span>);\n}\n<span class=\"hljs-keyword\">else</span>\n{\n    <span class=\"hljs-keyword\">var</span> latest = (Order)current.ToObject();\n    Console.WriteLine(<span class=\"hljs-string\">$&quot;The database has <span class=\"hljs-subst\">{latest.Lines.Count}</span> lines.&quot;</span>);\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Both methods return <code>null</code> when the row no longer exists. For an entity\nwithout complex collections they return the same result as EF Core’s methods\n(<a href=\"/documentation/ef-core/ef-core-reference#store-values-for-complex-collections\">full reference</a>).</p>\n<h2>How do transactions and retries work?</h2>\n<p>Each <code>SaveChanges</code> call runs in a transaction, so either all of its batches\ncommit or none do. To group several operations, start a transaction yourself:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using (var transaction = await db.Database.BeginTransactionAsync())\n{\n    db.Orders.Add(new Order { Customer = \"Fabrikam\" });\n    await db.SaveChangesAsync();\n\n    await db.Orders\n        .Where(o => o.Customer == \"Fabrikam\")\n        .ExecuteUpdateAsync(set => set.SetProperty(o => o.Total, 0m));\n\n    await transaction.CommitAsync();\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> transaction = <span class=\"hljs-keyword\">await</span> db.Database.BeginTransactionAsync())\n{\n    db.Orders.Add(<span class=\"hljs-keyword\">new</span> Order { Customer = <span class=\"hljs-string\">&quot;Fabrikam&quot;</span> });\n    <span class=\"hljs-keyword\">await</span> db.SaveChangesAsync();\n\n    <span class=\"hljs-keyword\">await</span> db.Orders\n        .Where(o =&gt; o.Customer == <span class=\"hljs-string\">&quot;Fabrikam&quot;</span>)\n        .ExecuteUpdateAsync(<span class=\"hljs-keyword\">set</span> =&gt; <span class=\"hljs-keyword\">set</span>.SetProperty(o =&gt; o.Total, <span class=\"hljs-number\">0m</span>));\n\n    <span class=\"hljs-keyword\">await</span> transaction.CommitAsync();\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Inside your transaction, EF Core creates a savepoint before each\n<code>SaveChanges</code>. If the save fails, EF Core rolls back to the savepoint, so\nearlier work in the transaction is kept and you can still commit.</p>\n<p><strong>Retries are off by default.</strong> BlueTusk does not ship a retrying execution\nstrategy. To retry on PostgreSQL errors you consider transient, write one and\nchoose the SQLSTATE codes yourself:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "public sealed class RetryOnSerializationFailure(ExecutionStrategyDependencies dependencies)\n    : ExecutionStrategy(dependencies, maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(2))\n{\n    // 40001 = serialization_failure, 40P01 = deadlock_detected\n    protected override bool ShouldRetryOn(Exception exception)\n        => exception is BlueTuskException { SqlState: \"40001\" or \"40P01\" };\n}\n",
+        "highlighted": "<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">RetryOnSerializationFailure</span>(<span class=\"hljs-params\">ExecutionStrategyDependencies dependencies</span>)\n    : <span class=\"hljs-title\">ExecutionStrategy</span>(<span class=\"hljs-params\">dependencies, maxRetryCount: <span class=\"hljs-number\">3</span>, maxRetryDelay: TimeSpan.FromSeconds(<span class=\"hljs-number\">2</span></span>))</span>\n{\n    <span class=\"hljs-comment\">// 40001 = serialization_failure, 40P01 = deadlock_detected</span>\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-built_in\">bool</span> <span class=\"hljs-title\">ShouldRetryOn</span>(<span class=\"hljs-params\">Exception exception</span>)</span>\n        =&gt; exception <span class=\"hljs-keyword\">is</span> BlueTuskException { SqlState: <span class=\"hljs-string\">&quot;40001&quot;</span> <span class=\"hljs-keyword\">or</span> <span class=\"hljs-string\">&quot;40P01&quot;</span> };\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Register it with <code>ExecutionStrategy(...)</code> (see\n<a href=\"/documentation/ef-core/configuration#bluetusk-options\">Configuration</a>). With a retrying strategy,\nrun explicit transactions through the strategy so the whole unit can be\nretried:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var strategy = db.Database.CreateExecutionStrategy();\nawait strategy.ExecuteAsync(async () =>\n{\n    await using var transaction = await db.Database.BeginTransactionAsync();\n    db.Orders.Add(new Order { Customer = \"Northwind\" });\n    await db.SaveChangesAsync();\n    await transaction.CommitAsync();\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> strategy = db.Database.CreateExecutionStrategy();\n<span class=\"hljs-keyword\">await</span> strategy.ExecuteAsync(<span class=\"hljs-keyword\">async</span> () =&gt;\n{\n    <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> transaction = <span class=\"hljs-keyword\">await</span> db.Database.BeginTransactionAsync();\n    db.Orders.Add(<span class=\"hljs-keyword\">new</span> Order { Customer = <span class=\"hljs-string\">&quot;Northwind&quot;</span> });\n    <span class=\"hljs-keyword\">await</span> db.SaveChangesAsync();\n    <span class=\"hljs-keyword\">await</span> transaction.CommitAsync();\n});\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Only retry work that is safe to repeat. If the connection fails during\n<code>COMMIT</code>, BlueTusk cannot tell whether the commit succeeded.</p>\n<h2>How do migrations work?</h2>\n<p>BlueTusk uses the normal EF Core migrations workflow (<code>dotnet ef migrations add</code>, <code>database update</code>, <code>migrations script</code>). It adds:</p>\n<ul>\n<li><strong>PostgreSQL objects in the model.</strong> Enums, domains, composites, ranges,\nextensions, collations, sequences, partitions, triggers, views, functions,\nrow-level security policies and publications become migration operations.\nSee <a href=\"/documentation/ef-core/configuration#model-configuration\">model configuration</a>.</li>\n<li><strong>Identity keys.</strong> Integer keys generated on add become\n<code>GENERATED BY DEFAULT AS IDENTITY</code>. Use <code>UseIdentityColumn(...)</code> to choose\n<code>ALWAYS</code>.</li>\n<li><strong>A history table</strong> named <code>__EFMigrationsHistory</code> (change it with\n<code>MigrationsHistoryTable</code>).</li>\n<li><strong>A migration lock.</strong> Before applying migrations, BlueTusk runs\n<code>LOCK TABLE &quot;__EFMigrationsHistory&quot; IN ACCESS EXCLUSIVE MODE</code>. The lock ends\nwith the migration transaction, so two processes cannot apply migrations at\nthe same time.</li>\n<li><strong>Database creation.</strong> <code>database update</code> creates the target database if it\nis missing. It connects to the <code>postgres</code> database to do so (or <code>template1</code>\nwhen the target is <code>postgres</code>). Change it with <code>UseAdminDatabase</code>.</li>\n<li><strong>Server version checks.</strong> Features that need a newer PostgreSQL, such as\nvirtual generated columns (PostgreSQL 18), are wrapped in a check that stops\nthe migration with a clear error on an older server.</li>\n</ul>\n<p>For production, generate a reviewed script with\n<code>dotnet ef migrations script --idempotent</code> and apply it in one deployment step,\nusing a role allowed to change the schema. Do not let every application\nreplica migrate at startup.</p>\n<p>A data source that maps an enum or composite can connect before the type\nexists, so <code>dotnet ef database update</code> and <code>Migrate</code> can create the type\nthrough your application’s own data source. <code>Migrate</code> and <code>MigrateAsync</code> then\nreload that data source’s type catalogue. An instance that was already running\nmust call <code>ReloadTypesAsync()</code> or restart. See\n<a href=\"/documentation/ef-core/troubleshooting#enums-and-types\">Troubleshooting</a>.</p>\n<h2>How do I start from an existing database?</h2>\n<p>Scaffolding (database-first) reads the PostgreSQL catalogue and generates a\n<code>DbContext</code> and entity classes. You have two options:</p>\n<ul>\n<li><code>dotnet ef dbcontext scaffold &quot;&lt;connection string&gt;&quot; BlueTusk.EntityFrameworkCore</code>,\nin a project that references <code>BlueTusk.EntityFrameworkCore.Design</code> and\n<code>Microsoft.EntityFrameworkCore.Design</code>.</li>\n<li><code>bluetusk scaffold</code>, from the <code>BlueTusk.Tool</code> .NET tool. It does not need a\nproject to build first.</li>\n</ul>\n<p>Both keep PostgreSQL details such as identity mode, index method, operator\nclass and collation as fluent calls in the generated <code>OnModelCreating</code>.\n<code>bluetusk scaffold</code> leaves your connection string out of the generated code\nunless you pass <code>--include-connection-string</code>. <code>dotnet ef dbcontext scaffold</code>\nwrites it into <code>OnConfiguring</code> unless you pass <code>--no-onconfiguring</code> or use\n<code>Name=ConnectionStrings:&lt;name&gt;</code>.\nSee <a href=\"/documentation/ef-core/configuration#scaffold-command-options\">scaffold command options</a>.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/ef-core/configuration\">Configuration</a>: every option and model method.</li>\n<li><a href=\"/documentation/ef-core/troubleshooting\">Troubleshooting</a>: common errors.</li>\n<li><a href=\"/documentation/ef-core/ef-core-reference\">Full EF Core reference</a>: translated functions and operators.</li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "configuration",
+    "summary": "UseBlueTusk overloads, provider options, model-building extensions and scaffolding options.",
+    "keywords": [
+      "configuration",
+      "UseBlueTusk",
+      "options",
+      "scaffold"
+    ],
+    "order": 13,
+    "listed": true,
+    "title": "EF Core configuration",
+    "sourcePath": "docs/ef-core/configuration.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/configuration.md",
+    "headings": [
+      {
+        "id": "ef-core-configuration",
+        "text": "EF Core configuration",
+        "level": 1
+      },
+      {
+        "id": "connection-string",
+        "text": "Connection string",
+        "level": 2
+      },
+      {
+        "id": "usebluetusk-overloads",
+        "text": "UseBlueTusk overloads",
+        "level": 2
+      },
+      {
+        "id": "bluetusk-options",
+        "text": "BlueTusk options",
+        "level": 2
+      },
+      {
+        "id": "extension-package-options",
+        "text": "Extension package options",
+        "level": 3
+      },
+      {
+        "id": "model-configuration",
+        "text": "Model configuration",
+        "level": 2
+      },
+      {
+        "id": "columns-and-keys",
+        "text": "Columns and keys",
+        "level": 3
+      },
+      {
+        "id": "indexes",
+        "text": "Indexes",
+        "level": 3
+      },
+      {
+        "id": "types-extensions-and-other-database-objects",
+        "text": "Types, extensions and other database objects",
+        "level": 3
+      },
+      {
+        "id": "example",
+        "text": "Example",
+        "level": 3
+      },
+      {
+        "id": "design-time-setup",
+        "text": "Design-time setup",
+        "level": 2
+      },
+      {
+        "id": "scaffold-command-options",
+        "text": "Scaffold command options",
+        "level": 2
+      },
+      {
+        "id": "full-reference",
+        "text": "Full reference",
+        "level": 2
+      }
+    ],
+    "wordCount": 1886,
+    "readMinutes": 9,
+    "searchText": "EF Core configuration This page lists every setting you can use to configure the BlueTusk EF Core provider: the `UseBlueTusk` overloads, the provider options, the PostgreSQL-specific model configuration methods, and the scaffold command options. For explanations, see [Concepts](concepts.md). Connection string The provider uses the same connection string as the ADO.NET provider. The keywords you are most likely to change: Keyword Default Meaning `Host`, `Port`, `Database`, `Username`, `Password` `Port=5432` Where and how to connect. `SSL Mode` `VerifyFull` TLS with certificate and host name checks. Use `Disable` only for a local test container. `Timeout` `15` Seconds to wait when opening a connection. `Pooling` `true` Applies to a data source's pool. `Minimum Pool Size`, `Maximum Pool Size` `0`, `100` Pool limits for the data source. See the [ADO.NET guide](../ado-net/README.md) and [connection pooling](../ado-net/pooling.md) for every keyword. UseBlueTusk overloads Call `UseBlueTusk` on a `DbContextOptionsBuilder` (or the generic `DbContextOptionsBuilder<TContext>`). Every overload takes an optional last argument, `Action<BlueTuskDbContextOptionsBuilder>`, for the [provider options](#bluetusk-options). Overload Use it when `UseBlueTusk(BlueTuskDataSource dataSource, ...)` Always, in applications. Contexts share the data source's pool and its enum and composite mappings. You dispose the data source. `UseBlueTusk(string? connectionString, ...)` Tools and tests. Each context opens its own **unpooled** connection. Runtime type mappings are not available. `UseBlueTusk(BlueTuskConnection connection, bool contextOwnsConnection = false, ...)` You manage one connection yourself, for example to share it with ADO.NET code. BlueTusk options These methods are on `BlueTuskDbContextOptionsBuilder`, the object passed to the `UseBlueTusk` callback. `UseAdminDatabase` is BlueTusk-specific; the others are EF Core relational options with BlueTusk's defaults. Method Default Meaning `Max",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>EF Core configuration</h1>\n<p>This page lists every setting you can use to configure the BlueTusk EF Core\nprovider: the <code>UseBlueTusk</code> overloads, the provider options, the\nPostgreSQL-specific model configuration methods, and the scaffold command\noptions. For explanations, see <a href=\"/documentation/ef-core/concepts\">Concepts</a>.</p>\n<h2>Connection string</h2>\n<p>The provider uses the same connection string as the ADO.NET provider. The\nkeywords you are most likely to change:</p>\n<table>\n<thead>\n<tr>\n<th>Keyword</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Host</code>, <code>Port</code>, <code>Database</code>, <code>Username</code>, <code>Password</code></td>\n<td><code>Port=5432</code></td>\n<td>Where and how to connect.</td>\n</tr>\n<tr>\n<td><code>SSL Mode</code></td>\n<td><code>VerifyFull</code></td>\n<td>TLS with certificate and host name checks. Use <code>Disable</code> only for a local test container.</td>\n</tr>\n<tr>\n<td><code>Timeout</code></td>\n<td><code>15</code></td>\n<td>Seconds to wait when opening a connection.</td>\n</tr>\n<tr>\n<td><code>Pooling</code></td>\n<td><code>true</code></td>\n<td>Applies to a data source’s pool.</td>\n</tr>\n<tr>\n<td><code>Minimum Pool Size</code>, <code>Maximum Pool Size</code></td>\n<td><code>0</code>, <code>100</code></td>\n<td>Pool limits for the data source.</td>\n</tr>\n</tbody>\n</table>\n<p>See the <a href=\"/documentation/getting-started/provider-overview\">ADO.NET guide</a> and\n<a href=\"/documentation/provider/pooling\">connection pooling</a> for every keyword.</p>\n<h2>UseBlueTusk overloads</h2>\n<p>Call <code>UseBlueTusk</code> on a <code>DbContextOptionsBuilder</code> (or the generic\n<code>DbContextOptionsBuilder&lt;TContext&gt;</code>). Every overload takes an optional last\nargument, <code>Action&lt;BlueTuskDbContextOptionsBuilder&gt;</code>, for the\n<a href=\"#bluetusk-options\">provider options</a>.</p>\n<table>\n<thead>\n<tr>\n<th>Overload</th>\n<th>Use it when</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>UseBlueTusk(BlueTuskDataSource dataSource, ...)</code></td>\n<td>Always, in applications. Contexts share the data source’s pool and its enum and composite mappings. You dispose the data source.</td>\n</tr>\n<tr>\n<td><code>UseBlueTusk(string? connectionString, ...)</code></td>\n<td>Tools and tests. Each context opens its own <strong>unpooled</strong> connection. Runtime type mappings are not available.</td>\n</tr>\n<tr>\n<td><code>UseBlueTusk(BlueTuskConnection connection, bool contextOwnsConnection = false, ...)</code></td>\n<td>You manage one connection yourself, for example to share it with ADO.NET code.</td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "code",
+        "code": "// Recommended: share the application's data source and its pool.\noptions.UseBlueTusk(dataSource);\n",
+        "highlighted": "<span class=\"hljs-comment\">// Recommended: share the application&#x27;s data source and its pool.</span>\noptions.UseBlueTusk(dataSource);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "code",
+        "code": "// A connection string: each context opens its own unpooled connection.\noptions.UseBlueTusk(connectionString);\n",
+        "highlighted": "<span class=\"hljs-comment\">// A connection string: each context opens its own unpooled connection.</span>\noptions.UseBlueTusk(connectionString);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "code",
+        "code": "// An existing connection. The context disposes it only if contextOwnsConnection is true.\noptions.UseBlueTusk(connection, contextOwnsConnection: false);\n",
+        "highlighted": "<span class=\"hljs-comment\">// An existing connection. The context disposes it only if contextOwnsConnection is true.</span>\noptions.UseBlueTusk(connection, contextOwnsConnection: <span class=\"hljs-literal\">false</span>);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>BlueTusk options</h2>\n<p>These methods are on <code>BlueTuskDbContextOptionsBuilder</code>, the object passed to\nthe <code>UseBlueTusk</code> callback. <code>UseAdminDatabase</code> is BlueTusk-specific; the others\nare EF Core relational options with BlueTusk’s defaults.</p>\n<table>\n<thead>\n<tr>\n<th>Method</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MaxBatchSize(int)</code></td>\n<td><code>42</code></td>\n<td>Most commands sent together by one <code>SaveChanges</code> batch. <code>1</code> sends each statement on its own. <strong>New in 1.1.0:</strong> batching was off in 1.0.0 and 1.1.0-rc.1. A batch is also split at 65,536 characters of SQL or 32,767 parameters.</td>\n</tr>\n<tr>\n<td><code>MinBatchSize(int)</code></td>\n<td><code>1</code></td>\n<td>Fewer commands than this are sent without batching.</td>\n</tr>\n<tr>\n<td><code>CommandTimeout(int?)</code></td>\n<td><code>30</code> seconds</td>\n<td>Seconds before a command is cancelled.</td>\n</tr>\n<tr>\n<td><code>ExecutionStrategy(Func&lt;ExecutionStrategyDependencies, IExecutionStrategy&gt;)</code></td>\n<td>No retries</td>\n<td>Your retry strategy. See <a href=\"/documentation/ef-core/concepts#how-do-transactions-and-retries-work\">Concepts</a>.</td>\n</tr>\n<tr>\n<td><code>MigrationsAssembly(string)</code> or <code>MigrationsAssembly(Assembly)</code></td>\n<td>The context’s assembly</td>\n<td>Where migrations live.</td>\n</tr>\n<tr>\n<td><code>MigrationsHistoryTable(string tableName, string? schema = null)</code></td>\n<td><code>__EFMigrationsHistory</code>, unqualified (so usually in <code>public</code>)</td>\n<td>Name and schema of the history table.</td>\n</tr>\n<tr>\n<td><code>UseQuerySplittingBehavior(QuerySplittingBehavior)</code></td>\n<td><code>SingleQuery</code></td>\n<td>Load collections with one query or one query per collection.</td>\n</tr>\n<tr>\n<td><code>UseRelationalNulls(bool useRelationalNulls = true)</code></td>\n<td><code>false</code></td>\n<td><code>true</code> uses SQL null comparison semantics instead of C# semantics.</td>\n</tr>\n<tr>\n<td><code>UseParameterizedCollectionMode(ParameterTranslationMode)</code></td>\n<td><code>MultipleParameters</code></td>\n<td>How a captured collection in <code>Contains</code> is sent: <code>IN (@ids1, @ids2, ...)</code> by default, inline constants with <code>Constant</code>, or one typed PostgreSQL array parameter with <code>Parameter</code> (<code>IN (SELECT ... FROM unnest(@ids) ...)</code>, element type taken from the compared column).</td>\n</tr>\n<tr>\n<td><code>UseAdminDatabase(string databaseName)</code></td>\n<td><code>postgres</code> (<code>template1</code> when the target is <code>postgres</code>)</td>\n<td>Existing database used to create or drop the target database.</td>\n</tr>\n<tr>\n<td><code>ContextOptionsBuilder</code> (property)</td>\n<td></td>\n<td>The underlying <code>DbContextOptionsBuilder</code>. Extension packages use it.</td>\n</tr>\n</tbody>\n</table>\n<p><code>TranslateParameterizedCollectionsToConstants()</code> and\n<code>TranslateParameterizedCollectionsToParameters()</code> are marked obsolete by EF\nCore 10. Use <code>UseParameterizedCollectionMode</code> instead.</p>\n<p>A context that sets several options:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "options.UseBlueTusk(dataSource, provider => provider\n    .MaxBatchSize(100)\n    .CommandTimeout(60)\n    .MigrationsHistoryTable(\"__EFMigrationsHistory\", \"app\")\n    .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)\n    .ExecutionStrategy(dependencies => new RetryOnSerializationFailure(dependencies))\n    .UseAdminDatabase(\"maintenance\"));\n",
+        "highlighted": "options.UseBlueTusk(dataSource, provider =&gt; provider\n    .MaxBatchSize(<span class=\"hljs-number\">100</span>)\n    .CommandTimeout(<span class=\"hljs-number\">60</span>)\n    .MigrationsHistoryTable(<span class=\"hljs-string\">&quot;__EFMigrationsHistory&quot;</span>, <span class=\"hljs-string\">&quot;app&quot;</span>)\n    .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)\n    .ExecutionStrategy(dependencies =&gt; <span class=\"hljs-keyword\">new</span> RetryOnSerializationFailure(dependencies))\n    .UseAdminDatabase(<span class=\"hljs-string\">&quot;maintenance&quot;</span>));\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>RetryOnSerializationFailure</code> is the example strategy from\n<a href=\"/documentation/ef-core/concepts#how-do-transactions-and-retries-work\">Concepts</a>.</p>\n<h3>Extension package options</h3>\n<p>Optional packages add methods to the same builder. Register the matching\ndata-source method too. Each method takes an optional <code>schema</code> argument (default\n<code>&quot;public&quot;</code>): the schema where the extension is installed.</p>\n<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>Provider option</th>\n<th>Data source method</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTusk.Extensions.Citext.EntityFrameworkCore</code></td>\n<td><code>UseCitext()</code></td>\n<td><code>UseCitext()</code></td>\n</tr>\n<tr>\n<td><code>BlueTusk.Extensions.PgVector.EntityFrameworkCore</code></td>\n<td><code>UsePgVector()</code></td>\n<td><code>UsePgVector()</code></td>\n</tr>\n<tr>\n<td><code>BlueTusk.Extensions.PostGIS.EntityFrameworkCore</code></td>\n<td><code>UsePostGis()</code></td>\n<td><code>UsePostGis()</code></td>\n</tr>\n<tr>\n<td><code>BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore</code></td>\n<td><code>UseTimescaleDb()</code></td>\n<td><code>UseTimescaleDb()</code></td>\n</tr>\n</tbody>\n</table>\n<p>See <a href=\"/documentation/extensions/catalog\">PostgreSQL extensions</a>.</p>\n<h2>Model configuration</h2>\n<p>These extension methods are in the <code>Microsoft.EntityFrameworkCore</code> namespace.\nUse them in <code>OnModelCreating</code> next to the standard EF Core fluent API.\nMigrations create, change and drop the objects they describe.</p>\n<h3>Columns and keys</h3>\n<table>\n<thead>\n<tr>\n<th>Method</th>\n<th>On</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>UseIdentityColumn(BlueTuskIdentityGeneration generation = ByDefault)</code></td>\n<td>property</td>\n<td><code>GENERATED BY DEFAULT AS IDENTITY</code> or <code>GENERATED ALWAYS AS IDENTITY</code>. Integer keys get <code>ByDefault</code> without this call.</td>\n</tr>\n<tr>\n<td><code>UseXminConcurrencyToken()</code></td>\n<td>entity</td>\n<td>Maps <code>xmin</code> as a concurrency token.</td>\n</tr>\n<tr>\n<td><code>UseSystemColumn(BlueTuskSystemColumn)</code>, <code>UseSystemColumns()</code></td>\n<td>entity</td>\n<td>Maps <code>tableoid</code>, <code>xmin</code>, <code>cmin</code>, <code>xmax</code>, <code>cmax</code> or <code>ctid</code> as read-only shadow properties.</td>\n</tr>\n<tr>\n<td><code>HasColumnType(string)</code> (EF Core)</td>\n<td>property</td>\n<td>Chooses the PostgreSQL type, for example <code>&quot;jsonb&quot;</code>, <code>&quot;cidr&quot;</code> or <code>&quot;app.order_status&quot;</code>.</td>\n</tr>\n</tbody>\n</table>\n<h3>Indexes</h3>\n<table>\n<thead>\n<tr>\n<th>Method</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>UseIndexMethod(string)</code></td>\n<td>Index method: <code>btree</code>, <code>hash</code>, <code>gin</code>, <code>gist</code>, <code>brin</code>, <code>spgist</code> or an extension’s method.</td>\n</tr>\n<tr>\n<td><code>UseOperatorClass(params string?[])</code></td>\n<td>Operator class per column, for example <code>&quot;jsonb_path_ops&quot;</code>.</td>\n</tr>\n<tr>\n<td><code>UseCollation(params string?[])</code></td>\n<td>Collation per column.</td>\n</tr>\n<tr>\n<td><code>HasNullSortOrder(params BlueTuskIndexNullSortOrder[])</code></td>\n<td><code>NULLS FIRST</code> or <code>NULLS LAST</code> per column.</td>\n</tr>\n<tr>\n<td><code>IncludeProperties(...)</code></td>\n<td>Non-key <code>INCLUDE</code> columns (expression or property names).</td>\n</tr>\n<tr>\n<td><code>HasNullsDistinct(bool distinct = true)</code></td>\n<td><code>NULLS DISTINCT</code> or <code>NULLS NOT DISTINCT</code> for unique indexes.</td>\n</tr>\n<tr>\n<td><code>IsConcurrent(bool concurrent = true)</code></td>\n<td><code>CREATE INDEX CONCURRENTLY</code>.</td>\n</tr>\n<tr>\n<td><code>HasFillFactor(int)</code></td>\n<td>Fill factor, 10 to 100.</td>\n</tr>\n<tr>\n<td><code>HasStorageParameter(string name, string value)</code></td>\n<td>Any other <code>WITH (...)</code> storage parameter.</td>\n</tr>\n<tr>\n<td><code>HasIndexExpressions(params string?[])</code></td>\n<td>SQL expressions instead of columns.</td>\n</tr>\n</tbody>\n</table>\n<p>Entities also have <code>HasExpressionIndex</code>, <code>HasExclusionConstraint</code> and\n<code>HasCheckConstraints</code> (with <code>IsNoInherit</code>, <code>IsNotValid</code> and <code>IsNotEnforced</code> on\na check constraint).</p>\n<h3>Types, extensions and other database objects</h3>\n<table>\n<thead>\n<tr>\n<th>Method</th>\n<th>On</th>\n<th>Creates</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>HasEnum(name, labels, schema)</code></td>\n<td>model</td>\n<td>An enum type.</td>\n</tr>\n<tr>\n<td><code>HasDomain</code>, <code>HasComposite</code>, <code>HasRange</code></td>\n<td>model</td>\n<td>A domain, composite or range (with its multirange) type.</td>\n</tr>\n<tr>\n<td><code>HasExtension(name, ...)</code></td>\n<td>model</td>\n<td><code>CREATE EXTENSION</code>, with <code>UseSchema</code>, <code>HasVersion</code>, <code>DependsOnExtension</code> and <code>InstallDependencies</code> on the builder.</td>\n</tr>\n<tr>\n<td><code>HasCollation(name, ...)</code></td>\n<td>model</td>\n<td>A collation.</td>\n</tr>\n<tr>\n<td><code>HasSequence&lt;T&gt;(...)</code> (EF Core)</td>\n<td>model</td>\n<td>A sequence.</td>\n</tr>\n<tr>\n<td><code>HasFunction</code>, <code>HasProcedure</code>, <code>HasRoutine</code></td>\n<td>model</td>\n<td>Functions and procedures.</td>\n</tr>\n<tr>\n<td><code>HasView</code>, <code>HasMaterializedView</code></td>\n<td>model</td>\n<td>Views and materialized views.</td>\n</tr>\n<tr>\n<td><code>HasAggregate</code>, <code>HasOperator</code>, <code>HasOperatorClass</code>, <code>HasOperatorFamily</code>, <code>HasCast</code></td>\n<td>model</td>\n<td>Other schema objects.</td>\n</tr>\n<tr>\n<td><code>HasPublication</code>, <code>HasSubscription</code></td>\n<td>model</td>\n<td>Logical-replication publications and subscriptions.</td>\n</tr>\n<tr>\n<td><code>HasTablespace</code>, <code>HasEventTrigger</code></td>\n<td>model</td>\n<td>Tablespaces and event triggers.</td>\n</tr>\n<tr>\n<td><code>HasForeignDataWrapper</code>, <code>HasForeignServer</code>, <code>HasUserMapping</code>, <code>HasForeignTable</code></td>\n<td>model / entity</td>\n<td>Foreign data objects.</td>\n</tr>\n<tr>\n<td><code>HasRangePartitioning</code>, <code>HasListPartitioning</code>, <code>HasHashPartitioning</code></td>\n<td>entity</td>\n<td>A partitioned table.</td>\n</tr>\n<tr>\n<td><code>HasTrigger</code>, <code>HasRule</code></td>\n<td>entity</td>\n<td>Triggers and rewrite rules.</td>\n</tr>\n<tr>\n<td><code>UseRowLevelSecurity</code>, <code>HasRowLevelSecurity</code></td>\n<td>entity</td>\n<td>Row-level security and policies.</td>\n</tr>\n<tr>\n<td><code>InheritsFromTable</code></td>\n<td>entity</td>\n<td>PostgreSQL table inheritance.</td>\n</tr>\n</tbody>\n</table>\n<p>Most have a matching <code>HasNo...</code> method to remove the object. The\n<a href=\"/documentation/ef-core/ef-core-reference#migrations\">full reference</a> shows each one with the SQL it\ncreates.</p>\n<h3>Example</h3>\n"
+      },
+      {
+        "kind": "code",
+        "code": "protected override void OnModelCreating(ModelBuilder modelBuilder)\n{\n    modelBuilder.HasDefaultSchema(\"app\");\n    modelBuilder.HasEnum(\"order_status\", [\"pending\", \"shipped\"], schema: \"app\");\n    modelBuilder.HasSequence<long>(\"order_numbers\", \"app\").StartsAt(1000);\n\n    modelBuilder.Entity<Order>(order =>\n    {\n        order.Property(o => o.Id).UseIdentityColumn(BlueTuskIdentityGeneration.Always);\n        order.Property(o => o.Number).HasDefaultValueSql(\"nextval('app.order_numbers')\");\n        order.Property(o => o.Customer).HasMaxLength(200);\n        order.Property(o => o.Status).HasColumnType(\"app.order_status\");\n        order.Property(o => o.Total).HasPrecision(18, 2);\n        order.ComplexCollection(o => o.Lines, lines => lines.ToJson());\n\n        order.HasIndex(o => o.Tags).UseIndexMethod(\"gin\");\n        order.HasIndex(o => o.Customer).IncludeProperties(o => o.Total).HasFillFactor(90);\n\n        order.UseXminConcurrencyToken();\n    });\n}\n",
+        "highlighted": "<span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">void</span> <span class=\"hljs-title\">OnModelCreating</span>(<span class=\"hljs-params\">ModelBuilder modelBuilder</span>)</span>\n{\n    modelBuilder.HasDefaultSchema(<span class=\"hljs-string\">&quot;app&quot;</span>);\n    modelBuilder.HasEnum(<span class=\"hljs-string\">&quot;order_status&quot;</span>, [<span class=\"hljs-string\">&quot;pending&quot;</span>, <span class=\"hljs-string\">&quot;shipped&quot;</span>], schema: <span class=\"hljs-string\">&quot;app&quot;</span>);\n    modelBuilder.HasSequence&lt;<span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-string\">&quot;order_numbers&quot;</span>, <span class=\"hljs-string\">&quot;app&quot;</span>).StartsAt(<span class=\"hljs-number\">1000</span>);\n\n    modelBuilder.Entity&lt;Order&gt;(order =&gt;\n    {\n        order.Property(o =&gt; o.Id).UseIdentityColumn(BlueTuskIdentityGeneration.Always);\n        order.Property(o =&gt; o.Number).HasDefaultValueSql(<span class=\"hljs-string\">&quot;nextval(&#x27;app.order_numbers&#x27;)&quot;</span>);\n        order.Property(o =&gt; o.Customer).HasMaxLength(<span class=\"hljs-number\">200</span>);\n        order.Property(o =&gt; o.Status).HasColumnType(<span class=\"hljs-string\">&quot;app.order_status&quot;</span>);\n        order.Property(o =&gt; o.Total).HasPrecision(<span class=\"hljs-number\">18</span>, <span class=\"hljs-number\">2</span>);\n        order.ComplexCollection(o =&gt; o.Lines, lines =&gt; lines.ToJson());\n\n        order.HasIndex(o =&gt; o.Tags).UseIndexMethod(<span class=\"hljs-string\">&quot;gin&quot;</span>);\n        order.HasIndex(o =&gt; o.Customer).IncludeProperties(o =&gt; o.Total).HasFillFactor(<span class=\"hljs-number\">90</span>);\n\n        order.UseXminConcurrencyToken();\n    });\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>With these entity types:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "public enum OrderStatus\n{\n    [BlueTuskName(\"pending\")] Pending,\n    [BlueTuskName(\"shipped\")] Shipped,\n}\n\npublic readonly record struct OrderLine(string Sku, int Quantity);\n\npublic sealed class Order\n{\n    public long Id { get; set; }\n    public long Number { get; set; }\n    public required string Customer { get; set; }\n    public OrderStatus Status { get; set; }\n    public decimal Total { get; set; }\n    public DateTimeOffset PlacedAt { get; set; }\n    public string[] Tags { get; set; } = [];\n    public BlueTuskRange<DateOnly> DeliveryWindow { get; set; }\n    public List<OrderLine> Lines { get; set; } = [];\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">enum</span> OrderStatus\n{\n    [<span class=\"hljs-meta\">BlueTuskName(<span class=\"hljs-string\">&quot;pending&quot;</span>)</span>] Pending,\n    [<span class=\"hljs-meta\">BlueTuskName(<span class=\"hljs-string\">&quot;shipped&quot;</span>)</span>] Shipped,\n}\n\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">readonly</span> <span class=\"hljs-keyword\">record</span> <span class=\"hljs-keyword\">struct</span> <span class=\"hljs-title\">OrderLine</span>(<span class=\"hljs-params\"><span class=\"hljs-built_in\">string</span> Sku, <span class=\"hljs-built_in\">int</span> Quantity</span>)</span>;\n\n<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">Order</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">long</span> Id { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">long</span> Number { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">required</span> <span class=\"hljs-built_in\">string</span> Customer { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> OrderStatus Status { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">decimal</span> Total { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> DateTimeOffset PlacedAt { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">string</span>[] Tags { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; } = [];\n    <span class=\"hljs-keyword\">public</span> BlueTuskRange&lt;DateOnly&gt; DeliveryWindow { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> List&lt;OrderLine&gt; Lines { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; } = [];\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The migration for this model creates:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "CREATE TYPE \"app\".\"order_status\" AS ENUM ('pending', 'shipped');\nCREATE SEQUENCE \"app\".\"order_numbers\" START WITH 1000 INCREMENT BY 1 NO CYCLE;\nCREATE TABLE \"app\".\"Orders\" (\n    \"Id\" bigint NOT NULL GENERATED ALWAYS AS IDENTITY,\n    \"Number\" bigint NOT NULL DEFAULT (nextval('app.order_numbers')),\n    \"Customer\" character varying(200) NOT NULL,\n    \"Status\" app.order_status NOT NULL,\n    \"Total\" numeric(18,2) NOT NULL,\n    \"PlacedAt\" timestamp with time zone NOT NULL,\n    \"Tags\" text[] NOT NULL,\n    \"DeliveryWindow\" daterange NOT NULL,\n    \"Lines\" jsonb NOT NULL,\n    CONSTRAINT \"PK_Orders\" PRIMARY KEY (\"Id\")\n);\nCREATE INDEX \"IX_Orders_Customer\" ON \"app\".\"Orders\" (\"Customer\") INCLUDE (\"Total\") WITH (fillfactor = 90);\nCREATE INDEX \"IX_Orders_Tags\" ON \"app\".\"Orders\" USING \"gin\" (\"Tags\");\n",
+        "highlighted": "<span class=\"hljs-keyword\">CREATE</span> TYPE &quot;app&quot;.&quot;order_status&quot; <span class=\"hljs-keyword\">AS</span> ENUM (<span class=\"hljs-string\">&#x27;pending&#x27;</span>, <span class=\"hljs-string\">&#x27;shipped&#x27;</span>);\n<span class=\"hljs-keyword\">CREATE</span> SEQUENCE &quot;app&quot;.&quot;order_numbers&quot; <span class=\"hljs-keyword\">START</span> <span class=\"hljs-keyword\">WITH</span> <span class=\"hljs-number\">1000</span> INCREMENT <span class=\"hljs-keyword\">BY</span> <span class=\"hljs-number\">1</span> <span class=\"hljs-keyword\">NO</span> <span class=\"hljs-keyword\">CYCLE</span>;\n<span class=\"hljs-keyword\">CREATE TABLE</span> &quot;app&quot;.&quot;Orders&quot; (\n    &quot;Id&quot; <span class=\"hljs-type\">bigint</span> <span class=\"hljs-keyword\">NOT NULL</span> GENERATED ALWAYS <span class=\"hljs-keyword\">AS</span> <span class=\"hljs-keyword\">IDENTITY</span>,\n    &quot;Number&quot; <span class=\"hljs-type\">bigint</span> <span class=\"hljs-keyword\">NOT NULL</span> <span class=\"hljs-keyword\">DEFAULT</span> (nextval(<span class=\"hljs-string\">&#x27;app.order_numbers&#x27;</span>)),\n    &quot;Customer&quot; <span class=\"hljs-type\">character</span> <span class=\"hljs-type\">varying</span>(<span class=\"hljs-number\">200</span>) <span class=\"hljs-keyword\">NOT NULL</span>,\n    &quot;Status&quot; app.order_status <span class=\"hljs-keyword\">NOT NULL</span>,\n    &quot;Total&quot; <span class=\"hljs-type\">numeric</span>(<span class=\"hljs-number\">18</span>,<span class=\"hljs-number\">2</span>) <span class=\"hljs-keyword\">NOT NULL</span>,\n    &quot;PlacedAt&quot; <span class=\"hljs-type\">timestamp</span> <span class=\"hljs-keyword\">with</span> <span class=\"hljs-type\">time</span> zone <span class=\"hljs-keyword\">NOT NULL</span>,\n    &quot;Tags&quot; text[] <span class=\"hljs-keyword\">NOT NULL</span>,\n    &quot;DeliveryWindow&quot; daterange <span class=\"hljs-keyword\">NOT NULL</span>,\n    &quot;Lines&quot; jsonb <span class=\"hljs-keyword\">NOT NULL</span>,\n    <span class=\"hljs-keyword\">CONSTRAINT</span> &quot;PK_Orders&quot; <span class=\"hljs-keyword\">PRIMARY KEY</span> (&quot;Id&quot;)\n);\n<span class=\"hljs-keyword\">CREATE</span> INDEX &quot;IX_Orders_Customer&quot; <span class=\"hljs-keyword\">ON</span> &quot;app&quot;.&quot;Orders&quot; (&quot;Customer&quot;) INCLUDE (&quot;Total&quot;) <span class=\"hljs-keyword\">WITH</span> (fillfactor <span class=\"hljs-operator\">=</span> <span class=\"hljs-number\">90</span>);\n<span class=\"hljs-keyword\">CREATE</span> INDEX &quot;IX_Orders_Tags&quot; <span class=\"hljs-keyword\">ON</span> &quot;app&quot;.&quot;Orders&quot; <span class=\"hljs-keyword\">USING</span> &quot;gin&quot; (&quot;Tags&quot;);\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The application’s data source must also map the enum:\n<code>.MapEnum&lt;OrderStatus&gt;(&quot;app.order_status&quot;)</code>. It can map it before this\nmigration has run: <code>dotnet ef database update</code> and <code>Migrate</code> work through the\nsame data source and reload its type catalogue afterwards. See\n<a href=\"/documentation/ef-core/concepts#postgresql-enums-need-three-pieces\">Concepts</a>.</p>\n<h2>Design-time setup</h2>\n<p><code>dotnet ef</code> needs two packages in the startup project:\n<code>BlueTusk.EntityFrameworkCore.Design</code> and\n<code>Microsoft.EntityFrameworkCore.Design</code> (version 10.0.11). BlueTusk registers\nits design-time services automatically; you do not write an\n<code>IDesignTimeServices</code> class. Use <code>dotnet-ef</code> version 10.0.11.</p>\n<p>To scaffold with <code>dotnet ef</code>, pass the provider name\n<code>BlueTusk.EntityFrameworkCore</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet ef dbcontext scaffold \"Name=ConnectionStrings:Library\" BlueTusk.EntityFrameworkCore --output-dir Scaffolded --table Authors --table Books --context ScaffoldedContext\n",
+        "highlighted": "dotnet ef dbcontext scaffold <span class=\"hljs-string\">&quot;Name=ConnectionStrings:Library&quot;</span> BlueTusk.EntityFrameworkCore <span class=\"hljs-literal\">--output-dir</span> Scaffolded <span class=\"hljs-literal\">--table</span> Authors <span class=\"hljs-literal\">--table</span> Books <span class=\"hljs-literal\">--context</span> ScaffoldedContext\n",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>Review the SQL and apply it through a deployment job using a migration role.\nDo not let every application replica race to migrate the database at startup.</p>\n<h2>Verify the setup</h2>\n<p>Run the repository’s executable example when developing BlueTusk itself:</p>\n"
+        "html": "<p><code>Name=ConnectionStrings:Library</code> reads the connection string from\nconfiguration, so it is not copied into the generated code.</p>\n<h2>Scaffold command options</h2>\n<p><code>bluetusk scaffold</code> generates a <code>DbContext</code> and entity classes without a\nproject build. Install it with <code>dotnet tool install --global BlueTusk.Tool</code>.</p>\n"
       },
       {
         "kind": "code",
-        "code": "$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Database=app;Username=app;Password=local-only;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet run --project samples/BlueTusk.Samples.EntityFrameworkCore\n",
-        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Database=app;Username=app;Password=local-only;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.EntityFrameworkCore\n",
+        "code": "$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=library;SSL Mode=Disable;Channel Binding=Disable\"\nbluetusk scaffold --schema public --context LibraryContext --namespace Library.Data --output Data\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=library;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\nbluetusk scaffold <span class=\"hljs-literal\">--schema</span> public <span class=\"hljs-literal\">--context</span> LibraryContext <span class=\"hljs-literal\">--namespace</span> Library.Data <span class=\"hljs-literal\">--output</span> <span class=\"hljs-keyword\">Data</span>\n",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>The TLS-disabled connection is for an isolated local database only.</p>\n<h2>Production defaults</h2>\n<ul>\n<li>Supply the connection string from the deployment secret store.</li>\n<li>Enable TLS certificate and hostname validation.</li>\n<li>Set explicit command timeouts and a measured maximum pool size.</li>\n<li>Use a least-privilege application role and a separate migration role.</li>\n<li>Log query duration and failure metadata, not parameter values.</li>\n</ul>\n<h2>Go deeper only when needed</h2>\n<p>The <a href=\"/documentation/ef-core/ef-core-reference\">EF Core reference</a> covers PostgreSQL mappings, translated\noperators and functions, arrays, migrations, scaffolding, extension packages,\nand SQL/PGQ. The <a href=\"/documentation/ef-core/specification-tests\">specification-test record</a> is evidence\nfor provider maintainers rather than required application reading.</p>\n"
+        "html": "<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>--connection &lt;value&gt;</code></td>\n<td><code>BLUETUSK_CONNECTION_STRING</code></td>\n<td>Connection string. Required unless the environment variable is set. Removed from error messages.</td>\n</tr>\n<tr>\n<td><code>--schema &lt;name&gt;</code></td>\n<td>All schemas</td>\n<td>Include a schema. Repeatable.</td>\n</tr>\n<tr>\n<td><code>--table &lt;schema.table&gt;</code></td>\n<td>All tables</td>\n<td>Include a table. Repeatable. Without it, <code>__EFMigrationsHistory</code> is scaffolded too.</td>\n</tr>\n<tr>\n<td><code>--include-graphs</code>, <code>--include-functions</code>, <code>--include-views</code></td>\n<td>Included</td>\n<td>Accepted for scripts; graphs, routines and views are always included.</td>\n</tr>\n<tr>\n<td><code>--output &lt;directory&gt;</code></td>\n<td><code>Models</code></td>\n<td>Output folder, relative to <code>--project-dir</code>.</td>\n</tr>\n<tr>\n<td><code>--project-dir &lt;directory&gt;</code></td>\n<td>Current directory</td>\n<td>Base project folder.</td>\n</tr>\n<tr>\n<td><code>--context &lt;name&gt;</code></td>\n<td><code>BlueTuskContext</code></td>\n<td><code>DbContext</code> class name.</td>\n</tr>\n<tr>\n<td><code>--namespace &lt;name&gt;</code></td>\n<td><code>BlueTusk.Models</code></td>\n<td>Entity namespace.</td>\n</tr>\n<tr>\n<td><code>--context-namespace &lt;name&gt;</code></td>\n<td>Same as <code>--namespace</code></td>\n<td><code>DbContext</code> namespace.</td>\n</tr>\n<tr>\n<td><code>--root-namespace &lt;name&gt;</code></td>\n<td>Same as <code>--namespace</code></td>\n<td>Project root namespace.</td>\n</tr>\n<tr>\n<td><code>--data-annotations</code></td>\n<td>Off</td>\n<td>Use attributes where possible instead of fluent calls.</td>\n</tr>\n<tr>\n<td><code>--use-database-names</code></td>\n<td>Off</td>\n<td>Keep database identifiers as class and property names.</td>\n</tr>\n<tr>\n<td><code>--no-pluralize</code></td>\n<td>Off</td>\n<td>Do not pluralize or singularize names.</td>\n</tr>\n<tr>\n<td><code>--include-connection-string</code></td>\n<td>Off</td>\n<td>Generate <code>OnConfiguring</code> with the connection string.</td>\n</tr>\n<tr>\n<td><code>--force</code></td>\n<td>Off</td>\n<td>Overwrite existing files.</td>\n</tr>\n</tbody>\n</table>\n<p>Run <code>bluetusk scaffold --help</code> to print the same list. The command exits with\n<code>0</code> on success, <code>1</code> if scaffolding fails, and <code>2</code> for an unknown option, a\nmissing value or a missing connection string. See the <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/tooling/BlueTusk.Tool/README.md\" target=\"_blank\" rel=\"noreferrer\">tool README</a> for\n<code>bluetusk doctor</code>.</p>\n<h2>Full reference</h2>\n<p>The <a href=\"/documentation/ef-core/ef-core-reference\">full EF Core reference</a> documents every translated\nfunction and operator, query construct and migration operation.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "troubleshooting",
+    "summary": "Fix setup, translation, migration, concurrency and type-mapping problems.",
+    "keywords": [
+      "troubleshooting",
+      "errors",
+      "migrations",
+      "translation"
+    ],
+    "order": 14,
+    "listed": true,
+    "title": "EF Core troubleshooting",
+    "sourcePath": "docs/ef-core/troubleshooting.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/troubleshooting.md",
+    "headings": [
+      {
+        "id": "ef-core-troubleshooting",
+        "text": "EF Core troubleshooting",
+        "level": 1
+      },
+      {
+        "id": "setup",
+        "text": "Setup",
+        "level": 2
+      },
+      {
+        "id": "no-database-provider-has-been-configured-for-this-dbcontext",
+        "text": "\"No database provider has been configured for this DbContext\"",
+        "level": 3
+      },
+      {
+        "id": "a-connection-string-is-required",
+        "text": "\"A connection string is required.\"",
+        "level": 3
+      },
+      {
+        "id": "postgresql-runs-out-of-connections-or-every-request-opens-a-new-one",
+        "text": "PostgreSQL runs out of connections, or every request opens a new one",
+        "level": 3
+      },
+      {
+        "id": "dotnet-ef-and-package-versions",
+        "text": "dotnet ef and package versions",
+        "level": 2
+      },
+      {
+        "id": "your-startup-project-doesn-t-reference-microsoft-entityframeworkcore-design",
+        "text": "\"Your startup project '...' doesn't reference Microsoft.EntityFrameworkCore.Design.\"",
+        "level": 3
+      },
+      {
+        "id": "could-not-load-file-or-assembly-bluetusk-entityframeworkcore-design",
+        "text": "\"Could not load file or assembly 'BlueTusk.EntityFrameworkCore.Design'\"",
+        "level": 3
+      },
+      {
+        "id": "the-entity-framework-tools-version-is-older-than-that-of-the-runtime-10-0-11",
+        "text": "\"The Entity Framework tools version '...' is older than that of the runtime '10.0.11'.\"",
+        "level": 3
+      },
+      {
+        "id": "nu1605-detected-package-downgrade-microsoft-entityframeworkcore-relational-from-10-0-11-to",
+        "text": "\"NU1605: Detected package downgrade: Microsoft.EntityFrameworkCore.Relational from 10.0.11 to ...\"",
+        "level": 3
+      },
+      {
+        "id": "unable-to-retrieve-project-metadata-ensure-it-s-an-sdk-style-project",
+        "text": "\"Unable to retrieve project metadata. Ensure it's an SDK-style project.\"",
+        "level": 3
+      },
+      {
+        "id": "queries",
+        "text": "Queries",
+        "level": 2
+      },
+      {
+        "id": "the-linq-expression-could-not-be-translated",
+        "text": "\"The LINQ expression '...' could not be translated.\"",
+        "level": 3
+      },
+      {
+        "id": "bluetusk-postgresql-database-functions-can-only-be-used-in-translated-ef-core-queries",
+        "text": "\"BlueTusk PostgreSQL database functions can only be used in translated EF Core queries.\"",
+        "level": 3
+      },
+      {
+        "id": "enums-and-types",
+        "text": "Enums and types",
+        "level": 2
+      },
+      {
+        "id": "pending-is-not-a-catalogue-label-for-postgresql-enum-app-order-status",
+        "text": "\"'Pending' is not a catalogue label for PostgreSQL enum app.order_status.\"",
+        "level": 3
+      },
+      {
+        "id": "invalid-input-value-for-enum-app-order-status-in-a-query-with-an-enum-constant",
+        "text": "\"invalid input value for enum app.order_status\" in a query with an enum constant",
+        "level": 3
+      },
+      {
+        "id": "postgresql-type-oid-requires-a-registered-codec-or-string-byte-payload",
+        "text": "\"PostgreSQL type OID ... requires a registered codec or string/byte payload.\"",
+        "level": 3
+      },
+      {
+        "id": "postgresql-type-app-order-status-is-not-present-in-the-loaded-type-catalogue",
+        "text": "\"PostgreSQL type app.order_status is not present in the loaded type catalogue.\"",
+        "level": 3
+      },
+      {
+        "id": "values-read-back-as-datetimekind-unspecified",
+        "text": "Values read back as `DateTimeKind.Unspecified`",
+        "level": 3
+      },
+      {
+        "id": "saving",
+        "text": "Saving",
+        "level": 2
+      },
+      {
+        "id": "dbupdateconcurrencyexception-the-database-operation-was-expected-to-affect-1-row-s-but-actually-affected-0-row-s",
+        "text": "DbUpdateConcurrencyException: \"The database operation was expected to affect 1 row(s), but actually affected 0 row(s)\"",
+        "level": 3
+      },
+      {
+        "id": "dbupdateexception-an-error-occurred-while-saving-the-entity-changes",
+        "text": "DbUpdateException: \"An error occurred while saving the entity changes.\"",
+        "level": 3
+      },
+      {
+        "id": "savechanges-behaves-differently-after-upgrading-to-1-1-0",
+        "text": "SaveChanges behaves differently after upgrading to 1.1.0",
+        "level": 3
+      },
+      {
+        "id": "the-configured-execution-strategy-does-not-support-user-initiated-transactions",
+        "text": "\"The configured execution strategy '...' does not support user-initiated transactions.\"",
+        "level": 3
+      },
+      {
+        "id": "migrations",
+        "text": "Migrations",
+        "level": 2
+      },
+      {
+        "id": "bluetusk-virtual-generated-columns-require-postgresql-18-or-later",
+        "text": "\"BlueTusk virtual generated columns require PostgreSQL 18 or later.\"",
+        "level": 3
+      },
+      {
+        "id": "database-update-waits-after-acquiring-an-exclusive-lock-for-migration-application",
+        "text": "`database update` waits after \"Acquiring an exclusive lock for migration application.\"",
+        "level": 3
+      },
+      {
+        "id": "database-update-or-database-drop-cannot-connect-to-create-or-drop-the-database",
+        "text": "`database update` or `database drop` cannot connect to create or drop the database",
+        "level": 3
+      },
+      {
+        "id": "still-stuck",
+        "text": "Still stuck?",
+        "level": 2
+      }
+    ],
+    "wordCount": 1332,
+    "readMinutes": 7,
+    "searchText": "EF Core troubleshooting This page helps you fix common errors with the BlueTusk EF Core provider. Find the message or symptom you see, then apply the fix. For connection, TLS and authentication errors, see the [provider troubleshooting guide](../operations/troubleshooting.md). Setup \"No database provider has been configured for this DbContext\" **Cause:** `UseBlueTusk` was never called for this context, or the context's constructor does not pass `DbContextOptions<TContext>` to the base class. **Fix:** Register the context with `AddDbContext<TContext>((services, options) => options.UseBlueTusk(...))` and give it a constructor such as `MyContext(DbContextOptions<MyContext> options) : DbContext(options)`. \"A connection string is required.\" **Cause:** `UseBlueTusk` received a null or empty connection string, usually because a configuration value or environment variable is not set. **Fix:** Check the configuration key. For example, `GetConnectionString(\"Library\")` reads `ConnectionStrings:Library`, which the environment variable `ConnectionStrings__Library` can supply. PostgreSQL runs out of connections, or every request opens a new one **Cause:** The context uses `UseBlueTusk(connectionString)`, which opens an unpooled connection for each context, or the app builds a new data source per request. **Fix:** Build one `BlueTuskDataSource` as a singleton and pass it to `UseBlueTusk`. See [Concepts](concepts.md#how-long-should-the-data-source-and-dbcontext-live). dotnet ef and package versions \"Your startup project '...' doesn't reference Microsoft.EntityFrameworkCore.Design.\" **Fix:** `dotnet add package Microsoft.EntityFrameworkCore.Design --version 10.0.11`. `BlueTusk.EntityFrameworkCore.Design` does not add it for you. \"Could not load file or assembly 'BlueTusk.EntityFrameworkCore.Design'\" **Cause:** `dotnet ef` found the BlueTusk provider but not its design-time package. **Fix:** `dotnet add package BlueTusk.EntityFrameworkCore.Design` in the startup project, using the sa",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>EF Core troubleshooting</h1>\n<p>This page helps you fix common errors with the BlueTusk EF Core provider. Find\nthe message or symptom you see, then apply the fix. For connection, TLS and\nauthentication errors, see the\n<a href=\"/documentation/operations/troubleshooting\">provider troubleshooting guide</a>.</p>\n<h2>Setup</h2>\n<h3>“No database provider has been configured for this DbContext”</h3>\n<p><strong>Cause:</strong> <code>UseBlueTusk</code> was never called for this context, or the context’s\nconstructor does not pass <code>DbContextOptions&lt;TContext&gt;</code> to the base class.</p>\n<p><strong>Fix:</strong> Register the context with\n<code>AddDbContext&lt;TContext&gt;((services, options) =&gt; options.UseBlueTusk(...))</code> and\ngive it a constructor such as\n<code>MyContext(DbContextOptions&lt;MyContext&gt; options) : DbContext(options)</code>.</p>\n<h3>“A connection string is required.”</h3>\n<p><strong>Cause:</strong> <code>UseBlueTusk</code> received a null or empty connection string, usually\nbecause a configuration value or environment variable is not set.</p>\n<p><strong>Fix:</strong> Check the configuration key. For example, <code>GetConnectionString(&quot;Library&quot;)</code>\nreads <code>ConnectionStrings:Library</code>, which the environment variable\n<code>ConnectionStrings__Library</code> can supply.</p>\n<h3>PostgreSQL runs out of connections, or every request opens a new one</h3>\n<p><strong>Cause:</strong> The context uses <code>UseBlueTusk(connectionString)</code>, which opens an\nunpooled connection for each context, or the app builds a new data source per\nrequest.</p>\n<p><strong>Fix:</strong> Build one <code>BlueTuskDataSource</code> as a singleton and pass it to\n<code>UseBlueTusk</code>. See\n<a href=\"/documentation/ef-core/concepts#how-long-should-the-data-source-and-dbcontext-live\">Concepts</a>.</p>\n<h2>dotnet ef and package versions</h2>\n<h3>“Your startup project ‘…’ doesn’t reference Microsoft.EntityFrameworkCore.Design.”</h3>\n<p><strong>Fix:</strong> <code>dotnet add package Microsoft.EntityFrameworkCore.Design --version 10.0.11</code>.\n<code>BlueTusk.EntityFrameworkCore.Design</code> does not add it for you.</p>\n<h3>“Could not load file or assembly ‘BlueTusk.EntityFrameworkCore.Design’”</h3>\n<p><strong>Cause:</strong> <code>dotnet ef</code> found the BlueTusk provider but not its design-time\npackage.</p>\n<p><strong>Fix:</strong> <code>dotnet add package BlueTusk.EntityFrameworkCore.Design</code> in the\nstartup project, using the same version as <code>BlueTusk.EntityFrameworkCore</code>.</p>\n<h3>“The Entity Framework tools version ‘…’ is older than that of the runtime ‘10.0.11’.”</h3>\n<p><strong>Fix:</strong> <code>dotnet tool update --global dotnet-ef --version 10.0.11</code> (or\n<code>dotnet tool update dotnet-ef --version 10.0.11</code> for a local tool).</p>\n<h3>“NU1605: Detected package downgrade: Microsoft.EntityFrameworkCore.Relational from 10.0.11 to …”</h3>\n<p><strong>Cause:</strong> Your project references an EF Core package older than 10.0.11.\nThe provider needs EF Core 10.0.11 or later in the 10.0 line.</p>\n<p><strong>Fix:</strong> Reference version 10.0.11 for every <code>Microsoft.EntityFrameworkCore.*</code>\npackage. EF Core 9 and earlier are not supported.</p>\n<h3>“Unable to retrieve project metadata. Ensure it’s an SDK-style project.”</h3>\n<p><strong>Cause:</strong> The project was never restored, so <code>obj/project.assets.json</code> is\nmissing.</p>\n<p><strong>Fix:</strong> Run <code>dotnet build</code> once, then run the <code>dotnet ef</code> command again.</p>\n<h2>Queries</h2>\n<h3>“The LINQ expression ‘…’ could not be translated.”</h3>\n<p><strong>Cause:</strong> The query calls a .NET method that EF Core and BlueTusk cannot\nturn into SQL, such as your own helper method.</p>\n<p><strong>Fix:</strong> Rewrite the condition with translatable members, or use a PostgreSQL\nfunction from <code>EF.Functions</code> (see the <a href=\"/documentation/ef-core/ef-core-reference\">full reference</a>). If the\nrest of the work must run in .NET, filter in SQL first, then call\n<code>AsEnumerable()</code> and finish in memory.</p>\n<h3>“BlueTusk PostgreSQL database functions can only be used in translated EF Core queries.”</h3>\n<p><strong>Cause:</strong> An <code>EF.Functions</code> method from BlueTusk ran as ordinary .NET code,\noutside a query, or in a part of the query EF Core evaluates on the client.</p>\n<p><strong>Fix:</strong> Use these methods only inside LINQ queries that go to the database.</p>\n<h2>Enums and types</h2>\n<h3>“‘Pending’ is not a catalogue label for PostgreSQL enum app.order_status.”</h3>\n<p><strong>Cause:</strong> BlueTusk sends each enum member’s CLR name as its label, but the\nPostgreSQL enum uses different labels (for example lower-case).</p>\n<p><strong>Fix:</strong> Give each member its PostgreSQL label with <code>[BlueTuskName(&quot;pending&quot;)]</code>\nor <code>[EnumMember(Value = &quot;pending&quot;)]</code>, or pass a <code>labels</code> dictionary to\n<code>MapEnum</code>. See\n<a href=\"/documentation/ef-core/concepts#postgresql-enums-need-three-pieces\">Concepts</a>.</p>\n<h3>“invalid input value for enum app.order_status” in a query with an enum constant</h3>\n<p><strong>Cause:</strong> A LINQ query compares with an enum constant, such as\n<code>o.Status == OrderStatus.Shipped</code>, and the enum’s PostgreSQL labels are set\nonly in the <code>labels</code> dictionary of <code>MapEnum</code>. BlueTusk writes a constant into\nthe SQL with the label from <code>[BlueTuskName]</code>, then <code>[EnumMember]</code>, then the CLR\nmember name. It cannot see the <code>labels</code> dictionary, so it sends <code>'Shipped'</code>.</p>\n<p><strong>Fix:</strong> Put the labels on the enum members with <code>[BlueTuskName(&quot;shipped&quot;)]</code>\nor <code>[EnumMember(Value = &quot;shipped&quot;)]</code>. Or compare with a variable, which is sent\nas a parameter and uses the data source’s labels:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var status = OrderStatus.Shipped;\nvar orders = await db.Orders\n    .Where(o => o.Status == status)\n    .ToListAsync();\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> status = OrderStatus.Shipped;\n<span class=\"hljs-keyword\">var</span> orders = <span class=\"hljs-keyword\">await</span> db.Orders\n    .Where(o =&gt; o.Status == status)\n    .ToListAsync();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<h3>“PostgreSQL type OID … requires a registered codec or string/byte payload.”</h3>\n<p><strong>Cause:</strong> A property is mapped to a PostgreSQL enum or composite with\n<code>HasColumnType</code>, but the data source has no <code>MapEnum</code> or <code>MapComposite</code> for it.</p>\n<p><strong>Fix:</strong> Add the mapping to the data source builder, and pass that data\nsource to <code>UseBlueTusk</code>.</p>\n<h3>“PostgreSQL type app.order_status is not present in the loaded type catalogue.”</h3>\n<p><strong>Cause:</strong> The data source loaded its type catalogue before the type existed,\nand nothing reloaded it. <code>Migrate</code> and <code>MigrateAsync</code> reload the catalogue of\nthe data source they run on, but only in their own process. So this happens\nwhen the type was created while the application was already running: by a SQL\nscript, by <code>dotnet ef database update</code> or another process’s migration, or by\n<code>ExecuteSqlRaw</code>. The message comes from an <code>InvalidOperationException</code>, often\ninside a <code>DbUpdateException</code>.</p>\n<p><strong>Fix:</strong> Call <code>await dataSource.ReloadTypesAsync()</code> on the application’s data\nsource after the type is created, or restart the application. Also check that\nthe schema and name in <code>MapEnum</code> or <code>MapComposite</code> match the database.</p>\n<h3>Values read back as <code>DateTimeKind.Unspecified</code></h3>\n<p><strong>Cause:</strong> <code>DateTime</code> maps to <code>timestamp without time zone</code>, which stores no\ntime zone.</p>\n<p><strong>Fix:</strong> Use <code>DateTimeOffset</code> (<code>timestamp with time zone</code>) for points in\ntime. See <a href=\"/documentation/ef-core/concepts#how-are-net-types-mapped-to-postgresql\">Concepts</a>.</p>\n<h2>Saving</h2>\n<h3>DbUpdateConcurrencyException: “The database operation was expected to affect 1 row(s), but actually affected 0 row(s)”</h3>\n<p><strong>Cause:</strong> Another transaction changed or deleted the row after you read it,\nand the entity has a concurrency token such as <code>UseXminConcurrencyToken()</code>.</p>\n<p><strong>Fix:</strong> Catch the exception, reload or merge the entries in\n<code>conflict.Entries</code>, and save again. See\n<a href=\"/documentation/ef-core/concepts#how-do-i-detect-concurrent-updates\">Concepts</a>.</p>\n<h3>DbUpdateException: “An error occurred while saving the entity changes.”</h3>\n<p><strong>Cause:</strong> PostgreSQL rejected a statement. The inner exception is a\n<code>BlueTuskException</code>.</p>\n<p><strong>Fix:</strong> Read <code>((BlueTuskException)exception.InnerException).SqlState</code>. For\nexample, <code>23505</code> is a unique violation and <code>23503</code> a foreign key violation.\nClear or fix the failed entries before you save again.</p>\n<h3>SaveChanges behaves differently after upgrading to 1.1.0</h3>\n<p><strong>Cause:</strong> <strong>New in 1.1.0</strong>, <code>SaveChanges</code> sends up to 42 statements in one\ncommand. In 1.0.0 and 1.1.0-rc.1 each statement was its own command. You may\nnotice that:</p>\n<ul>\n<li>logs show several <code>INSERT</code>, <code>UPDATE</code> or <code>DELETE</code> statements in one\n“Executed DbCommand” entry;</li>\n<li>a <code>DbCommandInterceptor</code> is called once per batch, not once per entity;</li>\n<li><code>DbUpdateException.Entries</code> lists every entry in the failing batch.</li>\n</ul>\n<p><strong>Fix:</strong> Update code that counted commands or expected one entry per error.\nTo restore the old behavior while you investigate, set\n<code>provider =&gt; provider.MaxBatchSize(1)</code>.</p>\n<h3>“The configured execution strategy ‘…’ does not support user-initiated transactions.”</h3>\n<p><strong>Cause:</strong> A retrying execution strategy is configured, and the code calls\n<code>BeginTransaction</code> directly.</p>\n<p><strong>Fix:</strong> Run the whole transaction inside\n<code>db.Database.CreateExecutionStrategy().ExecuteAsync(...)</code>. See\n<a href=\"/documentation/ef-core/concepts#how-do-transactions-and-retries-work\">Concepts</a>.</p>\n<h2>Migrations</h2>\n<h3>“BlueTusk virtual generated columns require PostgreSQL 18 or later.”</h3>\n<p><strong>Cause:</strong> The migration uses a feature that the connected server does not\nhave, such as virtual generated columns (PostgreSQL 18) or <code>NOT ENFORCED</code>\ncheck constraints (PostgreSQL 18). Similar messages name other features and\nversions. BlueTusk checks the server version and stops the migration with\nSQLSTATE <code>0A000</code> before it runs the statement.</p>\n<p><strong>Fix:</strong> Upgrade the server, or change the model (for example use\n<code>stored: true</code> for a generated column) and add a new migration.</p>\n<h3><code>database update</code> waits after “Acquiring an exclusive lock for migration application.”</h3>\n<p><strong>Cause:</strong> Another process is applying migrations and holds a lock on\n<code>__EFMigrationsHistory</code>, or an idle open transaction is holding a lock on it.</p>\n<p><strong>Fix:</strong> Let the other process finish. Check <code>pg_stat_activity</code> for sessions\nthat are <code>idle in transaction</code>. Apply migrations from one deployment step, not\nfrom every replica.</p>\n<h3><code>database update</code> or <code>database drop</code> cannot connect to create or drop the database</h3>\n<p><strong>Cause:</strong> To create or drop the target database, BlueTusk connects to the\n<code>postgres</code> database (or <code>template1</code> when the target is <code>postgres</code>). Your role\nmay not be allowed to connect there, or may lack <code>CREATEDB</code>.</p>\n<p><strong>Fix:</strong> Create the database yourself, or point BlueTusk at a database you\ncan use with <code>UseAdminDatabase(&quot;maintenance&quot;)</code>.</p>\n<h2>Still stuck?</h2>\n<ul>\n<li><a href=\"/documentation/ef-core/configuration\">Configuration</a> lists every option and its default.</li>\n<li>The <a href=\"/documentation/ef-core/ef-core-reference\">full EF Core reference</a> covers each translated function\nand migration operation.</li>\n</ul>\n"
       }
     ]
   },
@@ -229,7 +883,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "core",
       "reference"
     ],
-    "order": 1072,
+    "order": 1085,
     "title": "Entity Framework Core",
     "sourcePath": "docs/ef-core/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/reference.md",
@@ -415,13 +1069,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 14829,
+    "wordCount": 14830,
     "readMinutes": 68,
-    "searchText": "Entity Framework Core `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings. Microsoft's provider-facing relational test package is consumed by a dedicated test assembly. The exact adopted suites, commands, and completed 1.0 coverage gate are recorded in [EF Core relational specification tests](specification-tests.md). SaveChanges batching The 1.2 candidate batches tracked inserts, updates and deletes automatically. One batch normally carries up to **42 modification commands**, not necessarily 42 entities: an entity mapped to several tables can need several commands. EF still chooses command order from relationship and generated-value dependencies; batching never relaxes that ordering. Omit the option for the default, or set `MaxBatchSize(1)` for the former one-command behavior. A larger configured limit does not remove the aggregate bounds: a batch is split before exceeding 65,536 SQL characters or 32,767 parameters. These are aggregation limits, not a maximum entity size. EF permits one unusually wide command to run alone; PostgreSQL's own limits still apply. Each statement has locally bound parameters and a corresponding result in command order. Server-generated IDs, computed columns and concurrency-token checks remain associated with the correct tracked entries, including batches that mix client-generated and server-generated keys. Batches use the normal EF command execution path, including logging and `DbCommandInterceptor` callbacks. An interceptor now observes a batch rather than necessarily one callback per entity. When no command-reader interceptor or custom update SQL generator is registered, writes without server-generated values use PostgreSQL's command-completion count instead of alloc",
+    "searchText": "Entity Framework Core `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings. Microsoft's provider-facing relational test package is consumed by a dedicated test assembly. The exact adopted suites, commands, and completed 1.0 coverage gate are recorded in [EF Core relational specification tests](specification-tests.md). SaveChanges batching Starting with 1.1.0, SaveChanges batches tracked inserts, updates and deletes automatically. One batch normally carries up to **42 modification commands**, not necessarily 42 entities: an entity mapped to several tables can need several commands. EF still chooses command order from relationship and generated-value dependencies; batching never relaxes that ordering. Omit the option for the default, or set `MaxBatchSize(1)` for the former one-command behavior. A larger configured limit does not remove the aggregate bounds: a batch is split before exceeding 65,536 SQL characters or 32,767 parameters. These are aggregation limits, not a maximum entity size. EF permits one unusually wide command to run alone; PostgreSQL's own limits still apply. Each statement has locally bound parameters and a corresponding result in command order. Server-generated IDs, computed columns and concurrency-token checks remain associated with the correct tracked entries, including batches that mix client-generated and server-generated keys. Batches use the normal EF command execution path, including logging and `DbCommandInterceptor` callbacks. An interceptor now observes a batch rather than necessarily one callback per entity. When no command-reader interceptor or custom update SQL generator is registered, writes without server-generated values use PostgreSQL's command-completion count i",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Entity Framework Core</h1>\n<p><code>BlueTusk.EntityFrameworkCore</code> is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings.</p>\n<p>Microsoft’s provider-facing relational test package is consumed by a dedicated\ntest assembly. The exact adopted suites, commands, and completed 1.0 coverage\ngate are recorded in <a href=\"/documentation/ef-core/specification-tests\">EF Core relational specification tests</a>.</p>\n<h2>SaveChanges batching</h2>\n<p>The 1.2 candidate batches tracked inserts, updates and deletes automatically.\nOne batch normally carries up to <strong>42 modification commands</strong>, not necessarily\n42 entities: an entity mapped to several tables can need several commands.\nEF still chooses command order from relationship and generated-value\ndependencies; batching never relaxes that ordering.</p>\n"
+        "html": "<h1>Entity Framework Core</h1>\n<p><code>BlueTusk.EntityFrameworkCore</code> is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings.</p>\n<p>Microsoft’s provider-facing relational test package is consumed by a dedicated\ntest assembly. The exact adopted suites, commands, and completed 1.0 coverage\ngate are recorded in <a href=\"/documentation/ef-core/specification-tests\">EF Core relational specification tests</a>.</p>\n<h2>SaveChanges batching</h2>\n<p>Starting with 1.1.0, SaveChanges batches tracked inserts, updates and deletes automatically.\nOne batch normally carries up to <strong>42 modification commands</strong>, not necessarily\n42 entities: an entity mapped to several tables can need several commands.\nEF still chooses command order from relationship and generated-value\ndependencies; batching never relaxes that ordering.</p>\n"
       },
       {
         "kind": "code",

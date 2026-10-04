@@ -14,14 +14,20 @@ Use this index to find the canonical HTML documentation. The complete curated gu
 
 ## Getting started
 
-- [Install BlueTusk](https://bluetusk.io/documentation/getting-started/install): Choose the stable or RC channel, install the smallest NuGet/npm package set, pin exact versions, and verify the resolved dependency graph.
-- [Quickstart: run the first query](https://bluetusk.io/documentation/getting-started/quickstart): Create a .NET console app, install BlueTusk, run a parameterized PostgreSQL query, and understand data-source ownership.
-- [Core concepts](https://bluetusk.io/documentation/getting-started/concepts): Learn data-source ownership, sessions, capabilities, type identity, checkpoints, source identity, and release-state vocabulary.
+- [What is BlueTusk?](https://bluetusk.io/documentation/getting-started/overview): What BlueTusk is, the product families and their status, and where to start.
+- [Install BlueTusk](https://bluetusk.io/documentation/getting-started/install): Choose packages and a version, add them to a .NET or npm project, and install the bluetusk tool and templates.
+- [BlueTusk 1.1.0 release notes](https://bluetusk.io/documentation/getting-started/release-1-1-0): What 1.1.0 contains, what is new since 1.1.0-rc.1, and how to upgrade.
+- [5-minute first app](https://bluetusk.io/documentation/getting-started/quickstart): Start PostgreSQL, create a .NET console app, and run a parameterized query in five minutes.
+- [Core concepts](https://bluetusk.io/documentation/getting-started/concepts): The shared vocabulary: data sources, parameters, the type catalogue, logical replication, acknowledgement and checkpoints.
 - [Architecture](https://bluetusk.io/documentation/getting-started/architecture): Understand the layers, dependency direction, ownership, and async boundaries.
-- [ADO.NET](https://bluetusk.io/documentation/getting-started/provider-overview): Connect a .NET application, run safe SQL, and choose the right command, transaction, batch, or bulk API.
+- [ADO.NET provider](https://bluetusk.io/documentation/getting-started/provider-overview): Use BlueTusk.Data for direct PostgreSQL commands, transactions, batches, COPY and notifications from .NET.
 
 ## Provider
 
+- [ADO.NET quick start: a small web API](https://bluetusk.io/documentation/provider/quickstart): Create a table, write rows in a transaction, read them back, and register the data source with dependency injection.
+- [ADO.NET concepts](https://bluetusk.io/documentation/provider/concepts): How data sources, connections, commands, protocols, preparation, transactions and pooling work.
+- [ADO.NET configuration](https://bluetusk.io/documentation/provider/configuration): Every connection-string keyword and data source option, with types and defaults.
+- [ADO.NET troubleshooting](https://bluetusk.io/documentation/provider/troubleshooting): Fix connection, TLS, authentication, pool, timeout, cancellation and type-mapping problems.
 - [Authentication](https://bluetusk.io/documentation/provider/authentication): Credentials, password files, TLS certificates, GSSAPI, Kerberos, and SSPI.
 - [Cloud identity](https://bluetusk.io/documentation/provider/cloud-identity): AWS, Azure, and Google Cloud identity integration and live-test boundaries.
 - [Dependency injection and health checks](https://bluetusk.io/documentation/provider/dependency-injection): Register one long-lived provider data source, consume DbDataSource, and design readiness checks without harming liveness.
@@ -40,21 +46,44 @@ Use this index to find the canonical HTML documentation. The complete curated gu
 
 ## EF Core
 
-- [Use BlueTusk with Entity Framework Core](https://bluetusk.io/documentation/ef-core/overview): Set up an EF Core context, query and save data, create migrations, and prepare the provider for production.
+- [EF Core provider](https://bluetusk.io/documentation/ef-core/overview): Set up an EF Core context, query and save data, create migrations, and prepare the provider for production.
+- [EF Core quick start](https://bluetusk.io/documentation/ef-core/quickstart): Define a DbContext, create and apply a migration, and query PostgreSQL with LINQ.
+- [EF Core concepts](https://bluetusk.io/documentation/ef-core/concepts): How the EF Core provider maps types, batches SaveChanges, handles transactions and builds migrations.
+- [EF Core configuration](https://bluetusk.io/documentation/ef-core/configuration): UseBlueTusk overloads, provider options, model-building extensions and scaffolding options.
+- [EF Core troubleshooting](https://bluetusk.io/documentation/ef-core/troubleshooting): Fix setup, translation, migration, concurrency and type-mapping problems.
 
 ## Real time
 
-- [BlueTusk real-time platform](https://bluetusk.io/documentation/real-time/platform): Choose Streams, Sync, Live, Continuous Graph, or Control Plane from the outcome your application needs.
-- [Delivery guarantees in plain language](https://bluetusk.io/documentation/real-time/contracts): Understand when work is durable, when it may be replayed, and what each real-time product guarantees.
+- [Choose a real-time product](https://bluetusk.io/documentation/real-time/platform): Pick the real-time product you need: Streams, Sync, Live, Control Plane or Continuous Graph.
+- [Delivery guarantees in plain language](https://bluetusk.io/documentation/real-time/contracts): What each real-time product delivers, when checkpoints move, and what can be duplicated or lost.
 - [BlueTusk Streams](https://bluetusk.io/documentation/real-time/streams): Turn PostgreSQL changes into complete transactions with bounded storage, durable progress, and safe recovery.
-- [Consistent snapshot bootstrap](https://bluetusk.io/documentation/real-time/snapshot-bootstrap): A fenced snapshot-then-stream protocol.
-- [PostgreSQL durable relay](https://bluetusk.io/documentation/real-time/durable-relay): Storage, backup, groups, retention, and relay fan-out.
-- [Streams checkpoint and lease stores](https://bluetusk.io/documentation/real-time/state-stores): State-store contracts and supported persistence behavior.
+- [Quick start: stream changes from a table](https://bluetusk.io/documentation/real-time/streams-quickstart): Prepare PostgreSQL, run a hosted Streams consumer, and process committed transactions with a durable checkpoint.
+- [Streams concepts](https://bluetusk.io/documentation/real-time/streams-concepts): Transactions, acknowledgement, checkpoints, state stores, spooling, snapshots and redelivery.
+- [Streams configuration](https://bluetusk.io/documentation/real-time/streams-configuration): Streams options, configuration keys, state stores and limits, with defaults.
+- [Troubleshooting Streams](https://bluetusk.io/documentation/real-time/streams-troubleshooting): Fix replication slot, publication, privilege, source identity, spool and lease problems.
+- [Snapshot and catch-up](https://bluetusk.io/documentation/real-time/snapshot-bootstrap): A fenced snapshot-then-stream protocol.
+- [Durable relay](https://bluetusk.io/documentation/real-time/durable-relay): Storage, backup, groups, retention, and relay fan-out.
+- [Checkpoint and lease stores](https://bluetusk.io/documentation/real-time/state-stores): State-store contracts and supported persistence behavior.
 - [Hosting and observability](https://bluetusk.io/documentation/real-time/streams-hosting): Hosted services, health checks, metrics, and operational behavior.
-- [Keep another system in sync](https://bluetusk.io/documentation/real-time/sync): Keep PostgreSQL, Redis, OpenSearch, NATS, Kafka, S3, or a webhook current from committed changes.
-- [Push live updates to applications](https://bluetusk.io/documentation/real-time/live): Register one authorized query and keep browser or .NET clients updated with bounded, resumable changes.
-- [Operate BlueTusk from the dashboard](https://bluetusk.io/documentation/real-time/control-plane): Run the dashboard, inspect every product, drill into unhealthy resources, and authorize audited operations.
-- [Real-time operations](https://bluetusk.io/documentation/real-time/operations): Operate source identity, checkpoints, relay storage, destinations, failover, reconciliation, rebuilds, and endurance evidence.
+- [BlueTusk Sync](https://bluetusk.io/documentation/real-time/sync): Keep PostgreSQL, Redis, OpenSearch, NATS, Kafka, S3, or a webhook current from committed changes.
+- [Sync quick start: copy a table to another database](https://bluetusk.io/documentation/real-time/sync-quickstart): Copy a PostgreSQL table into another database with Sync and watch inserts, updates and deletes arrive.
+- [Sync concepts](https://bluetusk.io/documentation/real-time/sync-concepts): Pipelines, whole-transaction apply, idempotency, ordering, checkpoints, rebuilds and retries.
+- [Configure Sync](https://bluetusk.io/documentation/real-time/sync-configuration): Sync options and every destination option, with defaults.
+- [Troubleshoot Sync](https://bluetusk.io/documentation/real-time/sync-troubleshooting): Fix destination, duplicate, mapping, lag and permission problems.
+- [BlueTusk Live](https://bluetusk.io/documentation/real-time/live): Register one authorized query and keep browser or .NET clients updated with bounded, resumable changes.
+- [Live quick start: a browser list that updates itself](https://bluetusk.io/documentation/real-time/live-quickstart): Register an authorized live query in ASP.NET Core and show updating rows in a browser.
+- [Live concepts](https://bluetusk.io/documentation/real-time/live-concepts): Registered queries, subscriber scope, re-query and diff, snapshots, resume, batching and transports.
+- [Configure BlueTusk Live](https://bluetusk.io/documentation/real-time/live-configuration): Live server options, transport settings and browser client options, with defaults.
+- [Troubleshoot BlueTusk Live](https://bluetusk.io/documentation/real-time/live-troubleshooting): Fix missing updates, authorization, reconnect, resume, limit and proxy problems.
+- [Framework guides: Angular, React, Vue and Svelte](https://bluetusk.io/documentation/real-time/live-clients): Use Live from Angular, React, Vue, Svelte or plain TypeScript.
+- [Control Plane](https://bluetusk.io/documentation/real-time/control-plane): Run the dashboard, inspect every product, drill into unhealthy resources, and authorize audited operations.
+- [Control Plane quick start](https://bluetusk.io/documentation/real-time/control-plane-quickstart): Host the Control Plane API and dashboard, register a component, and query the inventory.
+- [Control Plane concepts](https://bluetusk.io/documentation/real-time/control-plane-concepts): Inventory, components, health, operations, fleet operations, audit and authorization.
+- [Control Plane configuration](https://bluetusk.io/documentation/real-time/control-plane-configuration): Control Plane options, endpoints, authorization policies, persistence and Kubernetes settings.
+- [Control Plane troubleshooting](https://bluetusk.io/documentation/real-time/control-plane-troubleshooting): Fix authorization, missing inventory, stale health, rejected operations and Kubernetes problems.
+- [Enable operator actions](https://bluetusk.io/documentation/real-time/control-plane-operations): Turn on audited operator actions: pause, resume, rebuild and fleet operations.
+- [Real-time operations](https://bluetusk.io/documentation/real-time/operations): Runbook for restarts, crashes, failover, WAL growth, restores and rebuilds of the real-time products.
+- [Manage deployments with Kubernetes](https://bluetusk.io/documentation/real-time/control-plane-kubernetes): Install and use the BlueTusk Kubernetes operator.
 - [Keep graph query results current](https://bluetusk.io/documentation/real-time/continuous-graph): Keep a bounded SQL/PGQ result current with incremental updates and authoritative repair.
 
 ## Extensions

@@ -6,7 +6,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "real-time",
     "categoryLabel": "Real time",
     "slug": "platform",
-    "summary": "Choose Streams, Sync, Live, Continuous Graph, or Control Plane from the outcome your application needs.",
+    "summary": "Pick the real-time product you need: Streams, Sync, Live, Control Plane or Continuous Graph.",
     "keywords": [
       "streams",
       "sync",
@@ -15,53 +15,53 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     ],
     "order": 10,
     "listed": true,
-    "title": "BlueTusk real-time platform",
+    "title": "Choose a real-time product",
     "sourcePath": "docs/realtime-platform/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/README.md",
     "headings": [
       {
-        "id": "bluetusk-real-time-platform",
-        "text": "BlueTusk real-time platform",
+        "id": "choose-a-real-time-product",
+        "text": "Choose a real-time product",
         "level": 1
       },
       {
-        "id": "choose-one-starting-point",
-        "text": "Choose one starting point",
+        "id": "pick-by-outcome",
+        "text": "Pick by outcome",
         "level": 2
       },
       {
-        "id": "how-the-pieces-connect",
-        "text": "How the pieces connect",
+        "id": "how-the-products-connect",
+        "text": "How the products connect",
         "level": 2
       },
       {
-        "id": "correctness-contract",
-        "text": "Correctness contract",
+        "id": "what-every-product-guarantees",
+        "text": "What every product guarantees",
         "level": 2
       },
       {
-        "id": "release-trains",
-        "text": "Release trains",
+        "id": "before-production",
+        "text": "Before production",
         "level": 2
       }
     ],
-    "wordCount": 629,
+    "wordCount": 583,
     "readMinutes": 3,
-    "searchText": "BlueTusk real-time platform BlueTusk can react after PostgreSQL commits a change. Start with the outcome you need; most applications do not need every product. Choose one starting point You need to… Start with What it gives you Process committed changes in .NET [Streams](../streams/README.md) Complete transactions, checkpointing, leases, spooling, and snapshots. Feed several independent consumers from one slot [Durable relay](../streams/durable-relay.md) Retained transactions and independently acknowledged groups. Keep Redis, OpenSearch, NATS, Kafka, PostgreSQL, S3, or a webhook current [Sync](../sync/README.md) Transforms, destination guarantees, retries, reconciliation, and rebuilds. Push a bounded query result to connected users [Live](../live/README.md) Authorized queries, keyed diffs, replay, resume tokens, and browser clients. Maintain a changing graph result [Continuous Graph](../continuous-graph/README.md) Incremental and authoritative SQL/PGQ maintenance under the original security scope. Inspect and operate the deployment [Control Plane](../control-plane/README.md) Redacted inventory, drill-down dashboard, authorization, and audit. How the pieces connect Build and prove Streams first. Add a relay when more than one independently recoverable consumer needs the feed. Add Sync, Live, or Continuous Graph only for the corresponding outcome. Streams is the only application-level CDC boundary. Sync, Live, and Continuous Graph consume Streams deliveries or relay cursors; they do not reach into replication protocol internals. Correctness contract Delivery is ordered, transaction-preserving, and at least once. Exactly once is not claimed. Durable downstream handling precedes checkpoint persistence; checkpoint persistence precedes PostgreSQL feedback. Checkpoints are monotonic compare-and-swap records bound to a source identity and lease fencing token. Direct groups own independent slots. Streams also includes PostgreSQL relay fan-out from one slot. All memory, trans",
+    "searchText": "Choose a real-time product BlueTusk's real-time products let your application react after PostgreSQL commits a change. Use this page to pick the product you need. Most applications need only one or two of them. Pick by outcome You want to Use Start with Run .NET code for every committed change, in commit order [Streams](../streams/README.md) [Streams quick start](../streams/quickstart.md) Feed several independent consumers from one replication slot Streams [durable relay](../streams/durable-relay.md) [Durable relay](../streams/durable-relay.md) Keep another PostgreSQL database, Redis, NATS, OpenSearch, Kafka, S3 or a webhook up to date [Sync](../sync/README.md) [Sync quick start](../sync/quickstart.md) Show users a query result that updates by itself [Live](../live/README.md) [Live quick start](../live/quickstart.md) See and operate the running components [Control Plane](../control-plane/README.md) [Control Plane quick start](../control-plane/quickstart.md) Keep a graph query result current (preview) [Continuous Graph](../continuous-graph/README.md) [Graph guide](../graph/README.md) Not sure? Start with Streams. Sync and Live are built on it, and the Streams quick start teaches the setup every real-time product needs. How the products connect **Streams** is the only product that reads PostgreSQL's replication protocol. It turns the write-ahead log into complete, ordered, committed transactions. **Sync** and **Live** consume Streams. They never read the replication protocol directly. The **durable relay** stores committed transactions in PostgreSQL so several consumers can share one replication slot and acknowledge independently. **Control Plane** does not process changes. It shows the inventory and health of the other products and runs audited operations on them. Build and test your Streams setup first. Add a relay when more than one consumer needs the same changes. Add Sync or Live only for the outcome you need. What every product guarantees All real-time products ",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>BlueTusk real-time platform</h1>\n<p>BlueTusk can react after PostgreSQL commits a change. Start with the outcome you\nneed; most applications do not need every product.</p>\n<h2>Choose one starting point</h2>\n<table>\n<thead>\n<tr>\n<th>You need to…</th>\n<th>Start with</th>\n<th>What it gives you</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Process committed changes in .NET</td>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n<td>Complete transactions, checkpointing, leases, spooling, and snapshots.</td>\n</tr>\n<tr>\n<td>Feed several independent consumers from one slot</td>\n<td><a href=\"/documentation/real-time/durable-relay\">Durable relay</a></td>\n<td>Retained transactions and independently acknowledged groups.</td>\n</tr>\n<tr>\n<td>Keep Redis, OpenSearch, NATS, Kafka, PostgreSQL, S3, or a webhook current</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n<td>Transforms, destination guarantees, retries, reconciliation, and rebuilds.</td>\n</tr>\n<tr>\n<td>Push a bounded query result to connected users</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n<td>Authorized queries, keyed diffs, replay, resume tokens, and browser clients.</td>\n</tr>\n<tr>\n<td>Maintain a changing graph result</td>\n<td><a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a></td>\n<td>Incremental and authoritative SQL/PGQ maintenance under the original security scope.</td>\n</tr>\n<tr>\n<td>Inspect and operate the deployment</td>\n<td><a href=\"/documentation/real-time/control-plane\">Control Plane</a></td>\n<td>Redacted inventory, drill-down dashboard, authorization, and audit.</td>\n</tr>\n</tbody>\n</table>\n<h2>How the pieces connect</h2>\n"
+        "html": "<h1>Choose a real-time product</h1>\n<p>BlueTusk’s real-time products let your application react after PostgreSQL\ncommits a change. Use this page to pick the product you need. Most\napplications need only one or two of them.</p>\n<h2>Pick by outcome</h2>\n<table>\n<thead>\n<tr>\n<th>You want to</th>\n<th>Use</th>\n<th>Start with</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Run .NET code for every committed change, in commit order</td>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n<td><a href=\"/documentation/real-time/streams-quickstart\">Streams quick start</a></td>\n</tr>\n<tr>\n<td>Feed several independent consumers from one replication slot</td>\n<td>Streams <a href=\"/documentation/real-time/durable-relay\">durable relay</a></td>\n<td><a href=\"/documentation/real-time/durable-relay\">Durable relay</a></td>\n</tr>\n<tr>\n<td>Keep another PostgreSQL database, Redis, NATS, OpenSearch, Kafka, S3 or a webhook up to date</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n<td><a href=\"/documentation/real-time/sync-quickstart\">Sync quick start</a></td>\n</tr>\n<tr>\n<td>Show users a query result that updates by itself</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n<td><a href=\"/documentation/real-time/live-quickstart\">Live quick start</a></td>\n</tr>\n<tr>\n<td>See and operate the running components</td>\n<td><a href=\"/documentation/real-time/control-plane\">Control Plane</a></td>\n<td><a href=\"/documentation/real-time/control-plane-quickstart\">Control Plane quick start</a></td>\n</tr>\n<tr>\n<td>Keep a graph query result current (preview)</td>\n<td><a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a></td>\n<td><a href=\"/documentation/graph/sql-pgq\">Graph guide</a></td>\n</tr>\n</tbody>\n</table>\n<p>Not sure? Start with Streams. Sync and Live are built on it, and the Streams\nquick start teaches the setup every real-time product needs.</p>\n<h2>How the products connect</h2>\n"
       },
       {
         "kind": "code",
-        "code": "PostgreSQL 15–19\n       ↓\nData / COPY / Replication / pgoutput\n       ↓\nBlueTusk Streams ─→ PostgreSQL durable relay\n       ├──────────→ BlueTusk Sync\n       └──────────→ BlueTusk Live ─→ Continuous Graph\n                              ↑\n                    Control Plane / Dashboard\n",
-        "highlighted": "PostgreSQL 15–19\n       ↓\nData / COPY / Replication / pgoutput\n       ↓\nBlueTusk Streams ─→ PostgreSQL durable relay\n       ├──────────→ BlueTusk Sync\n       └──────────→ BlueTusk Live ─→ Continuous Graph\n                              ↑\n                    Control Plane / Dashboard\n",
+        "code": "PostgreSQL (wal_level = logical)\n        │  logical replication\n        ▼\n     Streams ──────────► durable relay (optional, in PostgreSQL)\n        │\n        ├──► Sync ──────► another database, cache, broker, index or webhook\n        │\n        ├──► Live ──────► browsers and .NET clients\n        │\n        └──► Continuous Graph (preview)\n\n Control Plane shows and operates all of them.\n",
+        "highlighted": "PostgreSQL (wal_level = logical)\n        │  logical replication\n        ▼\n     Streams ──────────► durable relay (optional, in PostgreSQL)\n        │\n        ├──► Sync ──────► another database, cache, broker, index or webhook\n        │\n        ├──► Live ──────► browsers and .NET clients\n        │\n        └──► Continuous Graph (preview)\n\n Control Plane shows and operates all of them.\n",
         "language": "text"
       },
       {
         "kind": "html",
-        "html": "<p>Build and prove Streams first. Add a relay when more than one independently\nrecoverable consumer needs the feed. Add Sync, Live, or Continuous Graph only\nfor the corresponding outcome.</p>\n<p>Streams is the only application-level CDC boundary. Sync, Live, and Continuous\nGraph consume Streams deliveries or relay cursors; they do not reach into\nreplication protocol internals.</p>\n<h2>Correctness contract</h2>\n<ul>\n<li>Delivery is ordered, transaction-preserving, and at least once. Exactly once is not claimed.</li>\n<li>Durable downstream handling precedes checkpoint persistence; checkpoint persistence precedes PostgreSQL feedback.</li>\n<li>Checkpoints are monotonic compare-and-swap records bound to a source identity and lease fencing token.</li>\n<li>Direct groups own independent slots. Streams also includes PostgreSQL relay\nfan-out from one slot.</li>\n<li>All memory, transaction, spool, acknowledgement-age, and WAL-lag queues are bounded.</li>\n<li>Exported snapshots restart with a new epoch after exporter/session loss; an expired snapshot is not resumable.</li>\n<li>Live uses CDC as invalidation and reruns an authorised bounded EF query before emitting client-visible data.</li>\n<li>Sync advances only after a destination confirms durable handling of the complete source transaction.</li>\n</ul>\n<p>See the <a href=\"/documentation/real-time/contracts\">public contracts</a>, <a href=\"/documentation/real-time/realtime-platform-delivery-plan\">delivery phases</a>, and accepted <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions\" target=\"_blank\" rel=\"noreferrer\">architecture decisions</a>.</p>\n<h2>Release trains</h2>\n<p>The release manifest is <code>eng/product-families.json</code>; version properties live under <code>eng/versions</code>. A product project declares its train with <code>BlueTuskProductFamily</code>. Release tags are independently named <code>provider-v*</code>, <code>streams-v*</code>, <code>sync-v*</code>, <code>live-v*</code>, <code>control-plane-v*</code>, and <code>continuous-graph-v*</code>.</p>\n<p>An empty family is valid during architecture work but cannot be packaged. This prevents placeholder NuGet packages from implying implemented behavior.</p>\n<p>Each family declares its cross-family release dependencies and an explicit\nschema-2 publication policy. During preparation all policies are disabled; in\nthe immutable candidate all six are armed. Exact stable channels, tag prefixes,\ndependency order, and required exact-commit workflow evidence are\nmachine-enforced. Every package\nproject is listed explicitly, so a new project cannot silently enter a release\ntrain. <code>-Candidate</code> can build a gated verification\nartifact without opening its publication gate. Families with npm artifacts\nalways run a clean locked install, vulnerability audit, client build, and\nclient tests before any tarball is created. See the\n<a href=\"/documentation/operations/release-process\">release process</a>.</p>\n<p>Implementation status: all six families are published at stable\n<code>1.0.0</code>. <a href=\"/documentation/real-time/streams-release-notes-1-0-0\">Streams</a> has its complete CDC and\nrelay contracts; <a href=\"/documentation/real-time/sync-release-notes-1-0-0\">Sync</a> has all four\ndestinations on one conformance contract; <a href=\"/documentation/real-time/live-release-notes-1-0-0\">Live</a>\nhas its PostgreSQL stores, transports, and NuGet/npm clients; the\n<a href=\"/documentation/real-time/control-plane-release-notes-1-0-0\">Control Plane and Dashboard</a> provide\nauthorised inventory, operations, audit, and versioned v1 APIs; and\n<a href=\"/documentation/graph/continuous-graph-release-notes-1-0-0\">ContinuousGraph</a> has bounded\nincremental maintenance plus authoritative repair. Publication remains\ndisabled during preparation. After PostgreSQL 19 GA, a reviewed arming PR to\n<code>main</code> creates the immutable candidate; tags and protected production approval\nremain the publication boundary.</p>\n"
+        "html": "<ul>\n<li><strong>Streams</strong> is the only product that reads PostgreSQL’s replication\nprotocol. It turns the write-ahead log into complete, ordered, committed\ntransactions.</li>\n<li><strong>Sync</strong> and <strong>Live</strong> consume Streams. They never read the replication\nprotocol directly.</li>\n<li>The <strong>durable relay</strong> stores committed transactions in PostgreSQL so several\nconsumers can share one replication slot and acknowledge independently.</li>\n<li><strong>Control Plane</strong> does not process changes. It shows the inventory and\nhealth of the other products and runs audited operations on them.</li>\n</ul>\n<p>Build and test your Streams setup first. Add a relay when more than one\nconsumer needs the same changes. Add Sync or Live only for the outcome you need.</p>\n<h2>What every product guarantees</h2>\n<p>All real-time products share one delivery model:</p>\n<ul>\n<li>Changes arrive as <strong>whole transactions</strong>, in <strong>commit order</strong>.</li>\n<li>Delivery is <strong>at least once</strong>. After a crash, the last unacknowledged\ntransaction can arrive again. Every change has a stable identity so you can\ndetect the repeat. BlueTusk does not claim “exactly once”.</li>\n<li>A transaction is <strong>acknowledged</strong> only after its effect is durable, and the\n<strong>checkpoint</strong> moves only after that.</li>\n<li>A checkpoint belongs to one <strong>source identity</strong> (cluster, database, slot and\npublication). BlueTusk refuses to resume from a checkpoint that belongs to a\ndifferent source, for example after a restore into a new cluster.</li>\n<li>Every queue, buffer and spool has a configured limit. When a limit is\nreached, BlueTusk stops with an error instead of dropping changes; Live\ndisconnects a client that cannot keep up.</li>\n<li><strong>Live</strong> uses a change only as a signal. It re-runs the registered query\nwith the subscriber’s permissions before it sends anything to a client.</li>\n<li><strong>Sync</strong> moves its checkpoint only after the destination confirms it has\nstored the whole source transaction.</li>\n</ul>\n<p><a href=\"/documentation/real-time/contracts\">Delivery guarantees</a> defines each rule exactly.\n<a href=\"/documentation/getting-started/concepts\">Core concepts</a> explains the vocabulary.</p>\n<h2>Before production</h2>\n<ul>\n<li><a href=\"/documentation/real-time/operations\">Recovery and rebuilds</a>: restart, replay, rebuild and\nfailover procedures.</li>\n<li><a href=\"/documentation/operations/security\">Security</a>: roles, replication privileges and what each\nproduct exposes.</li>\n<li><a href=\"/documentation/operations/operations-observability\">Observability</a>: metrics, traces and\nalerts.</li>\n<li><a href=\"/documentation/operations/production-checklist\">Production checklist</a>.</li>\n</ul>\n<p>For the design history, see the <a href=\"https://github.com/jphgardner/BlueTusk/tree/main/docs/architecture/decisions/\" target=\"_blank\" rel=\"noreferrer\">architecture decisions</a>\nand the <a href=\"/documentation/real-time/realtime-platform-delivery-plan\">delivery plan</a>.</p>\n"
       }
     ]
   },
@@ -69,7 +69,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "real-time",
     "categoryLabel": "Real time",
     "slug": "contracts",
-    "summary": "Understand when work is durable, when it may be replayed, and what each real-time product guarantees.",
+    "summary": "What each real-time product delivers, when checkpoints move, and what can be duplicated or lost.",
     "keywords": [
       "contract",
       "delivery",
@@ -149,93 +149,597 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       },
       {
-        "id": "run-the-sample",
-        "text": "Run the sample",
+        "id": "when-to-use-streams",
+        "text": "When to use Streams",
         "level": 2
       },
       {
-        "id": "the-processing-rule",
-        "text": "The processing rule",
+        "id": "packages",
+        "text": "Packages",
         "level": 2
       },
       {
-        "id": "what-streams-provides",
-        "text": "What Streams provides",
+        "id": "choose-how-to-run-a-consumer",
+        "text": "Choose how to run a consumer",
         "level": 2
       },
       {
-        "id": "reading-transactions",
-        "text": "Reading transactions",
+        "id": "what-the-code-looks-like",
+        "text": "What the code looks like",
         "level": 2
       },
       {
-        "id": "failure-behavior",
-        "text": "Failure behavior",
+        "id": "next-steps",
+        "text": "Next steps",
         "level": 2
       },
       {
-        "id": "position-feedback-without-an-observer",
-        "text": "Position feedback without an observer",
-        "level": 3
-      },
-      {
-        "id": "creating-a-slot-while-the-schema-changes",
-        "text": "Creating a slot while the schema changes",
-        "level": 2
-      },
-      {
-        "id": "performance-baseline",
-        "text": "Performance baseline",
+        "id": "reference-records",
+        "text": "Reference records",
         "level": 2
       }
     ],
-    "wordCount": 1486,
-    "readMinutes": 7,
-    "searchText": "BlueTusk Streams BlueTusk Streams turns PostgreSQL logical replication into complete committed transactions an application can process and acknowledge. It handles large transaction spooling, source identity, checkpoints, leases, restart, and a no-gap initial snapshot. Use Streams when application code needs a reliable change feed. Use the lower level [replication API](../replication/README.md) only when you need raw protocol messages. Run the sample The sample creates a hosted snapshot-then-stream consumer and prints each committed transaction: Create the PostgreSQL publication and replication role first. The TLS-disabled connection is for an isolated local database only. The processing rule Do not acknowledge before the downstream effect and checkpoint are durable. A crash can redeliver the last unconfirmed transaction, so the downstream write must use stable change identities or an atomic checkpoint. For a new data set, use [snapshot and catch-up](snapshot-bootstrap.md) rather than combining an unrelated table export with a later WAL position. What Streams provides immutable source, relation, column, row, transaction, change, and stable change-ID models; explicit value, database-null, not-published, unavailable-old-value, unchanged-TOAST, and decoding-failure column states; exact/unknown changed-column sets that require a complete old row before claiming exactness; ordinary, streamed, and opt-in prepared transaction assembly by PostgreSQL transaction ID; insert, update, delete, truncate, transactional/nontransactional logical message, origin, timestamp, LSN, and ordering preservation; bounded change, relation, transaction-memory, individual-record, and total spool-storage accounting; versioned disk envelopes with completion footers, per-record CRC32 integrity, atomic `.partial` to `.ready` publication, and pluggable at-rest protection; restart-safe spool accounting that includes pre-existing `.partial` and `.ready` artifacts in the configured disk ceiling; streami",
+    "wordCount": 781,
+    "readMinutes": 4,
+    "searchText": "BlueTusk Streams BlueTusk Streams lets your .NET code react to every committed change in PostgreSQL. It reads the write-ahead log through logical replication and gives you whole transactions, in commit order, that you acknowledge when your work is done. After a restart it carries on from the last acknowledged transaction. When to use Streams Use Streams when you need to run your own code for every committed insert, update, delete or truncate. For example: keep a read model, cache or search index in step with the database; publish integration events after a transaction commits; write an audit trail. Use something else when: You want to Use Copy changes into PostgreSQL, Redis, NATS, Kafka, OpenSearch, S3 or a webhook without writing the apply code [Sync](../sync/README.md) Push live query results to browsers [Live](../live/README.md) Read raw replication protocol messages The [replication API](../replication/README.md) Run a query now The [ADO.NET provider](../ado-net/README.md) Streams delivers each transaction **at least once**. Make your work safe to repeat, or store your progress in the same transaction as your work. See [delivery guarantees](../realtime-platform/contracts.md). Packages Package What it adds `BlueTusk.Streams` Transactions, changes, acknowledgement, checkpoints, snapshot bootstrap and large-transaction spooling. Start here. `BlueTusk.Streams.Storage.PostgreSql` Durable checkpoint and lease store, and the durable relay, in PostgreSQL. `BlueTusk.Streams.DependencyInjection` Hosted snapshot-then-stream consumers and a health check. `BlueTusk.Streams.Storage.File` Checkpoint store on one host's local disk. `BlueTusk.Streams.Storage.Redis` Checkpoint store in Redis. `BlueTusk.Streams.EntityFrameworkCore` Typed change mappings built from an EF Core model. `BlueTusk.Streams.CloudEvents` One CloudEvents JSON event per transaction. `BlueTusk.Streams.Aspire` Wires Streams workers into a .NET Aspire AppHost. `BlueTusk.Streams.Testing` Test deliveries and a co",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>BlueTusk Streams</h1>\n<p>BlueTusk Streams turns PostgreSQL logical replication into complete committed\ntransactions an application can process and acknowledge. It handles large\ntransaction spooling, source identity, checkpoints, leases, restart, and a\nno-gap initial snapshot.</p>\n<p>Use Streams when application code needs a reliable change feed. Use the lower\nlevel <a href=\"/documentation/provider/replication\">replication API</a> only when you need raw protocol\nmessages.</p>\n<h2>Run the sample</h2>\n<p>The sample creates a hosted snapshot-then-stream consumer and prints each\ncommitted transaction:</p>\n"
+        "html": "<h1>BlueTusk Streams</h1>\n<p>BlueTusk Streams lets your .NET code react to every committed change in\nPostgreSQL. It reads the write-ahead log through logical replication and gives\nyou whole transactions, in commit order, that you acknowledge when your work is\ndone. After a restart it carries on from the last acknowledged transaction.</p>\n<h2>When to use Streams</h2>\n<p>Use Streams when you need to run your own code for every committed insert,\nupdate, delete or truncate. For example:</p>\n<ul>\n<li>keep a read model, cache or search index in step with the database;</li>\n<li>publish integration events after a transaction commits;</li>\n<li>write an audit trail.</li>\n</ul>\n<p>Use something else when:</p>\n<table>\n<thead>\n<tr>\n<th>You want to</th>\n<th>Use</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Copy changes into PostgreSQL, Redis, NATS, Kafka, OpenSearch, S3 or a webhook without writing the apply code</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n</tr>\n<tr>\n<td>Push live query results to browsers</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n</tr>\n<tr>\n<td>Read raw replication protocol messages</td>\n<td>The <a href=\"/documentation/provider/replication\">replication API</a></td>\n</tr>\n<tr>\n<td>Run a query now</td>\n<td>The <a href=\"/documentation/getting-started/provider-overview\">ADO.NET provider</a></td>\n</tr>\n</tbody>\n</table>\n<p>Streams delivers each transaction <strong>at least once</strong>. Make your work safe to\nrepeat, or store your progress in the same transaction as your work. See\n<a href=\"/documentation/real-time/contracts\">delivery guarantees</a>.</p>\n<h2>Packages</h2>\n<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>What it adds</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTusk.Streams</code></td>\n<td>Transactions, changes, acknowledgement, checkpoints, snapshot bootstrap and large-transaction spooling. Start here.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Streams.Storage.PostgreSql</code></td>\n<td>Durable checkpoint and lease store, and the durable relay, in PostgreSQL.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Streams.DependencyInjection</code></td>\n<td>Hosted snapshot-then-stream consumers and a health check.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Streams.Storage.File</code></td>\n<td>Checkpoint store on one host’s local disk.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Streams.Storage.Redis</code></td>\n<td>Checkpoint store in Redis.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Streams.EntityFrameworkCore</code></td>\n<td>Typed change mappings built from an EF Core model.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Streams.CloudEvents</code></td>\n<td>One CloudEvents JSON event per transaction.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Streams.Aspire</code></td>\n<td>Wires Streams workers into a .NET Aspire AppHost.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Streams.Testing</code></td>\n<td>Test deliveries and a conformance suite for custom state stores.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Streams.Tool</code></td>\n<td>The <code>bluetusk-streams</code> command for validating and provisioning PostgreSQL.</td>\n</tr>\n</tbody>\n</table>\n"
       },
       {
         "kind": "code",
-        "code": "$env:BLUETUSK_STREAMS_SOURCE = \"Host=localhost;Database=app;Username=replicator;Password=local-only;SSL Mode=Disable;Channel Binding=Disable\"\n$env:BlueTusk__Streams__Slot = \"orders_sample\"\n$env:BlueTusk__Streams__Publications__0 = \"app_changes\"\ndotnet run --project samples/BlueTusk.Samples.Streams\n",
-        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_SOURCE</span> = <span class=\"hljs-string\">&quot;Host=localhost;Database=app;Username=replicator;Password=local-only;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n<span class=\"hljs-variable\">$env:BlueTusk__Streams__Slot</span> = <span class=\"hljs-string\">&quot;orders_sample&quot;</span>\n<span class=\"hljs-variable\">$env:BlueTusk__Streams__Publications__0</span> = <span class=\"hljs-string\">&quot;app_changes&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.Streams\n",
+        "code": "dotnet add package BlueTusk.Streams\ndotnet add package BlueTusk.Streams.Storage.PostgreSql\n",
+        "highlighted": "dotnet add package BlueTusk.Streams\ndotnet add package BlueTusk.Streams.Storage.PostgreSql\n",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>Create the PostgreSQL publication and replication role first. The TLS-disabled\nconnection is for an isolated local database only.</p>\n<h2>The processing rule</h2>\n"
+        "html": "<p>See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a> to choose a channel and\npin a version.</p>\n<p><strong>Status:</strong> Core. Streams ships on the shared Core version line. <code>1.0.0</code> (stable)\nand <code>1.1.0-rc.1</code> are published; <code>1.1.0</code> is not released yet. It supports\n.NET 10 and PostgreSQL 15, 16, 17 and 18 (19 is preview).\n<a href=\"/documentation/real-time/streams-prepared-transactions\">Prepared-transaction delivery</a> is an opt-in preview.</p>\n<h2>Choose how to run a consumer</h2>\n<p>Most applications run Streams inside a .NET hosted service. Pick the shape that\nmatches your job:</p>\n<table>\n<thead>\n<tr>\n<th>You want</th>\n<th>Use</th>\n<th>Start with</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>A worker that processes new changes and resumes where it stopped</td>\n<td>A hosted worker with a PostgreSQL checkpoint store</td>\n<td><a href=\"/documentation/real-time/streams-quickstart\">Quick start</a></td>\n</tr>\n<tr>\n<td>To copy the existing rows first, then stream new changes</td>\n<td><code>AddBlueTuskStreams().AddHostedConsumer&lt;T&gt;()</code></td>\n<td><a href=\"/documentation/real-time/snapshot-bootstrap\">Snapshot and catch-up</a>, <a href=\"/documentation/real-time/streams-hosting\">hosting</a></td>\n</tr>\n<tr>\n<td>Several consumers that each read the same changes at their own pace</td>\n<td>The durable relay</td>\n<td><a href=\"/documentation/real-time/durable-relay\">Durable relay</a></td>\n</tr>\n<tr>\n<td>To build the pipeline from its parts</td>\n<td><code>PgOutputChangeStream</code> and delivery observers</td>\n<td><a href=\"/documentation/real-time/streams-concepts\">Concepts</a></td>\n</tr>\n</tbody>\n</table>\n<h2>What the code looks like</h2>\n<p>Register a hosted worker:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await foreach (var delivery in changes.ReadTransactionsAsync())\n{\n    await ApplyTheCompleteTransactionAsync(delivery.Transaction);\n    await SaveCheckpointAsync(delivery.Transaction.CommitEndPosition);\n    await delivery.AcknowledgeAsync();\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> delivery <span class=\"hljs-keyword\">in</span> changes.ReadTransactionsAsync())\n{\n    <span class=\"hljs-keyword\">await</span> ApplyTheCompleteTransactionAsync(delivery.Transaction);\n    <span class=\"hljs-keyword\">await</span> SaveCheckpointAsync(delivery.Transaction.CommitEndPosition);\n    <span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync();\n}\n",
+        "code": "builder.Services.AddSingleton(BlueTuskDataSource.Create(connectionString));\nbuilder.Services.AddHostedService<OrdersStreamWorker>();\n",
+        "highlighted": "builder.Services.AddSingleton(BlueTuskDataSource.Create(connectionString));\nbuilder.Services.AddHostedService&lt;OrdersStreamWorker&gt;();\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Do not acknowledge before the downstream effect and checkpoint are durable. A\ncrash can redeliver the last unconfirmed transaction, so the downstream write\nmust use stable change identities or an atomic checkpoint.</p>\n<p>For a new data set, use <a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot and catch-up</a> rather\nthan combining an unrelated table export with a later WAL position.</p>\n<h2>What Streams provides</h2>\n<ul>\n<li>immutable source, relation, column, row, transaction, change, and stable change-ID models;</li>\n<li>explicit value, database-null, not-published, unavailable-old-value, unchanged-TOAST, and decoding-failure column states;</li>\n<li>exact/unknown changed-column sets that require a complete old row before claiming exactness;</li>\n<li>ordinary, streamed, and opt-in prepared transaction assembly by PostgreSQL transaction ID;</li>\n<li>insert, update, delete, truncate, transactional/nontransactional logical message, origin, timestamp, LSN, and ordering preservation;</li>\n<li>bounded change, relation, transaction-memory, individual-record, and total spool-storage accounting;</li>\n<li>versioned disk envelopes with completion footers, per-record CRC32 integrity, atomic <code>.partial</code> to <code>.ready</code> publication, and pluggable at-rest protection;</li>\n<li>restart-safe spool accounting that includes pre-existing <code>.partial</code> and <code>.ready</code> artifacts in the configured disk ceiling;</li>\n<li>streaming materialisation of spooled changes, with spool deletion tied to delivery acknowledgement, nack, or disposal;</li>\n<li>explicit one-shot acknowledgement semantics that stop a source read if a delivery is skipped or rejected; and</li>\n<li>public API baselines plus fake pgoutput and PostgreSQL 15–19 integration coverage.</li>\n</ul>\n<p>Prepared/two-phase transactions fail closed by default. The opt-in\nexperimental mode outside the default V1 contract exposes durable prepare,\ncommit-prepared, and rollback-prepared lifecycle deliveries for destinations\nthat explicitly support invisible staging. See\n<a href=\"/documentation/real-time/streams-prepared-transactions\">prepared and two-phase transactions</a>.</p>\n<h2>Reading transactions</h2>\n<p><code>PgOutputChangeStream</code> accepts the decoded pgoutput sequence from a dedicated logical replication connection. This low-level composition is the Phase 1 integration surface; hosted configuration and durable acknowledgement arrive in later phases.</p>\n"
+        "html": "<p>Inside the worker, read committed transactions and acknowledge each one after\nyour work is done:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var identity = new ChangeSourceIdentity(\n    systemIdentifier,\n    databaseName,\n    slotName,\n    canonicalPublicationFingerprint);\n\nIChangeStream changes = new PgOutputChangeStream(\n    replication.StartReplicationAsync(slotName, publicationName)\n        .DecodePgOutputAsync(),\n    identity,\n    new TransactionAssemblyOptions\n    {\n        MaxInMemoryTransactionBytes = 4 * 1024 * 1024,\n        MaxTransactionBytes = 1024L * 1024 * 1024,\n        MaxSpoolBytes = 10L * 1024 * 1024 * 1024,\n        SpoolDirectory = dedicatedSpoolDirectory,\n        // Opt in only when ApplyIdempotentlyAsync durably stages PREPARE.\n        PreparedTransactionMode = PreparedTransactionMode.Fail,\n    });\n\nawait foreach (var delivery in changes.ReadTransactionsAsync())\n{\n    await foreach (var change in delivery.Transaction.Changes)\n    {\n        await ApplyIdempotentlyAsync(change);\n    }\n\n    await delivery.AcknowledgeAsync();\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> identity = <span class=\"hljs-keyword\">new</span> ChangeSourceIdentity(\n    systemIdentifier,\n    databaseName,\n    slotName,\n    canonicalPublicationFingerprint);\n\nIChangeStream changes = <span class=\"hljs-keyword\">new</span> PgOutputChangeStream(\n    replication.StartReplicationAsync(slotName, publicationName)\n        .DecodePgOutputAsync(),\n    identity,\n    <span class=\"hljs-keyword\">new</span> TransactionAssemblyOptions\n    {\n        MaxInMemoryTransactionBytes = <span class=\"hljs-number\">4</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n        MaxTransactionBytes = <span class=\"hljs-number\">1024L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n        MaxSpoolBytes = <span class=\"hljs-number\">10L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n        SpoolDirectory = dedicatedSpoolDirectory,\n        <span class=\"hljs-comment\">// Opt in only when ApplyIdempotentlyAsync durably stages PREPARE.</span>\n        PreparedTransactionMode = PreparedTransactionMode.Fail,\n    });\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> delivery <span class=\"hljs-keyword\">in</span> changes.ReadTransactionsAsync())\n{\n    <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> change <span class=\"hljs-keyword\">in</span> delivery.Transaction.Changes)\n    {\n        <span class=\"hljs-keyword\">await</span> ApplyIdempotentlyAsync(change);\n    }\n\n    <span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync();\n}\n",
+        "code": "await foreach (var delivery in changes.ReadTransactionsAsync(stoppingToken))\n{\n    // Do your work for the whole transaction...\n    await foreach (var change in delivery.Transaction.Changes.WithCancellation(stoppingToken))\n    {\n        Console.WriteLine($\"{change.Kind} in transaction {delivery.Transaction.TransactionId}\");\n    }\n\n    // ...then acknowledge it. Streams saves the checkpoint and tells PostgreSQL.\n    await delivery.AcknowledgeAsync(stoppingToken);\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> delivery <span class=\"hljs-keyword\">in</span> changes.ReadTransactionsAsync(stoppingToken))\n{\n    <span class=\"hljs-comment\">// Do your work for the whole transaction...</span>\n    <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> change <span class=\"hljs-keyword\">in</span> delivery.Transaction.Changes.WithCancellation(stoppingToken))\n    {\n        Console.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{change.Kind}</span> in transaction <span class=\"hljs-subst\">{delivery.Transaction.TransactionId}</span>&quot;</span>);\n    }\n\n    <span class=\"hljs-comment\">// ...then acknowledge it. Streams saves the checkpoint and tells PostgreSQL.</span>\n    <span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync(stoppingToken);\n}\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>The transaction change set is asynchronous so a large transaction can be read record-by-record from disk. <code>MaterializeAsync</code> is a deliberate convenience for bounded transactions and allocates the complete result.</p>\n<h2>Failure behavior</h2>\n<p>Incomplete ordinary or streamed transactions are discarded when the source ends, allowing PostgreSQL to redeliver them from the last durable checkpoint. Stream abort removes its partial spool. Tampered, truncated, incompatible, or wrong-protector spool data fails closed. Limit exhaustion pauses the read with a diagnostic exception; it never drops a change or splits a source transaction.</p>\n<p><code>CheckpointingChangeDeliveryObserver</code> implements the locked destination → compare-and-swap checkpoint → PostgreSQL feedback sequence. The checkpoint includes the source system/database/slot/publication identity, output plug-in, mapping fingerprint, acknowledged commit-end LSN, format version, and store generation. <code>MemoryChangeStreamStateStore</code> supplies the same monotonic compare-and-swap and fencing behavior as the durable stores for tests and ephemeral development only.</p>\n"
+        "html": "<p>The <a href=\"/documentation/real-time/streams-quickstart\">quick start</a> builds this worker end to end, including the\nreplication connection and the checkpoint store.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-quickstart\">Quick start</a>: stream changes from a table and resume after a restart, in about 10 minutes.</li>\n<li><a href=\"/documentation/real-time/streams-concepts\">Concepts</a>: transactions, column states, acknowledgement, checkpoints, leases, spooling, snapshots and the relay.</li>\n<li>Guides:\n<ul>\n<li><a href=\"/documentation/real-time/snapshot-bootstrap\">Snapshot and catch-up</a>: copy existing rows, then stream without a gap.</li>\n<li><a href=\"/documentation/real-time/state-stores\">Checkpoint and lease stores</a>: PostgreSQL, file, Redis and custom stores.</li>\n<li><a href=\"/documentation/real-time/durable-relay\">Durable relay</a>: feed many consumer groups from one slot.</li>\n<li><a href=\"/documentation/real-time/streams-hosting\">Hosting and observability</a>: hosted consumers, health checks, metrics and traces.</li>\n<li><a href=\"/documentation/real-time/streams-typed-mappings\">Typed mappings</a>: map rows to your own classes or an EF Core model.</li>\n<li><a href=\"/documentation/real-time/streams-cloudevents\">CloudEvents</a>: publish one event per transaction.</li>\n<li><a href=\"/documentation/real-time/streams-aspire\">Aspire</a>: wire Streams workers in an Aspire AppHost.</li>\n<li><a href=\"/documentation/real-time/streams-cli\">The <code>bluetusk-streams</code> tool</a>: validate and provision PostgreSQL.</li>\n<li><a href=\"/documentation/real-time/streams-prepared-transactions\">Prepared transactions</a>: stage two-phase transactions (preview).</li>\n<li><a href=\"/documentation/real-time/streams-sample\">Snapshot-then-stream sample</a>: run the sample worker in this repository.</li>\n</ul>\n</li>\n<li><a href=\"/documentation/real-time/streams-configuration\">Configuration</a>: every option, default and configuration key.</li>\n<li><a href=\"/documentation/real-time/streams-troubleshooting\">Troubleshooting</a>: common errors and how to fix them.</li>\n</ul>\n<h2>Reference records</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-api-compatibility\">Public API compatibility policy</a></li>\n<li><a href=\"/documentation/real-time/streams-format-compatibility\">Format compatibility registry</a></li>\n<li><a href=\"/documentation/real-time/streams-endurance\">Release endurance record</a></li>\n<li>Release notes: <a href=\"/documentation/real-time/streams-release-notes-1-0-0\">1.0.0</a>,\n<a href=\"/documentation/real-time/streams-release-notes-0-1-0-preview-1\">0.1.0-preview.1</a>,\n<a href=\"/documentation/getting-started/release-1-1-rc1\">1.1.0-rc.1</a></li>\n<li><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.StreamsTransactionBenchmarks-report-github.md\" target=\"_blank\" rel=\"noreferrer\">Transaction benchmark baseline</a></li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-quickstart",
+    "summary": "Prepare PostgreSQL, run a hosted Streams consumer, and process committed transactions with a durable checkpoint.",
+    "keywords": [
+      "streams",
+      "quickstart",
+      "cdc",
+      "replication"
+    ],
+    "order": 31,
+    "listed": true,
+    "title": "Quick start: stream changes from a table",
+    "sourcePath": "docs/streams/quickstart.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/quickstart.md",
+    "headings": [
+      {
+        "id": "quick-start-stream-changes-from-a-table",
+        "text": "Quick start: stream changes from a table",
+        "level": 1
+      },
+      {
+        "id": "before-you-start",
+        "text": "Before you start",
+        "level": 2
+      },
+      {
+        "id": "1-prepare-postgresql",
+        "text": "1. Prepare PostgreSQL",
+        "level": 2
+      },
+      {
+        "id": "2-create-the-project",
+        "text": "2. Create the project",
+        "level": 2
+      },
+      {
+        "id": "3-set-the-connection-string",
+        "text": "3. Set the connection string",
+        "level": 2
+      },
+      {
+        "id": "4-write-the-worker",
+        "text": "4. Write the worker",
+        "level": 2
+      },
+      {
+        "id": "5-run-it",
+        "text": "5. Run it",
+        "level": 2
+      },
+      {
+        "id": "6-make-some-changes",
+        "text": "6. Make some changes",
+        "level": 2
+      },
+      {
+        "id": "7-stop-change-and-restart",
+        "text": "7. Stop, change and restart",
+        "level": 2
+      },
+      {
+        "id": "8-clean-up",
+        "text": "8. Clean up",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 1089,
+    "readMinutes": 5,
+    "searchText": "Quick start: stream changes from a table In this quick start you build a .NET worker that prints every committed change to a PostgreSQL table, then stop and restart it and watch it carry on from where it stopped. It takes about 10 minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 test server with `wal_level = logical`. The `bluetusk-postgres` Docker container from [step 1 of the 5-minute first app](../getting-started/quickstart.md#1-start-postgresql) already has `wal_level=logical`. On another server, check with `SHOW wal_level;`; changing it needs `ALTER SYSTEM SET wal_level = logical;` and a restart. 1. Prepare PostgreSQL Open `psql` as the `postgres` superuser: Run this SQL: Type `\\q` to leave `psql`. The [concepts page](../getting-started/concepts.md#two-kinds-of-transaction) explains publications and slots. 2. Create the project 3. Set the connection string On Linux or macOS, use `export BLUETUSK_STREAMS_SOURCE=\"...\"`. **Warning:** `SSL Mode=Disable` is only for a local test container. Keep the default, `SSL Mode=VerifyFull`, everywhere else. 4. Write the worker Replace the contents of `Program.cs`: The numbered comments: (1) the store keeps one checkpoint row per consumer group in the `bluetusk_streams` schema; (2) the **source identity** names the server, database, slot and publication; (3) the **lease** stops a second copy from taking over, and the observer renews it in the background until it is disposed; (4) Streams assembles complete transactions; (5) `AcknowledgeAsync` saves the checkpoint, then lets the slot release that WAL. 5. Run it `0/0` means there is no checkpoint yet. Leave the worker running. 6. Make some changes In a second terminal: The worker prints one block per transaction. Your transaction IDs and positions will differ: The two inserts arrive together because they were one transaction. The delete shows `<OldValueUnavailable>` because PostgreSQL only logs ",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Quick start: stream changes from a table</h1>\n<p>In this quick start you build a .NET worker that prints every committed change\nto a PostgreSQL table, then stop and restart it and watch it carry on from where\nit stopped. It takes about 10 minutes.</p>\n<h2>Before you start</h2>\n<p>You need:</p>\n<ul>\n<li>the <a href=\"https://dotnet.microsoft.com/download/dotnet/10.0\" target=\"_blank\" rel=\"noreferrer\">.NET 10 SDK</a>;</li>\n<li>a PostgreSQL 15, 16, 17 or 18 test server with <code>wal_level = logical</code>.</li>\n</ul>\n<p>The <code>bluetusk-postgres</code> Docker container from\n<a href=\"/documentation/getting-started/quickstart#1-start-postgresql\">step 1 of the 5-minute first app</a>\nalready has <code>wal_level=logical</code>. On another server, check with\n<code>SHOW wal_level;</code>; changing it needs <code>ALTER SYSTEM SET wal_level = logical;</code> and\na restart.</p>\n<h2>1. Prepare PostgreSQL</h2>\n<p>Open <code>psql</code> as the <code>postgres</code> superuser:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var checkpointIdentity = ChangeStreamCheckpoint.CreateInitial(\n    identity,\n    databaseIdentity,\n    \"pgoutput\",\n    mappingFingerprint);\nvar stateKey = ChangeStreamStateKey.Create(identity, consumerGroup);\n\nawait using var acknowledgement =\n    await CheckpointingChangeDeliveryObserver.AcquireAsync(\n        memoryStateStore,\n        stateKey,\n        uniqueWorkerId,\n        TimeSpan.FromSeconds(30),\n        checkpointIdentity,\n        new LogicalReplicationFeedbackSender(replication));\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> checkpointIdentity = ChangeStreamCheckpoint.CreateInitial(\n    identity,\n    databaseIdentity,\n    <span class=\"hljs-string\">&quot;pgoutput&quot;</span>,\n    mappingFingerprint);\n<span class=\"hljs-keyword\">var</span> stateKey = ChangeStreamStateKey.Create(identity, consumerGroup);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> acknowledgement =\n    <span class=\"hljs-keyword\">await</span> CheckpointingChangeDeliveryObserver.AcquireAsync(\n        memoryStateStore,\n        stateKey,\n        uniqueWorkerId,\n        TimeSpan.FromSeconds(<span class=\"hljs-number\">30</span>),\n        checkpointIdentity,\n        <span class=\"hljs-keyword\">new</span> LogicalReplicationFeedbackSender(replication));\n",
+        "code": "docker exec -it bluetusk-postgres psql -U postgres\n",
+        "highlighted": "docker exec <span class=\"hljs-literal\">-it</span> bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Run this SQL:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "-- A login that may open replication connections.\nCREATE ROLE streams_quickstart WITH LOGIN REPLICATION PASSWORD 'local-dev-only';\n-- Lets the worker create its checkpoint schema in this database.\nGRANT CREATE ON DATABASE postgres TO streams_quickstart;\n\n-- The table to watch.\nCREATE SCHEMA app;\nCREATE TABLE app.orders (\n    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    description text NOT NULL\n);\nGRANT USAGE ON SCHEMA app TO streams_quickstart;\nGRANT SELECT ON app.orders TO streams_quickstart;\n\n-- Which tables to capture, and a slot that remembers how far you have read.\nCREATE PUBLICATION orders_publication FOR TABLE app.orders;\nSELECT pg_create_logical_replication_slot('orders_quickstart', 'pgoutput');\n",
+        "highlighted": "<span class=\"hljs-comment\">-- A login that may open replication connections.</span>\n<span class=\"hljs-keyword\">CREATE</span> ROLE streams_quickstart <span class=\"hljs-keyword\">WITH</span> LOGIN REPLICATION PASSWORD <span class=\"hljs-string\">&#x27;local-dev-only&#x27;</span>;\n<span class=\"hljs-comment\">-- Lets the worker create its checkpoint schema in this database.</span>\n<span class=\"hljs-keyword\">GRANT</span> <span class=\"hljs-keyword\">CREATE</span> <span class=\"hljs-keyword\">ON</span> DATABASE postgres <span class=\"hljs-keyword\">TO</span> streams_quickstart;\n\n<span class=\"hljs-comment\">-- The table to watch.</span>\n<span class=\"hljs-keyword\">CREATE</span> SCHEMA app;\n<span class=\"hljs-keyword\">CREATE TABLE</span> app.orders (\n    id <span class=\"hljs-type\">bigint</span> GENERATED ALWAYS <span class=\"hljs-keyword\">AS</span> <span class=\"hljs-keyword\">IDENTITY</span> <span class=\"hljs-keyword\">PRIMARY KEY</span>,\n    description text <span class=\"hljs-keyword\">NOT NULL</span>\n);\n<span class=\"hljs-keyword\">GRANT</span> USAGE <span class=\"hljs-keyword\">ON</span> SCHEMA app <span class=\"hljs-keyword\">TO</span> streams_quickstart;\n<span class=\"hljs-keyword\">GRANT</span> <span class=\"hljs-keyword\">SELECT</span> <span class=\"hljs-keyword\">ON</span> app.orders <span class=\"hljs-keyword\">TO</span> streams_quickstart;\n\n<span class=\"hljs-comment\">-- Which tables to capture, and a slot that remembers how far you have read.</span>\n<span class=\"hljs-keyword\">CREATE</span> PUBLICATION orders_publication <span class=\"hljs-keyword\">FOR</span> <span class=\"hljs-keyword\">TABLE</span> app.orders;\n<span class=\"hljs-keyword\">SELECT</span> pg_create_logical_replication_slot(<span class=\"hljs-string\">&#x27;orders_quickstart&#x27;</span>, <span class=\"hljs-string\">&#x27;pgoutput&#x27;</span>);\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Type <code>\\q</code> to leave <code>psql</code>. The <a href=\"/documentation/getting-started/concepts#two-kinds-of-transaction\">concepts page</a>\nexplains publications and slots.</p>\n<h2>2. Create the project</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet new console --framework net10.0 --name OrdersStream\ncd OrdersStream\ndotnet add package BlueTusk.Streams\ndotnet add package BlueTusk.Streams.Storage.PostgreSql\ndotnet add package Microsoft.Extensions.Hosting\n",
+        "highlighted": "dotnet new console <span class=\"hljs-literal\">--framework</span> net10.<span class=\"hljs-number\">0</span> <span class=\"hljs-literal\">--name</span> OrdersStream\n<span class=\"hljs-built_in\">cd</span> OrdersStream\ndotnet add package BlueTusk.Streams\ndotnet add package BlueTusk.Streams.Storage.PostgreSql\ndotnet add package Microsoft.Extensions.Hosting\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>3. Set the connection string</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:BLUETUSK_STREAMS_SOURCE = \"Host=localhost;Port=5432;Username=streams_quickstart;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable\"\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_SOURCE</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Username=streams_quickstart;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>On Linux or macOS, use <code>export BLUETUSK_STREAMS_SOURCE=&quot;...&quot;</code>.</p>\n<blockquote>\n<p><strong>Warning:</strong> <code>SSL Mode=Disable</code> is only for a local test container. Keep the\ndefault, <code>SSL Mode=VerifyFull</code>, everywhere else.</p>\n</blockquote>\n<h2>4. Write the worker</h2>\n<p>Replace the contents of <code>Program.cs</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using System.Text;\nusing BlueTusk.Data;\nusing BlueTusk.Replication;\nusing BlueTusk.Replication.PgOutput;\nusing BlueTusk.Streams;\nusing BlueTusk.Streams.Storage.PostgreSql;\nusing Microsoft.Extensions.Configuration;\nusing Microsoft.Extensions.DependencyInjection;\nusing Microsoft.Extensions.Hosting;\n\nvar builder = Host.CreateApplicationBuilder(args);\n\nvar connectionString = builder.Configuration[\"BLUETUSK_STREAMS_SOURCE\"]\n    ?? throw new InvalidOperationException(\"Set BLUETUSK_STREAMS_SOURCE first.\");\n\nbuilder.Services.AddSingleton(BlueTuskDataSource.Create(connectionString));\nbuilder.Services.AddHostedService<OrdersStreamWorker>();\n\nawait builder.Build().RunAsync();\n\nsealed class OrdersStreamWorker(BlueTuskDataSource dataSource, IConfiguration configuration)\n    : BackgroundService\n{\n    private static readonly TimeSpan LeaseDuration = TimeSpan.FromSeconds(30);\n\n    protected override async Task ExecuteAsync(CancellationToken stoppingToken)\n    {\n        var settings = configuration.GetSection(\"BlueTusk:Streams\");\n        var slot = settings[\"Slot\"] ?? \"orders_quickstart\";\n        var publication = settings[\"Publications:0\"] ?? \"orders_publication\";\n        var consumerGroup = settings[\"ConsumerGroup\"] ?? \"console\";\n\n        // 1. A durable checkpoint and lease store in PostgreSQL.\n        var store = new PostgreSqlChangeStreamStateStore(\n            new PostgreSqlStreamsStorageOptions { ControlDataSource = dataSource });\n        await store.InitializeAsync(stoppingToken);\n\n        // 2. A dedicated logical replication connection.\n        await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(\n            dataSource.CreateDedicatedSessionOptions(), stoppingToken);\n        var server = await replication.IdentifySystemAsync(stoppingToken);\n        var source = new ChangeSourceIdentity(\n            server.SystemIdentifier, server.DatabaseName!, slot, publication);\n\n        // 3. Take the consumer-group lease and load the last checkpoint.\n        await using var checkpoints = await CheckpointingChangeDeliveryObserver.AcquireAsync(\n            store,\n            ChangeStreamStateKey.Create(source, consumerGroup),\n            ownerId: $\"{Environment.MachineName}:{Environment.ProcessId}\",\n            LeaseDuration,\n            ChangeStreamCheckpoint.CreateInitial(\n                source, server.SystemIdentifier, \"pgoutput\", \"console-v1\"),\n            new LogicalReplicationFeedbackSender(replication),\n            stoppingToken);\n        var resumeFrom = checkpoints.Checkpoint?.AcknowledgedCommitPosition ?? default;\n        Console.WriteLine($\"Consumer group '{consumerGroup}' starts after {resumeFrom}\");\n\n        // 4. Read committed transactions from the slot, after the checkpoint.\n        var changes = new PgOutputChangeStream(\n            replication\n                .StartReplicationAsync(\n                    new BlueTuskPgOutputReplicationOptions\n                    {\n                        SlotName = slot,\n                        PublicationNames = [publication],\n                        StartPosition = resumeFrom,\n                        ProtocolVersion = 2,\n                        StreamingMode = BlueTuskLogicalStreamingMode.On,\n                    },\n                    stoppingToken)\n                .DecodePgOutputAsync(\n                    new BlueTuskPgOutputDecoderOptions\n                    {\n                        ProtocolVersion = 2,\n                        StreamingMode = BlueTuskPgOutputStreamingMode.On,\n                    },\n                    stoppingToken),\n            source,\n            observer: checkpoints);\n\n        await foreach (var delivery in changes.ReadTransactionsAsync(stoppingToken))\n        {\n            var transaction = delivery.Transaction;\n            Console.WriteLine(\n                $\"Transaction {transaction.TransactionId} committed at \" +\n                $\"{transaction.CommitEndPosition} ({transaction.Changes.Count} changes)\");\n\n            await foreach (var change in transaction.Changes.WithCancellation(stoppingToken))\n            {\n                Console.WriteLine($\"  {change.Kind,-6} {Describe(change)}\");\n            }\n\n            // 5. Acknowledge only after your work is done. This stores the\n            //    checkpoint, then confirms the position to PostgreSQL.\n            await delivery.AcknowledgeAsync(stoppingToken);\n        }\n    }\n\n    private static string Describe(Change change)\n    {\n        var row = change switch\n        {\n            InsertChange insert => insert.NewRow,\n            UpdateChange update => update.NewRow,\n            DeleteChange delete => delete.OldRow,\n            _ => null,\n        };\n        if (row is null)\n        {\n            return string.Empty;\n        }\n\n        var columns = row.Table.Columns.Select(column =>\n        {\n            var value = row[column.Ordinal];\n            var text = value.State == ChangeColumnState.Value\n                ? Encoding.UTF8.GetString(value.Data.Span)\n                : $\"<{value.State}>\";\n            return $\"{column.Name}={text}\";\n        });\n        return $\"{row.Table} {string.Join(\", \", columns)}\";\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> System.Text;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Replication;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Replication.PgOutput;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Streams;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Streams.Storage.PostgreSql;\n<span class=\"hljs-keyword\">using</span> Microsoft.Extensions.Configuration;\n<span class=\"hljs-keyword\">using</span> Microsoft.Extensions.DependencyInjection;\n<span class=\"hljs-keyword\">using</span> Microsoft.Extensions.Hosting;\n\n<span class=\"hljs-keyword\">var</span> builder = Host.CreateApplicationBuilder(<span class=\"hljs-keyword\">args</span>);\n\n<span class=\"hljs-keyword\">var</span> connectionString = builder.Configuration[<span class=\"hljs-string\">&quot;BLUETUSK_STREAMS_SOURCE&quot;</span>]\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Set BLUETUSK_STREAMS_SOURCE first.&quot;</span>);\n\nbuilder.Services.AddSingleton(BlueTuskDataSource.Create(connectionString));\nbuilder.Services.AddHostedService&lt;OrdersStreamWorker&gt;();\n\n<span class=\"hljs-keyword\">await</span> builder.Build().RunAsync();\n\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">OrdersStreamWorker</span>(<span class=\"hljs-params\">BlueTuskDataSource dataSource, IConfiguration configuration</span>)\n    : BackgroundService</span>\n{\n    <span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">static</span> <span class=\"hljs-keyword\">readonly</span> TimeSpan LeaseDuration = TimeSpan.FromSeconds(<span class=\"hljs-number\">30</span>);\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">async</span> Task <span class=\"hljs-title\">ExecuteAsync</span>(<span class=\"hljs-params\">CancellationToken stoppingToken</span>)</span>\n    {\n        <span class=\"hljs-keyword\">var</span> settings = configuration.GetSection(<span class=\"hljs-string\">&quot;BlueTusk:Streams&quot;</span>);\n        <span class=\"hljs-keyword\">var</span> slot = settings[<span class=\"hljs-string\">&quot;Slot&quot;</span>] ?? <span class=\"hljs-string\">&quot;orders_quickstart&quot;</span>;\n        <span class=\"hljs-keyword\">var</span> publication = settings[<span class=\"hljs-string\">&quot;Publications:0&quot;</span>] ?? <span class=\"hljs-string\">&quot;orders_publication&quot;</span>;\n        <span class=\"hljs-keyword\">var</span> consumerGroup = settings[<span class=\"hljs-string\">&quot;ConsumerGroup&quot;</span>] ?? <span class=\"hljs-string\">&quot;console&quot;</span>;\n\n        <span class=\"hljs-comment\">// 1. A durable checkpoint and lease store in PostgreSQL.</span>\n        <span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> PostgreSqlChangeStreamStateStore(\n            <span class=\"hljs-keyword\">new</span> PostgreSqlStreamsStorageOptions { ControlDataSource = dataSource });\n        <span class=\"hljs-keyword\">await</span> store.InitializeAsync(stoppingToken);\n\n        <span class=\"hljs-comment\">// 2. A dedicated logical replication connection.</span>\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication = <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n            dataSource.CreateDedicatedSessionOptions(), stoppingToken);\n        <span class=\"hljs-keyword\">var</span> server = <span class=\"hljs-keyword\">await</span> replication.IdentifySystemAsync(stoppingToken);\n        <span class=\"hljs-keyword\">var</span> source = <span class=\"hljs-keyword\">new</span> ChangeSourceIdentity(\n            server.SystemIdentifier, server.DatabaseName!, slot, publication);\n\n        <span class=\"hljs-comment\">// 3. Take the consumer-group lease and load the last checkpoint.</span>\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> checkpoints = <span class=\"hljs-keyword\">await</span> CheckpointingChangeDeliveryObserver.AcquireAsync(\n            store,\n            ChangeStreamStateKey.Create(source, consumerGroup),\n            ownerId: <span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{Environment.MachineName}</span>:<span class=\"hljs-subst\">{Environment.ProcessId}</span>&quot;</span>,\n            LeaseDuration,\n            ChangeStreamCheckpoint.CreateInitial(\n                source, server.SystemIdentifier, <span class=\"hljs-string\">&quot;pgoutput&quot;</span>, <span class=\"hljs-string\">&quot;console-v1&quot;</span>),\n            <span class=\"hljs-keyword\">new</span> LogicalReplicationFeedbackSender(replication),\n            stoppingToken);\n        <span class=\"hljs-keyword\">var</span> resumeFrom = checkpoints.Checkpoint?.AcknowledgedCommitPosition ?? <span class=\"hljs-literal\">default</span>;\n        Console.WriteLine(<span class=\"hljs-string\">$&quot;Consumer group &#x27;<span class=\"hljs-subst\">{consumerGroup}</span>&#x27; starts after <span class=\"hljs-subst\">{resumeFrom}</span>&quot;</span>);\n\n        <span class=\"hljs-comment\">// 4. Read committed transactions from the slot, after the checkpoint.</span>\n        <span class=\"hljs-keyword\">var</span> changes = <span class=\"hljs-keyword\">new</span> PgOutputChangeStream(\n            replication\n                .StartReplicationAsync(\n                    <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputReplicationOptions\n                    {\n                        SlotName = slot,\n                        PublicationNames = [publication],\n                        StartPosition = resumeFrom,\n                        ProtocolVersion = <span class=\"hljs-number\">2</span>,\n                        StreamingMode = BlueTuskLogicalStreamingMode.On,\n                    },\n                    stoppingToken)\n                .DecodePgOutputAsync(\n                    <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputDecoderOptions\n                    {\n                        ProtocolVersion = <span class=\"hljs-number\">2</span>,\n                        StreamingMode = BlueTuskPgOutputStreamingMode.On,\n                    },\n                    stoppingToken),\n            source,\n            observer: checkpoints);\n\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> delivery <span class=\"hljs-keyword\">in</span> changes.ReadTransactionsAsync(stoppingToken))\n        {\n            <span class=\"hljs-keyword\">var</span> transaction = delivery.Transaction;\n            Console.WriteLine(\n                <span class=\"hljs-string\">$&quot;Transaction <span class=\"hljs-subst\">{transaction.TransactionId}</span> committed at &quot;</span> +\n                <span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{transaction.CommitEndPosition}</span> (<span class=\"hljs-subst\">{transaction.Changes.Count}</span> changes)&quot;</span>);\n\n            <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> change <span class=\"hljs-keyword\">in</span> transaction.Changes.WithCancellation(stoppingToken))\n            {\n                Console.WriteLine(<span class=\"hljs-string\">$&quot;  <span class=\"hljs-subst\">{change.Kind,<span class=\"hljs-number\">-6</span>}</span> <span class=\"hljs-subst\">{Describe(change)}</span>&quot;</span>);\n            }\n\n            <span class=\"hljs-comment\">// 5. Acknowledge only after your work is done. This stores the</span>\n            <span class=\"hljs-comment\">//    checkpoint, then confirms the position to PostgreSQL.</span>\n            <span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync(stoppingToken);\n        }\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">static</span> <span class=\"hljs-built_in\">string</span> <span class=\"hljs-title\">Describe</span>(<span class=\"hljs-params\">Change change</span>)</span>\n    {\n        <span class=\"hljs-keyword\">var</span> row = change <span class=\"hljs-keyword\">switch</span>\n        {\n            InsertChange insert =&gt; insert.NewRow,\n            UpdateChange update =&gt; update.NewRow,\n            DeleteChange delete =&gt; delete.OldRow,\n            _ =&gt; <span class=\"hljs-literal\">null</span>,\n        };\n        <span class=\"hljs-keyword\">if</span> (row <span class=\"hljs-keyword\">is</span> <span class=\"hljs-literal\">null</span>)\n        {\n            <span class=\"hljs-keyword\">return</span> <span class=\"hljs-built_in\">string</span>.Empty;\n        }\n\n        <span class=\"hljs-keyword\">var</span> columns = row.Table.Columns.Select(column =&gt;\n        {\n            <span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">value</span> = row[column.Ordinal];\n            <span class=\"hljs-keyword\">var</span> text = <span class=\"hljs-keyword\">value</span>.State == ChangeColumnState.Value\n                ? Encoding.UTF8.GetString(<span class=\"hljs-keyword\">value</span>.Data.Span)\n                : <span class=\"hljs-string\">$&quot;&lt;<span class=\"hljs-subst\">{<span class=\"hljs-keyword\">value</span>.State}</span>&gt;&quot;</span>;\n            <span class=\"hljs-keyword\">return</span> <span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{column.Name}</span>=<span class=\"hljs-subst\">{text}</span>&quot;</span>;\n        });\n        <span class=\"hljs-keyword\">return</span> <span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{row.Table}</span> <span class=\"hljs-subst\">{<span class=\"hljs-built_in\">string</span>.Join(<span class=\"hljs-string\">&quot;, &quot;</span>, columns)}</span>&quot;</span>;\n    }\n}\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Only the active fenced lease may mutate a checkpoint. Backward positions, stale generations, incompatible source/mapping identities, and expired owners fail closed. If feedback fails after the checkpoint is durable, retry sends feedback from the stored position without rewriting or advancing the checkpoint. A nack never advances either checkpoint or feedback.</p>\n<p>The observer renews its lease on a timer, three times per lease duration, independently of acknowledgements, so an idle consumer or a slow destination keeps ownership. Each acknowledgement still renews and verifies the lease first; if the store reports the lease lost, the acknowledgement fails with <code>ChangeStreamLeaseLostException</code> before any checkpoint is written. Disposing the observer stops renewal and releases the lease. <code>PostgreSqlRelayChangeDeliveryObserver</code> renews its source lease the same way.</p>\n<h3>Position feedback without an observer</h3>\n<p>A <code>PgOutputChangeStream</code> reading from a BlueTusk replication connection reports progress to PostgreSQL even when no delivery observer is attached. This covers streams created directly over <code>StartReplicationAsync(...).DecodePgOutputAsync()</code> and the stream created by <code>PostgreSqlConsistentSnapshotSource</code>, so hosted Streams consumers and direct Sync pipelines without an <code>observerFactory</code> are included. After <code>AcknowledgeAsync</code> completes, the stream confirms that transaction’s commit-end position to the WAL sender that delivered it. The slot’s <code>confirmed_flush_lsn</code> then advances and PostgreSQL can release the WAL behind it. Feedback is at-least-once: a delivery that is nacked, disposed or never acknowledged is not confirmed, and PostgreSQL redelivers it after a restart.</p>\n<p>When an observer is attached, the observer owns position feedback, as <code>CheckpointingChangeDeliveryObserver</code> and <code>PostgreSqlRelayChangeDeliveryObserver</code> do after their durable write. A custom observer that never sends feedback still holds WAL. Without an observer there is no durable checkpoint, so a restart cannot resume from a known position. Use an observer and a checkpoint store when a consumer must resume.</p>\n<p>See <a href=\"/documentation/real-time/state-stores\">checkpoint and lease stores</a> for backend guarantees, file-store deployment constraints, and the custom-store conformance kit.</p>\n<p>See the <a href=\"/documentation/real-time/durable-relay\">PostgreSQL durable relay</a> for source append ordering, group fan-out/replay, retention, storage bounds, and health signals.</p>\n<p>See <a href=\"/documentation/real-time/streams-prepared-transactions\">prepared and two-phase transactions</a> for the\nopt-in staging contract, final lifecycle deliveries, decoder configuration, and\nrelay format 1-to-2 compatibility.</p>\n<p>The <a href=\"/documentation/real-time/streams-format-compatibility\">format compatibility registry</a> records every\ndurable or externally visible Streams format, its readable range, and the test\nfixture that proves its compatibility policy.</p>\n<p>The <a href=\"/documentation/real-time/streams-api-compatibility\">public API compatibility policy</a> describes the\nmachine-enforced Streams 1.0 candidate freeze and its release gate.</p>\n<p><code>BlueTusk.Streams.Testing</code> includes <code>ChangeDeliveryTestFactory</code>, allowing\ndownstream products to exercise acknowledge/nack ordering through the public\nStreams contract without importing replication protocol types.</p>\n<p>See <a href=\"/documentation/real-time/streams-typed-mappings\">typed mappings</a> for convention and explicit mappings, schema and mapping fingerprints, partial-row safety, decoding policy, and the snapshot consumer lifecycle.</p>\n<p>See <a href=\"/documentation/real-time/snapshot-bootstrap\">consistent snapshot bootstrap</a> for exported-snapshot lifetime, keyset binary COPY, bounded parallelism, restart epochs, and the PostgreSQL 15–19 no-gap proof.</p>\n<p>See <a href=\"/documentation/real-time/streams-hosting\">hosting and observability</a> for hosted-worker registration, health states, readiness behavior, and exporter-neutral OpenTelemetry instruments.</p>\n<p>See <a href=\"/documentation/real-time/streams-cloudevents\">CloudEvents</a> for transaction-preserving structured JSON, deterministic IDs, integrity-checked payloads, and acknowledgement responsibility.</p>\n<p>See the <a href=\"/documentation/real-time/streams-cli\">validation and provisioning CLI</a> for idempotent source/relay setup, safe shared-control checks, and machine-readable diagnostic codes.</p>\n<p>See <a href=\"/documentation/real-time/streams-aspire\">Aspire integration</a> for secret-preserving source/control resource wiring and explicit relay versus direct delivery configuration.</p>\n<p>See the <a href=\"/documentation/real-time/streams-sample\">snapshot-then-stream sample</a> for a runnable hosted consumer using exported-snapshot binary COPY followed by transaction-preserving CDC.</p>\n<p>See the <a href=\"/documentation/real-time/streams-release-notes-1-0-0\">1.0.0 release record</a> for the package list,\nguarantees, evidence gate, and support boundary.\nSee the coordinated <a href=\"/documentation/getting-started/release-1-1-rc1\">1.1.0-rc.1 release record</a> for\nthe public RC version, exact commit, registry verification, and stable gate.</p>\n<h2>Creating a slot while the schema changes</h2>\n<p>PostgreSQL 15 to 19 can create a logical slot that fails when it decodes\nchanges. This happens when, in the slot’s database, a transaction creates or\nalters a table and commits while the slot is still being created. An older\ntransaction must still be open elsewhere in the cluster, and a third\ntransaction must then write to that table. The read fails with a\n<code>BlueTuskServerException</code> such as\n<code>could not map filenumber &quot;base/…&quot; to relation OID</code>. PostgreSQL 15 says\n<code>filenode</code> instead of <code>filenumber</code>. The error can also read\n<code>pg_attribute catalog is missing N attribute(s) for relation OID …</code>.</p>\n<p>The error comes from the server’s logical decoding, and the decoder fails the\nsame way each time it rereads the same WAL. Reconnecting to the same slot\ntherefore normally fails again. The upstream fix is still under review as of\nOctober 2026; see the pgsql-hackers thread “Historic snapshot doesn’t track txns\ncommitted in BUILDING_SNAPSHOT state”.</p>\n<ul>\n<li>Avoid the risk by creating slots, including temporary ones, at a point when\nnothing in that database runs migrations or creates tables. The risk only\nexists until slot creation returns; later schema changes are decoded normally.</li>\n<li>To recover, drop the slot and create a new one. The new slot starts at a new\nWAL position, so rebuild derived state with\n<a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot and catch-up</a> instead of resuming from the\nold checkpoint.</li>\n</ul>\n<h2>Performance baseline</h2>\n<p>The checked-in Ryzen 7 5800X/.NET 10 ShortRun measures 422 ns and 852 B per change for a materialised 1,000-insert transaction. A 4 MiB durable spill, integrity check, streamed read, flush, and cleanup measures 38.3 ms and 12.1 MiB. See the <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.StreamsTransactionBenchmarks-report-github.md\" target=\"_blank\" rel=\"noreferrer\">benchmark report</a>. ShortRun values guide regression work and are not universal production claims.</p>\n"
+        "html": "<p>The numbered comments: (1) the store keeps one checkpoint row per consumer\ngroup in the <code>bluetusk_streams</code> schema; (2) the <strong>source identity</strong> names the\nserver, database, slot and publication; (3) the <strong>lease</strong> stops a second copy\nfrom taking over, and the observer renews it in the background until it is\ndisposed; (4) Streams assembles complete transactions; (5)\n<code>AcknowledgeAsync</code> saves the checkpoint, then lets the slot release that WAL.</p>\n<h2>5. Run it</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet run\n",
+        "highlighted": "dotnet run\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "code",
+        "code": "Consumer group 'console' starts after 0/0\n",
+        "highlighted": "Consumer group &#x27;console&#x27; starts after 0/0\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>0/0</code> means there is no checkpoint yet. Leave the worker running.</p>\n<h2>6. Make some changes</h2>\n<p>In a second terminal:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres `\n  -c \"INSERT INTO app.orders (description) VALUES ('first order'), ('second order');\" `\n  -c \"UPDATE app.orders SET description = 'first order (paid)' WHERE id = 1;\" `\n  -c \"DELETE FROM app.orders WHERE id = 2;\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres `\n  <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;INSERT INTO app.orders (description) VALUES (&#x27;first order&#x27;), (&#x27;second order&#x27;);&quot;</span> `\n  <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;UPDATE app.orders SET description = &#x27;first order (paid)&#x27; WHERE id = 1;&quot;</span> `\n  <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;DELETE FROM app.orders WHERE id = 2;&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The worker prints one block per transaction. Your transaction IDs and\npositions will differ:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "Transaction 1466 committed at 0/577A780 (2 changes)\n  Insert app.orders id=1, description=first order\n  Insert app.orders id=2, description=second order\nTransaction 1467 committed at 0/577A810 (1 changes)\n  Update app.orders id=1, description=first order (paid)\nTransaction 1468 committed at 0/577A888 (1 changes)\n  Delete app.orders id=2, description=<OldValueUnavailable>\n",
+        "highlighted": "Transaction 1466 committed at 0/577A780 (2 changes)\n  Insert app.orders id=1, description=first order\n  Insert app.orders id=2, description=second order\nTransaction 1467 committed at 0/577A810 (1 changes)\n  Update app.orders id=1, description=first order (paid)\nTransaction 1468 committed at 0/577A888 (1 changes)\n  Delete app.orders id=2, description=&lt;OldValueUnavailable&gt;\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The two inserts arrive together because they were one transaction. The delete\nshows <code>&lt;OldValueUnavailable&gt;</code> because PostgreSQL only logs the key of a deleted\nrow by default. See <a href=\"/documentation/real-time/streams-concepts#what-a-column-value-can-be\">column states</a>.</p>\n<h2>7. Stop, change and restart</h2>\n<p>Press Ctrl+C in the first terminal. While the worker is stopped, add two rows:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres `\n  -c \"INSERT INTO app.orders (description) VALUES ('while stopped 1'), ('while stopped 2');\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres `\n  <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;INSERT INTO app.orders (description) VALUES (&#x27;while stopped 1&#x27;), (&#x27;while stopped 2&#x27;);&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Start the worker again with <code>dotnet run</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "Consumer group 'console' starts after 0/577A888\nTransaction 1477 committed at 0/57B0570 (2 changes)\n  Insert app.orders id=3, description=while stopped 1\n  Insert app.orders id=4, description=while stopped 2\n",
+        "highlighted": "Consumer group &#x27;console&#x27; starts after 0/577A888\nTransaction 1477 committed at 0/57B0570 (2 changes)\n  Insert app.orders id=3, description=while stopped 1\n  Insert app.orders id=4, description=while stopped 2\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The worker resumed after its checkpoint: nothing was lost and nothing was\nrepeated. Press Ctrl+C when you are done.</p>\n<blockquote>\n<p><strong>Note:</strong> After a crash, the old lease is held for up to 30 seconds and a\nrestart fails with <code>ChangeStreamLeaseUnavailableException</code>. See\n<a href=\"/documentation/real-time/streams-troubleshooting#another-worker-owns-the-consumer-group\">troubleshooting</a>.</p>\n</blockquote>\n<h2>8. Clean up</h2>\n<p>A slot keeps WAL until it is dropped, so drop slots you no longer use. In\n<code>psql</code> as <code>postgres</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "SELECT pg_drop_replication_slot('orders_quickstart');\nDROP PUBLICATION orders_publication;\nDROP SCHEMA bluetusk_streams CASCADE;\nDROP SCHEMA app CASCADE;\nREVOKE CREATE ON DATABASE postgres FROM streams_quickstart;\nDROP ROLE streams_quickstart;\n",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> pg_drop_replication_slot(<span class=\"hljs-string\">&#x27;orders_quickstart&#x27;</span>);\n<span class=\"hljs-keyword\">DROP</span> PUBLICATION orders_publication;\n<span class=\"hljs-keyword\">DROP</span> SCHEMA bluetusk_streams CASCADE;\n<span class=\"hljs-keyword\">DROP</span> SCHEMA app CASCADE;\n<span class=\"hljs-keyword\">REVOKE</span> <span class=\"hljs-keyword\">CREATE</span> <span class=\"hljs-keyword\">ON</span> DATABASE postgres <span class=\"hljs-keyword\">FROM</span> streams_quickstart;\n<span class=\"hljs-keyword\">DROP</span> ROLE streams_quickstart;\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-concepts\">Concepts</a></li>\n<li><a href=\"/documentation/real-time/snapshot-bootstrap\">Snapshot and catch-up</a>: copy existing rows first.</li>\n<li><a href=\"/documentation/real-time/state-stores\">Checkpoint and lease stores</a></li>\n<li><a href=\"/documentation/real-time/streams-configuration\">Configuration</a></li>\n<li><a href=\"/documentation/real-time/streams-troubleshooting\">Troubleshooting</a></li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-concepts",
+    "summary": "Transactions, acknowledgement, checkpoints, state stores, spooling, snapshots and redelivery.",
+    "keywords": [
+      "streams",
+      "concepts",
+      "checkpoint",
+      "acknowledge"
+    ],
+    "order": 32,
+    "listed": true,
+    "title": "Streams concepts",
+    "sourcePath": "docs/streams/concepts.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/concepts.md",
+    "headings": [
+      {
+        "id": "streams-concepts",
+        "text": "Streams concepts",
+        "level": 1
+      },
+      {
+        "id": "how-a-change-reaches-your-code",
+        "text": "How a change reaches your code",
+        "level": 2
+      },
+      {
+        "id": "transactions-and-changes",
+        "text": "Transactions and changes",
+        "level": 2
+      },
+      {
+        "id": "what-a-column-value-can-be",
+        "text": "What a column value can be",
+        "level": 2
+      },
+      {
+        "id": "acknowledge-after-your-work-is-durable",
+        "text": "Acknowledge after your work is durable",
+        "level": 2
+      },
+      {
+        "id": "how-the-slot-releases-wal",
+        "text": "How the slot releases WAL",
+        "level": 3
+      },
+      {
+        "id": "checkpoints-leases-and-fencing",
+        "text": "Checkpoints, leases and fencing",
+        "level": 2
+      },
+      {
+        "id": "source-identity",
+        "text": "Source identity",
+        "level": 2
+      },
+      {
+        "id": "large-transactions-are-spooled-to-disk",
+        "text": "Large transactions are spooled to disk",
+        "level": 2
+      },
+      {
+        "id": "snapshot-then-stream",
+        "text": "Snapshot, then stream",
+        "level": 2
+      },
+      {
+        "id": "direct-consumers-and-the-relay",
+        "text": "Direct consumers and the relay",
+        "level": 2
+      },
+      {
+        "id": "restarts-and-redelivery",
+        "text": "Restarts and redelivery",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
+        "level": 2
+      }
+    ],
+    "wordCount": 1602,
+    "readMinutes": 8,
+    "searchText": "Streams concepts This page explains the model behind Streams so you can write a consumer that is correct after crashes and restarts. It builds on the shared [core concepts](../getting-started/concepts.md): logical replication, publications, slots, acknowledgement, checkpoints, source identity, snapshot-then-stream and the relay. Read that page first if those terms are new. How a change reaches your code Transactions and changes Streams never splits a source transaction. Each delivery holds one `ChangeTransaction`: Member Meaning `TransactionId` PostgreSQL transaction ID (xid). `CommitEndPosition` WAL position just after the commit. This is the position a checkpoint stores. `CommitTimestamp`, `Origin` When it committed, and its replication origin if any. `Outcome` `Committed`, or `Prepared` / `RolledBack` for [two-phase transactions](prepared-transactions.md). `Changes` A `ChangeSet` of the changes in commit order. Each change is an `InsertChange`, `UpdateChange`, `DeleteChange`, `TruncateChange` or `LogicalMessageChange`. Every change has a `ChangeId` made of the source identity, commit-end position, transaction ID and ordinal. The ID is the same every time the change is delivered, so use it as the de-duplication key in your destination. `ChangeSet` is an asynchronous sequence. A large transaction is read record by record from disk, so iterate it with `await foreach`. `MaterializeAsync()` loads every change into a list; use it only when you know the transaction is small. `Count`, `EstimatedBytes` and `IsSpooled` are available without reading the changes. What a column value can be A row is a `ChangeRow`: one `ChangeColumnValue` per column, indexed by ordinal or name. PostgreSQL does not always send a value, so each value has an explicit `State`: `ChangeColumnState` When you see it `Value` A real value. `Data` holds the bytes and `Encoding` says `Text` or `Binary`. `DatabaseNull` The column is SQL `NULL`. `NotPublished` The publication's column list excludes this col",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Streams concepts</h1>\n<p>This page explains the model behind Streams so you can write a consumer that is\ncorrect after crashes and restarts. It builds on the shared\n<a href=\"/documentation/getting-started/concepts\">core concepts</a>: logical replication,\npublications, slots, acknowledgement, checkpoints, source identity,\nsnapshot-then-stream and the relay. Read that page first if those terms are new.</p>\n<h2>How a change reaches your code</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "PostgreSQL commit\n   │  WAL, filtered by your publication, read through your replication slot\n   ▼\npgoutput messages ──► Streams assembles one complete transaction\n                         (in memory, or spooled to disk when large)\n   ▼\nChangeTransactionDelivery ──► your code does its work\n                                  │\n                                  ▼ delivery.AcknowledgeAsync()\n                       delivery observer: save checkpoint, then confirm\n                       the position to PostgreSQL so the slot can free WAL\n",
+        "highlighted": "PostgreSQL commit\n   │  WAL, filtered by your publication, read through your replication slot\n   ▼\npgoutput messages ──► Streams assembles one complete transaction\n                         (in memory, or spooled to disk when large)\n   ▼\nChangeTransactionDelivery ──► your code does its work\n                                  │\n                                  ▼ delivery.AcknowledgeAsync()\n                       delivery observer: save checkpoint, then confirm\n                       the position to PostgreSQL so the slot can free WAL\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Transactions and changes</h2>\n<p>Streams never splits a source transaction. Each delivery holds one\n<code>ChangeTransaction</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Member</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>TransactionId</code></td>\n<td>PostgreSQL transaction ID (xid).</td>\n</tr>\n<tr>\n<td><code>CommitEndPosition</code></td>\n<td>WAL position just after the commit. This is the position a checkpoint stores.</td>\n</tr>\n<tr>\n<td><code>CommitTimestamp</code>, <code>Origin</code></td>\n<td>When it committed, and its replication origin if any.</td>\n</tr>\n<tr>\n<td><code>Outcome</code></td>\n<td><code>Committed</code>, or <code>Prepared</code> / <code>RolledBack</code> for <a href=\"/documentation/real-time/streams-prepared-transactions\">two-phase transactions</a>.</td>\n</tr>\n<tr>\n<td><code>Changes</code></td>\n<td>A <code>ChangeSet</code> of the changes in commit order.</td>\n</tr>\n</tbody>\n</table>\n<p>Each change is an <code>InsertChange</code>, <code>UpdateChange</code>, <code>DeleteChange</code>,\n<code>TruncateChange</code> or <code>LogicalMessageChange</code>. Every change has a <code>ChangeId</code> made\nof the source identity, commit-end position, transaction ID and ordinal. The ID\nis the same every time the change is delivered, so use it as the\nde-duplication key in your destination.</p>\n<p><code>ChangeSet</code> is an asynchronous sequence. A large transaction is read\nrecord by record from disk, so iterate it with <code>await foreach</code>.\n<code>MaterializeAsync()</code> loads every change into a list; use it only when you know\nthe transaction is small. <code>Count</code>, <code>EstimatedBytes</code> and <code>IsSpooled</code> are\navailable without reading the changes.</p>\n<h2>What a column value can be</h2>\n<p>A row is a <code>ChangeRow</code>: one <code>ChangeColumnValue</code> per column, indexed by ordinal\nor name. PostgreSQL does not always send a value, so each value has an explicit\n<code>State</code>:</p>\n<table>\n<thead>\n<tr>\n<th><code>ChangeColumnState</code></th>\n<th>When you see it</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Value</code></td>\n<td>A real value. <code>Data</code> holds the bytes and <code>Encoding</code> says <code>Text</code> or <code>Binary</code>.</td>\n</tr>\n<tr>\n<td><code>DatabaseNull</code></td>\n<td>The column is SQL <code>NULL</code>.</td>\n</tr>\n<tr>\n<td><code>NotPublished</code></td>\n<td>The publication’s column list excludes this column.</td>\n</tr>\n<tr>\n<td><code>OldValueUnavailable</code></td>\n<td>An old row (update or delete) without this column. With the default replica identity only key columns are logged.</td>\n</tr>\n<tr>\n<td><code>UnchangedToast</code></td>\n<td>A large (TOASTed) value that the update did not change, so PostgreSQL did not resend it.</td>\n</tr>\n<tr>\n<td><code>DecodingFailure</code></td>\n<td>The value could not be decoded. <code>DecodingError</code> explains why.</td>\n</tr>\n</tbody>\n</table>\n<p>Never treat a missing value as <code>NULL</code> or as a default. To receive complete old\nrows, run <code>ALTER TABLE app.orders REPLICA IDENTITY FULL;</code> (this makes PostgreSQL\nlog more WAL). An update’s <code>ChangedColumns</code> set has <code>IsExact = true</code> only when\nStreams had a complete old row to compare.</p>\n<p><a href=\"/documentation/real-time/streams-typed-mappings\">Typed mappings</a> keep these states: a typed row has\n<code>HasValue = false</code> when any mapped column is missing.</p>\n<h2>Acknowledge after your work is durable</h2>\n<p>Streams hands you one transaction at a time. The rule is:</p>\n<ol>\n<li>Do your work for the whole transaction and make it durable.</li>\n<li>Call <code>delivery.AcknowledgeAsync()</code>.</li>\n<li>Only then ask for the next transaction.</li>\n</ol>\n<p>If you ask for the next transaction without settling the current one, the\nstream stops with <code>ChangeDeliveryNotAcknowledgedException</code>. A delivery can be\nsettled once. <code>NackAsync()</code> (or disposing the delivery) rejects it: the stream\nstops, nothing is checkpointed, and the transaction is delivered again on the\nnext start.</p>\n<p>Acknowledging calls the stream’s <strong>delivery observer</strong>. The observer decides\nwhat “done” means:</p>\n<table>\n<thead>\n<tr>\n<th>Observer</th>\n<th>On acknowledge</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>CheckpointingChangeDeliveryObserver</code></td>\n<td>Renews the lease, saves the checkpoint with compare-and-swap, then sends the position to PostgreSQL.</td>\n</tr>\n<tr>\n<td><code>PostgreSqlRelayChangeDeliveryObserver</code></td>\n<td>Appends the transaction to the <a href=\"/documentation/real-time/durable-relay\">durable relay</a>, then sends the position to PostgreSQL.</td>\n</tr>\n<tr>\n<td>None</td>\n<td>The stream confirms the commit position to PostgreSQL itself. Nothing is saved, so a restart cannot resume from a known position.</td>\n</tr>\n</tbody>\n</table>\n<h3>How the slot releases WAL</h3>\n<p>PostgreSQL keeps WAL from the slot’s <code>confirmed_flush_lsn</code> onwards, and that\nposition only moves when the consumer confirms a position. A\n<code>PgOutputChangeStream</code> that reads from a BlueTusk replication connection\nconfirms it as follows:</p>\n<ul>\n<li><strong>With no observer</strong>, the stream confirms each transaction’s commit-end\nposition after <code>AcknowledgeAsync</code> completes. This covers streams you build\nover <code>StartReplicationAsync(...).DecodePgOutputAsync()</code>, the stream inside\n<code>PostgreSqlConsistentSnapshotSource</code>, hosted consumers, and Sync pipelines\nwithout an <code>observerFactory</code>.</li>\n<li><strong>With an observer</strong>, the observer owns confirmation. The two built-in\nobservers confirm after their durable write. A custom observer that never\nsends feedback holds WAL until the slot is dropped.</li>\n</ul>\n<p>A delivery that is rejected, disposed or never acknowledged is not confirmed,\nso PostgreSQL sends it again after a restart.</p>\n<p>When a consumer must resume after a restart, use\n<code>CheckpointingChangeDeliveryObserver</code> and a <a href=\"/documentation/real-time/state-stores\">state store</a>.</p>\n<blockquote>\n<p><strong>New in 1.1.0:</strong> In 1.0.0 and 1.1.0-rc.1 a stream without an observer never\nconfirmed a position, so its slot kept all WAL. An observer you added only to\nsend feedback still works, but you can remove it.</p>\n</blockquote>\n<h2>Checkpoints, leases and fencing</h2>\n<p>A <strong>state store</strong> keeps one record per source and <strong>consumer group</strong> (a name\nyou choose for one independent reader). The record holds:</p>\n<ul>\n<li>the <strong>checkpoint</strong>: the last acknowledged commit-end position, plus the\nsource identity, output plug-in, a mapping fingerprint and a format version;</li>\n<li>a <strong>generation</strong> number that increases with every write; and</li>\n<li>the current <strong>lease</strong>: owner ID, expiry time and <strong>fencing token</strong>.</li>\n</ul>\n<p>Only the lease owner may write. Every write is a compare-and-swap on the\ngeneration, a checkpoint can never move backwards, and a worker whose lease\nexpired is rejected even if it is still running. A new owner always receives a\nhigher fencing token than any earlier owner.</p>\n<p><code>CheckpointingChangeDeliveryObserver</code> renews its lease on a timer, three times\nper lease duration, whether or not transactions arrive. An idle worker, or one\nstill working on a slow transaction, keeps its lease. Each acknowledgement also\nrenews and checks the lease first. If the lease expired (for example because\nthe store could not be reached for longer than the lease duration) or another\nworker took it over, the acknowledgement fails with\n<code>ChangeStreamLeaseLostException</code> before any checkpoint is written. Disposing\nthe observer stops renewal and releases the lease.\n<code>PostgreSqlRelayChangeDeliveryObserver</code> renews its source lease the same way.</p>\n<blockquote>\n<p><strong>New in 1.1.0:</strong> In 1.0.0 and 1.1.0-rc.1 the observers renewed the lease\nonly when you acknowledged, so an idle worker needed its own renewal timer.\nYou can remove that timer.</p>\n</blockquote>\n<p>Choose a store in <a href=\"/documentation/real-time/state-stores\">checkpoint and lease stores</a>.</p>\n<h2>Source identity</h2>\n<p><code>ChangeSourceIdentity</code> names where changes come from: the PostgreSQL system\nidentifier, database, slot name and a publication fingerprint. Its <code>Fingerprint</code>\nis part of the state-store key and of every <code>ChangeId</code>.</p>\n<p>If any part changes, for example after a restore into a new cluster, the old\ncheckpoint no longer matches. Streams refuses to reuse it instead of silently\nskipping or repeating data. A checkpoint whose plug-in or mapping fingerprint\ndiffers fails with <code>ChangeStreamCheckpointMismatchException</code>. For the\npublication fingerprint, use either the publication name or the canonical value\nthat <a href=\"/documentation/real-time/streams-cli\"><code>bluetusk-streams validate</code></a> prints as <code>BTS008</code>, and keep it stable.</p>\n<h2>Large transactions are spooled to disk</h2>\n<p>Streams buffers each transaction in memory up to\n<code>MaxInMemoryTransactionBytes</code> (4 MiB by default), then writes it to a spool file\nin <code>SpoolDirectory</code>. Spool records carry checksums; a damaged file stops the\nstream with <code>TransactionSpoolIntegrityException</code>. A spool file is deleted when\nits delivery is acknowledged, rejected or disposed.</p>\n<p>When a limit is reached (bytes, changes or relations per transaction, or total\nspool space) the stream stops with <code>TransactionAssemblyLimitExceededException</code>\nor <code>TransactionSpoolLimitExceededException</code>. It never drops a change or splits\na transaction. Raise the limit and restart. See\n<a href=\"/documentation/real-time/streams-configuration#transaction-assembly-and-spooling\">configuration</a>.</p>\n<h2>Snapshot, then stream</h2>\n<p>A new consumer often needs the rows that already exist. The snapshot source\ncreates the slot, copies the tables from the same consistent point, then streams\nfrom exactly that point. Your <code>IChangeStreamConsumer</code> receives:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "ResetSnapshotAsync → StartSnapshotAsync → ConsumeSnapshotBatchAsync (repeated)\n  → CompleteSnapshotAsync → ConsumeTransactionAsync (repeated)\n",
+        "highlighted": "ResetSnapshotAsync → StartSnapshotAsync → ConsumeSnapshotBatchAsync (repeated)\n  → CompleteSnapshotAsync → ConsumeTransactionAsync (repeated)\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Each attempt has a new <strong>snapshot epoch</strong>. If the copy fails, the next attempt\ncalls <code>ResetSnapshotAsync</code> with the abandoned epoch so you can discard partial\nrows. See <a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot and catch-up</a>.</p>\n<h2>Direct consumers and the relay</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "Direct:  slot A ──► consumer group \"search\"\n         slot B ──► consumer group \"audit\"          (one slot per group)\n\nRelay:   slot ──► source worker ──► relay tables ──► group \"search\"\n                                               └──► group \"audit\"\n",
+        "highlighted": "Direct:  slot A ──► consumer group &quot;search&quot;\n         slot B ──► consumer group &quot;audit&quot;          (one slot per group)\n\nRelay:   slot ──► source worker ──► relay tables ──► group &quot;search&quot;\n                                               └──► group &quot;audit&quot;\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>A slot can be read by one connection at a time. With direct consumers, each\ngroup needs its own slot, and each slot holds WAL until its consumer\ncatches up. The <a href=\"/documentation/real-time/durable-relay\">durable relay</a> reads one slot, stores\ntransactions in PostgreSQL, and lets each group read and acknowledge at its own\npace.</p>\n<h2>Restarts and redelivery</h2>\n<table>\n<thead>\n<tr>\n<th>The worker stops…</th>\n<th>On restart</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Before your work is durable</td>\n<td>The transaction is delivered again.</td>\n</tr>\n<tr>\n<td>After your work, before the checkpoint is saved</td>\n<td>The transaction is delivered again. Your work must be safe to repeat.</td>\n</tr>\n<tr>\n<td>After the checkpoint, before PostgreSQL is told</td>\n<td>Pass the checkpoint as the start position and PostgreSQL skips what you already acknowledged.</td>\n</tr>\n<tr>\n<td>During a snapshot copy</td>\n<td>A new snapshot epoch starts. Discard rows from older epochs in <code>ResetSnapshotAsync</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>Delivery is at least once. Use <code>ChangeId</code> for idempotent writes, or save your\nprogress in the same database transaction as your work. Read\n<a href=\"/documentation/real-time/contracts\">delivery guarantees</a> for the boundaries of\neach product.</p>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-configuration\">Configuration</a>: every option and default</li>\n<li><a href=\"/documentation/real-time/streams-troubleshooting\">Troubleshooting</a></li>\n<li><a href=\"/documentation/real-time/streams-format-compatibility\">Format compatibility registry</a></li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-configuration",
+    "summary": "Streams options, configuration keys, state stores and limits, with defaults.",
+    "keywords": [
+      "streams",
+      "configuration",
+      "options",
+      "slot",
+      "publication"
+    ],
+    "order": 33,
+    "listed": true,
+    "title": "Streams configuration",
+    "sourcePath": "docs/streams/configuration.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/configuration.md",
+    "headings": [
+      {
+        "id": "streams-configuration",
+        "text": "Streams configuration",
+        "level": 1
+      },
+      {
+        "id": "configuration-keys",
+        "text": "Configuration keys",
+        "level": 2
+      },
+      {
+        "id": "transaction-assembly-and-spooling",
+        "text": "Transaction assembly and spooling",
+        "level": 2
+      },
+      {
+        "id": "snapshot-bootstrap",
+        "text": "Snapshot bootstrap",
+        "level": 2
+      },
+      {
+        "id": "state-stores",
+        "text": "State stores",
+        "level": 2
+      },
+      {
+        "id": "postgresql-storage-and-relay",
+        "text": "PostgreSQL storage and relay",
+        "level": 2
+      },
+      {
+        "id": "typed-mappings",
+        "text": "Typed mappings",
+        "level": 2
+      },
+      {
+        "id": "cloudevents",
+        "text": "CloudEvents",
+        "level": 2
+      },
+      {
+        "id": "aspire",
+        "text": "Aspire",
+        "level": 2
+      },
+      {
+        "id": "health-and-telemetry",
+        "text": "Health and telemetry",
+        "level": 2
+      },
+      {
+        "id": "replication-options",
+        "text": "Replication options",
+        "level": 2
+      }
+    ],
+    "wordCount": 1606,
+    "readMinutes": 8,
+    "searchText": "Streams configuration This page lists every Streams setting you can change: the configuration keys and environment variables used by the tooling, and each options class with its properties and defaults. All options classes are immutable records. Set them with object initializers; each validates its values when you pass it to the component that uses it and throws `ArgumentException` (or `ArgumentOutOfRangeException`) for invalid values. Configuration keys Streams does **not** bind `IConfiguration` sections by itself. The keys below are a shared convention: the [Aspire integration](aspire.md) sets them, the [`bluetusk-streams` tool](cli.md) and the [sample](sample.md) read some of them, and your worker reads them and passes the values to the options classes (as the [quick start](quickstart.md) does). Environment variable Configuration key Used by Meaning `BLUETUSK_STREAMS_SOURCE` `BLUETUSK_STREAMS_SOURCE` Aspire, tool, sample Source database connection string. `BLUETUSK_STREAMS_CONTROL` `BLUETUSK_STREAMS_CONTROL` Aspire (relay mode), tool Control database for the relay and state store. `BlueTusk__Streams__Slot` `BlueTusk:Streams:Slot` Aspire, sample Replication slot name. `BlueTusk__Streams__Publications__0`, `__1`, ... `BlueTusk:Streams:Publications:0`, ... Aspire, sample Publication names, one key per publication. `BlueTusk__Streams__ConsumerGroup` `BlueTusk:Streams:ConsumerGroup` Aspire Consumer group name. `BlueTusk__Streams__ControlSchema` `BlueTusk:Streams:ControlSchema` Aspire Relay and state schema. Default `bluetusk_streams`. `BlueTusk__Streams__DeliveryMode` `BlueTusk:Streams:DeliveryMode` Aspire `DurableRelay` or `Direct`. `BlueTusk__Streams__Sample__Schema`, `__Table` `BlueTusk:Streams:Sample:Schema`, `:Table` sample Table the sample copies. Defaults `app`, `orders`. The same keys in `appsettings.json`: Keep connection strings in environment variables or a secret store, not in `appsettings.json`. Connection-string keywords are described in [ADO.NET configu",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Streams configuration</h1>\n<p>This page lists every Streams setting you can change: the configuration keys\nand environment variables used by the tooling, and each options class with its\nproperties and defaults.</p>\n<p>All options classes are immutable records. Set them with object initializers;\neach validates its values when you pass it to the component that uses it and\nthrows <code>ArgumentException</code> (or <code>ArgumentOutOfRangeException</code>) for invalid\nvalues.</p>\n<h2>Configuration keys</h2>\n<p>Streams does <strong>not</strong> bind <code>IConfiguration</code> sections by itself. The keys below are\na shared convention: the <a href=\"/documentation/real-time/streams-aspire\">Aspire integration</a> sets them, the\n<a href=\"/documentation/real-time/streams-cli\"><code>bluetusk-streams</code> tool</a> and the <a href=\"/documentation/real-time/streams-sample\">sample</a> read some of them,\nand your worker reads them and passes the values to the options classes (as the\n<a href=\"/documentation/real-time/streams-quickstart\">quick start</a> does).</p>\n<table>\n<thead>\n<tr>\n<th>Environment variable</th>\n<th>Configuration key</th>\n<th>Used by</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BLUETUSK_STREAMS_SOURCE</code></td>\n<td><code>BLUETUSK_STREAMS_SOURCE</code></td>\n<td>Aspire, tool, sample</td>\n<td>Source database connection string.</td>\n</tr>\n<tr>\n<td><code>BLUETUSK_STREAMS_CONTROL</code></td>\n<td><code>BLUETUSK_STREAMS_CONTROL</code></td>\n<td>Aspire (relay mode), tool</td>\n<td>Control database for the relay and state store.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__Slot</code></td>\n<td><code>BlueTusk:Streams:Slot</code></td>\n<td>Aspire, sample</td>\n<td>Replication slot name.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__Publications__0</code>, <code>__1</code>, …</td>\n<td><code>BlueTusk:Streams:Publications:0</code>, …</td>\n<td>Aspire, sample</td>\n<td>Publication names, one key per publication.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__ConsumerGroup</code></td>\n<td><code>BlueTusk:Streams:ConsumerGroup</code></td>\n<td>Aspire</td>\n<td>Consumer group name.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__ControlSchema</code></td>\n<td><code>BlueTusk:Streams:ControlSchema</code></td>\n<td>Aspire</td>\n<td>Relay and state schema. Default <code>bluetusk_streams</code>.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__DeliveryMode</code></td>\n<td><code>BlueTusk:Streams:DeliveryMode</code></td>\n<td>Aspire</td>\n<td><code>DurableRelay</code> or <code>Direct</code>.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__Sample__Schema</code>, <code>__Table</code></td>\n<td><code>BlueTusk:Streams:Sample:Schema</code>, <code>:Table</code></td>\n<td>sample</td>\n<td>Table the sample copies. Defaults <code>app</code>, <code>orders</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>The same keys in <code>appsettings.json</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "{\n  \"BlueTusk\": {\n    \"Streams\": {\n      \"Slot\": \"orders_quickstart\",\n      \"Publications\": [ \"orders_publication\" ],\n      \"ConsumerGroup\": \"console\"\n    }\n  }\n}\n",
+        "highlighted": "<span class=\"hljs-punctuation\">{</span>\n  <span class=\"hljs-attr\">&quot;BlueTusk&quot;</span><span class=\"hljs-punctuation\">:</span> <span class=\"hljs-punctuation\">{</span>\n    <span class=\"hljs-attr\">&quot;Streams&quot;</span><span class=\"hljs-punctuation\">:</span> <span class=\"hljs-punctuation\">{</span>\n      <span class=\"hljs-attr\">&quot;Slot&quot;</span><span class=\"hljs-punctuation\">:</span> <span class=\"hljs-string\">&quot;orders_quickstart&quot;</span><span class=\"hljs-punctuation\">,</span>\n      <span class=\"hljs-attr\">&quot;Publications&quot;</span><span class=\"hljs-punctuation\">:</span> <span class=\"hljs-punctuation\">[</span> <span class=\"hljs-string\">&quot;orders_publication&quot;</span> <span class=\"hljs-punctuation\">]</span><span class=\"hljs-punctuation\">,</span>\n      <span class=\"hljs-attr\">&quot;ConsumerGroup&quot;</span><span class=\"hljs-punctuation\">:</span> <span class=\"hljs-string\">&quot;console&quot;</span>\n    <span class=\"hljs-punctuation\">}</span>\n  <span class=\"hljs-punctuation\">}</span>\n<span class=\"hljs-punctuation\">}</span>\n",
+        "language": "json"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Keep connection strings in environment variables or a secret store, not in\n<code>appsettings.json</code>. Connection-string keywords are described in\n<a href=\"/documentation/provider/configuration\">ADO.NET configuration</a>. Replication uses\n<code>BlueTuskDataSource.CreateDedicatedSessionOptions()</code>, which keeps the data\nsource’s host, credentials and TLS settings.</p>\n<h2>Transaction assembly and spooling</h2>\n<p><code>TransactionAssemblyOptions</code> (namespace <code>BlueTusk.Streams</code>) is passed to\n<code>PgOutputChangeStream</code>, or set as <code>PostgreSqlConsistentSnapshotOptions.TransactionAssembly</code>.</p>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MaxInMemoryTransactionBytes</code></td>\n<td><code>long</code></td>\n<td>4 MiB</td>\n<td>Above this size a transaction is written to a spool file. Must not exceed <code>MaxTransactionBytes</code>.</td>\n</tr>\n<tr>\n<td><code>MaxTransactionBytes</code></td>\n<td><code>long</code></td>\n<td>1 GiB</td>\n<td>Largest transaction. Larger ones stop the stream with <code>TransactionAssemblyLimitExceededException</code>.</td>\n</tr>\n<tr>\n<td><code>MaxSpoolBytes</code></td>\n<td><code>long</code></td>\n<td>10 GiB</td>\n<td>Total disk space for spool files, including files left from earlier runs.</td>\n</tr>\n<tr>\n<td><code>MaxChangesPerTransaction</code></td>\n<td><code>int</code></td>\n<td>1,000,000</td>\n<td>Most changes in one transaction.</td>\n</tr>\n<tr>\n<td><code>MaxRelationsPerTransaction</code></td>\n<td><code>int</code></td>\n<td>4,096</td>\n<td>Most distinct tables in one transaction.</td>\n</tr>\n<tr>\n<td><code>PreparedTransactionMode</code></td>\n<td><code>PreparedTransactionMode</code></td>\n<td><code>Fail</code></td>\n<td><code>Stage</code> turns on <a href=\"/documentation/real-time/streams-prepared-transactions\">prepared-transaction</a> deliveries.</td>\n</tr>\n<tr>\n<td><code>SpoolDirectory</code></td>\n<td><code>string</code></td>\n<td><code>&lt;temp&gt;/bluetusk-streams-spool</code></td>\n<td>Spool file directory. Use a dedicated local directory per worker.</td>\n</tr>\n</tbody>\n</table>\n<p>To protect spool files at rest, pass your own spool:\n<code>new FileTransactionSpool(new FileTransactionSpoolOptions { ... })</code> as the\n<code>spool</code> argument of <code>PgOutputChangeStream</code>.</p>\n<table>\n<thead>\n<tr>\n<th><code>FileTransactionSpoolOptions</code></th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>DirectoryPath</code></td>\n<td><code>string</code></td>\n<td>(required)</td>\n<td>Spool directory.</td>\n</tr>\n<tr>\n<td><code>MaxStorageBytes</code></td>\n<td><code>long</code></td>\n<td>10 GiB</td>\n<td>Total spool space.</td>\n</tr>\n<tr>\n<td><code>MaxRecordBytes</code></td>\n<td><code>int</code></td>\n<td>256 MiB</td>\n<td>Largest single record. The built-in spool uses the smaller of <code>MaxTransactionBytes</code> and <code>int.MaxValue</code>.</td>\n</tr>\n<tr>\n<td><code>Protector</code></td>\n<td><code>ITransactionSpoolProtector?</code></td>\n<td><code>null</code></td>\n<td>Encrypts each record before it is written.</td>\n</tr>\n</tbody>\n</table>\n<h2>Snapshot bootstrap</h2>\n<p><code>PostgreSqlConsistentSnapshotOptions</code> configures <code>PostgreSqlConsistentSnapshotSource</code>.</p>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Source</code></td>\n<td><code>ChangeSourceIdentity</code></td>\n<td>(required)</td>\n<td>Must match the connected server and database.</td>\n</tr>\n<tr>\n<td><code>PublicationNames</code></td>\n<td><code>IReadOnlyList&lt;string&gt;</code></td>\n<td>(required)</td>\n<td>At least one publication.</td>\n</tr>\n<tr>\n<td><code>Tables</code></td>\n<td><code>IReadOnlyList&lt;PostgreSqlSnapshotTable&gt;</code></td>\n<td>(required)</td>\n<td>Tables to copy, each with key ordinals.</td>\n</tr>\n<tr>\n<td><code>CopyPageRows</code></td>\n<td><code>int</code></td>\n<td>2,048</td>\n<td>Rows per keyset <code>COPY</code> page.</td>\n</tr>\n<tr>\n<td><code>MaximumBatchRows</code></td>\n<td><code>int</code></td>\n<td>512</td>\n<td>Rows per consumer batch.</td>\n</tr>\n<tr>\n<td><code>MaximumBatchBytes</code></td>\n<td><code>long</code></td>\n<td>4 MiB</td>\n<td>Bytes per consumer batch.</td>\n</tr>\n<tr>\n<td><code>MaximumRowBytes</code></td>\n<td><code>long</code></td>\n<td>4 MiB</td>\n<td>Largest row. Must not exceed <code>MaximumBatchBytes</code>.</td>\n</tr>\n<tr>\n<td><code>MaximumParallelTables</code></td>\n<td><code>int</code></td>\n<td>4</td>\n<td>Tables copied at the same time.</td>\n</tr>\n<tr>\n<td><code>ExistingSlotMode</code></td>\n<td><code>PostgreSqlExistingSnapshotSlotMode</code></td>\n<td><code>Fail</code></td>\n<td><code>RestartSnapshot</code> replaces an inactive slot left by an earlier run.</td>\n</tr>\n<tr>\n<td><code>TransactionAssembly</code></td>\n<td><code>TransactionAssemblyOptions</code></td>\n<td>defaults above</td>\n<td>Used while streaming after the copy.</td>\n</tr>\n</tbody>\n</table>\n<p><code>SnapshotThenStreamOptions.MaximumSnapshotAttempts</code> (default 3) limits how many\ntimes a lost snapshot is retried.</p>\n<h2>State stores</h2>\n<table>\n<thead>\n<tr>\n<th><code>PostgreSqlStreamsStorageOptions</code></th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>ControlDataSource</code></td>\n<td><code>DbDataSource</code></td>\n<td>(required)</td>\n<td>Database that holds state and relay tables.</td>\n</tr>\n<tr>\n<td><code>ControlSchema</code></td>\n<td><code>string</code></td>\n<td><code>bluetusk_streams</code></td>\n<td>Schema name, at most 63 bytes.</td>\n</tr>\n</tbody>\n</table>\n<p>The same class configures the relay; see <a href=\"#postgresql-storage-and-relay\">below</a>.</p>\n<table>\n<thead>\n<tr>\n<th><code>FileChangeStreamStateStoreOptions</code></th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>DirectoryPath</code></td>\n<td><code>string</code></td>\n<td>(required)</td>\n<td>Local directory for state files.</td>\n</tr>\n<tr>\n<td><code>LockTimeout</code></td>\n<td><code>TimeSpan</code></td>\n<td>30 s</td>\n<td>How long to wait for another process’s lock.</td>\n</tr>\n<tr>\n<td><code>LockRetryDelay</code></td>\n<td><code>TimeSpan</code></td>\n<td>20 ms</td>\n<td>Pause between lock attempts. Must not exceed <code>LockTimeout</code>.</td>\n</tr>\n</tbody>\n</table>\n<table>\n<thead>\n<tr>\n<th><code>RedisChangeStreamStateStoreOptions</code></th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Connection</code></td>\n<td><code>IConnectionMultiplexer</code></td>\n<td>(required)</td>\n<td>Your Redis connection.</td>\n</tr>\n<tr>\n<td><code>Database</code></td>\n<td><code>int</code></td>\n<td>-1</td>\n<td>Redis database (-1 is the connection’s default).</td>\n</tr>\n<tr>\n<td><code>KeyPrefix</code></td>\n<td><code>string</code></td>\n<td><code>bluetusk:streams</code></td>\n<td>Key prefix. Must not contain <code>{</code> or <code>}</code>.</td>\n</tr>\n</tbody>\n</table>\n<p><code>CheckpointingChangeDeliveryObserver.AcquireAsync</code> takes the lease duration as\nan argument; the samples use 30 seconds. The observer renews the lease by\nitself every third of that duration. See\n<a href=\"/documentation/real-time/state-stores\">checkpoint and lease stores</a>.</p>\n<h2>PostgreSQL storage and relay</h2>\n<p>The remaining <code>PostgreSqlStreamsStorageOptions</code> properties apply to the\n<a href=\"/documentation/real-time/durable-relay\">durable relay</a>:</p>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MaxRelayStorageBytes</code></td>\n<td><code>long</code></td>\n<td>100 GiB</td>\n<td>Total stored transactions.</td>\n</tr>\n<tr>\n<td><code>MaxEnvelopeBytes</code></td>\n<td><code>int</code></td>\n<td>256 MiB</td>\n<td>Largest stored transaction.</td>\n</tr>\n<tr>\n<td><code>ResumeRetentionWindow</code></td>\n<td><code>TimeSpan</code></td>\n<td>1 hour</td>\n<td>Minimum time a transaction is kept after all groups acknowledge it.</td>\n</tr>\n<tr>\n<td><code>RemovedConsumerGroupRetentionWindow</code></td>\n<td><code>TimeSpan</code></td>\n<td>1 hour</td>\n<td>How long a removed group’s unacknowledged transactions are kept.</td>\n</tr>\n<tr>\n<td><code>MinimumRetainedTransactions</code></td>\n<td><code>int</code></td>\n<td>0</td>\n<td>Transactions always kept, even when acknowledged.</td>\n</tr>\n<tr>\n<td><code>RetentionDeleteBatchSize</code></td>\n<td><code>int</code></td>\n<td>1,000</td>\n<td>Deletions per retention batch.</td>\n</tr>\n<tr>\n<td><code>MaxCompactionBatches</code></td>\n<td><code>int</code></td>\n<td>100</td>\n<td>Batches per <code>CompactAsync</code> call.</td>\n</tr>\n<tr>\n<td><code>MaxAcknowledgementAge</code></td>\n<td><code>TimeSpan</code></td>\n<td>5 minutes</td>\n<td><code>GetHealthAsync</code> flags older unacknowledged transactions.</td>\n</tr>\n<tr>\n<td><code>MaxWalLagBytes</code></td>\n<td><code>long</code></td>\n<td>10 GiB</td>\n<td><code>GetHealthAsync</code> flags a larger WAL lag.</td>\n</tr>\n<tr>\n<td><code>EnvelopeProtection</code></td>\n<td><code>IChangeRelayEnvelopeProtectionProvider?</code></td>\n<td><code>null</code></td>\n<td>Encrypts stored transactions.</td>\n</tr>\n</tbody>\n</table>\n<table>\n<thead>\n<tr>\n<th><code>PostgreSqlRelayChangeStreamOptions</code></th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>ConsumerGroup</code></td>\n<td><code>string</code></td>\n<td>(required)</td>\n<td>Group name.</td>\n</tr>\n<tr>\n<td><code>OwnerId</code></td>\n<td><code>string</code></td>\n<td>(required)</td>\n<td>Unique ID of this worker process.</td>\n</tr>\n<tr>\n<td><code>NewGroupStart</code></td>\n<td><code>ChangeRelayConsumerGroupStart</code></td>\n<td><code>EarliestAvailable</code></td>\n<td>Where a new group starts; or <code>Latest</code>.</td>\n</tr>\n<tr>\n<td><code>MaxTransactionsPerRead</code></td>\n<td><code>int</code></td>\n<td>128</td>\n<td>Transactions per read query.</td>\n</tr>\n<tr>\n<td><code>MaxBytesPerRead</code></td>\n<td><code>long</code></td>\n<td>8 MiB</td>\n<td>Bytes per read query (one transaction may exceed it).</td>\n</tr>\n<tr>\n<td><code>EmptyReadDelay</code></td>\n<td><code>TimeSpan</code></td>\n<td>100 ms</td>\n<td>Wait before polling again when nothing is new.</td>\n</tr>\n<tr>\n<td><code>LeaseDuration</code></td>\n<td><code>TimeSpan</code></td>\n<td>30 s</td>\n<td>Group lease length.</td>\n</tr>\n<tr>\n<td><code>LeaseRenewalInterval</code></td>\n<td><code>TimeSpan</code></td>\n<td>10 s</td>\n<td>Must be shorter than <code>LeaseDuration</code>.</td>\n</tr>\n</tbody>\n</table>\n<p><code>ChangeRelayBackupOptions</code>: <code>MaxFrameBytes</code> (257 MiB), <code>IncludeSnapshotRuns</code>\n(<code>true</code>), <code>IncludeDeadLetters</code> (<code>true</code>). <code>ChangeRelayRestoreOptions</code>:\n<code>MaxFrameBytes</code> (257 MiB).</p>\n<h2>Typed mappings</h2>\n<p><code>ChangeMappingPolicy</code> is the optional second argument of\n<code>ChangeEntityMappingBuilder&lt;T&gt;.Build</code> and <code>BlueTuskEfChangeMappingFactory.Create</code>.</p>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>Default</th>\n<th>Values</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>SchemaChangeMode</code></td>\n<td><code>PauseAndReload</code></td>\n<td><code>Fail</code>, <code>ContinueDynamically</code>, <code>ApplicationCallback</code></td>\n</tr>\n<tr>\n<td><code>DecodingFailureMode</code></td>\n<td><code>Pause</code></td>\n<td><code>ContinueDynamically</code>, <code>ApplicationCallback</code></td>\n</tr>\n<tr>\n<td><code>SchemaChangeCallback</code></td>\n<td><code>null</code></td>\n<td>Required for <code>ApplicationCallback</code>.</td>\n</tr>\n<tr>\n<td><code>DecodingFailureCallback</code></td>\n<td><code>null</code></td>\n<td>Required for <code>ApplicationCallback</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>See <a href=\"/documentation/real-time/streams-typed-mappings\">typed mappings</a>.</p>\n<h2>CloudEvents</h2>\n<table>\n<thead>\n<tr>\n<th><code>ChangeTransactionCloudEventOptions</code></th>\n<th>Default</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>EventType</code></td>\n<td><code>io.bluetusk.streams.transaction.v1</code></td>\n</tr>\n<tr>\n<td><code>DataContentType</code></td>\n<td><code>application/vnd.bluetusk.change-transaction+binary;version=1</code></td>\n</tr>\n<tr>\n<td><code>MaximumEventBytes</code></td>\n<td>384 MiB</td>\n</tr>\n<tr>\n<td><code>Envelope</code></td>\n<td><code>ChangeTransactionEnvelopeOptions</code></td>\n</tr>\n</tbody>\n</table>\n<table>\n<thead>\n<tr>\n<th><code>ChangeTransactionEnvelopeOptions</code></th>\n<th>Default</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MaxEnvelopeBytes</code></td>\n<td>256 MiB</td>\n</tr>\n<tr>\n<td><code>MaxChanges</code></td>\n<td>1,000,000</td>\n</tr>\n<tr>\n<td><code>MaxTables</code></td>\n<td>4,096</td>\n</tr>\n<tr>\n<td><code>MaxColumnsPerTable</code></td>\n<td>16,384</td>\n</tr>\n<tr>\n<td><code>MaxStringBytes</code></td>\n<td>1 MiB</td>\n</tr>\n</tbody>\n</table>\n<h2>Aspire</h2>\n<p><code>BlueTuskStreamsAspireOptions</code>: <code>Slot</code>, <code>Publications</code> and <code>ConsumerGroup</code> are\nrequired; <code>ControlSchema</code> defaults to <code>bluetusk_streams</code>; <code>DeliveryMode</code>\ndefaults to <code>DurableRelay</code>. See <a href=\"/documentation/real-time/streams-aspire\">Aspire</a>.</p>\n<h2>Health and telemetry</h2>\n<table>\n<thead>\n<tr>\n<th>Item</th>\n<th>Name</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Health check</td>\n<td><code>bluetusk_streams</code>, tags <code>bluetusk</code>, <code>streams</code>, <code>ready</code></td>\n</tr>\n<tr>\n<td>Meter and activity source</td>\n<td><code>BlueTusk.Streams</code> (<code>BlueTuskStreamsDiagnostics.InstrumentationName</code>)</td>\n</tr>\n<tr>\n<td>Snapshot activity</td>\n<td><code>bluetusk.streams.snapshot</code></td>\n</tr>\n<tr>\n<td>Metrics</td>\n<td><code>bluetusk.streams.*</code>; listed in <a href=\"/documentation/real-time/streams-hosting#collect-metrics-and-traces\">hosting and observability</a></td>\n</tr>\n</tbody>\n</table>\n<p>There are no options to turn these on; subscribe with your telemetry library.</p>\n<h2>Replication options</h2>\n<p>The replication request and decoder options belong to\n<code>BlueTusk.Replication</code>:</p>\n<table>\n<thead>\n<tr>\n<th><code>BlueTuskPgOutputReplicationOptions</code></th>\n<th>Default</th>\n<th>Note</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>SlotName</code>, <code>PublicationNames</code></td>\n<td>(required)</td>\n<td></td>\n</tr>\n<tr>\n<td><code>StartPosition</code></td>\n<td><code>0/0</code></td>\n<td>Pass your checkpoint to skip acknowledged transactions.</td>\n</tr>\n<tr>\n<td><code>ProtocolVersion</code></td>\n<td>1</td>\n<td>Use 2 for <code>StreamingMode.On</code>, 3 for <code>TwoPhase</code>.</td>\n</tr>\n<tr>\n<td><code>StreamingMode</code></td>\n<td><code>Off</code></td>\n<td><code>On</code> streams large in-progress transactions.</td>\n</tr>\n<tr>\n<td><code>Messages</code></td>\n<td><code>false</code></td>\n<td>Include logical messages (<code>pg_logical_emit_message</code>).</td>\n</tr>\n<tr>\n<td><code>Binary</code></td>\n<td><code>false</code></td>\n<td>Binary column values.</td>\n</tr>\n<tr>\n<td><code>TwoPhase</code></td>\n<td><code>false</code></td>\n<td>Two-phase decoding.</td>\n</tr>\n<tr>\n<td><code>OriginMode</code></td>\n<td><code>Any</code></td>\n<td><code>None</code> skips changes that came from replication.</td>\n</tr>\n</tbody>\n</table>\n<p><code>BlueTuskPgOutputDecoderOptions</code> must use the same <code>ProtocolVersion</code>,\n<code>StreamingMode</code> and <code>TwoPhase</code>. See the <a href=\"/documentation/provider/replication\">replication guide</a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-troubleshooting",
+    "summary": "Fix replication slot, publication, privilege, source identity, spool and lease problems.",
+    "keywords": [
+      "streams",
+      "troubleshooting",
+      "slot",
+      "wal"
+    ],
+    "order": 34,
+    "listed": true,
+    "title": "Troubleshooting Streams",
+    "sourcePath": "docs/streams/troubleshooting.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/troubleshooting.md",
+    "headings": [
+      {
+        "id": "troubleshooting-streams",
+        "text": "Troubleshooting Streams",
+        "level": 1
+      },
+      {
+        "id": "setting-up-the-source",
+        "text": "Setting up the source",
+        "level": 2
+      },
+      {
+        "id": "another-worker-owns-the-consumer-group",
+        "text": "Another worker owns the consumer group",
+        "level": 2
+      },
+      {
+        "id": "the-lease-was-lost",
+        "text": "The lease was lost",
+        "level": 2
+      },
+      {
+        "id": "the-database-was-restored-or-replaced",
+        "text": "The database was restored or replaced",
+        "level": 2
+      },
+      {
+        "id": "the-same-transaction-arrives-twice",
+        "text": "The same transaction arrives twice",
+        "level": 2
+      },
+      {
+        "id": "the-stream-stops-on-a-delivery",
+        "text": "The stream stops on a delivery",
+        "level": 2
+      },
+      {
+        "id": "a-large-transaction-stops-the-stream",
+        "text": "A large transaction stops the stream",
+        "level": 2
+      },
+      {
+        "id": "the-snapshot-does-not-start",
+        "text": "The snapshot does not start",
+        "level": 2
+      },
+      {
+        "id": "wal-keeps-growing-on-the-source-server",
+        "text": "WAL keeps growing on the source server",
+        "level": 2
+      },
+      {
+        "id": "a-new-slot-fails-with-could-not-map-filenumber",
+        "text": "A new slot fails with \"could not map filenumber\"",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
+        "level": 2
+      }
+    ],
+    "wordCount": 1750,
+    "readMinutes": 8,
+    "searchText": "Troubleshooting Streams This page helps you fix the most common Streams errors. Run [`bluetusk-streams validate`](cli.md) first: it checks the server version, `wal_level`, publications and slot in one go. PostgreSQL errors reach you as `BlueTusk.Client.BlueTuskServerException` with PostgreSQL's own message. Setting up the source Symptom Cause Fix Creating or starting a slot fails with an error that says logical decoding requires `wal_level` >= `logical`; or `ERROR BTS002 wal_level is 'replica'; logical is required.` The server is not configured for logical replication. Run `ALTER SYSTEM SET wal_level = logical;` and restart PostgreSQL. On managed services, use the provider's logical-replication setting. `permission denied to start WAL sender` The login lacks the `REPLICATION` attribute. `ALTER ROLE <login> WITH REPLICATION;` (or grant your provider's replication role). `permission denied for schema bluetusk_streams` The state store or relay schema is owned by another login. Use the login that created the schema, or grant `USAGE` on the schema and rights on its tables. `replication slot \"<name>\" does not exist` The slot was never created, was dropped, or the worker points at another database. Create it (`SELECT pg_create_logical_replication_slot('<name>', 'pgoutput');` or `bluetusk-streams provision`). A snapshot source creates its own slot. `replication slot \"<name>\" is active for PID <pid>` Another connection is reading the slot. A slot has one reader at a time. Stop the other reader, or give each direct consumer its own slot. Use the [relay](durable-relay.md) for several consumers. Find the reader with `SELECT active_pid FROM pg_replication_slots WHERE slot_name = '<name>';`. `publication \"<name>\" does not exist` (PostgreSQL 15 to 17), or no changes arrive and the server log shows `skipped loading publication \"<name>\"` (PostgreSQL 18) The publication name is wrong or the publication was created after the slot position. Create the publication, or fix the name. `blu",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Troubleshooting Streams</h1>\n<p>This page helps you fix the most common Streams errors. Run\n<a href=\"/documentation/real-time/streams-cli\"><code>bluetusk-streams validate</code></a> first: it checks the server version,\n<code>wal_level</code>, publications and slot in one go.</p>\n<p>PostgreSQL errors reach you as <code>BlueTusk.Client.BlueTuskServerException</code> with\nPostgreSQL’s own message.</p>\n<h2>Setting up the source</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Creating or starting a slot fails with an error that says logical decoding requires <code>wal_level</code> &gt;= <code>logical</code>; or <code>ERROR BTS002 wal_level is 'replica'; logical is required.</code></td>\n<td>The server is not configured for logical replication.</td>\n<td>Run <code>ALTER SYSTEM SET wal_level = logical;</code> and restart PostgreSQL. On managed services, use the provider’s logical-replication setting.</td>\n</tr>\n<tr>\n<td><code>permission denied to start WAL sender</code></td>\n<td>The login lacks the <code>REPLICATION</code> attribute.</td>\n<td><code>ALTER ROLE &lt;login&gt; WITH REPLICATION;</code> (or grant your provider’s replication role).</td>\n</tr>\n<tr>\n<td><code>permission denied for schema bluetusk_streams</code></td>\n<td>The state store or relay schema is owned by another login.</td>\n<td>Use the login that created the schema, or grant <code>USAGE</code> on the schema and rights on its tables.</td>\n</tr>\n<tr>\n<td><code>replication slot &quot;&lt;name&gt;&quot; does not exist</code></td>\n<td>The slot was never created, was dropped, or the worker points at another database.</td>\n<td>Create it (<code>SELECT pg_create_logical_replication_slot('&lt;name&gt;', 'pgoutput');</code> or <code>bluetusk-streams provision</code>). A snapshot source creates its own slot.</td>\n</tr>\n<tr>\n<td><code>replication slot &quot;&lt;name&gt;&quot; is active for PID &lt;pid&gt;</code></td>\n<td>Another connection is reading the slot. A slot has one reader at a time.</td>\n<td>Stop the other reader, or give each direct consumer its own slot. Use the <a href=\"/documentation/real-time/durable-relay\">relay</a> for several consumers. Find the reader with <code>SELECT active_pid FROM pg_replication_slots WHERE slot_name = '&lt;name&gt;';</code>.</td>\n</tr>\n<tr>\n<td><code>publication &quot;&lt;name&gt;&quot; does not exist</code> (PostgreSQL 15 to 17), or no changes arrive and the server log shows <code>skipped loading publication &quot;&lt;name&gt;&quot;</code> (PostgreSQL 18)</td>\n<td>The publication name is wrong or the publication was created after the slot position.</td>\n<td>Create the publication, or fix the name. <code>bluetusk-streams validate</code> reports <code>BTS003</code>.</td>\n</tr>\n<tr>\n<td>Changes for a table never arrive</td>\n<td>The table is not in the publication.</td>\n<td><code>ALTER PUBLICATION &lt;name&gt; ADD TABLE &lt;table&gt;;</code> <code>BTS004</code> lists how many tables are published.</td>\n</tr>\n</tbody>\n</table>\n<h2>Another worker owns the consumer group</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "ChangeStreamLeaseUnavailableException: Consumer group 'console' is already owned by 'HACKITRON:31400'.\n",
+        "highlighted": "ChangeStreamLeaseUnavailableException: Consumer group &#x27;console&#x27; is already owned by &#x27;HACKITRON:31400&#x27;.\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Another process holds the group’s lease. It may still be running, or it\ncrashed and its lease has not expired yet (leases are not released on a\ncrash). Stop the other process, or wait for the lease duration (30 seconds in\nthe samples) and start again. Give every process a unique owner ID, such as\nmachine name plus process ID; two processes sharing an ID would share a lease.</p>\n<p>The relay equivalents are <code>ChangeRelayLeaseUnavailableException</code>:\n“Relay source slot ‘…’ is already owned by ‘…’.” and “Relay consumer group\n‘…’ is already owned by another worker.”</p>\n<h2>The lease was lost</h2>\n<table>\n<thead>\n<tr>\n<th>Message</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>ChangeStreamLeaseLostException</code>: “The lease for consumer group ‘…’ was lost.”</td>\n<td>The lease expired before the observer could renew it (for example, the state store was unreachable for longer than the lease duration), or another worker took over.</td>\n<td>Restart the worker; it resumes from the checkpoint. If it recurs, check the store or use a longer lease.</td>\n</tr>\n<tr>\n<td><code>ChangeRelayLeaseLostException</code>: “The relay source lease was lost before append.”</td>\n<td>Same, for a relay source worker.</td>\n<td>Restart the source worker; it resumes from the relay’s last stored position.</td>\n</tr>\n<tr>\n<td><code>ChangeRelayLeaseLostException</code>: “The relay consumer-group lease was lost.”</td>\n<td>A relay group’s background renewal failed, for example during a database outage.</td>\n<td>Restart the consumer.</td>\n</tr>\n<tr>\n<td><code>ChangeStreamCheckpointWriteException</code>: “The change-stream checkpoint write failed with status Fenced.”</td>\n<td>A newer owner holds the lease. Other statuses: <code>Conflict</code> (concurrent write), <code>BackwardMovement</code>, <code>Incompatible</code>.</td>\n<td>Stop this worker. Do not retry the write; let the current owner continue.</td>\n</tr>\n</tbody>\n</table>\n<h2>The database was restored or replaced</h2>\n<p>A checkpoint belongs to one server, database, slot and publication. After a\nrestore, a failover to a server with a different system identifier, or a\nrecreated slot, Streams refuses to reuse it:</p>\n<table>\n<thead>\n<tr>\n<th>Message</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>ChangeStreamCheckpointMismatchException</code>: “The checkpoint belongs to a different source, slot, publication, output plug-in, database, mapping, or format.”</td>\n<td>The stored checkpoint does not match the identity you passed (often a changed <code>mappingFingerprint</code>).</td>\n</tr>\n<tr>\n<td><code>BlueTuskReplicationCheckpointException</code>: “The checkpoint belongs to a different PostgreSQL system identifier.”</td>\n<td>From <code>ValidateResumeCheckpointAsync</code>: the server was replaced. Other messages report a missing or temporary slot, lost WAL, or a checkpoint ahead of the server.</td>\n</tr>\n<tr>\n<td><code>SnapshotAttemptException</code>: “The connected PostgreSQL system/database identity does not match the configured change source.”</td>\n<td>A snapshot source connected to a different server or database than its <code>ChangeSourceIdentity</code>.</td>\n</tr>\n<tr>\n<td><code>ChangeRelaySourceMismatchException</code></td>\n<td>The relay’s registered source differs from the transaction’s source.</td>\n</tr>\n</tbody>\n</table>\n<p>Because the system identifier is part of the state key, a worker on a restored\nserver usually finds no checkpoint at all and its slot is missing (slots are\nnot part of most backups). In every case, rebuild the consumer: create the slot\nagain, take a new <a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot</a>, and treat the destination\nas needing a reset. Do not copy the old checkpoint across.</p>\n<h2>The same transaction arrives twice</h2>\n<p>This is expected after a crash, a rejected delivery or a failed acknowledgement:\ndelivery is at least once. Make your writes idempotent using <code>ChangeId</code>. Start\nreplication at <code>StartPosition = checkpoint</code> so PostgreSQL skips what you already\nacknowledged. See <a href=\"/documentation/real-time/streams-concepts#restarts-and-redelivery\">restarts and redelivery</a>.</p>\n<h2>The stream stops on a delivery</h2>\n<table>\n<thead>\n<tr>\n<th>Message</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>ChangeDeliveryNotAcknowledgedException</code>: “The previous change transaction was not acknowledged; its final state is Active.”</td>\n<td>Your loop moved to the next transaction without calling <code>AcknowledgeAsync</code>. <code>Nacked</code> or <code>Disposed</code> means you rejected it.</td>\n<td>Acknowledge every delivery after your work. A rejected one is redelivered on restart.</td>\n</tr>\n<tr>\n<td><code>PreparedTransactionNotSupportedException</code></td>\n<td>Two-phase messages arrived while <code>PreparedTransactionMode</code> is <code>Fail</code>.</td>\n<td>Turn off two-phase decoding on the slot, or opt in to <a href=\"/documentation/real-time/streams-prepared-transactions\">prepared transactions</a>.</td>\n</tr>\n<tr>\n<td><code>ChangeSchemaReloadRequiredException</code></td>\n<td>A <a href=\"/documentation/real-time/streams-typed-mappings\">typed mapping</a> saw a changed table.</td>\n<td>Rebuild the mapping, then restart.</td>\n</tr>\n</tbody>\n</table>\n<h2>A large transaction stops the stream</h2>\n<table>\n<thead>\n<tr>\n<th>Message</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>TransactionAssemblyLimitExceededException</code>: “Transaction 1249 exceeds the 262144-byte limit.” (or the <code>-change</code> or <code>-relation</code> limit)</td>\n<td>Raise <code>MaxTransactionBytes</code>, <code>MaxChangesPerTransaction</code> or <code>MaxRelationsPerTransaction</code>, or split the job that writes such transactions.</td>\n</tr>\n<tr>\n<td><code>TransactionSpoolLimitExceededException</code>: “The transaction spool limit of … bytes would be exceeded.”</td>\n<td>Raise <code>MaxSpoolBytes</code>, or free the spool directory.</td>\n</tr>\n<tr>\n<td><code>TransactionSpoolLimitExceededException</code>: “Existing transaction spool artifacts consume … bytes, which exceeds the …-byte storage limit.”</td>\n<td>Files from an earlier run fill the spool. With the worker stopped, delete the spool directory’s contents.</td>\n</tr>\n<tr>\n<td><code>TransactionSpoolIntegrityException</code></td>\n<td>A spool file is damaged. Stop the worker, empty the spool directory and restart; the transaction is read again from PostgreSQL.</td>\n</tr>\n<tr>\n<td><code>ChangeRelayStorageExhaustedException</code></td>\n<td>Raise <code>MaxRelayStorageBytes</code> or <code>MaxEnvelopeBytes</code>, or run relay compaction.</td>\n</tr>\n</tbody>\n</table>\n<p>Streams never skips or splits a transaction to get past a limit. Until you fix\nthe cause, the same transaction fails again after every restart. See\n<a href=\"/documentation/real-time/streams-configuration#transaction-assembly-and-spooling\">configuration</a>.</p>\n<h2>The snapshot does not start</h2>\n<table>\n<thead>\n<tr>\n<th>Message</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>SnapshotRestartLimitExceededException</code>: “Snapshot bootstrap failed before an epoch could be established after 3 attempts.” with an inner <code>replication slot &quot;&lt;name&gt;&quot; already exists</code></td>\n<td>The slot exists and <code>ExistingSlotMode</code> is <code>Fail</code>.</td>\n<td>Drop the slot, or use <code>ExistingSlotMode.RestartSnapshot</code> if your consumer handles a reset.</td>\n</tr>\n<tr>\n<td><code>SnapshotAttemptException</code>: “Existing slot … is active or does not belong to the configured pgoutput snapshot source; it cannot be replaced safely.”</td>\n<td><code>RestartSnapshot</code> found an active slot, or one for another plug-in or database.</td>\n<td>Stop its reader, or choose another slot name.</td>\n</tr>\n<tr>\n<td><code>SnapshotAttemptException</code>: “Snapshot row in … uses … bytes; the configured maximum is … bytes.”</td>\n<td>A row is larger than <code>MaximumRowBytes</code>.</td>\n<td>Raise <code>MaximumRowBytes</code> (and <code>MaximumBatchBytes</code>).</td>\n</tr>\n</tbody>\n</table>\n<h2>WAL keeps growing on the source server</h2>\n<p>A slot keeps every WAL file from its confirmed position onwards. Check how\nmuch each slot holds:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "SELECT slot_name, active, confirmed_flush_lsn,\n       pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) AS retained\nFROM pg_replication_slots;\n",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> slot_name, active, confirmed_flush_lsn,\n       pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) <span class=\"hljs-keyword\">AS</span> retained\n<span class=\"hljs-keyword\">FROM</span> pg_replication_slots;\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>A consumer is stopped or slow.</td>\n<td>Restart it or speed it up. With many consumers, use the <a href=\"/documentation/real-time/durable-relay\">relay</a>.</td>\n</tr>\n<tr>\n<td>A slot is no longer used.</td>\n<td>Drop it: <code>SELECT pg_drop_replication_slot('&lt;name&gt;');</code> The slot must be inactive. Its consumer group must then start again from a snapshot.</td>\n</tr>\n<tr>\n<td>The consumer acknowledges, but <code>confirmed_flush_lsn</code> never moves: a custom observer that never sends feedback replaces the stream’s own confirmation. (On 1.0.0 and 1.1.0-rc.1, a stream without an observer never confirmed either.)</td>\n<td>Send the position from your observer, or use a built-in one or none. See <a href=\"/documentation/real-time/streams-concepts#how-the-slot-releases-wal\">how the slot releases WAL</a>.</td>\n</tr>\n<tr>\n<td>A relay group is stopped.</td>\n<td>The relay frees WAL anyway; check relay storage with <code>GetHealthAsync</code> instead.</td>\n</tr>\n</tbody>\n</table>\n<p>As a safety net, set PostgreSQL’s <code>max_slot_wal_keep_size</code> so a forgotten slot\ncannot fill the disk. A slot that passes the limit loses WAL and must be\nrecreated, and its consumers re-snapshotted.</p>\n<h2>A new slot fails with “could not map filenumber”</h2>\n<p>A logical slot can be created in a broken state if a table is created or\naltered in the same database while the slot is being created. This is a\nPostgreSQL 15 to 19 limitation, not a BlueTusk defect. It needs three things\nat once: a transaction that changes a table and commits while the slot is\nbeing created, an older transaction still open elsewhere in the cluster, and a\nlater write to that table.</p>\n<p><strong>Symptom:</strong> reading the slot fails with a <code>BlueTuskServerException</code> such as\n<code>could not map filenumber &quot;base/...&quot; to relation OID</code> (PostgreSQL 15 says\n<code>filenode</code>), or <code>pg_attribute catalog is missing N attribute(s) for relation OID ...</code>. Reconnecting fails the same way, because the server decodes the same\nWAL again.</p>\n<p><strong>Avoid it:</strong> create slots, including temporary ones, when nothing in that\ndatabase is running migrations or creating tables. The risk ends when slot\ncreation returns; later schema changes are decoded normally.</p>\n<p><strong>Recover:</strong> drop the slot and create a new one. The new slot starts at a new\nWAL position, so rebuild derived state with\n<a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot and catch-up</a> instead of resuming from the old\ncheckpoint. An upstream fix is under review (pgsql-hackers thread “Historic\nsnapshot doesn’t track txns committed in BUILDING_SNAPSHOT state”, October\n2026).</p>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-configuration\">Configuration</a></li>\n<li><a href=\"/documentation/real-time/streams-hosting\">Hosting and observability</a></li>\n<li><a href=\"/documentation/real-time/contracts\">Delivery guarantees</a></li>\n</ul>\n"
       }
     ]
   },
@@ -251,53 +755,118 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     ],
     "order": 40,
     "listed": true,
-    "title": "Consistent snapshot bootstrap",
+    "title": "Snapshot and catch-up",
     "sourcePath": "docs/streams/snapshot-bootstrap.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/snapshot-bootstrap.md",
     "headings": [
       {
-        "id": "consistent-snapshot-bootstrap",
-        "text": "Consistent snapshot bootstrap",
+        "id": "snapshot-and-catch-up",
+        "text": "Snapshot and catch-up",
         "level": 1
       },
       {
-        "id": "consistency-sequence",
-        "text": "Consistency sequence",
+        "id": "how-it-works",
+        "text": "How it works",
         "level": 2
       },
       {
-        "id": "bounds-and-backpressure",
-        "text": "Bounds and backpressure",
+        "id": "1-describe-the-tables-to-copy",
+        "text": "1. Describe the tables to copy",
         "level": 2
       },
       {
-        "id": "restart-semantics",
-        "text": "Restart semantics",
+        "id": "2-write-the-consumer",
+        "text": "2. Write the consumer",
         "level": 2
       },
       {
-        "id": "low-level-composition",
-        "text": "Low-level composition",
+        "id": "3-copy-then-stream-then-resume",
+        "text": "3. Copy, then stream, then resume",
+        "level": 2
+      },
+      {
+        "id": "what-happens-when-something-fails",
+        "text": "What happens when something fails",
+        "level": 2
+      },
+      {
+        "id": "tune-the-copy",
+        "text": "Tune the copy",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
         "level": 2
       }
     ],
-    "wordCount": 605,
-    "readMinutes": 3,
-    "searchText": "Consistent snapshot bootstrap Streams bootstraps a new logical replication slot with PostgreSQL's exported-snapshot protocol. It does not combine an unrelated table read with a later WAL position. Consistency sequence A dedicated logical-replication connection identifies the PostgreSQL system and database and verifies them against `ChangeSourceIdentity`. `CREATE_REPLICATION_SLOT ... LOGICAL pgoutput EXPORT_SNAPSHOT` returns one consistent LSN and exported snapshot name. Every snapshot reader starts a repeatable-read transaction and imports that exact snapshot before issuing its first query. Readers scan declared key columns in deterministic keyset order. Each page uses binary `COPY TO STDOUT`; raw binary field payloads become explicit `ChangeColumnValue` instances without an intermediate CLR materialisation. Bounded parallel readers feed a bounded channel. The consumer sees serial reset, start, batch, and complete callbacks. After snapshot completion, pgoutput starts from the slot's matching consistent LSN. WAL generated during the snapshot has remained retained by the slot, so concurrent writes are delivered after the snapshot without a gap. The implementation has a PostgreSQL 15–19 acceptance test that creates the slot, commits a write after the consistent point, verifies that the write is absent from the snapshot, and then verifies that it is the first streamed transaction. Bounds and backpressure `PostgreSqlConsistentSnapshotOptions` independently limits: rows per keyset COPY page; rows and bytes per consumer batch; bytes in one row; and parallel table readers. The cross-reader channel is bounded to twice the configured parallelism. A slow consumer therefore propagates backpressure into COPY reads rather than accumulating an unbounded in-memory snapshot. A row larger than the explicit row limit fails the attempt with diagnostics. Every table requires one or more non-null, immutable ordering keys. The declared key order must match the intended primary or unique k",
+    "wordCount": 1119,
+    "readMinutes": 6,
+    "searchText": "Snapshot and catch-up This guide shows you how to copy the rows that already exist in your tables and then stream every later change, with no gap and no overlap between the two. Use it when a new consumer needs the current state, for example to build a read model or search index from scratch. If you only need changes from now on, the [quick start](quickstart.md) is enough. How it works Streams opens a replication connection and checks that the server and database match your `ChangeSourceIdentity`. It creates the replication slot with an **exported snapshot**. PostgreSQL returns a consistent WAL position and a snapshot name for that same moment. Each table is copied inside a repeatable-read transaction that imports that snapshot, in key order, using binary `COPY`. When every table is copied, streaming starts from the slot's consistent position. Changes committed during the copy were kept by the slot, so they arrive next. A change committed after the consistent point is never in the copy, and is always the first thing streamed. 1. Describe the tables to copy Streams needs each table's columns, PostgreSQL type OIDs and key. Look them up: Then describe the table. Mark the key columns with `IsKey: true`; they must be non-null and must not change (a primary key is ideal): The copy reads exactly the columns you list, in that order. 2. Write the consumer Implement `IChangeStreamConsumer`. Streams calls it in this order: reset, start, one call per batch of copied rows, complete, then one call per streamed transaction. Make every callback safe to repeat. Copied rows arrive as binary values (`ChangeValueEncoding.Binary`); a [typed mapping](typed-mappings.md#snapshot-rows) can decode them (text columns need a decoder). 3. Copy, then stream, then resume The code below runs the snapshot on the first start. It also saves a checkpoint for each streamed transaction, so later starts resume from the slot instead of copying the table again. `store` is a PostgreSQL state store and `serv",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Consistent snapshot bootstrap</h1>\n<p>Streams bootstraps a new logical replication slot with PostgreSQL’s exported-snapshot protocol. It does not combine an unrelated table read with a later WAL position.</p>\n<h2>Consistency sequence</h2>\n<ol>\n<li>A dedicated logical-replication connection identifies the PostgreSQL system and database and verifies them against <code>ChangeSourceIdentity</code>.</li>\n<li><code>CREATE_REPLICATION_SLOT ... LOGICAL pgoutput EXPORT_SNAPSHOT</code> returns one consistent LSN and exported snapshot name.</li>\n<li>Every snapshot reader starts a repeatable-read transaction and imports that exact snapshot before issuing its first query.</li>\n<li>Readers scan declared key columns in deterministic keyset order. Each page uses binary <code>COPY TO STDOUT</code>; raw binary field payloads become explicit <code>ChangeColumnValue</code> instances without an intermediate CLR materialisation.</li>\n<li>Bounded parallel readers feed a bounded channel. The consumer sees serial reset, start, batch, and complete callbacks.</li>\n<li>After snapshot completion, pgoutput starts from the slot’s matching consistent LSN. WAL generated during the snapshot has remained retained by the slot, so concurrent writes are delivered after the snapshot without a gap.</li>\n</ol>\n<p>The implementation has a PostgreSQL 15–19 acceptance test that creates the slot, commits a write after the consistent point, verifies that the write is absent from the snapshot, and then verifies that it is the first streamed transaction.</p>\n<h2>Bounds and backpressure</h2>\n<p><code>PostgreSqlConsistentSnapshotOptions</code> independently limits:</p>\n<ul>\n<li>rows per keyset COPY page;</li>\n<li>rows and bytes per consumer batch;</li>\n<li>bytes in one row; and</li>\n<li>parallel table readers.</li>\n</ul>\n<p>The cross-reader channel is bounded to twice the configured parallelism. A slow consumer therefore propagates backpressure into COPY reads rather than accumulating an unbounded in-memory snapshot. A row larger than the explicit row limit fails the attempt with diagnostics.</p>\n<p>Every table requires one or more non-null, immutable ordering keys. The declared key order must match the intended primary or unique key order. PostgreSQL produces the continuation literals with <code>quote_nullable</code>; callers never interpolate client-provided key text into keyset SQL.</p>\n<h2>Restart semantics</h2>\n<p><code>SnapshotThenStreamCoordinator</code> treats <code>SnapshotSessionLostException</code> before completion as abandonment of the complete epoch. It disposes the attempt, removes only the inactive slot that the same source instance can prove it created, creates a new slot and consistent point, and calls <code>ResetSnapshotAsync</code> with a new epoch. It never continues an expired exported snapshot.</p>\n<p>The number of complete attempts is bounded by <code>MaximumSnapshotAttempts</code>. Failure before PostgreSQL establishes an epoch can be retried without inventing an abandoned epoch identity. Consumer exceptions and permanent configuration failures are not relabelled as session loss.</p>\n<p>A new process cannot prove ownership through in-memory state. The default\n<code>ExistingSlotMode.Fail</code> therefore refuses to alter a pre-existing slot. A worker\nwhose snapshot reset is durable and idempotent can explicitly select\n<code>ExistingSlotMode.RestartSnapshot</code>. On its first attempt, Streams will replace\nonly an inactive logical <code>pgoutput</code> slot for the configured database and then\nemit a new snapshot epoch. Active slots, physical slots, other output plug-ins,\nand other databases always fail closed. PostgreSQL 15–19 acceptance recreates a\nsource object around an abandoned slot and verifies that the replacement epoch\nis distinct.</p>\n<p>The snapshot consumer must apply reset and rows idempotently. Once <code>CompleteSnapshotAsync</code> succeeds, normal transaction-delivery acknowledgement rules apply. A replication failure after that boundary is a normal checkpoint-based reconnect concern and never causes an implicit full snapshot restart.</p>\n<h2>Low-level composition</h2>\n"
+        "html": "<h1>Snapshot and catch-up</h1>\n<p>This guide shows you how to copy the rows that already exist in your tables and\nthen stream every later change, with no gap and no overlap between the two.</p>\n<p>Use it when a new consumer needs the current state, for example to build a read\nmodel or search index from scratch. If you only need changes from now on, the\n<a href=\"/documentation/real-time/streams-quickstart\">quick start</a> is enough.</p>\n<h2>How it works</h2>\n<ol>\n<li>Streams opens a replication connection and checks that the server and\ndatabase match your <code>ChangeSourceIdentity</code>.</li>\n<li>It creates the replication slot with an <strong>exported snapshot</strong>. PostgreSQL\nreturns a consistent WAL position and a snapshot name for that same moment.</li>\n<li>Each table is copied inside a repeatable-read transaction that imports that\nsnapshot, in key order, using binary <code>COPY</code>.</li>\n<li>When every table is copied, streaming starts from the slot’s consistent\nposition. Changes committed during the copy were kept by the slot, so they\narrive next.</li>\n</ol>\n<p>A change committed after the consistent point is never in the copy, and is\nalways the first thing streamed.</p>\n<h2>1. Describe the tables to copy</h2>\n<p>Streams needs each table’s columns, PostgreSQL type OIDs and key. Look them up:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var source = new PostgreSqlConsistentSnapshotSource(\n    dataSource,\n    new PostgreSqlConsistentSnapshotOptions\n    {\n        Source = sourceIdentity,\n        PublicationNames = [\"application_publication\"],\n        Tables =\n        [\n            new PostgreSqlSnapshotTable(ordersRelation, [ordersIdOrdinal]),\n        ],\n        CopyPageRows = 2_048,\n        MaximumBatchRows = 512,\n        MaximumBatchBytes = 4 * 1024 * 1024,\n        MaximumParallelTables = 4,\n        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n    },\n    replication => CreateCheckpointBeforeFeedbackObserver(replication));\n\nawait new SnapshotThenStreamCoordinator(source).RunAsync(consumer, stoppingToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> source = <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotSource(\n    dataSource,\n    <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotOptions\n    {\n        Source = sourceIdentity,\n        PublicationNames = [<span class=\"hljs-string\">&quot;application_publication&quot;</span>],\n        Tables =\n        [\n            <span class=\"hljs-keyword\">new</span> PostgreSqlSnapshotTable(ordersRelation, [ordersIdOrdinal]),\n        ],\n        CopyPageRows = <span class=\"hljs-number\">2_048</span>,\n        MaximumBatchRows = <span class=\"hljs-number\">512</span>,\n        MaximumBatchBytes = <span class=\"hljs-number\">4</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n        MaximumParallelTables = <span class=\"hljs-number\">4</span>,\n        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n    },\n    replication =&gt; CreateCheckpointBeforeFeedbackObserver(replication));\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">new</span> SnapshotThenStreamCoordinator(source).RunAsync(consumer, stoppingToken);\n",
+        "code": "SELECT row_number() OVER (ORDER BY attnum) - 1 AS ordinal,\n       attname AS name, atttypid AS type_oid, atttypmod AS type_modifier\nFROM pg_attribute\nWHERE attrelid = 'app.orders'::regclass AND attnum > 0 AND NOT attisdropped\nORDER BY attnum;\n",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> <span class=\"hljs-built_in\">row_number</span>() <span class=\"hljs-keyword\">OVER</span> (<span class=\"hljs-keyword\">ORDER</span> <span class=\"hljs-keyword\">BY</span> attnum) <span class=\"hljs-operator\">-</span> <span class=\"hljs-number\">1</span> <span class=\"hljs-keyword\">AS</span> ordinal,\n       attname <span class=\"hljs-keyword\">AS</span> name, atttypid <span class=\"hljs-keyword\">AS</span> type_oid, atttypmod <span class=\"hljs-keyword\">AS</span> type_modifier\n<span class=\"hljs-keyword\">FROM</span> pg_attribute\n<span class=\"hljs-keyword\">WHERE</span> attrelid <span class=\"hljs-operator\">=</span> <span class=\"hljs-string\">&#x27;app.orders&#x27;</span>::regclass <span class=\"hljs-keyword\">AND</span> attnum <span class=\"hljs-operator\">&gt;</span> <span class=\"hljs-number\">0</span> <span class=\"hljs-keyword\">AND</span> <span class=\"hljs-keyword\">NOT</span> attisdropped\n<span class=\"hljs-keyword\">ORDER</span> <span class=\"hljs-keyword\">BY</span> attnum;\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Then describe the table. Mark the key columns with <code>IsKey: true</code>; they must be\nnon-null and must not change (a primary key is ideal):</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var ordersTable = new ChangeTable(\n    relationId: 0,\n    \"app\",\n    \"orders\",\n    replicaIdentity: 'd',\n    [\n        new ChangeColumn(0, \"id\", TypeOid: 20, TypeModifier: -1, IsKey: true),\n        new ChangeColumn(1, \"description\", TypeOid: 25, TypeModifier: -1, IsKey: false),\n    ]);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> ordersTable = <span class=\"hljs-keyword\">new</span> ChangeTable(\n    relationId: <span class=\"hljs-number\">0</span>,\n    <span class=\"hljs-string\">&quot;app&quot;</span>,\n    <span class=\"hljs-string\">&quot;orders&quot;</span>,\n    replicaIdentity: <span class=\"hljs-string\">&#x27;d&#x27;</span>,\n    [\n        <span class=\"hljs-keyword\">new</span> ChangeColumn(<span class=\"hljs-number\">0</span>, <span class=\"hljs-string\">&quot;id&quot;</span>, TypeOid: <span class=\"hljs-number\">20</span>, TypeModifier: <span class=\"hljs-number\">-1</span>, IsKey: <span class=\"hljs-literal\">true</span>),\n        <span class=\"hljs-keyword\">new</span> ChangeColumn(<span class=\"hljs-number\">1</span>, <span class=\"hljs-string\">&quot;description&quot;</span>, TypeOid: <span class=\"hljs-number\">25</span>, TypeModifier: <span class=\"hljs-number\">-1</span>, IsKey: <span class=\"hljs-literal\">false</span>),\n    ]);\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>The observer factory is where a direct consumer composes its fenced checkpoint store and <code>LogicalReplicationFeedbackSender</code>. The existing acknowledgement observer still guarantees destination work, then durable compare-and-swap checkpoint, then PostgreSQL feedback.</p>\n"
+        "html": "<p>The copy reads exactly the columns you list, in that order.</p>\n<h2>2. Write the consumer</h2>\n<p>Implement <code>IChangeStreamConsumer</code>. Streams calls it in this order: reset, start,\none call per batch of copied rows, complete, then one call per streamed\ntransaction.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "sealed class ReadModelConsumer : IChangeStreamConsumer\n{\n    public ValueTask ResetSnapshotAsync(SnapshotReset reset, CancellationToken cancellationToken = default)\n    {\n        // Discard rows from reset.AbandonedEpoch (if any) and start epoch reset.Epoch.\n        Console.WriteLine($\"Reset: {reset.Reason}\");\n        return ValueTask.CompletedTask;\n    }\n\n    public ValueTask StartSnapshotAsync(SnapshotStart start, CancellationToken cancellationToken = default)\n    {\n        Console.WriteLine($\"Copying {start.TableCount} table(s)\");\n        return ValueTask.CompletedTask;\n    }\n\n    public ValueTask ConsumeSnapshotBatchAsync(ChangeSnapshotBatch batch, CancellationToken cancellationToken = default)\n    {\n        // Upsert batch.Rows. Each row has a stable SnapshotRowId within the epoch.\n        Console.WriteLine($\"Copied {batch.Rows.Count} row(s) from {batch.Table}\");\n        return ValueTask.CompletedTask;\n    }\n\n    public ValueTask CompleteSnapshotAsync(SnapshotComplete complete, CancellationToken cancellationToken = default)\n    {\n        Console.WriteLine($\"Snapshot complete: {complete.RowCount} row(s)\");\n        return ValueTask.CompletedTask;\n    }\n\n    public async ValueTask ConsumeTransactionAsync(\n        ChangeTransactionDelivery delivery, CancellationToken cancellationToken = default)\n    {\n        // Apply the transaction, then acknowledge it.\n        Console.WriteLine($\"Transaction {delivery.Transaction.TransactionId}: {delivery.Transaction.Changes.Count} change(s)\");\n        await delivery.AcknowledgeAsync(cancellationToken);\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">ReadModelConsumer</span> : <span class=\"hljs-title\">IChangeStreamConsumer</span>\n{\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask <span class=\"hljs-title\">ResetSnapshotAsync</span>(<span class=\"hljs-params\">SnapshotReset reset, CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        <span class=\"hljs-comment\">// Discard rows from reset.AbandonedEpoch (if any) and start epoch reset.Epoch.</span>\n        Console.WriteLine(<span class=\"hljs-string\">$&quot;Reset: <span class=\"hljs-subst\">{reset.Reason}</span>&quot;</span>);\n        <span class=\"hljs-keyword\">return</span> ValueTask.CompletedTask;\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask <span class=\"hljs-title\">StartSnapshotAsync</span>(<span class=\"hljs-params\">SnapshotStart start, CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        Console.WriteLine(<span class=\"hljs-string\">$&quot;Copying <span class=\"hljs-subst\">{start.TableCount}</span> table(s)&quot;</span>);\n        <span class=\"hljs-keyword\">return</span> ValueTask.CompletedTask;\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask <span class=\"hljs-title\">ConsumeSnapshotBatchAsync</span>(<span class=\"hljs-params\">ChangeSnapshotBatch batch, CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        <span class=\"hljs-comment\">// Upsert batch.Rows. Each row has a stable SnapshotRowId within the epoch.</span>\n        Console.WriteLine(<span class=\"hljs-string\">$&quot;Copied <span class=\"hljs-subst\">{batch.Rows.Count}</span> row(s) from <span class=\"hljs-subst\">{batch.Table}</span>&quot;</span>);\n        <span class=\"hljs-keyword\">return</span> ValueTask.CompletedTask;\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask <span class=\"hljs-title\">CompleteSnapshotAsync</span>(<span class=\"hljs-params\">SnapshotComplete complete, CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        Console.WriteLine(<span class=\"hljs-string\">$&quot;Snapshot complete: <span class=\"hljs-subst\">{complete.RowCount}</span> row(s)&quot;</span>);\n        <span class=\"hljs-keyword\">return</span> ValueTask.CompletedTask;\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">async</span> ValueTask <span class=\"hljs-title\">ConsumeTransactionAsync</span>(<span class=\"hljs-params\">\n        ChangeTransactionDelivery delivery, CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        <span class=\"hljs-comment\">// Apply the transaction, then acknowledge it.</span>\n        Console.WriteLine(<span class=\"hljs-string\">$&quot;Transaction <span class=\"hljs-subst\">{delivery.Transaction.TransactionId}</span>: <span class=\"hljs-subst\">{delivery.Transaction.Changes.Count}</span> change(s)&quot;</span>);\n        <span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync(cancellationToken);\n    }\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Make every callback safe to repeat. Copied rows arrive as binary values\n(<code>ChangeValueEncoding.Binary</code>); a <a href=\"/documentation/real-time/streams-typed-mappings#snapshot-rows\">typed mapping</a>\ncan decode them (text columns need a decoder).</p>\n<h2>3. Copy, then stream, then resume</h2>\n<p>The code below runs the snapshot on the first start. It also saves a checkpoint\nfor each streamed transaction, so later starts resume from the slot instead of\ncopying the table again. <code>store</code> is a PostgreSQL state store and <code>server</code> comes\nfrom <code>IdentifySystemAsync()</code>, as in the <a href=\"/documentation/real-time/streams-quickstart\">quick start</a>.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var sourceIdentity = new ChangeSourceIdentity(\n    server.SystemIdentifier, server.DatabaseName!, \"orders_snapshot\", \"orders_publication\");\n\nvar feedback = new DeferredFeedbackSender();\nawait using var checkpoints = await CheckpointingChangeDeliveryObserver.AcquireAsync(\n    store,\n    ChangeStreamStateKey.Create(sourceIdentity, \"read-model\"),\n    workerId,\n    TimeSpan.FromSeconds(30),\n    ChangeStreamCheckpoint.CreateInitial(\n        sourceIdentity, server.SystemIdentifier, \"pgoutput\", \"read-model-v1\"),\n    feedback);\n\nif (checkpoints.Checkpoint is { } checkpoint)\n{\n    // A previous run finished its snapshot and acknowledged at least one\n    // transaction: resume from the slot instead of copying the table again.\n    await ResumeFromCheckpointAsync(checkpoint, checkpoints, stoppingToken);\n    return;\n}\n\n// ordersTable is the ChangeTable from step 1.\nvar snapshotSource = new PostgreSqlConsistentSnapshotSource(\n    dataSource,\n    new PostgreSqlConsistentSnapshotOptions\n    {\n        Source = sourceIdentity,\n        PublicationNames = [\"orders_publication\"],\n        Tables = [new PostgreSqlSnapshotTable(ordersTable, keyOrdinals: [0])],\n        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n    },\n    observerFactory: replication =>\n    {\n        feedback.Connection = replication;\n        return checkpoints;\n    });\n\nawait new SnapshotThenStreamCoordinator(snapshotSource).RunAsync(consumer, stoppingToken);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> sourceIdentity = <span class=\"hljs-keyword\">new</span> ChangeSourceIdentity(\n    server.SystemIdentifier, server.DatabaseName!, <span class=\"hljs-string\">&quot;orders_snapshot&quot;</span>, <span class=\"hljs-string\">&quot;orders_publication&quot;</span>);\n\n<span class=\"hljs-keyword\">var</span> feedback = <span class=\"hljs-keyword\">new</span> DeferredFeedbackSender();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> checkpoints = <span class=\"hljs-keyword\">await</span> CheckpointingChangeDeliveryObserver.AcquireAsync(\n    store,\n    ChangeStreamStateKey.Create(sourceIdentity, <span class=\"hljs-string\">&quot;read-model&quot;</span>),\n    workerId,\n    TimeSpan.FromSeconds(<span class=\"hljs-number\">30</span>),\n    ChangeStreamCheckpoint.CreateInitial(\n        sourceIdentity, server.SystemIdentifier, <span class=\"hljs-string\">&quot;pgoutput&quot;</span>, <span class=\"hljs-string\">&quot;read-model-v1&quot;</span>),\n    feedback);\n\n<span class=\"hljs-keyword\">if</span> (checkpoints.Checkpoint <span class=\"hljs-keyword\">is</span> { } checkpoint)\n{\n    <span class=\"hljs-comment\">// A previous run finished its snapshot and acknowledged at least one</span>\n    <span class=\"hljs-comment\">// transaction: resume from the slot instead of copying the table again.</span>\n    <span class=\"hljs-keyword\">await</span> ResumeFromCheckpointAsync(checkpoint, checkpoints, stoppingToken);\n    <span class=\"hljs-keyword\">return</span>;\n}\n\n<span class=\"hljs-comment\">// ordersTable is the ChangeTable from step 1.</span>\n<span class=\"hljs-keyword\">var</span> snapshotSource = <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotSource(\n    dataSource,\n    <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotOptions\n    {\n        Source = sourceIdentity,\n        PublicationNames = [<span class=\"hljs-string\">&quot;orders_publication&quot;</span>],\n        Tables = [<span class=\"hljs-keyword\">new</span> PostgreSqlSnapshotTable(ordersTable, keyOrdinals: [<span class=\"hljs-number\">0</span>])],\n        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n    },\n    observerFactory: replication =&gt;\n    {\n        feedback.Connection = replication;\n        <span class=\"hljs-keyword\">return</span> checkpoints;\n    });\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">new</span> SnapshotThenStreamCoordinator(snapshotSource).RunAsync(consumer, stoppingToken);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>ResumeFromCheckpointAsync</code> is your own method: the quick start’s read loop,\nstarted at <code>checkpoint.AcknowledgedCommitPosition</code> with <code>checkpoints</code> as the\nobserver.</p>\n<p>The snapshot source opens its own replication connection, so the feedback\nsender is connected when streaming starts:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "// Sends feedback on the replication connection that the snapshot source opens.\nsealed class DeferredFeedbackSender : IReplicationFeedbackSender\n{\n    public BlueTuskReplicationConnection? Connection { get; set; }\n\n    public ValueTask SendFeedbackAsync(\n        BlueTuskLogSequenceNumber position,\n        CancellationToken cancellationToken = default) =>\n        new LogicalReplicationFeedbackSender(\n                Connection ?? throw new InvalidOperationException(\"Streaming has not started.\"))\n            .SendFeedbackAsync(position, cancellationToken);\n}\n",
+        "highlighted": "<span class=\"hljs-comment\">// Sends feedback on the replication connection that the snapshot source opens.</span>\n<span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">DeferredFeedbackSender</span> : <span class=\"hljs-title\">IReplicationFeedbackSender</span>\n{\n    <span class=\"hljs-keyword\">public</span> BlueTuskReplicationConnection? Connection { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask <span class=\"hljs-title\">SendFeedbackAsync</span>(<span class=\"hljs-params\">\n        BlueTuskLogSequenceNumber position,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span> =&gt;\n        <span class=\"hljs-keyword\">new</span> LogicalReplicationFeedbackSender(\n                Connection ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Streaming has not started.&quot;</span>))\n            .SendFeedbackAsync(position, cancellationToken);\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Add <code>using BlueTusk.Replication;</code> and <code>using BlueTusk.TypeSystem;</code> for these\ntypes. With this composition, the first run prints:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "Reset: Initial consistent snapshot.\nCopying 1 table(s)\nCopied 7 row(s) from app.orders\nSnapshot complete: 7 row(s)\nTransaction 1188: 1 change(s)\n",
+        "highlighted": "Reset: Initial consistent snapshot.\nCopying 1 table(s)\nCopied 7 row(s) from app.orders\nSnapshot complete: 7 row(s)\nTransaction 1188: 1 change(s)\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<blockquote>\n<p><strong>Note:</strong> Do not create the slot yourself. The snapshot source must create it\nto get the exported snapshot. Provision only the publication (for example\nwith <code>bluetusk-streams provision --skip-slot</code>).</p>\n</blockquote>\n<p>To run a snapshot consumer inside a .NET host with a health check, see\n<a href=\"/documentation/real-time/streams-hosting\">hosting and observability</a>.</p>\n<h2>What happens when something fails</h2>\n<p><strong>The copy fails part-way.</strong> If the snapshot session is lost before\n<code>CompleteSnapshotAsync</code>, Streams throws away that attempt, drops the slot it\ncreated, creates a new one and calls <code>ResetSnapshotAsync</code> with a new epoch and\nthe abandoned one. It never continues an expired snapshot. After\n<code>MaximumSnapshotAttempts</code> attempts (3 by default, set on\n<code>SnapshotThenStreamOptions</code>) it stops with\n<code>SnapshotRestartLimitExceededException</code>. Errors thrown by your consumer are not\nretried.</p>\n<p><strong>The process restarts and the slot already exists.</strong> A new process cannot\nprove it created the slot, so the default, <code>ExistingSlotMode = Fail</code>, refuses to\ntouch it and the run stops with <code>SnapshotRestartLimitExceededException</code>\n(the inner error says the slot already exists). With\n<code>ExistingSlotMode = RestartSnapshot</code>, Streams drops the slot only if it is\ninactive, logical, uses <code>pgoutput</code> and belongs to the configured database, then\nstarts a fresh snapshot epoch. Choose <code>RestartSnapshot</code> only if your reset and\ncopy are idempotent.</p>\n<p><strong>Streaming fails after the snapshot completed.</strong> That is a normal restart:\nresume from the checkpoint as shown above. It never triggers a new snapshot by\nitself.</p>\n<h2>Tune the copy</h2>\n<p><code>PostgreSqlConsistentSnapshotOptions</code> controls memory use and parallelism:</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Default</th>\n<th>Effect</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>CopyPageRows</code></td>\n<td>2,048</td>\n<td>Rows per keyset <code>COPY</code> page.</td>\n</tr>\n<tr>\n<td><code>MaximumBatchRows</code></td>\n<td>512</td>\n<td>Rows per <code>ConsumeSnapshotBatchAsync</code> call.</td>\n</tr>\n<tr>\n<td><code>MaximumBatchBytes</code></td>\n<td>4 MiB</td>\n<td>Bytes per batch.</td>\n</tr>\n<tr>\n<td><code>MaximumRowBytes</code></td>\n<td>4 MiB</td>\n<td>Largest single row. A larger row stops the attempt.</td>\n</tr>\n<tr>\n<td><code>MaximumParallelTables</code></td>\n<td>4</td>\n<td>Tables copied at the same time.</td>\n</tr>\n</tbody>\n</table>\n<p>A slow consumer slows the copy down instead of filling memory: the hand-off\nbetween readers and your consumer holds at most twice <code>MaximumParallelTables</code>\nbatches. See <a href=\"/documentation/real-time/streams-configuration#snapshot-bootstrap\">configuration</a> for every\noption.</p>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-concepts#snapshot-then-stream\">Concepts: snapshot, then stream</a></li>\n<li><a href=\"/documentation/real-time/streams-sample\">Sample worker</a></li>\n<li><a href=\"/documentation/real-time/streams-troubleshooting\">Troubleshooting</a></li>\n</ul>\n"
       }
     ]
   },
@@ -313,43 +882,148 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     ],
     "order": 50,
     "listed": true,
-    "title": "PostgreSQL durable relay",
+    "title": "Durable relay",
     "sourcePath": "docs/streams/durable-relay.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/durable-relay.md",
     "headings": [
       {
-        "id": "postgresql-durable-relay",
-        "text": "PostgreSQL durable relay",
+        "id": "durable-relay",
+        "text": "Durable relay",
         "level": 1
       },
       {
-        "id": "storage-model",
-        "text": "Storage model",
+        "id": "when-to-use-the-relay",
+        "text": "When to use the relay",
         "level": 2
       },
       {
-        "id": "backup-and-restore",
-        "text": "Backup and restore",
+        "id": "prepare-the-relay-storage",
+        "text": "Prepare the relay storage",
         "level": 2
       },
       {
-        "id": "consumer-groups",
-        "text": "Consumer groups",
+        "id": "1-run-the-source-worker",
+        "text": "1. Run the source worker",
         "level": 2
       },
       {
-        "id": "retention-and-health",
-        "text": "Retention and health",
+        "id": "2-read-as-a-consumer-group",
+        "text": "2. Read as a consumer group",
+        "level": 2
+      },
+      {
+        "id": "choose-where-a-new-group-starts",
+        "text": "Choose where a new group starts",
+        "level": 3
+      },
+      {
+        "id": "keep-the-relay-small",
+        "text": "Keep the relay small",
+        "level": 2
+      },
+      {
+        "id": "monitor-the-relay",
+        "text": "Monitor the relay",
+        "level": 2
+      },
+      {
+        "id": "remove-a-consumer-group",
+        "text": "Remove a consumer group",
+        "level": 2
+      },
+      {
+        "id": "protect-stored-payloads",
+        "text": "Protect stored payloads",
+        "level": 2
+      },
+      {
+        "id": "back-up-and-restore",
+        "text": "Back up and restore",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
         "level": 2
       }
     ],
-    "wordCount": 1355,
-    "readMinutes": 7,
-    "searchText": "PostgreSQL durable relay The PostgreSQL relay lets one logical replication slot feed multiple independently checkpointed consumer groups. The source worker remains a normal transaction-preserving Streams consumer; `PostgreSqlRelayChangeDeliveryObserver` changes its acknowledgement target from an application destination to a durable relay append. The ordering is fixed: renew and verify the fenced source-owner lease; encode and append the complete source transaction; update the relay source watermark in the same PostgreSQL transaction; commit the control-store transaction; and send PostgreSQL replication feedback. If the worker fails before the relay commit, PostgreSQL redelivers. If feedback fails after the commit, retry finds the identical transaction identity and envelope and returns `AlreadyPresent`; it does not duplicate relay storage. A duplicate identity with different bytes fails as an integrity violation. Storage model The configured control schema contains versioned storage metadata, source registrations and epochs, binary transaction envelopes, consumer groups/checkpoints/fencing leases, snapshot runs, dead letters, and retention watermarks. `InitializeAsync` takes a row lock on storage metadata and transactionally applies every registered migration in order. It upgrades schema version 1 to version 2 and rejects a database created by a newer, unsupported build instead of guessing at compatibility. `GetSchemaVersionAsync` exposes the installed version for health and upgrade checks. The envelope is a bounded versioned binary format with a SHA-256 integrity hash. It preserves source and transaction metadata, table/type/column metadata, every explicit row state, changed-column exactness, truncates, logical messages, and prepared-transaction lifecycle state. `MaxEnvelopeBytes` bounds one transaction and `MaxRelayStorageBytes` atomically reserves total relay storage before insert. Read batches are bounded by transaction count and bytes. The first transaction may ",
+    "wordCount": 1276,
+    "readMinutes": 6,
+    "searchText": "Durable relay This guide shows you how to feed several independent consumers from one replication slot. A source worker stores each committed transaction in PostgreSQL tables (the **relay**), and each **consumer group** reads them back at its own pace. When to use the relay Direct consumers Relay One slot per consumer group. One slot for all groups. Each slot holds WAL until its slowest reader catches up. PostgreSQL releases WAL as soon as the relay has stored a transaction. A stopped consumer makes WAL grow on the source server. A stopped group only keeps rows in the relay tables. A new consumer needs its own slot and snapshot. A new group can start from the oldest retained transaction or from now. Use the relay when you have more than one consumer, or when consumers may be stopped for a while. [Sync](../sync/README.md) pipelines can read from the relay directly. Prepare the relay storage Keep the relay in a **control database** that is separate from the source database. If the relay tables were in a published source table set, the relay would read its own writes. The [`bluetusk-streams` tool](cli.md) creates the publication, slot and relay schema and checks this for you: In code, `InitializeAsync()` creates or upgrades the relay schema (`bluetusk_streams` by default). It is safe to call on every start: `InitializeAsync()` refuses a schema created by a newer BlueTusk version with `ChangeRelaySchemaVersionException`. 1. Run the source worker Run exactly one source worker per slot. It reads the slot like any Streams consumer, but its delivery observer appends each transaction to the relay: Each acknowledgement renews the source lease, then appends the transaction and moves the relay's source watermark in one control-database transaction, and only then sends the position to PostgreSQL. If the worker crashes before the append commits, PostgreSQL sends the transaction again. If it crashes after, the retry finds the identical transaction already stored and does not store",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>PostgreSQL durable relay</h1>\n<p>The PostgreSQL relay lets one logical replication slot feed multiple independently checkpointed consumer groups. The source worker remains a normal transaction-preserving Streams consumer; <code>PostgreSqlRelayChangeDeliveryObserver</code> changes its acknowledgement target from an application destination to a durable relay append.</p>\n<p>The ordering is fixed:</p>\n<ol>\n<li>renew and verify the fenced source-owner lease;</li>\n<li>encode and append the complete source transaction;</li>\n<li>update the relay source watermark in the same PostgreSQL transaction;</li>\n<li>commit the control-store transaction; and</li>\n<li>send PostgreSQL replication feedback.</li>\n</ol>\n<p>If the worker fails before the relay commit, PostgreSQL redelivers. If feedback fails after the commit, retry finds the identical transaction identity and envelope and returns <code>AlreadyPresent</code>; it does not duplicate relay storage. A duplicate identity with different bytes fails as an integrity violation.</p>\n<h2>Storage model</h2>\n<p>The configured control schema contains versioned storage metadata, source registrations and epochs, binary transaction envelopes, consumer groups/checkpoints/fencing leases, snapshot runs, dead letters, and retention watermarks. <code>InitializeAsync</code> takes a row lock on storage metadata and transactionally applies every registered migration in order. It upgrades schema version 1 to version 2 and rejects a database created by a newer, unsupported build instead of guessing at compatibility. <code>GetSchemaVersionAsync</code> exposes the installed version for health and upgrade checks.</p>\n<p>The envelope is a bounded versioned binary format with a SHA-256 integrity hash. It preserves source and transaction metadata, table/type/column metadata, every explicit row state, changed-column exactness, truncates, logical messages, and prepared-transaction lifecycle state.</p>\n<p><code>MaxEnvelopeBytes</code> bounds one transaction and <code>MaxRelayStorageBytes</code> atomically reserves total relay storage before insert. Read batches are bounded by transaction count and bytes. The first transaction may exceed the requested batch-byte target because source transactions are never split; it still cannot exceed the configured envelope limit.</p>\n<p>Set <code>EnvelopeProtection</code> to an <code>IChangeRelayEnvelopeProtectionProvider</code> to protect relay payloads before they enter PostgreSQL. Each row stores the provider’s current protector ID. Reads pass that ID back to the provider, allowing a key-ring implementation to decrypt older rows after rotation. Rows written before protection was enabled remain readable as integrity-checked plaintext. A missing protector, unknown key ID, failed decrypt, or invalid envelope fails closed.</p>\n<p>BlueTusk intentionally does not ship a process-global encryption key. Production providers should use authenticated encryption, keep keys outside the control database, return a new immutable ID when rotating keys, and retain old decrypt-only keys through the relay retention and backup windows. Protection overhead counts against <code>MaxEnvelopeBytes</code> and <code>MaxRelayStorageBytes</code>.</p>\n<h2>Backup and restore</h2>\n<p><code>BackupAsync</code> writes one source epoch as a bounded, framed stream from a PostgreSQL <code>REPEATABLE READ</code> snapshot. The backup includes retained transaction envelopes, consumer-group checkpoints and tombstones, fencing-token history, the source high-watermark, and the retention watermark. Snapshot runs and dead letters are included by default and can be omitted explicitly. Each frame has a SHA-256 integrity hash and <code>MaxFrameBytes</code> rejects an oversized or malicious frame.</p>\n<p>Relay envelopes remain in their stored form. If envelope protection is configured, the backup therefore retains the protected bytes and protector ID instead of decrypting sensitive payloads into the backup stream. The restore process must have a provider capable of decrypting every retained protector ID so it can validate each envelope before storing it. Keep decrypt-only rotation keys until every backup that references them has expired.</p>\n"
+        "html": "<h1>Durable relay</h1>\n<p>This guide shows you how to feed several independent consumers from one\nreplication slot. A source worker stores each committed transaction in\nPostgreSQL tables (the <strong>relay</strong>), and each <strong>consumer group</strong> reads them back at\nits own pace.</p>\n<h2>When to use the relay</h2>\n<table>\n<thead>\n<tr>\n<th>Direct consumers</th>\n<th>Relay</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>One slot per consumer group.</td>\n<td>One slot for all groups.</td>\n</tr>\n<tr>\n<td>Each slot holds WAL until its slowest reader catches up.</td>\n<td>PostgreSQL releases WAL as soon as the relay has stored a transaction.</td>\n</tr>\n<tr>\n<td>A stopped consumer makes WAL grow on the source server.</td>\n<td>A stopped group only keeps rows in the relay tables.</td>\n</tr>\n<tr>\n<td>A new consumer needs its own slot and snapshot.</td>\n<td>A new group can start from the oldest retained transaction or from now.</td>\n</tr>\n</tbody>\n</table>\n<p>Use the relay when you have more than one consumer, or when consumers may be\nstopped for a while. <a href=\"/documentation/real-time/sync\">Sync</a> pipelines can read from the\nrelay directly.</p>\n<h2>Prepare the relay storage</h2>\n<p>Keep the relay in a <strong>control database</strong> that is separate from the source\ndatabase. If the relay tables were in a published source table set, the relay\nwould read its own writes. The <a href=\"/documentation/real-time/streams-cli\"><code>bluetusk-streams</code> tool</a> creates the\npublication, slot and relay schema and checks this for you:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:BLUETUSK_STREAMS_SOURCE = \"Host=source;Database=app;Username=streams;Password=...\"\n$env:BLUETUSK_STREAMS_CONTROL = \"Host=control;Database=streams;Username=streams;Password=...\"\nbluetusk-streams provision --publication app_changes --slot app_relay --table app.orders\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_SOURCE</span> = <span class=\"hljs-string\">&quot;Host=source;Database=app;Username=streams;Password=...&quot;</span>\n<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_CONTROL</span> = <span class=\"hljs-string\">&quot;Host=control;Database=streams;Username=streams;Password=...&quot;</span>\nbluetusk<span class=\"hljs-literal\">-streams</span> provision <span class=\"hljs-literal\">--publication</span> app_changes <span class=\"hljs-literal\">--slot</span> app_relay <span class=\"hljs-literal\">--table</span> app.orders\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>In code, <code>InitializeAsync()</code> creates or upgrades the relay schema\n(<code>bluetusk_streams</code> by default). It is safe to call on every start:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var relay = new PostgreSqlDurableChangeRelay(new PostgreSqlStreamsStorageOptions\n{\n    ControlDataSource = controlDataSource,\n    ControlSchema = \"bluetusk_streams\",\n});\nawait relay.InitializeAsync();\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> relay = <span class=\"hljs-keyword\">new</span> PostgreSqlDurableChangeRelay(<span class=\"hljs-keyword\">new</span> PostgreSqlStreamsStorageOptions\n{\n    ControlDataSource = controlDataSource,\n    ControlSchema = <span class=\"hljs-string\">&quot;bluetusk_streams&quot;</span>,\n});\n<span class=\"hljs-keyword\">await</span> relay.InitializeAsync();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>InitializeAsync()</code> refuses a schema created by a newer BlueTusk version with\n<code>ChangeRelaySchemaVersionException</code>.</p>\n<h2>1. Run the source worker</h2>\n<p>Run exactly one source worker per slot. It reads the slot like any Streams\nconsumer, but its delivery observer appends each transaction to the relay:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(\n    sourceDataSource.CreateDedicatedSessionOptions(), stoppingToken);\nvar server = await replication.IdentifySystemAsync(stoppingToken);\nvar source = new ChangeSourceIdentity(\n    server.SystemIdentifier, server.DatabaseName!, slot, publicationFingerprint);\n\nawait using var relayWriter = await PostgreSqlRelayChangeDeliveryObserver.AcquireAsync(\n    relay,\n    source,\n    workerId,\n    TimeSpan.FromSeconds(30),\n    new LogicalReplicationFeedbackSender(replication),\n    stoppingToken);\n\nvar changes = new PgOutputChangeStream(\n    replication\n        .StartReplicationAsync(\n            new BlueTuskPgOutputReplicationOptions\n            {\n                SlotName = slot,\n                PublicationNames = [publication],\n                StartPosition = relayWriter.Source.LastCommitPosition,\n                ProtocolVersion = 2,\n                StreamingMode = BlueTuskLogicalStreamingMode.On,\n            },\n            stoppingToken)\n        .DecodePgOutputAsync(\n            new BlueTuskPgOutputDecoderOptions\n            {\n                ProtocolVersion = 2,\n                StreamingMode = BlueTuskPgOutputStreamingMode.On,\n            },\n            stoppingToken),\n    source,\n    observer: relayWriter);\n\nawait foreach (var delivery in changes.ReadTransactionsAsync(stoppingToken))\n{\n    // Acknowledging appends the transaction to the relay, then confirms\n    // the position to PostgreSQL.\n    await delivery.AcknowledgeAsync(stoppingToken);\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication = <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n    sourceDataSource.CreateDedicatedSessionOptions(), stoppingToken);\n<span class=\"hljs-keyword\">var</span> server = <span class=\"hljs-keyword\">await</span> replication.IdentifySystemAsync(stoppingToken);\n<span class=\"hljs-keyword\">var</span> source = <span class=\"hljs-keyword\">new</span> ChangeSourceIdentity(\n    server.SystemIdentifier, server.DatabaseName!, slot, publicationFingerprint);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> relayWriter = <span class=\"hljs-keyword\">await</span> PostgreSqlRelayChangeDeliveryObserver.AcquireAsync(\n    relay,\n    source,\n    workerId,\n    TimeSpan.FromSeconds(<span class=\"hljs-number\">30</span>),\n    <span class=\"hljs-keyword\">new</span> LogicalReplicationFeedbackSender(replication),\n    stoppingToken);\n\n<span class=\"hljs-keyword\">var</span> changes = <span class=\"hljs-keyword\">new</span> PgOutputChangeStream(\n    replication\n        .StartReplicationAsync(\n            <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputReplicationOptions\n            {\n                SlotName = slot,\n                PublicationNames = [publication],\n                StartPosition = relayWriter.Source.LastCommitPosition,\n                ProtocolVersion = <span class=\"hljs-number\">2</span>,\n                StreamingMode = BlueTuskLogicalStreamingMode.On,\n            },\n            stoppingToken)\n        .DecodePgOutputAsync(\n            <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputDecoderOptions\n            {\n                ProtocolVersion = <span class=\"hljs-number\">2</span>,\n                StreamingMode = BlueTuskPgOutputStreamingMode.On,\n            },\n            stoppingToken),\n    source,\n    observer: relayWriter);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> delivery <span class=\"hljs-keyword\">in</span> changes.ReadTransactionsAsync(stoppingToken))\n{\n    <span class=\"hljs-comment\">// Acknowledging appends the transaction to the relay, then confirms</span>\n    <span class=\"hljs-comment\">// the position to PostgreSQL.</span>\n    <span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync(stoppingToken);\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Each acknowledgement renews the source lease, then appends the transaction and\nmoves the relay’s source watermark in one control-database transaction, and\nonly then sends the position to PostgreSQL. If the worker crashes before the append\ncommits, PostgreSQL sends the transaction again. If it crashes after, the retry\nfinds the identical transaction already stored and does not store it twice.</p>\n<p><code>relayWriter.Source.LastCommitPosition</code> is the last stored position, so a\nrestarted worker carries on from there. A second worker for the same slot fails\nwith <code>ChangeRelayLeaseUnavailableException</code>. The observer also renews the\nsource lease on a timer, three times per lease duration, so a quiet source\nkeeps it. Disposing <code>relayWriter</code> stops renewal and releases the lease.</p>\n<h2>2. Read as a consumer group</h2>\n<p>Each consumer process builds the same <code>ChangeSourceIdentity</code> and reads its\ngroup:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var registration = await relay.RegisterSourceAsync(source, cancellationToken: stoppingToken);\nIChangeStream stream = new PostgreSqlRelayChangeStream(\n    relay,\n    registration,\n    new PostgreSqlRelayChangeStreamOptions\n    {\n        ConsumerGroup = \"search-index\",\n        OwnerId = workerId,\n    });\n\nawait foreach (var delivery in stream.ReadTransactionsAsync(stoppingToken))\n{\n    await ApplyTransactionIdempotentlyAsync(delivery.Transaction, stoppingToken);\n    await delivery.AcknowledgeAsync(stoppingToken);\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> registration = <span class=\"hljs-keyword\">await</span> relay.RegisterSourceAsync(source, cancellationToken: stoppingToken);\nIChangeStream stream = <span class=\"hljs-keyword\">new</span> PostgreSqlRelayChangeStream(\n    relay,\n    registration,\n    <span class=\"hljs-keyword\">new</span> PostgreSqlRelayChangeStreamOptions\n    {\n        ConsumerGroup = <span class=\"hljs-string\">&quot;search-index&quot;</span>,\n        OwnerId = workerId,\n    });\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> delivery <span class=\"hljs-keyword\">in</span> stream.ReadTransactionsAsync(stoppingToken))\n{\n    <span class=\"hljs-keyword\">await</span> ApplyTransactionIdempotentlyAsync(delivery.Transaction, stoppingToken);\n    <span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync(stoppingToken);\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The stream creates the group if it does not exist, takes the group’s lease and\nrenews it in the background, and reads at most <code>MaxTransactionsPerRead</code> (128)\ntransactions or <code>MaxBytesPerRead</code> (8 MiB) per query. A single transaction is\nnever split, so one read can exceed the byte target. Acknowledging moves the\ngroup’s checkpoint. A rejected delivery, a crash or a lost lease leaves the\ntransaction to be read again. Use <code>ChangeId</code> to make your writes idempotent;\ndelivery is at least once.</p>\n<p><code>ApplyTransactionIdempotentlyAsync</code> is your own code.</p>\n<h3>Choose where a new group starts</h3>\n<p><code>NewGroupStart</code> decides where a group that does not exist yet begins:</p>\n<ul>\n<li><code>EarliestAvailable</code> (default): the oldest transaction still in the relay.</li>\n<li><code>Latest</code>: only transactions stored from now on.</li>\n</ul>\n<p>A group that needs the full current state should take a snapshot first. Use\n<code>PostgreSqlRelayConsumerGroupSession.AcquireAsync</code> to hold the group’s lease\nduring the copy, record it with <code>BeginSnapshotRunAsync</code>, and call\n<code>CompleteSnapshotRunAsync</code> after your destination has stored the snapshot. The\nrelay then keeps every transaction the group still needs while it copies.\n<a href=\"/documentation/real-time/sync\">Sync</a> does all of this for you in\n<code>PostgreSqlRelaySyncPipelineSource</code>.</p>\n<h2>Keep the relay small</h2>\n<p>A transaction is deleted only when every active group has acknowledged it and\nit is older than <code>ResumeRetentionWindow</code> (1 hour by default).\n<code>MinimumRetainedTransactions</code> keeps a tail even after that. Groups created at\n<code>Latest</code> do not hold older transactions.</p>\n<p>Run compaction regularly, for example from a timer:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var compaction = await relay.CompactAsync(registration);\nConsole.WriteLine(\n    $\"Deleted {compaction.DeletedTransactions} transactions ({compaction.DeletedBytes} bytes) \" +\n    $\"in {compaction.Batches} batches; caught up: {compaction.FullyApplied}\");\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> compaction = <span class=\"hljs-keyword\">await</span> relay.CompactAsync(registration);\nConsole.WriteLine(\n    <span class=\"hljs-string\">$&quot;Deleted <span class=\"hljs-subst\">{compaction.DeletedTransactions}</span> transactions (<span class=\"hljs-subst\">{compaction.DeletedBytes}</span> bytes) &quot;</span> +\n    <span class=\"hljs-string\">$&quot;in <span class=\"hljs-subst\">{compaction.Batches}</span> batches; caught up: <span class=\"hljs-subst\">{compaction.FullyApplied}</span>&quot;</span>);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>CompactAsync</code> runs up to <code>MaxCompactionBatches</code> (100) batches of\n<code>RetentionDeleteBatchSize</code> (1,000) deletions, then runs <code>VACUUM (ANALYZE)</code>. Pass\n<code>vacuum: false</code> if autovacuum or a maintenance job handles that.\n<code>ApplyRetentionAsync</code> runs a single batch.</p>\n<p><code>MaxRelayStorageBytes</code> (100 GiB) caps total relay storage and\n<code>MaxEnvelopeBytes</code> (256 MiB) caps one transaction. When an append would pass\neither limit it fails with <code>ChangeRelayStorageExhaustedException</code>; nothing is\ndropped.</p>\n<h2>Monitor the relay</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var registration = await relay.RegisterSourceAsync(source);\nvar metrics = await relay.GetMetricsAsync(registration);\nvar health = await relay.GetHealthAsync(registration, serverWalEnd);\nConsole.WriteLine(\n    $\"{metrics.TransactionCount} transactions, {metrics.StorageBytes} bytes, \" +\n    $\"WAL lag {health.WalLagBytes} bytes, oldest unacknowledged {metrics.OldestUnacknowledgedAge}\");\nif (health.IsWalRetentionDanger || health.IsAcknowledgementOverdue || health.IsStorageExhausted)\n{\n    Console.WriteLine(\"The relay needs attention.\");\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> registration = <span class=\"hljs-keyword\">await</span> relay.RegisterSourceAsync(source);\n<span class=\"hljs-keyword\">var</span> metrics = <span class=\"hljs-keyword\">await</span> relay.GetMetricsAsync(registration);\n<span class=\"hljs-keyword\">var</span> health = <span class=\"hljs-keyword\">await</span> relay.GetHealthAsync(registration, serverWalEnd);\nConsole.WriteLine(\n    <span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{metrics.TransactionCount}</span> transactions, <span class=\"hljs-subst\">{metrics.StorageBytes}</span> bytes, &quot;</span> +\n    <span class=\"hljs-string\">$&quot;WAL lag <span class=\"hljs-subst\">{health.WalLagBytes}</span> bytes, oldest unacknowledged <span class=\"hljs-subst\">{metrics.OldestUnacknowledgedAge}</span>&quot;</span>);\n<span class=\"hljs-keyword\">if</span> (health.IsWalRetentionDanger || health.IsAcknowledgementOverdue || health.IsStorageExhausted)\n{\n    Console.WriteLine(<span class=\"hljs-string\">&quot;The relay needs attention.&quot;</span>);\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>serverWalEnd</code> is the source server’s current WAL position, for example\n<code>IdentifySystemAsync()</code> → <code>WalPosition</code>. The flags compare against\n<code>MaxWalLagBytes</code> (10 GiB), <code>MaxAcknowledgementAge</code> (5 minutes) and\n<code>MaxRelayStorageBytes</code>.</p>\n<h2>Remove a consumer group</h2>\n<p>Removal needs the group’s current generation and its exact name as a\nconfirmation:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var group = await relay.CreateConsumerGroupAsync(registration, \"old-reporting\");\nvar removal = await relay.RemoveConsumerGroupAsync(\n    group,\n    expectedGeneration: group.StoreGeneration,\n    confirmation: \"old-reporting\");\nConsole.WriteLine(removal.Status);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">group</span> = <span class=\"hljs-keyword\">await</span> relay.CreateConsumerGroupAsync(registration, <span class=\"hljs-string\">&quot;old-reporting&quot;</span>);\n<span class=\"hljs-keyword\">var</span> removal = <span class=\"hljs-keyword\">await</span> relay.RemoveConsumerGroupAsync(\n    <span class=\"hljs-keyword\">group</span>,\n    expectedGeneration: <span class=\"hljs-keyword\">group</span>.StoreGeneration,\n    confirmation: <span class=\"hljs-string\">&quot;old-reporting&quot;</span>);\nConsole.WriteLine(removal.Status);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The group is marked inactive, not deleted, and cannot be silently recreated.\nBy default (<code>PreserveResumeWindow</code>) its unacknowledged transactions are kept for\n<code>RemovedConsumerGroupRetentionWindow</code> (1 hour). Call again with\n<code>ChangeRelayConsumerGroupRemovalMode.ReleaseRetentionImmediately</code> to release\nthem sooner.</p>\n<h2>Protect stored payloads</h2>\n<p>Set <code>EnvelopeProtection</code> to your own <code>IChangeRelayEnvelopeProtectionProvider</code> to\nencrypt each stored transaction. Each row records the provider’s\n<code>CurrentProtectorId</code>, and reads pass it back to <code>Unprotect</code>, so you can rotate\nkeys and still read older rows. BlueTusk does not ship a key. Use authenticated\nencryption, keep keys outside the control database, and keep old decrypt-only\nkeys for as long as rows or backups use them. A missing or wrong key stops the\nread with <code>ChangeRelayProtectionException</code>.</p>\n<h2>Back up and restore</h2>\n"
       },
       {
         "kind": "code",
@@ -359,17 +1033,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p><code>RestoreAsync</code> is deliberately a replace/recovery operation, not a merge. It requires an initialized but otherwise empty control schema, a confirmation string exactly matching the backup source fingerprint, and a complete stream with no trailing bytes. Restore runs in one <code>SERIALIZABLE</code> database transaction; a truncated frame, invalid hash, malformed identity, envelope decode failure, duplicate record, or write failure rolls back the entire import.</p>\n<p>Source and consumer leases are never copied. Consumer checkpoints, inactive-group tombstones, retention protection, store generations, and last fencing tokens are copied, so a newly acquired lease advances beyond every pre-backup token. The source’s last sequence is restored even when retention already removed its highest stored transaction, preventing identity reuse after recovery.</p>\n<p>Frame hashes detect accidental corruption; they are not a substitute for authenticated backup storage. Encrypt and authenticate the outer backup stream, restrict access to it, and test restore into a disposable schema regularly. This is especially important when relay envelope protection is disabled, because those backup frames contain integrity-checked plaintext transaction envelopes.</p>\n<h2>Consumer groups</h2>\n<p>Create groups at the earliest retained position or at the latest source position. Each group owns its own database-clock lease, monotonically increasing fencing token, checkpoint sequence, and compare-and-swap generation. Reading with a stale lease fails; acknowledgement rechecks the lease and known relay sequence inside a locked PostgreSQL transaction.</p>\n<p><code>PostgreSqlRelayChangeStream</code> is the normal application adapter. It exposes a relay group through <code>IChangeStream</code>, bounds every read by transaction count and encoded bytes, renews the database-clock lease while destination work is in flight, and acknowledges exactly one sequence only after the delivery is acknowledged. A nack, abandoned delivery, lease loss, or process failure leaves the sequence available for safe redelivery.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "IChangeStream stream = new PostgreSqlRelayChangeStream(\n    relay,\n    sourceRegistration,\n    new PostgreSqlRelayChangeStreamOptions\n    {\n        ConsumerGroup = \"search-index\",\n        OwnerId = uniqueWorkerId,\n        MaxTransactionsPerRead = 128,\n        MaxBytesPerRead = 8 * 1024 * 1024,\n        LeaseDuration = TimeSpan.FromSeconds(30),\n        LeaseRenewalInterval = TimeSpan.FromSeconds(10),\n    });\n\nawait foreach (var delivery in stream.ReadTransactionsAsync(stoppingToken))\n{\n    await ApplyTransactionIdempotentlyAsync(delivery.Transaction, stoppingToken);\n    await delivery.AcknowledgeAsync(stoppingToken);\n}\n",
-        "highlighted": "IChangeStream stream = <span class=\"hljs-keyword\">new</span> PostgreSqlRelayChangeStream(\n    relay,\n    sourceRegistration,\n    <span class=\"hljs-keyword\">new</span> PostgreSqlRelayChangeStreamOptions\n    {\n        ConsumerGroup = <span class=\"hljs-string\">&quot;search-index&quot;</span>,\n        OwnerId = uniqueWorkerId,\n        MaxTransactionsPerRead = <span class=\"hljs-number\">128</span>,\n        MaxBytesPerRead = <span class=\"hljs-number\">8</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n        LeaseDuration = TimeSpan.FromSeconds(<span class=\"hljs-number\">30</span>),\n        LeaseRenewalInterval = TimeSpan.FromSeconds(<span class=\"hljs-number\">10</span>),\n    });\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> delivery <span class=\"hljs-keyword\">in</span> stream.ReadTransactionsAsync(stoppingToken))\n{\n    <span class=\"hljs-keyword\">await</span> ApplyTransactionIdempotentlyAsync(delivery.Transaction, stoppingToken);\n    <span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync(stoppingToken);\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The stream is single-use and deliberately permits only one outstanding transaction. Its options require an explicit group and unique owner identity; a newly created group starts at the earliest retained position unless <code>Latest</code> is explicitly selected. Stable <code>ChangeId</code> values remain the destination deduplication key; the relay and Streams still promise at-least-once delivery, not exactly once.</p>\n<p><code>PostgreSqlRelayConsumerGroupSession</code> extends that lease across an initial snapshot. Acquire it before exporting the snapshot so retention cannot pass the group while rows are copied. <code>BeginSnapshotRunAsync</code> records the new epoch and consistent LSN; <code>CompleteSnapshotRunAsync</code> is called only after the destination durably completes the snapshot. The progress payload is versioned, bounded, and SHA-256 integrity checked. A reserved run left by a crash is abandoned when the next epoch begins, while a completed run supplies the baseline needed to resume CDC without resetting the destination.</p>\n<p>Transactions at or below a completed snapshot’s consistent LSN may be acknowledged without reapplying them because the authoritative snapshot already contains that state. Transactions above it must still pass through the normal destination-durability-before-acknowledgement path. <code>BlueTusk.Sync.DependencyInjection</code> implements this orchestration in <code>PostgreSqlRelaySyncPipelineSource</code>; setting a new group to <code>Latest</code> is never a substitute for the snapshot reservation protocol.</p>\n<p>Consumer-group removal is a fenced state transition, not a row deletion. <code>RemoveConsumerGroupAsync</code> requires the expected store generation and an exact group-name confirmation. It clears the lease, increments the generation, records removal time, and leaves an inactive tombstone that cannot be silently recreated. The default <code>PreserveResumeWindow</code> mode continues to protect the removed group’s unacknowledged records for <code>RemovedConsumerGroupRetentionWindow</code>. The explicitly destructive <code>ReleaseRetentionImmediately</code> mode can release that protection later, again with generation checking and confirmation.</p>\n<h2>Retention and health</h2>\n<p>A transaction is eligible for deletion only when every active or retention-protected removed group to which it applies has checkpointed past it and the resume-retention window has elapsed. A group created at <code>Latest</code> does not pin older transactions. <code>MinimumRetainedTransactions</code> can keep a source tail even after acknowledgement.</p>\n<p>Each <code>ApplyRetentionAsync</code> call deletes at most <code>RetentionDeleteBatchSize</code> records and reports when it reached that limit. This bounds locks, WAL, and transaction duration. <code>CompactAsync</code> runs up to <code>MaxCompactionBatches</code>, reports whether it fully caught up, updates the persisted byte reservation and retention high-watermark atomically per batch, and can issue <code>VACUUM (ANALYZE)</code> after deletion. Operators can disable that final vacuum when autovacuum or a maintenance service owns physical compaction.</p>\n<p><code>GetMetricsAsync</code> reports count, bytes, sequence bounds, minimum group checkpoint, and oldest applicable unacknowledged age. <code>GetHealthAsync</code> adds WAL lag against the source’s durably appended commit position and explicit danger flags for WAL lag, acknowledgement age, and relay capacity.</p>\n<p>The relay’s control schema must not be part of the source publication. Use a separate control data source by default and run publication validation during provisioning. The live acceptance suite covers append/retry, two-group fan-out, replay, fencing, bounded retention, confirmed group removal, schema upgrade/future-version rejection, protected envelope round trips, atomic backup/restore with corruption rollback, compaction, capacity exhaustion, integrity decoding, and health signals on PostgreSQL 15–19.</p>\n"
+        "html": "<ul>\n<li>A backup covers one source: stored transactions, group checkpoints, removed\ngroups, fencing tokens and watermarks. Snapshot runs and dead letters are\nincluded unless you turn them off in <code>ChangeRelayBackupOptions</code>.</li>\n<li>Restore needs an initialized, empty relay schema (call <code>InitializeAsync()</code> on\n<code>replacementRelay</code> first) and the source fingerprint as confirmation. It runs\nin one transaction: a damaged or truncated backup changes nothing and throws\n<code>ChangeRelayBackupException</code>.</li>\n<li>Leases are not restored. New owners get fencing tokens above every token in\nthe backup.</li>\n<li>Protected payloads stay protected in the backup. Without protection the\nbackup contains row data in plain form, so encrypt and restrict the backup\nfile.</li>\n</ul>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-concepts#direct-consumers-and-the-relay\">Concepts: direct consumers and the relay</a></li>\n<li><a href=\"/documentation/real-time/streams-configuration#postgresql-storage-and-relay\">Configuration: relay options</a></li>\n<li><a href=\"/documentation/real-time/streams-troubleshooting\">Troubleshooting</a></li>\n<li><a href=\"/documentation/real-time/streams-format-compatibility\">Format compatibility registry</a></li>\n</ul>\n"
       }
     ]
   },
@@ -384,88 +1048,124 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     ],
     "order": 60,
     "listed": true,
-    "title": "Streams checkpoint and lease stores",
+    "title": "Checkpoint and lease stores",
     "sourcePath": "docs/streams/state-stores.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/state-stores.md",
     "headings": [
       {
-        "id": "streams-checkpoint-and-lease-stores",
-        "text": "Streams checkpoint and lease stores",
+        "id": "checkpoint-and-lease-stores",
+        "text": "Checkpoint and lease stores",
         "level": 1
       },
       {
-        "id": "memory",
-        "text": "Memory",
+        "id": "choose-a-store",
+        "text": "Choose a store",
         "level": 2
       },
       {
-        "id": "file",
-        "text": "File",
+        "id": "use-the-postgresql-store",
+        "text": "Use the PostgreSQL store",
         "level": 2
       },
       {
-        "id": "postgresql",
-        "text": "PostgreSQL",
+        "id": "check-the-slot-before-resuming",
+        "text": "Check the slot before resuming",
         "level": 2
       },
       {
-        "id": "custom-stores",
-        "text": "Custom stores",
+        "id": "use-the-file-store",
+        "text": "Use the file store",
         "level": 2
       },
       {
-        "id": "redis",
-        "text": "Redis",
+        "id": "use-redis",
+        "text": "Use Redis",
+        "level": 2
+      },
+      {
+        "id": "test-a-custom-store",
+        "text": "Test a custom store",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
         "level": 2
       }
     ],
-    "wordCount": 638,
-    "readMinutes": 3,
-    "searchText": "Streams checkpoint and lease stores Every Streams state store implements the same monotonic checkpoint and fenced lease contracts. The public `BlueTusk.Streams.Testing` conformance kit exercises compare-and-swap conflicts, backward movement, mapping incompatibility, exclusive group ownership, fencing-token progression, stale-owner rejection, independent groups, and lease expiry. Memory `MemoryChangeStreamStateStore` is for tests and ephemeral development. Its state disappears with the process and it must not be used to protect a production replication slot. File `BlueTusk.Streams.Storage.File` is the single-node self-hosting backend. Give it a directory on a local durable filesystem: Each consumer group is represented by a SHA-256-derived filename so source and group names do not leak through directory listings. Checkpoint, lease, and last-issued fencing token are written together. Writes use a unique temporary file, write-through flush, and atomic replacement. A versioned header, bounded payload length, and SHA-256 checksum make torn, truncated, or modified state fail closed. The file backend coordinates processes on one host with an exclusive per-group lock file. Do not place it on a network filesystem whose locking or atomic-replace semantics differ from the host filesystem. Restrict directory permissions to the BlueTusk worker identity and use encrypted storage when checkpoint metadata requires encryption at rest. Checksums provide integrity detection, not confidentiality. Back up the complete directory. Temporary `*.tmp` files are incomplete writes and are never read as state; `*.state` files and persistent `*.lock` filenames contain the recoverable data and coordination namespace. PostgreSQL `BlueTusk.Streams.Storage.PostgreSql` is the production default. Its options require an explicit control `DbDataSource`; the application/source replication data source is never inferred. Provision the versioned control schema before workers start: Checkpoint compare-and-sw",
+    "wordCount": 807,
+    "readMinutes": 4,
+    "searchText": "Checkpoint and lease stores This guide helps you choose where a Streams consumer keeps its checkpoint and lease, and shows how to set up each store. For what checkpoints and leases are, read [concepts](concepts.md#checkpoints-leases-and-fencing). Choose a store Store Package Use it when `PostgreSqlChangeStreamStateStore` `BlueTusk.Streams.Storage.PostgreSql` Production. The default choice. `FileChangeStreamStateStore` `BlueTusk.Streams.Storage.File` All workers run on one host with a local disk. `RedisChangeStreamStateStore` `BlueTusk.Streams.Storage.Redis` You already run a durable, replicated Redis. `MemoryChangeStreamStateStore` `BlueTusk.Streams` Tests only. State is lost when the process exits. Every store implements `IChangeStreamStateStore` and passes the same conformance suite: compare-and-swap writes, no backward movement, exclusive leases, increasing fencing tokens and lease expiry. Use the PostgreSQL store Give the store a data source for the database that should hold the state, then create its schema: `InitializeAsync()` creates the schema and a `stream_state` table if they do not exist, so the login needs `CREATE` on the database the first time. Lease expiry uses the database clock, so workers with skewed clocks still agree. Then take the lease for your consumer group and wrap the store in a delivery observer: `ownerId` must be unique per running process, for example machine name plus process ID. `mappingFingerprint` is a value you choose. Change it when your consumer's output changes in an incompatible way; an old checkpoint then fails with `ChangeStreamCheckpointMismatchException` instead of being reused. Pass the observer to `PgOutputChangeStream` and start replication at `AcknowledgedCommitPosition`. The [quick start](quickstart.md) shows the whole worker. The observer renews the lease in the background, three times per lease duration, until you dispose it. Disposing it stops renewal and releases the lease, so a clean shutdown lets the next process ",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Streams checkpoint and lease stores</h1>\n<p>Every Streams state store implements the same monotonic checkpoint and fenced lease contracts. The public <code>BlueTusk.Streams.Testing</code> conformance kit exercises compare-and-swap conflicts, backward movement, mapping incompatibility, exclusive group ownership, fencing-token progression, stale-owner rejection, independent groups, and lease expiry.</p>\n<h2>Memory</h2>\n<p><code>MemoryChangeStreamStateStore</code> is for tests and ephemeral development. Its state disappears with the process and it must not be used to protect a production replication slot.</p>\n<h2>File</h2>\n<p><code>BlueTusk.Streams.Storage.File</code> is the single-node self-hosting backend. Give it a directory on a local durable filesystem:</p>\n"
+        "html": "<h1>Checkpoint and lease stores</h1>\n<p>This guide helps you choose where a Streams consumer keeps its checkpoint and\nlease, and shows how to set up each store. For what checkpoints and leases are,\nread <a href=\"/documentation/real-time/streams-concepts#checkpoints-leases-and-fencing\">concepts</a>.</p>\n<h2>Choose a store</h2>\n<table>\n<thead>\n<tr>\n<th>Store</th>\n<th>Package</th>\n<th>Use it when</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>PostgreSqlChangeStreamStateStore</code></td>\n<td><code>BlueTusk.Streams.Storage.PostgreSql</code></td>\n<td>Production. The default choice.</td>\n</tr>\n<tr>\n<td><code>FileChangeStreamStateStore</code></td>\n<td><code>BlueTusk.Streams.Storage.File</code></td>\n<td>All workers run on one host with a local disk.</td>\n</tr>\n<tr>\n<td><code>RedisChangeStreamStateStore</code></td>\n<td><code>BlueTusk.Streams.Storage.Redis</code></td>\n<td>You already run a durable, replicated Redis.</td>\n</tr>\n<tr>\n<td><code>MemoryChangeStreamStateStore</code></td>\n<td><code>BlueTusk.Streams</code></td>\n<td>Tests only. State is lost when the process exits.</td>\n</tr>\n</tbody>\n</table>\n<p>Every store implements <code>IChangeStreamStateStore</code> and passes the same\nconformance suite: compare-and-swap writes, no backward movement, exclusive\nleases, increasing fencing tokens and lease expiry.</p>\n<h2>Use the PostgreSQL store</h2>\n<p>Give the store a data source for the database that should hold the state, then\ncreate its schema:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var store = new FileChangeStreamStateStore(\n    new FileChangeStreamStateStoreOptions\n    {\n        DirectoryPath = \"/var/lib/bluetusk/streams-state\",\n        LockTimeout = TimeSpan.FromSeconds(30),\n    });\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> FileChangeStreamStateStore(\n    <span class=\"hljs-keyword\">new</span> FileChangeStreamStateStoreOptions\n    {\n        DirectoryPath = <span class=\"hljs-string\">&quot;/var/lib/bluetusk/streams-state&quot;</span>,\n        LockTimeout = TimeSpan.FromSeconds(<span class=\"hljs-number\">30</span>),\n    });\n",
+        "code": "var store = new PostgreSqlChangeStreamStateStore(new PostgreSqlStreamsStorageOptions\n{\n    ControlDataSource = controlDataSource,\n    ControlSchema = \"bluetusk_streams\",\n});\nawait store.InitializeAsync();\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> PostgreSqlChangeStreamStateStore(<span class=\"hljs-keyword\">new</span> PostgreSqlStreamsStorageOptions\n{\n    ControlDataSource = controlDataSource,\n    ControlSchema = <span class=\"hljs-string\">&quot;bluetusk_streams&quot;</span>,\n});\n<span class=\"hljs-keyword\">await</span> store.InitializeAsync();\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Each consumer group is represented by a SHA-256-derived filename so source and group names do not leak through directory listings. Checkpoint, lease, and last-issued fencing token are written together. Writes use a unique temporary file, write-through flush, and atomic replacement. A versioned header, bounded payload length, and SHA-256 checksum make torn, truncated, or modified state fail closed.</p>\n<p>The file backend coordinates processes on one host with an exclusive per-group lock file. Do not place it on a network filesystem whose locking or atomic-replace semantics differ from the host filesystem. Restrict directory permissions to the BlueTusk worker identity and use encrypted storage when checkpoint metadata requires encryption at rest. Checksums provide integrity detection, not confidentiality.</p>\n<p>Back up the complete directory. Temporary <code>*.tmp</code> files are incomplete writes and are never read as state; <code>*.state</code> files and persistent <code>*.lock</code> filenames contain the recoverable data and coordination namespace.</p>\n<h2>PostgreSQL</h2>\n<p><code>BlueTusk.Streams.Storage.PostgreSql</code> is the production default. Its options require an explicit control <code>DbDataSource</code>; the application/source replication data source is never inferred. Provision the versioned control schema before workers start:</p>\n"
+        "html": "<p><code>InitializeAsync()</code> creates the schema and a <code>stream_state</code> table if they do\nnot exist, so the login needs <code>CREATE</code> on the database the first time. Lease\nexpiry uses the database clock, so workers with skewed clocks still agree.</p>\n<p>Then take the lease for your consumer group and wrap the store in a delivery\nobserver:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var options = new PostgreSqlStreamsStorageOptions\n{\n    ControlDataSource = controlDataSource,\n    ControlSchema = \"bluetusk_streams\",\n};\nvar store = new PostgreSqlChangeStreamStateStore(options);\nawait store.InitializeAsync();\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> options = <span class=\"hljs-keyword\">new</span> PostgreSqlStreamsStorageOptions\n{\n    ControlDataSource = controlDataSource,\n    ControlSchema = <span class=\"hljs-string\">&quot;bluetusk_streams&quot;</span>,\n};\n<span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> PostgreSqlChangeStreamStateStore(options);\n<span class=\"hljs-keyword\">await</span> store.InitializeAsync();\n",
+        "code": "await using var checkpoints = await CheckpointingChangeDeliveryObserver.AcquireAsync(\n    store,\n    ChangeStreamStateKey.Create(source, \"search-index\"),\n    ownerId: workerId,\n    leaseDuration: TimeSpan.FromSeconds(30),\n    ChangeStreamCheckpoint.CreateInitial(\n        source,\n        databaseIdentity: server.SystemIdentifier,\n        outputPlugin: \"pgoutput\",\n        mappingFingerprint: \"search-index-v1\"),\n    new LogicalReplicationFeedbackSender(replication));\n\nConsole.WriteLine(checkpoints.Checkpoint is null\n    ? \"No checkpoint yet: start from the slot's confirmed position.\"\n    : $\"Resume after {checkpoints.Checkpoint.AcknowledgedCommitPosition}.\");\n",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> checkpoints = <span class=\"hljs-keyword\">await</span> CheckpointingChangeDeliveryObserver.AcquireAsync(\n    store,\n    ChangeStreamStateKey.Create(source, <span class=\"hljs-string\">&quot;search-index&quot;</span>),\n    ownerId: workerId,\n    leaseDuration: TimeSpan.FromSeconds(<span class=\"hljs-number\">30</span>),\n    ChangeStreamCheckpoint.CreateInitial(\n        source,\n        databaseIdentity: server.SystemIdentifier,\n        outputPlugin: <span class=\"hljs-string\">&quot;pgoutput&quot;</span>,\n        mappingFingerprint: <span class=\"hljs-string\">&quot;search-index-v1&quot;</span>),\n    <span class=\"hljs-keyword\">new</span> LogicalReplicationFeedbackSender(replication));\n\nConsole.WriteLine(checkpoints.Checkpoint <span class=\"hljs-keyword\">is</span> <span class=\"hljs-literal\">null</span>\n    ? <span class=\"hljs-string\">&quot;No checkpoint yet: start from the slot&#x27;s confirmed position.&quot;</span>\n    : <span class=\"hljs-string\">$&quot;Resume after <span class=\"hljs-subst\">{checkpoints.Checkpoint.AcknowledgedCommitPosition}</span>.&quot;</span>);\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Checkpoint compare-and-swap uses a PostgreSQL transaction and a locked group row. Lease acquisition, renewal, expiry, release, and fencing-token generation use the database clock, avoiding worker clock skew. Checkpoint positions are stored losslessly as 20-digit numerics, and checkpoint identity is stored as separate validated fields rather than an opaque application blob.</p>\n<p>The relay and state schema must be excluded from the source publication. Call <code>PostgreSqlRelayPublicationValidator.Validate</code> with the discovered publication tables during provisioning; configuration fails if any table belongs to the configured control schema. Prefer a separately credentialed control data source and database so an accidental <code>FOR ALL TABLES</code> source publication cannot feed relay writes back into itself.</p>\n<p>The live conformance gate runs this backend on PostgreSQL 15–19.</p>\n<h2>Custom stores</h2>\n<p>Run the conformance suite against a real instance before using a custom implementation:</p>\n"
+        "html": "<ul>\n<li><code>ownerId</code> must be unique per running process, for example machine name plus\nprocess ID.</li>\n<li><code>mappingFingerprint</code> is a value you choose. Change it when your consumer’s\noutput changes in an incompatible way; an old checkpoint then fails with\n<code>ChangeStreamCheckpointMismatchException</code> instead of being reused.</li>\n<li>Pass the observer to <code>PgOutputChangeStream</code> and start replication at\n<code>AcknowledgedCommitPosition</code>. The <a href=\"/documentation/real-time/streams-quickstart\">quick start</a> shows the\nwhole worker.</li>\n</ul>\n<p>The observer renews the lease in the background, three times per lease\nduration, until you dispose it. Disposing it stops renewal and releases the\nlease, so a clean shutdown lets the next process start straight away. See\n<a href=\"/documentation/real-time/streams-concepts#checkpoints-leases-and-fencing\">leases</a> for what happens when a\nlease is lost.</p>\n<blockquote>\n<p><strong>Note:</strong> Keep the state schema out of your source publication. A\n<code>FOR ALL TABLES</code> publication in the same database would capture checkpoint\nwrites. Prefer a separate control database, or publish named tables only.</p>\n</blockquote>\n<h2>Check the slot before resuming</h2>\n<p>To catch a restored or replaced database before you read, validate the\ncheckpoint against the slot:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var report = await ChangeStreamStateStoreConformance.RunAsync(\n    customStore,\n    \"custom-store\");\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> report = <span class=\"hljs-keyword\">await</span> ChangeStreamStateStoreConformance.RunAsync(\n    customStore,\n    <span class=\"hljs-string\">&quot;custom-store&quot;</span>);\n",
+        "code": "if (checkpoints.Checkpoint is { } checkpoint)\n{\n    await replication.ValidateResumeCheckpointAsync(new BlueTuskLogicalReplicationCheckpoint(\n        server.SystemIdentifier,\n        server.DatabaseName!,\n        source.SlotName,\n        \"pgoutput\",\n        checkpoint.AcknowledgedCommitPosition));\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">if</span> (checkpoints.Checkpoint <span class=\"hljs-keyword\">is</span> { } checkpoint)\n{\n    <span class=\"hljs-keyword\">await</span> replication.ValidateResumeCheckpointAsync(<span class=\"hljs-keyword\">new</span> BlueTuskLogicalReplicationCheckpoint(\n        server.SystemIdentifier,\n        server.DatabaseName!,\n        source.SlotName,\n        <span class=\"hljs-string\">&quot;pgoutput&quot;</span>,\n        checkpoint.AcknowledgedCommitPosition));\n}\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>A passing result establishes the shared behavioral contract, not the backend’s durability, disaster-recovery, latency, or security properties. Those remain backend-specific release gates.</p>\n<h2>Redis</h2>\n<p><code>BlueTusk.Streams.Storage.Redis</code> is the distributed alternative for checkpoints and leases. It accepts an application-owned <code>IConnectionMultiplexer</code>; BlueTusk does not create or dispose the shared Redis connection.</p>\n"
+        "html": "<p>It throws <code>BlueTuskReplicationCheckpointException</code> if the slot is missing,\nactive elsewhere, temporary, has lost WAL, or does not match the server and\ndatabase. See <a href=\"/documentation/real-time/streams-troubleshooting#the-database-was-restored-or-replaced\">troubleshooting</a>.</p>\n<h2>Use the file store</h2>\n<p>The file store suits a single host:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var store = new RedisChangeStreamStateStore(\n    new RedisChangeStreamStateStoreOptions\n    {\n        Connection = redisConnection,\n        KeyPrefix = \"bluetusk:streams\",\n    });\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> RedisChangeStreamStateStore(\n    <span class=\"hljs-keyword\">new</span> RedisChangeStreamStateStoreOptions\n    {\n        Connection = redisConnection,\n        KeyPrefix = <span class=\"hljs-string\">&quot;bluetusk:streams&quot;</span>,\n    });\n",
+        "code": "var fileStore = new FileChangeStreamStateStore(new FileChangeStreamStateStoreOptions\n{\n    DirectoryPath = stateDirectory,\n    LockTimeout = TimeSpan.FromSeconds(30),\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> fileStore = <span class=\"hljs-keyword\">new</span> FileChangeStreamStateStore(<span class=\"hljs-keyword\">new</span> FileChangeStreamStateStoreOptions\n{\n    DirectoryPath = stateDirectory,\n    LockTimeout = TimeSpan.FromSeconds(<span class=\"hljs-number\">30</span>),\n});\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Each consumer group is one Redis hash under a SHA-256-derived cluster hash tag. Lua scripts execute lease acquisition, renewal, release, monotonic compare-and-swap, compatibility checks, and fencing atomically on the Redis server clock. Commit LSNs use fixed-width unsigned decimal strings so comparison does not lose precision through Lua’s numeric representation. Generations and fencing tokens remain signed 64-bit values managed by .NET and Redis integer operations.</p>\n<p>Configure Redis persistence, replication, authentication, TLS, eviction policy, backup, and failover to match the durability required for replication checkpoints. The package provides atomic state semantics; it cannot turn an ephemeral or evicting Redis deployment into a durable checkpoint service. PostgreSQL remains the default durable control store and the only relay backend in the first preview.</p>\n<p>The checked-in integration gate runs the public store conformance suite against Redis 8.</p>\n"
+        "html": "<ul>\n<li>Each consumer group is one <code>*.state</code> file (named by a hash, so names do not\nleak) and a <code>*.lock</code> file. Writes go to a temporary file, are flushed to disk\nand then atomically replace the old file. A checksum detects torn or modified\nfiles and stops with <code>FileChangeStreamStateStoreException</code>.</li>\n<li>Processes on the same host coordinate through the lock file. Do not use a\nnetwork file system: its locking and rename behaviour may differ.</li>\n<li>Restrict the directory to the worker’s account, and use an encrypted volume if\ncheckpoint metadata must be encrypted at rest.</li>\n<li>Back up the whole directory. <code>*.tmp</code> files are unfinished writes and are never\nread.</li>\n</ul>\n<h2>Use Redis</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var redis = await ConnectionMultiplexer.ConnectAsync(\"localhost:6379\");\nvar redisStore = new RedisChangeStreamStateStore(new RedisChangeStreamStateStoreOptions\n{\n    Connection = redis,\n    KeyPrefix = \"bluetusk:streams\",\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> redis = <span class=\"hljs-keyword\">await</span> ConnectionMultiplexer.ConnectAsync(<span class=\"hljs-string\">&quot;localhost:6379&quot;</span>);\n<span class=\"hljs-keyword\">var</span> redisStore = <span class=\"hljs-keyword\">new</span> RedisChangeStreamStateStore(<span class=\"hljs-keyword\">new</span> RedisChangeStreamStateStoreOptions\n{\n    Connection = redis,\n    KeyPrefix = <span class=\"hljs-string\">&quot;bluetusk:streams&quot;</span>,\n});\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li>You own the <code>IConnectionMultiplexer</code>; the store never creates or disposes it.</li>\n<li>Each consumer group is one hash. Lua scripts make every lease and checkpoint\noperation atomic and use the Redis server clock. Keys use a hash tag, so\nRedis Cluster works; do not put <code>{</code> or <code>}</code> in <code>KeyPrefix</code>.</li>\n<li>The store cannot make Redis durable. Turn on persistence (AOF), replication\nand authentication, and use an eviction policy that never evicts these keys.</li>\n</ul>\n<p>The relay always uses PostgreSQL, whichever checkpoint store you choose.</p>\n<h2>Test a custom store</h2>\n<p>To write your own store, implement <code>IChangeStreamStateStore</code> and run the\nconformance suite from <code>BlueTusk.Streams.Testing</code> against a real instance:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var report = await ChangeStreamStateStoreConformance.RunAsync(customStore, \"custom-store\");\nConsole.WriteLine($\"{report.StoreName}: {report.Assertions} checks passed in {report.Elapsed}\");\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> report = <span class=\"hljs-keyword\">await</span> ChangeStreamStateStoreConformance.RunAsync(customStore, <span class=\"hljs-string\">&quot;custom-store&quot;</span>);\nConsole.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{report.StoreName}</span>: <span class=\"hljs-subst\">{report.Assertions}</span> checks passed in <span class=\"hljs-subst\">{report.Elapsed}</span>&quot;</span>);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "code",
+        "code": "custom-store: 13 checks passed in 00:00:00.5634765\n",
+        "highlighted": "custom-store: 13 checks passed in 00:00:00.5634765\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>A failure throws <code>ChangeStreamStateStoreConformanceException</code>. Passing proves\nthe shared behaviour only; durability, backup, latency and security of your\nbackend are still up to you.</p>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-configuration#state-stores\">Configuration: state store options</a></li>\n<li><a href=\"/documentation/real-time/durable-relay\">Durable relay</a></li>\n<li><a href=\"/documentation/real-time/streams-troubleshooting#another-worker-owns-the-consumer-group\">Troubleshooting: lease errors</a></li>\n</ul>\n"
       }
     ]
   },
@@ -491,38 +1191,93 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       },
       {
-        "id": "health",
-        "text": "Health",
+        "id": "run-a-snapshot-consumer-as-a-hosted-service",
+        "text": "Run a snapshot consumer as a hosted service",
         "level": 2
       },
       {
-        "id": "metrics-and-traces",
-        "text": "Metrics and traces",
+        "id": "confirm-positions-to-postgresql",
+        "text": "Confirm positions to PostgreSQL",
         "level": 2
       },
       {
-        "id": "investigating-slow-transaction-spooling",
-        "text": "Investigating slow transaction spooling",
-        "level": 3
+        "id": "check-health",
+        "text": "Check health",
+        "level": 2
+      },
+      {
+        "id": "collect-metrics-and-traces",
+        "text": "Collect metrics and traces",
+        "level": 2
+      },
+      {
+        "id": "find-out-why-spooling-is-slow",
+        "text": "Find out why spooling is slow",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
+        "level": 2
       }
     ],
-    "wordCount": 436,
-    "readMinutes": 2,
-    "searchText": "Hosting and observability `BlueTusk.Streams.DependencyInjection` runs registered snapshot-then-stream consumers as in-process .NET hosted workers. Multiple workers share the host lifetime but keep independent sources, consumers, checkpoints, and failure state. Worker names are unique and become health/diagnostic identities. A source factory returning null, an unregistered consumer, or a worker exception faults that hosted worker and is surfaced through the host rather than being silently retried outside the stream's explicit retry policy. Health `AddBlueTuskStreams` registers the standard `bluetusk_streams` health check with `bluetusk`, `streams`, and `ready` tags. `BlueTuskStreamHealthRegistry` exposes immutable status snapshots for dashboards or custom endpoints. States are starting, snapshotting, catching up, running, stopped, and faulted; status includes the current snapshot epoch, delivered snapshot rows, delivered transactions, transition time, and a redacted operator-facing error message. The aggregate health check is unhealthy if any worker is faulted, degraded if no worker is active, and healthy otherwise. Applications should still expose liveness separately from this readiness-oriented check. Metrics and traces Core Streams exposes exporter-neutral .NET diagnostics through `BlueTuskStreamsDiagnostics`: activity source and meter name: `BlueTusk.Streams`; snapshot attempt activities tagged with source fingerprint, slot, epoch, attempt, and row count; transaction and change delivery counters; snapshot-row counters; and transaction-size histograms. Tags contain stable source/table identities and never connection strings, credentials, row values, or logical-message content. Any OpenTelemetry-compatible .NET setup can subscribe to the activity source and meter; Streams does not force a particular exporter. Investigating slow transaction spooling Subscribe to the `BlueTusk.Streams` meter and inspect `bluetusk.streams.spool.operation.duration` (seconds). It measur",
+    "wordCount": 848,
+    "readMinutes": 4,
+    "searchText": "Hosting and observability This guide shows you how to run Streams consumers inside a .NET host, expose their health, and collect their metrics and traces. There are two hosted shapes: Shape Registration On restart Snapshot-then-stream consumer `AddBlueTuskStreams().AddHostedConsumer<T>()` Copies the tables again (with `ExistingSlotMode.RestartSnapshot`). Worker that resumes from a checkpoint `AddHostedService<T>()` with your own `BackgroundService` Continues after the last checkpoint. See the [quick start](quickstart.md). Run a snapshot consumer as a hosted service Install `BlueTusk.Streams.DependencyInjection`, then register your consumer and a source factory: `ReadModelConsumer` implements `IChangeStreamConsumer`. Register it in the container yourself; the hosted service resolves it by type. `snapshotOptions` is a `PostgreSqlConsistentSnapshotOptions`, built as in [snapshot and catch-up](snapshot-bootstrap.md). The name (`orders-read-model`) must be unique. It identifies the worker in health data. Registering the same name twice throws `InvalidOperationException`. You can register several consumers. Each runs independently with its own source and slot. If a consumer throws, its worker is marked `Faulted` and the exception reaches the host. By default .NET then stops the host (`BackgroundServiceExceptionBehavior.StopHost`), so your orchestrator can restart it. Confirm positions to PostgreSQL You do not need an observer for the slot to release WAL. When your consumer acknowledges a transaction, the snapshot source's stream confirms its position to PostgreSQL, so the slot's `confirmed_flush_lsn` moves forward while the worker runs. See [how the slot releases WAL](concepts.md#how-the-slot-releases-wal). This is enough for a consumer that rebuilds from a snapshot on every start. Nothing records a position across restarts, though. To resume instead, pass an `observerFactory` that returns a checkpointing observer, as shown in [snapshot and catch-up](snapshot-bootstrap.md",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Hosting and observability</h1>\n<p><code>BlueTusk.Streams.DependencyInjection</code> runs registered snapshot-then-stream consumers as in-process .NET hosted workers. Multiple workers share the host lifetime but keep independent sources, consumers, checkpoints, and failure state.</p>\n"
+        "html": "<h1>Hosting and observability</h1>\n<p>This guide shows you how to run Streams consumers inside a .NET host, expose\ntheir health, and collect their metrics and traces.</p>\n<p>There are two hosted shapes:</p>\n<table>\n<thead>\n<tr>\n<th>Shape</th>\n<th>Registration</th>\n<th>On restart</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Snapshot-then-stream consumer</td>\n<td><code>AddBlueTuskStreams().AddHostedConsumer&lt;T&gt;()</code></td>\n<td>Copies the tables again (with <code>ExistingSlotMode.RestartSnapshot</code>).</td>\n</tr>\n<tr>\n<td>Worker that resumes from a checkpoint</td>\n<td><code>AddHostedService&lt;T&gt;()</code> with your own <code>BackgroundService</code></td>\n<td>Continues after the last checkpoint. See the <a href=\"/documentation/real-time/streams-quickstart\">quick start</a>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Run a snapshot consumer as a hosted service</h2>\n<p>Install <code>BlueTusk.Streams.DependencyInjection</code>, then register your consumer and\na source factory:</p>\n"
       },
       {
         "kind": "code",
-        "code": "services.AddSingleton<OrdersConsumer>();\nservices\n    .AddBlueTuskStreams()\n    .AddHostedConsumer<OrdersConsumer>(\n        \"orders\",\n        provider => provider.GetRequiredService<PostgreSqlConsistentSnapshotSource>(),\n        new SnapshotThenStreamOptions { MaximumSnapshotAttempts = 3 });\n",
-        "highlighted": "services.AddSingleton&lt;OrdersConsumer&gt;();\nservices\n    .AddBlueTuskStreams()\n    .AddHostedConsumer&lt;OrdersConsumer&gt;(\n        <span class=\"hljs-string\">&quot;orders&quot;</span>,\n        provider =&gt; provider.GetRequiredService&lt;PostgreSqlConsistentSnapshotSource&gt;(),\n        <span class=\"hljs-keyword\">new</span> SnapshotThenStreamOptions { MaximumSnapshotAttempts = <span class=\"hljs-number\">3</span> });\n",
+        "code": "var builder = WebApplication.CreateBuilder(args);\n\nbuilder.Services.AddSingleton(BlueTuskDataSource.Create(connectionString));\nbuilder.Services.AddSingleton<ReadModelConsumer>();\nbuilder.Services\n    .AddBlueTuskStreams()\n    .AddHostedConsumer<ReadModelConsumer>(\n        \"orders-read-model\",\n        services => new PostgreSqlConsistentSnapshotSource(\n            services.GetRequiredService<BlueTuskDataSource>(),\n            snapshotOptions),\n        new SnapshotThenStreamOptions { MaximumSnapshotAttempts = 3 });\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> builder = WebApplication.CreateBuilder(<span class=\"hljs-keyword\">args</span>);\n\nbuilder.Services.AddSingleton(BlueTuskDataSource.Create(connectionString));\nbuilder.Services.AddSingleton&lt;ReadModelConsumer&gt;();\nbuilder.Services\n    .AddBlueTuskStreams()\n    .AddHostedConsumer&lt;ReadModelConsumer&gt;(\n        <span class=\"hljs-string\">&quot;orders-read-model&quot;</span>,\n        services =&gt; <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotSource(\n            services.GetRequiredService&lt;BlueTuskDataSource&gt;(),\n            snapshotOptions),\n        <span class=\"hljs-keyword\">new</span> SnapshotThenStreamOptions { MaximumSnapshotAttempts = <span class=\"hljs-number\">3</span> });\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Worker names are unique and become health/diagnostic identities. A source factory returning null, an unregistered consumer, or a worker exception faults that hosted worker and is surfaced through the host rather than being silently retried outside the stream’s explicit retry policy.</p>\n<h2>Health</h2>\n<p><code>AddBlueTuskStreams</code> registers the standard <code>bluetusk_streams</code> health check with <code>bluetusk</code>, <code>streams</code>, and <code>ready</code> tags. <code>BlueTuskStreamHealthRegistry</code> exposes immutable status snapshots for dashboards or custom endpoints. States are starting, snapshotting, catching up, running, stopped, and faulted; status includes the current snapshot epoch, delivered snapshot rows, delivered transactions, transition time, and a redacted operator-facing error message.</p>\n<p>The aggregate health check is unhealthy if any worker is faulted, degraded if no worker is active, and healthy otherwise. Applications should still expose liveness separately from this readiness-oriented check.</p>\n<h2>Metrics and traces</h2>\n<p>Core Streams exposes exporter-neutral .NET diagnostics through <code>BlueTuskStreamsDiagnostics</code>:</p>\n<ul>\n<li>activity source and meter name: <code>BlueTusk.Streams</code>;</li>\n<li>snapshot attempt activities tagged with source fingerprint, slot, epoch, attempt, and row count;</li>\n<li>transaction and change delivery counters;</li>\n<li>snapshot-row counters; and</li>\n<li>transaction-size histograms.</li>\n</ul>\n<p>Tags contain stable source/table identities and never connection strings, credentials, row values, or logical-message content. Any OpenTelemetry-compatible .NET setup can subscribe to the activity source and meter; Streams does not force a particular exporter.</p>\n<h3>Investigating slow transaction spooling</h3>\n<p>Subscribe to the <code>BlueTusk.Streams</code> meter and inspect\n<code>bluetusk.streams.spool.operation.duration</code> (seconds). It measures three separate\ncompletion steps:</p>\n<table>\n<thead>\n<tr>\n<th><code>bluetusk.streams.spool.operation</code></th>\n<th>Measured boundary</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>flush</code></td>\n<td><code>FileStream.Flush(flushToDisk: true)</code>, including any buffered write</td>\n</tr>\n<tr>\n<td><code>close</code></td>\n<td>Closing the completed writer stream</td>\n</tr>\n<tr>\n<td><code>rename</code></td>\n<td>Moving the partial file to its ready name</td>\n</tr>\n</tbody>\n</table>\n<p>The other tag, <code>bluetusk.streams.spool.outcome</code>, is <code>success</code> or <code>failure</code>.\nThese are fixed values: no file paths, source IDs, transaction IDs or row data\nare included. Timers are inactive when no listener subscribes to the histogram.\nOnly attempted steps are recorded; a flush failure does not produce a successful\nclose or rename measurement.\nExceptions raised while dispatching recorded measurements are isolated from\ntransaction completion; genuine filesystem exceptions still propagate.</p>\n<p>This histogram is not total transaction latency: it excludes serialization,\nearlier writes, replay, downstream processing and acknowledgement. Compare it\nwith delivery duration, runtime/GC counters and storage telemetry. High flush\nlatency warrants investigating the storage device and host contention; it is\nnot a reason to disable durable flushing. The spool format and acknowledgement\nguarantees do not change when metrics are enabled.</p>\n"
+        "html": "<ul>\n<li><code>ReadModelConsumer</code> implements <code>IChangeStreamConsumer</code>. Register it in the\ncontainer yourself; the hosted service resolves it by type.</li>\n<li><code>snapshotOptions</code> is a <code>PostgreSqlConsistentSnapshotOptions</code>, built as in\n<a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot and catch-up</a>.</li>\n<li>The name (<code>orders-read-model</code>) must be unique. It identifies the worker in\nhealth data. Registering the same name twice throws\n<code>InvalidOperationException</code>.</li>\n<li>You can register several consumers. Each runs independently with its own\nsource and slot.</li>\n</ul>\n<p>If a consumer throws, its worker is marked <code>Faulted</code> and the exception reaches\nthe host. By default .NET then stops the host\n(<code>BackgroundServiceExceptionBehavior.StopHost</code>), so your orchestrator can\nrestart it.</p>\n<h2>Confirm positions to PostgreSQL</h2>\n<p>You do not need an observer for the slot to release WAL. When your consumer\nacknowledges a transaction, the snapshot source’s stream confirms its position\nto PostgreSQL, so the slot’s <code>confirmed_flush_lsn</code> moves forward while the\nworker runs. See <a href=\"/documentation/real-time/streams-concepts#how-the-slot-releases-wal\">how the slot releases WAL</a>.</p>\n<p>This is enough for a consumer that rebuilds from a snapshot on every start.\nNothing records a position across restarts, though. To resume instead, pass an\n<code>observerFactory</code> that returns a checkpointing observer, as shown in\n<a href=\"/documentation/real-time/snapshot-bootstrap#3-copy-then-stream-then-resume\">snapshot and catch-up</a>.</p>\n<h2>Check health</h2>\n<p><code>AddBlueTuskStreams()</code> registers a health check named <code>bluetusk_streams</code> with\nthe tags <code>bluetusk</code>, <code>streams</code> and <code>ready</code>. Map it as a readiness endpoint:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var app = builder.Build();\n\napp.MapHealthChecks(\"/health/ready\", new HealthCheckOptions\n{\n    Predicate = check => check.Tags.Contains(\"ready\"),\n});\napp.MapGet(\"/streams\", (BlueTuskStreamHealthRegistry registry) => registry.GetStatuses());\n\napp.Run();\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> app = builder.Build();\n\napp.MapHealthChecks(<span class=\"hljs-string\">&quot;/health/ready&quot;</span>, <span class=\"hljs-keyword\">new</span> HealthCheckOptions\n{\n    Predicate = check =&gt; check.Tags.Contains(<span class=\"hljs-string\">&quot;ready&quot;</span>),\n});\napp.MapGet(<span class=\"hljs-string\">&quot;/streams&quot;</span>, (BlueTuskStreamHealthRegistry registry) =&gt; registry.GetStatuses());\n\napp.Run();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The health check reports:</p>\n<table>\n<thead>\n<tr>\n<th>Result</th>\n<th>When</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Unhealthy</code></td>\n<td>Any worker is <code>Faulted</code>.</td>\n</tr>\n<tr>\n<td><code>Degraded</code></td>\n<td>No worker is registered, or every worker is <code>Starting</code> or <code>Stopped</code>.</td>\n</tr>\n<tr>\n<td><code>Healthy</code></td>\n<td>Otherwise.</td>\n</tr>\n</tbody>\n</table>\n<p><code>BlueTuskStreamHealthRegistry.GetStatuses()</code> returns one\n<code>BlueTuskStreamWorkerStatus</code> per worker with <code>Name</code>, <code>State</code>, <code>ChangedAt</code>,\n<code>SnapshotEpoch</code>, <code>SnapshotRows</code>, <code>Transactions</code> and <code>Error</code> (the exception\nmessage only). <code>State</code> moves through:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "Starting → Snapshotting → CatchingUp → Running → Stopped\n                                (any) → Faulted\n",
+        "highlighted": "Starting → Snapshotting → CatchingUp → Running → Stopped\n                                (any) → Faulted\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>CatchingUp</code> means the copy is complete and no transaction has been delivered\nyet. The <code>/streams</code> endpoint above returns, for example:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "[{\"name\":\"orders-read-model\",\"state\":3,\"changedAt\":\"2026-10-03T09:54:05.9303762+00:00\",\"snapshotEpoch\":\"0f80575c-e8d4-4860-8c6c-7f64c34887e2\",\"snapshotRows\":9,\"transactions\":1,\"error\":null}]\n",
+        "highlighted": "<span class=\"hljs-punctuation\">[</span><span class=\"hljs-punctuation\">{</span><span class=\"hljs-attr\">&quot;name&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;orders-read-model&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;state&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-number\">3</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;changedAt&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;2026-10-03T09:54:05.9303762+00:00&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;snapshotEpoch&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;0f80575c-e8d4-4860-8c6c-7f64c34887e2&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;snapshotRows&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-number\">9</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;transactions&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-number\">1</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;error&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-literal\"><span class=\"hljs-keyword\">null</span></span><span class=\"hljs-punctuation\">}</span><span class=\"hljs-punctuation\">]</span>\n",
+        "language": "json"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Expose a separate liveness endpoint; this check is about readiness.</p>\n<h2>Collect metrics and traces</h2>\n<p>Streams publishes .NET <code>Meter</code> and <code>ActivitySource</code> data named\n<code>BlueTusk.Streams</code> (<code>BlueTuskStreamsDiagnostics.InstrumentationName</code>). With\nOpenTelemetry (<code>OpenTelemetry.Extensions.Hosting</code> plus the exporter you use):</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddOpenTelemetry()\n    .WithMetrics(metrics => metrics.AddMeter(BlueTuskStreamsDiagnostics.InstrumentationName))\n    .WithTracing(tracing => tracing.AddSource(BlueTuskStreamsDiagnostics.InstrumentationName));\n",
+        "highlighted": "builder.Services.AddOpenTelemetry()\n    .WithMetrics(metrics =&gt; metrics.AddMeter(BlueTuskStreamsDiagnostics.InstrumentationName))\n    .WithTracing(tracing =&gt; tracing.AddSource(BlueTuskStreamsDiagnostics.InstrumentationName));\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Instrument</th>\n<th>Type</th>\n<th>Unit</th>\n<th>Tags</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>bluetusk.streams.transactions.delivered</code></td>\n<td>Counter</td>\n<td><code>{transaction}</code></td>\n<td><code>bluetusk.source</code>, <code>bluetusk.slot</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.streams.changes.delivered</code></td>\n<td>Counter</td>\n<td><code>{change}</code></td>\n<td><code>bluetusk.source</code>, <code>bluetusk.slot</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.streams.transaction.bytes</code></td>\n<td>Histogram</td>\n<td><code>By</code></td>\n<td><code>bluetusk.source</code>, <code>bluetusk.slot</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.streams.transactions.spooled</code></td>\n<td>Counter</td>\n<td><code>{transaction}</code></td>\n<td><code>bluetusk.source</code>, <code>bluetusk.slot</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.streams.snapshot.rows</code></td>\n<td>Counter</td>\n<td><code>{row}</code></td>\n<td><code>bluetusk.source</code>, <code>bluetusk.table</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.streams.deliveries.active</code></td>\n<td>UpDownCounter</td>\n<td><code>{delivery}</code></td>\n<td><code>bluetusk.source</code>, <code>bluetusk.streams.spooled</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.streams.deliveries.settled</code></td>\n<td>Counter</td>\n<td><code>{delivery}</code></td>\n<td>as above, plus <code>bluetusk.streams.delivery.outcome</code> (<code>acknowledged</code>, <code>nacked</code>, <code>disposed</code>)</td>\n</tr>\n<tr>\n<td><code>bluetusk.streams.delivery.duration</code></td>\n<td>Histogram</td>\n<td><code>s</code></td>\n<td>as <code>deliveries.settled</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.streams.delivery.settlement.failures</code></td>\n<td>Counter</td>\n<td><code>{failure}</code></td>\n<td><code>bluetusk.source</code>, <code>bluetusk.streams.spooled</code>, <code>bluetusk.streams.delivery.operation</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.streams.spool.operation.duration</code></td>\n<td>Histogram</td>\n<td><code>s</code></td>\n<td><code>bluetusk.streams.spool.operation</code>, <code>bluetusk.streams.spool.outcome</code></td>\n</tr>\n</tbody>\n</table>\n<p><code>bluetusk.source</code> is the source fingerprint. Tags never contain connection\nstrings, credentials, row values or logical-message content.</p>\n<p>Each snapshot attempt is a <code>bluetusk.streams.snapshot</code> activity tagged with\n<code>bluetusk.source</code>, <code>bluetusk.slot</code>, <code>bluetusk.snapshot.epoch</code>,\n<code>bluetusk.snapshot.attempt</code> and, on success, <code>bluetusk.snapshot.rows</code>.</p>\n<p><code>delivery.duration</code> measures from delivery to acknowledgement, so a growing\nvalue usually means your own work is slow. A rising\n<code>delivery.settlement.failures</code> count means acknowledgements are failing, for\nexample because a checkpoint write failed or the lease was lost.</p>\n<h2>Find out why spooling is slow</h2>\n<blockquote>\n<p><strong>New in 1.1.0:</strong> <code>bluetusk.streams.spool.operation.duration</code> is not in\n1.0.0 or 1.1.0-rc.1.</p>\n</blockquote>\n<p>When large transactions are slow, check the spool timing histogram. It measures\nthree steps of finishing a spool file:</p>\n<table>\n<thead>\n<tr>\n<th><code>bluetusk.streams.spool.operation</code></th>\n<th>What is timed</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>flush</code></td>\n<td>Flushing the file to disk, including buffered writes.</td>\n</tr>\n<tr>\n<td><code>close</code></td>\n<td>Closing the finished file.</td>\n</tr>\n<tr>\n<td><code>rename</code></td>\n<td>Renaming the partial file to its ready name.</td>\n</tr>\n</tbody>\n</table>\n<p><code>bluetusk.streams.spool.outcome</code> is <code>success</code> or <code>failure</code>. Only steps that\nwere attempted are recorded, and timing is off when nothing listens to the\nhistogram. High <code>flush</code> times point at the storage device or host contention;\nput <code>SpoolDirectory</code> on faster local storage rather than turning off durable\nflushing. This histogram excludes serialization, replay and your own work;\ncompare it with <code>delivery.duration</code>.</p>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-configuration#health-and-telemetry\">Configuration: health and telemetry names</a></li>\n<li><a href=\"/documentation/real-time/streams-troubleshooting\">Troubleshooting</a></li>\n<li><a href=\"/documentation/real-time/control-plane\">Control Plane</a> shows Streams health across a deployment.</li>\n</ul>\n"
       }
     ]
   },
@@ -601,73 +1356,688 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     ],
     "order": 90,
     "listed": true,
-    "title": "Keep another system in sync",
+    "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/README.md",
     "headings": [
       {
-        "id": "keep-another-system-in-sync",
-        "text": "Keep another system in sync",
+        "id": "bluetusk-sync",
+        "text": "BlueTusk Sync",
         "level": 1
       },
       {
-        "id": "what-you-choose",
-        "text": "What you choose",
+        "id": "when-should-i-use-sync",
+        "text": "When should I use Sync?",
         "level": 2
       },
       {
-        "id": "1-choose-a-destination",
-        "text": "1. Choose a destination",
+        "id": "destinations",
+        "text": "Destinations",
         "level": 2
       },
       {
-        "id": "2-register-one-hosted-pipeline",
-        "text": "2. Register one hosted pipeline",
+        "id": "what-does-sync-guarantee",
+        "text": "What does Sync guarantee?",
         "level": 2
       },
       {
-        "id": "3-prove-recovery-before-traffic",
-        "text": "3. Prove recovery before traffic",
+        "id": "what-does-it-look-like",
+        "text": "What does it look like?",
         "level": 2
       },
       {
-        "id": "the-guarantee-in-plain-language",
-        "text": "The guarantee in plain language",
-        "level": 2
-      },
-      {
-        "id": "production-defaults",
-        "text": "Production defaults",
+        "id": "next-steps",
+        "text": "Next steps",
         "level": 2
       }
     ],
-    "wordCount": 609,
+    "wordCount": 573,
     "readMinutes": 3,
-    "searchText": "Keep another system in sync BlueTusk Sync takes complete committed transactions from Streams and applies them to another system. Use it for search indexes, caches, event buses, another PostgreSQL database, webhooks, or an object-store lake. If you only need to observe changes, start with [Streams](../streams/README.md). If you need to update connected users, use [Live](../live/README.md). What you choose Every Sync pipeline has four parts: **Source** — a Streams snapshot-and-change source. **Transform** — application code that turns source rows into destination mutations. **Destination** — PostgreSQL, Redis, NATS, Kafka, OpenSearch, S3/Parquet, or a signed webhook. **Pipeline identity** — a stable name and transform version used for safe recovery. BlueTusk keeps a source transaction intact. It acknowledges that transaction only after the destination confirms the exact commit position. 1. Choose a destination Destination Good fit Recovery model PostgreSQL Read models in another database Mutation and checkpoint commit atomically. Redis Keyed cache or lookup state Same-slot atomic script applies state and checkpoint. OpenSearch Search index Stable versions make replay converge safely. NATS JetStream Durable event distribution Stable message identity plus broker deduplication. Kafka Partitioned event and compacted state topics Transactional publication and durable state. S3/Parquet Analytics lake Versioned objects and commit manifests. Signed webhook External HTTP integration Receiver deduplicates the signed delivery identity. Install `BlueTusk.Sync`, `BlueTusk.Sync.DependencyInjection`, and only the destination package you selected. 2. Register one hosted pipeline `CreateOrdersSnapshotAndStreamSource` should use the no-gap Streams bootstrap described in [snapshot and catch-up](../streams/snapshot-bootstrap.md). Do not combine an unrelated table export with a later WAL position. The transform implements `ISyncTransform` and returns stable, keyed `SyncMutation` values. T",
+    "searchText": "BlueTusk Sync BlueTusk Sync keeps another system up to date with your PostgreSQL data. It reads committed transactions from [Streams](../streams/README.md), turns each row into a keyed document with your code, and writes the result to another PostgreSQL database, Redis, NATS, OpenSearch, Kafka, S3 or a webhook. **Status:** Core family, version 1.1.0. 1.1.0 is not published yet; the current releases are 1.0.0 (stable) and 1.1.0-rc.1. Supports .NET 10 and PostgreSQL 15 to 18. See [Install BlueTusk](../getting-started/install.md). When should I use Sync? Use Sync when a copy of your data must follow the database: a read model in another database, a cache, a search index, an event topic, a data lake or a partner system. Use something else when: you want to run your own code for each change: use [Streams](../streams/README.md) directly; you want to push query results to connected users: use [Live](../live/README.md). Destinations Install `BlueTusk.Sync.DependencyInjection` and the package for your destination. Each destination package brings in `BlueTusk.Sync`. Package Writes Status `BlueTusk.Sync.PostgreSql` Rows in your own tables (with a custom writer) or JSON documents, plus the checkpoint, in one transaction Stable since 1.0.0 `BlueTusk.Sync.Redis` Documents in Redis hashes, plus the checkpoint, in one Lua script Stable since 1.0.0 `BlueTusk.Sync.Nats` One JetStream message per transaction, with a stable message ID Stable since 1.0.0 `BlueTusk.Sync.OpenSearch` Documents in versioned indexes behind aliases; supports zero-downtime rebuilds Stable since 1.0.0 `BlueTusk.Sync.Kafka` One event per transaction plus a checkpoint in a compacted state topic, in one Kafka transaction New in 1.1.0 `BlueTusk.Sync.S3` One immutable Parquet object per transaction, made visible by a commit manifest New in 1.1.0 `BlueTusk.Sync.Webhooks` One signed HTTPS request per transaction New in 1.1.0 Supporting packages: Package Purpose `BlueTusk.Sync` Pipeline, transforms, retries, reconcilia",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Keep another system in sync</h1>\n<p>BlueTusk Sync takes complete committed transactions from Streams and applies\nthem to another system. Use it for search indexes, caches, event buses, another\nPostgreSQL database, webhooks, or an object-store lake.</p>\n<p>If you only need to observe changes, start with <a href=\"/documentation/real-time/streams\">Streams</a>.\nIf you need to update connected users, use <a href=\"/documentation/real-time/live\">Live</a>.</p>\n<h2>What you choose</h2>\n<p>Every Sync pipeline has four parts:</p>\n<ol>\n<li><strong>Source</strong> — a Streams snapshot-and-change source.</li>\n<li><strong>Transform</strong> — application code that turns source rows into destination\nmutations.</li>\n<li><strong>Destination</strong> — PostgreSQL, Redis, NATS, Kafka, OpenSearch, S3/Parquet, or\na signed webhook.</li>\n<li><strong>Pipeline identity</strong> — a stable name and transform version used for safe\nrecovery.</li>\n</ol>\n<p>BlueTusk keeps a source transaction intact. It acknowledges that transaction\nonly after the destination confirms the exact commit position.</p>\n<h2>1. Choose a destination</h2>\n<table>\n<thead>\n<tr>\n<th>Destination</th>\n<th>Good fit</th>\n<th>Recovery model</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>PostgreSQL</td>\n<td>Read models in another database</td>\n<td>Mutation and checkpoint commit atomically.</td>\n</tr>\n<tr>\n<td>Redis</td>\n<td>Keyed cache or lookup state</td>\n<td>Same-slot atomic script applies state and checkpoint.</td>\n</tr>\n<tr>\n<td>OpenSearch</td>\n<td>Search index</td>\n<td>Stable versions make replay converge safely.</td>\n</tr>\n<tr>\n<td>NATS JetStream</td>\n<td>Durable event distribution</td>\n<td>Stable message identity plus broker deduplication.</td>\n</tr>\n<tr>\n<td>Kafka</td>\n<td>Partitioned event and compacted state topics</td>\n<td>Transactional publication and durable state.</td>\n</tr>\n<tr>\n<td>S3/Parquet</td>\n<td>Analytics lake</td>\n<td>Versioned objects and commit manifests.</td>\n</tr>\n<tr>\n<td>Signed webhook</td>\n<td>External HTTP integration</td>\n<td>Receiver deduplicates the signed delivery identity.</td>\n</tr>\n</tbody>\n</table>\n<p>Install <code>BlueTusk.Sync</code>, <code>BlueTusk.Sync.DependencyInjection</code>, and only the\ndestination package you selected.</p>\n<h2>2. Register one hosted pipeline</h2>\n"
+        "html": "<h1>BlueTusk Sync</h1>\n<p>BlueTusk Sync keeps another system up to date with your PostgreSQL data. It\nreads committed transactions from <a href=\"/documentation/real-time/streams\">Streams</a>, turns each\nrow into a keyed document with your code, and writes the result to another\nPostgreSQL database, Redis, NATS, OpenSearch, Kafka, S3 or a webhook.</p>\n<p><strong>Status:</strong> Core family, version 1.1.0. 1.1.0 is not published yet; the\ncurrent releases are 1.0.0 (stable) and 1.1.0-rc.1. Supports .NET 10 and\nPostgreSQL 15 to 18. See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a>.</p>\n<h2>When should I use Sync?</h2>\n<p>Use Sync when a copy of your data must follow the database: a read model in\nanother database, a cache, a search index, an event topic, a data lake or a\npartner system.</p>\n<p>Use something else when:</p>\n<ul>\n<li>you want to run your own code for each change: use\n<a href=\"/documentation/real-time/streams\">Streams</a> directly;</li>\n<li>you want to push query results to connected users: use\n<a href=\"/documentation/real-time/live\">Live</a>.</li>\n</ul>\n<h2>Destinations</h2>\n<p>Install <code>BlueTusk.Sync.DependencyInjection</code> and the package for your\ndestination. Each destination package brings in <code>BlueTusk.Sync</code>.</p>\n<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>Writes</th>\n<th>Status</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTusk.Sync.PostgreSql</code></td>\n<td>Rows in your own tables (with a custom writer) or JSON documents, plus the checkpoint, in one transaction</td>\n<td>Stable since 1.0.0</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Sync.Redis</code></td>\n<td>Documents in Redis hashes, plus the checkpoint, in one Lua script</td>\n<td>Stable since 1.0.0</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Sync.Nats</code></td>\n<td>One JetStream message per transaction, with a stable message ID</td>\n<td>Stable since 1.0.0</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Sync.OpenSearch</code></td>\n<td>Documents in versioned indexes behind aliases; supports zero-downtime rebuilds</td>\n<td>Stable since 1.0.0</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Sync.Kafka</code></td>\n<td>One event per transaction plus a checkpoint in a compacted state topic, in one Kafka transaction</td>\n<td>New in 1.1.0</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Sync.S3</code></td>\n<td>One immutable Parquet object per transaction, made visible by a commit manifest</td>\n<td>New in 1.1.0</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Sync.Webhooks</code></td>\n<td>One signed HTTPS request per transaction</td>\n<td>New in 1.1.0</td>\n</tr>\n</tbody>\n</table>\n<p>Supporting packages:</p>\n<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>Purpose</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTusk.Sync</code></td>\n<td>Pipeline, transforms, retries, reconciliation and rebuilds.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Sync.DependencyInjection</code></td>\n<td>Hosted workers, health check, metrics.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Sync.Aspire</code></td>\n<td>Passes source and destination connections to an Aspire worker.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Sync.Testing</code></td>\n<td>Conformance tests for your own destination.</td>\n</tr>\n</tbody>\n</table>\n<h2>What does Sync guarantee?</h2>\n<p>Sync applies each source transaction as a whole, in commit order, and moves\nits checkpoint only after the destination confirms that exact transaction.\nDelivery is at least once: after a crash the last unconfirmed transaction can\narrive again, and every destination recognises the repeat by its stable\nidentity. PostgreSQL and Redis store the data and the checkpoint atomically;\nthe other destinations use stable IDs, versions or commit markers. For\nNATS, Kafka and webhooks, your consumer should also keep the delivery ID.\nDetails: <a href=\"/documentation/real-time/sync-concepts#why-duplicates-are-safe\">why duplicates are safe</a> and\n<a href=\"/documentation/real-time/contracts\">delivery guarantees</a>.</p>\n<h2>What does it look like?</h2>\n<p>You register a destination and a hosted pipeline that names your transform:</p>\n"
       },
       {
         "kind": "code",
-        "code": "builder.Services.AddSingleton<OrderTransform>();\nbuilder.Services.AddSingleton(ordersDestination);\n\nbuilder.Services.AddBlueTuskSync()\n    .AddHostedPipeline<OrderTransform, PostgreSqlSyncDestination>(\n        new SyncPipelineOptions\n        {\n            PipelineId = \"orders-read-model\",\n            Retry = new SyncRetryOptions\n            {\n                MaximumAttempts = 5,\n                InitialDelay = TimeSpan.FromMilliseconds(200),\n                MaximumDelay = TimeSpan.FromSeconds(10),\n            },\n        },\n        sourceIdentity,\n        services => CreateOrdersSnapshotAndStreamSource(services));\n",
-        "highlighted": "builder.Services.AddSingleton&lt;OrderTransform&gt;();\nbuilder.Services.AddSingleton(ordersDestination);\n\nbuilder.Services.AddBlueTuskSync()\n    .AddHostedPipeline&lt;OrderTransform, PostgreSqlSyncDestination&gt;(\n        <span class=\"hljs-keyword\">new</span> SyncPipelineOptions\n        {\n            PipelineId = <span class=\"hljs-string\">&quot;orders-read-model&quot;</span>,\n            Retry = <span class=\"hljs-keyword\">new</span> SyncRetryOptions\n            {\n                MaximumAttempts = <span class=\"hljs-number\">5</span>,\n                InitialDelay = TimeSpan.FromMilliseconds(<span class=\"hljs-number\">200</span>),\n                MaximumDelay = TimeSpan.FromSeconds(<span class=\"hljs-number\">10</span>),\n            },\n        },\n        sourceIdentity,\n        services =&gt; CreateOrdersSnapshotAndStreamSource(services));\n",
+        "code": "builder.Services.AddSingleton(new PostgreSqlSyncDestination(new PostgreSqlSyncOptions\n{\n    DestinationDataSource = target,\n}));\nbuilder.Services.AddBlueTuskSync()\n    .AddHostedPipeline<OrdersTransform, PostgreSqlSyncDestination>(\n        new SyncPipelineOptions { PipelineId = \"orders-replica\" },\n        sourceIdentity,\n        _ => new PostgreSqlConsistentSnapshotSource(source, snapshotOptions));\n",
+        "highlighted": "builder.Services.AddSingleton(<span class=\"hljs-keyword\">new</span> PostgreSqlSyncDestination(<span class=\"hljs-keyword\">new</span> PostgreSqlSyncOptions\n{\n    DestinationDataSource = target,\n}));\nbuilder.Services.AddBlueTuskSync()\n    .AddHostedPipeline&lt;OrdersTransform, PostgreSqlSyncDestination&gt;(\n        <span class=\"hljs-keyword\">new</span> SyncPipelineOptions { PipelineId = <span class=\"hljs-string\">&quot;orders-replica&quot;</span> },\n        sourceIdentity,\n        _ =&gt; <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotSource(source, snapshotOptions));\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p><code>CreateOrdersSnapshotAndStreamSource</code> should use the no-gap Streams bootstrap\ndescribed in <a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot and catch-up</a>. Do not\ncombine an unrelated table export with a later WAL position.</p>\n<p>The transform implements <code>ISyncTransform</code> and returns stable, keyed\n<code>SyncMutation</code> values. Treat its name and version as persisted data:</p>\n"
+        "html": "<p><code>OrdersTransform</code> implements <code>ISyncTransform</code> and maps each change to an\nupsert or delete. The <a href=\"/documentation/real-time/sync-quickstart\">quick start</a> has the complete program.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/sync-quickstart\">Quick start</a>: copy a table into another database in about\n10 minutes.</li>\n<li><a href=\"/documentation/real-time/sync-concepts\">Concepts</a>: pipelines, idempotency, ordering, checkpoints,\nrebuilds and failure handling.</li>\n<li><a href=\"/documentation/real-time/sync-configuration\">Configuration</a>: every option, per destination.</li>\n<li><a href=\"/documentation/real-time/sync-troubleshooting\">Troubleshooting</a>: stopped pipelines, duplicates, lag\nand permissions.</li>\n<li><a href=\"/documentation/real-time/sync-reference\">Full Sync reference</a>: engineering detail for each connector.</li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync-quickstart",
+    "summary": "Copy a PostgreSQL table into another database with Sync and watch inserts, updates and deletes arrive.",
+    "keywords": [
+      "sync",
+      "quickstart",
+      "replicate"
+    ],
+    "order": 91,
+    "listed": true,
+    "title": "Sync quick start: copy a table to another database",
+    "sourcePath": "docs/sync/quickstart.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/quickstart.md",
+    "headings": [
+      {
+        "id": "sync-quick-start-copy-a-table-to-another-database",
+        "text": "Sync quick start: copy a table to another database",
+        "level": 1
+      },
+      {
+        "id": "before-you-start",
+        "text": "Before you start",
+        "level": 2
+      },
+      {
+        "id": "1-create-the-source-database",
+        "text": "1. Create the source database",
+        "level": 2
+      },
+      {
+        "id": "2-create-the-target-database",
+        "text": "2. Create the target database",
+        "level": 2
+      },
+      {
+        "id": "3-create-the-project",
+        "text": "3. Create the project",
+        "level": 2
+      },
+      {
+        "id": "4-set-the-connection-strings",
+        "text": "4. Set the connection strings",
+        "level": 2
+      },
+      {
+        "id": "5-write-the-code",
+        "text": "5. Write the code",
+        "level": 2
+      },
+      {
+        "id": "6-run-it",
+        "text": "6. Run it",
+        "level": 2
+      },
+      {
+        "id": "7-change-the-source-and-watch-the-target",
+        "text": "7. Change the source and watch the target",
+        "level": 2
+      },
+      {
+        "id": "8-restart-the-worker",
+        "text": "8. Restart the worker",
+        "level": 2
+      },
+      {
+        "id": "9-clean-up",
+        "text": "9. Clean up",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 1492,
+    "readMinutes": 7,
+    "searchText": "Sync quick start: copy a table to another database In this quick start you keep a PostgreSQL table in one database identical to a table in another database. You copy the existing rows, then watch inserts, updates and deletes arrive within a second. It takes about 10 minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 test server started with `wal_level=logical`. Step 1 of the [first-app quick start](../getting-started/quickstart.md#1-start-postgresql) starts one in Docker as `bluetusk-postgres`. 1. Create the source database The source has an `orders` table, a publication that tells PostgreSQL which tables to stream, and a role allowed to replicate and read them. In bash, pass the SQL with a `<<'SQL'` heredoc instead of `@'...'@ |`. Do not create the replication slot yourself. Sync creates it so that the initial copy and the change stream start at exactly the same point. 2. Create the target database The target gets the same table and a role that can write to it. Sync also creates a small `bluetusk_sync` schema here for its checkpoint, so the role needs `CREATE` on the database. 3. Create the project See [Install BlueTusk](../getting-started/install.md) to choose and pin a version. 4. Set the connection strings In bash, use `export SYNC_SOURCE=\"...\"`. **Warning:** `SSL Mode=Disable` is only for a local test container. Keep the default `SSL Mode=VerifyFull` everywhere else. 5. Write the code A pipeline has a Streams **source**, a **transform** that turns rows into keyed documents, and a **destination** that writes them ([concepts](concepts.md)). Replace `Program.cs`: Add `OrdersTransform.cs`. It maps every row to a JSON document keyed by `id`: Add `OrdersTableWriter.cs`. It writes the documents into `public.orders`. Sync runs it inside the same database transaction that saves the checkpoint: 6. Run it After the host start-up lines you see the initial copy: Leave it running. 7. Change ",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Sync quick start: copy a table to another database</h1>\n<p>In this quick start you keep a PostgreSQL table in one database identical to a\ntable in another database. You copy the existing rows, then watch inserts,\nupdates and deletes arrive within a second. It takes about 10 minutes.</p>\n<h2>Before you start</h2>\n<p>You need:</p>\n<ul>\n<li>the <a href=\"https://dotnet.microsoft.com/download/dotnet/10.0\" target=\"_blank\" rel=\"noreferrer\">.NET 10 SDK</a>;</li>\n<li>a PostgreSQL 15, 16, 17 or 18 test server started with <code>wal_level=logical</code>.\nStep 1 of the <a href=\"/documentation/getting-started/quickstart#1-start-postgresql\">first-app quick start</a>\nstarts one in Docker as <code>bluetusk-postgres</code>.</li>\n</ul>\n<h2>1. Create the source database</h2>\n<p>The source has an <code>orders</code> table, a publication that tells PostgreSQL which\ntables to stream, and a role allowed to replicate and read them.</p>\n"
       },
       {
         "kind": "code",
-        "code": "public sealed class OrderTransform : ISyncTransform\n{\n    public SyncTransformVersion Version { get; } =\n        SyncTransformVersion.Create(\"orders\", \"v1\");\n\n    public ValueTask<IReadOnlyList<SyncMutation>> TransformTransactionAsync(\n        ChangeTransaction transaction,\n        CancellationToken cancellationToken = default)\n    {\n        // Map inserts, updates, deletes, and truncates deliberately.\n        return MapOrdersAsync(transaction, cancellationToken);\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">OrderTransform</span> : <span class=\"hljs-title\">ISyncTransform</span>\n{\n    <span class=\"hljs-keyword\">public</span> SyncTransformVersion Version { <span class=\"hljs-keyword\">get</span>; } =\n        SyncTransformVersion.Create(<span class=\"hljs-string\">&quot;orders&quot;</span>, <span class=\"hljs-string\">&quot;v1&quot;</span>);\n\n    <span class=\"hljs-keyword\">public</span> ValueTask&lt;IReadOnlyList&lt;SyncMutation&gt;&gt; TransformTransactionAsync(\n        ChangeTransaction transaction,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span>)\n    {\n        <span class=\"hljs-comment\">// Map inserts, updates, deletes, and truncates deliberately.</span>\n        <span class=\"hljs-keyword\">return</span> MapOrdersAsync(transaction, cancellationToken);\n    }\n}\n",
+        "code": "docker exec bluetusk-postgres psql -U postgres -c \"CREATE DATABASE sync_source\"\n@'\nCREATE TABLE public.orders (\n    id bigint PRIMARY KEY,\n    customer text NOT NULL,\n    status text NOT NULL\n);\nINSERT INTO public.orders VALUES (1, 'Ada', 'new'), (2, 'Grace', 'paid');\n\nCREATE PUBLICATION orders_pub FOR TABLE public.orders;\n\nCREATE ROLE sync_replicator LOGIN REPLICATION PASSWORD 'local-dev-only';\nGRANT SELECT ON public.orders TO sync_replicator;\n'@ | docker exec -i bluetusk-postgres psql -U postgres -d sync_source\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;CREATE DATABASE sync_source&quot;</span>\n<span class=\"hljs-string\">@&#x27;\nCREATE TABLE public.orders (\n    id bigint PRIMARY KEY,\n    customer text NOT NULL,\n    status text NOT NULL\n);\nINSERT INTO public.orders VALUES (1, &#x27;Ada&#x27;, &#x27;new&#x27;), (2, &#x27;Grace&#x27;, &#x27;paid&#x27;);\n\nCREATE PUBLICATION orders_pub FOR TABLE public.orders;\n\nCREATE ROLE sync_replicator LOGIN REPLICATION PASSWORD &#x27;local-dev-only&#x27;;\nGRANT SELECT ON public.orders TO sync_replicator;\n&#x27;@</span> | docker exec <span class=\"hljs-literal\">-i</span> bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-d</span> sync_source\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>In bash, pass the SQL with a <code>&lt;&lt;'SQL'</code> heredoc instead of <code>@'...'@ |</code>.</p>\n<p>Do not create the replication slot yourself. Sync creates it so that the\ninitial copy and the change stream start at exactly the same point.</p>\n<h2>2. Create the target database</h2>\n<p>The target gets the same table and a role that can write to it. Sync also\ncreates a small <code>bluetusk_sync</code> schema here for its checkpoint, so the role\nneeds <code>CREATE</code> on the database.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -c \"CREATE DATABASE sync_target\"\n@'\nCREATE TABLE public.orders (\n    id bigint PRIMARY KEY,\n    customer text NOT NULL,\n    status text NOT NULL\n);\n\nCREATE ROLE sync_writer LOGIN PASSWORD 'local-dev-only';\nGRANT CREATE ON DATABASE sync_target TO sync_writer;\nGRANT SELECT, INSERT, UPDATE, DELETE ON public.orders TO sync_writer;\n'@ | docker exec -i bluetusk-postgres psql -U postgres -d sync_target\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;CREATE DATABASE sync_target&quot;</span>\n<span class=\"hljs-string\">@&#x27;\nCREATE TABLE public.orders (\n    id bigint PRIMARY KEY,\n    customer text NOT NULL,\n    status text NOT NULL\n);\n\nCREATE ROLE sync_writer LOGIN PASSWORD &#x27;local-dev-only&#x27;;\nGRANT CREATE ON DATABASE sync_target TO sync_writer;\nGRANT SELECT, INSERT, UPDATE, DELETE ON public.orders TO sync_writer;\n&#x27;@</span> | docker exec <span class=\"hljs-literal\">-i</span> bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-d</span> sync_target\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>3. Create the project</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet new console --framework net10.0 --name OrdersSync\ncd OrdersSync\ndotnet add package BlueTusk.Sync.PostgreSql\ndotnet add package BlueTusk.Sync.DependencyInjection\ndotnet add package Microsoft.Extensions.Hosting\n",
+        "highlighted": "dotnet new console <span class=\"hljs-literal\">--framework</span> net10.<span class=\"hljs-number\">0</span> <span class=\"hljs-literal\">--name</span> OrdersSync\n<span class=\"hljs-built_in\">cd</span> OrdersSync\ndotnet add package BlueTusk.Sync.PostgreSql\ndotnet add package BlueTusk.Sync.DependencyInjection\ndotnet add package Microsoft.Extensions.Hosting\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a> to choose and pin a\nversion.</p>\n<h2>4. Set the connection strings</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:SYNC_SOURCE = \"Host=localhost;Port=5432;Database=sync_source;Username=sync_replicator;Password=local-dev-only;SSL Mode=Disable;Channel Binding=Disable\"\n$env:SYNC_TARGET = \"Host=localhost;Port=5432;Database=sync_target;Username=sync_writer;Password=local-dev-only;SSL Mode=Disable;Channel Binding=Disable\"\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:SYNC_SOURCE</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Database=sync_source;Username=sync_replicator;Password=local-dev-only;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n<span class=\"hljs-variable\">$env:SYNC_TARGET</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Database=sync_target;Username=sync_writer;Password=local-dev-only;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>In bash, use <code>export SYNC_SOURCE=&quot;...&quot;</code>.</p>\n<blockquote>\n<p><strong>Warning:</strong> <code>SSL Mode=Disable</code> is only for a local test container. Keep the\ndefault <code>SSL Mode=VerifyFull</code> everywhere else.</p>\n</blockquote>\n<h2>5. Write the code</h2>\n<p>A pipeline has a Streams <strong>source</strong>, a <strong>transform</strong> that turns rows into\nkeyed documents, and a <strong>destination</strong> that writes them\n(<a href=\"/documentation/real-time/sync-concepts\">concepts</a>). Replace <code>Program.cs</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using BlueTusk.Data;\nusing BlueTusk.Replication;\nusing BlueTusk.Streams;\nusing BlueTusk.Sync;\nusing BlueTusk.Sync.DependencyInjection;\nusing BlueTusk.Sync.PostgreSql;\nusing Microsoft.Extensions.DependencyInjection;\nusing Microsoft.Extensions.Hosting;\n\nvar builder = Host.CreateApplicationBuilder(args);\nvar source = new BlueTuskDataSourceBuilder(\n    Environment.GetEnvironmentVariable(\"SYNC_SOURCE\")!).Build();\nvar target = new BlueTuskDataSourceBuilder(\n    Environment.GetEnvironmentVariable(\"SYNC_TARGET\")!).Build();\n\n// Identify the source database. Sync stores this identity with its checkpoint.\nChangeSourceIdentity sourceIdentity;\nawait using (var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(\n                 source.CreateDedicatedSessionOptions()))\n{\n    var server = await replication.IdentifySystemAsync();\n    sourceIdentity = new ChangeSourceIdentity(\n        server.SystemIdentifier,\n        server.DatabaseName!,\n        slotName: \"orders_sync\",\n        publicationFingerprint: \"orders_pub:public.orders\");\n}\n\n// Describe the table to copy: column order and PostgreSQL type OIDs.\nvar orders = new ChangeTable(\n    relationId: 0,\n    \"public\",\n    \"orders\",\n    replicaIdentity: 'd',\n    [\n        new ChangeColumn(0, \"id\", 20, -1, IsKey: true),        // bigint\n        new ChangeColumn(1, \"customer\", 25, -1, IsKey: false), // text\n        new ChangeColumn(2, \"status\", 25, -1, IsKey: false),   // text\n    ]);\nvar snapshotOptions = new PostgreSqlConsistentSnapshotOptions\n{\n    Source = sourceIdentity,\n    PublicationNames = [\"orders_pub\"],\n    Tables = [new PostgreSqlSnapshotTable(orders, [0])],\n    ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n};\n\nbuilder.Services.AddSingleton(new PostgreSqlSyncDestination(new PostgreSqlSyncOptions\n{\n    DestinationDataSource = target,\n    MutationWriter = new OrdersTableWriter(),\n}));\nbuilder.Services.AddBlueTuskSync()\n    .AddHostedPipeline<OrdersTransform, PostgreSqlSyncDestination>(\n        new SyncPipelineOptions { PipelineId = \"orders-replica\" },\n        sourceIdentity,\n        _ => new PostgreSqlConsistentSnapshotSource(source, snapshotOptions));\n\nawait builder.Build().RunAsync();\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Replication;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Streams;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Sync;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Sync.DependencyInjection;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Sync.PostgreSql;\n<span class=\"hljs-keyword\">using</span> Microsoft.Extensions.DependencyInjection;\n<span class=\"hljs-keyword\">using</span> Microsoft.Extensions.Hosting;\n\n<span class=\"hljs-keyword\">var</span> builder = Host.CreateApplicationBuilder(<span class=\"hljs-keyword\">args</span>);\n<span class=\"hljs-keyword\">var</span> source = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(\n    Environment.GetEnvironmentVariable(<span class=\"hljs-string\">&quot;SYNC_SOURCE&quot;</span>)!).Build();\n<span class=\"hljs-keyword\">var</span> target = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(\n    Environment.GetEnvironmentVariable(<span class=\"hljs-string\">&quot;SYNC_TARGET&quot;</span>)!).Build();\n\n<span class=\"hljs-comment\">// Identify the source database. Sync stores this identity with its checkpoint.</span>\nChangeSourceIdentity sourceIdentity;\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> replication = <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n                 source.CreateDedicatedSessionOptions()))\n{\n    <span class=\"hljs-keyword\">var</span> server = <span class=\"hljs-keyword\">await</span> replication.IdentifySystemAsync();\n    sourceIdentity = <span class=\"hljs-keyword\">new</span> ChangeSourceIdentity(\n        server.SystemIdentifier,\n        server.DatabaseName!,\n        slotName: <span class=\"hljs-string\">&quot;orders_sync&quot;</span>,\n        publicationFingerprint: <span class=\"hljs-string\">&quot;orders_pub:public.orders&quot;</span>);\n}\n\n<span class=\"hljs-comment\">// Describe the table to copy: column order and PostgreSQL type OIDs.</span>\n<span class=\"hljs-keyword\">var</span> orders = <span class=\"hljs-keyword\">new</span> ChangeTable(\n    relationId: <span class=\"hljs-number\">0</span>,\n    <span class=\"hljs-string\">&quot;public&quot;</span>,\n    <span class=\"hljs-string\">&quot;orders&quot;</span>,\n    replicaIdentity: <span class=\"hljs-string\">&#x27;d&#x27;</span>,\n    [\n        <span class=\"hljs-keyword\">new</span> ChangeColumn(<span class=\"hljs-number\">0</span>, <span class=\"hljs-string\">&quot;id&quot;</span>, <span class=\"hljs-number\">20</span>, <span class=\"hljs-number\">-1</span>, IsKey: <span class=\"hljs-literal\">true</span>),        <span class=\"hljs-comment\">// bigint</span>\n        <span class=\"hljs-keyword\">new</span> ChangeColumn(<span class=\"hljs-number\">1</span>, <span class=\"hljs-string\">&quot;customer&quot;</span>, <span class=\"hljs-number\">25</span>, <span class=\"hljs-number\">-1</span>, IsKey: <span class=\"hljs-literal\">false</span>), <span class=\"hljs-comment\">// text</span>\n        <span class=\"hljs-keyword\">new</span> ChangeColumn(<span class=\"hljs-number\">2</span>, <span class=\"hljs-string\">&quot;status&quot;</span>, <span class=\"hljs-number\">25</span>, <span class=\"hljs-number\">-1</span>, IsKey: <span class=\"hljs-literal\">false</span>),   <span class=\"hljs-comment\">// text</span>\n    ]);\n<span class=\"hljs-keyword\">var</span> snapshotOptions = <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotOptions\n{\n    Source = sourceIdentity,\n    PublicationNames = [<span class=\"hljs-string\">&quot;orders_pub&quot;</span>],\n    Tables = [<span class=\"hljs-keyword\">new</span> PostgreSqlSnapshotTable(orders, [<span class=\"hljs-number\">0</span>])],\n    ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n};\n\nbuilder.Services.AddSingleton(<span class=\"hljs-keyword\">new</span> PostgreSqlSyncDestination(<span class=\"hljs-keyword\">new</span> PostgreSqlSyncOptions\n{\n    DestinationDataSource = target,\n    MutationWriter = <span class=\"hljs-keyword\">new</span> OrdersTableWriter(),\n}));\nbuilder.Services.AddBlueTuskSync()\n    .AddHostedPipeline&lt;OrdersTransform, PostgreSqlSyncDestination&gt;(\n        <span class=\"hljs-keyword\">new</span> SyncPipelineOptions { PipelineId = <span class=\"hljs-string\">&quot;orders-replica&quot;</span> },\n        sourceIdentity,\n        _ =&gt; <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotSource(source, snapshotOptions));\n\n<span class=\"hljs-keyword\">await</span> builder.Build().RunAsync();\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Use the exact interface signature from the installed package; the\n<a href=\"/documentation/real-time/sync-reference\">full Sync reference</a> contains destination-specific constructors\nand complete transformation rules.</p>\n<h2>3. Prove recovery before traffic</h2>\n<p>Test these cases with the real destination:</p>\n<ol>\n<li>stop the worker after the destination write but before acknowledgement;</li>\n<li>restart and confirm the same transaction is harmlessly redelivered;</li>\n<li>reject one mutation in a multi-row transaction;</li>\n<li>change the transform version and verify that a rebuild is required; and</li>\n<li>disconnect the destination until retries are exhausted.</li>\n</ol>\n<h2>The guarantee in plain language</h2>\n<p>BlueTusk never claims that a transaction is finished before the destination’s\ndocumented durable boundary. A crash can cause the last unconfirmed transaction\nto arrive again. Official connectors use atomic checkpoints or stable external\nversions/identities so that replay is safe. Your webhook or downstream NATS\nconsumer must also persist the stable delivery identity with its business\neffect.</p>\n<h2>Production defaults</h2>\n<ul>\n<li>Use the PostgreSQL durable relay when multiple consumers need one source slot.</li>\n<li>Bound batch bytes, retry time, destination concurrency, and quarantine size.</li>\n<li>Pause on poison data until an operator deliberately enables quarantine.</li>\n<li>Alert on checkpoint lag, retries, throttling, quarantine, and rebuild state.</li>\n<li>Reconcile destination contents and rehearse a generation rebuild before launch.</li>\n</ul>\n<p>Read <a href=\"/documentation/real-time/contracts\">delivery guarantees</a> next. Use the\n<a href=\"/documentation/real-time/sync-reference\">full Sync reference</a> for transformations, every connector,\nreconciliation, rebuilds, and cutover internals.</p>\n"
+        "html": "<p>Add <code>OrdersTransform.cs</code>. It maps every row to a JSON document keyed by <code>id</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using System.Globalization;\nusing System.Text;\nusing System.Text.Json;\nusing BlueTusk.Streams;\nusing BlueTusk.Sync;\n\n// Maps each source row to one keyed JSON document.\npublic sealed class OrdersTransform : ISyncTransform\n{\n    // Stored in the target. Changing it later requires a rebuild.\n    public SyncTransformVersion Version { get; } = SyncTransformVersion.Create(\"orders\", \"v1\");\n\n    public async ValueTask<IReadOnlyList<SyncMutation>> TransformTransactionAsync(\n        ChangeTransaction transaction,\n        CancellationToken cancellationToken = default)\n    {\n        var mutations = new List<SyncMutation>();\n        await foreach (var change in transaction.Changes.WithCancellation(cancellationToken))\n        {\n            switch (change)\n            {\n                case InsertChange insert:\n                    mutations.Add(Upsert(change.Id, insert.NewRow));\n                    break;\n                case UpdateChange update:\n                    mutations.Add(Upsert(change.Id, update.NewRow));\n                    break;\n                case DeleteChange delete:\n                    mutations.Add(new SyncMutation(\n                        change.Id, SyncMutationKind.Delete, \"orders\", Key(delete.OldRow), default));\n                    break;\n                case TruncateChange:\n                    mutations.Add(new SyncMutation(\n                        change.Id, SyncMutationKind.DeleteCollection, \"orders\", null, default));\n                    break;\n            }\n        }\n\n        return mutations;\n    }\n\n    public ValueTask<IReadOnlyList<SyncSnapshotMutation>> TransformSnapshotBatchAsync(\n        ChangeSnapshotBatch batch,\n        CancellationToken cancellationToken = default)\n    {\n        IReadOnlyList<SyncSnapshotMutation> mutations = batch.Rows\n            .Select(row => new SyncSnapshotMutation(\n                row.Id, \"orders\", Key(row.Row), ToJson(row.Row), \"application/json\"))\n            .ToArray();\n        return ValueTask.FromResult(mutations);\n    }\n\n    private static SyncMutation Upsert(ChangeId id, ChangeRow row) =>\n        new(id, SyncMutationKind.Upsert, \"orders\", Key(row), ToJson(row), \"application/json\");\n\n    private static string Key(ChangeRow row) =>\n        Id(row).ToString(CultureInfo.InvariantCulture);\n\n    private static long Id(ChangeRow row)\n    {\n        var column = row.Table.Columns.First(c => c.Name == \"id\");\n        return ChangeValueDecoders.Decode<long>(column, row[column.Ordinal]);\n    }\n\n    // PostgreSQL text values are UTF-8 in both the snapshot and the change stream.\n    private static string Text(ChangeRow row, string name) =>\n        Encoding.UTF8.GetString(row[name].Data.Span);\n\n    private static byte[] ToJson(ChangeRow row) =>\n        JsonSerializer.SerializeToUtf8Bytes(new\n        {\n            id = Id(row),\n            customer = Text(row, \"customer\"),\n            status = Text(row, \"status\"),\n        });\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> System.Globalization;\n<span class=\"hljs-keyword\">using</span> System.Text;\n<span class=\"hljs-keyword\">using</span> System.Text.Json;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Streams;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Sync;\n\n<span class=\"hljs-comment\">// Maps each source row to one keyed JSON document.</span>\n<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">OrdersTransform</span> : <span class=\"hljs-title\">ISyncTransform</span>\n{\n    <span class=\"hljs-comment\">// Stored in the target. Changing it later requires a rebuild.</span>\n    <span class=\"hljs-keyword\">public</span> SyncTransformVersion Version { <span class=\"hljs-keyword\">get</span>; } = SyncTransformVersion.Create(<span class=\"hljs-string\">&quot;orders&quot;</span>, <span class=\"hljs-string\">&quot;v1&quot;</span>);\n\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">async</span> ValueTask&lt;IReadOnlyList&lt;SyncMutation&gt;&gt; TransformTransactionAsync(\n        ChangeTransaction transaction,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span>)\n    {\n        <span class=\"hljs-keyword\">var</span> mutations = <span class=\"hljs-keyword\">new</span> List&lt;SyncMutation&gt;();\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> change <span class=\"hljs-keyword\">in</span> transaction.Changes.WithCancellation(cancellationToken))\n        {\n            <span class=\"hljs-keyword\">switch</span> (change)\n            {\n                <span class=\"hljs-keyword\">case</span> InsertChange insert:\n                    mutations.Add(Upsert(change.Id, insert.NewRow));\n                    <span class=\"hljs-keyword\">break</span>;\n                <span class=\"hljs-keyword\">case</span> UpdateChange update:\n                    mutations.Add(Upsert(change.Id, update.NewRow));\n                    <span class=\"hljs-keyword\">break</span>;\n                <span class=\"hljs-keyword\">case</span> DeleteChange delete:\n                    mutations.Add(<span class=\"hljs-keyword\">new</span> SyncMutation(\n                        change.Id, SyncMutationKind.Delete, <span class=\"hljs-string\">&quot;orders&quot;</span>, Key(delete.OldRow), <span class=\"hljs-literal\">default</span>));\n                    <span class=\"hljs-keyword\">break</span>;\n                <span class=\"hljs-keyword\">case</span> TruncateChange:\n                    mutations.Add(<span class=\"hljs-keyword\">new</span> SyncMutation(\n                        change.Id, SyncMutationKind.DeleteCollection, <span class=\"hljs-string\">&quot;orders&quot;</span>, <span class=\"hljs-literal\">null</span>, <span class=\"hljs-literal\">default</span>));\n                    <span class=\"hljs-keyword\">break</span>;\n            }\n        }\n\n        <span class=\"hljs-keyword\">return</span> mutations;\n    }\n\n    <span class=\"hljs-keyword\">public</span> ValueTask&lt;IReadOnlyList&lt;SyncSnapshotMutation&gt;&gt; TransformSnapshotBatchAsync(\n        ChangeSnapshotBatch batch,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span>)\n    {\n        IReadOnlyList&lt;SyncSnapshotMutation&gt; mutations = batch.Rows\n            .Select(row =&gt; <span class=\"hljs-keyword\">new</span> SyncSnapshotMutation(\n                row.Id, <span class=\"hljs-string\">&quot;orders&quot;</span>, Key(row.Row), ToJson(row.Row), <span class=\"hljs-string\">&quot;application/json&quot;</span>))\n            .ToArray();\n        <span class=\"hljs-keyword\">return</span> ValueTask.FromResult(mutations);\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">static</span> SyncMutation <span class=\"hljs-title\">Upsert</span>(<span class=\"hljs-params\">ChangeId id, ChangeRow row</span>)</span> =&gt;\n        <span class=\"hljs-keyword\">new</span>(id, SyncMutationKind.Upsert, <span class=\"hljs-string\">&quot;orders&quot;</span>, Key(row), ToJson(row), <span class=\"hljs-string\">&quot;application/json&quot;</span>);\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">static</span> <span class=\"hljs-built_in\">string</span> <span class=\"hljs-title\">Key</span>(<span class=\"hljs-params\">ChangeRow row</span>)</span> =&gt;\n        Id(row).ToString(CultureInfo.InvariantCulture);\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">static</span> <span class=\"hljs-built_in\">long</span> <span class=\"hljs-title\">Id</span>(<span class=\"hljs-params\">ChangeRow row</span>)</span>\n    {\n        <span class=\"hljs-keyword\">var</span> column = row.Table.Columns.First(c =&gt; c.Name == <span class=\"hljs-string\">&quot;id&quot;</span>);\n        <span class=\"hljs-keyword\">return</span> ChangeValueDecoders.Decode&lt;<span class=\"hljs-built_in\">long</span>&gt;(column, row[column.Ordinal]);\n    }\n\n    <span class=\"hljs-comment\">// PostgreSQL text values are UTF-8 in both the snapshot and the change stream.</span>\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">static</span> <span class=\"hljs-built_in\">string</span> <span class=\"hljs-title\">Text</span>(<span class=\"hljs-params\">ChangeRow row, <span class=\"hljs-built_in\">string</span> name</span>)</span> =&gt;\n        Encoding.UTF8.GetString(row[name].Data.Span);\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">static</span> <span class=\"hljs-built_in\">byte</span>[] <span class=\"hljs-title\">ToJson</span>(<span class=\"hljs-params\">ChangeRow row</span>)</span> =&gt;\n        JsonSerializer.SerializeToUtf8Bytes(<span class=\"hljs-keyword\">new</span>\n        {\n            id = Id(row),\n            customer = Text(row, <span class=\"hljs-string\">&quot;customer&quot;</span>),\n            status = Text(row, <span class=\"hljs-string\">&quot;status&quot;</span>),\n        });\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Add <code>OrdersTableWriter.cs</code>. It writes the documents into <code>public.orders</code>.\nSync runs it inside the same database transaction that saves the checkpoint:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using System.Data.Common;\nusing System.Text;\nusing BlueTusk.Streams;\nusing BlueTusk.Sync;\nusing BlueTusk.Sync.PostgreSql;\n\n// Writes mutations into public.orders. Sync owns the transaction and commits\n// these writes together with its checkpoint.\npublic sealed class OrdersTableWriter : IPostgreSqlSyncMutationWriter\n{\n    private const string UpsertSql = \"\"\"\n        INSERT INTO public.orders (id, customer, status)\n        SELECT id, customer, status\n        FROM jsonb_populate_record(NULL::public.orders, @value::jsonb)\n        ON CONFLICT (id) DO UPDATE\n        SET customer = EXCLUDED.customer, status = EXCLUDED.status\n        \"\"\";\n\n    public async ValueTask ResetSnapshotAsync(\n        DbConnection connection, DbTransaction transaction, string pipelineId,\n        SnapshotReset reset, CancellationToken cancellationToken = default)\n    {\n        Console.WriteLine(\"Snapshot started: clearing public.orders\");\n        await ExecuteAsync(connection, transaction, \"DELETE FROM public.orders\", null, cancellationToken);\n    }\n\n    public async ValueTask ApplySnapshotBatchAsync(\n        DbConnection connection, DbTransaction transaction,\n        SyncSnapshotBatch batch, CancellationToken cancellationToken = default)\n    {\n        Console.WriteLine($\"Copying {batch.Mutations.Count} snapshot row(s)\");\n        foreach (var mutation in batch.Mutations)\n        {\n            await ExecuteAsync(connection, transaction, UpsertSql, Json(mutation.Content), cancellationToken);\n        }\n    }\n\n    public async ValueTask ApplyTransactionAsync(\n        DbConnection connection, DbTransaction transaction,\n        SyncTransactionBatch batch, CancellationToken cancellationToken = default)\n    {\n        Console.WriteLine(\n            $\"Applying transaction {batch.Transaction.TransactionId}: {batch.Mutations.Count} change(s)\");\n        foreach (var mutation in batch.Mutations)\n        {\n            var (sql, value) = mutation.Kind switch\n            {\n                SyncMutationKind.Upsert => (UpsertSql, Json(mutation.Content)),\n                SyncMutationKind.Delete => (\"DELETE FROM public.orders WHERE id = @value::bigint\", mutation.Key),\n                _ => (\"DELETE FROM public.orders\", null),\n            };\n            await ExecuteAsync(connection, transaction, sql, value, cancellationToken);\n        }\n    }\n\n    private static string Json(ReadOnlyMemory<byte> content) => Encoding.UTF8.GetString(content.Span);\n\n    private static async ValueTask ExecuteAsync(\n        DbConnection connection, DbTransaction transaction, string sql,\n        string? value, CancellationToken cancellationToken)\n    {\n        await using var command = connection.CreateCommand();\n        command.Transaction = transaction;\n        command.CommandText = sql;\n        if (value is not null)\n        {\n            var parameter = command.CreateParameter();\n            parameter.ParameterName = \"value\";\n            parameter.Value = value;\n            command.Parameters.Add(parameter);\n        }\n\n        await command.ExecuteNonQueryAsync(cancellationToken);\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> System.Data.Common;\n<span class=\"hljs-keyword\">using</span> System.Text;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Streams;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Sync;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Sync.PostgreSql;\n\n<span class=\"hljs-comment\">// Writes mutations into public.orders. Sync owns the transaction and commits</span>\n<span class=\"hljs-comment\">// these writes together with its checkpoint.</span>\n<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">OrdersTableWriter</span> : <span class=\"hljs-title\">IPostgreSqlSyncMutationWriter</span>\n{\n    <span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">const</span> <span class=\"hljs-built_in\">string</span> UpsertSql = <span class=\"hljs-string\">&quot;&quot;&quot;\n        INSERT INTO public.orders (id, customer, status)\n        SELECT id, customer, status\n        FROM jsonb_populate_record(NULL::public.orders, @value::jsonb)\n        ON CONFLICT (id) DO UPDATE\n        SET customer = EXCLUDED.customer, status = EXCLUDED.status\n        &quot;&quot;&quot;</span>;\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">async</span> ValueTask <span class=\"hljs-title\">ResetSnapshotAsync</span>(<span class=\"hljs-params\">\n        DbConnection connection, DbTransaction transaction, <span class=\"hljs-built_in\">string</span> pipelineId,\n        SnapshotReset reset, CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        Console.WriteLine(<span class=\"hljs-string\">&quot;Snapshot started: clearing public.orders&quot;</span>);\n        <span class=\"hljs-keyword\">await</span> ExecuteAsync(connection, transaction, <span class=\"hljs-string\">&quot;DELETE FROM public.orders&quot;</span>, <span class=\"hljs-literal\">null</span>, cancellationToken);\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">async</span> ValueTask <span class=\"hljs-title\">ApplySnapshotBatchAsync</span>(<span class=\"hljs-params\">\n        DbConnection connection, DbTransaction transaction,\n        SyncSnapshotBatch batch, CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        Console.WriteLine(<span class=\"hljs-string\">$&quot;Copying <span class=\"hljs-subst\">{batch.Mutations.Count}</span> snapshot row(s)&quot;</span>);\n        <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> mutation <span class=\"hljs-keyword\">in</span> batch.Mutations)\n        {\n            <span class=\"hljs-keyword\">await</span> ExecuteAsync(connection, transaction, UpsertSql, Json(mutation.Content), cancellationToken);\n        }\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">async</span> ValueTask <span class=\"hljs-title\">ApplyTransactionAsync</span>(<span class=\"hljs-params\">\n        DbConnection connection, DbTransaction transaction,\n        SyncTransactionBatch batch, CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        Console.WriteLine(\n            <span class=\"hljs-string\">$&quot;Applying transaction <span class=\"hljs-subst\">{batch.Transaction.TransactionId}</span>: <span class=\"hljs-subst\">{batch.Mutations.Count}</span> change(s)&quot;</span>);\n        <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> mutation <span class=\"hljs-keyword\">in</span> batch.Mutations)\n        {\n            <span class=\"hljs-keyword\">var</span> (sql, <span class=\"hljs-keyword\">value</span>) = mutation.Kind <span class=\"hljs-keyword\">switch</span>\n            {\n                SyncMutationKind.Upsert =&gt; (UpsertSql, Json(mutation.Content)),\n                SyncMutationKind.Delete =&gt; (<span class=\"hljs-string\">&quot;DELETE FROM public.orders WHERE id = @value::bigint&quot;</span>, mutation.Key),\n                _ =&gt; (<span class=\"hljs-string\">&quot;DELETE FROM public.orders&quot;</span>, <span class=\"hljs-literal\">null</span>),\n            };\n            <span class=\"hljs-keyword\">await</span> ExecuteAsync(connection, transaction, sql, <span class=\"hljs-keyword\">value</span>, cancellationToken);\n        }\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">static</span> <span class=\"hljs-built_in\">string</span> <span class=\"hljs-title\">Json</span>(<span class=\"hljs-params\">ReadOnlyMemory&lt;<span class=\"hljs-built_in\">byte</span>&gt; content</span>)</span> =&gt; Encoding.UTF8.GetString(content.Span);\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">static</span> <span class=\"hljs-keyword\">async</span> ValueTask <span class=\"hljs-title\">ExecuteAsync</span>(<span class=\"hljs-params\">\n        DbConnection connection, DbTransaction transaction, <span class=\"hljs-built_in\">string</span> sql,\n        <span class=\"hljs-built_in\">string</span>? <span class=\"hljs-keyword\">value</span>, CancellationToken cancellationToken</span>)</span>\n    {\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = connection.CreateCommand();\n        command.Transaction = transaction;\n        command.CommandText = sql;\n        <span class=\"hljs-keyword\">if</span> (<span class=\"hljs-keyword\">value</span> <span class=\"hljs-keyword\">is</span> <span class=\"hljs-keyword\">not</span> <span class=\"hljs-literal\">null</span>)\n        {\n            <span class=\"hljs-keyword\">var</span> parameter = command.CreateParameter();\n            parameter.ParameterName = <span class=\"hljs-string\">&quot;value&quot;</span>;\n            parameter.Value = <span class=\"hljs-keyword\">value</span>;\n            command.Parameters.Add(parameter);\n        }\n\n        <span class=\"hljs-keyword\">await</span> command.ExecuteNonQueryAsync(cancellationToken);\n    }\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>6. Run it</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet run\n",
+        "highlighted": "dotnet run\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>After the host start-up lines you see the initial copy:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "Snapshot started: clearing public.orders\nCopying 2 snapshot row(s)\n",
+        "highlighted": "Snapshot started: clearing public.orders\nCopying 2 snapshot row(s)\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Leave it running.</p>\n<h2>7. Change the source and watch the target</h2>\n<p>In a second terminal, change the source:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -d sync_source -c \"INSERT INTO public.orders VALUES (3, 'Linus', 'new');\" -c \"UPDATE public.orders SET status = 'shipped' WHERE id = 1;\" -c \"DELETE FROM public.orders WHERE id = 2;\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-d</span> sync_source <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;INSERT INTO public.orders VALUES (3, &#x27;Linus&#x27;, &#x27;new&#x27;);&quot;</span> <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;UPDATE public.orders SET status = &#x27;shipped&#x27; WHERE id = 1;&quot;</span> <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;DELETE FROM public.orders WHERE id = 2;&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Each statement is its own transaction, so the worker prints three lines (your\ntransaction numbers will differ):</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "Applying transaction 980: 1 change(s)\nApplying transaction 981: 1 change(s)\nApplying transaction 982: 1 change(s)\n",
+        "highlighted": "Applying transaction 980: 1 change(s)\nApplying transaction 981: 1 change(s)\nApplying transaction 982: 1 change(s)\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Check the target:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -d sync_target -c \"SELECT * FROM public.orders ORDER BY id\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-d</span> sync_target <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;SELECT * FROM public.orders ORDER BY id&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "code",
+        "code": " id | customer | status\n----+----------+---------\n  1 | Ada      | shipped\n  3 | Linus    | new\n",
+        "highlighted": " id | customer | status\n----+----------+---------\n  1 | Ada      | shipped\n  3 | Linus    | new\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>A multi-statement transaction arrives as one batch and commits in the target\nall at once.</p>\n<h2>8. Restart the worker</h2>\n<p>Press Ctrl+C. While the worker is stopped, change the source:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -d sync_source -c \"UPDATE public.orders SET status = 'cancelled' WHERE id = 3;\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-d</span> sync_source <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;UPDATE public.orders SET status = &#x27;cancelled&#x27; WHERE id = 3;&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Run <code>dotnet run</code> again. The worker replaces its own inactive slot and copies\nthe table again, so the target picks up the change made while it was down:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "Snapshot started: clearing public.orders\nCopying 2 snapshot row(s)\n",
+        "highlighted": "Snapshot started: clearing public.orders\nCopying 2 snapshot row(s)\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>This direct setup re-copies the table on every start. To resume from the saved\ncheckpoint without re-copying, read through the\n<a href=\"/documentation/real-time/durable-relay\">durable relay</a> instead; see\n<a href=\"/documentation/real-time/sync-concepts#where-is-the-checkpoint-stored\">where checkpoints live</a>.</p>\n<h2>9. Clean up</h2>\n<p>Stop the worker, then drop the replication slot so PostgreSQL stops keeping\nWAL for it, and remove the test databases and roles:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -c \"SELECT pg_drop_replication_slot('orders_sync')\"\ndocker exec bluetusk-postgres psql -U postgres -c \"DROP DATABASE sync_source\" -c \"DROP DATABASE sync_target\" -c \"DROP ROLE sync_replicator\" -c \"DROP ROLE sync_writer\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;SELECT pg_drop_replication_slot(&#x27;orders_sync&#x27;)&quot;</span>\ndocker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;DROP DATABASE sync_source&quot;</span> <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;DROP DATABASE sync_target&quot;</span> <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;DROP ROLE sync_replicator&quot;</span> <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;DROP ROLE sync_writer&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/sync-concepts\">Sync concepts</a>: transactions, idempotency, ordering, rebuilds\nand failure handling.</li>\n<li><a href=\"/documentation/real-time/sync-configuration\">Configuration</a>: every option, and how to set up the\nother destinations.</li>\n<li><a href=\"/documentation/real-time/sync-troubleshooting\">Troubleshooting</a>: what to do when a pipeline stops.</li>\n<li><a href=\"/documentation/real-time/streams-quickstart\">Streams quick start</a>: the change feed Sync reads.</li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync-concepts",
+    "summary": "Pipelines, whole-transaction apply, idempotency, ordering, checkpoints, rebuilds and retries.",
+    "keywords": [
+      "sync",
+      "concepts",
+      "idempotency",
+      "rebuild"
+    ],
+    "order": 92,
+    "listed": true,
+    "title": "Sync concepts",
+    "sourcePath": "docs/sync/concepts.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/concepts.md",
+    "headings": [
+      {
+        "id": "sync-concepts",
+        "text": "Sync concepts",
+        "level": 1
+      },
+      {
+        "id": "what-is-a-pipeline",
+        "text": "What is a pipeline?",
+        "level": 2
+      },
+      {
+        "id": "whole-transactions-one-at-a-time",
+        "text": "Whole transactions, one at a time",
+        "level": 2
+      },
+      {
+        "id": "why-duplicates-are-safe",
+        "text": "Why duplicates are safe",
+        "level": 2
+      },
+      {
+        "id": "ordering",
+        "text": "Ordering",
+        "level": 2
+      },
+      {
+        "id": "where-is-the-checkpoint-stored",
+        "text": "Where is the checkpoint stored?",
+        "level": 2
+      },
+      {
+        "id": "changing-the-transform-rebuild-and-repair",
+        "text": "Changing the transform: rebuild and repair",
+        "level": 2
+      },
+      {
+        "id": "failures-retries-and-poison-data",
+        "text": "Failures, retries and poison data",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 1468,
+    "readMinutes": 7,
+    "searchText": "Sync concepts This page gives you the mental model for running a Sync pipeline safely: what a pipeline is, how duplicates and ordering work, where progress is saved, and what happens when something fails. Shared terms such as acknowledgement, checkpoint and source identity are explained in [core concepts](../getting-started/concepts.md); this page does not repeat them. What is a pipeline? A pipeline connects one Streams source to one destination through your transform: Term What it is Pipeline ID `SyncPipelineOptions.PipelineId`. The stable name under which the destination stores its checkpoint and transform version. Source An `IConsistentSnapshotSource` (direct slot) or an `ISyncPipelineSource` (durable relay). See [Streams](../streams/concepts.md). Transform Your `ISyncTransform`. It turns each source transaction or snapshot batch into `SyncMutation` or `SyncSnapshotMutation` values. Mutation `Upsert`, `Delete` or `DeleteCollection` for a `Collection` and `Key`, with `Content`, `ContentType` and an optional `PartitionKey`. Transform version `SyncTransformVersion`: a name plus a SHA-256 fingerprint. The destination stores it on first start. Destination An `ISyncDestination`, such as `PostgreSqlSyncDestination`. It reports what it supports through `SyncDestinationCapabilities`. A pipeline moves through these states (`SyncPipelineState`): `Reconciling` appears while a reconciliation run holds the pipeline. Whole transactions, one at a time Sync never splits a source transaction. Each committed PostgreSQL transaction becomes one `SyncTransactionBatch`. The destination must confirm the exact commit position of that transaction before Sync acknowledges it to Streams. If the destination confirms a different position, Sync stops with `SyncDestinationDurabilityException`. How \"all or nothing\" is achieved depends on the destination: Destination Transaction unit PostgreSQL One database transaction for the writes and the checkpoint. Redis One Lua script for the writes and the",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Sync concepts</h1>\n<p>This page gives you the mental model for running a Sync pipeline safely: what\na pipeline is, how duplicates and ordering work, where progress is saved, and\nwhat happens when something fails. Shared terms such as acknowledgement,\ncheckpoint and source identity are explained in\n<a href=\"/documentation/getting-started/concepts\">core concepts</a>; this page does not repeat\nthem.</p>\n<h2>What is a pipeline?</h2>\n<p>A pipeline connects one Streams source to one destination through your\ntransform:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "PostgreSQL ──► Streams source ──► transform ──► destination ──► target system\n publication    snapshot, then     rows to       writes, then\n + slot         transactions       mutations     confirms position\n                     ▲                                │\n                     └────────── acknowledge ◄────────┘\n",
+        "highlighted": "PostgreSQL ──► Streams source ──► transform ──► destination ──► target system\n publication    snapshot, then     rows to       writes, then\n + slot         transactions       mutations     confirms position\n                     ▲                                │\n                     └────────── acknowledge ◄────────┘\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Term</th>\n<th>What it is</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Pipeline ID</td>\n<td><code>SyncPipelineOptions.PipelineId</code>. The stable name under which the destination stores its checkpoint and transform version.</td>\n</tr>\n<tr>\n<td>Source</td>\n<td>An <code>IConsistentSnapshotSource</code> (direct slot) or an <code>ISyncPipelineSource</code> (durable relay). See <a href=\"/documentation/real-time/streams-concepts\">Streams</a>.</td>\n</tr>\n<tr>\n<td>Transform</td>\n<td>Your <code>ISyncTransform</code>. It turns each source transaction or snapshot batch into <code>SyncMutation</code> or <code>SyncSnapshotMutation</code> values.</td>\n</tr>\n<tr>\n<td>Mutation</td>\n<td><code>Upsert</code>, <code>Delete</code> or <code>DeleteCollection</code> for a <code>Collection</code> and <code>Key</code>, with <code>Content</code>, <code>ContentType</code> and an optional <code>PartitionKey</code>.</td>\n</tr>\n<tr>\n<td>Transform version</td>\n<td><code>SyncTransformVersion</code>: a name plus a SHA-256 fingerprint. The destination stores it on first start.</td>\n</tr>\n<tr>\n<td>Destination</td>\n<td>An <code>ISyncDestination</code>, such as <code>PostgreSqlSyncDestination</code>. It reports what it supports through <code>SyncDestinationCapabilities</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>A pipeline moves through these states (<code>SyncPipelineState</code>):</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "Stopped ─► Provisioning ─► Snapshotting ─► CatchingUp ─► Running\n                 │                                         │\n                 └─► Rebuilding (transform changed)        ├─► Paused (poison data)\n                                                           └─► Faulted (error)\n",
+        "highlighted": "Stopped ─► Provisioning ─► Snapshotting ─► CatchingUp ─► Running\n                 │                                         │\n                 └─► Rebuilding (transform changed)        ├─► Paused (poison data)\n                                                           └─► Faulted (error)\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>Reconciling</code> appears while a reconciliation run holds the pipeline.</p>\n<h2>Whole transactions, one at a time</h2>\n<p>Sync never splits a source transaction. Each committed PostgreSQL transaction\nbecomes one <code>SyncTransactionBatch</code>. The destination must confirm the exact\ncommit position of that transaction before Sync acknowledges it to Streams. If\nthe destination confirms a different position, Sync stops with\n<code>SyncDestinationDurabilityException</code>.</p>\n<p>How “all or nothing” is achieved depends on the destination:</p>\n<table>\n<thead>\n<tr>\n<th>Destination</th>\n<th>Transaction unit</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>PostgreSQL</td>\n<td>One database transaction for the writes and the checkpoint.</td>\n</tr>\n<tr>\n<td>Redis</td>\n<td>One Lua script for the writes and the checkpoint.</td>\n</tr>\n<tr>\n<td>OpenSearch</td>\n<td>One bulk request. Items apply separately, so a partial failure is replayed; the checkpoint moves only after every item succeeds.</td>\n</tr>\n<tr>\n<td>NATS JetStream</td>\n<td>One envelope message per transaction.</td>\n</tr>\n<tr>\n<td>Kafka (New in 1.1.0)</td>\n<td>One Kafka producer transaction for the event and the checkpoint record.</td>\n</tr>\n<tr>\n<td>S3 (New in 1.1.0)</td>\n<td>One Parquet object, made visible by a commit manifest written last.</td>\n</tr>\n<tr>\n<td>Webhooks (New in 1.1.0)</td>\n<td>One signed HTTP request per transaction.</td>\n</tr>\n</tbody>\n</table>\n<h2>Why duplicates are safe</h2>\n<p>Delivery is at least once. If the worker stops after the destination write but\nbefore the acknowledgement, the same transaction arrives again, with the same\ntransaction ID, commit position and <code>ChangeId</code> values. Each destination\nrecognises the repeat:</p>\n<table>\n<thead>\n<tr>\n<th>Destination</th>\n<th>How a repeat is detected</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>PostgreSQL</td>\n<td>The checkpoint row in <code>bluetusk_sync.pipelines</code> is at or past the commit position, so the writes are skipped.</td>\n</tr>\n<tr>\n<td>Redis</td>\n<td>The script compares the stored checkpoint before writing.</td>\n</tr>\n<tr>\n<td>OpenSearch</td>\n<td>Document IDs are SHA-256 hashes and versions are commit positions (<code>external_gte</code>), so an older write cannot replace a newer one.</td>\n</tr>\n<tr>\n<td>NATS JetStream</td>\n<td>The message ID is deterministic; JetStream drops repeats inside <code>DuplicateWindow</code>. Consumers keep the ID for longer windows.</td>\n</tr>\n<tr>\n<td>Kafka</td>\n<td>The checkpoint in the compacted <code>&lt;prefix&gt;.state</code> topic is reloaded on start. Consumers should read with <code>read_committed</code> and keep mutation IDs.</td>\n</tr>\n<tr>\n<td>S3</td>\n<td>Object keys are deterministic and written with <code>If-None-Match: *</code>; an existing commit manifest means “already applied”.</td>\n</tr>\n<tr>\n<td>Webhooks</td>\n<td>Each request has a stable <code>BlueTusk-Delivery-Id</code>. Your receiver stores it with its result and answers <code>duplicate</code> on a repeat.</td>\n</tr>\n</tbody>\n</table>\n<p>Your transform must be deterministic: the same transaction must produce the\nsame mutations. Never use the current time or a random value in a key.</p>\n<h2>Ordering</h2>\n<ul>\n<li>A pipeline handles one transaction at a time, in commit order. Retries and\nrate limiting wait in line; nothing overtakes.</li>\n<li>Mutations inside a transaction keep their change order. The default\nPostgreSQL document writer and Redis fold repeated writes to the same key\ninto the final result.</li>\n<li>Kafka topics must have exactly one partition per pipeline\n(<code>PartitionCount</code> must be <code>1</code>).</li>\n<li>Separate pipelines are not ordered relative to each other. To go faster,\nsplit work into pipelines by table or destination.</li>\n</ul>\n<h2>Where is the checkpoint stored?</h2>\n<p>There are two saved positions:</p>\n<ol>\n<li><strong>The destination checkpoint.</strong> Every materialising destination stores the\nlast applied commit position next to the data: PostgreSQL in\n<code>&lt;ControlSchema&gt;.pipelines</code>, Redis under <code>KeyPrefix</code>, OpenSearch in its\ncontrol index, Kafka in the state topic, S3 as commit manifests. This is\nwhat makes duplicates safe.</li>\n<li><strong>The source position.</strong> This decides where reading restarts. It depends\non how you register the pipeline:</li>\n</ol>\n<table>\n<thead>\n<tr>\n<th>Registration</th>\n<th>On restart</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>AddHostedPipeline</code> with a <code>PostgreSqlConsistentSnapshotSource</code> (direct slot)</td>\n<td>Takes a fresh snapshot. With <code>ExistingSlotMode = RestartSnapshot</code> it replaces its own inactive slot, resets the destination and copies the tables again.</td>\n</tr>\n<tr>\n<td><code>AddHostedPipelineSource</code> with a <code>PostgreSqlRelaySyncPipelineSource</code></td>\n<td>Resumes from its consumer-group checkpoint in the <a href=\"/documentation/real-time/durable-relay\">durable relay</a>. A completed snapshot is not repeated.</td>\n</tr>\n</tbody>\n</table>\n<p>Use the direct slot for small tables and development. Use the relay for\nproduction: it resumes without re-copying, and several pipelines can share one\nslot.</p>\n<p>With a direct slot, the source stream confirms each transaction to PostgreSQL\nafter the destination has applied it, so the slot releases WAL as the pipeline\nruns. You do not need an <code>observerFactory</code> for this. See\n<a href=\"/documentation/real-time/streams-concepts#how-the-slot-releases-wal\">how the slot releases WAL</a>.</p>\n<h2>Changing the transform: rebuild and repair</h2>\n<p>The transform fingerprint is stored in the destination when the pipeline is\nfirst provisioned. Change it whenever the same row would produce different\noutput: <code>SyncTransformVersion.Create(&quot;orders&quot;, &quot;v2&quot;)</code>. <code>CompositeSyncTransform</code>\nand <code>JsonSyncTransformStage</code> include their configuration in the fingerprint\nfor you.</p>\n<p>On the next start the destination reports <code>RebuildRequired</code>. The worker stops\nwith <code>SyncTransformVersionMismatchException</code>, the state becomes <code>Rebuilding</code>\nand the health check reports unhealthy. Sync never reinterprets existing data\non its own. You choose how to rebuild:</p>\n<table>\n<thead>\n<tr>\n<th>Destination</th>\n<th>How to rebuild</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>OpenSearch</td>\n<td>Zero-downtime: <code>SyncRebuildCoordinator</code> builds a new index generation, verifies it and swaps aliases atomically. Register the cutover with <code>AddRebuildCutover</code> or <code>AddPostgreSqlRelayRebuildCutover</code>.</td>\n</tr>\n<tr>\n<td>PostgreSQL</td>\n<td>Use a new <code>PipelineId</code>, or delete the pipeline’s row from <code>&lt;ControlSchema&gt;.pipelines</code> (its documents go with it) and restart. A direct-slot pipeline is provisioned again and re-copies the source. A relay pipeline also needs a new relay consumer group, because the group’s snapshot belongs to the old transform version.</td>\n</tr>\n<tr>\n<td>Redis, NATS, Kafka, S3</td>\n<td>Write the new version to a new <code>KeyPrefix</code>, stream, <code>TopicPrefix</code> or <code>Prefix</code>, then move readers.</td>\n</tr>\n<tr>\n<td>Webhooks</td>\n<td>Your receiver decides; it returns its stored fingerprint in <code>BlueTusk-Transform-Fingerprint</code>.</td>\n</tr>\n</tbody>\n</table>\n<p><strong>Reconciliation</strong> checks a destination against the source without a rebuild.\n<code>SyncPipeline.ReconcileAsync</code> compares counts, key sets or content hashes\n(<code>SyncReconciliationMode</code>) and can repair differences. The PostgreSQL default\ndocument writer, Redis and OpenSearch support it.</p>\n<h2>Failures, retries and poison data</h2>\n<p><strong>Only transient errors are retried.</strong> The PostgreSQL destination decides for\nitself which of its errors are transient (lost connections, deadlocks, lock\ntimeouts and similar) and retries them with the backoff in <code>SyncRetryOptions</code>\n(up to 5 attempts by default). The other built-in destinations do not classify\ntheir errors, so a failure from one of them stops the pipeline unless you\nregister an <code>ISyncRetryClassifier</code>. (The webhook destination first retries\ntransient HTTP responses and network errors by itself.) See\n<a href=\"/documentation/real-time/sync-configuration#retry-transient-destination-errors\">retries</a>.</p>\n<p><strong>A stopped pipeline stays stopped.</strong> The hosted worker logs\n<code>BlueTusk Sync pipeline {PipelineId} stopped and requires operator action.</code>,\nthe <code>bluetusk_sync</code> health check turns unhealthy, and other pipelines keep\nrunning. Fix the cause and restart the process. The checkpoint never moved\npast the failed transaction, so nothing is lost.</p>\n<p><strong>Poison data</strong> is a transaction your transform cannot map. Throw\n<code>SyncPoisonRecordException</code> from <code>TransformTransactionAsync</code> and Sync applies\n<code>SyncPipelineOptions.PoisonRecordPolicy</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Policy</th>\n<th>What happens</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Pause</code> (default)</td>\n<td>The transaction is rejected (nacked) and the pipeline stops. Nothing is skipped.</td>\n</tr>\n<tr>\n<td><code>QuarantineAndPause</code></td>\n<td>A <code>SyncQuarantineRecord</code> is stored, the transaction is acknowledged and the pipeline pauses.</td>\n</tr>\n<tr>\n<td><code>QuarantineAndAdvance</code></td>\n<td>The record is stored and the pipeline continues with the next transaction.</td>\n</tr>\n</tbody>\n</table>\n<p>Quarantine policies need a durable sink. PostgreSQL, Redis and OpenSearch\ndestinations act as their own sink; otherwise pass a <code>quarantineFactory</code>.\n<code>SyncQuarantineReplayCoordinator</code> can later re-apply a quarantined transaction\nfrom the durable relay. Any other exception from the transform, and any error\nduring the snapshot, stops the pipeline without quarantine.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/sync-configuration\">Configuration</a></li>\n<li><a href=\"/documentation/real-time/sync-troubleshooting\">Troubleshooting</a></li>\n<li><a href=\"/documentation/real-time/contracts\">Delivery guarantees</a> across products</li>\n<li><a href=\"/documentation/real-time/sync-reference\">Full Sync reference</a> for internals and cutover details</li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync-configuration",
+    "summary": "Sync options and every destination option, with defaults.",
+    "keywords": [
+      "sync",
+      "configuration",
+      "destinations",
+      "kafka",
+      "s3",
+      "webhooks"
+    ],
+    "order": 93,
+    "listed": true,
+    "title": "Configure Sync",
+    "sourcePath": "docs/sync/configuration.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/configuration.md",
+    "headings": [
+      {
+        "id": "configure-sync",
+        "text": "Configure Sync",
+        "level": 1
+      },
+      {
+        "id": "where-does-configuration-go",
+        "text": "Where does configuration go?",
+        "level": 2
+      },
+      {
+        "id": "register-pipelines",
+        "text": "Register pipelines",
+        "level": 2
+      },
+      {
+        "id": "pipeline-options",
+        "text": "Pipeline options",
+        "level": 2
+      },
+      {
+        "id": "retry-transient-destination-errors",
+        "text": "Retry transient destination errors",
+        "level": 2
+      },
+      {
+        "id": "transform-options",
+        "text": "Transform options",
+        "level": 2
+      },
+      {
+        "id": "rebuild-and-reconciliation-options",
+        "text": "Rebuild and reconciliation options",
+        "level": 2
+      },
+      {
+        "id": "destinations",
+        "text": "Destinations",
+        "level": 2
+      },
+      {
+        "id": "postgresql",
+        "text": "PostgreSQL",
+        "level": 3
+      },
+      {
+        "id": "redis",
+        "text": "Redis",
+        "level": 3
+      },
+      {
+        "id": "nats-jetstream",
+        "text": "NATS JetStream",
+        "level": 3
+      },
+      {
+        "id": "opensearch",
+        "text": "OpenSearch",
+        "level": 3
+      },
+      {
+        "id": "kafka",
+        "text": "Kafka",
+        "level": 3
+      },
+      {
+        "id": "s3-and-parquet",
+        "text": "S3 and Parquet",
+        "level": 3
+      },
+      {
+        "id": "webhooks",
+        "text": "Webhooks",
+        "level": 3
+      },
+      {
+        "id": "aspire",
+        "text": "Aspire",
+        "level": 2
+      }
+    ],
+    "wordCount": 2509,
+    "readMinutes": 12,
+    "searchText": "Configure Sync This page lists every option you set for a Sync pipeline and for each destination, with types, defaults and connection settings. All names and defaults come from the 1.1.0 source. For the ideas behind them, read [Sync concepts](concepts.md). Where does configuration go? Sync is configured in code with options records. It does not bind an `appsettings.json` section by itself. Read secrets and endpoints from `IConfiguration` (or a secret store) and pass them into the options, as the examples below do. The only configuration keys Sync writes are the ones `BlueTusk.Sync.Aspire` sets on a worker. See [Aspire](#aspire). Register pipelines `AddBlueTuskSync()` (package `BlueTusk.Sync.DependencyInjection`) registers the hosted worker, a health check named `bluetusk_sync` (tags `bluetusk`, `sync`, `ready`), `IBlueTuskSyncStatusSource` for per-pipeline status, and the `BlueTusk.Sync` meter and activity source. It returns a builder: Method Use it for `AddHostedPipeline<TTransform, TDestination>(options, source, sourceFactory, snapshotOptions, quarantineFactory)` A direct slot. `sourceFactory` returns an `IConsistentSnapshotSource`; `snapshotOptions` is `SnapshotThenStreamOptions` (`MaximumSnapshotAttempts`, default `3`). `AddHostedPipelineSource<TTransform, TDestination>(options, source, sourceFactory, quarantineFactory)` A restart-aware source such as `PostgreSqlRelaySyncPipelineSource` (durable relay). `AddRebuildCutover<TPositionProvider, THandoffHandler>()` Zero-downtime rebuild cutover for a hosted worker. `AddPostgreSqlRelayRebuildCutover<THandoffHandler>()` The same, reading the cutover position from the durable relay. Each `PipelineId` can be registered once. The transform and destination types are resolved from dependency injection as singletons. An `ISyncRetryClassifier` registered in the container is used by every pipeline and replaces the destination's own classification ([retries](#retry-transient-destination-errors)). Source options (`PostgreSqlCons",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Configure Sync</h1>\n<p>This page lists every option you set for a Sync pipeline and for each\ndestination, with types, defaults and connection settings. All names and\ndefaults come from the 1.1.0 source. For the ideas behind them, read\n<a href=\"/documentation/real-time/sync-concepts\">Sync concepts</a>.</p>\n<h2>Where does configuration go?</h2>\n<p>Sync is configured in code with options records. It does not bind an\n<code>appsettings.json</code> section by itself. Read secrets and endpoints from\n<code>IConfiguration</code> (or a secret store) and pass them into the options, as the\nexamples below do.</p>\n<p>The only configuration keys Sync writes are the ones <code>BlueTusk.Sync.Aspire</code>\nsets on a worker. See <a href=\"#aspire\">Aspire</a>.</p>\n<h2>Register pipelines</h2>\n<p><code>AddBlueTuskSync()</code> (package <code>BlueTusk.Sync.DependencyInjection</code>) registers the\nhosted worker, a health check named <code>bluetusk_sync</code> (tags <code>bluetusk</code>, <code>sync</code>,\n<code>ready</code>), <code>IBlueTuskSyncStatusSource</code> for per-pipeline status, and the\n<code>BlueTusk.Sync</code> meter and activity source. It returns a builder:</p>\n<table>\n<thead>\n<tr>\n<th>Method</th>\n<th>Use it for</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>AddHostedPipeline&lt;TTransform, TDestination&gt;(options, source, sourceFactory, snapshotOptions, quarantineFactory)</code></td>\n<td>A direct slot. <code>sourceFactory</code> returns an <code>IConsistentSnapshotSource</code>; <code>snapshotOptions</code> is <code>SnapshotThenStreamOptions</code> (<code>MaximumSnapshotAttempts</code>, default <code>3</code>).</td>\n</tr>\n<tr>\n<td><code>AddHostedPipelineSource&lt;TTransform, TDestination&gt;(options, source, sourceFactory, quarantineFactory)</code></td>\n<td>A restart-aware source such as <code>PostgreSqlRelaySyncPipelineSource</code> (durable relay).</td>\n</tr>\n<tr>\n<td><code>AddRebuildCutover&lt;TPositionProvider, THandoffHandler&gt;()</code></td>\n<td>Zero-downtime rebuild cutover for a hosted worker.</td>\n</tr>\n<tr>\n<td><code>AddPostgreSqlRelayRebuildCutover&lt;THandoffHandler&gt;()</code></td>\n<td>The same, reading the cutover position from the durable relay.</td>\n</tr>\n</tbody>\n</table>\n<p>Each <code>PipelineId</code> can be registered once. The transform and destination types\nare resolved from dependency injection as singletons. An\n<code>ISyncRetryClassifier</code> registered in the container is used by every pipeline\nand replaces the destination’s own classification\n(<a href=\"#retry-transient-destination-errors\">retries</a>).</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddSingleton(new PostgreSqlSyncDestination(new PostgreSqlSyncOptions\n{\n    DestinationDataSource = target,\n}));\nbuilder.Services.AddBlueTuskSync()\n    .AddHostedPipeline<OrdersTransform, PostgreSqlSyncDestination>(\n        new SyncPipelineOptions { PipelineId = \"orders-replica\" },\n        sourceIdentity,\n        _ => new PostgreSqlConsistentSnapshotSource(source, snapshotOptions));\n",
+        "highlighted": "builder.Services.AddSingleton(<span class=\"hljs-keyword\">new</span> PostgreSqlSyncDestination(<span class=\"hljs-keyword\">new</span> PostgreSqlSyncOptions\n{\n    DestinationDataSource = target,\n}));\nbuilder.Services.AddBlueTuskSync()\n    .AddHostedPipeline&lt;OrdersTransform, PostgreSqlSyncDestination&gt;(\n        <span class=\"hljs-keyword\">new</span> SyncPipelineOptions { PipelineId = <span class=\"hljs-string\">&quot;orders-replica&quot;</span> },\n        sourceIdentity,\n        _ =&gt; <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotSource(source, snapshotOptions));\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Source options (<code>PostgreSqlConsistentSnapshotOptions</code>, relay options) belong to\nStreams. See <a href=\"/documentation/real-time/streams-configuration\">Streams configuration</a>.</p>\n<h2>Pipeline options</h2>\n<p><code>SyncPipelineOptions</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>PipelineId</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Stable pipeline name. The destination keys its checkpoint and transform version by it.</td>\n</tr>\n<tr>\n<td><code>PoisonRecordPolicy</code></td>\n<td><code>SyncPoisonRecordPolicy</code></td>\n<td><code>Pause</code></td>\n<td><code>Pause</code>, <code>QuarantineAndPause</code> or <code>QuarantineAndAdvance</code>. Quarantine policies need a quarantine sink.</td>\n</tr>\n<tr>\n<td><code>Retry</code></td>\n<td><code>SyncRetryOptions</code></td>\n<td><code>new()</code></td>\n<td>Attempts and backoff for errors classified as transient.</td>\n</tr>\n<tr>\n<td><code>RateLimit</code></td>\n<td><code>SyncRateLimitOptions</code></td>\n<td><code>new()</code></td>\n<td>Optional pacing. No limit by default.</td>\n</tr>\n</tbody>\n</table>\n<p><code>SyncRetryOptions</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MaximumAttempts</code></td>\n<td><code>int</code></td>\n<td><code>5</code></td>\n<td>Total attempts, including the first (1 to 100). <code>1</code> turns retries off.</td>\n</tr>\n<tr>\n<td><code>InitialDelay</code></td>\n<td><code>TimeSpan</code></td>\n<td>100 ms</td>\n<td>Delay before the second attempt.</td>\n</tr>\n<tr>\n<td><code>MaximumDelay</code></td>\n<td><code>TimeSpan</code></td>\n<td>10 s</td>\n<td>Upper limit for any delay.</td>\n</tr>\n<tr>\n<td><code>BackoffFactor</code></td>\n<td><code>double</code></td>\n<td><code>2</code></td>\n<td>Multiplier per attempt (at least 1).</td>\n</tr>\n<tr>\n<td><code>JitterRatio</code></td>\n<td><code>double</code></td>\n<td><code>0.2</code></td>\n<td>Random spread, 0 to 1.</td>\n</tr>\n</tbody>\n</table>\n<p><code>SyncRateLimitOptions</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MaximumTransactionsPerSecond</code></td>\n<td><code>double?</code></td>\n<td><code>null</code></td>\n<td>Caps source transactions per second.</td>\n</tr>\n<tr>\n<td><code>MaximumTransformedBytesPerSecond</code></td>\n<td><code>long?</code></td>\n<td><code>null</code></td>\n<td>Caps transformed bytes per second, snapshot batches included.</td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var pipelineOptions = new SyncPipelineOptions\n{\n    PipelineId = \"orders-replica\",\n    PoisonRecordPolicy = SyncPoisonRecordPolicy.QuarantineAndPause,\n    Retry = new SyncRetryOptions\n    {\n        MaximumAttempts = 5,\n        InitialDelay = TimeSpan.FromMilliseconds(100),\n        MaximumDelay = TimeSpan.FromSeconds(10),\n    },\n    RateLimit = new SyncRateLimitOptions\n    {\n        MaximumTransactionsPerSecond = 500,\n        MaximumTransformedBytesPerSecond = 16 * 1024 * 1024,\n    },\n};\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> pipelineOptions = <span class=\"hljs-keyword\">new</span> SyncPipelineOptions\n{\n    PipelineId = <span class=\"hljs-string\">&quot;orders-replica&quot;</span>,\n    PoisonRecordPolicy = SyncPoisonRecordPolicy.QuarantineAndPause,\n    Retry = <span class=\"hljs-keyword\">new</span> SyncRetryOptions\n    {\n        MaximumAttempts = <span class=\"hljs-number\">5</span>,\n        InitialDelay = TimeSpan.FromMilliseconds(<span class=\"hljs-number\">100</span>),\n        MaximumDelay = TimeSpan.FromSeconds(<span class=\"hljs-number\">10</span>),\n    },\n    RateLimit = <span class=\"hljs-keyword\">new</span> SyncRateLimitOptions\n    {\n        MaximumTransactionsPerSecond = <span class=\"hljs-number\">500</span>,\n        MaximumTransformedBytesPerSecond = <span class=\"hljs-number\">16</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n    },\n};\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Retry transient destination errors</h2>\n<p>Sync retries a failed destination operation only when the failure is\nclassified as transient. Who classifies it:</p>\n<ol>\n<li>An <code>ISyncRetryClassifier</code> registered in the container (or passed to\n<code>SyncPipeline</code>), if there is one. It decides for every pipeline.</li>\n<li>Otherwise, the destination itself, if it implements\n<code>ISyncRetryClassifier</code>. Of the built-in destinations, only\n<code>PostgreSqlSyncDestination</code> does.</li>\n<li>Otherwise, nothing is retried.</li>\n</ol>\n<p><code>PostgreSqlSyncDestination</code> treats these as transient: lost or refused\nconnections (SQLSTATE <code>08000</code>, <code>08001</code>, <code>08003</code>, <code>08004</code>, <code>08006</code>, <code>08007</code>),\nserialization failures (<code>40001</code>), deadlocks (<code>40P01</code>), resource limits\n(<code>53000</code>, <code>53200</code>, <code>53300</code>, <code>53400</code>), objects in use (<code>55006</code>), lock timeouts\n(<code>55P03</code>), server shutdown or restart (<code>57P01</code>, <code>57P02</code>, <code>57P03</code>), idle-session\ntimeouts (<code>57P05</code>), I/O errors (<code>58030</code>), any provider <code>DbException</code> with\n<code>IsTransient = true</code>, and timeout, socket and I/O exceptions. Everything else\nis permanent and stops the pipeline at once: constraint, permission, schema\nand data errors, cancellation, and Sync’s own durability, transform-version\nand source-identity errors. Each destination operation runs in one database\ntransaction and applies idempotently, so a retry never applies work twice.</p>\n<blockquote>\n<p><strong>New in 1.1.0:</strong> In 1.0.0 and 1.1.0-rc.1 the PostgreSQL destination did not\nclassify its errors, so without a registered classifier its first failure\nstopped the pipeline. Set <code>MaximumAttempts = 1</code> to keep that behaviour.</p>\n</blockquote>\n<p>For the other destinations, or to change the PostgreSQL choices, register a\nclassifier. It replaces the destination’s own classification, so if you also\nuse the PostgreSQL destination, your classifier decides for its errors too.\n<code>SyncRetryContext</code> gives you <code>PipelineId</code>, <code>Destination</code>, <code>Operation</code>\n(<code>SyncPipelineOperation</code>), <code>Attempt</code> and <code>Exception</code>. This classifier retries\nlost connections and PostgreSQL errors that are safe to repeat:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "public sealed class TransientFailures : ISyncRetryClassifier\n{\n    public bool IsTransient(SyncRetryContext context)\n    {\n        if (context.Exception is BlueTuskException { SqlState: { } state })\n        {\n            return state.StartsWith(\"08\", StringComparison.Ordinal) ||\n                state is \"40001\" or \"40P01\" or \"53300\" or \"57P01\";\n        }\n\n        for (var error = context.Exception; error is not null; error = error.InnerException)\n        {\n            if (error is TimeoutException or System.Net.Sockets.SocketException)\n            {\n                return true;\n            }\n        }\n\n        return false;\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">TransientFailures</span> : <span class=\"hljs-title\">ISyncRetryClassifier</span>\n{\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">bool</span> <span class=\"hljs-title\">IsTransient</span>(<span class=\"hljs-params\">SyncRetryContext context</span>)</span>\n    {\n        <span class=\"hljs-keyword\">if</span> (context.Exception <span class=\"hljs-keyword\">is</span> BlueTuskException { SqlState: { } state })\n        {\n            <span class=\"hljs-keyword\">return</span> state.StartsWith(<span class=\"hljs-string\">&quot;08&quot;</span>, StringComparison.Ordinal) ||\n                state <span class=\"hljs-keyword\">is</span> <span class=\"hljs-string\">&quot;40001&quot;</span> <span class=\"hljs-keyword\">or</span> <span class=\"hljs-string\">&quot;40P01&quot;</span> <span class=\"hljs-keyword\">or</span> <span class=\"hljs-string\">&quot;53300&quot;</span> <span class=\"hljs-keyword\">or</span> <span class=\"hljs-string\">&quot;57P01&quot;</span>;\n        }\n\n        <span class=\"hljs-keyword\">for</span> (<span class=\"hljs-keyword\">var</span> error = context.Exception; error <span class=\"hljs-keyword\">is</span> <span class=\"hljs-keyword\">not</span> <span class=\"hljs-literal\">null</span>; error = error.InnerException)\n        {\n            <span class=\"hljs-keyword\">if</span> (error <span class=\"hljs-keyword\">is</span> TimeoutException <span class=\"hljs-keyword\">or</span> System.Net.Sockets.SocketException)\n            {\n                <span class=\"hljs-keyword\">return</span> <span class=\"hljs-literal\">true</span>;\n            }\n        }\n\n        <span class=\"hljs-keyword\">return</span> <span class=\"hljs-literal\">false</span>;\n    }\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddSingleton<ISyncRetryClassifier, TransientFailures>();\n",
+        "highlighted": "builder.Services.AddSingleton&lt;ISyncRetryClassifier, TransientFailures&gt;();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Built-in destinations detect duplicates, so repeating the same batch after an\nunclear outcome is safe. Kafka is the exception: after\n<code>KafkaSyncDeliveryException</code> the destination must be provisioned again, which\nmeans restarting the worker.</p>\n<h2>Transform options</h2>\n<p><code>JsonSyncTransformStageOptions</code> (for <code>JsonSyncTransformStage</code>, used inside a\n<code>CompositeSyncTransform</code>):</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Name</code>, <code>Version</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Part of the transform fingerprint.</td>\n</tr>\n<tr>\n<td><code>RedactedPaths</code></td>\n<td><code>IReadOnlyList&lt;string&gt;</code></td>\n<td>empty</td>\n<td>Dotted JSON paths to remove.</td>\n</tr>\n<tr>\n<td><code>EnrichmentJson</code></td>\n<td><code>IReadOnlyDictionary&lt;string, string&gt;</code></td>\n<td>empty</td>\n<td>Root properties to add (values are JSON).</td>\n</tr>\n<tr>\n<td><code>FlattenObjects</code></td>\n<td><code>bool</code></td>\n<td><code>false</code></td>\n<td>Flattens nested objects.</td>\n</tr>\n<tr>\n<td><code>FlattenSeparator</code></td>\n<td><code>string</code></td>\n<td><code>&quot;.&quot;</code></td>\n<td>Separator for flattened names (up to 8 characters).</td>\n</tr>\n<tr>\n<td><code>TenantPropertyPath</code></td>\n<td><code>string?</code></td>\n<td><code>null</code></td>\n<td>Path whose value becomes the partition key.</td>\n</tr>\n<tr>\n<td><code>RequireTenant</code></td>\n<td><code>bool</code></td>\n<td><code>true</code></td>\n<td>Rejects documents without a tenant value.</td>\n</tr>\n<tr>\n<td><code>MaximumDocumentBytes</code></td>\n<td><code>int</code></td>\n<td>1 MiB</td>\n<td>Largest document in or out.</td>\n</tr>\n</tbody>\n</table>\n<p><code>SyncTransformSandboxOptions</code> (for <code>SandboxedSyncTransformStage</code>) take\n<code>Name</code>, <code>Version</code> and <code>Instructions</code>, plus limits: <code>MaximumMutationsPerBatch</code>\n(10,000), <code>MaximumDocumentBytes</code> (1 MiB), <code>MaximumBatchBytes</code> (16 MiB),\n<code>MaximumOperationsPerBatch</code> (1,000,000), <code>MaximumJsonDepth</code> (64),\n<code>MaximumExecutionTime</code> (5 s) and <code>RequirePartitionedDeletes</code> (<code>true</code>). Every\noption is part of the fingerprint, so changing one requires a\n<a href=\"/documentation/real-time/sync-concepts#changing-the-transform-rebuild-and-repair\">rebuild</a>.</p>\n<h2>Rebuild and reconciliation options</h2>\n<table>\n<thead>\n<tr>\n<th>Class</th>\n<th>Option</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>SyncRebuildOptions</code></td>\n<td><code>PipelineId</code></td>\n<td>required</td>\n<td>Pipeline to rebuild.</td>\n</tr>\n<tr>\n<td></td>\n<td><code>MaximumSnapshotAttempts</code></td>\n<td><code>3</code></td>\n<td>Snapshot attempts after a lost exporter session.</td>\n</tr>\n<tr>\n<td></td>\n<td><code>RetirePreviousGeneration</code></td>\n<td><code>false</code></td>\n<td>Delete the old generation after activation.</td>\n</tr>\n<tr>\n<td><code>SyncReconciliationRequest</code></td>\n<td><code>PipelineId</code>, <code>Collection</code></td>\n<td>required</td>\n<td>What to compare.</td>\n</tr>\n<tr>\n<td></td>\n<td><code>Mode</code></td>\n<td><code>PartitionedContentHash</code></td>\n<td><code>Count</code>, <code>KeySet</code> or <code>PartitionedContentHash</code>.</td>\n</tr>\n<tr>\n<td></td>\n<td><code>PartitionCount</code></td>\n<td><code>256</code></td>\n<td>Key partitions (1 to 65,536).</td>\n</tr>\n<tr>\n<td></td>\n<td><code>MaxReportedDifferences</code></td>\n<td><code>1000</code></td>\n<td>Sample differences kept in the result.</td>\n</tr>\n<tr>\n<td></td>\n<td><code>Repair</code></td>\n<td><code>false</code></td>\n<td>Fix differences (not with <code>Count</code>).</td>\n</tr>\n<tr>\n<td></td>\n<td><code>RepairBatchSize</code></td>\n<td><code>500</code></td>\n<td>Repairs per destination call (1 to 10,000).</td>\n</tr>\n<tr>\n<td></td>\n<td><code>MaxBufferedRepairsPerPartition</code></td>\n<td><code>100000</code></td>\n<td>Memory limit per partition.</td>\n</tr>\n</tbody>\n</table>\n<h2>Destinations</h2>\n<p>Install only the package for the destination you use.</p>\n<h3>PostgreSQL</h3>\n<p>Package <code>BlueTusk.Sync.PostgreSql</code>. Connection: a <code>DbDataSource</code> for the\ntarget database, usually a <code>BlueTuskDataSource</code>. The role needs permission to\ncreate the control schema on first start, plus rights on your own tables when\nyou use a custom writer.</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>DestinationDataSource</code></td>\n<td><code>DbDataSource</code></td>\n<td>required</td>\n<td>Target database.</td>\n</tr>\n<tr>\n<td><code>ControlSchema</code></td>\n<td><code>string</code></td>\n<td><code>&quot;bluetusk_sync&quot;</code></td>\n<td>Schema for <code>pipelines</code>, <code>documents</code>, <code>quarantine</code> and <code>storage_metadata</code>.</td>\n</tr>\n<tr>\n<td><code>MaxDocumentBytes</code></td>\n<td><code>int</code></td>\n<td>16 MiB</td>\n<td>Largest single document.</td>\n</tr>\n<tr>\n<td><code>MaxTransactionBytes</code></td>\n<td><code>long</code></td>\n<td>256 MiB</td>\n<td>Largest transformed transaction.</td>\n</tr>\n<tr>\n<td><code>MutationWriter</code></td>\n<td><code>IPostgreSqlSyncMutationWriter?</code></td>\n<td><code>null</code></td>\n<td>Writes into your own tables. <code>null</code> stores JSON documents in <code>&lt;ControlSchema&gt;.documents</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>The <a href=\"/documentation/real-time/sync-quickstart\">quick start</a> shows a custom writer. A custom writer turns\noff built-in reconciliation.</p>\n<h3>Redis</h3>\n<p>Package <code>BlueTusk.Sync.Redis</code>. Connection: a StackExchange.Redis\n<code>IConnectionMultiplexer</code>.</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Connection</code></td>\n<td><code>IConnectionMultiplexer</code></td>\n<td>required</td>\n<td>Redis connection.</td>\n</tr>\n<tr>\n<td><code>Database</code></td>\n<td><code>int</code></td>\n<td><code>-1</code></td>\n<td>Database number (<code>-1</code> is the default database).</td>\n</tr>\n<tr>\n<td><code>KeyPrefix</code></td>\n<td><code>string</code></td>\n<td><code>&quot;bluetusk:sync&quot;</code></td>\n<td>Key prefix. Must not contain <code>{</code> or <code>}</code>.</td>\n</tr>\n<tr>\n<td><code>MaxDocumentBytes</code></td>\n<td><code>int</code></td>\n<td>8 MiB</td>\n<td>Largest document.</td>\n</tr>\n<tr>\n<td><code>MaxTransactionBytes</code></td>\n<td><code>long</code></td>\n<td>32 MiB</td>\n<td>Largest transaction.</td>\n</tr>\n<tr>\n<td><code>MaxMutationsPerTransaction</code></td>\n<td><code>int</code></td>\n<td><code>10000</code></td>\n<td>Most mutations in one script call.</td>\n</tr>\n</tbody>\n</table>\n<h3>NATS JetStream</h3>\n<p>Package <code>BlueTusk.Sync.Nats</code>. Connection: an <code>INatsJSContext</code> from NATS.Net.</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>JetStream</code></td>\n<td><code>INatsJSContext</code></td>\n<td>required</td>\n<td>JetStream context.</td>\n</tr>\n<tr>\n<td><code>StreamName</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Stream name (no <code>.</code>, <code>*</code>, <code>&gt;</code> or spaces).</td>\n</tr>\n<tr>\n<td><code>SubjectPrefix</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Messages go to <code>&lt;SubjectPrefix&gt;.&gt;</code>.</td>\n</tr>\n<tr>\n<td><code>CreateStream</code></td>\n<td><code>bool</code></td>\n<td><code>true</code></td>\n<td>Create the stream if missing; the contract is validated either way.</td>\n</tr>\n<tr>\n<td><code>MaxAge</code></td>\n<td><code>TimeSpan</code></td>\n<td>7 days</td>\n<td>Stream retention.</td>\n</tr>\n<tr>\n<td><code>MaxBytes</code></td>\n<td><code>long</code></td>\n<td>10 GiB</td>\n<td>Stream size limit.</td>\n</tr>\n<tr>\n<td><code>MaxMessageBytes</code></td>\n<td><code>int</code></td>\n<td>8 MiB</td>\n<td>Largest envelope.</td>\n</tr>\n<tr>\n<td><code>DuplicateWindow</code></td>\n<td><code>TimeSpan</code></td>\n<td>24 hours</td>\n<td>JetStream de-duplication window. Must cover your longest outage.</td>\n</tr>\n<tr>\n<td><code>Replicas</code></td>\n<td><code>int</code></td>\n<td><code>1</code></td>\n<td>Stream replicas (1 to 5).</td>\n</tr>\n<tr>\n<td><code>PublishRetryAttempts</code></td>\n<td><code>int</code></td>\n<td><code>3</code></td>\n<td>Publish attempts (1 to 20).</td>\n</tr>\n<tr>\n<td><code>PublishRetryDelay</code></td>\n<td><code>TimeSpan</code></td>\n<td>100 ms</td>\n<td>Delay between publish attempts.</td>\n</tr>\n</tbody>\n</table>\n<h3>OpenSearch</h3>\n<p>Package <code>BlueTusk.Sync.OpenSearch</code>. Connection: an <code>HttpClient</code> whose\n<code>BaseAddress</code> is the cluster URL; add authentication to the client.</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Client</code></td>\n<td><code>HttpClient</code></td>\n<td>required</td>\n<td>Must have an absolute <code>BaseAddress</code>.</td>\n</tr>\n<tr>\n<td><code>IndexPrefix</code></td>\n<td><code>string</code></td>\n<td><code>&quot;bluetusk-sync&quot;</code></td>\n<td>Lowercase prefix for indexes and aliases.</td>\n</tr>\n<tr>\n<td><code>NumberOfShards</code></td>\n<td><code>int</code></td>\n<td><code>1</code></td>\n<td>Primary shards per index.</td>\n</tr>\n<tr>\n<td><code>NumberOfReplicas</code></td>\n<td><code>int</code></td>\n<td><code>0</code></td>\n<td>Replica shards.</td>\n</tr>\n<tr>\n<td><code>WaitForActiveShards</code></td>\n<td><code>string</code></td>\n<td><code>&quot;all&quot;</code></td>\n<td><code>all</code> or a positive number.</td>\n</tr>\n<tr>\n<td><code>MaxDocumentBytes</code></td>\n<td><code>int</code></td>\n<td>8 MiB</td>\n<td>Largest document.</td>\n</tr>\n<tr>\n<td><code>MaxBulkBytes</code></td>\n<td><code>long</code></td>\n<td>32 MiB</td>\n<td>Largest bulk request.</td>\n</tr>\n<tr>\n<td><code>MaxMutationsPerTransaction</code></td>\n<td><code>int</code></td>\n<td><code>10000</code></td>\n<td>Most mutations per transaction.</td>\n</tr>\n<tr>\n<td><code>MaxReconciliationKeyBytes</code></td>\n<td><code>int</code></td>\n<td>8 KiB</td>\n<td>Longest key during reconciliation.</td>\n</tr>\n<tr>\n<td><code>ReconciliationPageSize</code></td>\n<td><code>int</code></td>\n<td><code>512</code></td>\n<td>Page size for reconciliation reads.</td>\n</tr>\n<tr>\n<td><code>RefreshAfterWrite</code></td>\n<td><code>bool</code></td>\n<td><code>false</code></td>\n<td>Wait until writes are searchable.</td>\n</tr>\n</tbody>\n</table>\n<h3>Kafka</h3>\n<blockquote>\n<p><strong>Note:</strong> New in 1.1.0.</p>\n</blockquote>\n<p>Package <code>BlueTusk.Sync.Kafka</code>. Connection: <code>BootstrapServers</code> plus any\nConfluent client settings in <code>ClientConfiguration</code>.</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BootstrapServers</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Broker list.</td>\n</tr>\n<tr>\n<td><code>TopicPrefix</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Uses <code>&lt;prefix&gt;.events</code> and the compacted <code>&lt;prefix&gt;.state</code>.</td>\n</tr>\n<tr>\n<td><code>TransactionalId</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Unique per active pipeline writer.</td>\n</tr>\n<tr>\n<td><code>ClientId</code></td>\n<td><code>string</code></td>\n<td><code>&quot;bluetusk-sync&quot;</code></td>\n<td>Client ID.</td>\n</tr>\n<tr>\n<td><code>CreateTopics</code></td>\n<td><code>bool</code></td>\n<td><code>true</code></td>\n<td>Create missing topics.</td>\n</tr>\n<tr>\n<td><code>PartitionCount</code></td>\n<td><code>int</code></td>\n<td><code>1</code></td>\n<td>Must be <code>1</code> to keep commit order.</td>\n</tr>\n<tr>\n<td><code>ReplicationFactor</code></td>\n<td><code>short</code></td>\n<td><code>3</code></td>\n<td>Replication for created topics (1 to 5).</td>\n</tr>\n<tr>\n<td><code>MaxEnvelopeBytes</code></td>\n<td><code>int</code></td>\n<td>8 MiB</td>\n<td>Largest envelope.</td>\n</tr>\n<tr>\n<td><code>InitializationTimeout</code></td>\n<td><code>TimeSpan</code></td>\n<td>30 s</td>\n<td>Producer start-up timeout.</td>\n</tr>\n<tr>\n<td><code>TransactionTimeout</code></td>\n<td><code>TimeSpan</code></td>\n<td>30 s</td>\n<td>Kafka transaction timeout.</td>\n</tr>\n<tr>\n<td><code>ClientConfiguration</code></td>\n<td><code>IReadOnlyDictionary&lt;string, string&gt;</code></td>\n<td>empty</td>\n<td>Extra Confluent settings such as SASL and TLS.</td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var kafka = new KafkaSyncDestination(new KafkaSyncOptions\n{\n    BootstrapServers = configuration[\"Kafka:BootstrapServers\"]!,\n    TopicPrefix = \"bluetusk.orders\",\n    TransactionalId = \"orders-sync-primary\",\n    ClientConfiguration = new Dictionary<string, string>\n    {\n        [\"security.protocol\"] = \"SaslSsl\",\n        [\"sasl.mechanism\"] = \"SCRAM-SHA-512\",\n        [\"sasl.username\"] = configuration[\"Kafka:Username\"]!,\n        [\"sasl.password\"] = configuration[\"Kafka:Password\"]!,\n    },\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> kafka = <span class=\"hljs-keyword\">new</span> KafkaSyncDestination(<span class=\"hljs-keyword\">new</span> KafkaSyncOptions\n{\n    BootstrapServers = configuration[<span class=\"hljs-string\">&quot;Kafka:BootstrapServers&quot;</span>]!,\n    TopicPrefix = <span class=\"hljs-string\">&quot;bluetusk.orders&quot;</span>,\n    TransactionalId = <span class=\"hljs-string\">&quot;orders-sync-primary&quot;</span>,\n    ClientConfiguration = <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">string</span>&gt;\n    {\n        [<span class=\"hljs-string\">&quot;security.protocol&quot;</span>] = <span class=\"hljs-string\">&quot;SaslSsl&quot;</span>,\n        [<span class=\"hljs-string\">&quot;sasl.mechanism&quot;</span>] = <span class=\"hljs-string\">&quot;SCRAM-SHA-512&quot;</span>,\n        [<span class=\"hljs-string\">&quot;sasl.username&quot;</span>] = configuration[<span class=\"hljs-string\">&quot;Kafka:Username&quot;</span>]!,\n        [<span class=\"hljs-string\">&quot;sasl.password&quot;</span>] = configuration[<span class=\"hljs-string\">&quot;Kafka:Password&quot;</span>]!,\n    },\n});\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<h3>S3 and Parquet</h3>\n<blockquote>\n<p><strong>Note:</strong> New in 1.1.0.</p>\n</blockquote>\n<p>Package <code>BlueTusk.Sync.S3</code>. Connection: an <code>IAmazonS3</code> client using the normal\nAWS credential chain.</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Client</code></td>\n<td><code>IAmazonS3</code></td>\n<td>required</td>\n<td>S3 client.</td>\n</tr>\n<tr>\n<td><code>BucketName</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Bucket.</td>\n</tr>\n<tr>\n<td><code>Prefix</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Object prefix owned by this pipeline. Use a new prefix per transform version.</td>\n</tr>\n<tr>\n<td><code>ServerSideEncryption</code></td>\n<td><code>ServerSideEncryptionMethod</code></td>\n<td><code>AES256</code></td>\n<td>Encryption requested on write.</td>\n</tr>\n<tr>\n<td><code>KmsKeyId</code></td>\n<td><code>string?</code></td>\n<td><code>null</code></td>\n<td>KMS key; requires <code>AWSKMS</code>.</td>\n</tr>\n<tr>\n<td><code>MaxMutationCount</code></td>\n<td><code>int</code></td>\n<td><code>100000</code></td>\n<td>Most mutations per object.</td>\n</tr>\n<tr>\n<td><code>MaxParquetBytes</code></td>\n<td><code>int</code></td>\n<td>64 MiB</td>\n<td>Largest Parquet object.</td>\n</tr>\n</tbody>\n</table>\n<h3>Webhooks</h3>\n<blockquote>\n<p><strong>Note:</strong> New in 1.1.0.</p>\n</blockquote>\n<p>Package <code>BlueTusk.Sync.Webhooks</code>. Connection: an <code>HttpClient</code> and an HTTPS\nendpoint.</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Client</code></td>\n<td><code>HttpClient</code></td>\n<td>required</td>\n<td>HTTP client.</td>\n</tr>\n<tr>\n<td><code>Endpoint</code></td>\n<td><code>Uri</code></td>\n<td>required</td>\n<td>Absolute HTTPS URI.</td>\n</tr>\n<tr>\n<td><code>KeyId</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>Key name sent in <code>BlueTusk-Key-Id</code>.</td>\n</tr>\n<tr>\n<td><code>SigningKey</code></td>\n<td><code>ReadOnlyMemory&lt;byte&gt;</code></td>\n<td>required</td>\n<td>HMAC-SHA256 key, at least 32 bytes.</td>\n</tr>\n<tr>\n<td><code>AllowInsecureHttp</code></td>\n<td><code>bool</code></td>\n<td><code>false</code></td>\n<td>Allows <code>http://</code> for local tests only.</td>\n</tr>\n<tr>\n<td><code>MaxEnvelopeBytes</code></td>\n<td><code>int</code></td>\n<td>8 MiB</td>\n<td>Largest request body.</td>\n</tr>\n<tr>\n<td><code>MaximumAttempts</code></td>\n<td><code>int</code></td>\n<td><code>5</code></td>\n<td>Attempts for 408, 425, 429, 5xx and network errors (1 to 10).</td>\n</tr>\n<tr>\n<td><code>InitialRetryDelay</code></td>\n<td><code>TimeSpan</code></td>\n<td>100 ms</td>\n<td>First retry delay.</td>\n</tr>\n<tr>\n<td><code>MaximumRetryDelay</code></td>\n<td><code>TimeSpan</code></td>\n<td>5 s</td>\n<td>Longest retry delay.</td>\n</tr>\n<tr>\n<td><code>TimeProvider</code></td>\n<td><code>TimeProvider</code></td>\n<td><code>TimeProvider.System</code></td>\n<td>Clock for signatures and delays.</td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var webhook = new WebhookSyncDestination(new WebhookSyncOptions\n{\n    Client = new HttpClient(),\n    Endpoint = new Uri(\"https://receiver.example.com/bluetusk/sync\"),\n    KeyId = \"orders-2026-10\",\n    SigningKey = Convert.FromBase64String(configuration[\"WebhookSigningKey\"]!),\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> webhook = <span class=\"hljs-keyword\">new</span> WebhookSyncDestination(<span class=\"hljs-keyword\">new</span> WebhookSyncOptions\n{\n    Client = <span class=\"hljs-keyword\">new</span> HttpClient(),\n    Endpoint = <span class=\"hljs-keyword\">new</span> Uri(<span class=\"hljs-string\">&quot;https://receiver.example.com/bluetusk/sync&quot;</span>),\n    KeyId = <span class=\"hljs-string\">&quot;orders-2026-10&quot;</span>,\n    SigningKey = Convert.FromBase64String(configuration[<span class=\"hljs-string\">&quot;WebhookSigningKey&quot;</span>]!),\n});\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Your receiver must check the <code>BlueTusk-Signature</code> header, store\n<code>BlueTusk-Delivery-Id</code> with its result, and reply with\n<code>BlueTusk-Delivery-Status: applied</code> or <code>duplicate</code>.</p>\n<h2>Aspire</h2>\n<p><code>BlueTusk.Sync.Aspire</code> adds <code>WithBlueTuskSync(source, control, destination, options)</code> (durable relay) and <code>WithBlueTuskSyncDirect(source, destination, options)</code> to a worker resource. <code>BlueTuskSyncAspireOptions</code> has <code>PipelineId</code>,\n<code>ConsumerGroup</code>, <code>TransformVersion</code>, <code>Destination</code> (<code>PostgreSql</code>, <code>Nats</code>,\n<code>Redis</code>, <code>OpenSearch</code>), <code>ControlSchema</code> (<code>&quot;bluetusk_streams&quot;</code>), <code>DeliveryMode</code>\n(<code>DurableRelay</code>), <code>ReconciliationEnabled</code> (<code>true</code>) and <code>RebuildEnabled</code>\n(<code>true</code>). The worker receives:</p>\n<table>\n<thead>\n<tr>\n<th>Variable</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BLUETUSK_SYNC_SOURCE</code>, <code>BLUETUSK_SYNC_DESTINATION</code></td>\n<td>Connection strings.</td>\n</tr>\n<tr>\n<td><code>BLUETUSK_SYNC_CONTROL</code></td>\n<td>Relay control connection string (relay mode only).</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Sync__PipelineId</code>, <code>__ConsumerGroup</code>, <code>__TransformVersion</code>, <code>__Destination</code>, <code>__ControlSchema</code>, <code>__DeliveryMode</code>, <code>__ReconciliationEnabled</code>, <code>__RebuildEnabled</code></td>\n<td>The options above.</td>\n</tr>\n</tbody>\n</table>\n<p>Your worker reads these values and builds the pipeline; the Aspire package\ndoes not register it for you.</p>\n<p>Full engineering detail is in the <a href=\"/documentation/real-time/sync-reference\">Sync reference</a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync-troubleshooting",
+    "summary": "Fix destination, duplicate, mapping, lag and permission problems.",
+    "keywords": [
+      "sync",
+      "troubleshooting",
+      "lag",
+      "retry"
+    ],
+    "order": 94,
+    "listed": true,
+    "title": "Troubleshoot Sync",
+    "sourcePath": "docs/sync/troubleshooting.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/troubleshooting.md",
+    "headings": [
+      {
+        "id": "troubleshoot-sync",
+        "text": "Troubleshoot Sync",
+        "level": 1
+      },
+      {
+        "id": "why-did-my-pipeline-stop",
+        "text": "Why did my pipeline stop?",
+        "level": 2
+      },
+      {
+        "id": "the-destination-is-unavailable",
+        "text": "The destination is unavailable",
+        "level": 2
+      },
+      {
+        "id": "i-see-duplicate-rows-or-repeated-events",
+        "text": "I see duplicate rows or repeated events",
+        "level": 2
+      },
+      {
+        "id": "mapping-and-schema-errors",
+        "text": "Mapping and schema errors",
+        "level": 2
+      },
+      {
+        "id": "the-transform-changed-and-a-rebuild-is-needed",
+        "text": "The transform changed and a rebuild is needed",
+        "level": 2
+      },
+      {
+        "id": "lag-keeps-growing",
+        "text": "Lag keeps growing",
+        "level": 2
+      },
+      {
+        "id": "why-does-wal-keep-growing-with-a-direct-pipeline",
+        "text": "Why does WAL keep growing with a direct pipeline?",
+        "level": 2
+      },
+      {
+        "id": "permission-and-start-up-errors",
+        "text": "Permission and start-up errors",
+        "level": 2
+      },
+      {
+        "id": "destination-specific-gotchas",
+        "text": "Destination-specific gotchas",
+        "level": 2
+      }
+    ],
+    "wordCount": 1845,
+    "readMinutes": 9,
+    "searchText": "Troubleshoot Sync This page helps you find out why a Sync pipeline stopped or fell behind, and how to fix it. Each entry lists the symptom, the cause and the fix, with the exception types and messages BlueTusk actually raises. Why did my pipeline stop? When a hosted pipeline hits an error it does not retry, the worker stops that pipeline and logs (event ID 1, `SyncPipelineStopped`): The exception follows on the next lines. The host keeps running and other pipelines continue. A stopped pipeline does not restart by itself: fix the cause, then restart the process. The checkpoint never moves past the failed transaction. In an ASP.NET Core host, expose health and status so you notice: The `bluetusk_sync` check is **Unhealthy** when a pipeline is `Faulted`, `Rebuilding` or has a diagnostic code, and **Degraded** when nothing is applying changes. `BlueTuskSyncWorkerStatus.DiagnosticCode` is one of: Code Meaning `transform-version-mismatch` The transform changed. See [rebuild needed](#the-transform-changed-and-a-rebuild-is-needed). `destination-durability-failure` The destination did not confirm the exact commit position. `worker-fault` Any other exception stopped the worker. Read the log. `worker-cancelled` The worker was cancelled. `pipeline-fault` The pipeline recorded an error (`LastError`). Metrics come from the `BlueTusk.Sync` meter, tagged `sync.pipeline.id`: Metric Unit What it tells you `bluetusk.sync.transactions` `{transaction}` Transactions applied. Flat while the source changes means stuck. `bluetusk.sync.transaction.duration` ms Time per transaction, including retries. `bluetusk.sync.retries` `{attempt}` Retry attempts. `bluetusk.sync.throttle.duration` ms Time spent waiting on `RateLimit`. `bluetusk.sync.snapshot.rows` `{row}` Rows copied by snapshots. `bluetusk.sync.errors` `{error}` Pipelines stopped by an error. Traces use the `BlueTusk.Sync` activity source (`sync.transaction.consume`, `sync.snapshot.consume`). The destination is unavailable Symptom Cause",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Troubleshoot Sync</h1>\n<p>This page helps you find out why a Sync pipeline stopped or fell behind, and\nhow to fix it. Each entry lists the symptom, the cause and the fix, with the\nexception types and messages BlueTusk actually raises.</p>\n<h2>Why did my pipeline stop?</h2>\n<p>When a hosted pipeline hits an error it does not retry, the worker stops that\npipeline and logs (event ID 1, <code>SyncPipelineStopped</code>):</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "fail: BlueTusk.Sync.DependencyInjection.BlueTuskSyncHostedService[1]\n      BlueTusk Sync pipeline orders-replica stopped and requires operator action.\n",
+        "highlighted": "fail: BlueTusk.Sync.DependencyInjection.BlueTuskSyncHostedService[1]\n      BlueTusk Sync pipeline orders-replica stopped and requires operator action.\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The exception follows on the next lines. The host keeps running and other\npipelines continue. A stopped pipeline does not restart by itself: fix the\ncause, then restart the process. The checkpoint never moves past the failed\ntransaction.</p>\n<p>In an ASP.NET Core host, expose health and status so you notice:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "app.MapHealthChecks(\"/health/ready\", new HealthCheckOptions\n{\n    Predicate = check => check.Tags.Contains(\"ready\"),\n});\napp.MapGet(\"/sync/status\", (IBlueTuskSyncStatusSource status) => status.GetStatuses());\n",
+        "highlighted": "app.MapHealthChecks(<span class=\"hljs-string\">&quot;/health/ready&quot;</span>, <span class=\"hljs-keyword\">new</span> HealthCheckOptions\n{\n    Predicate = check =&gt; check.Tags.Contains(<span class=\"hljs-string\">&quot;ready&quot;</span>),\n});\napp.MapGet(<span class=\"hljs-string\">&quot;/sync/status&quot;</span>, (IBlueTuskSyncStatusSource status) =&gt; status.GetStatuses());\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The <code>bluetusk_sync</code> check is <strong>Unhealthy</strong> when a pipeline is <code>Faulted</code>,\n<code>Rebuilding</code> or has a diagnostic code, and <strong>Degraded</strong> when nothing is\napplying changes. <code>BlueTuskSyncWorkerStatus.DiagnosticCode</code> is one of:</p>\n<table>\n<thead>\n<tr>\n<th>Code</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>transform-version-mismatch</code></td>\n<td>The transform changed. See <a href=\"#the-transform-changed-and-a-rebuild-is-needed\">rebuild needed</a>.</td>\n</tr>\n<tr>\n<td><code>destination-durability-failure</code></td>\n<td>The destination did not confirm the exact commit position.</td>\n</tr>\n<tr>\n<td><code>worker-fault</code></td>\n<td>Any other exception stopped the worker. Read the log.</td>\n</tr>\n<tr>\n<td><code>worker-cancelled</code></td>\n<td>The worker was cancelled.</td>\n</tr>\n<tr>\n<td><code>pipeline-fault</code></td>\n<td>The pipeline recorded an error (<code>LastError</code>).</td>\n</tr>\n</tbody>\n</table>\n<p>Metrics come from the <code>BlueTusk.Sync</code> meter, tagged <code>sync.pipeline.id</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Metric</th>\n<th>Unit</th>\n<th>What it tells you</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>bluetusk.sync.transactions</code></td>\n<td><code>{transaction}</code></td>\n<td>Transactions applied. Flat while the source changes means stuck.</td>\n</tr>\n<tr>\n<td><code>bluetusk.sync.transaction.duration</code></td>\n<td>ms</td>\n<td>Time per transaction, including retries.</td>\n</tr>\n<tr>\n<td><code>bluetusk.sync.retries</code></td>\n<td><code>{attempt}</code></td>\n<td>Retry attempts.</td>\n</tr>\n<tr>\n<td><code>bluetusk.sync.throttle.duration</code></td>\n<td>ms</td>\n<td>Time spent waiting on <code>RateLimit</code>.</td>\n</tr>\n<tr>\n<td><code>bluetusk.sync.snapshot.rows</code></td>\n<td><code>{row}</code></td>\n<td>Rows copied by snapshots.</td>\n</tr>\n<tr>\n<td><code>bluetusk.sync.errors</code></td>\n<td><code>{error}</code></td>\n<td>Pipelines stopped by an error.</td>\n</tr>\n</tbody>\n</table>\n<p>Traces use the <code>BlueTusk.Sync</code> activity source (<code>sync.transaction.consume</code>,\n<code>sync.snapshot.consume</code>).</p>\n<h2>The destination is unavailable</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTuskException: Could not open a PostgreSQL connection matching Any across 1 configured host(s).</code> after several attempts; <code>bluetusk.sync.retries</code> rose</td>\n<td>The PostgreSQL destination retried until <code>MaximumAttempts</code> (default 5) ran out.</td>\n<td>Fix the destination, then restart. Raise <code>MaximumAttempts</code> or <code>MaximumDelay</code> to ride out longer outages.</td>\n</tr>\n<tr>\n<td>A NATS, Redis, OpenSearch, Kafka or S3 error stops the pipeline at once</td>\n<td>These destinations do not classify errors, so nothing is retried.</td>\n<td>Register an <code>ISyncRetryClassifier</code> (<a href=\"/documentation/real-time/sync-configuration#retry-transient-destination-errors\">how</a>).</td>\n</tr>\n<tr>\n<td>A PostgreSQL error you expect to be retried stops the pipeline at once</td>\n<td>Your registered classifier replaces the destination’s own, or the SQLSTATE is not transient.</td>\n<td>Return <code>true</code> for it in your classifier.</td>\n</tr>\n<tr>\n<td>Your <code>IPostgreSqlSyncMutationWriter</code> runs the same transaction more than once</td>\n<td>The destination retried a transient error, such as a lock timeout, in a new database transaction.</td>\n<td>Expected. Keep non-database side effects out of the writer.</td>\n</tr>\n<tr>\n<td><code>WebhookSyncDeliveryException: Webhook receiver '&lt;host&gt;' returned HTTP 400; the Sync checkpoint was not advanced.</code></td>\n<td>A non-transient status. Only 408, 425, 429 and 5xx are retried.</td>\n<td>Fix the receiver.</td>\n</tr>\n<tr>\n<td><code>WebhookSyncProtocolException</code> about <code>BlueTusk-Delivery-Status</code></td>\n<td>The receiver replied 2xx without <code>applied</code> or <code>duplicate</code>.</td>\n<td>Return the header. Sync never treats an unclear success as applied.</td>\n</tr>\n<tr>\n<td><code>KafkaSyncDeliveryException: Kafka did not confirm an atomic transaction...</code></td>\n<td>The commit outcome is unknown.</td>\n<td>Restart the worker; provisioning reloads the state topic and resolves it.</td>\n</tr>\n<tr>\n<td><code>S3SyncDeliveryException: S3 did not confirm immutable object '&lt;key&gt;'...</code></td>\n<td>The write failed or timed out.</td>\n<td>Retry is safe: keys are deterministic.</td>\n</tr>\n</tbody>\n</table>\n<h2>I see duplicate rows or repeated events</h2>\n<p>Delivery is at least once (<a href=\"/documentation/real-time/sync-concepts#why-duplicates-are-safe\">why duplicates are safe</a>).</p>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Extra rows in a PostgreSQL table written by your <code>IPostgreSqlSyncMutationWriter</code></td>\n<td>The writer inserts instead of upserting.</td>\n<td>Use <code>INSERT ... ON CONFLICT (key) DO UPDATE</code>, as in the <a href=\"/documentation/real-time/sync-quickstart\">quick start</a>.</td>\n</tr>\n<tr>\n<td>The same document under two keys</td>\n<td>The key is not deterministic (time, random value, or a column that changes).</td>\n<td>Build <code>Key</code> from the primary key only.</td>\n</tr>\n<tr>\n<td>A NATS, Kafka or webhook consumer processes an event twice</td>\n<td>Redelivery after a crash, or after the NATS <code>DuplicateWindow</code>.</td>\n<td>Store the stable delivery or mutation ID with your consumer’s effect and skip repeats.</td>\n</tr>\n<tr>\n<td>Two pipelines overwrite each other</td>\n<td>Two <code>PipelineId</code> values write the same table or index.</td>\n<td>Give each target one pipeline.</td>\n</tr>\n</tbody>\n</table>\n<h2>Mapping and schema errors</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>NotSupportedException: No default binary change decoder is registered for System.String with N bytes.</code> during the snapshot</td>\n<td>Snapshot values arrive in binary format; <code>ChangeValueDecoders.Decode&lt;string&gt;</code> only decodes text-format strings.</td>\n<td>Decode text columns as UTF-8 (<code>Encoding.UTF8.GetString(value.Data.Span)</code>), or use a <a href=\"/documentation/real-time/streams-typed-mappings\">typed mapping</a>.</td>\n</tr>\n<tr>\n<td><code>InvalidOperationException: Column state NotPublished does not contain a decodable value.</code> (or <code>UnchangedToast</code>, <code>OldValueUnavailable</code>)</td>\n<td>A delete carries only key columns, or an update left a large value unchanged.</td>\n<td>Read only the key from <code>OldRow</code>. Set <code>REPLICA IDENTITY FULL</code> on the source table if you need old values.</td>\n</tr>\n<tr>\n<td><code>ChangeDeliveryNotAcknowledgedException: The previous change transaction was not acknowledged; its final state is Nacked.</code></td>\n<td>Your transform threw <code>SyncPoisonRecordException</code> and the policy is <code>Pause</code>.</td>\n<td>Fix the data or transform and restart, or choose a quarantine policy.</td>\n</tr>\n<tr>\n<td><code>BlueTuskException</code> such as <code>column &quot;x&quot; of relation &quot;orders&quot; does not exist</code></td>\n<td>The target table does not match what your writer sends.</td>\n<td>Change the target schema first, then the transform, then <a href=\"#the-transform-changed-and-a-rebuild-is-needed\">rebuild</a>.</td>\n</tr>\n<tr>\n<td><code>PostgreSqlSyncException: A &lt;n&gt;-byte document exceeds the &lt;m&gt;-byte limit.</code> or <code>The transformed transaction exceeds the &lt;m&gt;-byte limit.</code></td>\n<td>A document or transaction is larger than <code>MaxDocumentBytes</code> or <code>MaxTransactionBytes</code>.</td>\n<td>Raise the limit or send less content. Redis, NATS, Kafka, OpenSearch and S3 have similar limits in their options.</td>\n</tr>\n<tr>\n<td>A new source column never reaches the target</td>\n<td>Changes carry it, but your transform and the snapshot’s <code>ChangeTable</code> do not.</td>\n<td>Add it to both, bump the transform version and rebuild.</td>\n</tr>\n</tbody>\n</table>\n<h2>The transform changed and a rebuild is needed</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "BlueTusk.Sync.SyncTransformVersionMismatchException: The destination transform fingerprint '<old>' does not match requested fingerprint '<new>'. An explicit rebuild or migration is required.\n",
+        "highlighted": "BlueTusk.Sync.SyncTransformVersionMismatchException: The destination transform fingerprint &#x27;&lt;old&gt;&#x27; does not match requested fingerprint &#x27;&lt;new&gt;&#x27;. An explicit rebuild or migration is required.\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The stored transform version differs from the running one. Either revert the\nversion, or rebuild the target (<a href=\"/documentation/real-time/sync-concepts#changing-the-transform-rebuild-and-repair\">options per destination</a>).\nFor the PostgreSQL destination, the quickest rebuild is to remove the pipeline\nrecord and restart; the worker provisions again and re-copies the source:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "DELETE FROM bluetusk_sync.pipelines WHERE pipeline_id = 'orders-replica';\n",
+        "highlighted": "<span class=\"hljs-keyword\">DELETE</span> <span class=\"hljs-keyword\">FROM</span> bluetusk_sync.pipelines <span class=\"hljs-keyword\">WHERE</span> pipeline_id <span class=\"hljs-operator\">=</span> <span class=\"hljs-string\">&#x27;orders-replica&#x27;</span>;\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>A related error is <code>PostgreSqlSyncSourceMismatchException: Pipeline '&lt;id&gt;' belongs to source '&lt;a&gt;', not '&lt;b&gt;'.</code>\n(Redis, OpenSearch, Kafka and S3 have equivalents). The source identity\nchanged: a different database, slot name or publication fingerprint, or a\nrestored cluster. Point the pipeline back at its source, or use a new\n<code>PipelineId</code> and rebuild.</p>\n<h2>Lag keeps growing</h2>\n<p>A pipeline applies one transaction at a time. If the source writes faster than\nthe destination accepts, lag grows.</p>\n<ol>\n<li>Check <code>bluetusk.sync.transaction.duration</code>. Slow transactions point at the\ndestination or your writer; batch statements in a custom writer.</li>\n<li>Check <code>bluetusk.sync.throttle.duration</code>. Non-zero means <code>RateLimit</code> is\nholding the pipeline back.</li>\n<li>Check <code>bluetusk.sync.retries</code>. Steady retries mean the destination is\nfailing intermittently.</li>\n<li>Split the work into several pipelines (by table or destination). Ordering\nis only kept within a pipeline.</li>\n</ol>\n<p>Check the slot on the source:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "SELECT slot_name, active,\n       pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), confirmed_flush_lsn)) AS behind\nFROM pg_replication_slots;\n",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> slot_name, active,\n       pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), confirmed_flush_lsn)) <span class=\"hljs-keyword\">AS</span> behind\n<span class=\"hljs-keyword\">FROM</span> pg_replication_slots;\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Why does WAL keep growing with a direct pipeline?</h2>\n<p>A running direct pipeline confirms each transaction to PostgreSQL after the\ndestination commits it, so <code>confirmed_flush_lsn</code> moves forward and the slot\nreleases WAL (<a href=\"/documentation/real-time/streams-concepts#how-the-slot-releases-wal\">how</a>). If WAL\nstill grows:</p>\n<table>\n<thead>\n<tr>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>The worker or pipeline stopped. The slot keeps WAL from its last confirmed position.</td>\n<td>Fix the cause and restart, or drop a slot you no longer need.</td>\n</tr>\n<tr>\n<td>The pipeline is slow.</td>\n<td>See <a href=\"#lag-keeps-growing\">lag keeps growing</a>.</td>\n</tr>\n<tr>\n<td>Your <code>observerFactory</code> observer never sends feedback; it replaces the stream’s own confirmation.</td>\n<td>Send the position from its <code>AcknowledgeAsync</code>, or remove the <code>observerFactory</code>.</td>\n</tr>\n<tr>\n<td>The worker runs 1.0.0 or 1.1.0-rc.1, where a source without an observer never confirmed positions.</td>\n<td>Upgrade to 1.1.0, or pass an observer that sends the position.</td>\n</tr>\n</tbody>\n</table>\n<h2>Permission and start-up errors</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTuskServerException: permission denied to start WAL sender</code></td>\n<td>The source role lacks <code>REPLICATION</code>.</td>\n<td><code>ALTER ROLE ... REPLICATION</code>.</td>\n</tr>\n<tr>\n<td><code>SnapshotRestartLimitExceededException: Snapshot bootstrap failed after 3 attempts...</code> with inner <code>permission denied for table orders</code></td>\n<td>The source role cannot <code>SELECT</code> a published table.</td>\n<td><code>GRANT SELECT ON ... TO</code> the replication role.</td>\n</tr>\n<tr>\n<td><code>BlueTuskException: permission denied for table orders</code> from the worker</td>\n<td>The target role cannot write your table.</td>\n<td>Grant <code>SELECT, INSERT, UPDATE, DELETE</code> on the target table.</td>\n</tr>\n<tr>\n<td><code>permission denied for database</code> on first start</td>\n<td>The target role cannot create the <code>bluetusk_sync</code> schema.</td>\n<td><code>GRANT CREATE ON DATABASE</code>, or let an owner create the schema first.</td>\n</tr>\n<tr>\n<td><code>SnapshotAttemptException: Existing slot orders_sync is active or does not belong to the configured pgoutput snapshot source; it cannot be replaced safely.</code></td>\n<td>Another worker is using the slot, or the slot belongs to something else.</td>\n<td>Run one worker per pipeline. Use a distinct slot name per pipeline.</td>\n</tr>\n<tr>\n<td><code>InvalidOperationException: A BlueTusk Sync pipeline named '&lt;id&gt;' is already registered.</code></td>\n<td>Two registrations share a <code>PipelineId</code>.</td>\n<td>Use unique IDs.</td>\n</tr>\n<tr>\n<td><code>ArgumentException: A quarantine poison policy requires a durable quarantine sink.</code></td>\n<td>A quarantine policy with a destination that is not a sink.</td>\n<td>Pass <code>quarantineFactory</code>, or use <code>Pause</code>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Destination-specific gotchas</h2>\n<table>\n<thead>\n<tr>\n<th>Destination</th>\n<th>Watch out for</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>PostgreSQL</td>\n<td>A custom <code>MutationWriter</code> disables built-in reconciliation. Keep the target and source in separate databases.</td>\n</tr>\n<tr>\n<td>Redis</td>\n<td><code>KeyPrefix</code> cannot contain <code>{</code> or <code>}</code>. Large transactions hit <code>MaxMutationsPerTransaction</code> and stop the pipeline instead of blocking Redis.</td>\n</tr>\n<tr>\n<td>NATS JetStream</td>\n<td>If the stream’s settings differ from <code>NatsSyncOptions</code> (changed by hand or in code), provisioning stops with <code>NatsSyncStreamConfigurationException</code>; use a new stream. <code>DuplicateWindow</code> must not exceed <code>MaxAge</code>.</td>\n</tr>\n<tr>\n<td>OpenSearch</td>\n<td>Bulk items apply separately; <code>OpenSearchSyncBulkException</code> means a partial failure that is replayed after you fix the cause (often a mapping conflict).</td>\n</tr>\n<tr>\n<td>Kafka</td>\n<td>Topics must have one partition. The state topic needs <code>cleanup.policy=compact</code>. Each running pipeline needs its own <code>TransactionalId</code>.</td>\n</tr>\n<tr>\n<td>S3</td>\n<td>Readers must list <code>commits/</code>, not <code>data/</code>; orphan data objects after a crash are expected. Use a new <code>Prefix</code> per transform version.</td>\n</tr>\n<tr>\n<td>Webhooks</td>\n<td>HTTPS only, unless <code>AllowInsecureHttp</code> for local tests. Store <code>BlueTusk-Delivery-Id</code> in the same transaction as your effect.</td>\n</tr>\n</tbody>\n</table>\n<p>Still stuck? The <a href=\"/documentation/real-time/sync-reference\">Sync reference</a> describes each connector’s\nrecovery rules in depth, and <a href=\"/documentation/real-time/streams-troubleshooting\">Streams troubleshooting</a>\ncovers slot and publication problems.</p>\n"
       }
     ]
   },
@@ -761,78 +2131,831 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     ],
     "order": 110,
     "listed": true,
-    "title": "Push live updates to applications",
+    "title": "BlueTusk Live",
     "sourcePath": "docs/live/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/README.md",
     "headings": [
       {
-        "id": "push-live-updates-to-applications",
-        "text": "Push live updates to applications",
+        "id": "bluetusk-live",
+        "text": "BlueTusk Live",
         "level": 1
       },
       {
-        "id": "how-live-works",
-        "text": "How Live works",
+        "id": "when-to-use-live",
+        "text": "When to use Live",
         "level": 2
       },
       {
-        "id": "1-register-a-bounded-query",
-        "text": "1. Register a bounded query",
+        "id": "how-it-works",
+        "text": "How it works",
         "level": 2
       },
       {
-        "id": "2-expose-one-transport",
-        "text": "2. Expose one transport",
+        "id": "packages",
+        "text": "Packages",
         "level": 2
       },
       {
-        "id": "3-connect-a-browser",
-        "text": "3. Connect a browser",
+        "id": "a-taste-of-the-code",
+        "text": "A taste of the code",
+        "level": 2
+      },
+      {
+        "id": "framework-guides",
+        "text": "Framework guides",
         "level": 2
       },
       {
         "id": "security-checklist",
         "text": "Security checklist",
         "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
       }
     ],
-    "wordCount": 539,
-    "readMinutes": 3,
-    "searchText": "Push live updates to applications BlueTusk Live keeps a bounded query result current for authenticated clients. The server owns and authorizes the query; browsers send a registered query name and typed parameters, not arbitrary SQL. Use Live for dashboards, order tracking, operations screens, and collaborative views. Use [Sync](../sync/README.md) when the destination is another data system rather than a connected user. How Live works Trusted server code registers a bounded EF query. The first request runs that query under the caller's security scope. Streams records relevant committed table changes. Live reruns the authorized query and emits keyed add, update, remove, reorder, or reset events. The client applies events locally and reconnects with a signed resume token. PostgreSQL and EF remain authoritative. CDC data does not bypass row-level security or application authorization. 1. Register a bounded query The query must have deterministic ordering, include its key in that ordering, and end with a bounded `Take`: Compilation happens at startup, so unsupported or unbounded query shapes fail before clients connect. 2. Expose one transport Server-sent events are the simplest browser transport: `AppLiveResolver` maps the authenticated caller and request to a registered plan, validates parameters, and creates the `LiveSecurityScope`. SignalR and gRPC expose the same delivery contract when those transports are a better fit. 3. Connect a browser Use `@bluetusk/live-angular`, `@bluetusk/live-react`, `@bluetusk/live-vue`, or `@bluetusk/live-svelte` for framework lifecycle and batched state updates. The framework-neutral client owns protocol validation, reconnect, replay, and resume tokens. In the current 1.2 development candidate, the client applies up to 64 already available events before building one rows array. Small bursts are published immediately after the current network read; it never waits for a full batch or a timer. Set `maximumBatchEvents: 1` if a core subscrib",
+    "wordCount": 768,
+    "readMinutes": 4,
+    "searchText": "BlueTusk Live BlueTusk Live keeps query results on a user's screen up to date as PostgreSQL data changes. You register a query on the server; a browser subscribes to it by name and receives the rows, then only the changes. When to use Live Use Live when a connected user should see current data without refreshing: dashboards, order tracking, operations screens, shared lists. The server owns every query. Browsers send a registered query name and typed parameters, never SQL. Each subscriber gets the rows that their own authorization allows. Raw change data never reaches a browser; Live runs the query again and sends the difference. Many users with the same query and scope share one query execution. A dropped connection resumes from where it stopped. Use something else when: the destination is another system, such as a search index or a warehouse: use [Sync](../sync/README.md); your own code must react to each committed change: use [Streams](../streams/README.md); a result is too large to keep in a browser. Every live query has a hard row limit. How it works [Concepts](concepts.md) explains each step. Packages Package Use it for `BlueTusk.Live` Query plans, subscriptions, diffs, replay, resume tokens. `BlueTusk.Live.EntityFrameworkCore` Register live queries from EF Core LINQ. `BlueTusk.Live.DependencyInjection` PostgreSQL invalidation and replay storage, and the Streams consumer that feeds it. `BlueTusk.Live.AspNetCore` The authenticated request and resolver contract shared by all transports. `BlueTusk.Live.ServerSentEvents` Server-sent events endpoint for browsers. `BlueTusk.Live.SignalR` SignalR streaming hub. `BlueTusk.Live.Grpc` gRPC streaming service and its .NET client. `BlueTusk.Live.Aspire` Pass Live settings from an Aspire AppHost. `BlueTusk.Live.Testing` In-memory invalidation log and replay store for tests, and a conformance kit for custom replay stores. `@bluetusk/live` (npm) Framework-neutral browser client. `@bluetusk/live-angular`, `@bluetusk/live-react`",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Push live updates to applications</h1>\n<p>BlueTusk Live keeps a bounded query result current for authenticated clients.\nThe server owns and authorizes the query; browsers send a registered query name\nand typed parameters, not arbitrary SQL.</p>\n<p>Use Live for dashboards, order tracking, operations screens, and collaborative\nviews. Use <a href=\"/documentation/real-time/sync\">Sync</a> when the destination is another data\nsystem rather than a connected user.</p>\n<h2>How Live works</h2>\n<ol>\n<li>Trusted server code registers a bounded EF query.</li>\n<li>The first request runs that query under the caller’s security scope.</li>\n<li>Streams records relevant committed table changes.</li>\n<li>Live reruns the authorized query and emits keyed add, update, remove,\nreorder, or reset events.</li>\n<li>The client applies events locally and reconnects with a signed resume token.</li>\n</ol>\n<p>PostgreSQL and EF remain authoritative. CDC data does not bypass row-level\nsecurity or application authorization.</p>\n<h2>1. Register a bounded query</h2>\n<p>The query must have deterministic ordering, include its key in that ordering,\nand end with a bounded <code>Take</code>:</p>\n"
+        "html": "<h1>BlueTusk Live</h1>\n<p>BlueTusk Live keeps query results on a user’s screen up to date as PostgreSQL\ndata changes. You register a query on the server; a browser subscribes to it by\nname and receives the rows, then only the changes.</p>\n<h2>When to use Live</h2>\n<p>Use Live when a connected user should see current data without refreshing:\ndashboards, order tracking, operations screens, shared lists.</p>\n<ul>\n<li>The server owns every query. Browsers send a registered query name and\ntyped parameters, never SQL.</li>\n<li>Each subscriber gets the rows that their own authorization allows. Raw change\ndata never reaches a browser; Live runs the query again and sends the\ndifference.</li>\n<li>Many users with the same query and scope share one query execution.</li>\n<li>A dropped connection resumes from where it stopped.</li>\n</ul>\n<p>Use something else when:</p>\n<ul>\n<li>the destination is another system, such as a search index or a warehouse:\nuse <a href=\"/documentation/real-time/sync\">Sync</a>;</li>\n<li>your own code must react to each committed change: use\n<a href=\"/documentation/real-time/streams\">Streams</a>;</li>\n<li>a result is too large to keep in a browser. Every live query has a hard row\nlimit.</li>\n</ul>\n<h2>How it works</h2>\n"
       },
       {
         "kind": "code",
-        "code": "var definition = new LiveEfQueryDefinition<OrdersContext, Order, long>(\n    name: \"recent-orders\",\n    databaseIdentity: \"orders-primary\",\n    version: \"v1\",\n    parameters: [new LiveQueryParameter(\"tenant\", typeof(string))],\n    validationArguments: new Dictionary<string, object?>\n    {\n        [\"tenant\"] = \"example-tenant\",\n    },\n    maximumResultCount: 100,\n    queryFactory: (db, arguments) =>\n    {\n        var tenant = arguments.Get<string>(\"tenant\")!;\n        return db.Orders\n            .Where(order => order.TenantId == tenant)\n            .OrderByDescending(order => order.CreatedAt)\n            .ThenBy(order => order.Id)\n            .Take(100);\n    },\n    keySelector: order => order.Id,\n    rowComparer: EqualityComparer<Order>.Default,\n    tenantIsolationMode: LiveEfTenantIsolationMode.RegisteredPredicate,\n    tenantBinding: new LiveEfTenantBinding(nameof(Order.TenantId), \"tenant\"));\n\nvar plan = await LiveEfQueryCompiler.CompileAsync(\n    contextFactory,\n    definition,\n    cancellationToken);\n\nqueryRegistry.Register(plan);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> definition = <span class=\"hljs-keyword\">new</span> LiveEfQueryDefinition&lt;OrdersContext, Order, <span class=\"hljs-built_in\">long</span>&gt;(\n    name: <span class=\"hljs-string\">&quot;recent-orders&quot;</span>,\n    databaseIdentity: <span class=\"hljs-string\">&quot;orders-primary&quot;</span>,\n    version: <span class=\"hljs-string\">&quot;v1&quot;</span>,\n    parameters: [<span class=\"hljs-keyword\">new</span> LiveQueryParameter(<span class=\"hljs-string\">&quot;tenant&quot;</span>, <span class=\"hljs-keyword\">typeof</span>(<span class=\"hljs-built_in\">string</span>))],\n    validationArguments: <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">object</span>?&gt;\n    {\n        [<span class=\"hljs-string\">&quot;tenant&quot;</span>] = <span class=\"hljs-string\">&quot;example-tenant&quot;</span>,\n    },\n    maximumResultCount: <span class=\"hljs-number\">100</span>,\n    queryFactory: (db, arguments) =&gt;\n    {\n        <span class=\"hljs-keyword\">var</span> tenant = arguments.Get&lt;<span class=\"hljs-built_in\">string</span>&gt;(<span class=\"hljs-string\">&quot;tenant&quot;</span>)!;\n        <span class=\"hljs-keyword\">return</span> db.Orders\n            .Where(order =&gt; order.TenantId == tenant)\n            .OrderByDescending(order =&gt; order.CreatedAt)\n            .ThenBy(order =&gt; order.Id)\n            .Take(<span class=\"hljs-number\">100</span>);\n    },\n    keySelector: order =&gt; order.Id,\n    rowComparer: EqualityComparer&lt;Order&gt;.Default,\n    tenantIsolationMode: LiveEfTenantIsolationMode.RegisteredPredicate,\n    tenantBinding: <span class=\"hljs-keyword\">new</span> LiveEfTenantBinding(<span class=\"hljs-keyword\">nameof</span>(Order.TenantId), <span class=\"hljs-string\">&quot;tenant&quot;</span>));\n\n<span class=\"hljs-keyword\">var</span> plan = <span class=\"hljs-keyword\">await</span> LiveEfQueryCompiler.CompileAsync(\n    contextFactory,\n    definition,\n    cancellationToken);\n\nqueryRegistry.Register(plan);\n",
+        "code": "PostgreSQL ──► Streams ──► invalidation log ──► re-run the query ──► diff ──► browser\n              (which tables changed)          (with the user's scope)    (keyed events)\n",
+        "highlighted": "PostgreSQL ──► Streams ──► invalidation log ──► re-run the query ──► diff ──► browser\n              (which tables changed)          (with the user&#x27;s scope)    (keyed events)\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p><a href=\"/documentation/real-time/live-concepts\">Concepts</a> explains each step.</p>\n<h2>Packages</h2>\n<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>Use it for</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTusk.Live</code></td>\n<td>Query plans, subscriptions, diffs, replay, resume tokens.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Live.EntityFrameworkCore</code></td>\n<td>Register live queries from EF Core LINQ.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Live.DependencyInjection</code></td>\n<td>PostgreSQL invalidation and replay storage, and the Streams consumer that feeds it.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Live.AspNetCore</code></td>\n<td>The authenticated request and resolver contract shared by all transports.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Live.ServerSentEvents</code></td>\n<td>Server-sent events endpoint for browsers.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Live.SignalR</code></td>\n<td>SignalR streaming hub.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Live.Grpc</code></td>\n<td>gRPC streaming service and its .NET client.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Live.Aspire</code></td>\n<td>Pass Live settings from an Aspire AppHost.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Live.Testing</code></td>\n<td>In-memory invalidation log and replay store for tests, and a conformance kit for custom replay stores.</td>\n</tr>\n<tr>\n<td><code>@bluetusk/live</code> (npm)</td>\n<td>Framework-neutral browser client.</td>\n</tr>\n<tr>\n<td><code>@bluetusk/live-angular</code>, <code>@bluetusk/live-react</code> (npm)</td>\n<td>Angular signals and React hooks.</td>\n</tr>\n<tr>\n<td><code>@bluetusk/live-vue</code>, <code>@bluetusk/live-svelte</code> (npm)</td>\n<td>New in 1.1.0. Vue composables and Svelte stores.</td>\n</tr>\n</tbody>\n</table>\n<p>Install with <code>dotnet add package BlueTusk.Live.EntityFrameworkCore</code> (and the\nothers you need) and <code>npm install @bluetusk/live</code>. See\n<a href=\"/documentation/getting-started/install\">Install BlueTusk</a> to choose and pin a version.</p>\n<p><strong>Status:</strong> Live is part of the BlueTusk 1.1.0 core release, with the same\nversion as Provider, Streams, Sync and Control Plane. 1.1.0 is not published\nyet; the published versions are 1.0.0 (stable) and 1.1.0-rc.1 (release\ncandidate). It supports .NET 10 and PostgreSQL 15, 16, 17 and 18.</p>\n<h2>A taste of the code</h2>\n<p>The server registers a query that is limited to 100 rows, ordered, and scoped\nto a user:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "new LiveEfQueryDefinition<TodoContext, Todo, long>(\n    name: \"my-todos\",\n    databaseIdentity: \"app\",\n    version: \"v1\",\n    parameters: [new LiveQueryParameter(\"owner\", typeof(string))],\n    validationArguments: new Dictionary<string, object?> { [\"owner\"] = \"example\" },\n    maximumResultCount: 100,\n    queryFactory: (db, arguments) =>\n    {\n        var owner = arguments.Get<string>(\"owner\")!;\n        return db.Todos\n            .Where(todo => todo.Owner == owner)\n            .OrderBy(todo => todo.Id)\n            .Take(100);\n    },\n    keySelector: todo => todo.Id,\n    rowComparer: EqualityComparer<Todo>.Default,\n    tenantIsolationMode: LiveEfTenantIsolationMode.RegisteredPredicate,\n    tenantBinding: new LiveEfTenantBinding(nameof(Todo.Owner), \"owner\"))\n",
+        "highlighted": "<span class=\"hljs-keyword\">new</span> LiveEfQueryDefinition&lt;TodoContext, Todo, <span class=\"hljs-built_in\">long</span>&gt;(\n    name: <span class=\"hljs-string\">&quot;my-todos&quot;</span>,\n    databaseIdentity: <span class=\"hljs-string\">&quot;app&quot;</span>,\n    version: <span class=\"hljs-string\">&quot;v1&quot;</span>,\n    parameters: [<span class=\"hljs-keyword\">new</span> LiveQueryParameter(<span class=\"hljs-string\">&quot;owner&quot;</span>, <span class=\"hljs-keyword\">typeof</span>(<span class=\"hljs-built_in\">string</span>))],\n    validationArguments: <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">object</span>?&gt; { [<span class=\"hljs-string\">&quot;owner&quot;</span>] = <span class=\"hljs-string\">&quot;example&quot;</span> },\n    maximumResultCount: <span class=\"hljs-number\">100</span>,\n    queryFactory: (db, arguments) =&gt;\n    {\n        <span class=\"hljs-keyword\">var</span> owner = arguments.Get&lt;<span class=\"hljs-built_in\">string</span>&gt;(<span class=\"hljs-string\">&quot;owner&quot;</span>)!;\n        <span class=\"hljs-keyword\">return</span> db.Todos\n            .Where(todo =&gt; todo.Owner == owner)\n            .OrderBy(todo =&gt; todo.Id)\n            .Take(<span class=\"hljs-number\">100</span>);\n    },\n    keySelector: todo =&gt; todo.Id,\n    rowComparer: EqualityComparer&lt;Todo&gt;.Default,\n    tenantIsolationMode: LiveEfTenantIsolationMode.RegisteredPredicate,\n    tenantBinding: <span class=\"hljs-keyword\">new</span> LiveEfTenantBinding(<span class=\"hljs-keyword\">nameof</span>(Todo.Owner), <span class=\"hljs-string\">&quot;owner&quot;</span>))\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Compilation happens at startup, so unsupported or unbounded query shapes fail\nbefore clients connect.</p>\n<h2>2. Expose one transport</h2>\n<p>Server-sent events are the simplest browser transport:</p>\n"
+        "html": "<p>Your resolver binds <code>owner</code> from the signed-in user, and the browser\nsubscribes by name:</p>\n"
       },
       {
         "kind": "code",
-        "code": "builder.Services.AddAuthentication().AddJwtBearer();\nbuilder.Services.AddAuthorization();\nbuilder.Services.AddSingleton<ILiveTransportSubscriptionResolver, AppLiveResolver>();\nbuilder.Services.AddBlueTuskLiveAspNetCore(resumeTokenProtector);\n\nvar app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapBlueTuskLiveServerSentEvents();\n",
-        "highlighted": "builder.Services.AddAuthentication().AddJwtBearer();\nbuilder.Services.AddAuthorization();\nbuilder.Services.AddSingleton&lt;ILiveTransportSubscriptionResolver, AppLiveResolver&gt;();\nbuilder.Services.AddBlueTuskLiveAspNetCore(resumeTokenProtector);\n\n<span class=\"hljs-keyword\">var</span> app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapBlueTuskLiveServerSentEvents();\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p><code>AppLiveResolver</code> maps the authenticated caller and request to a registered\nplan, validates parameters, and creates the <code>LiveSecurityScope</code>. SignalR and\ngRPC expose the same delivery contract when those transports are a better fit.</p>\n<h2>3. Connect a browser</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "const query = new BlueTuskLiveClient({\n  endpoint: \"/bluetusk/live/sse\",\n}).createQuery<Order, string, { tenant: string }>({\n  query: \"recent-orders\",\n  parameters: { tenant: \"acme\" },\n});\n\nconst unsubscribe = query.subscribe((state) => render(state.rows));\nquery.start();\n\n// When the owning view is destroyed:\nunsubscribe();\nquery.stop();\n",
-        "highlighted": "<span class=\"hljs-keyword\">const</span> query = <span class=\"hljs-keyword\">new</span> <span class=\"hljs-title class_\">BlueTuskLiveClient</span>({\n  <span class=\"hljs-attr\">endpoint</span>: <span class=\"hljs-string\">&quot;/bluetusk/live/sse&quot;</span>,\n}).<span class=\"hljs-property\">createQuery</span>&lt;<span class=\"hljs-title class_\">Order</span>, <span class=\"hljs-built_in\">string</span>, { <span class=\"hljs-attr\">tenant</span>: <span class=\"hljs-built_in\">string</span> }&gt;({\n  <span class=\"hljs-attr\">query</span>: <span class=\"hljs-string\">&quot;recent-orders&quot;</span>,\n  <span class=\"hljs-attr\">parameters</span>: { <span class=\"hljs-attr\">tenant</span>: <span class=\"hljs-string\">&quot;acme&quot;</span> },\n});\n\n<span class=\"hljs-keyword\">const</span> unsubscribe = query.<span class=\"hljs-title function_\">subscribe</span>(<span class=\"hljs-function\">(<span class=\"hljs-params\">state</span>) =&gt;</span> <span class=\"hljs-title function_\">render</span>(state.<span class=\"hljs-property\">rows</span>));\nquery.<span class=\"hljs-title function_\">start</span>();\n\n<span class=\"hljs-comment\">// When the owning view is destroyed:</span>\n<span class=\"hljs-title function_\">unsubscribe</span>();\nquery.<span class=\"hljs-title function_\">stop</span>();\n",
+        "code": "const query = client.createQuery<Todo, number, object>({\n  query: \"my-todos\",\n  parameters: {}\n});\n\nquery.subscribe((state) => render(state.rows));\nquery.start();\n",
+        "highlighted": "<span class=\"hljs-keyword\">const</span> query = client.<span class=\"hljs-property\">createQuery</span>&lt;<span class=\"hljs-title class_\">Todo</span>, <span class=\"hljs-built_in\">number</span>, <span class=\"hljs-built_in\">object</span>&gt;({\n  <span class=\"hljs-attr\">query</span>: <span class=\"hljs-string\">&quot;my-todos&quot;</span>,\n  <span class=\"hljs-attr\">parameters</span>: {}\n});\n\nquery.<span class=\"hljs-title function_\">subscribe</span>(<span class=\"hljs-function\">(<span class=\"hljs-params\">state</span>) =&gt;</span> <span class=\"hljs-title function_\">render</span>(state.<span class=\"hljs-property\">rows</span>));\nquery.<span class=\"hljs-title function_\">start</span>();\n",
         "language": "typescript"
       },
       {
         "kind": "html",
-        "html": "<p>Use <code>@bluetusk/live-angular</code>, <code>@bluetusk/live-react</code>,\n<code>@bluetusk/live-vue</code>, or <code>@bluetusk/live-svelte</code> for framework lifecycle and\nbatched state updates. The framework-neutral client owns protocol validation,\nreconnect, replay, and resume tokens.</p>\n<p>In the current 1.2 development candidate, the client applies up to 64 already\navailable events before building one rows array. Small bursts are published\nimmediately after the current network read; it never waits for a full batch or\na timer. Set <code>maximumBatchEvents: 1</code> if a core subscriber needs every intermediate\nsnapshot. Previously delivered arrays stay unchanged, and resume tokens advance\nonly after the matching rows and sequence are committed. See\n<a href=\"/documentation/real-time/live-reference#browser-clients\">browser behavior and tuning</a> before persisting\ntokens or handling reconnects.</p>\n<h2>Security checklist</h2>\n<ul>\n<li>Authenticate before resolving a subscription.</li>\n<li>Bind tenant/user scope and policy version into <code>LiveSecurityScope</code>.</li>\n<li>Enforce RLS, a global query filter, or a compiler-verified tenant predicate.</li>\n<li>Set a hard result limit and deterministic ordering.</li>\n<li>Keep parameter values and result rows out of logs and control-plane metadata.</li>\n<li>Bound each subscriber queue and choose an explicit slow-client policy.</li>\n</ul>\n<p>The <a href=\"/documentation/real-time/live-reference\">full Live reference</a> covers projections, client-query\ncapabilities, resume-token rotation, shared subscriptions, transports,\nframework adapters, quotas, backpressure, and load gates.</p>\n"
+        "html": "<p>The <a href=\"/documentation/real-time/live-quickstart\">quick start</a> puts these together into a running app.</p>\n<h2>Framework guides</h2>\n<p><code>@bluetusk/live</code> works in any page. For component lifecycles, use the adapter\nfor your framework: see <a href=\"/documentation/real-time/live-clients\">Angular, React, Vue and Svelte</a>.</p>\n<h2>Security checklist</h2>\n<ul>\n<li>Authenticate before the Live endpoint. Anonymous requests are refused.</li>\n<li>In your resolver, take tenant and user values from claims, not from request\nparameters.</li>\n<li>Put the tenant or user in the <code>LiveSecurityScope</code>, and change its policy\nversion when your authorization rules change.</li>\n<li>Enforce tenant isolation in the plan: a registered predicate, an EF global\nquery filter, or PostgreSQL row-level security.</li>\n<li>Keep a hard row limit and an order that includes the key.</li>\n<li>Load resume-token signing keys from a secret store, and use the same keys on\nevery instance.</li>\n<li>Keep parameter values and rows out of your logs. Live’s own telemetry never\nrecords them.</li>\n</ul>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/live-quickstart\">Quick start</a>: a browser list that updates itself.</li>\n<li><a href=\"/documentation/real-time/live-concepts\">Concepts</a>: queries, scope, re-query and diff, resume tokens,\nlimits and transports.</li>\n<li><a href=\"/documentation/real-time/live-clients\">Framework guides</a>: Angular, React, Vue and Svelte.</li>\n<li><a href=\"/documentation/real-time/live-configuration\">Configuration</a>: every option and default.</li>\n<li><a href=\"/documentation/real-time/live-troubleshooting\">Troubleshooting</a>: no updates, errors and reconnects.</li>\n<li><a href=\"/documentation/real-time/contracts#live\">Delivery guarantees</a> across Streams,\nSync and Live.</li>\n<li><a href=\"/documentation/real-time/live-reference\">Full engineering reference</a>, the\n<a href=\"/documentation/real-time/live-release-notes-1-0-0\">1.0.0 release notes</a> and the\n<a href=\"/documentation/real-time/live-api-compatibility\">public API policy</a>.</li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-quickstart",
+    "summary": "Register an authorized live query in ASP.NET Core and show updating rows in a browser.",
+    "keywords": [
+      "live",
+      "quickstart",
+      "browser",
+      "asp.net core"
+    ],
+    "order": 111,
+    "listed": true,
+    "title": "Live quick start: a browser list that updates itself",
+    "sourcePath": "docs/live/quickstart.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/quickstart.md",
+    "headings": [
+      {
+        "id": "live-quick-start-a-browser-list-that-updates-itself",
+        "text": "Live quick start: a browser list that updates itself",
+        "level": 1
+      },
+      {
+        "id": "before-you-start",
+        "text": "Before you start",
+        "level": 2
+      },
+      {
+        "id": "1-create-the-table-and-publication",
+        "text": "1. Create the table and publication",
+        "level": 2
+      },
+      {
+        "id": "2-create-the-project",
+        "text": "2. Create the project",
+        "level": 2
+      },
+      {
+        "id": "3-write-the-server",
+        "text": "3. Write the server",
+        "level": 2
+      },
+      {
+        "id": "4-write-the-page",
+        "text": "4. Write the page",
+        "level": 2
+      },
+      {
+        "id": "5-run-the-app",
+        "text": "5. Run the app",
+        "level": 2
+      },
+      {
+        "id": "6-change-the-table",
+        "text": "6. Change the table",
+        "level": 2
+      },
+      {
+        "id": "7-clean-up",
+        "text": "7. Clean up",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 1519,
+    "readMinutes": 7,
+    "searchText": "Live quick start: a browser list that updates itself In this quick start you build an ASP.NET Core app that keeps a browser list of to-do items current. When you insert, update or delete a row in PostgreSQL, the page changes within a moment, and each user sees only their own rows. It takes about 15 minutes. You will: create a table and a publication; register one live query and map the server-sent events (SSE) endpoint; show the result in a small page that uses `@bluetusk/live`; change rows in PostgreSQL and watch the page update. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); [Node.js](https://nodejs.org/) 20 or later, for `npm` and `npx`; a PostgreSQL 15, 16, 17 or 18 server with `wal_level=logical`, and a role that can create replication slots. The Docker container from the [5-minute first app](../getting-started/quickstart.md#1-start-postgresql) has both. 1. Create the table and publication Create a database for this quick start, then the table and a publication that lists it: At the `live_quickstart=#` prompt, run: Leave this `psql` session open. You use it in step 6. 2. Create the project In a second terminal: See [Install BlueTusk](../getting-started/install.md) to choose and pin a version. 3. Write the server Replace the contents of `Program.cs`: What the pieces do: **The live query** `my-todos` is compiled at startup. It filters by the `owner` parameter, has a deterministic order that includes the key, and a hard limit of 100 rows. **`TodoSubscriptions`** is the authorization point. It ignores any owner the browser might send and binds the signed-in user's name instead. **Streams** reads committed changes from the `live_todos` publication and records which tables changed. **`LiveRefreshWorker`** re-runs a query only when one of its tables changed, then sends the difference. [Concepts](concepts.md) explains each step. 4. Write the page Create `app.ts` next to `Program.cs`: **Note:** With the published 1.0.0 o",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Live quick start: a browser list that updates itself</h1>\n<p>In this quick start you build an ASP.NET Core app that keeps a browser list of\nto-do items current. When you insert, update or delete a row in PostgreSQL, the\npage changes within a moment, and each user sees only their own rows. It takes\nabout 15 minutes.</p>\n<p>You will:</p>\n<ol>\n<li>create a table and a publication;</li>\n<li>register one live query and map the server-sent events (SSE) endpoint;</li>\n<li>show the result in a small page that uses <code>@bluetusk/live</code>;</li>\n<li>change rows in PostgreSQL and watch the page update.</li>\n</ol>\n<h2>Before you start</h2>\n<p>You need:</p>\n<ul>\n<li>the <a href=\"https://dotnet.microsoft.com/download/dotnet/10.0\" target=\"_blank\" rel=\"noreferrer\">.NET 10 SDK</a>;</li>\n<li><a href=\"https://nodejs.org/\" target=\"_blank\" rel=\"noreferrer\">Node.js</a> 20 or later, for <code>npm</code> and <code>npx</code>;</li>\n<li>a PostgreSQL 15, 16, 17 or 18 server with <code>wal_level=logical</code>, and a role\nthat can create replication slots. The Docker container from the\n<a href=\"/documentation/getting-started/quickstart#1-start-postgresql\">5-minute first app</a>\nhas both.</li>\n</ul>\n<h2>1. Create the table and publication</h2>\n<p>Create a database for this quick start, then the table and a publication that\nlists it:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -c \"CREATE DATABASE live_quickstart\"\ndocker exec -it bluetusk-postgres psql -U postgres -d live_quickstart\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;CREATE DATABASE live_quickstart&quot;</span>\ndocker exec <span class=\"hljs-literal\">-it</span> bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-d</span> live_quickstart\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>At the <code>live_quickstart=#</code> prompt, run:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "CREATE TABLE public.todos (\n    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    owner text NOT NULL,\n    title text NOT NULL\n);\n\nCREATE PUBLICATION live_todos FOR TABLE public.todos;\n",
+        "highlighted": "<span class=\"hljs-keyword\">CREATE TABLE</span> public.todos (\n    id <span class=\"hljs-type\">bigint</span> GENERATED ALWAYS <span class=\"hljs-keyword\">AS</span> <span class=\"hljs-keyword\">IDENTITY</span> <span class=\"hljs-keyword\">PRIMARY KEY</span>,\n    owner text <span class=\"hljs-keyword\">NOT NULL</span>,\n    title text <span class=\"hljs-keyword\">NOT NULL</span>\n);\n\n<span class=\"hljs-keyword\">CREATE</span> PUBLICATION live_todos <span class=\"hljs-keyword\">FOR</span> <span class=\"hljs-keyword\">TABLE</span> public.todos;\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Leave this <code>psql</code> session open. You use it in step 6.</p>\n<h2>2. Create the project</h2>\n<p>In a second terminal:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet new web --framework net10.0 --name LiveQuickstart\ncd LiveQuickstart\ndotnet add package BlueTusk.Live.EntityFrameworkCore\ndotnet add package BlueTusk.Live.DependencyInjection\ndotnet add package BlueTusk.Live.ServerSentEvents\ndotnet add package BlueTusk.Streams.DependencyInjection\nnpm init -y\nnpm install @bluetusk/live esbuild\n",
+        "highlighted": "dotnet new web <span class=\"hljs-literal\">--framework</span> net10.<span class=\"hljs-number\">0</span> <span class=\"hljs-literal\">--name</span> LiveQuickstart\n<span class=\"hljs-built_in\">cd</span> LiveQuickstart\ndotnet add package BlueTusk.Live.EntityFrameworkCore\ndotnet add package BlueTusk.Live.DependencyInjection\ndotnet add package BlueTusk.Live.ServerSentEvents\ndotnet add package BlueTusk.Streams.DependencyInjection\nnpm init <span class=\"hljs-literal\">-y</span>\nnpm install @bluetusk/live esbuild\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a> to choose and pin a\nversion.</p>\n<h2>3. Write the server</h2>\n<p>Replace the contents of <code>Program.cs</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using System.Collections.Concurrent;\nusing System.Security.Claims;\nusing System.Text.Json;\nusing BlueTusk.Data;\nusing BlueTusk.Live;\nusing BlueTusk.Live.AspNetCore;\nusing BlueTusk.Live.DependencyInjection;\nusing BlueTusk.Live.EntityFrameworkCore;\nusing BlueTusk.Live.ServerSentEvents;\nusing BlueTusk.Replication;\nusing BlueTusk.Streams;\nusing BlueTusk.Streams.DependencyInjection;\nusing Microsoft.EntityFrameworkCore;\n\nvar builder = WebApplication.CreateBuilder(args);\nvar connectionString = builder.Configuration.GetConnectionString(\"App\")\n    ?? throw new InvalidOperationException(\"Set ConnectionStrings__App.\");\nvar dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nbuilder.Services.AddSingleton(dataSource);\nbuilder.Services.AddDbContextFactory<TodoContext>(options => options.UseBlueTusk(dataSource));\n\n// Live storage: the invalidation log and the replay window, in schema bluetusk_live.\nvar store = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions\n{\n    ControlDataSource = dataSource,\n    ControlSchema = \"bluetusk_live\",\n});\nbuilder.Services.AddSingleton<ILiveInvalidationLog>(store);\nbuilder.Services.AddSingleton<ILiveReplayStore>(store);\nbuilder.Services.AddSingleton(new LiveQueryRegistry());\nbuilder.Services.AddSingleton<TodoSubscriptions>();\nbuilder.Services.AddSingleton<ILiveTransportSubscriptionResolver>(\n    services => services.GetRequiredService<TodoSubscriptions>());\nbuilder.Services.AddHostedService<LiveRefreshWorker>();\n\n// Resume tokens are signed with a secret of at least 32 bytes.\nvar resumeKey = Convert.FromBase64String(builder.Configuration[\"Live:ResumeKey\"]\n    ?? throw new InvalidOperationException(\"Set Live__ResumeKey.\"));\nbuilder.Services.AddBlueTuskLiveAspNetCore(new LiveResumeTokenProtector(\n    [new LiveResumeTokenKey(\"local\", resumeKey, isPrimary: true)]));\n\n// Streams: every committed change to public.todos becomes a Live invalidation.\nChangeSourceIdentity source;\nawait using (var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions()))\n{\n    var server = await replication.IdentifySystemAsync();\n    source = new ChangeSourceIdentity(\n        server.SystemIdentifier, server.DatabaseName!, \"live_todos\", \"live_todos\");\n}\n\nvar todosTable = new ChangeTable(0, \"public\", \"todos\", 'd',\n    [new ChangeColumn(0, \"id\", 20, -1, IsKey: true)]);\nbuilder.Services.AddSingleton(new LiveInvalidationConsumer(\"app\", store));\nbuilder.Services.AddBlueTuskStreams().AddHostedConsumer<LiveInvalidationConsumer>(\n    \"live-invalidations\",\n    _ => new PostgreSqlConsistentSnapshotSource(dataSource, new PostgreSqlConsistentSnapshotOptions\n    {\n        Source = source,\n        PublicationNames = [\"live_todos\"],\n        Tables = [new PostgreSqlSnapshotTable(todosTable, [0])],\n        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n    }));\n\nvar app = builder.Build();\nawait store.InitializeAsync();\n\n// Register the live query. Compilation rejects unsupported shapes, such as a missing Take.\nvar plan = await LiveEfQueryCompiler.CompileAsync(\n    app.Services.GetRequiredService<IDbContextFactory<TodoContext>>(),\n    new LiveEfQueryDefinition<TodoContext, Todo, long>(\n        name: \"my-todos\",\n        databaseIdentity: \"app\",\n        version: \"v1\",\n        parameters: [new LiveQueryParameter(\"owner\", typeof(string))],\n        validationArguments: new Dictionary<string, object?> { [\"owner\"] = \"example\" },\n        maximumResultCount: 100,\n        queryFactory: (db, arguments) =>\n        {\n            var owner = arguments.Get<string>(\"owner\")!;\n            return db.Todos\n                .Where(todo => todo.Owner == owner)\n                .OrderBy(todo => todo.Id)\n                .Take(100);\n        },\n        keySelector: todo => todo.Id,\n        rowComparer: EqualityComparer<Todo>.Default,\n        tenantIsolationMode: LiveEfTenantIsolationMode.RegisteredPredicate,\n        tenantBinding: new LiveEfTenantBinding(nameof(Todo.Owner), \"owner\")));\napp.Services.GetRequiredService<LiveQueryRegistry>().Register(plan);\n\n// Development only: trust an X-Demo-User header. Use real authentication in production.\napp.Use((context, next) =>\n{\n    if (context.Request.Headers[\"X-Demo-User\"] is [{ Length: > 0 } user])\n    {\n        context.User = new ClaimsPrincipal(\n            new ClaimsIdentity([new Claim(ClaimTypes.Name, user)], \"demo\"));\n    }\n\n    return next(context);\n});\n\napp.UseDefaultFiles();\napp.UseStaticFiles();\napp.MapBlueTuskLiveServerSentEvents();\napp.Run();\n\n// A record compares by value, so unchanged rows are not resent.\npublic sealed record Todo\n{\n    public long Id { get; set; }\n    public string Owner { get; set; } = \"\";\n    public string Title { get; set; } = \"\";\n}\n\npublic sealed class TodoContext(DbContextOptions<TodoContext> options) : DbContext(options)\n{\n    public DbSet<Todo> Todos => Set<Todo>();\n\n    protected override void OnModelCreating(ModelBuilder model) =>\n        model.Entity<Todo>(todo =>\n        {\n            todo.ToTable(\"todos\", \"public\");\n            todo.Property(t => t.Id).HasColumnName(\"id\");\n            todo.Property(t => t.Owner).HasColumnName(\"owner\");\n            todo.Property(t => t.Title).HasColumnName(\"title\");\n        });\n}\n\n// Turns a request into a running shared subscription for the signed-in user.\npublic sealed class TodoSubscriptions(\n    LiveQueryRegistry queries,\n    ILiveInvalidationLog invalidations,\n    ILiveReplayStore replay) : ILiveTransportSubscriptionResolver\n{\n    private readonly ConcurrentDictionary<string, LiveSharedSubscription<Todo, long>> _running = new();\n    private readonly SemaphoreSlim _gate = new(1, 1);\n\n    public async ValueTask<ILiveSharedSubscription> ResolveAsync(\n        string query,\n        JsonElement parameters,\n        ClaimsPrincipal principal,\n        CancellationToken cancellationToken = default)\n    {\n        if (query != \"my-todos\")\n        {\n            throw new LiveTransportRequestException($\"Unknown live query '{query}'.\");\n        }\n\n        // The owner comes from the authenticated user, never from the browser.\n        var owner = principal.Identity?.Name\n            ?? throw new LiveTransportAuthorizationException(\"A user name is required.\");\n        await _gate.WaitAsync(cancellationToken);\n        try\n        {\n            if (_running.TryGetValue(owner, out var existing))\n            {\n                return existing;\n            }\n\n            var plan = queries.Get<Todo, long>(\"my-todos\");\n            var session = new LiveQuerySession<Todo, long>(\n                plan,\n                plan.Bind(new Dictionary<string, object?> { [\"owner\"] = owner }),\n                new LiveSecurityScope($\"user:{owner}\", \"todos-policy-v1\"),\n                invalidations);\n            var subscription = new LiveSharedSubscription<Todo, long>(session, replay);\n            try\n            {\n                await subscription.StartAsync(cancellationToken);\n            }\n            catch\n            {\n                await subscription.DisposeAsync();\n                throw;\n            }\n\n            _running[owner] = subscription;\n            return subscription;\n        }\n        finally\n        {\n            _gate.Release();\n        }\n    }\n\n    public async Task RefreshAllAsync(CancellationToken cancellationToken)\n    {\n        foreach (var subscription in _running.Values)\n        {\n            await subscription.RefreshAsync(cancellationToken);\n        }\n    }\n}\n\n// Re-runs a subscription's query only when its tables have new invalidations.\npublic sealed class LiveRefreshWorker(TodoSubscriptions subscriptions, ILogger<LiveRefreshWorker> logger)\n    : BackgroundService\n{\n    protected override async Task ExecuteAsync(CancellationToken stoppingToken)\n    {\n        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(250));\n        while (await timer.WaitForNextTickAsync(stoppingToken))\n        {\n            try\n            {\n                await subscriptions.RefreshAllAsync(stoppingToken);\n            }\n            catch (Exception exception) when (!stoppingToken.IsCancellationRequested)\n            {\n                logger.LogWarning(exception, \"Live refresh failed; it will be retried.\");\n            }\n        }\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> System.Collections.Concurrent;\n<span class=\"hljs-keyword\">using</span> System.Security.Claims;\n<span class=\"hljs-keyword\">using</span> System.Text.Json;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Live;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Live.AspNetCore;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Live.DependencyInjection;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Live.EntityFrameworkCore;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Live.ServerSentEvents;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Replication;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Streams;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Streams.DependencyInjection;\n<span class=\"hljs-keyword\">using</span> Microsoft.EntityFrameworkCore;\n\n<span class=\"hljs-keyword\">var</span> builder = WebApplication.CreateBuilder(<span class=\"hljs-keyword\">args</span>);\n<span class=\"hljs-keyword\">var</span> connectionString = builder.Configuration.GetConnectionString(<span class=\"hljs-string\">&quot;App&quot;</span>)\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Set ConnectionStrings__App.&quot;</span>);\n<span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\nbuilder.Services.AddSingleton(dataSource);\nbuilder.Services.AddDbContextFactory&lt;TodoContext&gt;(options =&gt; options.UseBlueTusk(dataSource));\n\n<span class=\"hljs-comment\">// Live storage: the invalidation log and the replay window, in schema bluetusk_live.</span>\n<span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> PostgreSqlLiveInvalidationStore(<span class=\"hljs-keyword\">new</span> PostgreSqlLiveStoreOptions\n{\n    ControlDataSource = dataSource,\n    ControlSchema = <span class=\"hljs-string\">&quot;bluetusk_live&quot;</span>,\n});\nbuilder.Services.AddSingleton&lt;ILiveInvalidationLog&gt;(store);\nbuilder.Services.AddSingleton&lt;ILiveReplayStore&gt;(store);\nbuilder.Services.AddSingleton(<span class=\"hljs-keyword\">new</span> LiveQueryRegistry());\nbuilder.Services.AddSingleton&lt;TodoSubscriptions&gt;();\nbuilder.Services.AddSingleton&lt;ILiveTransportSubscriptionResolver&gt;(\n    services =&gt; services.GetRequiredService&lt;TodoSubscriptions&gt;());\nbuilder.Services.AddHostedService&lt;LiveRefreshWorker&gt;();\n\n<span class=\"hljs-comment\">// Resume tokens are signed with a secret of at least 32 bytes.</span>\n<span class=\"hljs-keyword\">var</span> resumeKey = Convert.FromBase64String(builder.Configuration[<span class=\"hljs-string\">&quot;Live:ResumeKey&quot;</span>]\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Set Live__ResumeKey.&quot;</span>));\nbuilder.Services.AddBlueTuskLiveAspNetCore(<span class=\"hljs-keyword\">new</span> LiveResumeTokenProtector(\n    [<span class=\"hljs-meta\">new LiveResumeTokenKey(<span class=\"hljs-string\">&quot;local&quot;</span>, resumeKey, isPrimary: true)</span>]));\n\n<span class=\"hljs-comment\">// Streams: every committed change to public.todos becomes a Live invalidation.</span>\nChangeSourceIdentity source;\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> replication = <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions()))\n{\n    <span class=\"hljs-keyword\">var</span> server = <span class=\"hljs-keyword\">await</span> replication.IdentifySystemAsync();\n    source = <span class=\"hljs-keyword\">new</span> ChangeSourceIdentity(\n        server.SystemIdentifier, server.DatabaseName!, <span class=\"hljs-string\">&quot;live_todos&quot;</span>, <span class=\"hljs-string\">&quot;live_todos&quot;</span>);\n}\n\n<span class=\"hljs-keyword\">var</span> todosTable = <span class=\"hljs-keyword\">new</span> ChangeTable(<span class=\"hljs-number\">0</span>, <span class=\"hljs-string\">&quot;public&quot;</span>, <span class=\"hljs-string\">&quot;todos&quot;</span>, <span class=\"hljs-string\">&#x27;d&#x27;</span>,\n    [<span class=\"hljs-meta\">new ChangeColumn(0, <span class=\"hljs-string\">&quot;id&quot;</span>, 20, -1, IsKey: true)</span>]);\nbuilder.Services.AddSingleton(<span class=\"hljs-keyword\">new</span> LiveInvalidationConsumer(<span class=\"hljs-string\">&quot;app&quot;</span>, store));\nbuilder.Services.AddBlueTuskStreams().AddHostedConsumer&lt;LiveInvalidationConsumer&gt;(\n    <span class=\"hljs-string\">&quot;live-invalidations&quot;</span>,\n    _ =&gt; <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotSource(dataSource, <span class=\"hljs-keyword\">new</span> PostgreSqlConsistentSnapshotOptions\n    {\n        Source = source,\n        PublicationNames = [<span class=\"hljs-string\">&quot;live_todos&quot;</span>],\n        Tables = [<span class=\"hljs-keyword\">new</span> PostgreSqlSnapshotTable(todosTable, [<span class=\"hljs-number\">0</span>])],\n        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,\n    }));\n\n<span class=\"hljs-keyword\">var</span> app = builder.Build();\n<span class=\"hljs-keyword\">await</span> store.InitializeAsync();\n\n<span class=\"hljs-comment\">// Register the live query. Compilation rejects unsupported shapes, such as a missing Take.</span>\n<span class=\"hljs-keyword\">var</span> plan = <span class=\"hljs-keyword\">await</span> LiveEfQueryCompiler.CompileAsync(\n    app.Services.GetRequiredService&lt;IDbContextFactory&lt;TodoContext&gt;&gt;(),\n    <span class=\"hljs-keyword\">new</span> LiveEfQueryDefinition&lt;TodoContext, Todo, <span class=\"hljs-built_in\">long</span>&gt;(\n        name: <span class=\"hljs-string\">&quot;my-todos&quot;</span>,\n        databaseIdentity: <span class=\"hljs-string\">&quot;app&quot;</span>,\n        version: <span class=\"hljs-string\">&quot;v1&quot;</span>,\n        parameters: [<span class=\"hljs-keyword\">new</span> LiveQueryParameter(<span class=\"hljs-string\">&quot;owner&quot;</span>, <span class=\"hljs-keyword\">typeof</span>(<span class=\"hljs-built_in\">string</span>))],\n        validationArguments: <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">object</span>?&gt; { [<span class=\"hljs-string\">&quot;owner&quot;</span>] = <span class=\"hljs-string\">&quot;example&quot;</span> },\n        maximumResultCount: <span class=\"hljs-number\">100</span>,\n        queryFactory: (db, arguments) =&gt;\n        {\n            <span class=\"hljs-keyword\">var</span> owner = arguments.Get&lt;<span class=\"hljs-built_in\">string</span>&gt;(<span class=\"hljs-string\">&quot;owner&quot;</span>)!;\n            <span class=\"hljs-keyword\">return</span> db.Todos\n                .Where(todo =&gt; todo.Owner == owner)\n                .OrderBy(todo =&gt; todo.Id)\n                .Take(<span class=\"hljs-number\">100</span>);\n        },\n        keySelector: todo =&gt; todo.Id,\n        rowComparer: EqualityComparer&lt;Todo&gt;.Default,\n        tenantIsolationMode: LiveEfTenantIsolationMode.RegisteredPredicate,\n        tenantBinding: <span class=\"hljs-keyword\">new</span> LiveEfTenantBinding(<span class=\"hljs-keyword\">nameof</span>(Todo.Owner), <span class=\"hljs-string\">&quot;owner&quot;</span>)));\napp.Services.GetRequiredService&lt;LiveQueryRegistry&gt;().Register(plan);\n\n<span class=\"hljs-comment\">// Development only: trust an X-Demo-User header. Use real authentication in production.</span>\napp.Use((context, next) =&gt;\n{\n    <span class=\"hljs-keyword\">if</span> (context.Request.Headers[<span class=\"hljs-string\">&quot;X-Demo-User&quot;</span>] <span class=\"hljs-keyword\">is</span> [{ Length: &gt; <span class=\"hljs-number\">0</span> } user])\n    {\n        context.User = <span class=\"hljs-keyword\">new</span> ClaimsPrincipal(\n            <span class=\"hljs-keyword\">new</span> ClaimsIdentity([<span class=\"hljs-keyword\">new</span> Claim(ClaimTypes.Name, user)], <span class=\"hljs-string\">&quot;demo&quot;</span>));\n    }\n\n    <span class=\"hljs-keyword\">return</span> next(context);\n});\n\napp.UseDefaultFiles();\napp.UseStaticFiles();\napp.MapBlueTuskLiveServerSentEvents();\napp.Run();\n\n<span class=\"hljs-comment\">// A record compares by value, so unchanged rows are not resent.</span>\n<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">record</span> <span class=\"hljs-title\">Todo</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">long</span> Id { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">string</span> Owner { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; } = <span class=\"hljs-string\">&quot;&quot;</span>;\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">string</span> Title { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; } = <span class=\"hljs-string\">&quot;&quot;</span>;\n}\n\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">TodoContext</span>(<span class=\"hljs-params\">DbContextOptions&lt;TodoContext&gt; options</span>) : <span class=\"hljs-title\">DbContext</span>(<span class=\"hljs-params\">options</span>)</span>\n{\n    <span class=\"hljs-keyword\">public</span> DbSet&lt;Todo&gt; Todos =&gt; Set&lt;Todo&gt;();\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">void</span> <span class=\"hljs-title\">OnModelCreating</span>(<span class=\"hljs-params\">ModelBuilder model</span>)</span> =&gt;\n        model.Entity&lt;Todo&gt;(todo =&gt;\n        {\n            todo.ToTable(<span class=\"hljs-string\">&quot;todos&quot;</span>, <span class=\"hljs-string\">&quot;public&quot;</span>);\n            todo.Property(t =&gt; t.Id).HasColumnName(<span class=\"hljs-string\">&quot;id&quot;</span>);\n            todo.Property(t =&gt; t.Owner).HasColumnName(<span class=\"hljs-string\">&quot;owner&quot;</span>);\n            todo.Property(t =&gt; t.Title).HasColumnName(<span class=\"hljs-string\">&quot;title&quot;</span>);\n        });\n}\n\n<span class=\"hljs-comment\">// Turns a request into a running shared subscription for the signed-in user.</span>\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">TodoSubscriptions</span>(<span class=\"hljs-params\">\n    LiveQueryRegistry queries,\n    ILiveInvalidationLog invalidations,\n    ILiveReplayStore replay</span>) : ILiveTransportSubscriptionResolver</span>\n{\n    <span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">readonly</span> ConcurrentDictionary&lt;<span class=\"hljs-built_in\">string</span>, LiveSharedSubscription&lt;Todo, <span class=\"hljs-built_in\">long</span>&gt;&gt; _running = <span class=\"hljs-keyword\">new</span>();\n    <span class=\"hljs-keyword\">private</span> <span class=\"hljs-keyword\">readonly</span> SemaphoreSlim _gate = <span class=\"hljs-keyword\">new</span>(<span class=\"hljs-number\">1</span>, <span class=\"hljs-number\">1</span>);\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">async</span> ValueTask&lt;ILiveSharedSubscription&gt; <span class=\"hljs-title\">ResolveAsync</span>(<span class=\"hljs-params\">\n        <span class=\"hljs-built_in\">string</span> query,\n        JsonElement parameters,\n        ClaimsPrincipal principal,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        <span class=\"hljs-keyword\">if</span> (query != <span class=\"hljs-string\">&quot;my-todos&quot;</span>)\n        {\n            <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> LiveTransportRequestException(<span class=\"hljs-string\">$&quot;Unknown live query &#x27;<span class=\"hljs-subst\">{query}</span>&#x27;.&quot;</span>);\n        }\n\n        <span class=\"hljs-comment\">// The owner comes from the authenticated user, never from the browser.</span>\n        <span class=\"hljs-keyword\">var</span> owner = principal.Identity?.Name\n            ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> LiveTransportAuthorizationException(<span class=\"hljs-string\">&quot;A user name is required.&quot;</span>);\n        <span class=\"hljs-keyword\">await</span> _gate.WaitAsync(cancellationToken);\n        <span class=\"hljs-keyword\">try</span>\n        {\n            <span class=\"hljs-keyword\">if</span> (_running.TryGetValue(owner, <span class=\"hljs-keyword\">out</span> <span class=\"hljs-keyword\">var</span> existing))\n            {\n                <span class=\"hljs-keyword\">return</span> existing;\n            }\n\n            <span class=\"hljs-keyword\">var</span> plan = queries.Get&lt;Todo, <span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-string\">&quot;my-todos&quot;</span>);\n            <span class=\"hljs-keyword\">var</span> session = <span class=\"hljs-keyword\">new</span> LiveQuerySession&lt;Todo, <span class=\"hljs-built_in\">long</span>&gt;(\n                plan,\n                plan.Bind(<span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">object</span>?&gt; { [<span class=\"hljs-string\">&quot;owner&quot;</span>] = owner }),\n                <span class=\"hljs-keyword\">new</span> LiveSecurityScope(<span class=\"hljs-string\">$&quot;user:<span class=\"hljs-subst\">{owner}</span>&quot;</span>, <span class=\"hljs-string\">&quot;todos-policy-v1&quot;</span>),\n                invalidations);\n            <span class=\"hljs-keyword\">var</span> subscription = <span class=\"hljs-keyword\">new</span> LiveSharedSubscription&lt;Todo, <span class=\"hljs-built_in\">long</span>&gt;(session, replay);\n            <span class=\"hljs-keyword\">try</span>\n            {\n                <span class=\"hljs-keyword\">await</span> subscription.StartAsync(cancellationToken);\n            }\n            <span class=\"hljs-keyword\">catch</span>\n            {\n                <span class=\"hljs-keyword\">await</span> subscription.DisposeAsync();\n                <span class=\"hljs-keyword\">throw</span>;\n            }\n\n            _running[owner] = subscription;\n            <span class=\"hljs-keyword\">return</span> subscription;\n        }\n        <span class=\"hljs-keyword\">finally</span>\n        {\n            _gate.Release();\n        }\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">async</span> Task <span class=\"hljs-title\">RefreshAllAsync</span>(<span class=\"hljs-params\">CancellationToken cancellationToken</span>)</span>\n    {\n        <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> subscription <span class=\"hljs-keyword\">in</span> _running.Values)\n        {\n            <span class=\"hljs-keyword\">await</span> subscription.RefreshAsync(cancellationToken);\n        }\n    }\n}\n\n<span class=\"hljs-comment\">// Re-runs a subscription&#x27;s query only when its tables have new invalidations.</span>\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">LiveRefreshWorker</span>(<span class=\"hljs-params\">TodoSubscriptions subscriptions, ILogger&lt;LiveRefreshWorker&gt; logger</span>)\n    : BackgroundService</span>\n{\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">async</span> Task <span class=\"hljs-title\">ExecuteAsync</span>(<span class=\"hljs-params\">CancellationToken stoppingToken</span>)</span>\n    {\n        <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> timer = <span class=\"hljs-keyword\">new</span> PeriodicTimer(TimeSpan.FromMilliseconds(<span class=\"hljs-number\">250</span>));\n        <span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> timer.WaitForNextTickAsync(stoppingToken))\n        {\n            <span class=\"hljs-keyword\">try</span>\n            {\n                <span class=\"hljs-keyword\">await</span> subscriptions.RefreshAllAsync(stoppingToken);\n            }\n            <span class=\"hljs-keyword\">catch</span> (Exception exception) <span class=\"hljs-keyword\">when</span> (!stoppingToken.IsCancellationRequested)\n            {\n                logger.LogWarning(exception, <span class=\"hljs-string\">&quot;Live refresh failed; it will be retried.&quot;</span>);\n            }\n        }\n    }\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>What the pieces do:</p>\n<ul>\n<li><strong>The live query</strong> <code>my-todos</code> is compiled at startup. It filters by the\n<code>owner</code> parameter, has a deterministic order that includes the key, and a\nhard limit of 100 rows.</li>\n<li><strong><code>TodoSubscriptions</code></strong> is the authorization point. It ignores any owner the\nbrowser might send and binds the signed-in user’s name instead.</li>\n<li><strong>Streams</strong> reads committed changes from the <code>live_todos</code> publication and\nrecords which tables changed. <strong><code>LiveRefreshWorker</code></strong> re-runs a query only\nwhen one of its tables changed, then sends the difference.</li>\n</ul>\n<p><a href=\"/documentation/real-time/live-concepts\">Concepts</a> explains each step.</p>\n<h2>4. Write the page</h2>\n<p>Create <code>app.ts</code> next to <code>Program.cs</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "import { BlueTuskLiveClient } from \"@bluetusk/live\";\n\ninterface Todo {\n  Id: number;\n  Owner: string;\n  Title: string;\n}\n\nconst client = new BlueTuskLiveClient({\n  endpoint: \"/bluetusk/live/sse\",\n  headers: { \"X-Demo-User\": \"alice\" }\n});\n\nconst query = client.createQuery<Todo, number, object>({\n  query: \"my-todos\",\n  parameters: {}\n});\n\nconst status = document.querySelector(\"#status\")!;\nconst list = document.querySelector(\"#todos\")!;\n\nquery.subscribe((state) => {\n  status.textContent = state.error ? `${state.phase}: ${state.error.message}` : state.phase;\n  list.replaceChildren(\n    ...state.rows.map((todo) => {\n      const item = document.createElement(\"li\");\n      item.textContent = `${todo.Id}: ${todo.Title}`;\n      return item;\n    })\n  );\n});\n\nquery.start();\n",
+        "highlighted": "<span class=\"hljs-keyword\">import</span> { <span class=\"hljs-title class_\">BlueTuskLiveClient</span> } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@bluetusk/live&quot;</span>;\n\n<span class=\"hljs-keyword\">interface</span> <span class=\"hljs-title class_\">Todo</span> {\n  <span class=\"hljs-title class_\">Id</span>: <span class=\"hljs-built_in\">number</span>;\n  <span class=\"hljs-title class_\">Owner</span>: <span class=\"hljs-built_in\">string</span>;\n  <span class=\"hljs-title class_\">Title</span>: <span class=\"hljs-built_in\">string</span>;\n}\n\n<span class=\"hljs-keyword\">const</span> client = <span class=\"hljs-keyword\">new</span> <span class=\"hljs-title class_\">BlueTuskLiveClient</span>({\n  <span class=\"hljs-attr\">endpoint</span>: <span class=\"hljs-string\">&quot;/bluetusk/live/sse&quot;</span>,\n  <span class=\"hljs-attr\">headers</span>: { <span class=\"hljs-string\">&quot;X-Demo-User&quot;</span>: <span class=\"hljs-string\">&quot;alice&quot;</span> }\n});\n\n<span class=\"hljs-keyword\">const</span> query = client.<span class=\"hljs-property\">createQuery</span>&lt;<span class=\"hljs-title class_\">Todo</span>, <span class=\"hljs-built_in\">number</span>, <span class=\"hljs-built_in\">object</span>&gt;({\n  <span class=\"hljs-attr\">query</span>: <span class=\"hljs-string\">&quot;my-todos&quot;</span>,\n  <span class=\"hljs-attr\">parameters</span>: {}\n});\n\n<span class=\"hljs-keyword\">const</span> status = <span class=\"hljs-variable language_\">document</span>.<span class=\"hljs-title function_\">querySelector</span>(<span class=\"hljs-string\">&quot;#status&quot;</span>)!;\n<span class=\"hljs-keyword\">const</span> list = <span class=\"hljs-variable language_\">document</span>.<span class=\"hljs-title function_\">querySelector</span>(<span class=\"hljs-string\">&quot;#todos&quot;</span>)!;\n\nquery.<span class=\"hljs-title function_\">subscribe</span>(<span class=\"hljs-function\">(<span class=\"hljs-params\">state</span>) =&gt;</span> {\n  status.<span class=\"hljs-property\">textContent</span> = state.<span class=\"hljs-property\">error</span> ? <span class=\"hljs-string\">`<span class=\"hljs-subst\">${state.phase}</span>: <span class=\"hljs-subst\">${state.error.message}</span>`</span> : state.<span class=\"hljs-property\">phase</span>;\n  list.<span class=\"hljs-title function_\">replaceChildren</span>(\n    ...state.<span class=\"hljs-property\">rows</span>.<span class=\"hljs-title function_\">map</span>(<span class=\"hljs-function\">(<span class=\"hljs-params\">todo</span>) =&gt;</span> {\n      <span class=\"hljs-keyword\">const</span> item = <span class=\"hljs-variable language_\">document</span>.<span class=\"hljs-title function_\">createElement</span>(<span class=\"hljs-string\">&quot;li&quot;</span>);\n      item.<span class=\"hljs-property\">textContent</span> = <span class=\"hljs-string\">`<span class=\"hljs-subst\">${todo.Id}</span>: <span class=\"hljs-subst\">${todo.Title}</span>`</span>;\n      <span class=\"hljs-keyword\">return</span> item;\n    })\n  );\n});\n\nquery.<span class=\"hljs-title function_\">start</span>();\n",
+        "language": "typescript"
+      },
+      {
+        "kind": "html",
+        "html": "<blockquote>\n<p><strong>Note:</strong> With the published 1.0.0 or 1.1.0-rc.1 client, add\n<code>fetch: (input, init) =&gt; fetch(input, init)</code> to the options, or the page shows\n<code>Illegal invocation</code>. See <a href=\"/documentation/real-time/live-troubleshooting#the-page-says-illegal-invocation\">troubleshooting</a>.</p>\n</blockquote>\n<p>Rows arrive with the C# property names (<code>Id</code>, <code>Title</code>), because the server\nserializes them with default <code>System.Text.Json</code> settings.</p>\n<p>Create <code>wwwroot/index.html</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <title>Live todos</title>\n  </head>\n  <body>\n    <h1>Alice's todos</h1>\n    <p>Connection: <span id=\"status\">idle</span></p>\n    <ul id=\"todos\"></ul>\n    <script type=\"module\" src=\"app.js\"></script>\n  </body>\n</html>\n",
+        "highlighted": "<span class=\"hljs-meta\">&lt;!doctype <span class=\"hljs-keyword\">html</span>&gt;</span>\n<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">html</span> <span class=\"hljs-attr\">lang</span>=<span class=\"hljs-string\">&quot;en&quot;</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">head</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">meta</span> <span class=\"hljs-attr\">charset</span>=<span class=\"hljs-string\">&quot;utf-8&quot;</span> /&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">title</span>&gt;</span>Live todos<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">title</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">head</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">body</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">h1</span>&gt;</span>Alice&#x27;s todos<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">h1</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">p</span>&gt;</span>Connection: <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">span</span> <span class=\"hljs-attr\">id</span>=<span class=\"hljs-string\">&quot;status&quot;</span>&gt;</span>idle<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">span</span>&gt;</span><span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">p</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">ul</span> <span class=\"hljs-attr\">id</span>=<span class=\"hljs-string\">&quot;todos&quot;</span>&gt;</span><span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">ul</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">script</span> <span class=\"hljs-attr\">type</span>=<span class=\"hljs-string\">&quot;module&quot;</span> <span class=\"hljs-attr\">src</span>=<span class=\"hljs-string\">&quot;app.js&quot;</span>&gt;</span><span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">script</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">body</span>&gt;</span>\n<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">html</span>&gt;</span>\n",
+        "language": "html"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Bundle the script into <code>wwwroot/app.js</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "npx esbuild app.ts --bundle --format=esm --outfile=wwwroot/app.js\n",
+        "highlighted": "npx esbuild app.ts <span class=\"hljs-literal\">--bundle</span> <span class=\"hljs-literal\">--format</span>=esm <span class=\"hljs-literal\">--outfile</span>=wwwroot/app.js\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>5. Run the app</h2>\n<p>Set the connection string and a resume-token signing key, then start the app:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:ConnectionStrings__App = \"Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=live_quickstart;SSL Mode=Disable;Channel Binding=Disable\"\n$env:Live__ResumeKey = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))\ndotnet run --urls http://localhost:5080\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:ConnectionStrings__App</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=live_quickstart;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n<span class=\"hljs-variable\">$env:Live__ResumeKey</span> = [<span class=\"hljs-type\">Convert</span>]::ToBase64String([<span class=\"hljs-type\">Security.Cryptography.RandomNumberGenerator</span>]::GetBytes(<span class=\"hljs-number\">32</span>))\ndotnet run <span class=\"hljs-literal\">--urls</span> http://localhost:<span class=\"hljs-number\">5080</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>On Linux or macOS, use <code>export ConnectionStrings__App=&quot;...&quot;</code> and\n<code>export Live__ResumeKey=$(openssl rand -base64 32)</code>.</p>\n<blockquote>\n<p><strong>Warning:</strong> <code>SSL Mode=Disable</code> is only for a local test container. Keep the\ndefault <code>SSL Mode=VerifyFull</code> everywhere else.</p>\n</blockquote>\n<p>Open <a href=\"http://localhost:5080\" target=\"_blank\" rel=\"noreferrer\">http://localhost:5080</a>. The page shows <code>Connection: live</code> and an empty\nlist.</p>\n<h2>6. Change the table</h2>\n<p>In the <code>psql</code> session from step 1:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "INSERT INTO public.todos (owner, title) VALUES ('alice', 'Write the docs'), ('bob', 'Not for alice');\nUPDATE public.todos SET title = 'Write the Live docs' WHERE id = 1;\nINSERT INTO public.todos (owner, title) VALUES ('alice', 'Ship it');\nDELETE FROM public.todos WHERE title = 'Ship it';\n",
+        "highlighted": "<span class=\"hljs-keyword\">INSERT INTO</span> public.todos (owner, title) <span class=\"hljs-keyword\">VALUES</span> (<span class=\"hljs-string\">&#x27;alice&#x27;</span>, <span class=\"hljs-string\">&#x27;Write the docs&#x27;</span>), (<span class=\"hljs-string\">&#x27;bob&#x27;</span>, <span class=\"hljs-string\">&#x27;Not for alice&#x27;</span>);\n<span class=\"hljs-keyword\">UPDATE</span> public.todos <span class=\"hljs-keyword\">SET</span> title <span class=\"hljs-operator\">=</span> <span class=\"hljs-string\">&#x27;Write the Live docs&#x27;</span> <span class=\"hljs-keyword\">WHERE</span> id <span class=\"hljs-operator\">=</span> <span class=\"hljs-number\">1</span>;\n<span class=\"hljs-keyword\">INSERT INTO</span> public.todos (owner, title) <span class=\"hljs-keyword\">VALUES</span> (<span class=\"hljs-string\">&#x27;alice&#x27;</span>, <span class=\"hljs-string\">&#x27;Ship it&#x27;</span>);\n<span class=\"hljs-keyword\">DELETE</span> <span class=\"hljs-keyword\">FROM</span> public.todos <span class=\"hljs-keyword\">WHERE</span> title <span class=\"hljs-operator\">=</span> <span class=\"hljs-string\">&#x27;Ship it&#x27;</span>;\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Expected result: after each statement the page changes within about a\nsecond. Alice’s item appears, is renamed, a second item appears and then\ndisappears. Bob’s row never appears, because the query is bound to the\nsigned-in user.</p>\n<p>Stop the app with Ctrl+C and start it again with the same <code>Live__ResumeKey</code>.\nThe open page reconnects by itself and catches up, including rows changed\nwhile the app was down.</p>\n<h2>7. Clean up</h2>\n<p>Stop the app first. Then remove the replication slot, because an unused slot\nkeeps PostgreSQL from removing old WAL:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -d live_quickstart -c \"SELECT pg_drop_replication_slot('live_todos')\"\ndocker exec bluetusk-postgres psql -U postgres -c \"DROP DATABASE live_quickstart\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-d</span> live_quickstart <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;SELECT pg_drop_replication_slot(&#x27;live_todos&#x27;)&quot;</span>\ndocker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;DROP DATABASE live_quickstart&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/live-concepts\">Concepts</a>: what happened between the <code>INSERT</code> and the page.</li>\n<li><a href=\"/documentation/real-time/live-clients\">Framework guides</a>: the same query in Angular, React, Vue or\nSvelte.</li>\n<li><a href=\"/documentation/real-time/live-configuration\">Configuration</a>: limits, token lifetime and transports.</li>\n<li><a href=\"/documentation/real-time/live-troubleshooting\">Troubleshooting</a>: what to check when updates do not\narrive.</li>\n<li>Before production: replace the demo header with real authentication, keep\nthe signing key in a secret store, and call <code>PruneAsync</code> on the store on a\nschedule (see <a href=\"/documentation/real-time/live-configuration#postgresqllivestoreoptions\">configuration</a>).</li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-concepts",
+    "summary": "Registered queries, subscriber scope, re-query and diff, snapshots, resume, batching and transports.",
+    "keywords": [
+      "live",
+      "concepts",
+      "subscription",
+      "resume"
+    ],
+    "order": 112,
+    "listed": true,
+    "title": "Live concepts",
+    "sourcePath": "docs/live/concepts.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/concepts.md",
+    "headings": [
+      {
+        "id": "live-concepts",
+        "text": "Live concepts",
+        "level": 1
+      },
+      {
+        "id": "the-path-from-a-commit-to-the-screen",
+        "text": "The path from a commit to the screen",
+        "level": 2
+      },
+      {
+        "id": "registered-queries",
+        "text": "Registered queries",
+        "level": 2
+      },
+      {
+        "id": "who-may-see-what-scope-and-authorization",
+        "text": "Who may see what: scope and authorization",
+        "level": 2
+      },
+      {
+        "id": "change-signal-re-query-diff",
+        "text": "Change signal, re-query, diff",
+        "level": 2
+      },
+      {
+        "id": "sequences-replay-and-resume-tokens",
+        "text": "Sequences, replay and resume tokens",
+        "level": 2
+      },
+      {
+        "id": "batching-on-the-client",
+        "text": "Batching on the client",
+        "level": 2
+      },
+      {
+        "id": "backpressure-and-limits",
+        "text": "Backpressure and limits",
+        "level": 2
+      },
+      {
+        "id": "transports",
+        "text": "Transports",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 1662,
+    "readMinutes": 8,
+    "searchText": "Live concepts This page explains how BlueTusk Live turns a committed PostgreSQL change into an update on a user's screen, so you can design queries, authorization and limits that behave the way you expect. It builds on the shared [core concepts](../getting-started/concepts.md), in particular [Live results are re-queried](../getting-started/concepts.md#live-results-are-re-queried-not-copied-from-the-change-feed). The path from a commit to the screen Live never forwards row data from the change feed. The change only says \"this table changed\". The rows a user sees always come from running the registered query again with that user's parameters and scope. Registered queries A **registered query** is a query plan that trusted server code creates at startup. Clients refer to it by name and cannot send SQL. The plan type is `LiveQueryPlan<TRow, TKey>`. It records the name, the tables it depends on, its typed parameters, a hard result limit, how to run it and how to get each row's key. Most applications create plans from EF Core with `LiveEfQueryCompiler.CompileAsync` (package `BlueTusk.Live.EntityFrameworkCore`). The compiler accepts this shape and rejects anything else with `LiveEfQueryRegistrationException` before any client connects: Rule Example One mapped root entity with a single-column primary key `db.Todos` Simple `Where` predicates over parameters `.Where(t => t.Owner == owner)` `OrderBy`/`ThenBy` that includes the primary key `.OrderBy(t => t.Id)` Exactly one `Take`, between 1 and `maximumResultCount` `.Take(100)` Optional `Include`/`ThenInclude` of one-to-many navigations `.Include(o => o.Lines)` Every table reached through an `Include` becomes a dependency of the plan, so a change to any of them refreshes the query. `CompileProjectionAsync` accepts a separate result type for grouped and joined projections; see the [full reference](reference.md#ef-query-registration). Parameters are declared with `LiveQueryParameter(name, type, allowNull)` and must be scalars: `s",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Live concepts</h1>\n<p>This page explains how BlueTusk Live turns a committed PostgreSQL change into\nan update on a user’s screen, so you can design queries, authorization and\nlimits that behave the way you expect. It builds on the shared\n<a href=\"/documentation/getting-started/concepts\">core concepts</a>, in particular\n<a href=\"/documentation/getting-started/concepts#live-results-are-re-queried-not-copied-from-the-change-feed\">Live results are re-queried</a>.</p>\n<h2>The path from a commit to the screen</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "PostgreSQL commit\n   │  logical replication (Streams)\n   ▼\nLiveInvalidationConsumer ──► invalidation log: \"cursor 42 changed public.todos\"\n                                    │\nyour refresh loop ── RefreshAsync ──┘\n   │  did any table this query depends on change since my cursor?\n   │     no  ──► nothing to do\n   │     yes ──► run the registered query again, with this subscriber's scope\n   ▼\nkeyed diff (RowAdded, RowUpdated, RowRemoved, ResultReordered, or ResultReset)\n   │  appended to the replay window, numbered by sequence\n   ▼\nevery connected client of this subscription ──► browser applies the events\n",
+        "highlighted": "PostgreSQL commit\n   │  logical replication (Streams)\n   ▼\nLiveInvalidationConsumer ──► invalidation log: &quot;cursor 42 changed public.todos&quot;\n                                    │\nyour refresh loop ── RefreshAsync ──┘\n   │  did any table this query depends on change since my cursor?\n   │     no  ──► nothing to do\n   │     yes ──► run the registered query again, with this subscriber&#x27;s scope\n   ▼\nkeyed diff (RowAdded, RowUpdated, RowRemoved, ResultReordered, or ResultReset)\n   │  appended to the replay window, numbered by sequence\n   ▼\nevery connected client of this subscription ──► browser applies the events\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Live never forwards row data from the change feed. The change only says\n“this table changed”. The rows a user sees always come from running the\nregistered query again with that user’s parameters and scope.</p>\n<h2>Registered queries</h2>\n<p>A <strong>registered query</strong> is a query plan that trusted server code creates at\nstartup. Clients refer to it by name and cannot send SQL. The plan type is\n<code>LiveQueryPlan&lt;TRow, TKey&gt;</code>. It records the name, the tables it depends on, its\ntyped parameters, a hard result limit, how to run it and how to get each row’s\nkey.</p>\n<p>Most applications create plans from EF Core with\n<code>LiveEfQueryCompiler.CompileAsync</code> (package <code>BlueTusk.Live.EntityFrameworkCore</code>).\nThe compiler accepts this shape and rejects anything else with\n<code>LiveEfQueryRegistrationException</code> before any client connects:</p>\n<table>\n<thead>\n<tr>\n<th>Rule</th>\n<th>Example</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>One mapped root entity with a single-column primary key</td>\n<td><code>db.Todos</code></td>\n</tr>\n<tr>\n<td>Simple <code>Where</code> predicates over parameters</td>\n<td><code>.Where(t =&gt; t.Owner == owner)</code></td>\n</tr>\n<tr>\n<td><code>OrderBy</code>/<code>ThenBy</code> that includes the primary key</td>\n<td><code>.OrderBy(t =&gt; t.Id)</code></td>\n</tr>\n<tr>\n<td>Exactly one <code>Take</code>, between 1 and <code>maximumResultCount</code></td>\n<td><code>.Take(100)</code></td>\n</tr>\n<tr>\n<td>Optional <code>Include</code>/<code>ThenInclude</code> of one-to-many navigations</td>\n<td><code>.Include(o =&gt; o.Lines)</code></td>\n</tr>\n</tbody>\n</table>\n<p>Every table reached through an <code>Include</code> becomes a dependency of the plan, so a\nchange to any of them refreshes the query. <code>CompileProjectionAsync</code> accepts a\nseparate result type for grouped and joined projections; see the\n<a href=\"/documentation/real-time/live-reference#ef-query-registration\">full reference</a>.</p>\n<p>Parameters are declared with <code>LiveQueryParameter(name, type, allowNull)</code> and\nmust be scalars: <code>string</code>, <code>bool</code>, integer and floating-point types, <code>decimal</code>,\n<code>Guid</code>, <code>DateOnly</code>, <code>TimeOnly</code>, <code>DateTime</code>, <code>DateTimeOffset</code> or an enum.\nArguments must match the declared names and types exactly.</p>\n<p>You can also construct a <code>LiveQueryPlan</code> yourself when the query is not EF\nCore. You then supply the dependencies, the fingerprint\n(<code>LiveQueryFingerprint.Create(name, version)</code>) and the execute delegate.</p>\n<p>An opt-in <strong>client query</strong> mode lets a browser send a restricted query document\nunder a server-issued policy. It is off unless you register\n<code>LiveClientQueryTransportResolver</code>. See the\n<a href=\"/documentation/real-time/live-reference#capability-secured-client-queries\">full reference</a> and\n<a href=\"/documentation/architecture/architecture-decisions-0015-capability-secured-client-queries\">ADR 0015</a>.</p>\n<h2>Who may see what: scope and authorization</h2>\n<p>Every request goes through your <strong>resolver</strong>, an\n<code>ILiveTransportSubscriptionResolver</code>. The transport has already checked that\nthe caller is authenticated; the resolver decides what they may see. It:</p>\n<ol>\n<li>checks the query name and the caller’s claims;</li>\n<li>binds arguments, taking tenant or user values from the claims rather than\nfrom the request;</li>\n<li>creates a <code>LiveSecurityScope(scope, authorizationPolicyVersion)</code>, for\nexample <code>new LiveSecurityScope(&quot;tenant:acme&quot;, &quot;orders-policy-v3&quot;)</code>;</li>\n<li>returns a started <code>LiveSharedSubscription</code>.</li>\n</ol>\n<p>The <strong>subscription identity</strong> is the combination of database identity, query\nplan fingerprint, parameter values, security scope, policy version and result\nlimit. Return the same subscription for an identical identity, so one query\nexecution and one replay window serve all those clients.\n<code>LiveSharedSubscriptionRegistry.GetOrAdd</code> does this lookup for you. Any\ndifference gives a different identity, so results never cross a scope. Change the policy\nversion when your authorization rules change; old resume tokens then stop\nmatching.</p>\n<p>Bind tenant isolation in the plan as well. The EF compiler requires one of\nthree <code>LiveEfTenantIsolationMode</code> values:</p>\n<table>\n<thead>\n<tr>\n<th>Mode</th>\n<th>What the compiler checks</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>RegisteredPredicate</code></td>\n<td>The <code>Where</code> clause compares the <code>LiveEfTenantBinding</code> property with the named parameter.</td>\n</tr>\n<tr>\n<td><code>EfGlobalQueryFilter</code></td>\n<td>The entity has an EF global query filter.</td>\n</tr>\n<tr>\n<td><code>DatabaseRowLevelSecurity</code></td>\n<td>Nothing; you rely on PostgreSQL row-level security for the connection’s role.</td>\n</tr>\n</tbody>\n</table>\n<p>The <a href=\"/documentation/real-time/live#security-checklist\">security checklist</a> lists the rest.</p>\n<h2>Change signal, re-query, diff</h2>\n<p><code>LiveInvalidationConsumer</code> is a Streams consumer. For each committed\ntransaction it records the affected tables in the invalidation log\n(<code>PostgreSqlLiveInvalidationStore</code>) under a new <strong>cursor</strong> number, and only then\nacknowledges the transaction to Streams. A failed write is retried by Streams,\nso a change is never lost between PostgreSQL and the log.</p>\n<p>Each subscription remembers the cursor of its last result. When your code calls\n<code>RefreshAsync</code>:</p>\n<ul>\n<li>if none of the plan’s tables changed since that cursor, no query runs;</li>\n<li>otherwise Live runs the query <strong>once</strong>, however many changes arrived, and\ncompares the new rows with the previous rows by key.</li>\n</ul>\n<blockquote>\n<p><strong>Note:</strong> In 1.1.0 your application calls <code>RefreshAsync</code>, for example from a\nbackground service on a short timer, as in the <a href=\"/documentation/real-time/live-quickstart\">quick start</a>.\nThere is no built-in refresh scheduler.</p>\n</blockquote>\n<p>The comparison produces keyed events:</p>\n<table>\n<thead>\n<tr>\n<th>Event</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>InitialResult</code></td>\n<td>The complete first result.</td>\n</tr>\n<tr>\n<td><code>RowAdded</code>, <code>RowUpdated</code>, <code>RowRemoved</code></td>\n<td>One row changed, with its index.</td>\n</tr>\n<tr>\n<td><code>ResultReordered</code></td>\n<td>The same rows in a new order.</td>\n</tr>\n<tr>\n<td><code>ResultReset</code></td>\n<td>A complete replacement result, with a reason.</td>\n</tr>\n</tbody>\n</table>\n<p>A reset happens when a diff would exceed <code>LiveDiffOptions.MaximumEventsPerRefresh</code>\n(reason <code>DiffLimitExceeded</code>), after a server restart (<code>ServerRestart</code>), when the\nreplay window no longer covers a new client (<code>ReplayExpired</code>), or when you call\n<code>ResetAsync</code> (<code>QueryShapeChanged</code>, <code>SchemaChanged</code>).</p>\n<p>The first result is taken carefully: Live notes the cursor, runs the query, and\nchecks the log again. If a relevant table changed meanwhile, it runs the query\nagain, up to <code>MaximumInitialCatchUpPasses</code> times. This closes the gap between\n“read the rows” and “start listening”.</p>\n<h2>Sequences, replay and resume tokens</h2>\n<p>Every event gets a <strong>sequence</strong> number, starting at 1 for each subscription.\nBefore any client sees an event, Live appends it to the <strong>replay window</strong> in\nPostgreSQL. Calling the store’s <code>PruneAsync</code> removes events older than\n<code>ReplayRetentionWindow</code> (one hour by default); nothing is removed until you\ncall it.</p>\n<p>Each message to a client carries a <strong>resume token</strong>: a signed, expiring token\nthat names the subscription identity and the sequence. The client keeps the\nlatest one. When the connection drops, it reconnects with the token and\nreceives only the events it missed.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "client has seq 7 ──disconnect──► reconnect with token(seq 7)\nserver replays 8, 9, 10 from the window, then continues live\n",
+        "highlighted": "client has seq 7 ──disconnect──► reconnect with token(seq 7)\nserver replays 8, 9, 10 from the window, then continues live\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>What happens when resuming is not possible:</p>\n<table>\n<thead>\n<tr>\n<th>Situation</th>\n<th>Server answer</th>\n<th>Client behavior</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Token older than <code>ResumeTokenLifetime</code> (30 min)</td>\n<td><code>ResumeTokenExpired</code>, HTTP 409</td>\n<td>Drops the token, reconnects, receives a full result.</td>\n</tr>\n<tr>\n<td>Events after the token were pruned</td>\n<td><code>ReplayUnavailable</code>, HTTP 409</td>\n<td>Same.</td>\n</tr>\n<tr>\n<td>Token signed by an unknown key, tampered, or for another subscription</td>\n<td><code>InvalidResumeToken</code>, HTTP 400</td>\n<td>Stops with <code>phase: &quot;faulted&quot;</code>.</td>\n</tr>\n<tr>\n<td>Server restarted</td>\n<td>Replay continues; a <code>ResultReset</code> (<code>ServerRestart</code>) follows</td>\n<td>Applies the reset.</td>\n</tr>\n</tbody>\n</table>\n<p>A resume token is not a saved result. A new page that only has a stored token\nstill needs a full result; the client handles that by requiring an\n<code>InitialResult</code> or <code>ResultReset</code> before it accepts deltas.</p>\n<h2>Batching on the client</h2>\n<p>New in 1.1.0: the browser client reduces up to <code>maximumBatchEvents</code> (default\n64) events that are already available before it builds one new <code>rows</code> array and\nnotifies subscribers. It never waits for a timer or for more events: a smaller\nbatch is published at the end of each network read. Set <code>maximumBatchEvents: 1</code>\nif your code must observe every intermediate state. The resume token is saved\nonly after the batch’s rows are in <code>query.state</code>.</p>\n<p>The framework adapters add one more step: they combine rapid notifications into\none update per microtask.</p>\n<h2>Backpressure and limits</h2>\n<p>Every limit has a fixed default and a clear error when it is reached:</p>\n<table>\n<thead>\n<tr>\n<th>Limit</th>\n<th>Default</th>\n<th>When reached</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Rows per query (<code>maximumResultCount</code>)</td>\n<td>set per plan</td>\n<td>Registration fails if <code>Take</code> is larger; a hand-built plan that returns more fails the refresh with <code>LiveQueryResultLimitException</code>.</td>\n</tr>\n<tr>\n<td>Events per refresh (<code>MaximumEventsPerRefresh</code>)</td>\n<td>1,024</td>\n<td>A <code>ResultReset</code> replaces the diff.</td>\n</tr>\n<tr>\n<td>Messages queued per client (<code>SubscriberBufferCapacity</code>)</td>\n<td>128</td>\n<td>The slow client is handled by <code>SlowClientPolicy</code>.</td>\n</tr>\n<tr>\n<td>Clients per subscription (<code>MaximumSubscribers</code>)</td>\n<td>1,000</td>\n<td>HTTP 429; the client retries.</td>\n</tr>\n<tr>\n<td>Replay events per connect (<code>MaximumReplayEventsPerConnect</code>)</td>\n<td>1,024</td>\n<td>HTTP 409.</td>\n</tr>\n<tr>\n<td>Shared subscriptions per registry (<code>MaximumSharedSubscriptions</code>)</td>\n<td>10,000</td>\n<td><code>LiveSubscriptionQuotaException</code> from <code>GetOrAdd</code>.</td>\n</tr>\n<tr>\n<td>Request body (<code>MaximumRequestBytes</code>)</td>\n<td>64 KiB</td>\n<td>HTTP 413.</td>\n</tr>\n</tbody>\n</table>\n<p>A <strong>slow client</strong> is one that does not read fast enough for its 128-message\nqueue. Live never silently drops an event for a client that keeps going. With\n<code>LiveSlowClientPolicy.Disconnect</code> (the default) the connection ends and the\nclient resumes from its token. With <code>RequireReset</code> the client receives a reset\nmessage, drops its token and reconnects for a full result.</p>\n<h2>Transports</h2>\n<p>All transports carry the same messages: an event, its sequence and a fresh\nresume token.</p>\n<table>\n<thead>\n<tr>\n<th>Transport</th>\n<th>Package</th>\n<th>Map with</th>\n<th>Default path</th>\n<th>Clients</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Server-sent events</td>\n<td><code>BlueTusk.Live.ServerSentEvents</code></td>\n<td><code>MapBlueTuskLiveServerSentEvents()</code></td>\n<td><code>POST /bluetusk/live/sse</code></td>\n<td><code>@bluetusk/live</code> and its framework adapters</td>\n</tr>\n<tr>\n<td>SignalR</td>\n<td><code>BlueTusk.Live.SignalR</code></td>\n<td><code>MapBlueTuskLiveHub()</code></td>\n<td><code>/bluetusk/live</code></td>\n<td>Any SignalR client; streaming method <code>SubscribeAsync</code></td>\n</tr>\n<tr>\n<td>gRPC</td>\n<td><code>BlueTusk.Live.Grpc</code></td>\n<td><code>MapBlueTuskLiveGrpc()</code></td>\n<td><code>bluetusk.live.v1.BlueTuskLive/Subscribe</code></td>\n<td>Generated gRPC clients; the package includes the .NET one</td>\n</tr>\n</tbody>\n</table>\n<p>The SSE endpoint is a <code>POST</code> that the client reads as a stream with <code>fetch</code>.\nIt is not compatible with the browser’s <code>EventSource</code>, which only sends <code>GET</code>.\nChoose SSE for browsers, SignalR when the app already uses it, and gRPC for\nservice-to-service. See <a href=\"/documentation/real-time/live-configuration#transports\">configuration</a>.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/live-configuration\">Configuration</a>: every option and default.</li>\n<li><a href=\"/documentation/real-time/live-clients\">Framework guides</a>: Angular, React, Vue and Svelte.</li>\n<li><a href=\"/documentation/real-time/live-troubleshooting\">Troubleshooting</a>.</li>\n<li><a href=\"/documentation/real-time/live-reference\">Full engineering reference</a>.</li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-configuration",
+    "summary": "Live server options, transport settings and browser client options, with defaults.",
+    "keywords": [
+      "live",
+      "configuration",
+      "options",
+      "client"
+    ],
+    "order": 113,
+    "listed": true,
+    "title": "Configure BlueTusk Live",
+    "sourcePath": "docs/live/configuration.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/configuration.md",
+    "headings": [
+      {
+        "id": "configure-bluetusk-live",
+        "text": "Configure BlueTusk Live",
+        "level": 1
+      },
+      {
+        "id": "what-you-configure-and-where",
+        "text": "What you configure, and where",
+        "level": 2
+      },
+      {
+        "id": "postgresqllivestoreoptions",
+        "text": "PostgreSqlLiveStoreOptions",
+        "level": 2
+      },
+      {
+        "id": "query-registration",
+        "text": "Query registration",
+        "level": 2
+      },
+      {
+        "id": "subscriptions-and-limits",
+        "text": "Subscriptions and limits",
+        "level": 2
+      },
+      {
+        "id": "resume-tokens-and-requests",
+        "text": "Resume tokens and requests",
+        "level": 2
+      },
+      {
+        "id": "transports",
+        "text": "Transports",
+        "level": 2
+      },
+      {
+        "id": "browser-client-options",
+        "text": "Browser client options",
+        "level": 2
+      },
+      {
+        "id": "client-query-policies",
+        "text": "Client query policies",
+        "level": 2
+      },
+      {
+        "id": "aspire",
+        "text": "Aspire",
+        "level": 2
+      },
+      {
+        "id": "telemetry",
+        "text": "Telemetry",
+        "level": 2
+      }
+    ],
+    "wordCount": 2017,
+    "readMinutes": 10,
+    "searchText": "Configure BlueTusk Live This page lists every setting you can change in BlueTusk Live, on the server and in the browser client, with its type and default. For what the settings mean together, read [Concepts](concepts.md) first. The [full engineering reference](reference.md) has background detail. Live has no `appsettings.json` section of its own. You set options in code when you create each object. To drive them from configuration, read your own section and pass the values in, as shown in [Aspire](#aspire). What you configure, and where Object Package Purpose [`PostgreSqlLiveStoreOptions`](#postgresqllivestoreoptions) `BlueTusk.Live.DependencyInjection` Invalidation log and replay window in PostgreSQL. [`LiveEfQueryDefinition`](#query-registration) `BlueTusk.Live.EntityFrameworkCore` One registered EF Core query. [`LiveQuerySessionOptions`](#subscriptions-and-limits) `BlueTusk.Live` First result and diff size. [`LiveSharedSubscriptionOptions`](#subscriptions-and-limits) `BlueTusk.Live` Clients, queues and replay per subscription. [`LiveSharedSubscriptionRegistryOptions`](#subscriptions-and-limits) `BlueTusk.Live` Number of shared subscriptions. [`LiveResumeTokenProtector`, `LiveAspNetCoreOptions`](#resume-tokens-and-requests) `BlueTusk.Live` / `BlueTusk.Live.AspNetCore` Token signing, token lifetime, request size. [Transport mapping](#transports) `BlueTusk.Live.ServerSentEvents`, `.SignalR`, `.Grpc` Endpoints and paths. [`LiveClientOptions`](#browser-client-options) `@bluetusk/live` Browser connection, retries and batching. [`BlueTuskLiveAspireOptions`](#aspire) `BlueTusk.Live.Aspire` Settings passed from an Aspire AppHost. PostgreSqlLiveStoreOptions `PostgreSqlLiveInvalidationStore` implements the invalidation log (`ILiveInvalidationLog`), the sink that Streams writes to (`ILiveInvalidationSink`) and the replay store (`ILiveReplayStore`). It creates its tables on first use, or when you call `InitializeAsync`. Option Type Default Meaning `ControlDataSource` `DbDataS",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Configure BlueTusk Live</h1>\n<p>This page lists every setting you can change in BlueTusk Live, on the server\nand in the browser client, with its type and default. For what the settings\nmean together, read <a href=\"/documentation/real-time/live-concepts\">Concepts</a> first. The\n<a href=\"/documentation/real-time/live-reference\">full engineering reference</a> has background detail.</p>\n<p>Live has no <code>appsettings.json</code> section of its own. You set options in code when\nyou create each object. To drive them from configuration, read your own section\nand pass the values in, as shown in <a href=\"#aspire\">Aspire</a>.</p>\n<h2>What you configure, and where</h2>\n<table>\n<thead>\n<tr>\n<th>Object</th>\n<th>Package</th>\n<th>Purpose</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><a href=\"#postgresqllivestoreoptions\"><code>PostgreSqlLiveStoreOptions</code></a></td>\n<td><code>BlueTusk.Live.DependencyInjection</code></td>\n<td>Invalidation log and replay window in PostgreSQL.</td>\n</tr>\n<tr>\n<td><a href=\"#query-registration\"><code>LiveEfQueryDefinition</code></a></td>\n<td><code>BlueTusk.Live.EntityFrameworkCore</code></td>\n<td>One registered EF Core query.</td>\n</tr>\n<tr>\n<td><a href=\"#subscriptions-and-limits\"><code>LiveQuerySessionOptions</code></a></td>\n<td><code>BlueTusk.Live</code></td>\n<td>First result and diff size.</td>\n</tr>\n<tr>\n<td><a href=\"#subscriptions-and-limits\"><code>LiveSharedSubscriptionOptions</code></a></td>\n<td><code>BlueTusk.Live</code></td>\n<td>Clients, queues and replay per subscription.</td>\n</tr>\n<tr>\n<td><a href=\"#subscriptions-and-limits\"><code>LiveSharedSubscriptionRegistryOptions</code></a></td>\n<td><code>BlueTusk.Live</code></td>\n<td>Number of shared subscriptions.</td>\n</tr>\n<tr>\n<td><a href=\"#resume-tokens-and-requests\"><code>LiveResumeTokenProtector</code>, <code>LiveAspNetCoreOptions</code></a></td>\n<td><code>BlueTusk.Live</code> / <code>BlueTusk.Live.AspNetCore</code></td>\n<td>Token signing, token lifetime, request size.</td>\n</tr>\n<tr>\n<td><a href=\"#transports\">Transport mapping</a></td>\n<td><code>BlueTusk.Live.ServerSentEvents</code>, <code>.SignalR</code>, <code>.Grpc</code></td>\n<td>Endpoints and paths.</td>\n</tr>\n<tr>\n<td><a href=\"#browser-client-options\"><code>LiveClientOptions</code></a></td>\n<td><code>@bluetusk/live</code></td>\n<td>Browser connection, retries and batching.</td>\n</tr>\n<tr>\n<td><a href=\"#aspire\"><code>BlueTuskLiveAspireOptions</code></a></td>\n<td><code>BlueTusk.Live.Aspire</code></td>\n<td>Settings passed from an Aspire AppHost.</td>\n</tr>\n</tbody>\n</table>\n<h2>PostgreSqlLiveStoreOptions</h2>\n<p><code>PostgreSqlLiveInvalidationStore</code> implements the invalidation log\n(<code>ILiveInvalidationLog</code>), the sink that Streams writes to\n(<code>ILiveInvalidationSink</code>) and the replay store (<code>ILiveReplayStore</code>). It creates\nits tables on first use, or when you call <code>InitializeAsync</code>.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var store = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions\n{\n    ControlDataSource = controlDataSource,\n    ControlSchema = \"bluetusk_live\",\n    ReplayRetentionWindow = TimeSpan.FromHours(1),\n    MaximumReplayEventBytes = 4 * 1024 * 1024,\n    ReplayPruneBatchSize = 1_000,\n    MaximumDependenciesPerTransaction = 1_024,\n    MaximumDependenciesPerQuery = 128,\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> PostgreSqlLiveInvalidationStore(<span class=\"hljs-keyword\">new</span> PostgreSqlLiveStoreOptions\n{\n    ControlDataSource = controlDataSource,\n    ControlSchema = <span class=\"hljs-string\">&quot;bluetusk_live&quot;</span>,\n    ReplayRetentionWindow = TimeSpan.FromHours(<span class=\"hljs-number\">1</span>),\n    MaximumReplayEventBytes = <span class=\"hljs-number\">4</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n    ReplayPruneBatchSize = <span class=\"hljs-number\">1_000</span>,\n    MaximumDependenciesPerTransaction = <span class=\"hljs-number\">1_024</span>,\n    MaximumDependenciesPerQuery = <span class=\"hljs-number\">128</span>,\n});\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>ControlDataSource</code></td>\n<td><code>DbDataSource</code></td>\n<td>required</td>\n<td>Where the Live tables live.</td>\n</tr>\n<tr>\n<td><code>ControlSchema</code></td>\n<td><code>string</code></td>\n<td><code>&quot;bluetusk_streams&quot;</code></td>\n<td>Schema for the Live tables. At most 63 UTF-8 bytes.</td>\n</tr>\n<tr>\n<td><code>ReplayRetentionWindow</code></td>\n<td><code>TimeSpan</code></td>\n<td>1 hour</td>\n<td><code>PruneAsync</code> removes replay events older than this.</td>\n</tr>\n<tr>\n<td><code>MaximumReplayEventBytes</code></td>\n<td><code>int</code></td>\n<td>4 MiB</td>\n<td>Largest single serialized event the store accepts.</td>\n</tr>\n<tr>\n<td><code>ReplayPruneBatchSize</code></td>\n<td><code>int</code></td>\n<td>1,000</td>\n<td>Events removed per <code>PruneAsync</code> call.</td>\n</tr>\n<tr>\n<td><code>MaximumDependenciesPerTransaction</code></td>\n<td><code>int</code></td>\n<td>1,024</td>\n<td>Distinct tables recorded for one committed transaction.</td>\n</tr>\n<tr>\n<td><code>MaximumDependenciesPerQuery</code></td>\n<td><code>int</code></td>\n<td>128</td>\n<td>Tables one query may depend on when checking for changes.</td>\n</tr>\n</tbody>\n</table>\n<p>The store never prunes by itself. Run <code>PruneAsync</code> on a schedule:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "public sealed class LiveReplayPruner(PostgreSqlLiveInvalidationStore store) : BackgroundService\n{\n    protected override async Task ExecuteAsync(CancellationToken stoppingToken)\n    {\n        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));\n        while (await timer.WaitForNextTickAsync(stoppingToken))\n        {\n            while (await store.PruneAsync(stoppingToken) > 0)\n            {\n            }\n        }\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">LiveReplayPruner</span>(<span class=\"hljs-params\">PostgreSqlLiveInvalidationStore store</span>) : BackgroundService</span>\n{\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">async</span> Task <span class=\"hljs-title\">ExecuteAsync</span>(<span class=\"hljs-params\">CancellationToken stoppingToken</span>)</span>\n    {\n        <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> timer = <span class=\"hljs-keyword\">new</span> PeriodicTimer(TimeSpan.FromMinutes(<span class=\"hljs-number\">1</span>));\n        <span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> timer.WaitForNextTickAsync(stoppingToken))\n        {\n            <span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> store.PruneAsync(stoppingToken) &gt; <span class=\"hljs-number\">0</span>)\n            {\n            }\n        }\n    }\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>If the control tables are in the same database as your data, do not add them\nto the publication that feeds Live. Otherwise each invalidation write would\nproduce another change.</p>\n<h2>Query registration</h2>\n<p><code>LiveEfQueryDefinition&lt;TContext, TEntity, TKey&gt;</code> takes these constructor\narguments. See the <a href=\"/documentation/real-time/live-quickstart#3-write-the-server\">quick start</a> for a\ncomplete example.</p>\n<table>\n<thead>\n<tr>\n<th>Argument</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>name</code></td>\n<td>The name clients send as <code>query</code>. Unique per <code>LiveQueryRegistry</code>.</td>\n</tr>\n<tr>\n<td><code>databaseIdentity</code></td>\n<td>A stable name for the database. Part of the subscription identity.</td>\n</tr>\n<tr>\n<td><code>version</code></td>\n<td>Change it when the query’s meaning changes; it changes the plan fingerprint.</td>\n</tr>\n<tr>\n<td><code>parameters</code></td>\n<td><code>LiveQueryParameter(name, type, allowNull = false)</code> values. Scalars only.</td>\n</tr>\n<tr>\n<td><code>validationArguments</code></td>\n<td>Sample values used to check and translate the query at startup.</td>\n</tr>\n<tr>\n<td><code>maximumResultCount</code></td>\n<td>Hard row limit. <code>Take</code> must be between 1 and this value.</td>\n</tr>\n<tr>\n<td><code>queryFactory</code></td>\n<td><code>(context, arguments) =&gt; IQueryable&lt;TEntity&gt;</code> in the supported shape.</td>\n</tr>\n<tr>\n<td><code>keySelector</code></td>\n<td>The primary key property, for example <code>todo =&gt; todo.Id</code>.</td>\n</tr>\n<tr>\n<td><code>rowComparer</code></td>\n<td>Decides whether a row with the same key changed.</td>\n</tr>\n<tr>\n<td><code>tenantIsolationMode</code></td>\n<td><code>RegisteredPredicate</code>, <code>EfGlobalQueryFilter</code> or <code>DatabaseRowLevelSecurity</code>.</td>\n</tr>\n<tr>\n<td><code>tenantBinding</code></td>\n<td><code>LiveEfTenantBinding(entityProperty, parameterName)</code>; required for <code>RegisteredPredicate</code> only.</td>\n</tr>\n</tbody>\n</table>\n<p>Rows are sent to clients with default <code>System.Text.Json</code> settings, so property\nnames keep their C# spelling. Use <code>[JsonPropertyName]</code> on the row type if you\nwant other names.</p>\n<h2>Subscriptions and limits</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var session = new LiveQuerySession<TRow, long>(\n    plan,\n    arguments,\n    scope,\n    invalidations,\n    resultLimit: null, // null uses the plan's maximumResultCount\n    options: new LiveQuerySessionOptions\n    {\n        MaximumInitialCatchUpPasses = 32,\n        Diff = new LiveDiffOptions { MaximumEventsPerRefresh = 1_024 },\n    });\n\nvar subscription = new LiveSharedSubscription<TRow, long>(\n    session,\n    replay,\n    new LiveSharedSubscriptionOptions\n    {\n        MaximumSubscribers = 1_000,\n        SubscriberBufferCapacity = 128,\n        MaximumReplayEventsPerConnect = 1_024,\n        SlowClientPolicy = LiveSlowClientPolicy.Disconnect,\n    });\n\nvar registry = new LiveSharedSubscriptionRegistry(new LiveSharedSubscriptionRegistryOptions\n{\n    MaximumSharedSubscriptions = 10_000,\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> session = <span class=\"hljs-keyword\">new</span> LiveQuerySession&lt;TRow, <span class=\"hljs-built_in\">long</span>&gt;(\n    plan,\n    arguments,\n    scope,\n    invalidations,\n    resultLimit: <span class=\"hljs-literal\">null</span>, <span class=\"hljs-comment\">// null uses the plan&#x27;s maximumResultCount</span>\n    options: <span class=\"hljs-keyword\">new</span> LiveQuerySessionOptions\n    {\n        MaximumInitialCatchUpPasses = <span class=\"hljs-number\">32</span>,\n        Diff = <span class=\"hljs-keyword\">new</span> LiveDiffOptions { MaximumEventsPerRefresh = <span class=\"hljs-number\">1_024</span> },\n    });\n\n<span class=\"hljs-keyword\">var</span> subscription = <span class=\"hljs-keyword\">new</span> LiveSharedSubscription&lt;TRow, <span class=\"hljs-built_in\">long</span>&gt;(\n    session,\n    replay,\n    <span class=\"hljs-keyword\">new</span> LiveSharedSubscriptionOptions\n    {\n        MaximumSubscribers = <span class=\"hljs-number\">1_000</span>,\n        SubscriberBufferCapacity = <span class=\"hljs-number\">128</span>,\n        MaximumReplayEventsPerConnect = <span class=\"hljs-number\">1_024</span>,\n        SlowClientPolicy = LiveSlowClientPolicy.Disconnect,\n    });\n\n<span class=\"hljs-keyword\">var</span> registry = <span class=\"hljs-keyword\">new</span> LiveSharedSubscriptionRegistry(<span class=\"hljs-keyword\">new</span> LiveSharedSubscriptionRegistryOptions\n{\n    MaximumSharedSubscriptions = <span class=\"hljs-number\">10_000</span>,\n});\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>resultLimit</code> (session argument)</td>\n<td><code>int?</code></td>\n<td>plan limit</td>\n<td>A lower row limit for this subscription. Part of its identity.</td>\n</tr>\n<tr>\n<td><code>LiveQuerySessionOptions.MaximumInitialCatchUpPasses</code></td>\n<td><code>int</code></td>\n<td>32</td>\n<td>Attempts to take a first result while the tables keep changing.</td>\n</tr>\n<tr>\n<td><code>LiveDiffOptions.MaximumEventsPerRefresh</code></td>\n<td><code>int</code></td>\n<td>1,024</td>\n<td>Larger diffs are sent as one <code>ResultReset</code>.</td>\n</tr>\n<tr>\n<td><code>LiveSharedSubscriptionOptions.MaximumSubscribers</code></td>\n<td><code>int</code></td>\n<td>1,000</td>\n<td>Connected clients per subscription. More get HTTP 429.</td>\n</tr>\n<tr>\n<td><code>LiveSharedSubscriptionOptions.SubscriberBufferCapacity</code></td>\n<td><code>int</code></td>\n<td>128</td>\n<td>Messages queued for one client before it counts as slow.</td>\n</tr>\n<tr>\n<td><code>LiveSharedSubscriptionOptions.MaximumReplayEventsPerConnect</code></td>\n<td><code>int</code></td>\n<td>1,024</td>\n<td>Most events replayed to one connecting client. More get HTTP 409.</td>\n</tr>\n<tr>\n<td><code>LiveSharedSubscriptionOptions.SlowClientPolicy</code></td>\n<td><code>LiveSlowClientPolicy</code></td>\n<td><code>Disconnect</code></td>\n<td><code>Disconnect</code> ends the connection; <code>RequireReset</code> sends a reset message first.</td>\n</tr>\n<tr>\n<td><code>LiveSharedSubscriptionRegistryOptions.MaximumSharedSubscriptions</code></td>\n<td><code>int</code></td>\n<td>10,000</td>\n<td>Distinct subscriptions in one registry.</td>\n</tr>\n</tbody>\n</table>\n<h2>Resume tokens and requests</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddBlueTuskLiveAspNetCore(\n    new LiveResumeTokenProtector(\n    [\n        new LiveResumeTokenKey(\"2026-10\", newKey, isPrimary: true),\n        new LiveResumeTokenKey(\"2026-04\", previousKey),\n    ]),\n    new LiveAspNetCoreOptions\n    {\n        ResumeTokenLifetime = TimeSpan.FromMinutes(30),\n        MaximumRequestBytes = 64 * 1024,\n    });\n",
+        "highlighted": "builder.Services.AddBlueTuskLiveAspNetCore(\n    <span class=\"hljs-keyword\">new</span> LiveResumeTokenProtector(\n    [\n        <span class=\"hljs-keyword\">new</span> LiveResumeTokenKey(<span class=\"hljs-string\">&quot;2026-10&quot;</span>, newKey, isPrimary: <span class=\"hljs-literal\">true</span>),\n        <span class=\"hljs-keyword\">new</span> LiveResumeTokenKey(<span class=\"hljs-string\">&quot;2026-04&quot;</span>, previousKey),\n    ]),\n    <span class=\"hljs-keyword\">new</span> LiveAspNetCoreOptions\n    {\n        ResumeTokenLifetime = TimeSpan.FromMinutes(<span class=\"hljs-number\">30</span>),\n        MaximumRequestBytes = <span class=\"hljs-number\">64</span> * <span class=\"hljs-number\">1024</span>,\n    });\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>LiveResumeTokenKey(keyId, secret, isPrimary = false)</code> rules:</p>\n<ul>\n<li>the secret must be at least 32 bytes, and the key ID at most 255 UTF-8 bytes;</li>\n<li>key IDs must be unique, and exactly one key must be primary;</li>\n<li>new tokens are signed with the primary key; every listed key can validate.</li>\n</ul>\n<p>To rotate, add the new key as primary and keep the old key listed for at least\n<code>ResumeTokenLifetime</code>. Load secrets from a secret store, not source code. Every\nserver instance must use the same keys.</p>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>LiveAspNetCoreOptions.ResumeTokenLifetime</code></td>\n<td><code>TimeSpan</code></td>\n<td>30 minutes</td>\n<td>How long each issued token stays valid.</td>\n</tr>\n<tr>\n<td><code>LiveAspNetCoreOptions.MaximumRequestBytes</code></td>\n<td><code>long</code></td>\n<td>64 KiB</td>\n<td>Largest subscription request body. Larger gets HTTP 413 (SSE) or <code>ResourceExhausted</code> (gRPC).</td>\n</tr>\n</tbody>\n</table>\n<h2>Transports</h2>\n<p>Each transport needs its ASP.NET Core services and the Live services above.\nThe SignalR hub and the gRPC service carry <code>[Authorize]</code>, so register\nauthentication and authorization.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddAuthentication();\nbuilder.Services.AddAuthorization();\nbuilder.Services.AddSignalR();\nbuilder.Services.AddGrpc();\n\nvar app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapBlueTuskLiveServerSentEvents(\"/bluetusk/live/sse\").RequireAuthorization();\napp.MapBlueTuskLiveHub(\"/bluetusk/live\");\napp.MapBlueTuskLiveGrpc();\n",
+        "highlighted": "builder.Services.AddAuthentication();\nbuilder.Services.AddAuthorization();\nbuilder.Services.AddSignalR();\nbuilder.Services.AddGrpc();\n\n<span class=\"hljs-keyword\">var</span> app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapBlueTuskLiveServerSentEvents(<span class=\"hljs-string\">&quot;/bluetusk/live/sse&quot;</span>).RequireAuthorization();\napp.MapBlueTuskLiveHub(<span class=\"hljs-string\">&quot;/bluetusk/live&quot;</span>);\napp.MapBlueTuskLiveGrpc();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Transport</th>\n<th>Method</th>\n<th>Default</th>\n<th>Notes</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Server-sent events</td>\n<td><code>MapBlueTuskLiveServerSentEvents(pattern)</code></td>\n<td><code>/bluetusk/live/sse</code></td>\n<td><code>POST</code> with JSON <code>{ &quot;query&quot;, &quot;parameters&quot;, &quot;resumeToken&quot; }</code>. Responds with <code>text/event-stream</code>, <code>Cache-Control: no-cache, no-store</code> and <code>X-Accel-Buffering: no</code>. Returns a <code>RouteHandlerBuilder</code>, so you can add <code>RequireAuthorization</code>, <code>RequireCors</code> or rate limiting.</td>\n</tr>\n<tr>\n<td>SignalR</td>\n<td><code>MapBlueTuskLiveHub(pattern)</code></td>\n<td><code>/bluetusk/live</code></td>\n<td>Streaming hub method <code>SubscribeAsync(LiveSubscriptionRequest)</code>. Errors arrive as <code>HubException</code>.</td>\n</tr>\n<tr>\n<td>gRPC</td>\n<td><code>MapBlueTuskLiveGrpc()</code></td>\n<td>service <code>bluetusk.live.v1.BlueTuskLive</code></td>\n<td>Server-streaming <code>Subscribe</code>. Parameters travel as JSON in <code>parameters_json</code>. Needs HTTP/2.</td>\n</tr>\n</tbody>\n</table>\n<p><code>parameters</code> must be a JSON object, even when the query has no parameters\n(<code>{}</code>). HTTP status and gRPC status for each failure are listed in\n<a href=\"/documentation/real-time/live-troubleshooting#what-each-error-response-means\">troubleshooting</a>.</p>\n<h2>Browser client options</h2>\n<p><code>new BlueTuskLiveClient(options)</code> from <code>@bluetusk/live</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "import { BlueTuskLiveClient } from \"@bluetusk/live\";\n\nconst client = new BlueTuskLiveClient({\n  endpoint: \"/bluetusk/live/sse\",           // required\n  headers: { authorization: `Bearer ${accessToken}` },\n  credentials: \"same-origin\",\n  initialRetryDelayMs: 250,\n  maximumRetryDelayMs: 15_000,\n  retryJitter: 0.2,\n  random: Math.random,\n  onResumeToken: (token) => console.debug(\"resume token\", token !== null),\n  maximumBatchEvents: 64\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">import</span> { <span class=\"hljs-title class_\">BlueTuskLiveClient</span> } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@bluetusk/live&quot;</span>;\n\n<span class=\"hljs-keyword\">const</span> client = <span class=\"hljs-keyword\">new</span> <span class=\"hljs-title class_\">BlueTuskLiveClient</span>({\n  <span class=\"hljs-attr\">endpoint</span>: <span class=\"hljs-string\">&quot;/bluetusk/live/sse&quot;</span>,           <span class=\"hljs-comment\">// required</span>\n  <span class=\"hljs-attr\">headers</span>: { <span class=\"hljs-attr\">authorization</span>: <span class=\"hljs-string\">`Bearer <span class=\"hljs-subst\">${accessToken}</span>`</span> },\n  <span class=\"hljs-attr\">credentials</span>: <span class=\"hljs-string\">&quot;same-origin&quot;</span>,\n  <span class=\"hljs-attr\">initialRetryDelayMs</span>: <span class=\"hljs-number\">250</span>,\n  <span class=\"hljs-attr\">maximumRetryDelayMs</span>: <span class=\"hljs-number\">15_000</span>,\n  <span class=\"hljs-attr\">retryJitter</span>: <span class=\"hljs-number\">0.2</span>,\n  <span class=\"hljs-attr\">random</span>: <span class=\"hljs-title class_\">Math</span>.<span class=\"hljs-property\">random</span>,\n  <span class=\"hljs-attr\">onResumeToken</span>: <span class=\"hljs-function\">(<span class=\"hljs-params\">token</span>) =&gt;</span> <span class=\"hljs-variable language_\">console</span>.<span class=\"hljs-title function_\">debug</span>(<span class=\"hljs-string\">&quot;resume token&quot;</span>, token !== <span class=\"hljs-literal\">null</span>),\n  <span class=\"hljs-attr\">maximumBatchEvents</span>: <span class=\"hljs-number\">64</span>\n});\n",
+        "language": "typescript"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>endpoint</code></td>\n<td><code>string</code></td>\n<td>required</td>\n<td>URL of the SSE endpoint.</td>\n</tr>\n<tr>\n<td><code>fetch</code></td>\n<td><code>typeof fetch</code></td>\n<td><code>globalThis.fetch</code></td>\n<td>Optional. A custom fetch function, for example one that adds a fresh access token (see <a href=\"/documentation/real-time/live-troubleshooting#unauthorized-or-forbidden\">troubleshooting</a>). The 1.0.0 and 1.1.0-rc.1 clients need <code>(input, init) =&gt; fetch(input, init)</code> here in a browser; see <a href=\"/documentation/real-time/live-troubleshooting#the-page-says-illegal-invocation\">troubleshooting</a>.</td>\n</tr>\n<tr>\n<td><code>headers</code></td>\n<td><code>Record&lt;string, string&gt;</code></td>\n<td>none</td>\n<td>Extra request headers, for example <code>authorization</code>.</td>\n</tr>\n<tr>\n<td><code>credentials</code></td>\n<td><code>RequestCredentials</code></td>\n<td><code>&quot;same-origin&quot;</code></td>\n<td>Use <code>&quot;include&quot;</code> to send cookies to another origin.</td>\n</tr>\n<tr>\n<td><code>initialRetryDelayMs</code></td>\n<td><code>number</code></td>\n<td>250</td>\n<td>First reconnect delay.</td>\n</tr>\n<tr>\n<td><code>maximumRetryDelayMs</code></td>\n<td><code>number</code></td>\n<td>15,000</td>\n<td>Longest reconnect delay. The delay doubles per attempt up to this.</td>\n</tr>\n<tr>\n<td><code>retryJitter</code></td>\n<td><code>number</code></td>\n<td>0.2</td>\n<td>Random spread, from 0 to 1, applied to each delay.</td>\n</tr>\n<tr>\n<td><code>random</code></td>\n<td><code>() =&gt; number</code></td>\n<td><code>Math.random</code></td>\n<td>Random source for jitter; replace in tests.</td>\n</tr>\n<tr>\n<td><code>onResumeToken</code></td>\n<td><code>(token: string | null) =&gt; void</code></td>\n<td>none</td>\n<td>Called after each applied batch with the latest token, or <code>null</code> when the token is discarded.</td>\n</tr>\n<tr>\n<td><code>maximumBatchEvents</code></td>\n<td><code>number</code></td>\n<td>64</td>\n<td>New in 1.1.0. Events reduced before one <code>rows</code> update. Integer from 1 to 1,024.</td>\n</tr>\n</tbody>\n</table>\n<p><code>createQuery&lt;TRow, TKey, TParameters&gt;({ query, parameters, resumeToken? })</code>\ncreates a <code>LiveQuery</code>. Call <code>start()</code>, <code>subscribe(listener)</code> and <code>stop()</code>.\nLeave <code>resumeToken</code> unset: a new query must start from a full result, and the\nrunning query already keeps its token for reconnects.</p>\n<p>The Vue and Svelte helpers accept a third argument,\n<code>{ autoStart?: boolean }</code>, default <code>true</code>. See <a href=\"/documentation/real-time/live-clients\">framework guides</a>.</p>\n<h2>Client query policies</h2>\n<p>If you enable <a href=\"/documentation/real-time/live-concepts#registered-queries\">client queries</a>,\n<code>LiveClientQueryPolicy</code> sets their limits:</p>\n<table>\n<thead>\n<tr>\n<th>Argument</th>\n<th>Default</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>allowSql</code></td>\n<td><code>false</code> (only the structured LINQ document is accepted)</td>\n</tr>\n<tr>\n<td><code>maximumQueryBytes</code></td>\n<td>32 KiB</td>\n</tr>\n<tr>\n<td><code>maximumParameters</code></td>\n<td>64</td>\n</tr>\n<tr>\n<td><code>maximumResultCount</code></td>\n<td>1,000</td>\n</tr>\n<tr>\n<td><code>maximumResultColumns</code></td>\n<td>128</td>\n</tr>\n<tr>\n<td><code>maximumResultBytes</code></td>\n<td>8 MiB</td>\n</tr>\n<tr>\n<td><code>statementTimeout</code></td>\n<td>5 seconds (at most 5 minutes)</td>\n</tr>\n<tr>\n<td><code>lockTimeout</code></td>\n<td>1 second (at most <code>statementTimeout</code>)</td>\n</tr>\n</tbody>\n</table>\n<p><code>securityMode</code> must include <code>DatabaseRowLevelSecurity</code>,\n<code>DedicatedReadOnlyRole</code> or both. See the\n<a href=\"/documentation/real-time/live-reference#capability-secured-client-queries\">full reference</a>.</p>\n<h2>Aspire</h2>\n<p>In an Aspire AppHost, <code>WithBlueTuskLive</code> passes two connection strings and the\nLive limits to your API project. The application database and the control\ndatabase must be separate Aspire resources.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using Aspire.Hosting;\n\nvar builder = DistributedApplication.CreateBuilder(args);\n\nvar postgres = builder.AddPostgres(\"postgres\");\nvar appDatabase = postgres.AddDatabase(\"app\");\nvar controlDatabase = postgres.AddDatabase(\"live-control\");\n\nbuilder.AddProject(\"api\", \"../Api/Api.csproj\")\n    .WithBlueTuskLive(\n        appDatabase,\n        controlDatabase,\n        new BlueTuskLiveAspireOptions\n        {\n            ControlSchema = \"bluetusk_live\",\n            ReplayRetention = TimeSpan.FromMinutes(30),\n            Transports = BlueTuskLiveAspireTransports.ServerSentEvents,\n        });\n\nbuilder.Build().Run();\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> Aspire.Hosting;\n\n<span class=\"hljs-keyword\">var</span> builder = DistributedApplication.CreateBuilder(<span class=\"hljs-keyword\">args</span>);\n\n<span class=\"hljs-keyword\">var</span> postgres = builder.AddPostgres(<span class=\"hljs-string\">&quot;postgres&quot;</span>);\n<span class=\"hljs-keyword\">var</span> appDatabase = postgres.AddDatabase(<span class=\"hljs-string\">&quot;app&quot;</span>);\n<span class=\"hljs-keyword\">var</span> controlDatabase = postgres.AddDatabase(<span class=\"hljs-string\">&quot;live-control&quot;</span>);\n\nbuilder.AddProject(<span class=\"hljs-string\">&quot;api&quot;</span>, <span class=\"hljs-string\">&quot;../Api/Api.csproj&quot;</span>)\n    .WithBlueTuskLive(\n        appDatabase,\n        controlDatabase,\n        <span class=\"hljs-keyword\">new</span> BlueTuskLiveAspireOptions\n        {\n            ControlSchema = <span class=\"hljs-string\">&quot;bluetusk_live&quot;</span>,\n            ReplayRetention = TimeSpan.FromMinutes(<span class=\"hljs-number\">30</span>),\n            Transports = BlueTuskLiveAspireTransports.ServerSentEvents,\n        });\n\nbuilder.Build().Run();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th><code>BlueTuskLiveAspireOptions</code></th>\n<th>Default</th>\n<th>Environment variable in the API project</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>(application database)</td>\n<td></td>\n<td><code>BLUETUSK_LIVE_SOURCE</code></td>\n</tr>\n<tr>\n<td>(control database)</td>\n<td></td>\n<td><code>BLUETUSK_LIVE_CONTROL</code></td>\n</tr>\n<tr>\n<td><code>ControlSchema</code></td>\n<td><code>&quot;bluetusk_streams&quot;</code></td>\n<td><code>BlueTusk__Live__ControlSchema</code></td>\n</tr>\n<tr>\n<td><code>MaximumSharedSubscriptions</code></td>\n<td>10,000</td>\n<td><code>BlueTusk__Live__MaximumSharedSubscriptions</code></td>\n</tr>\n<tr>\n<td><code>MaximumSubscribersPerQuery</code></td>\n<td>1,000</td>\n<td><code>BlueTusk__Live__MaximumSubscribersPerQuery</code></td>\n</tr>\n<tr>\n<td><code>SubscriberBufferCapacity</code></td>\n<td>128</td>\n<td><code>BlueTusk__Live__SubscriberBufferCapacity</code></td>\n</tr>\n<tr>\n<td><code>MaximumReplayEventsPerConnect</code></td>\n<td>1,024</td>\n<td><code>BlueTusk__Live__MaximumReplayEventsPerConnect</code></td>\n</tr>\n<tr>\n<td><code>ReplayRetention</code></td>\n<td>30 minutes</td>\n<td><code>BlueTusk__Live__ReplayRetentionSeconds</code></td>\n</tr>\n<tr>\n<td><code>Transports</code></td>\n<td><code>All</code></td>\n<td><code>BlueTusk__Live__Transports</code></td>\n</tr>\n</tbody>\n</table>\n<p>The Live packages do not read these variables themselves. Read them in the API\nproject and pass them to the options:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var live = builder.Configuration.GetSection(\"BlueTusk:Live\");\nvar subscriptionOptions = new LiveSharedSubscriptionOptions\n{\n    MaximumSubscribers = live.GetValue(\"MaximumSubscribersPerQuery\", 1_000),\n    SubscriberBufferCapacity = live.GetValue(\"SubscriberBufferCapacity\", 128),\n    MaximumReplayEventsPerConnect = live.GetValue(\"MaximumReplayEventsPerConnect\", 1_024),\n};\nvar registry = new LiveSharedSubscriptionRegistry(new LiveSharedSubscriptionRegistryOptions\n{\n    MaximumSharedSubscriptions = live.GetValue(\"MaximumSharedSubscriptions\", 10_000),\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> live = builder.Configuration.GetSection(<span class=\"hljs-string\">&quot;BlueTusk:Live&quot;</span>);\n<span class=\"hljs-keyword\">var</span> subscriptionOptions = <span class=\"hljs-keyword\">new</span> LiveSharedSubscriptionOptions\n{\n    MaximumSubscribers = live.GetValue(<span class=\"hljs-string\">&quot;MaximumSubscribersPerQuery&quot;</span>, <span class=\"hljs-number\">1_000</span>),\n    SubscriberBufferCapacity = live.GetValue(<span class=\"hljs-string\">&quot;SubscriberBufferCapacity&quot;</span>, <span class=\"hljs-number\">128</span>),\n    MaximumReplayEventsPerConnect = live.GetValue(<span class=\"hljs-string\">&quot;MaximumReplayEventsPerConnect&quot;</span>, <span class=\"hljs-number\">1_024</span>),\n};\n<span class=\"hljs-keyword\">var</span> registry = <span class=\"hljs-keyword\">new</span> LiveSharedSubscriptionRegistry(<span class=\"hljs-keyword\">new</span> LiveSharedSubscriptionRegistryOptions\n{\n    MaximumSharedSubscriptions = live.GetValue(<span class=\"hljs-string\">&quot;MaximumSharedSubscriptions&quot;</span>, <span class=\"hljs-number\">10_000</span>),\n});\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Telemetry</h2>\n<p>Live publishes an <code>ActivitySource</code> and a <code>Meter</code>, both named <code>BlueTusk.Live</code>.\nSubscribe with OpenTelemetry or any .NET metrics listener. Tags never contain\nrow values or parameter values.</p>\n<table>\n<thead>\n<tr>\n<th>Instrument</th>\n<th>Type</th>\n<th>Tags</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>bluetusk.live.authoritative_query.duration</code> (s)</td>\n<td>histogram</td>\n<td><code>bluetusk.live.query.name</code>, <code>bluetusk.live.outcome</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.live.authoritative_query.rows</code></td>\n<td>histogram</td>\n<td><code>bluetusk.live.query.name</code>, <code>bluetusk.live.outcome</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.live.refresh.duration</code> (s), <code>bluetusk.live.refresh.events</code></td>\n<td>histogram</td>\n<td><code>bluetusk.live.query.name</code>, <code>bluetusk.live.outcome</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.live.connections</code></td>\n<td>counter</td>\n<td><code>bluetusk.live.connection.outcome</code>: <code>connected</code>, <code>notstarted</code>, <code>quotaexceeded</code>, <code>replayunavailable</code>, <code>replaylimitexceeded</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.live.clients.active</code></td>\n<td>up-down counter</td>\n<td></td>\n</tr>\n<tr>\n<td><code>bluetusk.live.fanout.deliveries</code></td>\n<td>counter</td>\n<td></td>\n</tr>\n<tr>\n<td><code>bluetusk.live.replay.events</code>, <code>bluetusk.live.replay.bytes</code></td>\n<td>counter</td>\n<td><code>bluetusk.live.replay.operation</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.live.slow_client.disconnects</code></td>\n<td>counter</td>\n<td><code>bluetusk.live.slow_client.policy</code>: <code>disconnect</code>, <code>requirereset</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.live.resume.validations</code></td>\n<td>counter</td>\n<td><code>bluetusk.live.resume.outcome</code>: <code>valid</code>, <code>expired</code>, <code>invalidsignature</code>, <code>unknownkey</code>, <code>identitymismatch</code>, <code>malformed</code>, <code>unsupportedversion</code></td>\n</tr>\n</tbody>\n</table>\n<p>Each shared subscription also exposes <code>Status</code> (<code>LiveSharedSubscriptionStatus</code>)\nwith subscriber counts, quota and resume rejections, and\n<code>LastDisconnectCode</code> (<code>slow-client-disconnect</code> or <code>slow-client-reset</code>).</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-troubleshooting",
+    "summary": "Fix missing updates, authorization, reconnect, resume, limit and proxy problems.",
+    "keywords": [
+      "live",
+      "troubleshooting",
+      "sse",
+      "signalr"
+    ],
+    "order": 114,
+    "listed": true,
+    "title": "Troubleshoot BlueTusk Live",
+    "sourcePath": "docs/live/troubleshooting.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/troubleshooting.md",
+    "headings": [
+      {
+        "id": "troubleshoot-bluetusk-live",
+        "text": "Troubleshoot BlueTusk Live",
+        "level": 1
+      },
+      {
+        "id": "start-with-one-request-from-the-command-line",
+        "text": "Start with one request from the command line",
+        "level": 2
+      },
+      {
+        "id": "what-each-error-response-means",
+        "text": "What each error response means",
+        "level": 2
+      },
+      {
+        "id": "no-updates-arrive",
+        "text": "No updates arrive",
+        "level": 2
+      },
+      {
+        "id": "every-row-is-sent-again-on-each-change",
+        "text": "Every row is sent again on each change",
+        "level": 3
+      },
+      {
+        "id": "unauthorized-or-forbidden",
+        "text": "Unauthorized or forbidden",
+        "level": 2
+      },
+      {
+        "id": "the-page-says-illegal-invocation",
+        "text": "The page says \"Illegal invocation\"",
+        "level": 2
+      },
+      {
+        "id": "reconnect-loops",
+        "text": "Reconnect loops",
+        "level": 2
+      },
+      {
+        "id": "resume-tokens",
+        "text": "Resume tokens",
+        "level": 2
+      },
+      {
+        "id": "the-client-reloads-everything-after-a-reconnect",
+        "text": "The client reloads everything after a reconnect",
+        "level": 3
+      },
+      {
+        "id": "the-client-stops-with-http-400-after-a-server-restart",
+        "text": "The client stops with HTTP 400 after a server restart",
+        "level": 3
+      },
+      {
+        "id": "http-409-on-a-brand-new-connection",
+        "text": "HTTP 409 on a brand-new connection",
+        "level": 3
+      },
+      {
+        "id": "a-fresh-live-connection-must-establish-an-authoritative-snapshot-before-deltas",
+        "text": "\"A fresh Live connection must establish an authoritative snapshot before deltas.\"",
+        "level": 3
+      },
+      {
+        "id": "too-many-subscriptions-or-clients",
+        "text": "Too many subscriptions or clients",
+        "level": 2
+      },
+      {
+        "id": "proxies-buffer-the-stream",
+        "text": "Proxies buffer the stream",
+        "level": 2
+      },
+      {
+        "id": "cors",
+        "text": "CORS",
+        "level": 2
+      },
+      {
+        "id": "startup-errors",
+        "text": "Startup errors",
+        "level": 2
+      },
+      {
+        "id": "client-exceptions",
+        "text": "Client exceptions",
+        "level": 2
+      }
+    ],
+    "wordCount": 2282,
+    "readMinutes": 11,
+    "searchText": "Troubleshoot BlueTusk Live This page helps you find out why live updates do not arrive, why a client is refused, or why it keeps reconnecting. Each section lists the symptom, the cause and the fix, with the real error text. For background, see [Concepts](concepts.md). Start with one request from the command line Take the browser out of the picture. This request opens the SSE stream the way the client does: Replace the URL, query name and authentication header with yours (for example `-H \"authorization: Bearer ...\"`). In PowerShell 7.3 or later, call `curl.exe` with the same arguments on one line. A healthy stream starts with an `InitialResult` event and stays open: If you get an HTTP status instead, look it up in the next table. What each error response means The SSE endpoint and the gRPC service map each failure to a status. SignalR sends the same failures as a `HubException` with the message shown. SSE gRPC Cause Fix 401 `Unauthenticated` The request has no authenticated user (`An authenticated principal is required for a Live subscription.`), or your resolver threw `LiveTransportAuthorizationException`. Send credentials and run `UseAuthentication()` before the endpoint. See [Unauthorized or forbidden](#unauthorized-or-forbidden). 400 `InvalidArgument` The body is not valid JSON, `parameters` is not an object (`Live subscription parameters must be a JSON object.`), your resolver threw `LiveTransportRequestException`, or the resume token is invalid. Send `{ \"query\": \"...\", \"parameters\": {} }`. For tokens, see [resume tokens](#the-client-stops-with-http-400-after-a-server-restart). 405 A `GET` request, for example from the browser's `EventSource`. Use `@bluetusk/live`, which sends `POST`. 413 `ResourceExhausted` The request is larger than `MaximumRequestBytes` (64 KiB). Send fewer or shorter parameters, or raise the limit. 429 `ResourceExhausted` `QuotaExceeded`: the subscription already has `MaximumSubscribers` clients. See [too many subscriptions](#too-many-subscr",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Troubleshoot BlueTusk Live</h1>\n<p>This page helps you find out why live updates do not arrive, why a client is\nrefused, or why it keeps reconnecting. Each section lists the symptom, the\ncause and the fix, with the real error text. For background, see\n<a href=\"/documentation/real-time/live-concepts\">Concepts</a>.</p>\n<h2>Start with one request from the command line</h2>\n<p>Take the browser out of the picture. This request opens the SSE stream the way\nthe client does:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "curl -N -X POST http://localhost:5080/bluetusk/live/sse \\\n  -H \"content-type: application/json\" \\\n  -H \"X-Demo-User: alice\" \\\n  -d '{\"query\":\"my-todos\",\"parameters\":{}}'\n",
+        "highlighted": "curl -N -X POST http://localhost:5080/bluetusk/live/sse \\\n  -H <span class=\"hljs-string\">&quot;content-type: application/json&quot;</span> \\\n  -H <span class=\"hljs-string\">&quot;X-Demo-User: alice&quot;</span> \\\n  -d <span class=\"hljs-string\">&#x27;{&quot;query&quot;:&quot;my-todos&quot;,&quot;parameters&quot;:{}}&#x27;</span>\n",
+        "language": "bash"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Replace the URL, query name and authentication header with yours (for example\n<code>-H &quot;authorization: Bearer ...&quot;</code>). In PowerShell 7.3 or later, call\n<code>curl.exe</code> with the same arguments on one line.</p>\n<p>A healthy stream starts with an <code>InitialResult</code> event and stays open:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "id: 1\nevent: change\ndata: {\"kind\":\"Event\",\"sequence\":1,\"resumeToken\":\"bt1....\",\"event\":{\"sequence\":1,\"kind\":\"InitialResult\",...}}\n",
+        "highlighted": "id: 1\nevent: change\ndata: {&quot;kind&quot;:&quot;Event&quot;,&quot;sequence&quot;:1,&quot;resumeToken&quot;:&quot;bt1....&quot;,&quot;event&quot;:{&quot;sequence&quot;:1,&quot;kind&quot;:&quot;InitialResult&quot;,...}}\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>If you get an HTTP status instead, look it up in the next table.</p>\n<h2>What each error response means</h2>\n<p>The SSE endpoint and the gRPC service map each failure to a status. SignalR\nsends the same failures as a <code>HubException</code> with the message shown.</p>\n<table>\n<thead>\n<tr>\n<th>SSE</th>\n<th>gRPC</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>401</td>\n<td><code>Unauthenticated</code></td>\n<td>The request has no authenticated user (<code>An authenticated principal is required for a Live subscription.</code>), or your resolver threw <code>LiveTransportAuthorizationException</code>.</td>\n<td>Send credentials and run <code>UseAuthentication()</code> before the endpoint. See <a href=\"#unauthorized-or-forbidden\">Unauthorized or forbidden</a>.</td>\n</tr>\n<tr>\n<td>400</td>\n<td><code>InvalidArgument</code></td>\n<td>The body is not valid JSON, <code>parameters</code> is not an object (<code>Live subscription parameters must be a JSON object.</code>), your resolver threw <code>LiveTransportRequestException</code>, or the resume token is invalid.</td>\n<td>Send <code>{ &quot;query&quot;: &quot;...&quot;, &quot;parameters&quot;: {} }</code>. For tokens, see <a href=\"#the-client-stops-with-http-400-after-a-server-restart\">resume tokens</a>.</td>\n</tr>\n<tr>\n<td>405</td>\n<td></td>\n<td>A <code>GET</code> request, for example from the browser’s <code>EventSource</code>.</td>\n<td>Use <code>@bluetusk/live</code>, which sends <code>POST</code>.</td>\n</tr>\n<tr>\n<td>413</td>\n<td><code>ResourceExhausted</code></td>\n<td>The request is larger than <code>MaximumRequestBytes</code> (64 KiB).</td>\n<td>Send fewer or shorter parameters, or raise the limit.</td>\n</tr>\n<tr>\n<td>429</td>\n<td><code>ResourceExhausted</code></td>\n<td><code>QuotaExceeded</code>: the subscription already has <code>MaximumSubscribers</code> clients.</td>\n<td>See <a href=\"#too-many-subscriptions-or-clients\">too many subscriptions</a>.</td>\n</tr>\n<tr>\n<td>409</td>\n<td><code>FailedPrecondition</code></td>\n<td><code>ResumeTokenExpired</code>, <code>ReplayUnavailable</code> or <code>ReplayLimitExceeded</code>.</td>\n<td>The client drops its token and reconnects. See <a href=\"#the-client-reloads-everything-after-a-reconnect\">resume tokens</a>.</td>\n</tr>\n<tr>\n<td>503</td>\n<td><code>Unavailable</code></td>\n<td><code>NotStarted</code>: the resolver returned a subscription that was not started.</td>\n<td>Call <code>StartAsync</code> before returning it.</td>\n</tr>\n<tr>\n<td>500</td>\n<td><code>Internal</code></td>\n<td>Your resolver or the database threw an unexpected exception.</td>\n<td>Read the server log.</td>\n</tr>\n</tbody>\n</table>\n<h2>No updates arrive</h2>\n<p>The page shows the first result but later changes never appear. Work through\nthe path in order: PostgreSQL, Streams, the invalidation log, your refresh loop.</p>\n<table>\n<thead>\n<tr>\n<th>Check</th>\n<th>How</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>The table is in the publication</td>\n<td><code>SELECT * FROM pg_publication_tables WHERE pubname = 'live_todos';</code></td>\n<td><code>ALTER PUBLICATION live_todos ADD TABLE public.todos;</code></td>\n</tr>\n<tr>\n<td>The replication slot is active</td>\n<td><code>SELECT slot_name, active FROM pg_replication_slots;</code> shows your slot with <code>active = t</code> while the app runs.</td>\n<td>If it is missing or inactive, read the Streams worker error in the log or the <code>bluetusk_streams</code> health check. See <a href=\"/documentation/real-time/streams-troubleshooting\">Streams troubleshooting</a>.</td>\n</tr>\n<tr>\n<td>Invalidations are recorded</td>\n<td><code>SELECT database_identity, max(cursor) FROM bluetusk_streams.live_invalidations GROUP BY database_identity;</code> grows after each write. Use your <code>ControlSchema</code> if you changed it (the quick start uses <code>bluetusk_live</code>).</td>\n<td>If not, Streams is not delivering. Check <code>wal_level = logical</code> and the role’s <code>REPLICATION</code> attribute.</td>\n</tr>\n<tr>\n<td>The database identities match</td>\n<td>The <code>database_identity</code> in that result, which you pass to <code>new LiveInvalidationConsumer(&quot;app&quot;, store)</code>, equals the plan’s <code>databaseIdentity</code>.</td>\n<td>Use the same value. A mismatch means the plan never sees its invalidations.</td>\n</tr>\n<tr>\n<td>Something calls <code>RefreshAsync</code></td>\n<td>A breakpoint or log line in your refresh loop.</td>\n<td>1.1.0 has no built-in scheduler; call <code>RefreshAsync</code> on every running subscription, as in the <a href=\"/documentation/real-time/live-quickstart#3-write-the-server\">quick start</a>.</td>\n</tr>\n<tr>\n<td>The refresh does not fail</td>\n<td>Your refresh loop’s log.</td>\n<td>Fix the reported exception; a failed refresh is retried on the next call.</td>\n</tr>\n<tr>\n<td>The row really changed</td>\n<td>Compare the old and new row.</td>\n<td><code>rowComparer</code> decides whether a row changed. A comparer that reports “equal” hides updates.</td>\n</tr>\n</tbody>\n</table>\n<p>A refresh that reports <code>Live query '&lt;name&gt;' returned &lt;n&gt; rows, exceeding its bound of &lt;limit&gt;.</code> (<code>LiveQueryResultLimitException</code>) comes from a hand-built\nplan whose query returns more rows than its limit. Add a matching <code>Take</code> or\n<code>LIMIT</code>.</p>\n<p>A first result that fails with <code>Live query '&lt;name&gt;' could not reach a quiet invalidation boundary after 32 authoritative query passes.</code>\n(<code>LiveInitialCatchUpException</code>) means the tables changed during every attempt.\nRetry later, or raise <code>MaximumInitialCatchUpPasses</code>.</p>\n<h3>Every row is sent again on each change</h3>\n<p>Each change produces <code>RowUpdated</code> for rows that did not change. The row type\ncompares by reference, so <code>EqualityComparer&lt;T&gt;.Default</code> treats every re-queried\nrow as new. Make the row type a <code>record</code>, or pass a <code>rowComparer</code> that compares\nvalues.</p>\n<h2>Unauthorized or forbidden</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>HTTP 401, client <code>phase: &quot;faulted&quot;</code> with <code>BlueTusk Live endpoint returned HTTP 401.</code></td>\n<td>No authenticated user reached the endpoint.</td>\n<td>Send the cookie or <code>authorization</code> header; register authentication middleware before mapping the endpoint.</td>\n</tr>\n<tr>\n<td>HTTP 401 after the page has been open for a while</td>\n<td>The access token in <code>headers</code> expired. <code>headers</code> is fixed when the client is created.</td>\n<td>Supply the current token from a custom <code>fetch</code>, then call <code>query.start()</code> again.</td>\n</tr>\n<tr>\n<td>HTTP 400 or 401 from your resolver</td>\n<td>Your resolver rejected the query name or the caller’s claims.</td>\n<td>The SSE response has no body and the endpoint does not log the message. Log the reason in your resolver before you throw.</td>\n</tr>\n<tr>\n<td>SignalR or gRPC returns 401 before the stream starts</td>\n<td>The hub and service carry <code>[Authorize]</code>.</td>\n<td>Register <code>AddAuthentication</code>, <code>AddAuthorization</code> and the matching middleware.</td>\n</tr>\n</tbody>\n</table>\n<p>A custom <code>fetch</code> that adds the current token:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "const client = new BlueTuskLiveClient({\n  endpoint: \"/bluetusk/live/sse\",\n  fetch: (input, init) => {\n    const headers = new Headers(init?.headers);\n    headers.set(\"authorization\", `Bearer ${getAccessToken()}`);\n    return fetch(input, { ...init, headers });\n  }\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">const</span> client = <span class=\"hljs-keyword\">new</span> <span class=\"hljs-title class_\">BlueTuskLiveClient</span>({\n  <span class=\"hljs-attr\">endpoint</span>: <span class=\"hljs-string\">&quot;/bluetusk/live/sse&quot;</span>,\n  <span class=\"hljs-attr\">fetch</span>: <span class=\"hljs-function\">(<span class=\"hljs-params\">input, init</span>) =&gt;</span> {\n    <span class=\"hljs-keyword\">const</span> headers = <span class=\"hljs-keyword\">new</span> <span class=\"hljs-title class_\">Headers</span>(init?.<span class=\"hljs-property\">headers</span>);\n    headers.<span class=\"hljs-title function_\">set</span>(<span class=\"hljs-string\">&quot;authorization&quot;</span>, <span class=\"hljs-string\">`Bearer <span class=\"hljs-subst\">${getAccessToken()}</span>`</span>);\n    <span class=\"hljs-keyword\">return</span> <span class=\"hljs-title function_\">fetch</span>(input, { ...init, headers });\n  }\n});\n",
+        "language": "typescript"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Live never decides authorization by itself. If a user sees rows they should\nnot, check that your resolver takes tenant and user values from claims, not\nfrom <code>parameters</code>, and that the plan’s tenant isolation is set. See\n<a href=\"/documentation/real-time/live-concepts#who-may-see-what-scope-and-authorization\">scope and authorization</a>.</p>\n<h2>The page says “Illegal invocation”</h2>\n<p>The client’s <code>phase</code> is <code>reconnecting</code> with\n<code>Failed to execute 'fetch' on 'Window': Illegal invocation</code>, and it never\nconnects. This happens only with the published 1.0.0 and 1.1.0-rc.1 versions\nof <code>@bluetusk/live</code> in a browser, including through the framework adapters.\nThe fix ships in 1.1.0. Until you can upgrade, pass <code>fetch</code> when you create\nthe client:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "fetch: (input, init) => fetch(input, init)\n",
+        "highlighted": "<span class=\"hljs-attr\">fetch</span>: <span class=\"hljs-function\">(<span class=\"hljs-params\">input, init</span>) =&gt;</span> <span class=\"hljs-title function_\">fetch</span>(input, init)\n",
+        "language": "typescript"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Reconnect loops</h2>\n<p>The phase keeps switching between <code>live</code> and <code>reconnecting</code>.</p>\n<table>\n<thead>\n<tr>\n<th>Cause</th>\n<th>How to tell</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>A proxy or load balancer closes idle connections</td>\n<td>Reconnects happen at a fixed interval when nothing changes. The server sends no keep-alive messages.</td>\n<td>Raise the proxy’s read or idle timeout for the Live path. Reconnects then resume from the token without data loss.</td>\n</tr>\n<tr>\n<td>The server returns 429, 503 or 5xx</td>\n<td><code>state.error</code> is a <code>LiveHttpError</code> with that <code>status</code>.</td>\n<td>Fix the server error; the client retries with backoff up to <code>maximumRetryDelayMs</code>.</td>\n</tr>\n<tr>\n<td>The client is too slow</td>\n<td>Server status <code>LastDisconnectCode</code> is <code>slow-client-disconnect</code>; metric <code>bluetusk.live.slow_client.disconnects</code> grows.</td>\n<td>Render less often, or raise <code>SubscriberBufferCapacity</code>.</td>\n</tr>\n<tr>\n<td>A rate limiter on the endpoint</td>\n<td>429 from your middleware, not from Live.</td>\n<td>Exempt or raise the limit for the Live endpoint; each reconnect is a new request.</td>\n</tr>\n</tbody>\n</table>\n<p>The client stops retrying (<code>phase: &quot;faulted&quot;</code>) for statuses other than 409\nwith a token, 429, 503 and 5xx, and for protocol errors. After you fix the\ncause, call <code>query.start()</code> again.</p>\n<h2>Resume tokens</h2>\n<h3>The client reloads everything after a reconnect</h3>\n<p>The client receives a full result (<code>ResultReset</code> or <code>InitialResult</code>) instead of\na few missed events. This is expected when:</p>\n<ul>\n<li>the token was older than <code>ResumeTokenLifetime</code> (30 minutes): status\n<code>ResumeTokenExpired</code>, HTTP 409;</li>\n<li>the missed events were pruned from the replay window: <code>ReplayUnavailable</code>,\nHTTP 409;</li>\n<li>more than <code>MaximumReplayEventsPerConnect</code> (1,024) events were missed:\n<code>ReplayLimitExceeded</code>, HTTP 409;</li>\n<li>the server restarted: the replay ends with a <code>ResultReset</code> whose reason is\n<code>ServerRestart</code>.</li>\n</ul>\n<p>The client then discards the token and reconnects for a full result. Nothing\nis lost.</p>\n<h3>The client stops with HTTP 400 after a server restart</h3>\n<p>The token was signed with a key the server no longer has\n(<code>InvalidResumeToken</code>; resume metric outcome <code>unknownkey</code> or\n<code>invalidsignature</code>). This happens when the signing key is generated at startup\nor differs between instances.</p>\n<p>Load the same keys on every instance from configuration or a secret store. When\nyou rotate, keep the old key listed. See\n<a href=\"/documentation/real-time/live-configuration#resume-tokens-and-requests\">resume tokens</a>.</p>\n<h3>HTTP 409 on a brand-new connection</h3>\n<p>The client is <code>faulted</code> with <code>BlueTusk Live endpoint returned HTTP 409.</code> on its\nfirst connection. The replay window holds more than\n<code>MaximumReplayEventsPerConnect</code> events for that subscription, and a new client\nreplays from the start of the window. Call <code>PruneAsync</code> on a schedule (see\n<a href=\"/documentation/real-time/live-configuration#postgresqllivestoreoptions\">configuration</a>), shorten\n<code>ReplayRetentionWindow</code>, or raise <code>MaximumReplayEventsPerConnect</code>.</p>\n<h3>“A fresh Live connection must establish an authoritative snapshot before deltas.”</h3>\n<p>A new query was created with a saved <code>resumeToken</code>. A token does not contain\nthe rows, so the new query receives only changes and stops. Do not pass\n<code>resumeToken</code> to <code>createQuery</code>; the running query keeps its own token.</p>\n<h2>Too many subscriptions or clients</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>HTTP 429, client keeps retrying</td>\n<td>One subscription has <code>MaximumSubscribers</code> (1,000) clients.</td>\n<td>Raise the limit, or check for leaked connections: a page that creates queries without calling <code>stop()</code> or <code>destroy()</code>.</td>\n</tr>\n<tr>\n<td>HTTP 500 and <code>The shared Live subscription limit of 10000 has been reached.</code></td>\n<td>Your resolver called <code>LiveSharedSubscriptionRegistry.GetOrAdd</code> past <code>MaximumSharedSubscriptions</code>.</td>\n<td>Map the exception to a 429, as below, and look for parameters that create many distinct subscriptions.</td>\n</tr>\n<tr>\n<td><code>Live replay sequence for '&lt;id&gt;' is &lt;n&gt;, expected &lt;m&gt;.</code> (<code>LiveReplaySequenceException</code>)</td>\n<td>Two processes publish the same subscription to one replay store, for example two server instances.</td>\n<td>Make sure one process owns each subscription.</td>\n</tr>\n</tbody>\n</table>\n<p>Map the registry quota to HTTP 429 (gRPC <code>ResourceExhausted</code>) in your resolver:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "try\n{\n    selected = registry.GetOrAdd(candidate);\n}\ncatch (LiveSubscriptionQuotaException)\n{\n    await candidate.DisposeAsync();\n    throw new LiveTransportConnectException(LiveSubscriptionConnectStatus.QuotaExceeded);\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">try</span>\n{\n    selected = registry.GetOrAdd(candidate);\n}\n<span class=\"hljs-keyword\">catch</span> (LiveSubscriptionQuotaException)\n{\n    <span class=\"hljs-keyword\">await</span> candidate.DisposeAsync();\n    <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> LiveTransportConnectException(LiveSubscriptionConnectStatus.QuotaExceeded);\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Proxies buffer the stream</h2>\n<p>Events arrive in bursts, or only when the connection closes. Something between\nthe server and the browser buffers the response.</p>\n<p>Live already sends <code>Cache-Control: no-cache, no-store</code> and\n<code>X-Accel-Buffering: no</code>, and turns off ASP.NET Core response buffering. Check\nthe rest of the path:</p>\n<ul>\n<li><strong>nginx:</strong> <code>X-Accel-Buffering: no</code> is honored. If you strip that header, set\n<code>proxy_buffering off;</code> for the Live location.</li>\n<li><strong>Response compression:</strong> do not compress <code>text/event-stream</code>. Compression\nmiddleware holds data until a block fills.</li>\n<li><strong>CDNs and API gateways:</strong> turn off response buffering or caching for the\nLive path, and allow long-lived responses.</li>\n<li><strong>HTTP/1.1 proxies:</strong> the stream is a chunked response; the proxy must pass\nchunks through as they arrive.</li>\n</ul>\n<h2>CORS</h2>\n<p>The browser blocks the request when the page and the Live endpoint have\ndifferent origins. The <code>POST</code> with <code>content-type: application/json</code> causes a\npreflight request.</p>\n<p>Allow the origin, the <code>POST</code> method and the headers you send. If you use\ncookies, also allow credentials and set <code>credentials: &quot;include&quot;</code> in the client:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddCors(options => options.AddPolicy(\"live\", policy => policy\n    .WithOrigins(\"https://app.example.com\")\n    .WithMethods(\"POST\")\n    .WithHeaders(\"content-type\", \"authorization\")\n    .AllowCredentials()));\n\nvar app = builder.Build();\napp.UseCors();\napp.MapBlueTuskLiveServerSentEvents().RequireCors(\"live\");\n",
+        "highlighted": "builder.Services.AddCors(options =&gt; options.AddPolicy(<span class=\"hljs-string\">&quot;live&quot;</span>, policy =&gt; policy\n    .WithOrigins(<span class=\"hljs-string\">&quot;https://app.example.com&quot;</span>)\n    .WithMethods(<span class=\"hljs-string\">&quot;POST&quot;</span>)\n    .WithHeaders(<span class=\"hljs-string\">&quot;content-type&quot;</span>, <span class=\"hljs-string\">&quot;authorization&quot;</span>)\n    .AllowCredentials()));\n\n<span class=\"hljs-keyword\">var</span> app = builder.Build();\napp.UseCors();\napp.MapBlueTuskLiveServerSentEvents().RequireCors(<span class=\"hljs-string\">&quot;live&quot;</span>);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Startup errors</h2>\n<table>\n<thead>\n<tr>\n<th>Message</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Live query '&lt;name&gt;' is already registered.</code></td>\n<td>Two plans with one name in a <code>LiveQueryRegistry</code>.</td>\n<td>Use unique names.</td>\n</tr>\n<tr>\n<td><code>A Live query must contain one bounded Take operation.</code></td>\n<td>The EF query has no <code>Take</code>.</td>\n<td>Add <code>.Take(n)</code> with <code>n</code> at most <code>maximumResultCount</code>.</td>\n</tr>\n<tr>\n<td><code>A Live query must have deterministic ordering that includes primary key '&lt;key&gt;'.</code></td>\n<td>The order does not include the key.</td>\n<td>Add <code>.ThenBy(x =&gt; x.Id)</code>.</td>\n</tr>\n<tr>\n<td><code>Queryable method '&lt;name&gt;' is not supported by the initial Live compiler.</code></td>\n<td>For example <code>Select</code>, <code>Skip</code> or <code>Join</code>.</td>\n<td>Use the supported shape, or <code>CompileProjectionAsync</code>; see <a href=\"/documentation/real-time/live-concepts#registered-queries\">concepts</a>.</td>\n</tr>\n<tr>\n<td><code>Live query predicate does not bind entity property '&lt;property&gt;' to parameter '&lt;parameter&gt;'.</code></td>\n<td><code>RegisteredPredicate</code> isolation, but the <code>Where</code> does not compare them.</td>\n<td>Add <code>.Where(x =&gt; x.Owner == owner)</code> using that parameter.</td>\n</tr>\n<tr>\n<td><code>A resume-token signing key must contain at least 32 bytes.</code></td>\n<td>The key is too short.</td>\n<td>Generate 32 random bytes.</td>\n</tr>\n<tr>\n<td><code>Exactly one resume-token signing key must be primary.</code></td>\n<td>No key, or several keys, has <code>isPrimary: true</code>.</td>\n<td>Mark exactly one.</td>\n</tr>\n<tr>\n<td><code>Existing slot &lt;slot&gt; is active or does not belong to the configured pgoutput snapshot source; it cannot be replaced safely.</code></td>\n<td>Another process uses the replication slot.</td>\n<td>Give each process its own slot, or stop the other one.</td>\n</tr>\n</tbody>\n</table>\n<h2>Client exceptions</h2>\n<table>\n<thead>\n<tr>\n<th>Message</th>\n<th>Cause</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>maximumBatchEvents must be an integer from 1 through 1024.</code> (<code>RangeError</code>)</td>\n<td>Invalid <code>maximumBatchEvents</code>.</td>\n</tr>\n<tr>\n<td><code>BlueTusk Live retry settings are invalid.</code> (<code>RangeError</code>)</td>\n<td>Negative delays, a maximum below the initial delay, or jitter outside 0 to 1.</td>\n</tr>\n<tr>\n<td><code>The application's Live resume-token callback failed.</code></td>\n<td>Your <code>onResumeToken</code> threw. The query stops; it does not retry.</td>\n</tr>\n<tr>\n<td><code>Live sequence jumped from &lt;a&gt; to &lt;b&gt;.</code> (<code>LiveProtocolError</code>)</td>\n<td>Events were lost between server and client, usually a proxy that drops data.</td>\n</tr>\n<tr>\n<td><code>useBlueTuskLiveQuery must run inside a Vue setup scope; ...</code></td>\n<td>Called outside <code>setup()</code>. Use <code>createBlueTuskLiveQuery</code> and call <code>destroy()</code> yourself.</td>\n</tr>\n</tbody>\n</table>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-clients",
+    "summary": "Use Live from Angular, React, Vue, Svelte or plain TypeScript.",
+    "keywords": [
+      "live",
+      "angular",
+      "react",
+      "vue",
+      "svelte",
+      "npm"
+    ],
+    "order": 115,
+    "listed": true,
+    "title": "Framework guides: Angular, React, Vue and Svelte",
+    "sourcePath": "docs/live/clients.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/clients.md",
+    "headings": [
+      {
+        "id": "framework-guides-angular-react-vue-and-svelte",
+        "text": "Framework guides: Angular, React, Vue and Svelte",
+        "level": 1
+      },
+      {
+        "id": "create-one-client",
+        "text": "Create one client",
+        "level": 2
+      },
+      {
+        "id": "angular",
+        "text": "Angular",
+        "level": 2
+      },
+      {
+        "id": "react",
+        "text": "React",
+        "level": 2
+      },
+      {
+        "id": "vue",
+        "text": "Vue",
+        "level": 2
+      },
+      {
+        "id": "svelte",
+        "text": "Svelte",
+        "level": 2
+      },
+      {
+        "id": "plain-typescript",
+        "text": "Plain TypeScript",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 800,
+    "readMinutes": 4,
+    "searchText": "Framework guides: Angular, React, Vue and Svelte This page shows how to bind a live query to a component in Angular, React, Vue or Svelte. Each adapter starts the query with the component and stops it when the component goes away. The examples use the `my-todos` query from the [quick start](quickstart.md). The adapters only handle the framework's lifecycle and change notification. Reconnects, resume tokens and result updates come from the core client, `@bluetusk/live`, which each adapter installs as a dependency. Each adapter also combines rapid updates into one notification per microtask. Package Install Status `@bluetusk/live-angular` `npm install @bluetusk/live-angular` Angular 20 to 22 `@bluetusk/live-react` `npm install @bluetusk/live-react` React 18 or 19 `@bluetusk/live-vue` `npm install @bluetusk/live-vue` New in 1.1.0. Vue 3.4 or later `@bluetusk/live-svelte` `npm install @bluetusk/live-svelte` New in 1.1.0. Svelte 5 Create one client Every example shares one client. Create it once per application, in its own module: All client options are listed in [configuration](configuration.md#browser-client-options). With the published 1.0.0 or 1.1.0-rc.1 client, also pass `fetch: (input, init) => fetch(input, init)`; see [troubleshooting](troubleshooting.md#the-page-says-illegal-invocation). Angular `provideBlueTuskLive(client)` registers the client. Inject `BlueTuskLiveAngular` and call `createQuery`. The returned `AngularLiveQuery` exposes read-only signals: `state`, `rows`, `phase` and `error`. The Angular query does not start by itself: call `start()`. Call `destroy()` when the owner is destroyed; a destroyed query cannot be restarted. Use `stop()` and `start()` for a temporary pause. React `useBlueTuskLiveQuery(client, request)` returns the current `LiveQueryState`: `{ phase, rows, lastSequence, error }`. It starts the query after mount and stops it on unmount. Keep the `request` object and the `client` stable. The hook creates a new query, and a new connection,",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Framework guides: Angular, React, Vue and Svelte</h1>\n<p>This page shows how to bind a live query to a component in Angular, React, Vue\nor Svelte. Each adapter starts the query with the component and stops it when\nthe component goes away. The examples use the <code>my-todos</code> query from the\n<a href=\"/documentation/real-time/live-quickstart\">quick start</a>.</p>\n<p>The adapters only handle the framework’s lifecycle and change notification.\nReconnects, resume tokens and result updates come from the core client,\n<code>@bluetusk/live</code>, which each adapter installs as a dependency. Each adapter\nalso combines rapid updates into one notification per microtask.</p>\n<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>Install</th>\n<th>Status</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>@bluetusk/live-angular</code></td>\n<td><code>npm install @bluetusk/live-angular</code></td>\n<td>Angular 20 to 22</td>\n</tr>\n<tr>\n<td><code>@bluetusk/live-react</code></td>\n<td><code>npm install @bluetusk/live-react</code></td>\n<td>React 18 or 19</td>\n</tr>\n<tr>\n<td><code>@bluetusk/live-vue</code></td>\n<td><code>npm install @bluetusk/live-vue</code></td>\n<td>New in 1.1.0. Vue 3.4 or later</td>\n</tr>\n<tr>\n<td><code>@bluetusk/live-svelte</code></td>\n<td><code>npm install @bluetusk/live-svelte</code></td>\n<td>New in 1.1.0. Svelte 5</td>\n</tr>\n</tbody>\n</table>\n<h2>Create one client</h2>\n<p>Every example shares one client. Create it once per application, in its own\nmodule:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "import { BlueTuskLiveClient } from \"@bluetusk/live\";\n\nexport const client = new BlueTuskLiveClient({\n  endpoint: \"/bluetusk/live/sse\"\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">import</span> { <span class=\"hljs-title class_\">BlueTuskLiveClient</span> } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@bluetusk/live&quot;</span>;\n\n<span class=\"hljs-keyword\">export</span> <span class=\"hljs-keyword\">const</span> client = <span class=\"hljs-keyword\">new</span> <span class=\"hljs-title class_\">BlueTuskLiveClient</span>({\n  <span class=\"hljs-attr\">endpoint</span>: <span class=\"hljs-string\">&quot;/bluetusk/live/sse&quot;</span>\n});\n",
+        "language": "typescript"
+      },
+      {
+        "kind": "html",
+        "html": "<p>All client options are listed in\n<a href=\"/documentation/real-time/live-configuration#browser-client-options\">configuration</a>. With the published\n1.0.0 or 1.1.0-rc.1 client, also pass <code>fetch: (input, init) =&gt; fetch(input, init)</code>;\nsee <a href=\"/documentation/real-time/live-troubleshooting#the-page-says-illegal-invocation\">troubleshooting</a>.</p>\n<h2>Angular</h2>\n<p><code>provideBlueTuskLive(client)</code> registers the client. Inject\n<code>BlueTuskLiveAngular</code> and call <code>createQuery</code>. The returned\n<code>AngularLiveQuery</code> exposes read-only signals: <code>state</code>, <code>rows</code>, <code>phase</code> and\n<code>error</code>.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "import type { ApplicationConfig } from \"@angular/core\";\nimport { provideBlueTuskLive } from \"@bluetusk/live-angular\";\nimport { client } from \"./live-client\";\n\nexport const appConfig: ApplicationConfig = {\n  providers: [provideBlueTuskLive(client)]\n};\n",
+        "highlighted": "<span class=\"hljs-keyword\">import</span> <span class=\"hljs-keyword\">type</span> { <span class=\"hljs-title class_\">ApplicationConfig</span> } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@angular/core&quot;</span>;\n<span class=\"hljs-keyword\">import</span> { provideBlueTuskLive } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@bluetusk/live-angular&quot;</span>;\n<span class=\"hljs-keyword\">import</span> { client } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;./live-client&quot;</span>;\n\n<span class=\"hljs-keyword\">export</span> <span class=\"hljs-keyword\">const</span> <span class=\"hljs-attr\">appConfig</span>: <span class=\"hljs-title class_\">ApplicationConfig</span> = {\n  <span class=\"hljs-attr\">providers</span>: [<span class=\"hljs-title function_\">provideBlueTuskLive</span>(client)]\n};\n",
+        "language": "typescript"
+      },
+      {
+        "kind": "code",
+        "code": "import { Component, DestroyRef, inject } from \"@angular/core\";\nimport { BlueTuskLiveAngular } from \"@bluetusk/live-angular\";\n\ninterface Todo {\n  Id: number;\n  Title: string;\n}\n\n@Component({\n  selector: \"app-todo-list\",\n  template: `\n    @if (todos.error(); as error) {\n      <p>{{ todos.phase() }}: {{ error.message }}</p>\n    } @else {\n      <ul>\n        @for (todo of todos.rows(); track todo.Id) {\n          <li>{{ todo.Title }}</li>\n        }\n      </ul>\n    }\n  `\n})\nexport class TodoListComponent {\n  readonly todos = inject(BlueTuskLiveAngular).createQuery<Todo, number, object>({\n    query: \"my-todos\",\n    parameters: {}\n  });\n\n  constructor() {\n    this.todos.start();\n    inject(DestroyRef).onDestroy(() => this.todos.destroy());\n  }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">import</span> { <span class=\"hljs-title class_\">Component</span>, <span class=\"hljs-title class_\">DestroyRef</span>, inject } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@angular/core&quot;</span>;\n<span class=\"hljs-keyword\">import</span> { <span class=\"hljs-title class_\">BlueTuskLiveAngular</span> } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@bluetusk/live-angular&quot;</span>;\n\n<span class=\"hljs-keyword\">interface</span> <span class=\"hljs-title class_\">Todo</span> {\n  <span class=\"hljs-title class_\">Id</span>: <span class=\"hljs-built_in\">number</span>;\n  <span class=\"hljs-title class_\">Title</span>: <span class=\"hljs-built_in\">string</span>;\n}\n\n<span class=\"hljs-meta\">@Component</span>({\n  <span class=\"hljs-attr\">selector</span>: <span class=\"hljs-string\">&quot;app-todo-list&quot;</span>,\n  <span class=\"hljs-attr\">template</span>: <span class=\"hljs-string\">`\n    @if (todos.error(); as error) {\n      &lt;p&gt;{{ todos.phase() }}: {{ error.message }}&lt;/p&gt;\n    } @else {\n      &lt;ul&gt;\n        @for (todo of todos.rows(); track todo.Id) {\n          &lt;li&gt;{{ todo.Title }}&lt;/li&gt;\n        }\n      &lt;/ul&gt;\n    }\n  `</span>\n})\n<span class=\"hljs-keyword\">export</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title class_\">TodoListComponent</span> {\n  <span class=\"hljs-keyword\">readonly</span> todos = <span class=\"hljs-title function_\">inject</span>(<span class=\"hljs-title class_\">BlueTuskLiveAngular</span>).<span class=\"hljs-property\">createQuery</span>&lt;<span class=\"hljs-title class_\">Todo</span>, <span class=\"hljs-built_in\">number</span>, <span class=\"hljs-built_in\">object</span>&gt;({\n    <span class=\"hljs-attr\">query</span>: <span class=\"hljs-string\">&quot;my-todos&quot;</span>,\n    <span class=\"hljs-attr\">parameters</span>: {}\n  });\n\n  <span class=\"hljs-title function_\">constructor</span>(<span class=\"hljs-params\"></span>) {\n    <span class=\"hljs-variable language_\">this</span>.<span class=\"hljs-property\">todos</span>.<span class=\"hljs-title function_\">start</span>();\n    <span class=\"hljs-title function_\">inject</span>(<span class=\"hljs-title class_\">DestroyRef</span>).<span class=\"hljs-title function_\">onDestroy</span>(<span class=\"hljs-function\">() =&gt;</span> <span class=\"hljs-variable language_\">this</span>.<span class=\"hljs-property\">todos</span>.<span class=\"hljs-title function_\">destroy</span>());\n  }\n}\n",
+        "language": "typescript"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The Angular query does not start by itself: call <code>start()</code>. Call <code>destroy()</code>\nwhen the owner is destroyed; a destroyed query cannot be restarted. Use\n<code>stop()</code> and <code>start()</code> for a temporary pause.</p>\n<h2>React</h2>\n<p><code>useBlueTuskLiveQuery(client, request)</code> returns the current <code>LiveQueryState</code>:\n<code>{ phase, rows, lastSequence, error }</code>. It starts the query after mount and\nstops it on unmount.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "import { useMemo } from \"react\";\nimport { useBlueTuskLiveQuery } from \"@bluetusk/live-react\";\nimport { client } from \"./live-client\";\n\ninterface Todo {\n  Id: number;\n  Title: string;\n}\n\nexport function TodoList() {\n  const request = useMemo(() => ({ query: \"my-todos\", parameters: {} }), []);\n  const state = useBlueTuskLiveQuery<Todo, number, object>(client, request);\n\n  if (state.error) {\n    return <p>{state.phase}: {state.error.message}</p>;\n  }\n\n  return (\n    <ul>\n      {state.rows.map((todo) => <li key={todo.Id}>{todo.Title}</li>)}\n    </ul>\n  );\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">import</span> { useMemo } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;react&quot;</span>;\n<span class=\"hljs-keyword\">import</span> { useBlueTuskLiveQuery } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@bluetusk/live-react&quot;</span>;\n<span class=\"hljs-keyword\">import</span> { client } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;./live-client&quot;</span>;\n\n<span class=\"hljs-keyword\">interface</span> <span class=\"hljs-title class_\">Todo</span> {\n  <span class=\"hljs-title class_\">Id</span>: <span class=\"hljs-built_in\">number</span>;\n  <span class=\"hljs-title class_\">Title</span>: <span class=\"hljs-built_in\">string</span>;\n}\n\n<span class=\"hljs-keyword\">export</span> <span class=\"hljs-keyword\">function</span> <span class=\"hljs-title function_\">TodoList</span>(<span class=\"hljs-params\"></span>) {\n  <span class=\"hljs-keyword\">const</span> request = <span class=\"hljs-title function_\">useMemo</span>(<span class=\"hljs-function\">() =&gt;</span> ({ <span class=\"hljs-attr\">query</span>: <span class=\"hljs-string\">&quot;my-todos&quot;</span>, <span class=\"hljs-attr\">parameters</span>: {} }), []);\n  <span class=\"hljs-keyword\">const</span> state = useBlueTuskLiveQuery&lt;<span class=\"hljs-title class_\">Todo</span>, <span class=\"hljs-built_in\">number</span>, <span class=\"hljs-built_in\">object</span>&gt;(client, request);\n\n  <span class=\"hljs-keyword\">if</span> (state.<span class=\"hljs-property\">error</span>) {\n    <span class=\"hljs-keyword\">return</span> <span class=\"language-xml\"><span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">p</span>&gt;</span>{state.phase}: {state.error.message}<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">p</span>&gt;</span></span>;\n  }\n\n  <span class=\"hljs-keyword\">return</span> (\n    <span class=\"language-xml\"><span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">ul</span>&gt;</span>\n      {state.rows.map((todo) =&gt; <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">li</span> <span class=\"hljs-attr\">key</span>=<span class=\"hljs-string\">{todo.Id}</span>&gt;</span>{todo.Title}<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">li</span>&gt;</span>)}\n    <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">ul</span>&gt;</span></span>\n  );\n}\n",
+        "language": "tsx"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Keep the <code>request</code> object and the <code>client</code> stable. The hook creates a new\nquery, and a new connection, whenever either object changes. Wrap the request\nin <code>useMemo</code> with its real inputs as dependencies, as shown. Server rendering\ndoes not open a connection.</p>\n<h2>Vue</h2>\n<p><code>useBlueTuskLiveQuery(client, request, options?)</code> returns a <code>VueLiveQuery</code>\nwith read-only refs <code>state</code>, <code>rows</code>, <code>phase</code> and <code>error</code>. It starts\nimmediately and stops when the component’s setup scope is disposed.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "<script setup lang=\"ts\">\nimport { useBlueTuskLiveQuery } from \"@bluetusk/live-vue\";\nimport { client } from \"./live-client\";\n\ninterface Todo {\n  Id: number;\n  Title: string;\n}\n\nconst { rows, phase, error } = useBlueTuskLiveQuery<Todo, number, object>(client, {\n  query: \"my-todos\",\n  parameters: {}\n});\n</script>\n\n<template>\n  <p v-if=\"error\">{{ phase }}: {{ error.message }}</p>\n  <ul v-else>\n    <li v-for=\"todo in rows\" :key=\"todo.Id\">{{ todo.Title }}</li>\n  </ul>\n</template>\n",
+        "highlighted": "<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">script</span> <span class=\"hljs-attr\">setup</span> <span class=\"hljs-attr\">lang</span>=<span class=\"hljs-string\">&quot;ts&quot;</span>&gt;</span><span class=\"language-javascript\">\n<span class=\"hljs-keyword\">import</span> { useBlueTuskLiveQuery } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@bluetusk/live-vue&quot;</span>;\n<span class=\"hljs-keyword\">import</span> { client } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;./live-client&quot;</span>;\n\ninterface <span class=\"hljs-title class_\">Todo</span> {\n  <span class=\"hljs-title class_\">Id</span>: number;\n  <span class=\"hljs-title class_\">Title</span>: string;\n}\n\n<span class=\"hljs-keyword\">const</span> { rows, phase, error } = useBlueTuskLiveQuery&lt;<span class=\"hljs-title class_\">Todo</span>, number, object&gt;(client, {\n  <span class=\"hljs-attr\">query</span>: <span class=\"hljs-string\">&quot;my-todos&quot;</span>,\n  <span class=\"hljs-attr\">parameters</span>: {}\n});\n</span><span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">script</span>&gt;</span>\n\n<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">template</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">p</span> <span class=\"hljs-attr\">v-if</span>=<span class=\"hljs-string\">&quot;error&quot;</span>&gt;</span>{{ phase }}: {{ error.message }}<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">p</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">ul</span> <span class=\"hljs-attr\">v-else</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">li</span> <span class=\"hljs-attr\">v-for</span>=<span class=\"hljs-string\">&quot;todo in rows&quot;</span> <span class=\"hljs-attr\">:key</span>=<span class=\"hljs-string\">&quot;todo.Id&quot;</span>&gt;</span>{{ todo.Title }}<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">li</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">ul</span>&gt;</span>\n<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">template</span>&gt;</span>\n",
+        "language": "html"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Destructure the refs as shown so the template unwraps them. Outside a\ncomponent, for example in a store or a test, call\n<code>createBlueTuskLiveQuery(client, request)</code> instead and call <code>destroy()</code>\nyourself. Pass <code>{ autoStart: false }</code> to either function to start it later\nwith <code>start()</code>.</p>\n<h2>Svelte</h2>\n<p><code>useBlueTuskLiveQuery(client, request, options?)</code> returns a <code>SvelteLiveQuery</code>\nwith readable stores <code>state</code>, <code>rows</code>, <code>phase</code> and <code>error</code>. It starts\nimmediately and stops when the component is destroyed.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "<script lang=\"ts\">\n  import { useBlueTuskLiveQuery } from \"@bluetusk/live-svelte\";\n  import { client } from \"./live-client\";\n\n  interface Todo {\n    Id: number;\n    Title: string;\n  }\n\n  const { rows, phase, error } = useBlueTuskLiveQuery<Todo, number, object>(client, {\n    query: \"my-todos\",\n    parameters: {}\n  });\n</script>\n\n{#if $error}\n  <p>{$phase}: {$error.message}</p>\n{:else}\n  <ul>\n    {#each $rows as todo (todo.Id)}\n      <li>{todo.Title}</li>\n    {/each}\n  </ul>\n{/if}\n",
+        "highlighted": "<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">script</span> <span class=\"hljs-attr\">lang</span>=<span class=\"hljs-string\">&quot;ts&quot;</span>&gt;</span><span class=\"language-javascript\">\n  <span class=\"hljs-keyword\">import</span> { useBlueTuskLiveQuery } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;@bluetusk/live-svelte&quot;</span>;\n  <span class=\"hljs-keyword\">import</span> { client } <span class=\"hljs-keyword\">from</span> <span class=\"hljs-string\">&quot;./live-client&quot;</span>;\n\n  interface <span class=\"hljs-title class_\">Todo</span> {\n    <span class=\"hljs-title class_\">Id</span>: number;\n    <span class=\"hljs-title class_\">Title</span>: string;\n  }\n\n  <span class=\"hljs-keyword\">const</span> { rows, phase, error } = useBlueTuskLiveQuery&lt;<span class=\"hljs-title class_\">Todo</span>, number, object&gt;(client, {\n    <span class=\"hljs-attr\">query</span>: <span class=\"hljs-string\">&quot;my-todos&quot;</span>,\n    <span class=\"hljs-attr\">parameters</span>: {}\n  });\n</span><span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">script</span>&gt;</span>\n\n{#if $error}\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">p</span>&gt;</span>{$phase}: {$error.message}<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">p</span>&gt;</span>\n{:else}\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">ul</span>&gt;</span>\n    {#each $rows as todo (todo.Id)}\n      <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">li</span>&gt;</span>{todo.Title}<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">li</span>&gt;</span>\n    {/each}\n  <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">ul</span>&gt;</span>\n{/if}\n",
+        "language": "html"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Destructure the stores so you can read them with <code>$rows</code>, <code>$phase</code> and\n<code>$error</code>. Outside component initialization, call\n<code>createBlueTuskLiveQuery(client, request)</code>, subscribe to its stores, and call\n<code>destroy()</code> yourself.</p>\n<h2>Plain TypeScript</h2>\n<p>Without a framework, use the core client directly, as in the\n<a href=\"/documentation/real-time/live-quickstart#4-write-the-page\">quick start</a>: <code>createQuery</code>, then\n<code>subscribe(listener)</code>, <code>start()</code>, and <code>stop()</code> when the view goes away.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/live-configuration#browser-client-options\">Configuration</a>: retries,\ncredentials and batching.</li>\n<li><a href=\"/documentation/real-time/live-troubleshooting\">Troubleshooting</a>: reconnect loops and errors.</li>\n</ul>\n"
       }
     ]
   },
@@ -848,38 +2971,620 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     ],
     "order": 120,
     "listed": true,
-    "title": "Operate BlueTusk from the dashboard",
+    "title": "Control Plane",
     "sourcePath": "docs/control-plane/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/README.md",
     "headings": [
       {
-        "id": "operate-bluetusk-from-the-dashboard",
-        "text": "Operate BlueTusk from the dashboard",
+        "id": "control-plane",
+        "text": "Control Plane",
         "level": 1
       },
       {
-        "id": "run-the-sample-first",
-        "text": "Run the sample first",
+        "id": "what-it-shows",
+        "text": "What it shows",
         "level": 2
       },
       {
-        "id": "1-register-inventory-sources",
-        "text": "1. Register inventory sources",
+        "id": "what-it-lets-you-do",
+        "text": "What it lets you do",
         "level": 2
       },
       {
-        "id": "2-require-real-authorization",
-        "text": "2. Require real authorization",
+        "id": "use-it-when",
+        "text": "Use it when",
         "level": 2
       },
       {
-        "id": "3-map-the-dashboard",
-        "text": "3. Map the dashboard",
+        "id": "packages",
+        "text": "Packages",
         "level": 2
       },
       {
-        "id": "what-operators-can-inspect",
-        "text": "What operators can inspect",
+        "id": "the-shortest-version",
+        "text": "The shortest version",
+        "level": 2
+      },
+      {
+        "id": "status",
+        "text": "Status",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 693,
+    "readMinutes": 4,
+    "searchText": "Control Plane This page helps you decide whether to use the BlueTusk Control Plane and where to start. The Control Plane is a dashboard and a JSON API that you host inside your own ASP.NET Core application. It shows the health of your Streams, Sync and Live components and lets authorized operators act on them, with every action written to an audit log. What it shows Area What you see Sources and Streams Replication slot state and WAL lag, durable relay storage, consumer groups, direct checkpoints and snapshot runs Sync pipelines Pipeline state, throughput, checkpoint lag, retries, throttling, quarantined transactions and failures Live subscriptions Shared queries, connected clients, fan-out, invalidation lag, replay and resume activity, quota rejections Continuous Graph (preview) Registered graph queries and their limits Managed deployments Placement, desired and observed generation, workloads, requested capacity and delete protection The overview page combines all of these and lists the items that need attention. Every row opens a detail page. The same data is available as versioned JSON under `/bluetusk/api/v1/...` for scripts and agents. The inventory is redacted. It never returns connection strings, credentials, row values, query parameters or dead-letter payloads. What it lets you do Operators can request actions such as retrying, reconciling or rebuilding a Sync pipeline, and pausing, resuming, reconciling, rebuilding or deleting a managed deployment. Every request needs the right role, a typed confirmation and a reason. The Control Plane records the attempt before it calls your code and records the outcome afterwards. BlueTusk ships the handler for managed-deployment actions. For every other action you write the handler, so nothing runs that you did not wire up. See [Enable operator actions](operations.md). **New in 1.1.0:** fleet operations on managed deployments, the `/bluetusk/deployments` pages and `/api/v1/fleet`, and the `BlueTusk.ControlPlane.Kubernete",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Control Plane</h1>\n<p>This page helps you decide whether to use the BlueTusk Control Plane and where\nto start. The Control Plane is a dashboard and a JSON API that you host inside\nyour own ASP.NET Core application. It shows the health of your Streams, Sync\nand Live components and lets authorized operators act on them, with every\naction written to an audit log.</p>\n<h2>What it shows</h2>\n<table>\n<thead>\n<tr>\n<th>Area</th>\n<th>What you see</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Sources and Streams</td>\n<td>Replication slot state and WAL lag, durable relay storage, consumer groups, direct checkpoints and snapshot runs</td>\n</tr>\n<tr>\n<td>Sync pipelines</td>\n<td>Pipeline state, throughput, checkpoint lag, retries, throttling, quarantined transactions and failures</td>\n</tr>\n<tr>\n<td>Live subscriptions</td>\n<td>Shared queries, connected clients, fan-out, invalidation lag, replay and resume activity, quota rejections</td>\n</tr>\n<tr>\n<td>Continuous Graph (preview)</td>\n<td>Registered graph queries and their limits</td>\n</tr>\n<tr>\n<td>Managed deployments</td>\n<td>Placement, desired and observed generation, workloads, requested capacity and delete protection</td>\n</tr>\n</tbody>\n</table>\n<p>The overview page combines all of these and lists the items that need\nattention. Every row opens a detail page. The same data is available as\nversioned JSON under <code>/bluetusk/api/v1/...</code> for scripts and agents.</p>\n<p>The inventory is redacted. It never returns connection strings, credentials,\nrow values, query parameters or dead-letter payloads.</p>\n<h2>What it lets you do</h2>\n<p>Operators can request actions such as retrying, reconciling or rebuilding a\nSync pipeline, and pausing, resuming, reconciling, rebuilding or deleting a\nmanaged deployment. Every request needs the right role, a typed confirmation\nand a reason. The Control Plane records the attempt before it calls your code\nand records the outcome afterwards.</p>\n<p>BlueTusk ships the handler for managed-deployment actions. For every other\naction you write the handler, so nothing runs that you did not wire up. See\n<a href=\"/documentation/real-time/control-plane-operations\">Enable operator actions</a>.</p>\n<p><strong>New in 1.1.0:</strong> fleet operations on managed deployments, the\n<code>/bluetusk/deployments</code> pages and <code>/api/v1/fleet</code>, and the\n<code>BlueTusk.ControlPlane.Kubernetes</code> package.</p>\n<h2>Use it when</h2>\n<ul>\n<li>you run Streams, Sync or Live in production and need one place to see lag,\nfailures and backlog;</li>\n<li>you want operator actions to be role-checked and audited instead of run as\nad hoc SQL;</li>\n<li>you manage BlueTusk deployments for several tenants or through Kubernetes\ncustom resources.</li>\n</ul>\n<p>Do not use it as a general database administration tool. It only shows\nBlueTusk state, and it has no query editor.</p>\n<h2>Packages</h2>\n<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>Contains</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTusk.ControlPlane</code></td>\n<td>Inventory services, the operation executor, the PostgreSQL audit store and the managed-deployment controller</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Dashboard</code></td>\n<td><code>MapBlueTuskDashboard</code>: the HTML pages and the JSON API</td>\n</tr>\n<tr>\n<td><code>BlueTusk.ControlPlane.Kubernetes</code></td>\n<td><strong>New in 1.1.0.</strong> Reconciles <code>BlueTuskDeployment</code> custom resources; ships the CRD and RBAC manifests</td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet add package BlueTusk.Dashboard\n",
+        "highlighted": "dotnet add package BlueTusk.Dashboard\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTusk.Dashboard</code> brings in <code>BlueTusk.ControlPlane</code>. See\n<a href=\"/documentation/getting-started/install\">Install BlueTusk</a> for channels and version\npinning.</p>\n<h2>The shortest version</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddSingleton<IControlPlaneQueryService>(\n    new PostgreSqlControlPlaneQueryService(\n        [new ControlPlanePostgreSqlSource(\"local\", dataSource, dataSource)]));\n// ...register the other inventory services and your authentication...\n\nvar app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapBlueTuskDashboard();\n",
+        "highlighted": "builder.Services.AddSingleton&lt;IControlPlaneQueryService&gt;(\n    <span class=\"hljs-keyword\">new</span> PostgreSqlControlPlaneQueryService(\n        [<span class=\"hljs-meta\">new ControlPlanePostgreSqlSource(<span class=\"hljs-string\">&quot;local&quot;</span>, dataSource, dataSource)</span>]));\n<span class=\"hljs-comment\">// ...register the other inventory services and your authentication...</span>\n\n<span class=\"hljs-keyword\">var</span> app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapBlueTuskDashboard();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The <a href=\"/documentation/real-time/control-plane-quickstart\">quick start</a> turns this into a complete, runnable app.</p>\n<blockquote>\n<p><strong>Warning:</strong> The dashboard is an administrative surface. It reveals the\nshape of your data platform and, for operators, can change it. Always put it\nbehind real authentication, HTTPS and a private network or VPN. BlueTusk\nrequires an authorization policy on every route and never adds an anonymous\nfallback, but it cannot choose who your operators are. See\n<a href=\"/documentation/operations/security\">Security</a>.</p>\n</blockquote>\n<h2>Status</h2>\n<p>The Control Plane is a Core family. It ships on the same version line as the\nprovider, Streams, Sync and Live. <code>1.0.0</code> is the current stable release and\n<code>1.1.0-rc.1</code> is the current release candidate. <code>1.1.0</code> is not published yet.\nThe Continuous Graph pages depend on the Graph family, which is in preview.</p>\n<h2>Next steps</h2>\n<ol>\n<li><a href=\"/documentation/real-time/control-plane-quickstart\">Quick start</a>: host the dashboard and see your first\ninventory in about 10 minutes.</li>\n<li><a href=\"/documentation/real-time/control-plane-concepts\">Concepts</a>: inventory, health, operations, fleet, audit and\nroles.</li>\n<li><a href=\"/documentation/real-time/control-plane-operations\">Enable operator actions</a>: turn on audited actions and fleet\noperations.</li>\n<li><a href=\"/documentation/real-time/control-plane-kubernetes\">Kubernetes</a>: manage deployments with <code>BlueTuskDeployment</code>\nresources.</li>\n<li><a href=\"/documentation/real-time/control-plane-configuration\">Configuration</a>: every option, route and default.</li>\n<li><a href=\"/documentation/real-time/control-plane-troubleshooting\">Troubleshooting</a>: 401, 403, missing inventory and\nrejected operations.</li>\n</ol>\n<p>Engineering detail lives in the <a href=\"/documentation/real-time/control-plane-reference\">Control Plane reference</a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-quickstart",
+    "summary": "Host the Control Plane API and dashboard, register a component, and query the inventory.",
+    "keywords": [
+      "control plane",
+      "quickstart",
+      "dashboard"
+    ],
+    "order": 121,
+    "listed": true,
+    "title": "Control Plane quick start",
+    "sourcePath": "docs/control-plane/quickstart.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/quickstart.md",
+    "headings": [
+      {
+        "id": "control-plane-quick-start",
+        "text": "Control Plane quick start",
+        "level": 1
+      },
+      {
+        "id": "before-you-start",
+        "text": "Before you start",
+        "level": 2
+      },
+      {
+        "id": "1-start-postgresql",
+        "text": "1. Start PostgreSQL",
+        "level": 2
+      },
+      {
+        "id": "2-create-a-replication-slot",
+        "text": "2. Create a replication slot",
+        "level": 2
+      },
+      {
+        "id": "3-create-the-app",
+        "text": "3. Create the app",
+        "level": 2
+      },
+      {
+        "id": "4-set-the-connection-string",
+        "text": "4. Set the connection string",
+        "level": 2
+      },
+      {
+        "id": "5-write-the-code",
+        "text": "5. Write the code",
+        "level": 2
+      },
+      {
+        "id": "6-run-it",
+        "text": "6. Run it",
+        "level": 2
+      },
+      {
+        "id": "7-read-the-inventory",
+        "text": "7. Read the inventory",
+        "level": 2
+      },
+      {
+        "id": "8-clean-up",
+        "text": "8. Clean up",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 885,
+    "readMinutes": 5,
+    "searchText": "Control Plane quick start In this quick start you host the BlueTusk dashboard and its JSON API in an ASP.NET Core app, require sign-in, register a Streams relay source so there is something to see, and read the inventory with `curl`. It takes about 10 minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); Docker, or a PostgreSQL 15, 16, 17 or 18 test server with `wal_level=logical`; `curl` (Windows 10 and later include it as `curl.exe`). 1. Start PostgreSQL Skip this step if the container from the [5-minute first app](../getting-started/quickstart.md) is still running. 2. Create a replication slot The dashboard reports the state of each source's logical replication slot. Create one to look at: 3. Create the app See [Install BlueTusk](../getting-started/install.md) to choose and pin a version. 4. Set the connection string On Linux or macOS, use `export BLUETUSK_CONNECTION_STRING=\"...\"`. **Warning:** `SSL Mode=Disable` is only for a local test container. Keep the default, `SSL Mode=VerifyFull`, everywhere else. 5. Write the code Replace the contents of `Program.cs`: What the code does: **Relay source.** The dashboard reads Streams state from the durable relay tables. `InitializeAsync` creates them in the `bluetusk_streams` schema, and the code registers one source and one consumer group. **Authentication.** `/dev/login` signs anyone in as a viewer. It exists only when the app runs in the `Development` environment. Replace it with your real identity provider before you deploy. **Policies.** `MapBlueTuskDashboard` protects every route with a named policy. You must define those policies. **Inventory services.** The overview page asks for every product's inventory. `NotConnected` reports Sync, Live and Continuous Graph as empty. 6. Run it 7. Read the inventory In a second terminal, call the API without signing in: Sign in, keep the cookie, and call it again: On Linux or macOS, use `curl` instead of `curl.exe`. The respons",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Control Plane quick start</h1>\n<p>In this quick start you host the BlueTusk dashboard and its JSON API in an\nASP.NET Core app, require sign-in, register a Streams relay source so there is\nsomething to see, and read the inventory with <code>curl</code>. It takes about 10\nminutes.</p>\n<h2>Before you start</h2>\n<p>You need:</p>\n<ul>\n<li>the <a href=\"https://dotnet.microsoft.com/download/dotnet/10.0\" target=\"_blank\" rel=\"noreferrer\">.NET 10 SDK</a>;</li>\n<li>Docker, or a PostgreSQL 15, 16, 17 or 18 test server with\n<code>wal_level=logical</code>;</li>\n<li><code>curl</code> (Windows 10 and later include it as <code>curl.exe</code>).</li>\n</ul>\n<h2>1. Start PostgreSQL</h2>\n<p>Skip this step if the container from the\n<a href=\"/documentation/getting-started/quickstart\">5-minute first app</a> is still running.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker run --name bluetusk-postgres `\n  -e POSTGRES_PASSWORD=local-dev-only `\n  -p 5432:5432 `\n  -d postgres:18 `\n  -c wal_level=logical\n",
+        "highlighted": "docker run <span class=\"hljs-literal\">--name</span> bluetusk<span class=\"hljs-literal\">-postgres</span> `\n  <span class=\"hljs-literal\">-e</span> POSTGRES_PASSWORD=local<span class=\"hljs-literal\">-dev-only</span> `\n  <span class=\"hljs-literal\">-p</span> <span class=\"hljs-number\">5432</span>:<span class=\"hljs-number\">5432</span> `\n  <span class=\"hljs-literal\">-d</span> postgres:<span class=\"hljs-number\">18</span> `\n  <span class=\"hljs-literal\">-c</span> wal_level=logical\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>2. Create a replication slot</h2>\n<p>The dashboard reports the state of each source’s logical replication slot.\nCreate one to look at:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -c \"SELECT pg_create_logical_replication_slot('orders_slot', 'pgoutput');\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;SELECT pg_create_logical_replication_slot(&#x27;orders_slot&#x27;, &#x27;pgoutput&#x27;);&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>3. Create the app</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet new web --framework net10.0 --name ControlPlaneQuickstart\ncd ControlPlaneQuickstart\ndotnet add package BlueTusk.Dashboard\ndotnet add package BlueTusk.Data\n",
+        "highlighted": "dotnet new web <span class=\"hljs-literal\">--framework</span> net10.<span class=\"hljs-number\">0</span> <span class=\"hljs-literal\">--name</span> ControlPlaneQuickstart\n<span class=\"hljs-built_in\">cd</span> ControlPlaneQuickstart\ndotnet add package BlueTusk.Dashboard\ndotnet add package BlueTusk.Data\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a> to choose and pin a\nversion.</p>\n<h2>4. Set the connection string</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable\"\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>On Linux or macOS, use <code>export BLUETUSK_CONNECTION_STRING=&quot;...&quot;</code>.</p>\n<blockquote>\n<p><strong>Warning:</strong> <code>SSL Mode=Disable</code> is only for a local test container. Keep the\ndefault, <code>SSL Mode=VerifyFull</code>, everywhere else.</p>\n</blockquote>\n<h2>5. Write the code</h2>\n<p>Replace the contents of <code>Program.cs</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using System.Security.Claims;\nusing BlueTusk.ControlPlane;\nusing BlueTusk.Dashboard;\nusing BlueTusk.Data;\nusing BlueTusk.Streams;\nusing BlueTusk.Streams.Storage.PostgreSql;\nusing Microsoft.AspNetCore.Authentication;\nusing Microsoft.AspNetCore.Authentication.Cookies;\n\nvar builder = WebApplication.CreateBuilder(args);\nvar connectionString = builder.Configuration[\"BLUETUSK_CONNECTION_STRING\"]\n    ?? throw new InvalidOperationException(\"Set BLUETUSK_CONNECTION_STRING first.\");\nvar dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\n\n// 1. Register something for the dashboard to show: a relay source and a consumer group.\n//    In production the Streams relay worker does this when it starts.\nvar relay = new PostgreSqlDurableChangeRelay(\n    new PostgreSqlStreamsStorageOptions { ControlDataSource = dataSource });\nawait relay.InitializeAsync();\n\nawait using (var command = dataSource.CreateCommand(\n    \"SELECT system_identifier::text, current_database() FROM pg_control_system()\"))\nawait using (var reader = await command.ExecuteReaderAsync())\n{\n    await reader.ReadAsync();\n    var source = await relay.RegisterSourceAsync(new ChangeSourceIdentity(\n        systemIdentifier: reader.GetString(0),\n        databaseName: reader.GetString(1),\n        slotName: \"orders_slot\",\n        publicationFingerprint: \"quickstart\"));\n    await relay.CreateConsumerGroupAsync(source, \"search-index\");\n}\n\n// 2. Authentication. DEVELOPMENT ONLY: a cookie that /dev/login hands to anyone.\nbuilder.Services\n    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)\n    .AddCookie(options =>\n    {\n        // Return 401/403 instead of redirecting to a login page.\n        options.Events.OnRedirectToLogin = context =>\n        {\n            context.Response.StatusCode = StatusCodes.Status401Unauthorized;\n            return Task.CompletedTask;\n        };\n        options.Events.OnRedirectToAccessDenied = context =>\n        {\n            context.Response.StatusCode = StatusCodes.Status403Forbidden;\n            return Task.CompletedTask;\n        };\n    });\n\n// 3. The three policies the dashboard requires, with their default names.\nbuilder.Services.AddAuthorizationBuilder()\n    .AddPolicy(\"BlueTusk.ControlPlane.Read\", policy => policy.RequireRole(\n        \"BlueTuskViewer\", \"BlueTuskOperator\", \"BlueTuskAdministrator\"))\n    .AddPolicy(\"BlueTusk.ControlPlane.Mutate\", policy => policy.RequireRole(\n        \"BlueTuskOperator\", \"BlueTuskAdministrator\"))\n    .AddPolicy(\"BlueTusk.ControlPlane.GraphExecute\", policy => policy.RequireRole(\n        \"BlueTuskOperator\", \"BlueTuskAdministrator\"));\n\n// 4. Inventory services. The dashboard needs one of each.\nbuilder.Services.AddSingleton<IControlPlaneQueryService>(\n    new PostgreSqlControlPlaneQueryService(\n        [new ControlPlanePostgreSqlSource(\"local\", dataSource, dataSource)]));\nbuilder.Services.AddSingleton<IControlPlaneFleetQueryService>(\n    new ManagedDeploymentFleetQueryService(new InMemoryManagedDeploymentStore()));\nbuilder.Services.AddSingleton<NotConnected>();\nbuilder.Services.AddSingleton<IControlPlaneSyncQueryService>(\n    services => services.GetRequiredService<NotConnected>());\nbuilder.Services.AddSingleton<IControlPlaneLiveQueryService>(\n    services => services.GetRequiredService<NotConnected>());\nbuilder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(\n    services => services.GetRequiredService<NotConnected>());\n\nvar app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\n\nif (app.Environment.IsDevelopment())\n{\n    app.MapGet(\"/dev/login\", async (HttpContext context) =>\n    {\n        var identity = new ClaimsIdentity(\n            [new Claim(ClaimTypes.NameIdentifier, \"dev-user\"),\n             new Claim(ClaimTypes.Role, \"BlueTuskViewer\")],\n            CookieAuthenticationDefaults.AuthenticationScheme);\n        await context.SignInAsync(new ClaimsPrincipal(identity));\n        return Results.Redirect(\"/bluetusk/overview\");\n    });\n}\n\napp.MapBlueTuskDashboard();\napp.Run();\n\n// Reports \"nothing connected\" for the products this quick start does not run.\nsealed class NotConnected :\n    IControlPlaneSyncQueryService,\n    IControlPlaneLiveQueryService,\n    IControlPlaneContinuousGraphQueryService\n{\n    public ValueTask<ControlPlaneSyncOverview> GetSyncOverviewAsync(\n        CancellationToken cancellationToken = default) =>\n        ValueTask.FromResult(new ControlPlaneSyncOverview(DateTimeOffset.UtcNow, []));\n\n    public ValueTask<ControlPlaneLiveOverview> GetLiveOverviewAsync(\n        CancellationToken cancellationToken = default) =>\n        ValueTask.FromResult(new ControlPlaneLiveOverview(\n            DateTimeOffset.UtcNow, new ControlPlaneLiveRegistrySnapshot(0, 0, 0), []));\n\n    public ValueTask<ControlPlaneContinuousGraphOverview> GetContinuousGraphOverviewAsync(\n        CancellationToken cancellationToken = default) =>\n        ValueTask.FromResult(new ControlPlaneContinuousGraphOverview(DateTimeOffset.UtcNow, []));\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> System.Security.Claims;\n<span class=\"hljs-keyword\">using</span> BlueTusk.ControlPlane;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Dashboard;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Streams;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Streams.Storage.PostgreSql;\n<span class=\"hljs-keyword\">using</span> Microsoft.AspNetCore.Authentication;\n<span class=\"hljs-keyword\">using</span> Microsoft.AspNetCore.Authentication.Cookies;\n\n<span class=\"hljs-keyword\">var</span> builder = WebApplication.CreateBuilder(<span class=\"hljs-keyword\">args</span>);\n<span class=\"hljs-keyword\">var</span> connectionString = builder.Configuration[<span class=\"hljs-string\">&quot;BLUETUSK_CONNECTION_STRING&quot;</span>]\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Set BLUETUSK_CONNECTION_STRING first.&quot;</span>);\n<span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n\n<span class=\"hljs-comment\">// 1. Register something for the dashboard to show: a relay source and a consumer group.</span>\n<span class=\"hljs-comment\">//    In production the Streams relay worker does this when it starts.</span>\n<span class=\"hljs-keyword\">var</span> relay = <span class=\"hljs-keyword\">new</span> PostgreSqlDurableChangeRelay(\n    <span class=\"hljs-keyword\">new</span> PostgreSqlStreamsStorageOptions { ControlDataSource = dataSource });\n<span class=\"hljs-keyword\">await</span> relay.InitializeAsync();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n    <span class=\"hljs-string\">&quot;SELECT system_identifier::text, current_database() FROM pg_control_system()&quot;</span>))\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync())\n{\n    <span class=\"hljs-keyword\">await</span> reader.ReadAsync();\n    <span class=\"hljs-keyword\">var</span> source = <span class=\"hljs-keyword\">await</span> relay.RegisterSourceAsync(<span class=\"hljs-keyword\">new</span> ChangeSourceIdentity(\n        systemIdentifier: reader.GetString(<span class=\"hljs-number\">0</span>),\n        databaseName: reader.GetString(<span class=\"hljs-number\">1</span>),\n        slotName: <span class=\"hljs-string\">&quot;orders_slot&quot;</span>,\n        publicationFingerprint: <span class=\"hljs-string\">&quot;quickstart&quot;</span>));\n    <span class=\"hljs-keyword\">await</span> relay.CreateConsumerGroupAsync(source, <span class=\"hljs-string\">&quot;search-index&quot;</span>);\n}\n\n<span class=\"hljs-comment\">// 2. Authentication. DEVELOPMENT ONLY: a cookie that /dev/login hands to anyone.</span>\nbuilder.Services\n    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)\n    .AddCookie(options =&gt;\n    {\n        <span class=\"hljs-comment\">// Return 401/403 instead of redirecting to a login page.</span>\n        options.Events.OnRedirectToLogin = context =&gt;\n        {\n            context.Response.StatusCode = StatusCodes.Status401Unauthorized;\n            <span class=\"hljs-keyword\">return</span> Task.CompletedTask;\n        };\n        options.Events.OnRedirectToAccessDenied = context =&gt;\n        {\n            context.Response.StatusCode = StatusCodes.Status403Forbidden;\n            <span class=\"hljs-keyword\">return</span> Task.CompletedTask;\n        };\n    });\n\n<span class=\"hljs-comment\">// 3. The three policies the dashboard requires, with their default names.</span>\nbuilder.Services.AddAuthorizationBuilder()\n    .AddPolicy(<span class=\"hljs-string\">&quot;BlueTusk.ControlPlane.Read&quot;</span>, policy =&gt; policy.RequireRole(\n        <span class=\"hljs-string\">&quot;BlueTuskViewer&quot;</span>, <span class=\"hljs-string\">&quot;BlueTuskOperator&quot;</span>, <span class=\"hljs-string\">&quot;BlueTuskAdministrator&quot;</span>))\n    .AddPolicy(<span class=\"hljs-string\">&quot;BlueTusk.ControlPlane.Mutate&quot;</span>, policy =&gt; policy.RequireRole(\n        <span class=\"hljs-string\">&quot;BlueTuskOperator&quot;</span>, <span class=\"hljs-string\">&quot;BlueTuskAdministrator&quot;</span>))\n    .AddPolicy(<span class=\"hljs-string\">&quot;BlueTusk.ControlPlane.GraphExecute&quot;</span>, policy =&gt; policy.RequireRole(\n        <span class=\"hljs-string\">&quot;BlueTuskOperator&quot;</span>, <span class=\"hljs-string\">&quot;BlueTuskAdministrator&quot;</span>));\n\n<span class=\"hljs-comment\">// 4. Inventory services. The dashboard needs one of each.</span>\nbuilder.Services.AddSingleton&lt;IControlPlaneQueryService&gt;(\n    <span class=\"hljs-keyword\">new</span> PostgreSqlControlPlaneQueryService(\n        [<span class=\"hljs-meta\">new ControlPlanePostgreSqlSource(<span class=\"hljs-string\">&quot;local&quot;</span>, dataSource, dataSource)</span>]));\nbuilder.Services.AddSingleton&lt;IControlPlaneFleetQueryService&gt;(\n    <span class=\"hljs-keyword\">new</span> ManagedDeploymentFleetQueryService(<span class=\"hljs-keyword\">new</span> InMemoryManagedDeploymentStore()));\nbuilder.Services.AddSingleton&lt;NotConnected&gt;();\nbuilder.Services.AddSingleton&lt;IControlPlaneSyncQueryService&gt;(\n    services =&gt; services.GetRequiredService&lt;NotConnected&gt;());\nbuilder.Services.AddSingleton&lt;IControlPlaneLiveQueryService&gt;(\n    services =&gt; services.GetRequiredService&lt;NotConnected&gt;());\nbuilder.Services.AddSingleton&lt;IControlPlaneContinuousGraphQueryService&gt;(\n    services =&gt; services.GetRequiredService&lt;NotConnected&gt;());\n\n<span class=\"hljs-keyword\">var</span> app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\n\n<span class=\"hljs-keyword\">if</span> (app.Environment.IsDevelopment())\n{\n    app.MapGet(<span class=\"hljs-string\">&quot;/dev/login&quot;</span>, <span class=\"hljs-keyword\">async</span> (HttpContext context) =&gt;\n    {\n        <span class=\"hljs-keyword\">var</span> identity = <span class=\"hljs-keyword\">new</span> ClaimsIdentity(\n            [<span class=\"hljs-meta\">new Claim(ClaimTypes.NameIdentifier, <span class=\"hljs-string\">&quot;dev-user&quot;</span>),\n             new Claim(ClaimTypes.Role, <span class=\"hljs-string\">&quot;BlueTuskViewer&quot;</span>)</span>],\n            CookieAuthenticationDefaults.AuthenticationScheme);\n        <span class=\"hljs-keyword\">await</span> context.SignInAsync(<span class=\"hljs-keyword\">new</span> ClaimsPrincipal(identity));\n        <span class=\"hljs-keyword\">return</span> Results.Redirect(<span class=\"hljs-string\">&quot;/bluetusk/overview&quot;</span>);\n    });\n}\n\napp.MapBlueTuskDashboard();\napp.Run();\n\n<span class=\"hljs-comment\">// Reports &quot;nothing connected&quot; for the products this quick start does not run.</span>\n<span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">NotConnected</span> :\n    <span class=\"hljs-title\">IControlPlaneSyncQueryService</span>,\n    <span class=\"hljs-title\">IControlPlaneLiveQueryService</span>,\n    <span class=\"hljs-title\">IControlPlaneContinuousGraphQueryService</span>\n{\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask&lt;ControlPlaneSyncOverview&gt; <span class=\"hljs-title\">GetSyncOverviewAsync</span>(<span class=\"hljs-params\">\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span> =&gt;\n        ValueTask.FromResult(<span class=\"hljs-keyword\">new</span> ControlPlaneSyncOverview(DateTimeOffset.UtcNow, []));\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask&lt;ControlPlaneLiveOverview&gt; <span class=\"hljs-title\">GetLiveOverviewAsync</span>(<span class=\"hljs-params\">\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span> =&gt;\n        ValueTask.FromResult(<span class=\"hljs-keyword\">new</span> ControlPlaneLiveOverview(\n            DateTimeOffset.UtcNow, <span class=\"hljs-keyword\">new</span> ControlPlaneLiveRegistrySnapshot(<span class=\"hljs-number\">0</span>, <span class=\"hljs-number\">0</span>, <span class=\"hljs-number\">0</span>), []));\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask&lt;ControlPlaneContinuousGraphOverview&gt; <span class=\"hljs-title\">GetContinuousGraphOverviewAsync</span>(<span class=\"hljs-params\">\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span> =&gt;\n        ValueTask.FromResult(<span class=\"hljs-keyword\">new</span> ControlPlaneContinuousGraphOverview(DateTimeOffset.UtcNow, []));\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>What the code does:</p>\n<ul>\n<li><strong>Relay source.</strong> The dashboard reads Streams state from the durable relay\ntables. <code>InitializeAsync</code> creates them in the <code>bluetusk_streams</code> schema, and\nthe code registers one source and one consumer group.</li>\n<li><strong>Authentication.</strong> <code>/dev/login</code> signs anyone in as a viewer. It exists only\nwhen the app runs in the <code>Development</code> environment. Replace it with your\nreal identity provider before you deploy.</li>\n<li><strong>Policies.</strong> <code>MapBlueTuskDashboard</code> protects every route with a named\npolicy. You must define those policies.</li>\n<li><strong>Inventory services.</strong> The overview page asks for every product’s\ninventory. <code>NotConnected</code> reports Sync, Live and Continuous Graph as empty.</li>\n</ul>\n<h2>6. Run it</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet run --urls http://127.0.0.1:5217\n",
+        "highlighted": "dotnet run <span class=\"hljs-literal\">--urls</span> http://<span class=\"hljs-number\">127.0</span>.<span class=\"hljs-number\">0.1</span>:<span class=\"hljs-number\">5217</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>7. Read the inventory</h2>\n<p>In a second terminal, call the API without signing in:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "curl.exe -i http://127.0.0.1:5217/bluetusk/api/v1/overview\n",
+        "highlighted": "curl.exe <span class=\"hljs-literal\">-i</span> http://<span class=\"hljs-number\">127.0</span>.<span class=\"hljs-number\">0.1</span>:<span class=\"hljs-number\">5217</span>/bluetusk/api/v1/overview\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "code",
+        "code": "HTTP/1.1 401 Unauthorized\n",
+        "highlighted": "HTTP/1.1 401 Unauthorized\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Sign in, keep the cookie, and call it again:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "curl.exe -c cookies.txt http://127.0.0.1:5217/dev/login\ncurl.exe -b cookies.txt http://127.0.0.1:5217/bluetusk/api/v1/overview\n",
+        "highlighted": "curl.exe <span class=\"hljs-literal\">-c</span> cookies.txt http://<span class=\"hljs-number\">127.0</span>.<span class=\"hljs-number\">0.1</span>:<span class=\"hljs-number\">5217</span>/dev/login\ncurl.exe <span class=\"hljs-literal\">-b</span> cookies.txt http://<span class=\"hljs-number\">127.0</span>.<span class=\"hljs-number\">0.1</span>:<span class=\"hljs-number\">5217</span>/bluetusk/api/v1/overview\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>On Linux or macOS, use <code>curl</code> instead of <code>curl.exe</code>. The response (shortened)\nis:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "{\"contractVersion\":1,\"data\":{\"observedAt\":\"2026-10-03T09:40:29.62+00:00\",\"sources\":[{\n  \"sourceKey\":\"local:6029439887c9...\",\"instanceName\":\"local\",\"databaseName\":\"postgres\",\n  \"slotName\":\"orders_slot\",\"sourceEpoch\":1,\n  \"slot\":{\"sourceReachable\":true,\"exists\":true,\"active\":false,\"outputPlugin\":\"pgoutput\",\n          \"walStatus\":\"reserved\",\"walLagBytes\":316552,\"diagnosticCode\":null},\n  \"consumerGroups\":[{\"name\":\"search-index\",\"checkpointSequence\":0,\"isActive\":true,\"isLeased\":false}]}]}}\n",
+        "highlighted": "<span class=\"hljs-punctuation\">{</span><span class=\"hljs-attr\">&quot;contractVersion&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-number\">1</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;data&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-punctuation\">{</span><span class=\"hljs-attr\">&quot;observedAt&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;2026-10-03T09:40:29.62+00:00&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;sources&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-punctuation\">[</span><span class=\"hljs-punctuation\">{</span>\n  <span class=\"hljs-attr\">&quot;sourceKey&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;local:6029439887c9...&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;instanceName&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;local&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;databaseName&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;postgres&quot;</span><span class=\"hljs-punctuation\">,</span>\n  <span class=\"hljs-attr\">&quot;slotName&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;orders_slot&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;sourceEpoch&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-number\">1</span><span class=\"hljs-punctuation\">,</span>\n  <span class=\"hljs-attr\">&quot;slot&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-punctuation\">{</span><span class=\"hljs-attr\">&quot;sourceReachable&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-literal\"><span class=\"hljs-keyword\">true</span></span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;exists&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-literal\"><span class=\"hljs-keyword\">true</span></span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;active&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-literal\"><span class=\"hljs-keyword\">false</span></span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;outputPlugin&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;pgoutput&quot;</span><span class=\"hljs-punctuation\">,</span>\n          <span class=\"hljs-attr\">&quot;walStatus&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;reserved&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;walLagBytes&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-number\">316552</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;diagnosticCode&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-literal\"><span class=\"hljs-keyword\">null</span></span><span class=\"hljs-punctuation\">}</span><span class=\"hljs-punctuation\">,</span>\n  <span class=\"hljs-attr\">&quot;consumerGroups&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-punctuation\">[</span><span class=\"hljs-punctuation\">{</span><span class=\"hljs-attr\">&quot;name&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;search-index&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;checkpointSequence&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-number\">0</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;isActive&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-literal\"><span class=\"hljs-keyword\">true</span></span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;isLeased&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-literal\"><span class=\"hljs-keyword\">false</span></span><span class=\"hljs-punctuation\">}</span><span class=\"hljs-punctuation\">]</span><span class=\"hljs-punctuation\">}</span><span class=\"hljs-punctuation\">]</span><span class=\"hljs-punctuation\">}</span><span class=\"hljs-punctuation\">}</span>\n",
+        "language": "json"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Now open <a href=\"http://127.0.0.1:5217/dev/login\" target=\"_blank\" rel=\"noreferrer\">http://127.0.0.1:5217/dev/login</a> in a browser. You land on the\noverview page. It shows one source, <code>local / orders_slot</code>, under <strong>Needs\nattention</strong> with the message “Replication slot is not active”. That is\ncorrect: nothing is reading from the slot yet.</p>\n<h2>8. Clean up</h2>\n<p>Stop the app with Ctrl+C. Then drop the slot. An unused slot makes PostgreSQL\nkeep WAL files and fills the disk over time.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -c \"SELECT pg_drop_replication_slot('orders_slot');\" -c \"DROP SCHEMA bluetusk_streams CASCADE;\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;SELECT pg_drop_replication_slot(&#x27;orders_slot&#x27;);&quot;</span> <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;DROP SCHEMA bluetusk_streams CASCADE;&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>If you created the container only for this quick start, remove it instead:\n<code>docker rm -f bluetusk-postgres</code>.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/control-plane-concepts\">Concepts</a>: what the inventory, health and roles mean.</li>\n<li><a href=\"/documentation/real-time/control-plane-operations\">Enable operator actions</a>: add the audit log and let\noperators act.</li>\n<li><a href=\"/documentation/real-time/control-plane-configuration\">Configuration</a>: change the route prefix, policy names and\nroles.</li>\n<li><a href=\"/documentation/real-time/durable-relay\">Durable relay</a>: run a real relay worker that\nkeeps the slot active.</li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-concepts",
+    "summary": "Inventory, components, health, operations, fleet operations, audit and authorization.",
+    "keywords": [
+      "control plane",
+      "concepts",
+      "fleet",
+      "audit"
+    ],
+    "order": 122,
+    "listed": true,
+    "title": "Control Plane concepts",
+    "sourcePath": "docs/control-plane/concepts.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/concepts.md",
+    "headings": [
+      {
+        "id": "control-plane-concepts",
+        "text": "Control Plane concepts",
+        "level": 1
+      },
+      {
+        "id": "how-the-pieces-fit",
+        "text": "How the pieces fit",
+        "level": 2
+      },
+      {
+        "id": "inventory",
+        "text": "Inventory",
+        "level": 2
+      },
+      {
+        "id": "instances-and-sources",
+        "text": "Instances and sources",
+        "level": 2
+      },
+      {
+        "id": "health",
+        "text": "Health",
+        "level": 2
+      },
+      {
+        "id": "operations",
+        "text": "Operations",
+        "level": 2
+      },
+      {
+        "id": "fleet-operations",
+        "text": "Fleet operations",
+        "level": 2
+      },
+      {
+        "id": "audit",
+        "text": "Audit",
+        "level": 2
+      },
+      {
+        "id": "authorization",
+        "text": "Authorization",
+        "level": 2
+      },
+      {
+        "id": "persistence",
+        "text": "Persistence",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 1408,
+    "readMinutes": 7,
+    "searchText": "Control Plane concepts This page explains the mental model behind the Control Plane: where its data comes from, how it judges health, how operator actions are checked and audited, and what it stores. For shared terms such as replication slot, checkpoint, source identity and consumer group, read the [core concepts](../getting-started/concepts.md) first. How the pieces fit The Control Plane runs inside your ASP.NET Core app. It has no agent of its own and no background process. Each page or API call asks the inventory services for a fresh view. Inventory The inventory is a read-only, redacted view of what BlueTusk is running. Five services supply it. The dashboard needs all five registered, even if some products are not in use (return an empty overview for those, as the [quick start](quickstart.md) does). Service BlueTusk implementation Reads `IControlPlaneQueryService` `PostgreSqlControlPlaneQueryService` Streams relay tables, plus `pg_replication_slots` on the source server `IControlPlaneSyncQueryService` `HostedSyncControlPlaneQueryService` The status of hosted Sync workers (`IBlueTuskSyncStatusSource`) and the relay head from the query service above `IControlPlaneLiveQueryService` `HostedLiveControlPlaneQueryService` The Live shared-subscription registry and invalidation log `IControlPlaneContinuousGraphQueryService` In the preview `BlueTusk.ContinuousGraph.ControlPlane` package Registered graph queries `IControlPlaneFleetQueryService` `ManagedDeploymentFleetQueryService` The managed-deployment store Redaction is built in. The inventory contains fingerprints, positions, counts and stable diagnostic codes. It never contains connection strings, credentials, lease-owner identities, row values, query parameters, Live security scopes (only a category and a truncated hash), workload settings, secret-reference names or exception messages. Instances and sources A **Control Plane instance** is one `ControlPlanePostgreSqlSource`: a name, a data source for the PostgreSQL ser",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Control Plane concepts</h1>\n<p>This page explains the mental model behind the Control Plane: where its data\ncomes from, how it judges health, how operator actions are checked and\naudited, and what it stores. For shared terms such as replication slot,\ncheckpoint, source identity and consumer group, read the\n<a href=\"/documentation/getting-started/concepts\">core concepts</a> first.</p>\n<h2>How the pieces fit</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "  Streams relay tables ──┐\n  Sync worker status ────┤                          ┌─► HTML pages  /bluetusk/...\n  Live registry ─────────┼─► inventory services ───►│\n  Graph registry ────────┤   (read only)            └─► JSON API    /bluetusk/api/v1/...\n  Deployment store ──────┘\n\n  Operator ─► POST /bluetusk/api/v1/operations ─► ControlPlaneOperationExecutor\n              role check ─► confirmation check ─► audit \"Requested\"\n              ─► your handler ─► audit \"Succeeded\" or \"Failed\"\n",
+        "highlighted": "  Streams relay tables ──┐\n  Sync worker status ────┤                          ┌─► HTML pages  /bluetusk/...\n  Live registry ─────────┼─► inventory services ───►│\n  Graph registry ────────┤   (read only)            └─► JSON API    /bluetusk/api/v1/...\n  Deployment store ──────┘\n\n  Operator ─► POST /bluetusk/api/v1/operations ─► ControlPlaneOperationExecutor\n              role check ─► confirmation check ─► audit &quot;Requested&quot;\n              ─► your handler ─► audit &quot;Succeeded&quot; or &quot;Failed&quot;\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The Control Plane runs inside your ASP.NET Core app. It has no agent of its\nown and no background process. Each page or API call asks the inventory\nservices for a fresh view.</p>\n<h2>Inventory</h2>\n<p>The inventory is a read-only, redacted view of what BlueTusk is running. Five\nservices supply it. The dashboard needs all five registered, even if some\nproducts are not in use (return an empty overview for those, as the\n<a href=\"/documentation/real-time/control-plane-quickstart\">quick start</a> does).</p>\n<table>\n<thead>\n<tr>\n<th>Service</th>\n<th>BlueTusk implementation</th>\n<th>Reads</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>IControlPlaneQueryService</code></td>\n<td><code>PostgreSqlControlPlaneQueryService</code></td>\n<td>Streams relay tables, plus <code>pg_replication_slots</code> on the source server</td>\n</tr>\n<tr>\n<td><code>IControlPlaneSyncQueryService</code></td>\n<td><code>HostedSyncControlPlaneQueryService</code></td>\n<td>The status of hosted Sync workers (<code>IBlueTuskSyncStatusSource</code>) and the relay head from the query service above</td>\n</tr>\n<tr>\n<td><code>IControlPlaneLiveQueryService</code></td>\n<td><code>HostedLiveControlPlaneQueryService</code></td>\n<td>The Live shared-subscription registry and invalidation log</td>\n</tr>\n<tr>\n<td><code>IControlPlaneContinuousGraphQueryService</code></td>\n<td>In the preview <code>BlueTusk.ContinuousGraph.ControlPlane</code> package</td>\n<td>Registered graph queries</td>\n</tr>\n<tr>\n<td><code>IControlPlaneFleetQueryService</code></td>\n<td><code>ManagedDeploymentFleetQueryService</code></td>\n<td>The managed-deployment store</td>\n</tr>\n</tbody>\n</table>\n<p>Redaction is built in. The inventory contains fingerprints, positions, counts\nand stable diagnostic codes. It never contains connection strings,\ncredentials, lease-owner identities, row values, query parameters, Live\nsecurity scopes (only a category and a truncated hash), workload settings,\nsecret-reference names or exception messages.</p>\n<h2>Instances and sources</h2>\n<p>A <strong>Control Plane instance</strong> is one <code>ControlPlanePostgreSqlSource</code>: a name, a\ndata source for the PostgreSQL server you capture from, and a data source for\nthe database that holds the relay tables. One query service can read many\ninstances in parallel.</p>\n<p>Each instance can hold several <strong>sources</strong>: one per source identity\nregistered in its relay. A source’s key is <code>&lt;instance name&gt;:&lt;source fingerprint&gt;</code>, and it owns:</p>\n<ul>\n<li>one <strong>replication slot</strong> on the source server;</li>\n<li><strong>relay storage</strong>: retained transactions and their sequence range;</li>\n<li><strong>consumer groups</strong>: each with its own checkpoint, lease and fencing token;</li>\n<li><strong>snapshot runs</strong>: initial copies made with the snapshot bootstrap;</li>\n<li><strong>direct checkpoints</strong>: consumers that read the slot without the relay.</li>\n</ul>\n<p>A source appears in the inventory only after a relay worker has registered it.\nSee <a href=\"/documentation/real-time/durable-relay\">Durable relay</a>.</p>\n<h2>Health</h2>\n<p>The overview counts each item as healthy or “needs attention” with these\nrules:</p>\n<table>\n<thead>\n<tr>\n<th>Item</th>\n<th>Healthy when</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Source</td>\n<td>The source server is reachable, the slot exists and is active, and there is no diagnostic code</td>\n</tr>\n<tr>\n<td>Sync pipeline</td>\n<td>State is <code>Running</code>, nothing is quarantined, and there is no diagnostic or lag diagnostic code</td>\n</tr>\n<tr>\n<td>Live subscription</td>\n<td>It is started, its invalidation lag is 0, and there is no lag diagnostic code</td>\n</tr>\n<tr>\n<td>Managed deployment</td>\n<td>State is <code>Ready</code>, it is not paused, observed generation equals desired generation, and there is no diagnostic code</td>\n</tr>\n</tbody>\n</table>\n<p>When a value cannot be measured, the inventory reports a diagnostic code\ninstead of a guess:</p>\n<table>\n<thead>\n<tr>\n<th>Code</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>source-unavailable</code></td>\n<td>The source server could not be reached to read slot state</td>\n</tr>\n<tr>\n<td><code>slot-missing</code></td>\n<td>The registered slot does not exist on the source server</td>\n</tr>\n<tr>\n<td><code>source-head-unavailable</code></td>\n<td>A Sync pipeline’s source is not in the relay inventory, so lag is unknown</td>\n</tr>\n<tr>\n<td><code>checkpoint-ahead-of-source</code></td>\n<td>A Sync checkpoint is ahead of the relay head</td>\n</tr>\n<tr>\n<td><code>invalidation-cursor-regressed</code></td>\n<td>A Live subscription’s cursor is ahead of the invalidation log head</td>\n</tr>\n</tbody>\n</table>\n<p><strong>Freshness.</strong> Every response carries <code>observedAt</code>. The PostgreSQL inventory\nis cached for 250 ms by default, so bursts of requests share one read. Sync\nthroughput is the change between two observations, so the first view of a\npipeline shows no rate. Pages do not refresh by themselves; use <strong>Refresh</strong>.</p>\n<h2>Operations</h2>\n<p>An <strong>operation</strong> is a request to change something. It has an operation ID\n(a client-generated GUID), a kind, a target, a confirmation and a reason.</p>\n<table>\n<thead>\n<tr>\n<th>Kinds</th>\n<th>Target from the dashboard</th>\n<th>Required role</th>\n<th>Handler provided</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>RetryPipeline</code>, <code>ReconcilePipeline</code>, <code>RebuildPipeline</code>, <code>ReplayQuarantine</code></td>\n<td><code>pipeline:&lt;pipeline id&gt;</code></td>\n<td>Operator</td>\n<td>No, you write it</td>\n</tr>\n<tr>\n<td><code>PauseSource</code>, <code>ResumeSource</code>, <code>PauseConsumerGroup</code>, <code>ResumeConsumerGroup</code></td>\n<td>None (API only)</td>\n<td>Operator</td>\n<td>No</td>\n</tr>\n<tr>\n<td><code>RemoveConsumerGroup</code>, <code>RewindCheckpoint</code>, <code>DeleteSlot</code></td>\n<td>None (API only)</td>\n<td>Administrator</td>\n<td>No</td>\n</tr>\n<tr>\n<td><code>PauseDeployment</code>, <code>ResumeDeployment</code>, <code>ReconcileDeployment</code>, <code>RebuildDeployment</code></td>\n<td><code>deployment:&lt;deployment id&gt;</code></td>\n<td>Operator</td>\n<td>Yes</td>\n</tr>\n<tr>\n<td><code>DeleteDeployment</code></td>\n<td><code>deployment:&lt;deployment id&gt;</code></td>\n<td>Administrator</td>\n<td>Yes</td>\n</tr>\n</tbody>\n</table>\n<p>The <strong>confirmation</strong> must equal <code>&lt;Kind&gt;:&lt;Target&gt;</code> exactly, for example\n<code>PauseDeployment:deployment:orders</code>. The dashboard asks the operator to type\nit. Destructive kinds (the four that need Administrator) are never one-click.</p>\n<p>BlueTusk deliberately ships no handler for slot deletion, checkpoint rewind or\npipeline control. Your <code>IControlPlaneOperationHandler</code> decides what each kind\ndoes in your system. See <a href=\"/documentation/real-time/control-plane-operations\">Enable operator actions</a>.</p>\n<h2>Fleet operations</h2>\n<p><strong>New in 1.1.0.</strong> A <strong>managed deployment</strong> is a desired-state record for one\ntenant’s BlueTusk workloads (Streams, Sync, Live, ControlPlane, Dashboard,\nContinuousGraph) in one provider and region. <code>ManagedDeploymentController</code>\nreconciles it through an <code>IManagedInfrastructureProvider</code> that you supply.</p>\n<ul>\n<li><strong>Desired generation</strong> increases by one each time the desired state\nchanges. <strong>Observed generation</strong> is the generation last reconciled.</li>\n<li><strong>State</strong> is one of <code>Pending</code>, <code>Planning</code>, <code>Applying</code>, <code>Ready</code>, <code>Degraded</code>,\n<code>Paused</code>, <code>Deleting</code>, <code>Deleted</code> or <code>Failed</code>.</li>\n<li>Each reconciliation holds a lease and passes a <strong>fencing token</strong> to the\nprovider, so two Control Plane hosts never apply the same deployment at\nonce.</li>\n</ul>\n<p><code>ManagedDeploymentControlPlaneOperationHandler</code> turns fleet operations into\ncontroller calls:</p>\n<table>\n<thead>\n<tr>\n<th>Operation</th>\n<th>What happens</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>PauseDeployment</code> / <code>ResumeDeployment</code></td>\n<td>Sets <code>Paused</code> in the desired state (a new generation), then reconciles</td>\n</tr>\n<tr>\n<td><code>ReconcileDeployment</code></td>\n<td>Reconciles now</td>\n</tr>\n<tr>\n<td><code>RebuildDeployment</code></td>\n<td>Calls your <code>IManagedDeploymentRebuildHandler</code>, then reconciles</td>\n</tr>\n<tr>\n<td><code>DeleteDeployment</code></td>\n<td>Deletes through the provider. Stops with <code>delete-protection-enabled</code> if delete protection is on</td>\n</tr>\n</tbody>\n</table>\n<p>Delete protection cannot be overridden from the dashboard. Turn it off in the\ndesired state first.</p>\n<h2>Audit</h2>\n<p><code>ControlPlaneOperationExecutor</code> writes audit records through an\n<code>IControlPlaneAuditStore</code> in this order:</p>\n<ol>\n<li>If the actor lacks the role: <code>Denied</code> with detail <code>role-denied</code>. Stop.</li>\n<li>If the confirmation does not match: <code>Rejected</code> with detail\n<code>confirmation-mismatch</code>. Stop.</li>\n<li><code>Requested</code>. If this write fails, the handler is never called.</li>\n<li>Your handler runs.</li>\n<li><code>Succeeded</code>, or <code>Failed</code> with the exception type name (or <code>cancelled</code>) as\nthe detail.</li>\n</ol>\n<p>Records hold the operation ID, time, actor ID, kind, target, status, reason\nand detail code. They never hold exception messages. If the handler succeeds\nbut the <code>Succeeded</code> record cannot be written, the API reports a failure; look\nthe operation up by its ID before retrying.</p>\n<p><code>PostgreSqlControlPlaneAuditStore</code> keeps records in an append-only table. A\ntrigger rejects <code>UPDATE</code> and <code>DELETE</code>.</p>\n<h2>Authorization</h2>\n<p>Two layers protect the Control Plane:</p>\n<ol>\n<li><strong>Endpoint policies.</strong> ASP.NET Core authorization policies guard routes:\na read policy for every page and GET API, a mutation policy for\n<code>/api/v1/operations</code>, and a graph-execution policy for running graph\nqueries. You define the policies.</li>\n<li><strong>Control Plane roles.</strong> For operations, the dashboard maps the signed-in\nuser’s ASP.NET Core roles to <code>Viewer</code>, <code>Operator</code> and <code>Administrator</code>\n(role names are configurable). <code>RoleControlPlaneAuthorizer</code> allows an\noperation when the user has the required role or a higher one.</li>\n</ol>\n<p>The actor ID comes from the <code>NameIdentifier</code> claim, or the identity name.\nClients cannot submit an actor. Operation buttons appear only for users in the\nOperator or Administrator role, but the server checks every request anyway.</p>\n<h2>Persistence</h2>\n<p>The dashboard itself is stateless. These tables hold everything it shows or\nrecords:</p>\n<table>\n<thead>\n<tr>\n<th>Data</th>\n<th>Schema (default)</th>\n<th>Created by</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Relay sources, transactions, consumer groups, snapshot runs, checkpoints</td>\n<td><code>bluetusk_streams</code></td>\n<td><code>PostgreSqlDurableChangeRelay.InitializeAsync</code> (Streams)</td>\n</tr>\n<tr>\n<td>Audit log</td>\n<td><code>bluetusk_control</code></td>\n<td><code>PostgreSqlControlPlaneAuditStore.InitializeAsync</code></td>\n</tr>\n<tr>\n<td>Managed deployments, leases</td>\n<td><code>bluetusk_control</code></td>\n<td><code>PostgreSqlManagedDeploymentStore.InitializeAsync</code></td>\n</tr>\n</tbody>\n</table>\n<p>Both Control Plane stores record a schema version and refuse to write when the\ndatabase was migrated by a newer version. <code>InMemoryManagedDeploymentStore</code> is\nfor tests and single-process development only.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/control-plane-operations\">Enable operator actions</a></li>\n<li><a href=\"/documentation/real-time/control-plane-configuration\">Configuration</a></li>\n<li><a href=\"/documentation/real-time/control-plane-reference\">Full Control Plane reference</a></li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-configuration",
+    "summary": "Control Plane options, endpoints, authorization policies, persistence and Kubernetes settings.",
+    "keywords": [
+      "control plane",
+      "configuration",
+      "options"
+    ],
+    "order": 123,
+    "listed": true,
+    "title": "Control Plane configuration",
+    "sourcePath": "docs/control-plane/configuration.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/configuration.md",
+    "headings": [
+      {
+        "id": "control-plane-configuration",
+        "text": "Control Plane configuration",
+        "level": 1
+      },
+      {
+        "id": "dashboard-options",
+        "text": "Dashboard options",
+        "level": 2
+      },
+      {
+        "id": "authorization-policies",
+        "text": "Authorization policies",
+        "level": 2
+      },
+      {
+        "id": "routes",
+        "text": "Routes",
+        "level": 2
+      },
+      {
+        "id": "pages",
+        "text": "Pages",
+        "level": 3
+      },
+      {
+        "id": "json-api",
+        "text": "JSON API",
+        "level": 3
+      },
+      {
+        "id": "operation-requests",
+        "text": "Operation requests",
+        "level": 3
+      },
+      {
+        "id": "operation-kinds",
+        "text": "Operation kinds",
+        "level": 3
+      },
+      {
+        "id": "json-enum-values",
+        "text": "JSON enum values",
+        "level": 3
+      },
+      {
+        "id": "inventory-sources",
+        "text": "Inventory sources",
+        "level": 2
+      },
+      {
+        "id": "sync-and-live",
+        "text": "Sync and Live",
+        "level": 3
+      },
+      {
+        "id": "storage",
+        "text": "Storage",
+        "level": 2
+      },
+      {
+        "id": "managed-deployments",
+        "text": "Managed deployments",
+        "level": 2
+      },
+      {
+        "id": "kubernetes-reconciler",
+        "text": "Kubernetes reconciler",
+        "level": 2
+      },
+      {
+        "id": "metrics",
+        "text": "Metrics",
+        "level": 2
+      }
+    ],
+    "wordCount": 1812,
+    "readMinutes": 9,
+    "searchText": "Control Plane configuration This page lists every setting you can change in the Control Plane: dashboard options, authorization policies, routes, inventory sources, storage, managed deployments and the Kubernetes reconciler. All configuration is in code; the Control Plane reads no `appsettings.json` section of its own. Dashboard options Pass options to `MapBlueTuskDashboard`: `BlueTuskDashboardOptions`: Property Type Default Meaning `RoutePrefix` `string` `/bluetusk` Base path for every page and API. Must start with `/`, must not end with `/`, and may contain only ASCII letters, digits, `/`, `-`, `_`, `.` and `~` `BrandLabel` `string` `Control plane` Text next to the BlueTusk name in the header. **New in 1.1.0** `DataProvenanceNotice` `string?` `null` Optional banner, for example to say which products this host is not connected to. **New in 1.1.0** `ReadAuthorizationPolicy` `string` `BlueTusk.ControlPlane.Read` Policy required for every route `MutationAuthorizationPolicy` `string` `BlueTusk.ControlPlane.Mutate` Extra policy for `POST .../operations` `GraphExecutionAuthorizationPolicy` `string` `BlueTusk.ControlPlane.GraphExecute` Extra policy for `POST .../graphs/{queryFingerprint}/run`. **New in 1.1.0** `ViewerRole` `string` `BlueTuskViewer` ASP.NET Core role mapped to the Control Plane `Viewer` role `OperatorRole` `string` `BlueTuskOperator` Role mapped to `Operator`. Shows operation buttons `AdministratorRole` `string` `BlueTuskAdministrator` Role mapped to `Administrator`. Shows the deployment **Delete** button `GraphExecutorRole` `string` `BlueTuskOperator` Role that sees the graph **Run** controls. **New in 1.1.0** Every property except `DataProvenanceNotice` must be non-empty. An invalid value throws `ArgumentException` when `MapBlueTuskDashboard` runs. Authorization policies You must register a policy for each of the three policy names. BlueTusk does not create them, and a missing policy fails the request with `The AuthorizationPolicy named: '...' was not fo",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Control Plane configuration</h1>\n<p>This page lists every setting you can change in the Control Plane: dashboard\noptions, authorization policies, routes, inventory sources, storage, managed\ndeployments and the Kubernetes reconciler. All configuration is in code; the\nControl Plane reads no <code>appsettings.json</code> section of its own.</p>\n<h2>Dashboard options</h2>\n<p>Pass options to <code>MapBlueTuskDashboard</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "app.MapBlueTuskDashboard(options =>\n{\n    options.RoutePrefix = \"/ops/bluetusk\";\n    options.BrandLabel = \"Production EU\";\n    options.DataProvenanceNotice = \"Live is not connected to this host.\";\n    options.ReadAuthorizationPolicy = \"Ops.Read\";\n    options.MutationAuthorizationPolicy = \"Ops.Mutate\";\n    options.GraphExecutionAuthorizationPolicy = \"Ops.GraphExecute\";\n    options.ViewerRole = \"ops-viewer\";\n    options.OperatorRole = \"ops-operator\";\n    options.AdministratorRole = \"ops-admin\";\n    options.GraphExecutorRole = \"ops-operator\";\n});\n",
+        "highlighted": "app.MapBlueTuskDashboard(options =&gt;\n{\n    options.RoutePrefix = <span class=\"hljs-string\">&quot;/ops/bluetusk&quot;</span>;\n    options.BrandLabel = <span class=\"hljs-string\">&quot;Production EU&quot;</span>;\n    options.DataProvenanceNotice = <span class=\"hljs-string\">&quot;Live is not connected to this host.&quot;</span>;\n    options.ReadAuthorizationPolicy = <span class=\"hljs-string\">&quot;Ops.Read&quot;</span>;\n    options.MutationAuthorizationPolicy = <span class=\"hljs-string\">&quot;Ops.Mutate&quot;</span>;\n    options.GraphExecutionAuthorizationPolicy = <span class=\"hljs-string\">&quot;Ops.GraphExecute&quot;</span>;\n    options.ViewerRole = <span class=\"hljs-string\">&quot;ops-viewer&quot;</span>;\n    options.OperatorRole = <span class=\"hljs-string\">&quot;ops-operator&quot;</span>;\n    options.AdministratorRole = <span class=\"hljs-string\">&quot;ops-admin&quot;</span>;\n    options.GraphExecutorRole = <span class=\"hljs-string\">&quot;ops-operator&quot;</span>;\n});\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTuskDashboardOptions</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>RoutePrefix</code></td>\n<td><code>string</code></td>\n<td><code>/bluetusk</code></td>\n<td>Base path for every page and API. Must start with <code>/</code>, must not end with <code>/</code>, and may contain only ASCII letters, digits, <code>/</code>, <code>-</code>, <code>_</code>, <code>.</code> and <code>~</code></td>\n</tr>\n<tr>\n<td><code>BrandLabel</code></td>\n<td><code>string</code></td>\n<td><code>Control plane</code></td>\n<td>Text next to the BlueTusk name in the header. <strong>New in 1.1.0</strong></td>\n</tr>\n<tr>\n<td><code>DataProvenanceNotice</code></td>\n<td><code>string?</code></td>\n<td><code>null</code></td>\n<td>Optional banner, for example to say which products this host is not connected to. <strong>New in 1.1.0</strong></td>\n</tr>\n<tr>\n<td><code>ReadAuthorizationPolicy</code></td>\n<td><code>string</code></td>\n<td><code>BlueTusk.ControlPlane.Read</code></td>\n<td>Policy required for every route</td>\n</tr>\n<tr>\n<td><code>MutationAuthorizationPolicy</code></td>\n<td><code>string</code></td>\n<td><code>BlueTusk.ControlPlane.Mutate</code></td>\n<td>Extra policy for <code>POST .../operations</code></td>\n</tr>\n<tr>\n<td><code>GraphExecutionAuthorizationPolicy</code></td>\n<td><code>string</code></td>\n<td><code>BlueTusk.ControlPlane.GraphExecute</code></td>\n<td>Extra policy for <code>POST .../graphs/{queryFingerprint}/run</code>. <strong>New in 1.1.0</strong></td>\n</tr>\n<tr>\n<td><code>ViewerRole</code></td>\n<td><code>string</code></td>\n<td><code>BlueTuskViewer</code></td>\n<td>ASP.NET Core role mapped to the Control Plane <code>Viewer</code> role</td>\n</tr>\n<tr>\n<td><code>OperatorRole</code></td>\n<td><code>string</code></td>\n<td><code>BlueTuskOperator</code></td>\n<td>Role mapped to <code>Operator</code>. Shows operation buttons</td>\n</tr>\n<tr>\n<td><code>AdministratorRole</code></td>\n<td><code>string</code></td>\n<td><code>BlueTuskAdministrator</code></td>\n<td>Role mapped to <code>Administrator</code>. Shows the deployment <strong>Delete</strong> button</td>\n</tr>\n<tr>\n<td><code>GraphExecutorRole</code></td>\n<td><code>string</code></td>\n<td><code>BlueTuskOperator</code></td>\n<td>Role that sees the graph <strong>Run</strong> controls. <strong>New in 1.1.0</strong></td>\n</tr>\n</tbody>\n</table>\n<p>Every property except <code>DataProvenanceNotice</code> must be non-empty. An invalid\nvalue throws <code>ArgumentException</code> when <code>MapBlueTuskDashboard</code> runs.</p>\n<h2>Authorization policies</h2>\n<p>You must register a policy for each of the three policy names. BlueTusk does\nnot create them, and a missing policy fails the request with\n<code>The AuthorizationPolicy named: '...' was not found.</code></p>\n<table>\n<thead>\n<tr>\n<th>Policy</th>\n<th>Applies to</th>\n<th>Suggested requirement</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Read</td>\n<td>Every page and API, including the POST endpoints</td>\n<td>Any of the viewer, operator or administrator roles</td>\n</tr>\n<tr>\n<td>Mutation</td>\n<td><code>POST /api/v1/operations</code> and <code>/api/operations</code></td>\n<td>Operator or administrator</td>\n</tr>\n<tr>\n<td>Graph execution</td>\n<td><code>POST /api/v1/graphs/{queryFingerprint}/run</code> and the unversioned alias</td>\n<td>Operator or administrator</td>\n</tr>\n</tbody>\n</table>\n<p>A POST request must pass the read policy and its own policy. The\n<a href=\"/documentation/real-time/control-plane-quickstart#5-write-the-code\">quick start</a> shows a working set. Role checks\nfor individual operations happen after the policy check; see\n<a href=\"/documentation/real-time/control-plane-concepts#authorization\">Authorization</a>.</p>\n<h2>Routes</h2>\n<p>All paths are relative to <code>RoutePrefix</code>.</p>\n<h3>Pages</h3>\n<table>\n<thead>\n<tr>\n<th>Path</th>\n<th>Shows</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>/</code></td>\n<td>Redirects to <code>/overview</code></td>\n</tr>\n<tr>\n<td><code>/overview</code></td>\n<td>All products and the items that need attention</td>\n</tr>\n<tr>\n<td><code>/sources</code>, <code>/sources/{sourceKey}</code></td>\n<td>Streams sources, slots and relay storage</td>\n</tr>\n<tr>\n<td><code>/sources/{sourceKey}/consumer-groups/{groupName}</code></td>\n<td>One consumer group</td>\n</tr>\n<tr>\n<td><code>/sources/{sourceKey}/snapshots/{snapshotEpoch}</code></td>\n<td>One snapshot run</td>\n</tr>\n<tr>\n<td><code>/sources/{sourceKey}/checkpoints/{consumerGroup}</code></td>\n<td>One direct checkpoint</td>\n</tr>\n<tr>\n<td><code>/snapshots</code>, <code>/consumer-groups</code>, <code>/checkpoints</code></td>\n<td>Fleet-wide lists</td>\n</tr>\n<tr>\n<td><code>/pipelines</code>, <code>/pipelines/{pipelineId}</code></td>\n<td>Sync pipelines</td>\n</tr>\n<tr>\n<td><code>/live</code>, <code>/live/{subscriptionFingerprint}</code></td>\n<td>Live subscriptions</td>\n</tr>\n<tr>\n<td><code>/graphs</code>, <code>/graphs/{queryFingerprint}</code></td>\n<td>Continuous Graph queries (preview)</td>\n</tr>\n<tr>\n<td><code>/deployments</code>, <code>/deployments/{deploymentId}</code></td>\n<td>Managed deployments. An ID may contain <code>/</code>, such as Kubernetes <code>production/orders</code>; the dashboard links escape it as <code>%2F</code>. <strong>New in 1.1.0</strong></td>\n</tr>\n<tr>\n<td><code>/assets/dashboard.js</code></td>\n<td>The dashboard’s script (same origin)</td>\n</tr>\n</tbody>\n</table>\n<h3>JSON API</h3>\n<table>\n<thead>\n<tr>\n<th>Method and path</th>\n<th>Service used</th>\n<th>Response <code>data</code></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>GET /api/capabilities</code></td>\n<td>None</td>\n<td><code>currentVersion</code>, <code>minimumSupportedVersion</code>, <code>supportedVersions</code> (not wrapped)</td>\n</tr>\n<tr>\n<td><code>GET /api/v1/overview</code></td>\n<td><code>IControlPlaneQueryService</code></td>\n<td><code>ControlPlaneOverview</code></td>\n</tr>\n<tr>\n<td><code>GET /api/v1/sync</code></td>\n<td><code>IControlPlaneSyncQueryService</code></td>\n<td><code>ControlPlaneSyncOverview</code></td>\n</tr>\n<tr>\n<td><code>GET /api/v1/live</code></td>\n<td><code>IControlPlaneLiveQueryService</code></td>\n<td><code>ControlPlaneLiveOverview</code></td>\n</tr>\n<tr>\n<td><code>GET /api/v1/graphs</code></td>\n<td><code>IControlPlaneContinuousGraphQueryService</code></td>\n<td><code>ControlPlaneContinuousGraphOverview</code></td>\n</tr>\n<tr>\n<td><code>GET /api/v1/fleet</code></td>\n<td><code>IControlPlaneFleetQueryService</code></td>\n<td><code>ControlPlaneFleetOverview</code>. <strong>New in 1.1.0</strong></td>\n</tr>\n<tr>\n<td><code>POST /api/v1/operations</code></td>\n<td><code>ControlPlaneOperationExecutor</code></td>\n<td><code>operationId</code>, <code>status</code></td>\n</tr>\n<tr>\n<td><code>POST /api/v1/graphs/{queryFingerprint}/run</code></td>\n<td><code>IControlPlaneContinuousGraphExecutionService</code></td>\n<td><code>ControlPlaneContinuousGraphRunResult</code></td>\n</tr>\n</tbody>\n</table>\n<p>Every <code>/api/v1/...</code> response is <code>{&quot;contractVersion&quot;:1,&quot;data&quot;:...}</code>. Reject a\n<code>contractVersion</code> you do not recognize. New fields can appear within version\n1; a removed or changed field means a new version. The unversioned\n<code>/api/overview</code>, <code>/api/sync</code>, <code>/api/live</code>, <code>/api/graphs</code>, <code>/api/fleet</code>,\n<code>/api/operations</code> and <code>/api/graphs/{queryFingerprint}/run</code> routes return the\nsame data without the envelope and remain for 1.x compatibility. See\n<a href=\"/documentation/real-time/control-plane-api-compatibility\">API compatibility</a>.</p>\n<h3>Operation requests</h3>\n<table>\n<thead>\n<tr>\n<th>Rule</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Content type</td>\n<td><code>application/json</code></td>\n</tr>\n<tr>\n<td>Body size</td>\n<td>1 byte to 16 KiB</td>\n</tr>\n<tr>\n<td>Header</td>\n<td><code>X-BlueTusk-Operation-Id</code>, equal to the body’s <code>operationId</code> (GUID, <code>D</code> format)</td>\n</tr>\n<tr>\n<td>Body fields</td>\n<td><code>operationId</code>, <code>kind</code> (number), <code>target</code>, <code>confirmation</code>, <code>reason</code></td>\n</tr>\n<tr>\n<td>Confirmation</td>\n<td>Exactly <code>&lt;Kind&gt;:&lt;Target&gt;</code></td>\n</tr>\n<tr>\n<td>Length limits</td>\n<td><code>target</code> 1024, <code>confirmation</code> 2048, <code>reason</code> 2048, actor ID 512 characters</td>\n</tr>\n</tbody>\n</table>\n<p>A graph run request has the same size limit and at most 64 parameters.</p>\n<h3>Operation kinds</h3>\n<p><code>kind</code> is sent as a number:</p>\n<table>\n<thead>\n<tr>\n<th>Value</th>\n<th>Kind</th>\n<th>Value</th>\n<th>Kind</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>0</td>\n<td><code>PauseSource</code></td>\n<td>8</td>\n<td><code>RewindCheckpoint</code></td>\n</tr>\n<tr>\n<td>1</td>\n<td><code>ResumeSource</code></td>\n<td>9</td>\n<td><code>DeleteSlot</code></td>\n</tr>\n<tr>\n<td>2</td>\n<td><code>PauseConsumerGroup</code></td>\n<td>10</td>\n<td><code>ReplayQuarantine</code></td>\n</tr>\n<tr>\n<td>3</td>\n<td><code>ResumeConsumerGroup</code></td>\n<td>11</td>\n<td><code>PauseDeployment</code></td>\n</tr>\n<tr>\n<td>4</td>\n<td><code>RetryPipeline</code></td>\n<td>12</td>\n<td><code>ResumeDeployment</code></td>\n</tr>\n<tr>\n<td>5</td>\n<td><code>ReconcilePipeline</code></td>\n<td>13</td>\n<td><code>ReconcileDeployment</code></td>\n</tr>\n<tr>\n<td>6</td>\n<td><code>RebuildPipeline</code></td>\n<td>14</td>\n<td><code>RebuildDeployment</code></td>\n</tr>\n<tr>\n<td>7</td>\n<td><code>RemoveConsumerGroup</code></td>\n<td>15</td>\n<td><code>DeleteDeployment</code></td>\n</tr>\n</tbody>\n</table>\n<p>Values 11 to 15 are <strong>New in 1.1.0</strong>.</p>\n<h3>JSON enum values</h3>\n<p>Enums in API responses are also numbers:</p>\n<table>\n<thead>\n<tr>\n<th>Enum</th>\n<th>Values</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>ManagedDeploymentState</code> (<code>state</code>)</td>\n<td>0 <code>Pending</code>, 1 <code>Planning</code>, 2 <code>Applying</code>, 3 <code>Ready</code>, 4 <code>Degraded</code>, 5 <code>Paused</code>, 6 <code>Deleting</code>, 7 <code>Deleted</code>, 8 <code>Failed</code></td>\n</tr>\n<tr>\n<td><code>ManagedWorkloadKind</code> (<code>workloadKinds</code>)</td>\n<td>0 <code>Streams</code>, 1 <code>Sync</code>, 2 <code>Live</code>, 3 <code>ControlPlane</code>, 4 <code>Dashboard</code>, 5 <code>ContinuousGraph</code></td>\n</tr>\n</tbody>\n</table>\n<p>Sync pipeline <code>state</code> is a string, such as <code>Running</code>.</p>\n<h2>Inventory sources</h2>\n<p><code>ControlPlanePostgreSqlSource</code> describes one instance:</p>\n<table>\n<thead>\n<tr>\n<th>Parameter</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>instanceName</code></td>\n<td>Required</td>\n<td>Unique name. Becomes the first part of each source key</td>\n</tr>\n<tr>\n<td><code>sourceDataSource</code></td>\n<td>Required</td>\n<td>The PostgreSQL server you capture from. Used to read <code>pg_replication_slots</code></td>\n</tr>\n<tr>\n<td><code>controlDataSource</code></td>\n<td>Required</td>\n<td>The database that holds the relay tables</td>\n</tr>\n<tr>\n<td><code>controlSchema</code></td>\n<td><code>bluetusk_streams</code></td>\n<td>Relay schema. One unquoted identifier</td>\n</tr>\n</tbody>\n</table>\n<p><code>PostgreSqlControlPlaneQueryOptions</code>, passed to\n<code>PostgreSqlControlPlaneQueryService.Create</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MaximumParallelInstances</code></td>\n<td>Processor count, clamped to 2 to 8</td>\n<td>Instances read at the same time</td>\n</tr>\n<tr>\n<td><code>SnapshotCacheDuration</code></td>\n<td>250 ms</td>\n<td>How long one inventory read is reused. <code>TimeSpan.Zero</code> disables the cache</td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var inventory = PostgreSqlControlPlaneQueryService.Create(\n    [\n        new ControlPlanePostgreSqlSource(\n            instanceName: \"production-eu\",\n            sourceDataSource: sourceDataSource,\n            controlDataSource: controlDataSource,\n            controlSchema: \"bluetusk_streams\"),\n    ],\n    new PostgreSqlControlPlaneQueryOptions\n    {\n        MaximumParallelInstances = 4,\n        SnapshotCacheDuration = TimeSpan.FromSeconds(1),\n    });\nbuilder.Services.AddSingleton<IControlPlaneQueryService>(inventory);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> inventory = PostgreSqlControlPlaneQueryService.Create(\n    [\n        <span class=\"hljs-keyword\">new</span> ControlPlanePostgreSqlSource(\n            instanceName: <span class=\"hljs-string\">&quot;production-eu&quot;</span>,\n            sourceDataSource: sourceDataSource,\n            controlDataSource: controlDataSource,\n            controlSchema: <span class=\"hljs-string\">&quot;bluetusk_streams&quot;</span>),\n    ],\n    <span class=\"hljs-keyword\">new</span> PostgreSqlControlPlaneQueryOptions\n    {\n        MaximumParallelInstances = <span class=\"hljs-number\">4</span>,\n        SnapshotCacheDuration = TimeSpan.FromSeconds(<span class=\"hljs-number\">1</span>),\n    });\nbuilder.Services.AddSingleton&lt;IControlPlaneQueryService&gt;(inventory);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use a login with read-only access for both data sources. Instance names must\nbe unique, and you need at least one instance.</p>\n<h3>Sync and Live</h3>\n<p><code>HostedSyncControlPlaneQueryService</code> needs <code>IBlueTuskSyncStatusSource</code>, which\n<code>AddBlueTuskSync()</code> registers, and an <code>IControlPlaneQueryService</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddBlueTuskSync();\nbuilder.Services.AddSingleton<IControlPlaneSyncQueryService, HostedSyncControlPlaneQueryService>();\n",
+        "highlighted": "builder.Services.AddBlueTuskSync();\nbuilder.Services.AddSingleton&lt;IControlPlaneSyncQueryService, HostedSyncControlPlaneQueryService&gt;();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>HostedLiveControlPlaneQueryService</code> takes the <code>LiveSharedSubscriptionRegistry</code>\nand <code>ILiveInvalidationLog</code> your Live host uses, plus an optional\n<code>IControlPlaneLiveScopeRedactor</code> (default\n<code>FingerprintControlPlaneLiveScopeRedactor</code>).</p>\n<h2>Storage</h2>\n<table>\n<thead>\n<tr>\n<th>Class</th>\n<th>Constructor</th>\n<th>Tables</th>\n<th>Schema version</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>PostgreSqlControlPlaneAuditStore</code></td>\n<td><code>(DbDataSource dataSource, string controlSchema = &quot;bluetusk_control&quot;)</code></td>\n<td><code>storage_metadata</code>, <code>audit_log</code></td>\n<td>2</td>\n</tr>\n<tr>\n<td><code>PostgreSqlManagedDeploymentStore</code></td>\n<td><code>(DbDataSource dataSource, string controlSchema = &quot;bluetusk_control&quot;)</code></td>\n<td><code>managed_hosting_metadata</code>, <code>managed_deployments</code>, <code>managed_deployment_leases</code></td>\n<td>1</td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var audit = new PostgreSqlControlPlaneAuditStore(controlDataSource, controlSchema: \"bluetusk_control\");\nvar deployments = new PostgreSqlManagedDeploymentStore(controlDataSource, controlSchema: \"bluetusk_control\");\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> audit = <span class=\"hljs-keyword\">new</span> PostgreSqlControlPlaneAuditStore(controlDataSource, controlSchema: <span class=\"hljs-string\">&quot;bluetusk_control&quot;</span>);\n<span class=\"hljs-keyword\">var</span> deployments = <span class=\"hljs-keyword\">new</span> PostgreSqlManagedDeploymentStore(controlDataSource, controlSchema: <span class=\"hljs-string\">&quot;bluetusk_control&quot;</span>);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Call <code>InitializeAsync</code> on each before use. <code>GetSchemaVersionAsync</code> returns the\ninstalled version for readiness checks. Schema names must match\n<code>^[A-Za-z_][A-Za-z0-9_$]*$</code>.</p>\n<h2>Managed deployments</h2>\n<p><code>ManagedDeploymentController(store, leases, quotas, providers, owner, leaseDuration, timeProvider)</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Parameter</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>store</code></td>\n<td>Required</td>\n<td><code>IManagedDeploymentStore</code></td>\n</tr>\n<tr>\n<td><code>leases</code></td>\n<td>Required</td>\n<td><code>IManagedDeploymentLeaseStore</code>. Both PostgreSQL and in-memory stores implement it</td>\n</tr>\n<tr>\n<td><code>quotas</code></td>\n<td>Required</td>\n<td><code>IManagedTenantQuotaSource</code>, usually <code>ManagedDeploymentQuotaSource</code></td>\n</tr>\n<tr>\n<td><code>providers</code></td>\n<td>Required</td>\n<td><code>ManagedInfrastructureProviderResolver</code> with at least one provider, unique by <code>Name</code></td>\n</tr>\n<tr>\n<td><code>owner</code></td>\n<td>Required</td>\n<td>Lease owner for this host, up to 512 characters. Make it unique per instance</td>\n</tr>\n<tr>\n<td><code>leaseDuration</code></td>\n<td>2 minutes</td>\n<td>Between 15 seconds and 1 hour</td>\n</tr>\n</tbody>\n</table>\n<p><code>ManagedDeploymentQuotaSource(store, tenantQuotas, defaultQuota = null)</code> uses\nthe tenant’s entry, then <code>defaultQuota</code>. A tenant with neither fails with\n<code>tenant-quota-missing</code>.</p>\n<p>Desired state limits (<code>ManagedDeploymentValidation</code>):</p>\n<table>\n<thead>\n<tr>\n<th>Item</th>\n<th>Limit</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Deployment, tenant, provider and region IDs</td>\n<td>1 to 128 printable characters</td>\n</tr>\n<tr>\n<td>Workloads per deployment</td>\n<td>1 to 32, one per kind</td>\n</tr>\n<tr>\n<td>Replicas per workload</td>\n<td>1 to 256</td>\n</tr>\n<tr>\n<td>CPU per replica</td>\n<td>10 to 1,000,000 millicores</td>\n</tr>\n<tr>\n<td>Memory per replica</td>\n<td>16 MiB to 16 TiB</td>\n</tr>\n<tr>\n<td>Storage per workload</td>\n<td>0 to 16 TiB</td>\n</tr>\n<tr>\n<td>Secret references per workload</td>\n<td>128</td>\n</tr>\n<tr>\n<td>Settings per workload, labels per deployment</td>\n<td>256, 128; values up to 4096 characters</td>\n</tr>\n<tr>\n<td>Workload version</td>\n<td>Starts with a numeric version, such as <code>1.1.0</code></td>\n</tr>\n</tbody>\n</table>\n<h2>Kubernetes reconciler</h2>\n<p><strong>New in 1.1.0.</strong> <code>KubernetesManagedDeploymentOperator(store, controller, client, maximumConcurrency, pageSize, timeProvider)</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Parameter</th>\n<th>Default</th>\n<th>Range</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>maximumConcurrency</code></td>\n<td>4</td>\n<td>1 to 64</td>\n<td>Resources reconciled at the same time</td>\n</tr>\n<tr>\n<td><code>pageSize</code></td>\n<td>100</td>\n<td>1 to 500</td>\n<td>Resources per Kubernetes list request</td>\n</tr>\n</tbody>\n</table>\n<p><code>ReconcileAllAsync</code> reconciles each resource on its own and returns one\nresult per resource. A resource that breaks a\n<a href=\"#managed-deployments\">desired state limit</a>, has unusable metadata, or fails\ngets <code>Failed</code> with a diagnostic code on its own status; the rest of the pass\ncontinues. <code>ReconcileAllAsync</code> itself throws only when listing the resources\nfails, or when you cancel it. The codes are listed in\n<a href=\"/documentation/real-time/control-plane-troubleshooting#kubernetes-reconciler\">troubleshooting</a>.</p>\n<p><code>KubernetesApiManagedDeploymentClient(httpClient, resourceNamespace = null)</code>\nneeds an <code>HttpClient</code> with an absolute <code>BaseAddress</code>, authentication and TLS\ntrust. With <code>resourceNamespace</code> set, it lists only that namespace; otherwise it\nlists all namespaces.</p>\n<table>\n<thead>\n<tr>\n<th>Constant</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>KubernetesApiManagedDeploymentClient.ApiGroup</code></td>\n<td><code>controlplane.bluetusk.io</code></td>\n</tr>\n<tr>\n<td><code>KubernetesApiManagedDeploymentClient.ApiVersion</code></td>\n<td><code>v1alpha1</code></td>\n</tr>\n<tr>\n<td><code>KubernetesApiManagedDeploymentClient.Plural</code></td>\n<td><code>bluetuskdeployments</code></td>\n</tr>\n<tr>\n<td><code>KubernetesManagedDeploymentOperator.Finalizer</code></td>\n<td><code>controlplane.bluetusk.io/finalizer</code></td>\n</tr>\n</tbody>\n</table>\n<p>The custom resource fields are in <a href=\"/documentation/real-time/control-plane-kubernetes#4-write-a-bluetuskdeployment\">Kubernetes</a>.</p>\n<h2>Metrics</h2>\n<p>Meter and activity source: <code>BlueTusk.ControlPlane</code>. These cover managed\ndeployment reconcile and delete calls.</p>\n<table>\n<thead>\n<tr>\n<th>Instrument</th>\n<th>Type</th>\n<th>Tags</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>bluetusk.control_plane.operations.active</code></td>\n<td>Up-down counter</td>\n<td><code>bluetusk.control_plane.operation</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.control_plane.operations</code></td>\n<td>Counter</td>\n<td><code>bluetusk.control_plane.operation</code>, <code>bluetusk.control_plane.outcome</code></td>\n</tr>\n<tr>\n<td><code>bluetusk.control_plane.operation.duration</code></td>\n<td>Histogram (s)</td>\n<td>Same as above</td>\n</tr>\n</tbody>\n</table>\n<p><code>operation</code> is <code>reconcile</code> or <code>delete</code>. <code>outcome</code> is one of <code>changed</code>,\n<code>no_change</code>, <code>paused</code>, <code>deleted</code>, <code>failed</code>, <code>canceled</code>, <code>lease_lost</code>,\n<code>lease_unavailable</code> or <code>abandoned</code>.</p>\n<p>For everything else, see the <a href=\"/documentation/real-time/control-plane-reference\">full Control Plane reference</a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-troubleshooting",
+    "summary": "Fix authorization, missing inventory, stale health, rejected operations and Kubernetes problems.",
+    "keywords": [
+      "control plane",
+      "troubleshooting"
+    ],
+    "order": 124,
+    "listed": true,
+    "title": "Control Plane troubleshooting",
+    "sourcePath": "docs/control-plane/troubleshooting.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/troubleshooting.md",
+    "headings": [
+      {
+        "id": "control-plane-troubleshooting",
+        "text": "Control Plane troubleshooting",
+        "level": 1
+      },
+      {
+        "id": "sign-in-and-permissions",
+        "text": "Sign-in and permissions",
+        "level": 2
+      },
+      {
+        "id": "the-app-fails-at-startup",
+        "text": "The app fails at startup",
+        "level": 2
+      },
+      {
+        "id": "components-are-missing-from-the-inventory",
+        "text": "Components are missing from the inventory",
+        "level": 2
+      },
+      {
+        "id": "health-looks-stale-or-wrong",
+        "text": "Health looks stale or wrong",
+        "level": 2
+      },
+      {
+        "id": "operations-are-rejected",
+        "text": "Operations are rejected",
+        "level": 2
+      },
+      {
+        "id": "kubernetes-reconciler",
+        "text": "Kubernetes reconciler",
+        "level": 2
+      }
+    ],
+    "wordCount": 1722,
+    "readMinutes": 8,
+    "searchText": "Control Plane troubleshooting This page helps you fix common Control Plane problems: sign-in errors, startup failures, missing or stale inventory, rejected operations and Kubernetes reconciler issues. Sign-in and permissions Symptom Cause Fix Every route returns `401` The request has no authenticated user Sign in first. Check that `app.UseAuthentication()` and `app.UseAuthorization()` run before `MapBlueTuskDashboard()`. API clients must send your app's credentials (cookie or token) Unauthenticated requests redirect to `/Account/Login` Cookie authentication's default behavior Add a login page, or return `401` as the [quick start](quickstart.md#5-write-the-code) does Pages return `403` The user fails the read policy Give the user a role the read policy accepts. If your identity provider sends roles in a claim such as `roles`, set the authentication handler's role claim type so `IsInRole` sees them `500` with `The AuthorizationPolicy named: 'BlueTusk.ControlPlane.Read' was not found.` The policy is not registered Register all three policies, or set the option names to policies you have. See [Authorization policies](configuration.md#authorization-policies) Startup fails with `Unable to find the required services. Please add all the required services by calling 'IServiceCollection.AddAuthorization'` No authorization services Call `AddAuthorization()` or `AddAuthorizationBuilder()` No operation buttons appear The user is not in `OperatorRole` or `AdministratorRole` Check the role names in [dashboard options](configuration.md#dashboard-options) match your identity's roles `POST .../operations` returns `403` with an empty body The user fails the mutation policy, or has neither a `NameIdentifier` claim nor a name Grant an operator role; make sure the identity has a user ID `403` with `\"code\":\"operation-denied\"` The user passed the policy but lacks the Control Plane role for this kind. `RemoveConsumerGroup`, `RewindCheckpoint`, `DeleteSlot` and `DeleteDeployment` need Admini",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Control Plane troubleshooting</h1>\n<p>This page helps you fix common Control Plane problems: sign-in errors,\nstartup failures, missing or stale inventory, rejected operations and\nKubernetes reconciler issues.</p>\n<h2>Sign-in and permissions</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Every route returns <code>401</code></td>\n<td>The request has no authenticated user</td>\n<td>Sign in first. Check that <code>app.UseAuthentication()</code> and <code>app.UseAuthorization()</code> run before <code>MapBlueTuskDashboard()</code>. API clients must send your app’s credentials (cookie or token)</td>\n</tr>\n<tr>\n<td>Unauthenticated requests redirect to <code>/Account/Login</code></td>\n<td>Cookie authentication’s default behavior</td>\n<td>Add a login page, or return <code>401</code> as the <a href=\"/documentation/real-time/control-plane-quickstart#5-write-the-code\">quick start</a> does</td>\n</tr>\n<tr>\n<td>Pages return <code>403</code></td>\n<td>The user fails the read policy</td>\n<td>Give the user a role the read policy accepts. If your identity provider sends roles in a claim such as <code>roles</code>, set the authentication handler’s role claim type so <code>IsInRole</code> sees them</td>\n</tr>\n<tr>\n<td><code>500</code> with <code>The AuthorizationPolicy named: 'BlueTusk.ControlPlane.Read' was not found.</code></td>\n<td>The policy is not registered</td>\n<td>Register all three policies, or set the option names to policies you have. See <a href=\"/documentation/real-time/control-plane-configuration#authorization-policies\">Authorization policies</a></td>\n</tr>\n<tr>\n<td>Startup fails with <code>Unable to find the required services. Please add all the required services by calling 'IServiceCollection.AddAuthorization'</code></td>\n<td>No authorization services</td>\n<td>Call <code>AddAuthorization()</code> or <code>AddAuthorizationBuilder()</code></td>\n</tr>\n<tr>\n<td>No operation buttons appear</td>\n<td>The user is not in <code>OperatorRole</code> or <code>AdministratorRole</code></td>\n<td>Check the role names in <a href=\"/documentation/real-time/control-plane-configuration#dashboard-options\">dashboard options</a> match your identity’s roles</td>\n</tr>\n<tr>\n<td><code>POST .../operations</code> returns <code>403</code> with an empty body</td>\n<td>The user fails the mutation policy, or has neither a <code>NameIdentifier</code> claim nor a name</td>\n<td>Grant an operator role; make sure the identity has a user ID</td>\n</tr>\n<tr>\n<td><code>403</code> with <code>&quot;code&quot;:&quot;operation-denied&quot;</code></td>\n<td>The user passed the policy but lacks the Control Plane role for this kind. <code>RemoveConsumerGroup</code>, <code>RewindCheckpoint</code>, <code>DeleteSlot</code> and <code>DeleteDeployment</code> need Administrator</td>\n<td>Use an administrator, or a different operation. The audit log records <code>Denied</code></td>\n</tr>\n</tbody>\n</table>\n<h2>The app fails at startup</h2>\n<p><strong><code>InvalidOperationException: Body was inferred but the method does not allow inferred body parameters</code>, listing a parameter named <code>queries</code>, <code>sync</code>,\n<code>live</code>, <code>graphs</code> or <code>fleet</code>.</strong> One of the five inventory services is not\nregistered. The dashboard needs <code>IControlPlaneQueryService</code>,\n<code>IControlPlaneSyncQueryService</code>, <code>IControlPlaneLiveQueryService</code>,\n<code>IControlPlaneContinuousGraphQueryService</code> and <code>IControlPlaneFleetQueryService</code>.\nRegister an empty implementation for products you do not run, as the\n<a href=\"/documentation/real-time/control-plane-quickstart#5-write-the-code\">quick start</a> does.</p>\n<blockquote>\n<p><strong>Note:</strong> <code>IControlPlaneFleetQueryService</code> is <strong>new in 1.1.0</strong>. A host that\nworked with <code>1.0.0</code> or <code>1.1.0-rc.1</code> must register it after upgrading, for\nexample <code>new ManagedDeploymentFleetQueryService(new InMemoryManagedDeploymentStore())</code>.</p>\n</blockquote>\n<p><strong><code>ArgumentException: The dashboard route prefix must be an absolute path without a trailing slash, query, or fragment.</code></strong> Fix <code>RoutePrefix</code>, for\nexample <code>/ops</code> instead of <code>ops/</code>.</p>\n<h2>Components are missing from the inventory</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>No sources</td>\n<td>No relay worker has registered a source in the configured control schema</td>\n<td>Start the Streams relay worker. Check <code>controlDataSource</code> and <code>controlSchema</code> point to the relay’s database and schema</td>\n</tr>\n<tr>\n<td><code>500</code> with <code>Control-plane inventory requires relay schema version 2; found 0.</code> (<code>ControlPlaneStorageVersionException</code>)</td>\n<td>The relay schema is missing its version row, or was created by a different Streams version</td>\n<td>Run <code>PostgreSqlDurableChangeRelay.InitializeAsync</code> with the same BlueTusk version as the dashboard</td>\n</tr>\n<tr>\n<td><code>500</code> with a PostgreSQL “relation does not exist” error</td>\n<td>The relay tables do not exist in that schema</td>\n<td>As above</td>\n</tr>\n<tr>\n<td>Source shows <code>slot-missing</code></td>\n<td>The registered slot does not exist on <code>sourceDataSource</code></td>\n<td>Check <code>sourceDataSource</code> points to the server that owns the slot, or recreate the slot</td>\n</tr>\n<tr>\n<td>Source shows <code>source-unavailable</code></td>\n<td>The source server could not be reached</td>\n<td>Check network, credentials and TLS for <code>sourceDataSource</code></td>\n</tr>\n<tr>\n<td>Sync pipelines or Live subscriptions are empty</td>\n<td><code>HostedSyncControlPlaneQueryService</code> and <code>HostedLiveControlPlaneQueryService</code> read in-process state</td>\n<td>Host the dashboard in the same process as the workers, or implement the query interface to fetch status from them</td>\n</tr>\n<tr>\n<td>Sync lag shows <code>source-head-unavailable</code></td>\n<td>The pipeline’s source is not in the relay inventory</td>\n<td>Add the relay instance that feeds the pipeline as a <code>ControlPlanePostgreSqlSource</code></td>\n</tr>\n<tr>\n<td>Deployments are empty</td>\n<td>The fleet service reads a different store or schema, or an in-memory store in another process</td>\n<td>Point <code>ManagedDeploymentFleetQueryService</code> at the same <code>PostgreSqlManagedDeploymentStore</code> the controller uses</td>\n</tr>\n</tbody>\n</table>\n<h2>Health looks stale or wrong</h2>\n<ul>\n<li><strong>Nothing changes.</strong> Pages do not refresh by themselves. Use <strong>Refresh</strong>;\n<code>observedAt</code> shows when data was read.</li>\n<li><strong>Several requests show the same values.</strong> The PostgreSQL inventory is\ncached for <code>SnapshotCacheDuration</code> (250 ms by default).</li>\n<li><strong>Sync throughput is blank.</strong> It needs two observations. Refresh again.</li>\n<li><strong>“Replication slot is not active”.</strong> Nothing is reading the slot. Start\nthe relay worker. An inactive slot keeps WAL, so its WAL lag keeps growing.</li>\n<li><strong>Sync lag shows <code>checkpoint-ahead-of-source</code></strong>, or Live shows\n<code>invalidation-cursor-regressed</code>. The consumer’s position is ahead of the\nrecorded head, usually after a restore or a mismatched source. Check source\nidentity before resuming.</li>\n</ul>\n<h2>Operations are rejected</h2>\n<table>\n<thead>\n<tr>\n<th>Response</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>400</code> <code>invalid-operation-body</code></td>\n<td>Body is not JSON, is empty, is over 16 KiB, or <code>kind</code> is a string</td>\n<td>Send <code>application/json</code> with a numeric <code>kind</code> (<a href=\"/documentation/real-time/control-plane-configuration#operation-kinds\">values</a>)</td>\n</tr>\n<tr>\n<td><code>400</code> <code>operation-id-header-mismatch</code></td>\n<td><code>X-BlueTusk-Operation-Id</code> is missing or differs from <code>operationId</code></td>\n<td>Send the same GUID in both</td>\n</tr>\n<tr>\n<td><code>400</code> <code>confirmation-mismatch</code></td>\n<td><code>confirmation</code> is not exactly <code>&lt;Kind&gt;:&lt;Target&gt;</code></td>\n<td>Type it exactly. Audited as <code>Rejected</code></td>\n</tr>\n<tr>\n<td><code>400</code> <code>invalid-operation-request</code></td>\n<td>Empty or too-long <code>target</code> or <code>reason</code>, an empty GUID, or a deployment target not in the form <code>deployment:&lt;deployment-id&gt;</code></td>\n<td>Fix the request</td>\n</tr>\n<tr>\n<td><code>500</code> <code>operation-failed</code></td>\n<td>The handler threw, or the audit log could not be written</td>\n<td>Find the operation ID in the audit log. <code>detail_code</code> holds the exception type. Your app log has the full error</td>\n</tr>\n<tr>\n<td><code>500</code> with <code>Each parameter in the deserialization constructor on type 'BlueTusk.ControlPlane.ControlPlaneOperationExecutor' must bind...</code></td>\n<td>No executor registered</td>\n<td>Register <code>ControlPlaneOperationExecutor</code>. See <a href=\"/documentation/real-time/control-plane-operations#3-register-the-executor\">Enable operator actions</a></td>\n</tr>\n<tr>\n<td>Dashboard alert “Operation rejected. Reference …”</td>\n<td>Any of the above</td>\n<td>Look up the reference in the audit log</td>\n</tr>\n</tbody>\n</table>\n<p>Common <code>operation-failed</code> causes:</p>\n<ul>\n<li><code>NotSupportedException</code>: <code>Operation '...' is not a managed-deployment operation.</code> You did not pass a <code>fallback</code> handler, or your handler does not\nsupport that kind.</li>\n<li><code>ManagedDeploymentValidationException</code>: often delete protection. Turn it\noff in the desired state first.</li>\n<li><code>ManagedDeploymentLeaseException</code>: <code>Deployment '...' is being reconciled by another owner.</code> Retry later.</li>\n<li><code>InvalidOperationException</code>: <code>Control-plane audit writes require schema version 2.</code> Run <code>PostgreSqlControlPlaneAuditStore.InitializeAsync</code> with the\ncurrent package. Nothing ran, because the <code>Requested</code> record failed first.</li>\n<li><code>The operation completed but its success audit could not be stored; reconcile using the operation ID.</code> The action ran. Do not repeat it blindly.</li>\n</ul>\n<p><code>BlueTusk control-plane audit rows are immutable</code> means something tried to\nchange an audit row. That is intended.</p>\n<h2>Kubernetes reconciler</h2>\n<p>The reconciler handles each resource on its own. A resource it cannot\nreconcile gets <code>state: Failed</code> and a code in <code>status.diagnosticCode</code>, and\nevery other resource in the pass is still reconciled. The same code is in the\n<code>DiagnosticCode</code> of that resource’s <code>ReconcileAllAsync</code> result.</p>\n<table>\n<thead>\n<tr>\n<th>Code</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>workload-version-invalid</code></td>\n<td>A <code>workloads[].version</code> does not start with a numeric version, for example <code>latest</code>. The CRD does not check this</td>\n<td>Use a version such as <code>1.1.0</code></td>\n</tr>\n<tr>\n<td><code>identifier-invalid</code></td>\n<td><code>spec.tenantId</code>, <code>spec.provider</code> or <code>spec.region</code> is only spaces or contains control characters</td>\n<td>Fix the value</td>\n</tr>\n<tr>\n<td><code>workload-kind-invalid</code></td>\n<td>A <code>workloads[].kind</code> is not one this package knows. The packaged CRD rejects unknown kinds, so the installed CRD is out of date or edited</td>\n<td>Apply the CRD from the package, then fix <code>kind</code></td>\n</tr>\n<tr>\n<td>Other <code>...-invalid</code> or <code>...-duplicate</code> codes, for example <code>replica-count-invalid</code> or <code>workload-kind-duplicate</code></td>\n<td>The resource breaks a <a href=\"/documentation/real-time/control-plane-configuration#managed-deployments\">desired state limit</a> that the CRD does not check</td>\n<td>Fix the field the code names</td>\n</tr>\n<tr>\n<td><code>resource-invalid</code></td>\n<td>The resource’s metadata cannot be used: <code>&lt;namespace&gt;/&lt;name&gt;</code> is longer than 128 characters, or a namespace, name, UID, resource version or finalizer list is too long or contains control characters. The status may not be written; the code is always in the <code>ReconcileAllAsync</code> result</td>\n<td>Use a shorter name, or fix the metadata</td>\n</tr>\n<tr>\n<td><code>reconcile-failed</code></td>\n<td>Something else failed for this resource only: your provider threw (the stored deployment, and the dashboard, show <code>provider-failure</code>), a Kubernetes call for this resource failed, or a database conflict occurred while several new resources were stored at once. The exception is not logged or returned</td>\n<td>The next pass retries. Log inside your provider to see its exceptions</td>\n</tr>\n<tr>\n<td><code>tenant-quota-missing</code></td>\n<td>No quota for <code>spec.tenantId</code> and no default</td>\n<td>Add the tenant to <code>ManagedDeploymentQuotaSource</code></td>\n</tr>\n<tr>\n<td><code>quota-deployments-exceeded</code>, <code>quota-replicas-exceeded</code>, <code>quota-cpu-exceeded</code>, <code>quota-memory-exceeded</code>, <code>quota-storage-exceeded</code></td>\n<td>The tenant’s quota would be exceeded</td>\n<td>Raise the quota or reduce the request</td>\n</tr>\n<tr>\n<td><code>provider-not-registered</code></td>\n<td>No provider’s <code>Name</code> matches <code>spec.provider</code></td>\n<td>Register one, or fix <code>spec.provider</code></td>\n</tr>\n<tr>\n<td><code>provider-plan-mismatch</code>, <code>provider-plan-unbounded</code>, <code>provider-result-invalid</code></td>\n<td>Your provider returned a plan or result that does not match the desired state, or exceeds the limits</td>\n<td>Fix the provider</td>\n</tr>\n<tr>\n<td><code>delete-protection-enabled</code></td>\n<td>The resource is being deleted while protection is on</td>\n<td>See <a href=\"/documentation/real-time/control-plane-kubernetes#6-change-pause-and-delete\">delete a protected deployment</a></td>\n</tr>\n<tr>\n<td><code>concurrent-update</code>, <code>lease-unavailable</code></td>\n<td>Another process changed or is reconciling the deployment</td>\n<td>Usually clears on the next pass. Run one reconciler replica</td>\n</tr>\n<tr>\n<td><code>deployment-not-found</code></td>\n<td>The stored record disappeared during the pass</td>\n<td>Check nothing else deletes from <code>bluetusk_control</code></td>\n</tr>\n</tbody>\n</table>\n<p>Other symptoms:</p>\n<ul>\n<li><strong><code>ReconcileAllAsync</code> throws.</strong> Listing the resources failed, so nothing\nwas reconciled in that pass. <code>HttpRequestException</code> with <code>403 (Forbidden)</code>\nmeans RBAC is missing; <code>404 (Not Found)</code> means the CRD is not installed.\nApply both manifests. Other errors, such as a network failure, clear on a\nlater pass. Keep the <code>try</code>/<code>catch</code> around <code>ReconcileAllAsync</code>.</li>\n<li><strong>No status at all, and every result is <code>reconcile-failed</code>.</strong> The host can\nlist resources but cannot patch them or their <code>status</code>. Apply the packaged\nRBAC manifest.</li>\n<li><strong>A <code>Failed</code> status appears only from the second pass.</strong> On the first pass\nthe reconciler adds its finalizer, which changes the resource version. A\nfailure later in that pass can then not always be written to the status.\nThe next pass writes it.</li>\n<li><strong>A pause made in the dashboard is undone.</strong> The resource is the source of\ntruth. Set <code>spec.paused</code> instead.</li>\n<li><strong>The resource stays <code>Terminating</code>.</strong> Delete protection is on. See\n<a href=\"/documentation/real-time/control-plane-kubernetes#6-change-pause-and-delete\">Kubernetes</a>.</li>\n</ul>\n<p>See also the <a href=\"/documentation/real-time/control-plane-reference\">full Control Plane reference</a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-operations",
+    "summary": "Turn on audited operator actions: pause, resume, rebuild and fleet operations.",
+    "keywords": [
+      "control plane",
+      "operations",
+      "audit",
+      "fleet"
+    ],
+    "order": 125,
+    "listed": true,
+    "title": "Enable operator actions",
+    "sourcePath": "docs/control-plane/operations.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/operations.md",
+    "headings": [
+      {
+        "id": "enable-operator-actions",
+        "text": "Enable operator actions",
+        "level": 1
+      },
+      {
+        "id": "before-you-start",
+        "text": "Before you start",
+        "level": 2
+      },
+      {
+        "id": "1-create-the-audit-store",
+        "text": "1. Create the audit store",
+        "level": 2
+      },
+      {
+        "id": "2-write-an-operation-handler",
+        "text": "2. Write an operation handler",
+        "level": 2
+      },
+      {
+        "id": "3-register-the-executor",
+        "text": "3. Register the executor",
+        "level": 2
+      },
+      {
+        "id": "4-give-the-operator-a-role",
+        "text": "4. Give the operator a role",
+        "level": 2
+      },
+      {
+        "id": "5-run-an-operation",
+        "text": "5. Run an operation",
+        "level": 2
+      },
+      {
+        "id": "6-enable-fleet-operations",
+        "text": "6. Enable fleet operations",
         "level": 2
       },
       {
@@ -888,53 +3593,145 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 446,
-    "readMinutes": 3,
-    "searchText": "Operate BlueTusk from the dashboard BlueTusk Control Plane reads operational state from Provider, Streams, Sync, Live, and Continuous Graph. `BlueTusk.Dashboard` presents that state as server-rendered pages and versioned JSON APIs. Use it when operators need to answer: Is the source reachable and is its replication slot healthy? How far behind is each consumer or Sync destination? Are snapshots, retries, quarantines, or rebuilds active? Which Live subscriptions or graph queries are under pressure? Which safe operator actions were requested, authorized, and audited? The dashboard never needs row values, query parameters, connection strings, or dead-letter payloads. Run the sample first The repository contains an executable dashboard host: Open the URL printed by ASP.NET Core, then start at `/bluetusk/overview`. The sample makes unavailable integrations explicit; it does not invent healthy telemetry for products that are not connected. 1. Register inventory sources Use separate data sources for the PostgreSQL source and the relay/control schema in production: Register only the projections used by the deployment. Missing optional product services render as unavailable rather than exposing fabricated data. 2. Require real authorization Configure the host's authentication before mapping the dashboard. The package does not add a permissive fallback identity. 3. Map the dashboard Put the dashboard behind HTTPS. If a reverse proxy terminates TLS, configure trusted forwarded headers and ensure the application is not directly exposed. What operators can inspect The overview links to drill-down pages for sources, replication slots, relay storage, consumer groups, direct checkpoints, snapshots, Sync pipelines, Live subscriptions, graph queries, and managed deployments. Each page displays the complete redacted projection available for that resource. Graph execution is separately authorized. Only server-registered fingerprints can run, with bounded time, nodes, edges, and concurr",
+    "wordCount": 1278,
+    "readMinutes": 6,
+    "searchText": "Enable operator actions This guide shows you how to let operators act from the dashboard and the API: store an audit log, write the handler that performs each action, and turn on fleet operations for managed deployments. Read [Concepts](concepts.md#operations) for how operations, roles and audit fit together. Before you start Finish the [quick start](quickstart.md). This guide adds to its `Program.cs`. Out of the box, the quick start answers every operation request with `403 Forbidden`, because its user is only a viewer, and it has no executor to run operations. 1. Create the audit store Add this after `var dataSource = ...`: `InitializeAsync` creates the `bluetusk_control` schema, the append-only `audit_log` table and a trigger that rejects updates and deletes. It is safe to run on every start. In production, run it once from a deployment step with a database owner, and give the app's own login only what it needs: The trigger stops changes, but a database owner can still drop the table. Back the database up, and copy the audit log to a separate log system if you must prove that no records were removed. 2. Write an operation handler The handler is the code that actually does the work. BlueTusk calls it only after the role check, the confirmation check and the `Requested` audit record. Add this class at the end of `Program.cs`: Rules for a handler: Throw for any kind you do not support. The executor records `Failed` with the exception type name, and the API returns `operation-failed`. Make each action safe to repeat. A caller that saw a failure may retry the same operation ID. Do not put secrets or row data in exception messages. They are not audited or returned, but they do reach your logs. 3. Register the executor The dashboard's `POST /bluetusk/api/v1/operations` endpoint needs a `ControlPlaneOperationExecutor` in dependency injection. Add this before `var app = builder.Build();`: `RoleControlPlaneAuthorizer` allows an operation when the user has the required role",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Operate BlueTusk from the dashboard</h1>\n<p>BlueTusk Control Plane reads operational state from Provider, Streams, Sync,\nLive, and Continuous Graph. <code>BlueTusk.Dashboard</code> presents that state as\nserver-rendered pages and versioned JSON APIs.</p>\n<p>Use it when operators need to answer:</p>\n<ul>\n<li>Is the source reachable and is its replication slot healthy?</li>\n<li>How far behind is each consumer or Sync destination?</li>\n<li>Are snapshots, retries, quarantines, or rebuilds active?</li>\n<li>Which Live subscriptions or graph queries are under pressure?</li>\n<li>Which safe operator actions were requested, authorized, and audited?</li>\n</ul>\n<p>The dashboard never needs row values, query parameters, connection strings, or\ndead-letter payloads.</p>\n<h2>Run the sample first</h2>\n<p>The repository contains an executable dashboard host:</p>\n"
+        "html": "<h1>Enable operator actions</h1>\n<p>This guide shows you how to let operators act from the dashboard and the API:\nstore an audit log, write the handler that performs each action, and turn on\nfleet operations for managed deployments. Read <a href=\"/documentation/real-time/control-plane-concepts#operations\">Concepts</a>\nfor how operations, roles and audit fit together.</p>\n<h2>Before you start</h2>\n<p>Finish the <a href=\"/documentation/real-time/control-plane-quickstart\">quick start</a>. This guide adds to its <code>Program.cs</code>.\nOut of the box, the quick start answers every operation request with\n<code>403 Forbidden</code>, because its user is only a viewer, and it has no executor to\nrun operations.</p>\n<h2>1. Create the audit store</h2>\n<p>Add this after <code>var dataSource = ...</code>:</p>\n"
       },
       {
         "kind": "code",
-        "code": "dotnet run --project samples/BlueTusk.Samples.Dashboard\n",
-        "highlighted": "dotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.Dashboard\n",
+        "code": "var audit = new PostgreSqlControlPlaneAuditStore(dataSource);\nawait audit.InitializeAsync();\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> audit = <span class=\"hljs-keyword\">new</span> PostgreSqlControlPlaneAuditStore(dataSource);\n<span class=\"hljs-keyword\">await</span> audit.InitializeAsync();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>InitializeAsync</code> creates the <code>bluetusk_control</code> schema, the append-only\n<code>audit_log</code> table and a trigger that rejects updates and deletes. It is safe to\nrun on every start. In production, run it once from a deployment step with a\ndatabase owner, and give the app’s own login only what it needs:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "GRANT USAGE ON SCHEMA bluetusk_control TO bluetusk_app;\nGRANT SELECT ON bluetusk_control.storage_metadata TO bluetusk_app;\nGRANT INSERT ON bluetusk_control.audit_log TO bluetusk_app;\n",
+        "highlighted": "<span class=\"hljs-keyword\">GRANT</span> USAGE <span class=\"hljs-keyword\">ON</span> SCHEMA bluetusk_control <span class=\"hljs-keyword\">TO</span> bluetusk_app;\n<span class=\"hljs-keyword\">GRANT</span> <span class=\"hljs-keyword\">SELECT</span> <span class=\"hljs-keyword\">ON</span> bluetusk_control.storage_metadata <span class=\"hljs-keyword\">TO</span> bluetusk_app;\n<span class=\"hljs-keyword\">GRANT</span> <span class=\"hljs-keyword\">INSERT</span> <span class=\"hljs-keyword\">ON</span> bluetusk_control.audit_log <span class=\"hljs-keyword\">TO</span> bluetusk_app;\n",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The trigger stops changes, but a database owner can still drop the table.\nBack the database up, and copy the audit log to a separate log system if you\nmust prove that no records were removed.</p>\n<h2>2. Write an operation handler</h2>\n<p>The handler is the code that actually does the work. BlueTusk calls it only\nafter the role check, the confirmation check and the <code>Requested</code> audit record.\nAdd this class at the end of <code>Program.cs</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "// Handles the operations that are not fleet operations.\nsealed class PipelineOperations : IControlPlaneOperationHandler\n{\n    public ValueTask ExecuteAsync(\n        ControlPlaneOperationRequest request,\n        CancellationToken cancellationToken = default)\n    {\n        switch (request.Kind)\n        {\n            case ControlPlaneOperationKind.RetryPipeline:\n                // Call your Sync worker's retry here. request.Target is \"pipeline:<id>\".\n                return ValueTask.CompletedTask;\n            default:\n                throw new NotSupportedException($\"Operation '{request.Kind}' is not enabled.\");\n        }\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-comment\">// Handles the operations that are not fleet operations.</span>\n<span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">PipelineOperations</span> : <span class=\"hljs-title\">IControlPlaneOperationHandler</span>\n{\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask <span class=\"hljs-title\">ExecuteAsync</span>(<span class=\"hljs-params\">\n        ControlPlaneOperationRequest request,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        <span class=\"hljs-keyword\">switch</span> (request.Kind)\n        {\n            <span class=\"hljs-keyword\">case</span> ControlPlaneOperationKind.RetryPipeline:\n                <span class=\"hljs-comment\">// Call your Sync worker&#x27;s retry here. request.Target is &quot;pipeline:&lt;id&gt;&quot;.</span>\n                <span class=\"hljs-keyword\">return</span> ValueTask.CompletedTask;\n            <span class=\"hljs-literal\">default</span>:\n                <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> NotSupportedException(<span class=\"hljs-string\">$&quot;Operation &#x27;<span class=\"hljs-subst\">{request.Kind}</span>&#x27; is not enabled.&quot;</span>);\n        }\n    }\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Rules for a handler:</p>\n<ul>\n<li>Throw for any kind you do not support. The executor records <code>Failed</code> with\nthe exception type name, and the API returns <code>operation-failed</code>.</li>\n<li>Make each action safe to repeat. A caller that saw a failure may retry the\nsame operation ID.</li>\n<li>Do not put secrets or row data in exception messages. They are not audited\nor returned, but they do reach your logs.</li>\n</ul>\n<h2>3. Register the executor</h2>\n<p>The dashboard’s <code>POST /bluetusk/api/v1/operations</code> endpoint needs a\n<code>ControlPlaneOperationExecutor</code> in dependency injection. Add this before\n<code>var app = builder.Build();</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddSingleton(new ControlPlaneOperationExecutor(\n    new RoleControlPlaneAuthorizer(),\n    audit,\n    new PipelineOperations()));\n",
+        "highlighted": "builder.Services.AddSingleton(<span class=\"hljs-keyword\">new</span> ControlPlaneOperationExecutor(\n    <span class=\"hljs-keyword\">new</span> RoleControlPlaneAuthorizer(),\n    audit,\n    <span class=\"hljs-keyword\">new</span> PipelineOperations()));\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>RoleControlPlaneAuthorizer</code> allows an operation when the user has the\nrequired role or a higher one (Viewer, then Operator, then Administrator).\nReplace it with your own <code>IControlPlaneAuthorizer</code> to add rules such as\nchange windows.</p>\n<h2>4. Give the operator a role</h2>\n<p>In <code>/dev/login</code>, change the role claim from <code>BlueTuskViewer</code> to\n<code>BlueTuskOperator</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "new Claim(ClaimTypes.Role, \"BlueTuskOperator\")\n",
+        "highlighted": "<span class=\"hljs-keyword\">new</span> Claim(ClaimTypes.Role, <span class=\"hljs-string\">&quot;BlueTuskOperator&quot;</span>)\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Restart the app and sign in again.</p>\n<h2>5. Run an operation</h2>\n<p>In the dashboard, operation buttons appear on Sync pipeline and deployment\npages for operators. To call the API yourself, send the operation ID twice:\nin the body and in the <code>X-BlueTusk-Operation-Id</code> header. <code>kind</code> is a number\n(see <a href=\"/documentation/real-time/control-plane-configuration#operation-kinds\">operation kinds</a>); <code>4</code> is\n<code>RetryPipeline</code>.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "curl.exe -c cookies.txt http://127.0.0.1:5217/dev/login\n$id = [guid]::NewGuid().ToString()\n@{ operationId = $id; kind = 4; target = \"pipeline:orders\";\n   confirmation = \"RetryPipeline:pipeline:orders\"; reason = \"Destination recovered\" } |\n  ConvertTo-Json | Set-Content op.json\ncurl.exe -b cookies.txt -H \"Content-Type: application/json\" -H \"X-BlueTusk-Operation-Id: $id\" `\n  --data-binary \"@op.json\" http://127.0.0.1:5217/bluetusk/api/v1/operations\n",
+        "highlighted": "curl.exe <span class=\"hljs-literal\">-c</span> cookies.txt http://<span class=\"hljs-number\">127.0</span>.<span class=\"hljs-number\">0.1</span>:<span class=\"hljs-number\">5217</span>/dev/login\n<span class=\"hljs-variable\">$id</span> = [<span class=\"hljs-type\">guid</span>]::NewGuid().ToString()\n<span class=\"hljs-selector-tag\">@</span>{ operationId = <span class=\"hljs-variable\">$id</span>; kind = <span class=\"hljs-number\">4</span>; target = <span class=\"hljs-string\">&quot;pipeline:orders&quot;</span>;\n   confirmation = <span class=\"hljs-string\">&quot;RetryPipeline:pipeline:orders&quot;</span>; reason = <span class=\"hljs-string\">&quot;Destination recovered&quot;</span> } |\n  <span class=\"hljs-built_in\">ConvertTo-Json</span> | <span class=\"hljs-built_in\">Set-Content</span> op.json\ncurl.exe <span class=\"hljs-literal\">-b</span> cookies.txt <span class=\"hljs-literal\">-H</span> <span class=\"hljs-string\">&quot;Content-Type: application/json&quot;</span> <span class=\"hljs-literal\">-H</span> <span class=\"hljs-string\">&quot;X-BlueTusk-Operation-Id: <span class=\"hljs-variable\">$id</span>&quot;</span> `\n  <span class=\"hljs-literal\">--data-binary</span> <span class=\"hljs-string\">&quot;@op.json&quot;</span> http://<span class=\"hljs-number\">127.0</span>.<span class=\"hljs-number\">0.1</span>:<span class=\"hljs-number\">5217</span>/bluetusk/api/v1/operations\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "code",
+        "code": "{\"contractVersion\":1,\"data\":{\"operationId\":\"6f14c851-e615-4dc3-8316-8ea6c43eb544\",\"status\":\"succeeded\"}}\n",
+        "highlighted": "<span class=\"hljs-punctuation\">{</span><span class=\"hljs-attr\">&quot;contractVersion&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-number\">1</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;data&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-punctuation\">{</span><span class=\"hljs-attr\">&quot;operationId&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;6f14c851-e615-4dc3-8316-8ea6c43eb544&quot;</span><span class=\"hljs-punctuation\">,</span><span class=\"hljs-attr\">&quot;status&quot;</span><span class=\"hljs-punctuation\">:</span><span class=\"hljs-string\">&quot;succeeded&quot;</span><span class=\"hljs-punctuation\">}</span><span class=\"hljs-punctuation\">}</span>\n",
+        "language": "json"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Check the audit log:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "SELECT operation_kind, target, status, actor_id, detail_code\nFROM bluetusk_control.audit_log\nORDER BY audit_sequence;\n",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> operation_kind, target, status, actor_id, detail_code\n<span class=\"hljs-keyword\">FROM</span> bluetusk_control.audit_log\n<span class=\"hljs-keyword\">ORDER</span> <span class=\"hljs-keyword\">BY</span> audit_sequence;\n",
+        "language": "sql"
+      },
+      {
+        "kind": "code",
+        "code": " operation_kind |     target      |  status   | actor_id | detail_code\n----------------+-----------------+-----------+----------+-------------\n RetryPipeline  | pipeline:orders | Requested | dev-user |\n RetryPipeline  | pipeline:orders | Succeeded | dev-user |\n",
+        "highlighted": " operation_kind |     target      |  status   | actor_id | detail_code\n----------------+-----------------+-----------+----------+-------------\n RetryPipeline  | pipeline:orders | Requested | dev-user |\n RetryPipeline  | pipeline:orders | Succeeded | dev-user |\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>A wrong confirmation returns <code>400</code> with <code>confirmation-mismatch</code> and records\n<code>Rejected</code>. An operator who asks for <code>DeleteSlot</code> gets <code>403</code> with\n<code>operation-denied</code> and the log records <code>Denied</code>.</p>\n<h2>6. Enable fleet operations</h2>\n<p><strong>New in 1.1.0.</strong> Fleet operations act on managed deployments. BlueTusk ships\nthe handler; you supply a store, a controller and an infrastructure provider.</p>\n<p>Create the store and the controller, and replace the quick start’s\n<code>IControlPlaneFleetQueryService</code> registration:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var deployments = new PostgreSqlManagedDeploymentStore(dataSource);\nawait deployments.InitializeAsync();\n\nvar controller = new ManagedDeploymentController(\n    store: deployments,\n    leases: deployments,\n    quotas: new ManagedDeploymentQuotaSource(\n        deployments,\n        new Dictionary<string, ManagedTenantQuota>\n        {\n            [\"commerce\"] = new(\n                MaximumDeployments: 10,\n                MaximumReplicas: 50,\n                MaximumCpuMillicores: 50_000,\n                MaximumMemoryBytes: 64L * 1024 * 1024 * 1024,\n                MaximumStorageBytes: 1024L * 1024 * 1024 * 1024),\n        }),\n    providers: new ManagedInfrastructureProviderResolver([new LocalProvider()]),\n    owner: Environment.MachineName);\n\nbuilder.Services.AddSingleton<IControlPlaneFleetQueryService>(\n    new ManagedDeploymentFleetQueryService(deployments));\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> deployments = <span class=\"hljs-keyword\">new</span> PostgreSqlManagedDeploymentStore(dataSource);\n<span class=\"hljs-keyword\">await</span> deployments.InitializeAsync();\n\n<span class=\"hljs-keyword\">var</span> controller = <span class=\"hljs-keyword\">new</span> ManagedDeploymentController(\n    store: deployments,\n    leases: deployments,\n    quotas: <span class=\"hljs-keyword\">new</span> ManagedDeploymentQuotaSource(\n        deployments,\n        <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, ManagedTenantQuota&gt;\n        {\n            [<span class=\"hljs-string\">&quot;commerce&quot;</span>] = <span class=\"hljs-keyword\">new</span>(\n                MaximumDeployments: <span class=\"hljs-number\">10</span>,\n                MaximumReplicas: <span class=\"hljs-number\">50</span>,\n                MaximumCpuMillicores: <span class=\"hljs-number\">50_000</span>,\n                MaximumMemoryBytes: <span class=\"hljs-number\">64L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n                MaximumStorageBytes: <span class=\"hljs-number\">1024L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>),\n        }),\n    providers: <span class=\"hljs-keyword\">new</span> ManagedInfrastructureProviderResolver([<span class=\"hljs-keyword\">new</span> LocalProvider()]),\n    owner: Environment.MachineName);\n\nbuilder.Services.AddSingleton&lt;IControlPlaneFleetQueryService&gt;(\n    <span class=\"hljs-keyword\">new</span> ManagedDeploymentFleetQueryService(deployments));\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Every tenant needs a quota, or reconciliation stops with\n<code>tenant-quota-missing</code>. The <code>owner</code> names this host in reconciliation leases;\nuse a value that is unique per running instance.</p>\n<p>Then route fleet operations to BlueTusk’s handler and everything else to\nyours. Replace the executor registration from step 3:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "builder.Services.AddSingleton(new ControlPlaneOperationExecutor(\n    new RoleControlPlaneAuthorizer(),\n    audit,\n    new ManagedDeploymentControlPlaneOperationHandler(\n        deployments,\n        controller,\n        new NoRebuildPreparation(),\n        fallback: new PipelineOperations())));\n",
+        "highlighted": "builder.Services.AddSingleton(<span class=\"hljs-keyword\">new</span> ControlPlaneOperationExecutor(\n    <span class=\"hljs-keyword\">new</span> RoleControlPlaneAuthorizer(),\n    audit,\n    <span class=\"hljs-keyword\">new</span> ManagedDeploymentControlPlaneOperationHandler(\n        deployments,\n        controller,\n        <span class=\"hljs-keyword\">new</span> NoRebuildPreparation(),\n        fallback: <span class=\"hljs-keyword\">new</span> PipelineOperations())));\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Add the provider and the rebuild hook at the end of the file. This provider\ncreates nothing; a real one creates and deletes your workloads. For Kubernetes,\nsee <a href=\"/documentation/real-time/control-plane-kubernetes\">Kubernetes</a>.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "// A provider that \"deploys\" nothing. Replace it with one that creates real workloads.\nsealed class LocalProvider : IManagedInfrastructureProvider\n{\n    public string Name => \"local\";\n\n    public ValueTask<ManagedDeploymentPlan> PlanAsync(\n        ManagedDeploymentSpec desired,\n        ManagedDeploymentStatus current,\n        CancellationToken cancellationToken = default)\n    {\n        var fingerprint = ManagedDeploymentValidation.GetFingerprint(desired);\n        return ValueTask.FromResult(new ManagedDeploymentPlan(\n            desired.DeploymentId,\n            desired.Generation,\n            DesiredFingerprint: fingerprint,\n            PlanFingerprint: fingerprint,\n            RequiresChange: current.AppliedPlanFingerprint != fingerprint,\n            Actions: [new ManagedDeploymentAction(\"apply\", desired.DeploymentId, \"Apply desired state\")]));\n    }\n\n    public ValueTask<ManagedProviderResult> ApplyAsync(\n        ManagedDeploymentSpec desired,\n        ManagedDeploymentPlan plan,\n        long fencingToken,\n        CancellationToken cancellationToken = default) =>\n        ValueTask.FromResult(new ManagedProviderResult(\n            ProviderResourceId: \"local/\" + desired.DeploymentId,\n            AppliedPlanFingerprint: plan.PlanFingerprint));\n\n    public ValueTask DeleteAsync(\n        ManagedDeploymentSpec desired,\n        long fencingToken,\n        CancellationToken cancellationToken = default) => ValueTask.CompletedTask;\n}\n\nsealed class NoRebuildPreparation : IManagedDeploymentRebuildHandler\n{\n    public ValueTask RebuildAsync(\n        ManagedDeployment deployment,\n        CancellationToken cancellationToken = default) => ValueTask.CompletedTask;\n}\n",
+        "highlighted": "<span class=\"hljs-comment\">// A provider that &quot;deploys&quot; nothing. Replace it with one that creates real workloads.</span>\n<span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">LocalProvider</span> : <span class=\"hljs-title\">IManagedInfrastructureProvider</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">string</span> Name =&gt; <span class=\"hljs-string\">&quot;local&quot;</span>;\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask&lt;ManagedDeploymentPlan&gt; <span class=\"hljs-title\">PlanAsync</span>(<span class=\"hljs-params\">\n        ManagedDeploymentSpec desired,\n        ManagedDeploymentStatus current,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        <span class=\"hljs-keyword\">var</span> fingerprint = ManagedDeploymentValidation.GetFingerprint(desired);\n        <span class=\"hljs-keyword\">return</span> ValueTask.FromResult(<span class=\"hljs-keyword\">new</span> ManagedDeploymentPlan(\n            desired.DeploymentId,\n            desired.Generation,\n            DesiredFingerprint: fingerprint,\n            PlanFingerprint: fingerprint,\n            RequiresChange: current.AppliedPlanFingerprint != fingerprint,\n            Actions: [<span class=\"hljs-keyword\">new</span> ManagedDeploymentAction(<span class=\"hljs-string\">&quot;apply&quot;</span>, desired.DeploymentId, <span class=\"hljs-string\">&quot;Apply desired state&quot;</span>)]));\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask&lt;ManagedProviderResult&gt; <span class=\"hljs-title\">ApplyAsync</span>(<span class=\"hljs-params\">\n        ManagedDeploymentSpec desired,\n        ManagedDeploymentPlan plan,\n        <span class=\"hljs-built_in\">long</span> fencingToken,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span> =&gt;\n        ValueTask.FromResult(<span class=\"hljs-keyword\">new</span> ManagedProviderResult(\n            ProviderResourceId: <span class=\"hljs-string\">&quot;local/&quot;</span> + desired.DeploymentId,\n            AppliedPlanFingerprint: plan.PlanFingerprint));\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask <span class=\"hljs-title\">DeleteAsync</span>(<span class=\"hljs-params\">\n        ManagedDeploymentSpec desired,\n        <span class=\"hljs-built_in\">long</span> fencingToken,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span> =&gt; ValueTask.CompletedTask;\n}\n\n<span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">NoRebuildPreparation</span> : <span class=\"hljs-title\">IManagedDeploymentRebuildHandler</span>\n{\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask <span class=\"hljs-title\">RebuildAsync</span>(<span class=\"hljs-params\">\n        ManagedDeployment deployment,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span> =&gt; ValueTask.CompletedTask;\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Create one deployment so there is something to operate. Add this before\n<code>var app = builder.Build();</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "if (await deployments.GetAsync(\"orders\") is null)\n{\n    await deployments.PutAsync(\n        new ManagedDeploymentSpec(\n            DeploymentId: \"orders\",\n            TenantId: \"commerce\",\n            Provider: \"local\",\n            Region: \"local\",\n            Generation: 1,\n            Paused: false,\n            DeleteProtection: true,\n            Workloads:\n            [\n                new ManagedWorkloadSpec(\n                    ManagedWorkloadKind.Streams,\n                    Version: \"1.1.0\",\n                    new ManagedResourceRequest(\n                        Replicas: 1,\n                        CpuMillicoresPerReplica: 500,\n                        MemoryBytesPerReplica: 512L * 1024 * 1024,\n                        StorageBytes: 0),\n                    SecretReferences: [],\n                    Settings: new Dictionary<string, string>()),\n            ],\n            Labels: new Dictionary<string, string>()),\n        expectedGeneration: 0);\n    await controller.ReconcileAsync(\"orders\");\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">if</span> (<span class=\"hljs-keyword\">await</span> deployments.GetAsync(<span class=\"hljs-string\">&quot;orders&quot;</span>) <span class=\"hljs-keyword\">is</span> <span class=\"hljs-literal\">null</span>)\n{\n    <span class=\"hljs-keyword\">await</span> deployments.PutAsync(\n        <span class=\"hljs-keyword\">new</span> ManagedDeploymentSpec(\n            DeploymentId: <span class=\"hljs-string\">&quot;orders&quot;</span>,\n            TenantId: <span class=\"hljs-string\">&quot;commerce&quot;</span>,\n            Provider: <span class=\"hljs-string\">&quot;local&quot;</span>,\n            Region: <span class=\"hljs-string\">&quot;local&quot;</span>,\n            Generation: <span class=\"hljs-number\">1</span>,\n            Paused: <span class=\"hljs-literal\">false</span>,\n            DeleteProtection: <span class=\"hljs-literal\">true</span>,\n            Workloads:\n            [\n                <span class=\"hljs-keyword\">new</span> ManagedWorkloadSpec(\n                    ManagedWorkloadKind.Streams,\n                    Version: <span class=\"hljs-string\">&quot;1.1.0&quot;</span>,\n                    <span class=\"hljs-keyword\">new</span> ManagedResourceRequest(\n                        Replicas: <span class=\"hljs-number\">1</span>,\n                        CpuMillicoresPerReplica: <span class=\"hljs-number\">500</span>,\n                        MemoryBytesPerReplica: <span class=\"hljs-number\">512L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n                        StorageBytes: <span class=\"hljs-number\">0</span>),\n                    SecretReferences: [],\n                    Settings: <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">string</span>&gt;()),\n            ],\n            Labels: <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">string</span>&gt;()),\n        expectedGeneration: <span class=\"hljs-number\">0</span>);\n    <span class=\"hljs-keyword\">await</span> controller.ReconcileAsync(<span class=\"hljs-string\">&quot;orders&quot;</span>);\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Run the app and open <code>/bluetusk/deployments</code>. The <code>orders</code> deployment is\n<strong>Ready</strong> at generation 1 with <strong>Pause</strong>, <strong>Reconcile</strong> and <strong>Rebuild</strong>\nbuttons. Pause it from the API (<code>11</code> is <code>PauseDeployment</code>):</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$id = [guid]::NewGuid().ToString()\n@{ operationId = $id; kind = 11; target = \"deployment:orders\";\n   confirmation = \"PauseDeployment:deployment:orders\"; reason = \"Maintenance window\" } |\n  ConvertTo-Json | Set-Content op.json\ncurl.exe -b cookies.txt -H \"Content-Type: application/json\" -H \"X-BlueTusk-Operation-Id: $id\" `\n  --data-binary \"@op.json\" http://127.0.0.1:5217/bluetusk/api/v1/operations\ncurl.exe -b cookies.txt http://127.0.0.1:5217/bluetusk/api/v1/fleet\n",
+        "highlighted": "<span class=\"hljs-variable\">$id</span> = [<span class=\"hljs-type\">guid</span>]::NewGuid().ToString()\n<span class=\"hljs-selector-tag\">@</span>{ operationId = <span class=\"hljs-variable\">$id</span>; kind = <span class=\"hljs-number\">11</span>; target = <span class=\"hljs-string\">&quot;deployment:orders&quot;</span>;\n   confirmation = <span class=\"hljs-string\">&quot;PauseDeployment:deployment:orders&quot;</span>; reason = <span class=\"hljs-string\">&quot;Maintenance window&quot;</span> } |\n  <span class=\"hljs-built_in\">ConvertTo-Json</span> | <span class=\"hljs-built_in\">Set-Content</span> op.json\ncurl.exe <span class=\"hljs-literal\">-b</span> cookies.txt <span class=\"hljs-literal\">-H</span> <span class=\"hljs-string\">&quot;Content-Type: application/json&quot;</span> <span class=\"hljs-literal\">-H</span> <span class=\"hljs-string\">&quot;X-BlueTusk-Operation-Id: <span class=\"hljs-variable\">$id</span>&quot;</span> `\n  <span class=\"hljs-literal\">--data-binary</span> <span class=\"hljs-string\">&quot;@op.json&quot;</span> http://<span class=\"hljs-number\">127.0</span>.<span class=\"hljs-number\">0.1</span>:<span class=\"hljs-number\">5217</span>/bluetusk/api/v1/operations\ncurl.exe <span class=\"hljs-literal\">-b</span> cookies.txt http://<span class=\"hljs-number\">127.0</span>.<span class=\"hljs-number\">0.1</span>:<span class=\"hljs-number\">5217</span>/bluetusk/api/v1/fleet\n",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>Open the URL printed by ASP.NET Core, then start at <code>/bluetusk/overview</code>. The\nsample makes unavailable integrations explicit; it does not invent healthy\ntelemetry for products that are not connected.</p>\n<h2>1. Register inventory sources</h2>\n<p>Use separate data sources for the PostgreSQL source and the relay/control\nschema in production:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var inventory = new PostgreSqlControlPlaneQueryService(\n    [new ControlPlanePostgreSqlSource(\n        \"production-eu\",\n        sourceDataSource,\n        controlDataSource,\n        \"bluetusk_streams\")]);\n\nbuilder.Services.AddSingleton<IControlPlaneQueryService>(inventory);\nbuilder.Services.AddSingleton<IControlPlaneSyncQueryService,\n    HostedSyncControlPlaneQueryService>();\nbuilder.Services.AddSingleton<IControlPlaneLiveQueryService,\n    HostedLiveControlPlaneQueryService>();\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> inventory = <span class=\"hljs-keyword\">new</span> PostgreSqlControlPlaneQueryService(\n    [<span class=\"hljs-meta\">new ControlPlanePostgreSqlSource(\n        <span class=\"hljs-string\">&quot;production-eu&quot;</span>,\n        sourceDataSource,\n        controlDataSource,\n        <span class=\"hljs-string\">&quot;bluetusk_streams&quot;</span>)</span>]);\n\nbuilder.Services.AddSingleton&lt;IControlPlaneQueryService&gt;(inventory);\nbuilder.Services.AddSingleton&lt;IControlPlaneSyncQueryService,\n    HostedSyncControlPlaneQueryService&gt;();\nbuilder.Services.AddSingleton&lt;IControlPlaneLiveQueryService,\n    HostedLiveControlPlaneQueryService&gt;();\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Register only the projections used by the deployment. Missing optional product\nservices render as unavailable rather than exposing fabricated data.</p>\n<h2>2. Require real authorization</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "builder.Services.AddAuthorization(options =>\n{\n    options.AddPolicy(\"BlueTusk.ControlPlane.Read\", policy =>\n        policy.RequireRole(\"BlueTuskViewer\", \"BlueTuskOperator\", \"BlueTuskAdministrator\"));\n    options.AddPolicy(\"BlueTusk.ControlPlane.Mutate\", policy =>\n        policy.RequireRole(\"BlueTuskOperator\", \"BlueTuskAdministrator\"));\n    options.AddPolicy(\"BlueTusk.ControlPlane.GraphExecute\", policy =>\n        policy.RequireRole(\"BlueTuskOperator\", \"BlueTuskAdministrator\"));\n});\n",
-        "highlighted": "builder.Services.AddAuthorization(options =&gt;\n{\n    options.AddPolicy(<span class=\"hljs-string\">&quot;BlueTusk.ControlPlane.Read&quot;</span>, policy =&gt;\n        policy.RequireRole(<span class=\"hljs-string\">&quot;BlueTuskViewer&quot;</span>, <span class=\"hljs-string\">&quot;BlueTuskOperator&quot;</span>, <span class=\"hljs-string\">&quot;BlueTuskAdministrator&quot;</span>));\n    options.AddPolicy(<span class=\"hljs-string\">&quot;BlueTusk.ControlPlane.Mutate&quot;</span>, policy =&gt;\n        policy.RequireRole(<span class=\"hljs-string\">&quot;BlueTuskOperator&quot;</span>, <span class=\"hljs-string\">&quot;BlueTuskAdministrator&quot;</span>));\n    options.AddPolicy(<span class=\"hljs-string\">&quot;BlueTusk.ControlPlane.GraphExecute&quot;</span>, policy =&gt;\n        policy.RequireRole(<span class=\"hljs-string\">&quot;BlueTuskOperator&quot;</span>, <span class=\"hljs-string\">&quot;BlueTuskAdministrator&quot;</span>));\n});\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Configure the host’s authentication before mapping the dashboard. The package\ndoes not add a permissive fallback identity.</p>\n<h2>3. Map the dashboard</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\n\napp.MapBlueTuskDashboard(options =>\n{\n    options.ReadAuthorizationPolicy = \"BlueTusk.ControlPlane.Read\";\n    options.MutationAuthorizationPolicy = \"BlueTusk.ControlPlane.Mutate\";\n    options.GraphExecutionAuthorizationPolicy = \"BlueTusk.ControlPlane.GraphExecute\";\n});\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> app = builder.Build();\napp.UseAuthentication();\napp.UseAuthorization();\n\napp.MapBlueTuskDashboard(options =&gt;\n{\n    options.ReadAuthorizationPolicy = <span class=\"hljs-string\">&quot;BlueTusk.ControlPlane.Read&quot;</span>;\n    options.MutationAuthorizationPolicy = <span class=\"hljs-string\">&quot;BlueTusk.ControlPlane.Mutate&quot;</span>;\n    options.GraphExecutionAuthorizationPolicy = <span class=\"hljs-string\">&quot;BlueTusk.ControlPlane.GraphExecute&quot;</span>;\n});\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Put the dashboard behind HTTPS. If a reverse proxy terminates TLS, configure\ntrusted forwarded headers and ensure the application is not directly exposed.</p>\n<h2>What operators can inspect</h2>\n<p>The overview links to drill-down pages for sources, replication slots, relay\nstorage, consumer groups, direct checkpoints, snapshots, Sync pipelines, Live\nsubscriptions, graph queries, and managed deployments. Each page displays the\ncomplete redacted projection available for that resource.</p>\n<p>Graph execution is separately authorized. Only server-registered fingerprints\ncan run, with bounded time, nodes, edges, and concurrency.</p>\n<h2>Production checklist</h2>\n<ul>\n<li>Use a read-only database role for inventory queries.</li>\n<li>Keep read, mutation, and graph-execution policies separate.</li>\n<li>Back every mutation with an immutable audit store.</li>\n<li>Keep dangerous actions multi-step; slot deletion and checkpoint rewind are\nnot one-click defaults.</li>\n<li>Set inventory timeouts, bounded cross-instance concurrency, and cache lifetime.</li>\n<li>Export dashboard/API latency and operation outcome metrics.</li>\n<li>Treat <code>source-unavailable</code>, <code>slot-missing</code>, and checkpoint inconsistency as\ndifferent incidents.</li>\n</ul>\n<p>The <a href=\"/documentation/real-time/control-plane-reference\">full Control Plane reference</a> covers every projection,\nmanaged deployments, agents, Kubernetes resources, reconciliation, audit\nrecords, and verification status.</p>\n"
+        "html": "<p>The fleet response now shows <code>&quot;desiredGeneration&quot;:2</code>, <code>&quot;observedGeneration&quot;:2</code>,\n<code>&quot;paused&quot;:true</code> and <code>&quot;state&quot;:5</code>. Enum values are numbers in the JSON API; <code>5</code>\nis <code>Paused</code> (see <a href=\"/documentation/real-time/control-plane-configuration#json-enum-values\">JSON enum values</a>).\nResume it the same way with kind <code>12</code> and confirmation\n<code>ResumeDeployment:deployment:orders</code>.</p>\n<p><code>DeleteDeployment</code> needs the Administrator role, and it stops with\n<code>delete-protection-enabled</code> while <code>DeleteProtection</code> is <code>true</code>.</p>\n<h2>Production checklist</h2>\n<ul>\n<li>Use your organization’s identity provider. Map groups to the\n<code>BlueTuskViewer</code>, <code>BlueTuskOperator</code> and <code>BlueTuskAdministrator</code> roles (or\n<a href=\"/documentation/real-time/control-plane-configuration#dashboard-options\">your own names</a>).</li>\n<li>Serve the dashboard over HTTPS on a private network. If a proxy terminates\nTLS, configure forwarded headers and do not expose the app directly.</li>\n<li>Do not enable credentialed CORS for the dashboard. The required\n<code>X-BlueTusk-Operation-Id</code> header blocks cross-site form posts only while\ncross-origin requests stay blocked.</li>\n<li>The dashboard script is served from <code>/bluetusk/assets/dashboard.js</code>, so a\nContent Security Policy can use <code>script-src 'self'</code>.</li>\n<li>Run <code>InitializeAsync</code> for the audit and deployment stores from a migration\nstep, and grant the app login only the rights it needs.</li>\n<li>Watch <code>bluetusk.control_plane.operations</code> and\n<code>bluetusk.control_plane.operation.duration</code> (meter <code>BlueTusk.ControlPlane</code>).\nThey cover managed-deployment reconcile and delete calls.</li>\n</ul>\n"
       }
     ]
   },
@@ -942,7 +3739,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "real-time",
     "categoryLabel": "Real time",
     "slug": "operations",
-    "summary": "Operate source identity, checkpoints, relay storage, destinations, failover, reconciliation, rebuilds, and endurance evidence.",
+    "summary": "Runbook for restarts, crashes, failover, WAL growth, restores and rebuilds of the real-time products.",
     "keywords": [
       "operations",
       "incident",
@@ -1050,6 +3847,164 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "slug": "control-plane-kubernetes",
+    "summary": "Install and use the BlueTusk Kubernetes operator.",
+    "keywords": [
+      "control plane",
+      "kubernetes",
+      "operator",
+      "crd"
+    ],
+    "order": 126,
+    "listed": true,
+    "title": "Manage deployments with Kubernetes",
+    "sourcePath": "docs/control-plane/kubernetes.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/kubernetes.md",
+    "headings": [
+      {
+        "id": "manage-deployments-with-kubernetes",
+        "text": "Manage deployments with Kubernetes",
+        "level": 1
+      },
+      {
+        "id": "what-the-package-does-and-what-you-write",
+        "text": "What the package does, and what you write",
+        "level": 2
+      },
+      {
+        "id": "before-you-start",
+        "text": "Before you start",
+        "level": 2
+      },
+      {
+        "id": "1-install-the-crd-and-rbac",
+        "text": "1. Install the CRD and RBAC",
+        "level": 2
+      },
+      {
+        "id": "2-write-the-reconciler-host",
+        "text": "2. Write the reconciler host",
+        "level": 2
+      },
+      {
+        "id": "3-run-the-host-in-the-cluster",
+        "text": "3. Run the host in the cluster",
+        "level": 2
+      },
+      {
+        "id": "4-write-a-bluetuskdeployment",
+        "text": "4. Write a BlueTuskDeployment",
+        "level": 2
+      },
+      {
+        "id": "5-apply-it-and-read-the-status",
+        "text": "5. Apply it and read the status",
+        "level": 2
+      },
+      {
+        "id": "6-change-pause-and-delete",
+        "text": "6. Change, pause and delete",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "wordCount": 1678,
+    "readMinutes": 8,
+    "searchText": "Manage deployments with Kubernetes This guide shows you how to declare BlueTusk deployments as Kubernetes `BlueTuskDeployment` resources and have the Control Plane reconcile them: install the custom resource definition (CRD) and RBAC, run a reconciler host, apply a resource and read its status. **New in 1.1.0.** The `BlueTusk.ControlPlane.Kubernetes` package is not in `1.0.0` or `1.1.0-rc.1`. What the package does, and what you write The package gives you: the `controlplane.bluetusk.io/v1alpha1` `BlueTuskDeployment` CRD; a ServiceAccount, ClusterRole and ClusterRoleBinding; `KubernetesManagedDeploymentOperator`, which turns each resource into a managed deployment and writes the result to the resource's status; `KubernetesApiManagedDeploymentClient`, a small Kubernetes REST client. You write: a host process that calls the reconciler on a timer; an `IManagedInfrastructureProvider` that creates, updates and deletes the actual workloads. BlueTusk does not ship one. The reconciler never reads Kubernetes Secrets. A resource holds secret *references* only; your provider resolves them with its own identity. Read [Fleet operations](concepts.md#fleet-operations) for the model behind generations, states and leases. Before you start You need: a Kubernetes cluster and `kubectl` with rights to create CRDs and cluster roles; a PostgreSQL database the reconciler can reach, for desired state and leases; a container registry for your reconciler image. 1. Install the CRD and RBAC The manifests are in the repository under [`deploy/kubernetes/operator`](../../deploy/kubernetes/operator/). The NuGet package carries the same files under `contentFiles/any/any/kubernetes/` in its package folder (for example `~/.nuget/packages/bluetusk.controlplane.kubernetes/<version>/`). `rbac.yaml` creates the `bluetusk-control-plane-operator` ServiceAccount in `bluetusk-system`. Its ClusterRole can `get`, `list`, `watch` and `patch` `bluetuskdeployments`, and `get`, `patch` and `update` their status. It ",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Manage deployments with Kubernetes</h1>\n<p>This guide shows you how to declare BlueTusk deployments as Kubernetes\n<code>BlueTuskDeployment</code> resources and have the Control Plane reconcile them:\ninstall the custom resource definition (CRD) and RBAC, run a reconciler host,\napply a resource and read its status.</p>\n<p><strong>New in 1.1.0.</strong> The <code>BlueTusk.ControlPlane.Kubernetes</code> package is not in\n<code>1.0.0</code> or <code>1.1.0-rc.1</code>.</p>\n<h2>What the package does, and what you write</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": " kubectl apply ─► BlueTuskDeployment (namespace/name)\n                        │  list, add finalizer, patch status\n                        ▼\n                 your reconciler host ──► KubernetesManagedDeploymentOperator\n                                               │\n                         PostgreSQL ◄── ManagedDeploymentController ──► your provider\n                  (desired state, leases)                              (creates workloads)\n",
+        "highlighted": " kubectl apply ─► BlueTuskDeployment (namespace/name)\n                        │  list, add finalizer, patch status\n                        ▼\n                 your reconciler host ──► KubernetesManagedDeploymentOperator\n                                               │\n                         PostgreSQL ◄── ManagedDeploymentController ──► your provider\n                  (desired state, leases)                              (creates workloads)\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The package gives you:</p>\n<ul>\n<li>the <code>controlplane.bluetusk.io/v1alpha1</code> <code>BlueTuskDeployment</code> CRD;</li>\n<li>a ServiceAccount, ClusterRole and ClusterRoleBinding;</li>\n<li><code>KubernetesManagedDeploymentOperator</code>, which turns each resource into a\nmanaged deployment and writes the result to the resource’s status;</li>\n<li><code>KubernetesApiManagedDeploymentClient</code>, a small Kubernetes REST client.</li>\n</ul>\n<p>You write:</p>\n<ul>\n<li>a host process that calls the reconciler on a timer;</li>\n<li>an <code>IManagedInfrastructureProvider</code> that creates, updates and deletes the\nactual workloads. BlueTusk does not ship one.</li>\n</ul>\n<p>The reconciler never reads Kubernetes Secrets. A resource holds secret\n<em>references</em> only; your provider resolves them with its own identity.</p>\n<p>Read <a href=\"/documentation/real-time/control-plane-concepts#fleet-operations\">Fleet operations</a> for the model behind\ngenerations, states and leases.</p>\n<h2>Before you start</h2>\n<p>You need:</p>\n<ul>\n<li>a Kubernetes cluster and <code>kubectl</code> with rights to create CRDs and cluster\nroles;</li>\n<li>a PostgreSQL database the reconciler can reach, for desired state and\nleases;</li>\n<li>a container registry for your reconciler image.</li>\n</ul>\n<h2>1. Install the CRD and RBAC</h2>\n<p>The manifests are in the repository under\n<a href=\"https://github.com/jphgardner/BlueTusk/tree/main/deploy/kubernetes/operator/\" target=\"_blank\" rel=\"noreferrer\"><code>deploy/kubernetes/operator</code></a>. The NuGet\npackage carries the same files under\n<code>contentFiles/any/any/kubernetes/</code> in its package folder (for example\n<code>~/.nuget/packages/bluetusk.controlplane.kubernetes/&lt;version&gt;/</code>).</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "kubectl create namespace bluetusk-system\nkubectl apply -f deploy/kubernetes/operator/bluetuskdeployments.controlplane.bluetusk.io.yaml\nkubectl apply -f deploy/kubernetes/operator/rbac.yaml\nkubectl get crd bluetuskdeployments.controlplane.bluetusk.io\n",
+        "highlighted": "kubectl create namespace bluetusk<span class=\"hljs-literal\">-system</span>\nkubectl apply <span class=\"hljs-operator\">-f</span> deploy/kubernetes/operator/bluetuskdeployments.controlplane.bluetusk.io.yaml\nkubectl apply <span class=\"hljs-operator\">-f</span> deploy/kubernetes/operator/rbac.yaml\nkubectl get crd bluetuskdeployments.controlplane.bluetusk.io\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>rbac.yaml</code> creates the <code>bluetusk-control-plane-operator</code> ServiceAccount in\n<code>bluetusk-system</code>. Its ClusterRole can <code>get</code>, <code>list</code>, <code>watch</code> and <code>patch</code>\n<code>bluetuskdeployments</code>, and <code>get</code>, <code>patch</code> and <code>update</code> their status. It has no\naccess to Secrets or any other resource. Grant your provider’s own permissions\nto a separate identity.</p>\n<h2>2. Write the reconciler host</h2>\n<p>Create a console app and add the packages:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet new console --framework net10.0 --name BlueTuskReconciler\ncd BlueTuskReconciler\ndotnet add package BlueTusk.ControlPlane.Kubernetes\ndotnet add package BlueTusk.Data\n",
+        "highlighted": "dotnet new console <span class=\"hljs-literal\">--framework</span> net10.<span class=\"hljs-number\">0</span> <span class=\"hljs-literal\">--name</span> BlueTuskReconciler\n<span class=\"hljs-built_in\">cd</span> BlueTuskReconciler\ndotnet add package BlueTusk.ControlPlane.Kubernetes\ndotnet add package BlueTusk.Data\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Replace <code>Program.cs</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using System.Net.Http.Headers;\nusing System.Security.Cryptography.X509Certificates;\nusing BlueTusk.ControlPlane;\nusing BlueTusk.ControlPlane.Kubernetes;\nusing BlueTusk.Data;\n\nvar connectionString = Environment.GetEnvironmentVariable(\"BLUETUSK_CONNECTION_STRING\")\n    ?? throw new InvalidOperationException(\"Set BLUETUSK_CONNECTION_STRING first.\");\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\n\n// Durable desired state, status and leases (schema \"bluetusk_control\").\nvar store = new PostgreSqlManagedDeploymentStore(dataSource);\nawait store.InitializeAsync();\n\nvar controller = new ManagedDeploymentController(\n    store,\n    store,\n    new ManagedDeploymentQuotaSource(\n        store,\n        new Dictionary<string, ManagedTenantQuota>\n        {\n            [\"commerce\"] = new(\n                MaximumDeployments: 10,\n                MaximumReplicas: 50,\n                MaximumCpuMillicores: 50_000,\n                MaximumMemoryBytes: 64L * 1024 * 1024 * 1024,\n                MaximumStorageBytes: 1024L * 1024 * 1024 * 1024),\n        }),\n    new ManagedInfrastructureProviderResolver([new MyKubernetesProvider()]),\n    owner: Environment.GetEnvironmentVariable(\"HOSTNAME\") ?? Environment.MachineName);\n\nvar reconciler = new KubernetesManagedDeploymentOperator(\n    store,\n    controller,\n    new KubernetesApiManagedDeploymentClient(CreateInClusterClient()),\n    maximumConcurrency: 4);\n\nusing var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));\ndo\n{\n    try\n    {\n        foreach (var result in await reconciler.ReconcileAllAsync())\n        {\n            Console.WriteLine(\n                $\"{result.DeploymentId}: succeeded={result.Succeeded} \" +\n                $\"changed={result.Changed} diagnostic={result.DiagnosticCode ?? \"none\"}\");\n        }\n    }\n    catch (Exception exception)\n    {\n        // Listing the resources failed, so this pass did nothing. Try again on the next tick.\n        Console.Error.WriteLine($\"Reconcile pass failed: {exception.GetType().Name}\");\n    }\n}\nwhile (await timer.WaitForNextTickAsync());\n\n// Calls the Kubernetes API with the pod's service account and the cluster CA.\nstatic HttpClient CreateInClusterClient()\n{\n    const string account = \"/var/run/secrets/kubernetes.io/serviceaccount\";\n    var clusterCa = X509Certificate2.CreateFromPemFile(Path.Combine(account, \"ca.crt\"));\n    var tls = new SocketsHttpHandler();\n    tls.SslOptions.CertificateChainPolicy = new X509ChainPolicy\n    {\n        TrustMode = X509ChainTrustMode.CustomRootTrust,\n        CustomTrustStore = { clusterCa },\n    };\n\n    return new HttpClient(new ServiceAccountToken(Path.Combine(account, \"token\"), tls))\n    {\n        BaseAddress = new Uri(\"https://kubernetes.default.svc\"),\n    };\n}\n\n// Reads the token on every request, because Kubernetes rotates it.\nsealed class ServiceAccountToken(string path, HttpMessageHandler inner) : DelegatingHandler(inner)\n{\n    protected override async Task<HttpResponseMessage> SendAsync(\n        HttpRequestMessage request,\n        CancellationToken cancellationToken)\n    {\n        var token = (await File.ReadAllTextAsync(path, cancellationToken)).Trim();\n        request.Headers.Authorization = new AuthenticationHeaderValue(\"Bearer\", token);\n        return await base.SendAsync(request, cancellationToken);\n    }\n}\n\n// The provider named in each resource's spec.provider. BlueTusk does not ship one:\n// this is where you create or update the Deployments, StatefulSets and Services.\nsealed class MyKubernetesProvider : IManagedInfrastructureProvider\n{\n    public string Name => \"kubernetes\";\n\n    public ValueTask<ManagedDeploymentPlan> PlanAsync(\n        ManagedDeploymentSpec desired,\n        ManagedDeploymentStatus current,\n        CancellationToken cancellationToken = default)\n    {\n        var fingerprint = ManagedDeploymentValidation.GetFingerprint(desired);\n        return ValueTask.FromResult(new ManagedDeploymentPlan(\n            desired.DeploymentId,\n            desired.Generation,\n            DesiredFingerprint: fingerprint,\n            PlanFingerprint: fingerprint,\n            RequiresChange: current.AppliedPlanFingerprint != fingerprint,\n            Actions: [new ManagedDeploymentAction(\"apply\", desired.DeploymentId, \"Apply workloads\")]));\n    }\n\n    public ValueTask<ManagedProviderResult> ApplyAsync(\n        ManagedDeploymentSpec desired,\n        ManagedDeploymentPlan plan,\n        long fencingToken,\n        CancellationToken cancellationToken = default)\n    {\n        // Create or update workloads here. Reject a fencingToken older than the last one you saw.\n        return ValueTask.FromResult(new ManagedProviderResult(desired.DeploymentId, plan.PlanFingerprint));\n    }\n\n    public ValueTask DeleteAsync(\n        ManagedDeploymentSpec desired,\n        long fencingToken,\n        CancellationToken cancellationToken = default)\n    {\n        // Delete workloads here. It must be safe to call more than once.\n        return ValueTask.CompletedTask;\n    }\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> System.Net.Http.Headers;\n<span class=\"hljs-keyword\">using</span> System.Security.Cryptography.X509Certificates;\n<span class=\"hljs-keyword\">using</span> BlueTusk.ControlPlane;\n<span class=\"hljs-keyword\">using</span> BlueTusk.ControlPlane.Kubernetes;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n\n<span class=\"hljs-keyword\">var</span> connectionString = Environment.GetEnvironmentVariable(<span class=\"hljs-string\">&quot;BLUETUSK_CONNECTION_STRING&quot;</span>)\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Set BLUETUSK_CONNECTION_STRING first.&quot;</span>);\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n\n<span class=\"hljs-comment\">// Durable desired state, status and leases (schema &quot;bluetusk_control&quot;).</span>\n<span class=\"hljs-keyword\">var</span> store = <span class=\"hljs-keyword\">new</span> PostgreSqlManagedDeploymentStore(dataSource);\n<span class=\"hljs-keyword\">await</span> store.InitializeAsync();\n\n<span class=\"hljs-keyword\">var</span> controller = <span class=\"hljs-keyword\">new</span> ManagedDeploymentController(\n    store,\n    store,\n    <span class=\"hljs-keyword\">new</span> ManagedDeploymentQuotaSource(\n        store,\n        <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, ManagedTenantQuota&gt;\n        {\n            [<span class=\"hljs-string\">&quot;commerce&quot;</span>] = <span class=\"hljs-keyword\">new</span>(\n                MaximumDeployments: <span class=\"hljs-number\">10</span>,\n                MaximumReplicas: <span class=\"hljs-number\">50</span>,\n                MaximumCpuMillicores: <span class=\"hljs-number\">50_000</span>,\n                MaximumMemoryBytes: <span class=\"hljs-number\">64L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n                MaximumStorageBytes: <span class=\"hljs-number\">1024L</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>),\n        }),\n    <span class=\"hljs-keyword\">new</span> ManagedInfrastructureProviderResolver([<span class=\"hljs-keyword\">new</span> MyKubernetesProvider()]),\n    owner: Environment.GetEnvironmentVariable(<span class=\"hljs-string\">&quot;HOSTNAME&quot;</span>) ?? Environment.MachineName);\n\n<span class=\"hljs-keyword\">var</span> reconciler = <span class=\"hljs-keyword\">new</span> KubernetesManagedDeploymentOperator(\n    store,\n    controller,\n    <span class=\"hljs-keyword\">new</span> KubernetesApiManagedDeploymentClient(CreateInClusterClient()),\n    maximumConcurrency: <span class=\"hljs-number\">4</span>);\n\n<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> timer = <span class=\"hljs-keyword\">new</span> PeriodicTimer(TimeSpan.FromSeconds(<span class=\"hljs-number\">30</span>));\n<span class=\"hljs-keyword\">do</span>\n{\n    <span class=\"hljs-keyword\">try</span>\n    {\n        <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> result <span class=\"hljs-keyword\">in</span> <span class=\"hljs-keyword\">await</span> reconciler.ReconcileAllAsync())\n        {\n            Console.WriteLine(\n                <span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{result.DeploymentId}</span>: succeeded=<span class=\"hljs-subst\">{result.Succeeded}</span> &quot;</span> +\n                <span class=\"hljs-string\">$&quot;changed=<span class=\"hljs-subst\">{result.Changed}</span> diagnostic=<span class=\"hljs-subst\">{result.DiagnosticCode ?? <span class=\"hljs-string\">&quot;none&quot;</span>}</span>&quot;</span>);\n        }\n    }\n    <span class=\"hljs-keyword\">catch</span> (Exception exception)\n    {\n        <span class=\"hljs-comment\">// Listing the resources failed, so this pass did nothing. Try again on the next tick.</span>\n        Console.Error.WriteLine(<span class=\"hljs-string\">$&quot;Reconcile pass failed: <span class=\"hljs-subst\">{exception.GetType().Name}</span>&quot;</span>);\n    }\n}\n<span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> timer.WaitForNextTickAsync());\n\n<span class=\"hljs-comment\">// Calls the Kubernetes API with the pod&#x27;s service account and the cluster CA.</span>\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">static</span> HttpClient <span class=\"hljs-title\">CreateInClusterClient</span>()</span>\n{\n    <span class=\"hljs-keyword\">const</span> <span class=\"hljs-built_in\">string</span> account = <span class=\"hljs-string\">&quot;/var/run/secrets/kubernetes.io/serviceaccount&quot;</span>;\n    <span class=\"hljs-keyword\">var</span> clusterCa = X509Certificate2.CreateFromPemFile(Path.Combine(account, <span class=\"hljs-string\">&quot;ca.crt&quot;</span>));\n    <span class=\"hljs-keyword\">var</span> tls = <span class=\"hljs-keyword\">new</span> SocketsHttpHandler();\n    tls.SslOptions.CertificateChainPolicy = <span class=\"hljs-keyword\">new</span> X509ChainPolicy\n    {\n        TrustMode = X509ChainTrustMode.CustomRootTrust,\n        CustomTrustStore = { clusterCa },\n    };\n\n    <span class=\"hljs-keyword\">return</span> <span class=\"hljs-keyword\">new</span> HttpClient(<span class=\"hljs-keyword\">new</span> ServiceAccountToken(Path.Combine(account, <span class=\"hljs-string\">&quot;token&quot;</span>), tls))\n    {\n        BaseAddress = <span class=\"hljs-keyword\">new</span> Uri(<span class=\"hljs-string\">&quot;https://kubernetes.default.svc&quot;</span>),\n    };\n}\n\n<span class=\"hljs-comment\">// Reads the token on every request, because Kubernetes rotates it.</span>\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">ServiceAccountToken</span>(<span class=\"hljs-params\"><span class=\"hljs-built_in\">string</span> path, HttpMessageHandler inner</span>) : <span class=\"hljs-title\">DelegatingHandler</span>(<span class=\"hljs-params\">inner</span>)</span>\n{\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">async</span> Task&lt;HttpResponseMessage&gt; <span class=\"hljs-title\">SendAsync</span>(<span class=\"hljs-params\">\n        HttpRequestMessage request,\n        CancellationToken cancellationToken</span>)</span>\n    {\n        <span class=\"hljs-keyword\">var</span> token = (<span class=\"hljs-keyword\">await</span> File.ReadAllTextAsync(path, cancellationToken)).Trim();\n        request.Headers.Authorization = <span class=\"hljs-keyword\">new</span> AuthenticationHeaderValue(<span class=\"hljs-string\">&quot;Bearer&quot;</span>, token);\n        <span class=\"hljs-keyword\">return</span> <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">base</span>.SendAsync(request, cancellationToken);\n    }\n}\n\n<span class=\"hljs-comment\">// The provider named in each resource&#x27;s spec.provider. BlueTusk does not ship one:</span>\n<span class=\"hljs-comment\">// this is where you create or update the Deployments, StatefulSets and Services.</span>\n<span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">MyKubernetesProvider</span> : <span class=\"hljs-title\">IManagedInfrastructureProvider</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">string</span> Name =&gt; <span class=\"hljs-string\">&quot;kubernetes&quot;</span>;\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask&lt;ManagedDeploymentPlan&gt; <span class=\"hljs-title\">PlanAsync</span>(<span class=\"hljs-params\">\n        ManagedDeploymentSpec desired,\n        ManagedDeploymentStatus current,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        <span class=\"hljs-keyword\">var</span> fingerprint = ManagedDeploymentValidation.GetFingerprint(desired);\n        <span class=\"hljs-keyword\">return</span> ValueTask.FromResult(<span class=\"hljs-keyword\">new</span> ManagedDeploymentPlan(\n            desired.DeploymentId,\n            desired.Generation,\n            DesiredFingerprint: fingerprint,\n            PlanFingerprint: fingerprint,\n            RequiresChange: current.AppliedPlanFingerprint != fingerprint,\n            Actions: [<span class=\"hljs-keyword\">new</span> ManagedDeploymentAction(<span class=\"hljs-string\">&quot;apply&quot;</span>, desired.DeploymentId, <span class=\"hljs-string\">&quot;Apply workloads&quot;</span>)]));\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask&lt;ManagedProviderResult&gt; <span class=\"hljs-title\">ApplyAsync</span>(<span class=\"hljs-params\">\n        ManagedDeploymentSpec desired,\n        ManagedDeploymentPlan plan,\n        <span class=\"hljs-built_in\">long</span> fencingToken,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        <span class=\"hljs-comment\">// Create or update workloads here. Reject a fencingToken older than the last one you saw.</span>\n        <span class=\"hljs-keyword\">return</span> ValueTask.FromResult(<span class=\"hljs-keyword\">new</span> ManagedProviderResult(desired.DeploymentId, plan.PlanFingerprint));\n    }\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> ValueTask <span class=\"hljs-title\">DeleteAsync</span>(<span class=\"hljs-params\">\n        ManagedDeploymentSpec desired,\n        <span class=\"hljs-built_in\">long</span> fencingToken,\n        CancellationToken cancellationToken = <span class=\"hljs-literal\">default</span></span>)</span>\n    {\n        <span class=\"hljs-comment\">// Delete workloads here. It must be safe to call more than once.</span>\n        <span class=\"hljs-keyword\">return</span> ValueTask.CompletedTask;\n    }\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Points to check:</p>\n<ul>\n<li><strong>Provider name.</strong> <code>Name</code> must equal <code>spec.provider</code> in your resources.\nOtherwise the status shows <code>provider-not-registered</code>.</li>\n<li><strong>Quotas.</strong> Every <code>spec.tenantId</code> needs a quota (or pass a <code>defaultQuota</code>).\nOtherwise the status shows <code>tenant-quota-missing</code>.</li>\n<li><strong>Owner.</strong> The lease owner names this process. The pod’s <code>HOSTNAME</code> is\nunique per pod. Run one replica: leases stop two replicas from applying the\nsame deployment at once, but the one that loses reports <code>lease-unavailable</code>\nin the resource status.</li>\n<li><strong>Provider rules.</strong> <code>ApplyAsync</code> and <code>DeleteAsync</code> must be safe to repeat\nfor the same deployment, generation and fencing token, and must reject a\nfencing token older than the newest one they have accepted.</li>\n<li><strong>TLS.</strong> The client trusts only the cluster CA and keeps normal certificate\nand host-name checks. Do not turn certificate validation off.</li>\n</ul>\n<h2>3. Run the host in the cluster</h2>\n<p>Build a container image of the host and run it as a one-replica Deployment in\n<code>bluetusk-system</code> with:</p>\n<ul>\n<li><code>serviceAccountName: bluetusk-control-plane-operator</code>;</li>\n<li><code>BLUETUSK_CONNECTION_STRING</code> from a Kubernetes Secret, using a login that\nowns, or has been granted rights on, the <code>bluetusk_control</code> schema;</li>\n<li>the default service-account token mount (the code reads\n<code>/var/run/secrets/kubernetes.io/serviceaccount</code>).</li>\n</ul>\n<h2>4. Write a BlueTuskDeployment</h2>\n<p>This is the repository’s <code>example.yaml</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "apiVersion: controlplane.bluetusk.io/v1alpha1\nkind: BlueTuskDeployment\nmetadata:\n  name: orders\n  namespace: production\nspec:\n  tenantId: commerce\n  provider: kubernetes\n  region: uk-south\n  deleteProtection: true\n  labels:\n    environment: production\n    owner: commerce-platform\n  workloads:\n    - kind: Streams\n      version: 1.1.0\n      resources:\n        replicas: 2\n        cpuMillicoresPerReplica: 500\n        memoryBytesPerReplica: 536870912\n        storageBytes: 10737418240\n      secretReferences:\n        - store: kubernetes\n          name: orders-database\n      settings:\n        durability: relay\n    - kind: Sync\n      version: 1.1.0\n      resources:\n        replicas: 2\n        cpuMillicoresPerReplica: 500\n        memoryBytesPerReplica: 536870912\n        storageBytes: 0\n      secretReferences:\n        - store: kubernetes\n          name: orders-destinations\n      settings:\n        pipeline: orders\n",
+        "highlighted": "<span class=\"hljs-attr\">apiVersion:</span> <span class=\"hljs-string\">controlplane.bluetusk.io/v1alpha1</span>\n<span class=\"hljs-attr\">kind:</span> <span class=\"hljs-string\">BlueTuskDeployment</span>\n<span class=\"hljs-attr\">metadata:</span>\n  <span class=\"hljs-attr\">name:</span> <span class=\"hljs-string\">orders</span>\n  <span class=\"hljs-attr\">namespace:</span> <span class=\"hljs-string\">production</span>\n<span class=\"hljs-attr\">spec:</span>\n  <span class=\"hljs-attr\">tenantId:</span> <span class=\"hljs-string\">commerce</span>\n  <span class=\"hljs-attr\">provider:</span> <span class=\"hljs-string\">kubernetes</span>\n  <span class=\"hljs-attr\">region:</span> <span class=\"hljs-string\">uk-south</span>\n  <span class=\"hljs-attr\">deleteProtection:</span> <span class=\"hljs-literal\">true</span>\n  <span class=\"hljs-attr\">labels:</span>\n    <span class=\"hljs-attr\">environment:</span> <span class=\"hljs-string\">production</span>\n    <span class=\"hljs-attr\">owner:</span> <span class=\"hljs-string\">commerce-platform</span>\n  <span class=\"hljs-attr\">workloads:</span>\n    <span class=\"hljs-bullet\">-</span> <span class=\"hljs-attr\">kind:</span> <span class=\"hljs-string\">Streams</span>\n      <span class=\"hljs-attr\">version:</span> <span class=\"hljs-number\">1.1</span><span class=\"hljs-number\">.0</span>\n      <span class=\"hljs-attr\">resources:</span>\n        <span class=\"hljs-attr\">replicas:</span> <span class=\"hljs-number\">2</span>\n        <span class=\"hljs-attr\">cpuMillicoresPerReplica:</span> <span class=\"hljs-number\">500</span>\n        <span class=\"hljs-attr\">memoryBytesPerReplica:</span> <span class=\"hljs-number\">536870912</span>\n        <span class=\"hljs-attr\">storageBytes:</span> <span class=\"hljs-number\">10737418240</span>\n      <span class=\"hljs-attr\">secretReferences:</span>\n        <span class=\"hljs-bullet\">-</span> <span class=\"hljs-attr\">store:</span> <span class=\"hljs-string\">kubernetes</span>\n          <span class=\"hljs-attr\">name:</span> <span class=\"hljs-string\">orders-database</span>\n      <span class=\"hljs-attr\">settings:</span>\n        <span class=\"hljs-attr\">durability:</span> <span class=\"hljs-string\">relay</span>\n    <span class=\"hljs-bullet\">-</span> <span class=\"hljs-attr\">kind:</span> <span class=\"hljs-string\">Sync</span>\n      <span class=\"hljs-attr\">version:</span> <span class=\"hljs-number\">1.1</span><span class=\"hljs-number\">.0</span>\n      <span class=\"hljs-attr\">resources:</span>\n        <span class=\"hljs-attr\">replicas:</span> <span class=\"hljs-number\">2</span>\n        <span class=\"hljs-attr\">cpuMillicoresPerReplica:</span> <span class=\"hljs-number\">500</span>\n        <span class=\"hljs-attr\">memoryBytesPerReplica:</span> <span class=\"hljs-number\">536870912</span>\n        <span class=\"hljs-attr\">storageBytes:</span> <span class=\"hljs-number\">0</span>\n      <span class=\"hljs-attr\">secretReferences:</span>\n        <span class=\"hljs-bullet\">-</span> <span class=\"hljs-attr\">store:</span> <span class=\"hljs-string\">kubernetes</span>\n          <span class=\"hljs-attr\">name:</span> <span class=\"hljs-string\">orders-destinations</span>\n      <span class=\"hljs-attr\">settings:</span>\n        <span class=\"hljs-attr\">pipeline:</span> <span class=\"hljs-string\">orders</span>\n",
+        "language": "yaml"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Field</th>\n<th>Required</th>\n<th>Default</th>\n<th>Rules</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>spec.tenantId</code></td>\n<td>Yes</td>\n<td></td>\n<td>1 to 128 characters</td>\n</tr>\n<tr>\n<td><code>spec.provider</code></td>\n<td>Yes</td>\n<td></td>\n<td>Must match a registered provider’s <code>Name</code></td>\n</tr>\n<tr>\n<td><code>spec.region</code></td>\n<td>Yes</td>\n<td></td>\n<td>1 to 128 characters</td>\n</tr>\n<tr>\n<td><code>spec.paused</code></td>\n<td>No</td>\n<td><code>false</code></td>\n<td><code>true</code> stops changes; state becomes <code>Paused</code></td>\n</tr>\n<tr>\n<td><code>spec.deleteProtection</code></td>\n<td>No</td>\n<td><code>true</code></td>\n<td>While <code>true</code>, deleting the resource does not delete the workloads</td>\n</tr>\n<tr>\n<td><code>spec.labels</code></td>\n<td>No</td>\n<td></td>\n<td>Up to 128 entries</td>\n</tr>\n<tr>\n<td><code>spec.workloads[]</code></td>\n<td>Yes</td>\n<td></td>\n<td>1 to 32, at most one per <code>kind</code></td>\n</tr>\n<tr>\n<td><code>workloads[].kind</code></td>\n<td>Yes</td>\n<td></td>\n<td><code>Streams</code>, <code>Sync</code>, <code>Live</code>, <code>ControlPlane</code>, <code>Dashboard</code> or <code>ContinuousGraph</code></td>\n</tr>\n<tr>\n<td><code>workloads[].version</code></td>\n<td>Yes</td>\n<td></td>\n<td>Starts with a numeric version, such as <code>1.1.0</code>. The CRD does not check this; a value such as <code>latest</code> makes the resource <code>Failed</code> with <code>workload-version-invalid</code></td>\n</tr>\n<tr>\n<td><code>workloads[].resources</code></td>\n<td>Yes</td>\n<td></td>\n<td><code>replicas</code> 1 to 256, <code>cpuMillicoresPerReplica</code> 10 to 1,000,000, <code>memoryBytesPerReplica</code> 16 MiB to 16 TiB, <code>storageBytes</code> 0 to 16 TiB</td>\n</tr>\n<tr>\n<td><code>workloads[].secretReferences[]</code></td>\n<td>No</td>\n<td></td>\n<td><code>store</code>, <code>name</code>, optional <code>version</code>; up to 128</td>\n</tr>\n<tr>\n<td><code>workloads[].settings</code></td>\n<td>No</td>\n<td></td>\n<td>Up to 256 string entries</td>\n</tr>\n</tbody>\n</table>\n<p>The managed deployment ID is <code>&lt;namespace&gt;/&lt;name&gt;</code>, for example\n<code>production/orders</code>. Keep it to 128 characters or fewer; a longer ID is\nreported as <code>resource-invalid</code>.</p>\n<h2>5. Apply it and read the status</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "kubectl create namespace production\nkubectl apply -f deploy/kubernetes/operator/example.yaml\nkubectl get bluetuskdeployments -A\n",
+        "highlighted": "kubectl create namespace production\nkubectl apply <span class=\"hljs-operator\">-f</span> deploy/kubernetes/operator/example.yaml\nkubectl get bluetuskdeployments <span class=\"hljs-literal\">-A</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The short name is <code>btd</code>. The list shows the <strong>State</strong>, <strong>Desired</strong> (Kubernetes\ngeneration), <strong>Observed</strong>, <strong>Tenant</strong> and <strong>Age</strong> columns. On the first pass\nthe reconciler adds the <code>controlplane.bluetusk.io/finalizer</code> finalizer, stores\nthe desired state, reconciles it and writes the status:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "status:\n  observedGeneration: 1\n  managedGeneration: 1\n  state: Ready\n  updatedAt: \"2026-10-03T09:46:13.18+00:00\"\n",
+        "highlighted": "<span class=\"hljs-attr\">status:</span>\n  <span class=\"hljs-attr\">observedGeneration:</span> <span class=\"hljs-number\">1</span>\n  <span class=\"hljs-attr\">managedGeneration:</span> <span class=\"hljs-number\">1</span>\n  <span class=\"hljs-attr\">state:</span> <span class=\"hljs-string\">Ready</span>\n  <span class=\"hljs-attr\">updatedAt:</span> <span class=\"hljs-string\">&quot;2026-10-03T09:46:13.18+00:00&quot;</span>\n",
+        "language": "yaml"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Status field</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>observedGeneration</code></td>\n<td>The resource’s <code>metadata.generation</code> the reconciler last processed</td>\n</tr>\n<tr>\n<td><code>managedGeneration</code></td>\n<td>The Control Plane’s desired generation. It rises by one per real change, however many edits Kubernetes coalesced</td>\n</tr>\n<tr>\n<td><code>state</code></td>\n<td><code>Pending</code>, <code>Planning</code>, <code>Applying</code>, <code>Ready</code>, <code>Degraded</code>, <code>Paused</code>, <code>Deleting</code>, <code>Deleted</code> or <code>Failed</code></td>\n</tr>\n<tr>\n<td><code>diagnosticCode</code></td>\n<td>Present when something stopped reconciliation, for example <code>tenant-quota-missing</code></td>\n</tr>\n</tbody>\n</table>\n<p>Each resource is reconciled on its own. A resource that is invalid or fails\ngets <code>state: Failed</code> and a <code>diagnosticCode</code>; the others in the same pass are\nstill reconciled. <a href=\"/documentation/real-time/control-plane-troubleshooting#kubernetes-reconciler\">Troubleshooting</a>\nlists every code.</p>\n<p>The deployment also appears on the dashboard’s <strong>Deployments</strong> page when the\ndashboard host registers <code>ManagedDeploymentFleetQueryService</code> over the same\nstore (see <a href=\"/documentation/real-time/control-plane-operations#6-enable-fleet-operations\">Enable operator actions</a>).</p>\n<h2>6. Change, pause and delete</h2>\n<ul>\n<li><strong>Change.</strong> Edit the resource. If the desired state really changed, the next\npass raises <code>managedGeneration</code> by one and reconciles.</li>\n<li><strong>Pause.</strong> Set <code>spec.paused: true</code>. The resource is the source of truth: a\npause or resume made from the dashboard is undone on the next reconciler\npass, so change the resource instead.</li>\n<li><strong>Delete.</strong> With <code>deleteProtection: false</code>, <code>kubectl delete</code> makes the\nreconciler call your provider’s <code>DeleteAsync</code>, then remove the finalizer.\nWith <code>deleteProtection: true</code>, the resource stays in <code>Terminating</code>, its\nstatus shows <code>state: Failed</code> and <code>diagnosticCode: delete-protection-enabled</code>,\nand nothing is deleted.</li>\n</ul>\n<p>To delete a protected deployment, turn protection off first. Set\n<code>deleteProtection: false</code> in <code>example.yaml</code>, apply it, and wait until\n<code>managedGeneration</code> goes up, which shows the reconciler stored the change:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "kubectl apply -f deploy/kubernetes/operator/example.yaml\nkubectl get btd orders -n production -o jsonpath='{.status.managedGeneration}'\nkubectl delete btd orders -n production\n",
+        "highlighted": "kubectl apply <span class=\"hljs-operator\">-f</span> deploy/kubernetes/operator/example.yaml\nkubectl get btd orders <span class=\"hljs-literal\">-n</span> production <span class=\"hljs-literal\">-o</span> jsonpath=<span class=\"hljs-string\">&#x27;{.status.managedGeneration}&#x27;</span>\nkubectl delete btd orders <span class=\"hljs-literal\">-n</span> production\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<blockquote>\n<p><strong>Warning:</strong> Once a protected resource is already <code>Terminating</code>, editing its\nspec has no effect; the reconciler only retries the deletion with the stored\ndesired state. Removing the finalizer by hand deletes the resource but\nleaves your workloads and the stored record in place.</p>\n</blockquote>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/real-time/control-plane-troubleshooting#kubernetes-reconciler\">Troubleshooting</a>: status codes\nand stuck resources.</li>\n<li><a href=\"/documentation/real-time/control-plane-configuration#kubernetes-reconciler\">Configuration</a>: reconciler and\nclient settings.</li>\n<li><a href=\"/documentation/architecture/architecture-decisions-0014-managed-hosting-reconciliation\">ADR 0014: managed hosting reconciliation</a></li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
     "slug": "continuous-graph",
     "summary": "Keep a bounded SQL/PGQ result current with incremental updates and authoritative repair.",
     "keywords": [
@@ -1099,13 +4054,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 678,
+    "wordCount": 729,
     "readMinutes": 4,
-    "searchText": "Keep graph query results current BlueTusk Continuous Graph runs a bounded PostgreSQL SQL/PGQ query, keeps its result available to Live clients, and updates that result after relevant committed changes. This is a **preview product**. PostgreSQL 19 Beta 4 removed SQL/PGQ; the pinned Beta 3 fixture below is for historical preview development only. Graph will need a supported server with the actual SQL/PGQ capability and its own release evidence. It does not block the five core [release tracks](../releases/release-tracks.md). Use it for fraud paths, dependency maps, network reachability, and other views where relationships change over time. Start with [SQL/PGQ](../graph/README.md) if you have not yet defined and queried a PostgreSQL property graph. The safe mental model PostgreSQL is always authoritative. BlueTusk chooses the cheapest update path whose correctness it can prove: Tier What happens Use Trusted CDC delta Explicitly trusted application code updates known affected results in memory. Fastest; opt in only with a complete trust contract. Authoritative scoped query BlueTusk reruns generated `GRAPH_TABLE` SQL for affected keys. Automatic incremental default. Full authoritative repair BlueTusk reruns the complete registered query and diffs the result. Safety fallback and periodic drift repair. Unknown schemas, incomplete old rows, truncation, two-phase commits, affected-key overflow, unsafe deletes, uncertain top-N ranking, projector uncertainty, and drift checks all force a full repair. That fallback is expected behavior, not silent data loss. Run a working example The fraud and network samples create their schema, compile a query, execute the initial result, and exercise updates: The connection disables TLS only for the isolated repository container. 1. Define a bounded query The compiler verifies graph aliases, bounded output, stable ordering, direct result keys, dependencies, and EF translation before a client subscribes. 2. Start with authoritative maintenance",
+    "searchText": "Keep graph query results current **Preview, not part of 1.1.0.** Continuous Graph needs a PostgreSQL server that provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so this product waits for a PostgreSQL release that ships it. Packages published as `1.0.0` and `1.1.0-rc.1` are for evaluation only. See [product status](../getting-started/install.md#product-status). BlueTusk Continuous Graph runs a bounded PostgreSQL SQL/PGQ query, keeps its result available to Live clients, and updates that result after relevant committed changes. This is a **preview product**. PostgreSQL 19 Beta 4 removed SQL/PGQ; the pinned Beta 3 fixture below is for historical preview development only. Graph will need a supported server with the actual SQL/PGQ capability and its own release evidence. It does not block the five core [release tracks](../releases/release-tracks.md). Use it for fraud paths, dependency maps, network reachability, and other views where relationships change over time. Start with [SQL/PGQ](../graph/README.md) if you have not yet defined and queried a PostgreSQL property graph. The safe mental model PostgreSQL is always authoritative. BlueTusk chooses the cheapest update path whose correctness it can prove: Tier What happens Use Trusted CDC delta Explicitly trusted application code updates known affected results in memory. Fastest; opt in only with a complete trust contract. Authoritative scoped query BlueTusk reruns generated `GRAPH_TABLE` SQL for affected keys. Automatic incremental default. Full authoritative repair BlueTusk reruns the complete registered query and diffs the result. Safety fallback and periodic drift repair. Unknown schemas, incomplete old rows, truncation, two-phase commits, affected-key overflow, unsafe deletes, uncertain top-N ranking, projector uncertainty, and drift checks all force a full repair. That fallback is expected behavior, not silent data loss. Run a working example The fraud and network samples create their schema, com",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Keep graph query results current</h1>\n<p>BlueTusk Continuous Graph runs a bounded PostgreSQL SQL/PGQ query, keeps its\nresult available to Live clients, and updates that result after relevant\ncommitted changes.</p>\n<p>This is a <strong>preview product</strong>. PostgreSQL 19 Beta 4 removed SQL/PGQ; the pinned\nBeta 3 fixture below is for historical preview development only. Graph will\nneed a supported server with the actual SQL/PGQ capability and its own release\nevidence. It does not block the five core <a href=\"/documentation/operations/releases-release-tracks\">release tracks</a>.</p>\n<p>Use it for fraud paths, dependency maps, network reachability, and other views\nwhere relationships change over time. Start with <a href=\"/documentation/graph/sql-pgq\">SQL/PGQ</a>\nif you have not yet defined and queried a PostgreSQL property graph.</p>\n<h2>The safe mental model</h2>\n<p>PostgreSQL is always authoritative. BlueTusk chooses the cheapest update path\nwhose correctness it can prove:</p>\n<table>\n<thead>\n<tr>\n<th>Tier</th>\n<th>What happens</th>\n<th>Use</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Trusted CDC delta</td>\n<td>Explicitly trusted application code updates known affected results in memory.</td>\n<td>Fastest; opt in only with a complete trust contract.</td>\n</tr>\n<tr>\n<td>Authoritative scoped query</td>\n<td>BlueTusk reruns generated <code>GRAPH_TABLE</code> SQL for affected keys.</td>\n<td>Automatic incremental default.</td>\n</tr>\n<tr>\n<td>Full authoritative repair</td>\n<td>BlueTusk reruns the complete registered query and diffs the result.</td>\n<td>Safety fallback and periodic drift repair.</td>\n</tr>\n</tbody>\n</table>\n<p>Unknown schemas, incomplete old rows, truncation, two-phase commits, affected-key\noverflow, unsafe deletes, uncertain top-N ranking, projector uncertainty, and\ndrift checks all force a full repair. That fallback is expected behavior, not\nsilent data loss.</p>\n<h2>Run a working example</h2>\n<p>The fraud and network samples create their schema, compile a query, execute the\ninitial result, and exercise updates:</p>\n"
+        "html": "<h1>Keep graph query results current</h1>\n<blockquote>\n<p><strong>Preview, not part of 1.1.0.</strong> Continuous Graph needs a PostgreSQL server\nthat provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so\nthis product waits for a PostgreSQL release that ships it. Packages published\nas <code>1.0.0</code> and <code>1.1.0-rc.1</code> are for evaluation only. See\n<a href=\"/documentation/getting-started/install#product-status\">product status</a>.</p>\n</blockquote>\n<p>BlueTusk Continuous Graph runs a bounded PostgreSQL SQL/PGQ query, keeps its\nresult available to Live clients, and updates that result after relevant\ncommitted changes.</p>\n<p>This is a <strong>preview product</strong>. PostgreSQL 19 Beta 4 removed SQL/PGQ; the pinned\nBeta 3 fixture below is for historical preview development only. Graph will\nneed a supported server with the actual SQL/PGQ capability and its own release\nevidence. It does not block the five core <a href=\"/documentation/operations/releases-release-tracks\">release tracks</a>.</p>\n<p>Use it for fraud paths, dependency maps, network reachability, and other views\nwhere relationships change over time. Start with <a href=\"/documentation/graph/sql-pgq\">SQL/PGQ</a>\nif you have not yet defined and queried a PostgreSQL property graph.</p>\n<h2>The safe mental model</h2>\n<p>PostgreSQL is always authoritative. BlueTusk chooses the cheapest update path\nwhose correctness it can prove:</p>\n<table>\n<thead>\n<tr>\n<th>Tier</th>\n<th>What happens</th>\n<th>Use</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Trusted CDC delta</td>\n<td>Explicitly trusted application code updates known affected results in memory.</td>\n<td>Fastest; opt in only with a complete trust contract.</td>\n</tr>\n<tr>\n<td>Authoritative scoped query</td>\n<td>BlueTusk reruns generated <code>GRAPH_TABLE</code> SQL for affected keys.</td>\n<td>Automatic incremental default.</td>\n</tr>\n<tr>\n<td>Full authoritative repair</td>\n<td>BlueTusk reruns the complete registered query and diffs the result.</td>\n<td>Safety fallback and periodic drift repair.</td>\n</tr>\n</tbody>\n</table>\n<p>Unknown schemas, incomplete old rows, truncation, two-phase commits, affected-key\noverflow, unsafe deletes, uncertain top-N ranking, projector uncertainty, and\ndrift checks all force a full repair. That fallback is expected behavior, not\nsilent data loss.</p>\n<h2>Run a working example</h2>\n<p>The fraud and network samples create their schema, compile a query, execute the\ninitial result, and exercise updates:</p>\n"
       },
       {
         "kind": "code",
@@ -1152,7 +4107,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1053,
+    "order": 1057,
     "title": "Control Plane API and format compatibility",
     "sourcePath": "docs/control-plane/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/api-compatibility.md",
@@ -1185,7 +4140,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "plane",
       "reference"
     ],
-    "order": 1054,
+    "order": 1063,
     "title": "BlueTusk Control Plane and Dashboard",
     "sourcePath": "docs/control-plane/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/reference.md",
@@ -1294,7 +4249,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1055,
+    "order": 1064,
     "title": "BlueTusk Control Plane 0.1.0-preview.1 release notes",
     "sourcePath": "docs/control-plane/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/release-notes-0.1.0-preview.1.md",
@@ -1346,7 +4301,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1056,
+    "order": 1065,
     "title": "BlueTusk Control Plane 1.0.0 release record",
     "sourcePath": "docs/control-plane/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/release-notes-1.0.0.md",
@@ -1379,7 +4334,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1094,
+    "order": 1109,
     "title": "Live public API compatibility",
     "sourcePath": "docs/live/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/api-compatibility.md",
@@ -1412,7 +4367,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1095,
+    "order": 1113,
     "title": "Live format compatibility",
     "sourcePath": "docs/live/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/format-compatibility.md",
@@ -1444,7 +4399,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "live",
       "reference"
     ],
-    "order": 1096,
+    "order": 1115,
     "title": "BlueTusk Live",
     "sourcePath": "docs/live/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/reference.md",
@@ -1562,7 +4517,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1097,
+    "order": 1116,
     "title": "BlueTusk Live 0.1.0-preview.1",
     "sourcePath": "docs/live/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-0.1.0-preview.1.md",
@@ -1618,7 +4573,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1098,
+    "order": 1117,
     "title": "BlueTusk Live 1.0.0 release record",
     "sourcePath": "docs/live/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-1.0.0.md",
@@ -1652,7 +4607,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1131,
+    "order": 1150,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -1690,7 +4645,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1151,
+    "order": 1172,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -1716,50 +4671,85 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "categoryLabel": "Real time",
     "listed": false,
     "slug": "streams-aspire",
-    "summary": "BlueTusk.Streams.Aspire wires Streams workers to Aspire connection-string resources without resolving or copying secrets in the AppHost. It targets the Aspire application model and supports both relay and explicit dir…",
+    "summary": "This guide shows you how to pass PostgreSQL connections and Streams settings to a worker project from a .NET Aspire AppHost, without copying secrets into the AppHost.",
     "keywords": [
       "docs",
       "streams",
       "aspire"
     ],
-    "order": 1152,
-    "title": "Aspire integration",
+    "order": 1173,
+    "title": "Wire Streams into .NET Aspire",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
     "headings": [
       {
-        "id": "aspire-integration",
-        "text": "Aspire integration",
+        "id": "wire-streams-into-net-aspire",
+        "text": "Wire Streams into .NET Aspire",
         "level": 1
+      },
+      {
+        "id": "use-the-durable-relay-default",
+        "text": "Use the durable relay (default)",
+        "level": 2
+      },
+      {
+        "id": "read-from-a-slot-directly",
+        "text": "Read from a slot directly",
+        "level": 2
+      },
+      {
+        "id": "what-the-worker-receives",
+        "text": "What the worker receives",
+        "level": 2
+      },
+      {
+        "id": "errors-you-may-see",
+        "text": "Errors you may see",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
+        "level": 2
       }
     ],
-    "wordCount": 161,
-    "readMinutes": 1,
-    "searchText": "Aspire integration `BlueTusk.Streams.Aspire` wires Streams workers to Aspire connection-string resources without resolving or copying secrets in the AppHost. It targets the Aspire application model and supports both relay and explicit direct delivery. The source and control connection expressions become `BLUETUSK_STREAMS_SOURCE` and `BLUETUSK_STREAMS_CONTROL` only in the worker's environment. Slot, group, schema, delivery mode, and each publication use hierarchical .NET configuration keys. Publications are indexed separately so PostgreSQL identifiers are never encoded through a lossy delimiter. Durable relay is the default and requires a control resource. Direct slot-per-group operation is intentionally a separate call and requires `DeliveryMode.Direct`: The hosting integration uses `Aspire.Hosting` 13.4.6, the current stable Aspire application-model package when this preview baseline was established.",
+    "wordCount": 437,
+    "readMinutes": 2,
+    "searchText": "Wire Streams into .NET Aspire This guide shows you how to pass PostgreSQL connections and Streams settings to a worker project from a .NET Aspire AppHost, without copying secrets into the AppHost. Add the package to your AppHost project, together with Aspire's PostgreSQL hosting package: `BlueTusk.Streams.Aspire` builds on `Aspire.Hosting` 13.5.4. Use the durable relay (default) `WithBlueTuskStreams` connects a worker to a source database and a separate control database for the [durable relay](durable-relay.md): In an AppHost created from the Aspire template you can use the generated `builder.AddProject<Projects.SearchProjector>(\"search-projector\")` instead of the path. Read from a slot directly For a consumer that owns its own slot, without relay storage, call `WithBlueTuskStreamsDirect` and set `DeliveryMode` to `Direct`: Give every direct consumer its own slot. See [direct consumers and the relay](concepts.md#direct-consumers-and-the-relay). What the worker receives The AppHost sets these environment variables on the worker. Connection strings are passed as Aspire connection-string expressions, so the AppHost never resolves or stores the secret values. Environment variable Configuration key Value `BLUETUSK_STREAMS_SOURCE` `BLUETUSK_STREAMS_SOURCE` Source database connection string. `BLUETUSK_STREAMS_CONTROL` `BLUETUSK_STREAMS_CONTROL` Control database connection string (relay mode only). `BlueTusk__Streams__Slot` `BlueTusk:Streams:Slot` `Slot` `BlueTusk__Streams__Publications__0`, `__1`, ... `BlueTusk:Streams:Publications:0`, ... One entry per publication. `BlueTusk__Streams__ConsumerGroup` `BlueTusk:Streams:ConsumerGroup` `ConsumerGroup` `BlueTusk__Streams__ControlSchema` `BlueTusk:Streams:ControlSchema` `ControlSchema` (default `bluetusk_streams`) `BlueTusk__Streams__DeliveryMode` `BlueTusk:Streams:DeliveryMode` `DurableRelay` or `Direct` Each publication is a separate indexed key, so publication names never need escaping. Streams does not read these keys by it",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Aspire integration</h1>\n<p><code>BlueTusk.Streams.Aspire</code> wires Streams workers to Aspire connection-string\nresources without resolving or copying secrets in the AppHost. It targets the\nAspire application model and supports both relay and explicit direct delivery.</p>\n"
+        "html": "<h1>Wire Streams into .NET Aspire</h1>\n<p>This guide shows you how to pass PostgreSQL connections and Streams settings to\na worker project from a .NET Aspire AppHost, without copying secrets into the\nAppHost.</p>\n<p>Add the package to your AppHost project, together with Aspire’s PostgreSQL\nhosting package:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var source = builder.AddPostgres(\"source-server\").AddDatabase(\"app\");\nvar control = builder.AddPostgres(\"control-server\").AddDatabase(\"streams\");\n\nbuilder.AddProject<Projects.SearchProjector>(\"search-projector\")\n    .WithBlueTuskStreams(\n        source,\n        control,\n        new BlueTuskStreamsAspireOptions\n        {\n            Slot = \"app_streams\",\n            Publications = [\"app_changes\"],\n            ConsumerGroup = \"search\",\n        });\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> source = builder.AddPostgres(<span class=\"hljs-string\">&quot;source-server&quot;</span>).AddDatabase(<span class=\"hljs-string\">&quot;app&quot;</span>);\n<span class=\"hljs-keyword\">var</span> control = builder.AddPostgres(<span class=\"hljs-string\">&quot;control-server&quot;</span>).AddDatabase(<span class=\"hljs-string\">&quot;streams&quot;</span>);\n\nbuilder.AddProject&lt;Projects.SearchProjector&gt;(<span class=\"hljs-string\">&quot;search-projector&quot;</span>)\n    .WithBlueTuskStreams(\n        source,\n        control,\n        <span class=\"hljs-keyword\">new</span> BlueTuskStreamsAspireOptions\n        {\n            Slot = <span class=\"hljs-string\">&quot;app_streams&quot;</span>,\n            Publications = [<span class=\"hljs-string\">&quot;app_changes&quot;</span>],\n            ConsumerGroup = <span class=\"hljs-string\">&quot;search&quot;</span>,\n        });\n",
+        "code": "dotnet add package BlueTusk.Streams.Aspire\ndotnet add package Aspire.Hosting.PostgreSQL\n",
+        "highlighted": "dotnet add package BlueTusk.Streams.Aspire\ndotnet add package Aspire.Hosting.PostgreSQL\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTusk.Streams.Aspire</code> builds on <code>Aspire.Hosting</code> 13.5.4.</p>\n<h2>Use the durable relay (default)</h2>\n<p><code>WithBlueTuskStreams</code> connects a worker to a source database and a separate\ncontrol database for the <a href=\"/documentation/real-time/durable-relay\">durable relay</a>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using Aspire.Hosting;\n\nvar builder = DistributedApplication.CreateBuilder(args);\n\nvar source = builder.AddPostgres(\"source-server\").AddDatabase(\"app\");\nvar control = builder.AddPostgres(\"control-server\").AddDatabase(\"streams\");\n\nbuilder.AddProject(\"search-projector\", \"../SearchProjector/SearchProjector.csproj\")\n    .WithBlueTuskStreams(\n        source,\n        control,\n        new BlueTuskStreamsAspireOptions\n        {\n            Slot = \"app_streams\",\n            Publications = [\"app_changes\"],\n            ConsumerGroup = \"search\",\n        });\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> Aspire.Hosting;\n\n<span class=\"hljs-keyword\">var</span> builder = DistributedApplication.CreateBuilder(<span class=\"hljs-keyword\">args</span>);\n\n<span class=\"hljs-keyword\">var</span> source = builder.AddPostgres(<span class=\"hljs-string\">&quot;source-server&quot;</span>).AddDatabase(<span class=\"hljs-string\">&quot;app&quot;</span>);\n<span class=\"hljs-keyword\">var</span> control = builder.AddPostgres(<span class=\"hljs-string\">&quot;control-server&quot;</span>).AddDatabase(<span class=\"hljs-string\">&quot;streams&quot;</span>);\n\nbuilder.AddProject(<span class=\"hljs-string\">&quot;search-projector&quot;</span>, <span class=\"hljs-string\">&quot;../SearchProjector/SearchProjector.csproj&quot;</span>)\n    .WithBlueTuskStreams(\n        source,\n        control,\n        <span class=\"hljs-keyword\">new</span> BlueTuskStreamsAspireOptions\n        {\n            Slot = <span class=\"hljs-string\">&quot;app_streams&quot;</span>,\n            Publications = [<span class=\"hljs-string\">&quot;app_changes&quot;</span>],\n            ConsumerGroup = <span class=\"hljs-string\">&quot;search&quot;</span>,\n        });\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>The source and control connection expressions become\n<code>BLUETUSK_STREAMS_SOURCE</code> and <code>BLUETUSK_STREAMS_CONTROL</code> only in the worker’s\nenvironment. Slot, group, schema, delivery mode, and each publication use\nhierarchical .NET configuration keys. Publications are indexed separately so\nPostgreSQL identifiers are never encoded through a lossy delimiter.</p>\n<p>Durable relay is the default and requires a control resource. Direct\nslot-per-group operation is intentionally a separate call and requires\n<code>DeliveryMode.Direct</code>:</p>\n"
+        "html": "<p>In an AppHost created from the Aspire template you can use the generated\n<code>builder.AddProject&lt;Projects.SearchProjector&gt;(&quot;search-projector&quot;)</code> instead of\nthe path.</p>\n<h2>Read from a slot directly</h2>\n<p>For a consumer that owns its own slot, without relay storage, call\n<code>WithBlueTuskStreamsDirect</code> and set <code>DeliveryMode</code> to <code>Direct</code>:</p>\n"
       },
       {
         "kind": "code",
-        "code": "worker.WithBlueTuskStreamsDirect(\n    source,\n    new BlueTuskStreamsAspireOptions\n    {\n        Slot = \"app_streams_search\",\n        Publications = [\"app_changes\"],\n        ConsumerGroup = \"search\",\n        DeliveryMode = BlueTuskStreamsAspireDeliveryMode.Direct,\n    });\n",
-        "highlighted": "worker.WithBlueTuskStreamsDirect(\n    source,\n    <span class=\"hljs-keyword\">new</span> BlueTuskStreamsAspireOptions\n    {\n        Slot = <span class=\"hljs-string\">&quot;app_streams_search&quot;</span>,\n        Publications = [<span class=\"hljs-string\">&quot;app_changes&quot;</span>],\n        ConsumerGroup = <span class=\"hljs-string\">&quot;search&quot;</span>,\n        DeliveryMode = BlueTuskStreamsAspireDeliveryMode.Direct,\n    });\n",
+        "code": "builder.AddProject(\"audit-writer\", \"../AuditWriter/AuditWriter.csproj\")\n    .WithBlueTuskStreamsDirect(\n        source,\n        new BlueTuskStreamsAspireOptions\n        {\n            Slot = \"app_streams_audit\",\n            Publications = [\"app_changes\"],\n            ConsumerGroup = \"audit\",\n            DeliveryMode = BlueTuskStreamsAspireDeliveryMode.Direct,\n        });\n\nbuilder.Build().Run();\n",
+        "highlighted": "builder.AddProject(<span class=\"hljs-string\">&quot;audit-writer&quot;</span>, <span class=\"hljs-string\">&quot;../AuditWriter/AuditWriter.csproj&quot;</span>)\n    .WithBlueTuskStreamsDirect(\n        source,\n        <span class=\"hljs-keyword\">new</span> BlueTuskStreamsAspireOptions\n        {\n            Slot = <span class=\"hljs-string\">&quot;app_streams_audit&quot;</span>,\n            Publications = [<span class=\"hljs-string\">&quot;app_changes&quot;</span>],\n            ConsumerGroup = <span class=\"hljs-string\">&quot;audit&quot;</span>,\n            DeliveryMode = BlueTuskStreamsAspireDeliveryMode.Direct,\n        });\n\nbuilder.Build().Run();\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>The hosting integration uses <code>Aspire.Hosting</code> 13.4.6, the current stable Aspire\napplication-model package when this preview baseline was established.</p>\n"
+        "html": "<p>Give every direct consumer its own slot. See\n<a href=\"/documentation/real-time/streams-concepts#direct-consumers-and-the-relay\">direct consumers and the relay</a>.</p>\n<h2>What the worker receives</h2>\n<p>The AppHost sets these environment variables on the worker. Connection strings\nare passed as Aspire connection-string expressions, so the AppHost never\nresolves or stores the secret values.</p>\n<table>\n<thead>\n<tr>\n<th>Environment variable</th>\n<th>Configuration key</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BLUETUSK_STREAMS_SOURCE</code></td>\n<td><code>BLUETUSK_STREAMS_SOURCE</code></td>\n<td>Source database connection string.</td>\n</tr>\n<tr>\n<td><code>BLUETUSK_STREAMS_CONTROL</code></td>\n<td><code>BLUETUSK_STREAMS_CONTROL</code></td>\n<td>Control database connection string (relay mode only).</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__Slot</code></td>\n<td><code>BlueTusk:Streams:Slot</code></td>\n<td><code>Slot</code></td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__Publications__0</code>, <code>__1</code>, …</td>\n<td><code>BlueTusk:Streams:Publications:0</code>, …</td>\n<td>One entry per publication.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__ConsumerGroup</code></td>\n<td><code>BlueTusk:Streams:ConsumerGroup</code></td>\n<td><code>ConsumerGroup</code></td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__ControlSchema</code></td>\n<td><code>BlueTusk:Streams:ControlSchema</code></td>\n<td><code>ControlSchema</code> (default <code>bluetusk_streams</code>)</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__DeliveryMode</code></td>\n<td><code>BlueTusk:Streams:DeliveryMode</code></td>\n<td><code>DurableRelay</code> or <code>Direct</code></td>\n</tr>\n</tbody>\n</table>\n<p>Each publication is a separate indexed key, so publication names never need\nescaping.</p>\n<p>Streams does not read these keys by itself; your worker reads them, as the\n<a href=\"/documentation/real-time/streams-quickstart\">quick start</a> worker does with\n<code>configuration.GetSection(&quot;BlueTusk:Streams&quot;)</code>. The\n<a href=\"/documentation/real-time/streams-cli\"><code>bluetusk-streams</code> tool</a> reads the two connection variables too. See\n<a href=\"/documentation/real-time/streams-configuration#configuration-keys\">configuration</a>.</p>\n<h2>Errors you may see</h2>\n<table>\n<thead>\n<tr>\n<th>Error</th>\n<th>Cause</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>ArgumentException</code>: “Durable relay mode requires a separate control resource.”</td>\n<td><code>WithBlueTuskStreamsDirect</code> was called without <code>DeliveryMode = BlueTuskStreamsAspireDeliveryMode.Direct</code>.</td>\n</tr>\n<tr>\n<td><code>ArgumentException</code>: “Direct mode must use WithBlueTuskStreamsDirect and cannot reference relay control storage.”</td>\n<td><code>WithBlueTuskStreams</code> was called with <code>DeliveryMode.Direct</code>.</td>\n</tr>\n<tr>\n<td><code>InvalidOperationException</code>: “At least one non-empty publication is required.”</td>\n<td><code>Publications</code> is empty or has a blank name.</td>\n</tr>\n</tbody>\n</table>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-configuration\">Configuration</a></li>\n<li><a href=\"/documentation/real-time/durable-relay\">Durable relay</a></li>\n</ul>\n"
       }
     ]
   },
@@ -1768,40 +4758,152 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "categoryLabel": "Real time",
     "listed": false,
     "slug": "streams-cli",
-    "summary": "BlueTusk.Streams.Tool provides the bluetusk-streams .NET tool. It validates the PostgreSQL version, wallevel, publications, table selection, logical slot, source/control isolation, relay-schema exclusion, and canonica…",
+    "summary": "This guide shows you how to use the bluetusk-streams command to check that a PostgreSQL database is ready for Streams, and to create the publication, slot and relay storage a worker needs.",
     "keywords": [
       "docs",
       "streams",
       "cli"
     ],
-    "order": 1153,
-    "title": "Streams validation and provisioning CLI",
+    "order": 1174,
+    "title": "Validate and provision PostgreSQL with `bluetusk-streams`",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
     "headings": [
       {
-        "id": "streams-validation-and-provisioning-cli",
-        "text": "Streams validation and provisioning CLI",
+        "id": "validate-and-provision-postgresql-with-bluetusk-streams",
+        "text": "Validate and provision PostgreSQL with `bluetusk-streams`",
         "level": 1
+      },
+      {
+        "id": "install-the-tool",
+        "text": "Install the tool",
+        "level": 2
+      },
+      {
+        "id": "set-the-connections",
+        "text": "Set the connections",
+        "level": 2
+      },
+      {
+        "id": "check-a-database",
+        "text": "Check a database",
+        "level": 2
+      },
+      {
+        "id": "provision-for-the-durable-relay",
+        "text": "Provision for the durable relay",
+        "level": 2
+      },
+      {
+        "id": "provision-for-a-direct-consumer",
+        "text": "Provision for a direct consumer",
+        "level": 2
+      },
+      {
+        "id": "keep-the-relay-in-the-source-database-not-recommended",
+        "text": "Keep the relay in the source database (not recommended)",
+        "level": 2
+      },
+      {
+        "id": "all-options",
+        "text": "All options",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
+        "level": 2
       }
     ],
-    "wordCount": 189,
-    "readMinutes": 1,
-    "searchText": "Streams validation and provisioning CLI `BlueTusk.Streams.Tool` provides the `bluetusk-streams` .NET tool. It validates the PostgreSQL version, `wal_level`, publications, table selection, logical slot, source/control isolation, relay-schema exclusion, and canonical publication fingerprint before a worker starts. The control connection is required during provisioning unless `--direct-only` explicitly selects slot-per-group operation. Provisioning is idempotent: an existing compatible publication or `pgoutput` slot is retained, and relay storage runs its versioned `CREATE IF NOT EXISTS` migration path. Using one database for the source and relay is not the default. It requires `--allow-shared-control`; `--all-tables` is then rejected, and validation fails if any configured publication includes the relay control schema. This prevents the relay from consuming its own writes. Use `--skip-slot` only when another deployment step owns slot creation. A missing slot remains visible in the validation report. Connection strings may be supplied as arguments for automation, but environment variables keep them out of interactive shell history. Errors redact both source and control values.",
+    "wordCount": 951,
+    "readMinutes": 5,
+    "searchText": "Validate and provision PostgreSQL with `bluetusk-streams` This guide shows you how to use the `bluetusk-streams` command to check that a PostgreSQL database is ready for Streams, and to create the publication, slot and relay storage a worker needs. Install the tool See [Install BlueTusk](../getting-started/install.md) to pin a version. Run `bluetusk-streams --help` or `bluetusk-streams <command> --help` for usage. Set the connections The tool reads connection strings from environment variables, which keeps them out of your shell history: On Linux or macOS, use `export NAME=\"...\"`. You can pass `--connection` and `--control-connection` instead, for example in automation. Error messages never include either connection string. `BLUETUSK_STREAMS_SOURCE` is the database you capture changes from. The login needs the `REPLICATION` attribute to create a slot, and must own the tables (and have `CREATE` on the database) to create a publication. `BLUETUSK_STREAMS_CONTROL` is the separate database that holds the [durable relay](durable-relay.md); it is needed only for relay setups. Check a database Each line is `OK`, `WARNING` or `ERROR`, a stable code and a message: Code Checks Fix when it fails `BTS001` The server is PostgreSQL 15 to 19. Upgrade the server. `BTS002` `wal_level` is `logical`. Set `wal_level = logical` and restart PostgreSQL. `BTS003` Each `--publication` exists. Run `provision` with `--table`, or `CREATE PUBLICATION`. `BTS004` The publications include at least one table. Add tables to the publication. `BTS005` The slot exists, uses `pgoutput` and belongs to this database. Reports whether it is active. Run `provision`, or drop and recreate a slot that uses another plug-in or database. `BTS006` Relay storage is in a separate database (or sharing was allowed). A `WARNING` means no control connection was given. Pass `--control-connection`, or `--direct-only` for direct consumers. `BTS007` No publication includes the relay's own schema. Remove the control schema fr",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Streams validation and provisioning CLI</h1>\n<p><code>BlueTusk.Streams.Tool</code> provides the <code>bluetusk-streams</code> .NET tool. It validates\nthe PostgreSQL version, <code>wal_level</code>, publications, table selection, logical slot,\nsource/control isolation, relay-schema exclusion, and canonical publication\nfingerprint before a worker starts.</p>\n"
+        "html": "<h1>Validate and provision PostgreSQL with <code>bluetusk-streams</code></h1>\n<p>This guide shows you how to use the <code>bluetusk-streams</code> command to check that a\nPostgreSQL database is ready for Streams, and to create the publication, slot\nand relay storage a worker needs.</p>\n<h2>Install the tool</h2>\n"
       },
       {
         "kind": "code",
-        "code": "dotnet tool install --global BlueTusk.Streams.Tool --version 1.0.0\n$env:BLUETUSK_STREAMS_SOURCE = \"Host=source;Database=app;Username=streams;Password=...\"\n$env:BLUETUSK_STREAMS_CONTROL = \"Host=control;Database=streams;Username=streams;Password=...\"\n\nbluetusk-streams provision --publication app_changes --slot app_streams `\n  --table app.orders --table app.order_items\nbluetusk-streams validate --publication app_changes --slot app_streams\n",
-        "highlighted": "dotnet tool install <span class=\"hljs-literal\">--global</span> BlueTusk.Streams.Tool <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">1.0</span>.<span class=\"hljs-number\">0</span>\n<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_SOURCE</span> = <span class=\"hljs-string\">&quot;Host=source;Database=app;Username=streams;Password=...&quot;</span>\n<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_CONTROL</span> = <span class=\"hljs-string\">&quot;Host=control;Database=streams;Username=streams;Password=...&quot;</span>\n\nbluetusk<span class=\"hljs-literal\">-streams</span> provision <span class=\"hljs-literal\">--publication</span> app_changes <span class=\"hljs-literal\">--slot</span> app_streams `\n  <span class=\"hljs-literal\">--table</span> app.orders <span class=\"hljs-literal\">--table</span> app.order_items\nbluetusk<span class=\"hljs-literal\">-streams</span> validate <span class=\"hljs-literal\">--publication</span> app_changes <span class=\"hljs-literal\">--slot</span> app_streams\n",
+        "code": "dotnet tool install --global BlueTusk.Streams.Tool\n",
+        "highlighted": "dotnet tool install <span class=\"hljs-literal\">--global</span> BlueTusk.Streams.Tool\n",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>The control connection is required during provisioning unless <code>--direct-only</code>\nexplicitly selects slot-per-group operation. Provisioning is idempotent: an\nexisting compatible publication or <code>pgoutput</code> slot is retained, and relay\nstorage runs its versioned <code>CREATE IF NOT EXISTS</code> migration path.</p>\n<p>Using one database for the source and relay is not the default. It requires\n<code>--allow-shared-control</code>; <code>--all-tables</code> is then rejected, and validation fails\nif any configured publication includes the relay control schema. This prevents\nthe relay from consuming its own writes.</p>\n<p>Use <code>--skip-slot</code> only when another deployment step owns slot creation. A\nmissing slot remains visible in the validation report. Connection strings may\nbe supplied as arguments for automation, but environment variables keep them\nout of interactive shell history. Errors redact both source and control values.</p>\n"
+        "html": "<p>See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a> to pin a version. Run\n<code>bluetusk-streams --help</code> or <code>bluetusk-streams &lt;command&gt; --help</code> for usage.</p>\n<h2>Set the connections</h2>\n<p>The tool reads connection strings from environment variables, which keeps them\nout of your shell history:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:BLUETUSK_STREAMS_SOURCE = \"Host=source;Database=app;Username=streams;Password=...\"\n$env:BLUETUSK_STREAMS_CONTROL = \"Host=control;Database=streams;Username=streams;Password=...\"\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_SOURCE</span> = <span class=\"hljs-string\">&quot;Host=source;Database=app;Username=streams;Password=...&quot;</span>\n<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_CONTROL</span> = <span class=\"hljs-string\">&quot;Host=control;Database=streams;Username=streams;Password=...&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>On Linux or macOS, use <code>export NAME=&quot;...&quot;</code>. You can pass <code>--connection</code> and\n<code>--control-connection</code> instead, for example in automation. Error messages never\ninclude either connection string.</p>\n<p><code>BLUETUSK_STREAMS_SOURCE</code> is the database you capture changes from. The login\nneeds the <code>REPLICATION</code> attribute to create a slot, and must own the tables (and\nhave <code>CREATE</code> on the database) to create a publication. <code>BLUETUSK_STREAMS_CONTROL</code> is the separate database that\nholds the <a href=\"/documentation/real-time/durable-relay\">durable relay</a>; it is needed only for relay setups.</p>\n<h2>Check a database</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "bluetusk-streams validate --publication orders_publication --slot orders_quickstart --direct-only\n",
+        "highlighted": "bluetusk<span class=\"hljs-literal\">-streams</span> validate <span class=\"hljs-literal\">--publication</span> orders_publication <span class=\"hljs-literal\">--slot</span> orders_quickstart <span class=\"hljs-literal\">--direct-only</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "code",
+        "code": "OK BTS001 PostgreSQL 18 is supported.\nOK BTS002 wal_level is logical.\nOK BTS003 Publication 'orders_publication' exists.\nOK BTS004 The configured publications expose 1 distinct table(s).\nOK BTS005 Logical slot 'orders_quickstart' is compatible and inactive.\nOK BTS006 Direct slot-per-group mode was selected explicitly.\nOK BTS008 Publication fingerprint: 17984220fe0a62f6750ce374434707168d85ed8051431cc6c094d78a07d5b6e5\n",
+        "highlighted": "OK BTS001 PostgreSQL 18 is supported.\nOK BTS002 wal_level is logical.\nOK BTS003 Publication &#x27;orders_publication&#x27; exists.\nOK BTS004 The configured publications expose 1 distinct table(s).\nOK BTS005 Logical slot &#x27;orders_quickstart&#x27; is compatible and inactive.\nOK BTS006 Direct slot-per-group mode was selected explicitly.\nOK BTS008 Publication fingerprint: 17984220fe0a62f6750ce374434707168d85ed8051431cc6c094d78a07d5b6e5\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Each line is <code>OK</code>, <code>WARNING</code> or <code>ERROR</code>, a stable code and a message:</p>\n<table>\n<thead>\n<tr>\n<th>Code</th>\n<th>Checks</th>\n<th>Fix when it fails</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BTS001</code></td>\n<td>The server is PostgreSQL 15 to 19.</td>\n<td>Upgrade the server.</td>\n</tr>\n<tr>\n<td><code>BTS002</code></td>\n<td><code>wal_level</code> is <code>logical</code>.</td>\n<td>Set <code>wal_level = logical</code> and restart PostgreSQL.</td>\n</tr>\n<tr>\n<td><code>BTS003</code></td>\n<td>Each <code>--publication</code> exists.</td>\n<td>Run <code>provision</code> with <code>--table</code>, or <code>CREATE PUBLICATION</code>.</td>\n</tr>\n<tr>\n<td><code>BTS004</code></td>\n<td>The publications include at least one table.</td>\n<td>Add tables to the publication.</td>\n</tr>\n<tr>\n<td><code>BTS005</code></td>\n<td>The slot exists, uses <code>pgoutput</code> and belongs to this database. Reports whether it is active.</td>\n<td>Run <code>provision</code>, or drop and recreate a slot that uses another plug-in or database.</td>\n</tr>\n<tr>\n<td><code>BTS006</code></td>\n<td>Relay storage is in a separate database (or sharing was allowed). A <code>WARNING</code> means no control connection was given.</td>\n<td>Pass <code>--control-connection</code>, or <code>--direct-only</code> for direct consumers.</td>\n</tr>\n<tr>\n<td><code>BTS007</code></td>\n<td>No publication includes the relay’s own schema.</td>\n<td>Remove the control schema from the publication.</td>\n</tr>\n<tr>\n<td><code>BTS008</code></td>\n<td>Always <code>OK</code>. Prints the canonical publication fingerprint.</td>\n<td>You can use it as the publication fingerprint of your <code>ChangeSourceIdentity</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>The exit code is <code>0</code> when there are no errors, <code>1</code> when any check fails or the\ncommand fails, and <code>2</code> for invalid arguments.</p>\n<h2>Provision for the durable relay</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "bluetusk-streams provision --publication app_changes --slot app_streams `\n  --table app.orders --table app.order_items\n",
+        "highlighted": "bluetusk<span class=\"hljs-literal\">-streams</span> provision <span class=\"hljs-literal\">--publication</span> app_changes <span class=\"hljs-literal\">--slot</span> app_streams `\n  <span class=\"hljs-literal\">--table</span> app.orders <span class=\"hljs-literal\">--table</span> app.order_items\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>This command:</p>\n<ol>\n<li>creates the publication <code>FOR TABLE</code> the listed tables if it does not exist\n(an existing publication is left unchanged);</li>\n<li>creates a <code>pgoutput</code> logical slot if it does not exist;</li>\n<li>creates or upgrades the relay schema in the control database\n(<code>--control-schema</code>, default <code>bluetusk_streams</code>); and</li>\n<li>runs the same checks as <code>validate</code>.</li>\n</ol>\n<p>It is safe to run again. Output lines start with <code>CREATED</code>, <code>UNCHANGED</code> or\n<code>READY</code>, followed by the check report.</p>\n<h2>Provision for a direct consumer</h2>\n<p>Add <code>--direct-only</code> to skip relay storage. No control connection is needed:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "bluetusk-streams provision --direct-only `\n  --publication orders_publication --slot orders_quickstart --table app.orders\n",
+        "highlighted": "bluetusk<span class=\"hljs-literal\">-streams</span> provision <span class=\"hljs-literal\">--direct-only</span> `\n  <span class=\"hljs-literal\">--publication</span> orders_publication <span class=\"hljs-literal\">--slot</span> orders_quickstart <span class=\"hljs-literal\">--table</span> app.orders\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>A <a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot consumer</a> must create its own slot, so also\nadd <code>--skip-slot</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "bluetusk-streams provision --direct-only --skip-slot `\n  --publication app_changes --slot app_sample_stream --table app.orders\n",
+        "highlighted": "bluetusk<span class=\"hljs-literal\">-streams</span> provision <span class=\"hljs-literal\">--direct-only</span> <span class=\"hljs-literal\">--skip-slot</span> `\n  <span class=\"hljs-literal\">--publication</span> app_changes <span class=\"hljs-literal\">--slot</span> app_sample_stream <span class=\"hljs-literal\">--table</span> app.orders\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "code",
+        "code": "CREATED publication app_changes\nSKIPPED relay storage (explicit --direct-only mode)\nOK BTS001 PostgreSQL 18 is supported.\nOK BTS002 wal_level is logical.\nOK BTS003 Publication 'app_changes' exists.\nOK BTS004 The configured publications expose 1 distinct table(s).\nWARNING BTS005 Logical slot 'app_sample_stream' is absent and slot provisioning was skipped.\nOK BTS006 Direct slot-per-group mode was selected explicitly.\nOK BTS008 Publication fingerprint: 1569e830e20ebdd6f3313d62c6b4d59e1f44e82bf5dbd1b30441c4d2bfd07bf9\n",
+        "highlighted": "CREATED publication app_changes\nSKIPPED relay storage (explicit --direct-only mode)\nOK BTS001 PostgreSQL 18 is supported.\nOK BTS002 wal_level is logical.\nOK BTS003 Publication &#x27;app_changes&#x27; exists.\nOK BTS004 The configured publications expose 1 distinct table(s).\nWARNING BTS005 Logical slot &#x27;app_sample_stream&#x27; is absent and slot provisioning was skipped.\nOK BTS006 Direct slot-per-group mode was selected explicitly.\nOK BTS008 Publication fingerprint: 1569e830e20ebdd6f3313d62c6b4d59e1f44e82bf5dbd1b30441c4d2bfd07bf9\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<blockquote>\n<p><strong>Warning:</strong> A slot created by <code>provision</code> keeps WAL from that moment, even if\nno worker reads it. Drop slots you do not use. See\n<a href=\"/documentation/real-time/streams-troubleshooting#wal-keeps-growing-on-the-source-server\">troubleshooting</a>.</p>\n</blockquote>\n<h2>Keep the relay in the source database (not recommended)</h2>\n<p>By default the tool refuses a control connection that points at the source\ndatabase:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "BlueTusk Streams provision failed: The relay control data source resolves to the source database. Use a separate database or pass --allow-shared-control explicitly.\n",
+        "highlighted": "BlueTusk Streams provision failed: The relay control data source resolves to the source database. Use a separate database or pass --allow-shared-control explicitly.\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>If you must share one database, pass <code>--allow-shared-control</code> and list tables\nwith <code>--table</code>. <code>--all-tables</code> is then rejected, and <code>BTS007</code> fails if a\npublication includes the relay schema, because the relay would capture its own\nwrites.</p>\n<h2>All options</h2>\n<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Commands</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>--connection &lt;value&gt;</code></td>\n<td>both</td>\n<td>Source connection string. Default: <code>BLUETUSK_STREAMS_SOURCE</code>.</td>\n</tr>\n<tr>\n<td><code>--publication &lt;name&gt;</code></td>\n<td>both</td>\n<td>Publication name. Required; repeat for several.</td>\n</tr>\n<tr>\n<td><code>--slot &lt;name&gt;</code></td>\n<td>both</td>\n<td>Logical replication slot name. Required.</td>\n</tr>\n<tr>\n<td><code>--skip-slot</code></td>\n<td>both</td>\n<td>Do not create the slot; report it as a warning if absent.</td>\n</tr>\n<tr>\n<td><code>--control-connection &lt;value&gt;</code></td>\n<td>both</td>\n<td>Relay control connection string. Default: <code>BLUETUSK_STREAMS_CONTROL</code>. Required by <code>provision</code> unless <code>--direct-only</code>.</td>\n</tr>\n<tr>\n<td><code>--control-schema &lt;name&gt;</code></td>\n<td>both</td>\n<td>Relay schema. Default: <code>bluetusk_streams</code>.</td>\n</tr>\n<tr>\n<td><code>--direct-only</code></td>\n<td>both</td>\n<td>No relay storage: one slot per consumer.</td>\n</tr>\n<tr>\n<td><code>--allow-shared-control</code></td>\n<td>both</td>\n<td>Allow the source and control connections to use the same database.</td>\n</tr>\n<tr>\n<td><code>--table &lt;schema.table&gt;</code></td>\n<td><code>provision</code></td>\n<td>Table for a new publication. Repeatable.</td>\n</tr>\n<tr>\n<td><code>--all-tables</code></td>\n<td><code>provision</code></td>\n<td>Create the publication <code>FOR ALL TABLES</code>. Not allowed with shared control.</td>\n</tr>\n<tr>\n<td><code>--help</code>, <code>-h</code></td>\n<td>both</td>\n<td>Show usage.</td>\n</tr>\n</tbody>\n</table>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-quickstart\">Quick start</a></li>\n<li><a href=\"/documentation/real-time/streams-troubleshooting\">Troubleshooting</a></li>\n</ul>\n"
       }
     ]
   },
@@ -1810,40 +4912,100 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "categoryLabel": "Real time",
     "listed": false,
     "slug": "streams-cloudevents",
-    "summary": "BlueTusk.Streams.CloudEvents writes CloudEvents 1.0 structured JSON without changing the source transaction delivery unit. One committed PostgreSQL transaction becomes one event with one versioned BlueTusk transaction…",
+    "summary": "This guide shows you how to turn each committed transaction into one CloudEvents 1.0 structured JSON event, for example to send it to a message broker or an HTTP endpoint.",
     "keywords": [
       "docs",
       "streams",
       "cloudevents"
     ],
-    "order": 1154,
-    "title": "CloudEvents",
+    "order": 1175,
+    "title": "Publish transactions as CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
     "headings": [
       {
-        "id": "cloudevents",
-        "text": "CloudEvents",
+        "id": "publish-transactions-as-cloudevents",
+        "text": "Publish transactions as CloudEvents",
         "level": 1
+      },
+      {
+        "id": "write-one-event-per-transaction",
+        "text": "Write one event per transaction",
+        "level": 2
+      },
+      {
+        "id": "what-the-event-contains",
+        "text": "What the event contains",
+        "level": 2
+      },
+      {
+        "id": "change-the-event-type-or-size-limits",
+        "text": "Change the event type or size limits",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
+        "level": 2
       }
     ],
-    "wordCount": 167,
-    "readMinutes": 1,
-    "searchText": "CloudEvents `BlueTusk.Streams.CloudEvents` writes CloudEvents 1.0 structured JSON without changing the source transaction delivery unit. One committed PostgreSQL transaction becomes one event with one versioned BlueTusk transaction envelope in `data_base64`. The default event uses: type `io.bluetusk.streams.transaction.v1`; source `urn:bluetusk:postgresql:<source fingerprint>`; a deterministic ID composed from source fingerprint, commit-end LSN, and transaction ID; subject `slot/<slot>/transaction/<xid>`; the PostgreSQL commit timestamp; content type `application/vnd.bluetusk.change-transaction+binary;version=1`; and `bluetusklsn`, `bluetuskxid`, `bluetuskchanges`, and `bluetuskformat` extension attributes. The binary data is the same bounded, versioned, SHA-256 integrity-checked envelope used by the durable relay. It retains table metadata, ordering, every explicit row state, and logical messages. Stable event IDs support broker deduplication, but delivery remains advertised as at least once. Formatting has independent event and envelope limits. The formatter rejects an oversized event before writing JSON. It does not acknowledge a delivery; application or connector code acknowledges only after the event destination confirms durable handling.",
+    "wordCount": 444,
+    "readMinutes": 3,
+    "searchText": "Publish transactions as CloudEvents This guide shows you how to turn each committed transaction into one [CloudEvents 1.0](https://cloudevents.io/) structured JSON event, for example to send it to a message broker or an HTTP endpoint. Install the package: Write one event per transaction Inside your read loop, format the transaction, send it, and acknowledge only after the destination has accepted it: `destination` is any writable `Stream`. To get the bytes instead, call `ToStructuredJsonAsync(transaction)`, which returns a `ReadOnlyMemory<byte>`. The formatter never acknowledges for you. If the process stops before `AcknowledgeAsync`, the same transaction is formatted and sent again with the same event ID. What the event contains A whole transaction becomes one event, never one event per row: Attribute Value `specversion` `1.0` `id` `<source fingerprint>:<commit-end LSN as 16 hex digits>:<transaction ID>`. The same on every redelivery. `source` `urn:bluetusk:postgresql:<source fingerprint>` `type` `io.bluetusk.streams.transaction.v1` `subject` `slot/<slot>/transaction/<transaction ID>` `time` The PostgreSQL commit timestamp. `datacontenttype` `application/vnd.bluetusk.change-transaction+binary;version=1` `bluetusklsn`, `bluetuskxid`, `bluetuskchanges`, `bluetuskformat` Commit-end position, transaction ID, change count and envelope format version. `data_base64` The transaction in BlueTusk's binary envelope format. For example (shortened): The envelope is the same versioned, checksummed format the [durable relay](durable-relay.md) stores. It keeps table and column metadata, change order, every [column state](concepts.md#what-a-column-value-can-be) and logical messages. Use the event `id` for de-duplication in brokers that support it; delivery is still at least once. To read the attributes without writing the event: Change the event type or size limits Option Default `EventType` `io.bluetusk.streams.transaction.v1` `DataContentType` `application/vnd.bluetusk.change-tra",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>CloudEvents</h1>\n<p><code>BlueTusk.Streams.CloudEvents</code> writes CloudEvents 1.0 structured JSON without changing the source transaction delivery unit. One committed PostgreSQL transaction becomes one event with one versioned BlueTusk transaction envelope in <code>data_base64</code>.</p>\n"
+        "html": "<h1>Publish transactions as CloudEvents</h1>\n<p>This guide shows you how to turn each committed transaction into one\n<a href=\"https://cloudevents.io/\" target=\"_blank\" rel=\"noreferrer\">CloudEvents 1.0</a> structured JSON event, for example\nto send it to a message broker or an HTTP endpoint.</p>\n<p>Install the package:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var formatter = new ChangeTransactionCloudEventFormatter();\nawait formatter.WriteStructuredAsync(delivery.Transaction, destination, cancellationToken);\nawait destination.FlushAsync(cancellationToken);\nawait delivery.AcknowledgeAsync(cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> formatter = <span class=\"hljs-keyword\">new</span> ChangeTransactionCloudEventFormatter();\n<span class=\"hljs-keyword\">await</span> formatter.WriteStructuredAsync(delivery.Transaction, destination, cancellationToken);\n<span class=\"hljs-keyword\">await</span> destination.FlushAsync(cancellationToken);\n<span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync(cancellationToken);\n",
+        "code": "dotnet add package BlueTusk.Streams.CloudEvents\n",
+        "highlighted": "dotnet add package BlueTusk.Streams.CloudEvents\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Write one event per transaction</h2>\n<p>Inside your read loop, format the transaction, send it, and acknowledge only\nafter the destination has accepted it:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var formatter = new ChangeTransactionCloudEventFormatter();\nawait formatter.WriteStructuredAsync(delivery.Transaction, destination, cancellationToken);\nawait destination.FlushAsync(cancellationToken);\n\n// Acknowledge only after the destination has durably accepted the event.\nawait delivery.AcknowledgeAsync(cancellationToken);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> formatter = <span class=\"hljs-keyword\">new</span> ChangeTransactionCloudEventFormatter();\n<span class=\"hljs-keyword\">await</span> formatter.WriteStructuredAsync(delivery.Transaction, destination, cancellationToken);\n<span class=\"hljs-keyword\">await</span> destination.FlushAsync(cancellationToken);\n\n<span class=\"hljs-comment\">// Acknowledge only after the destination has durably accepted the event.</span>\n<span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync(cancellationToken);\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>The default event uses:</p>\n<ul>\n<li>type <code>io.bluetusk.streams.transaction.v1</code>;</li>\n<li>source <code>urn:bluetusk:postgresql:&lt;source fingerprint&gt;</code>;</li>\n<li>a deterministic ID composed from source fingerprint, commit-end LSN, and transaction ID;</li>\n<li>subject <code>slot/&lt;slot&gt;/transaction/&lt;xid&gt;</code>;</li>\n<li>the PostgreSQL commit timestamp;</li>\n<li>content type <code>application/vnd.bluetusk.change-transaction+binary;version=1</code>; and</li>\n<li><code>bluetusklsn</code>, <code>bluetuskxid</code>, <code>bluetuskchanges</code>, and <code>bluetuskformat</code> extension attributes.</li>\n</ul>\n<p>The binary data is the same bounded, versioned, SHA-256 integrity-checked envelope used by the durable relay. It retains table metadata, ordering, every explicit row state, and logical messages. Stable event IDs support broker deduplication, but delivery remains advertised as at least once.</p>\n<p>Formatting has independent event and envelope limits. The formatter rejects an oversized event before writing JSON. It does not acknowledge a delivery; application or connector code acknowledges only after the event destination confirms durable handling.</p>\n"
+        "html": "<p><code>destination</code> is any writable <code>Stream</code>. To get the bytes instead, call\n<code>ToStructuredJsonAsync(transaction)</code>, which returns a <code>ReadOnlyMemory&lt;byte&gt;</code>.</p>\n<p>The formatter never acknowledges for you. If the process stops before\n<code>AcknowledgeAsync</code>, the same transaction is formatted and sent again with the\nsame event ID.</p>\n<h2>What the event contains</h2>\n<p>A whole transaction becomes one event, never one event per row:</p>\n<table>\n<thead>\n<tr>\n<th>Attribute</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>specversion</code></td>\n<td><code>1.0</code></td>\n</tr>\n<tr>\n<td><code>id</code></td>\n<td><code>&lt;source fingerprint&gt;:&lt;commit-end LSN as 16 hex digits&gt;:&lt;transaction ID&gt;</code>. The same on every redelivery.</td>\n</tr>\n<tr>\n<td><code>source</code></td>\n<td><code>urn:bluetusk:postgresql:&lt;source fingerprint&gt;</code></td>\n</tr>\n<tr>\n<td><code>type</code></td>\n<td><code>io.bluetusk.streams.transaction.v1</code></td>\n</tr>\n<tr>\n<td><code>subject</code></td>\n<td><code>slot/&lt;slot&gt;/transaction/&lt;transaction ID&gt;</code></td>\n</tr>\n<tr>\n<td><code>time</code></td>\n<td>The PostgreSQL commit timestamp.</td>\n</tr>\n<tr>\n<td><code>datacontenttype</code></td>\n<td><code>application/vnd.bluetusk.change-transaction+binary;version=1</code></td>\n</tr>\n<tr>\n<td><code>bluetusklsn</code>, <code>bluetuskxid</code>, <code>bluetuskchanges</code>, <code>bluetuskformat</code></td>\n<td>Commit-end position, transaction ID, change count and envelope format version.</td>\n</tr>\n<tr>\n<td><code>data_base64</code></td>\n<td>The transaction in BlueTusk’s binary envelope format.</td>\n</tr>\n</tbody>\n</table>\n<p>For example (shortened):</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "{\"specversion\":\"1.0\",\"id\":\"0d034f72...a3ef49:0000000000001000:42\",\"source\":\"urn:bluetusk:postgresql:0d034f72...a3ef49\",\"type\":\"io.bluetusk.streams.transaction.v1\",\"subject\":\"slot/orders_slot/transaction/42\", ...}\n",
+        "highlighted": "{&quot;specversion&quot;:&quot;1.0&quot;,&quot;id&quot;:&quot;0d034f72...a3ef49:0000000000001000:42&quot;,&quot;source&quot;:&quot;urn:bluetusk:postgresql:0d034f72...a3ef49&quot;,&quot;type&quot;:&quot;io.bluetusk.streams.transaction.v1&quot;,&quot;subject&quot;:&quot;slot/orders_slot/transaction/42&quot;, ...}\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The envelope is the same versioned, checksummed format the\n<a href=\"/documentation/real-time/durable-relay\">durable relay</a> stores. It keeps table and column metadata,\nchange order, every <a href=\"/documentation/real-time/streams-concepts#what-a-column-value-can-be\">column state</a> and\nlogical messages. Use the event <code>id</code> for de-duplication in brokers that support\nit; delivery is still at least once.</p>\n<p>To read the attributes without writing the event:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var metadata = formatter.Describe(delivery.Transaction);\nConsole.WriteLine($\"{metadata.Id} {metadata.Type} {metadata.Subject}\");\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> metadata = formatter.Describe(delivery.Transaction);\nConsole.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{metadata.Id}</span> <span class=\"hljs-subst\">{metadata.Type}</span> <span class=\"hljs-subst\">{metadata.Subject}</span>&quot;</span>);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Change the event type or size limits</h2>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var custom = new ChangeTransactionCloudEventFormatter(new ChangeTransactionCloudEventOptions\n{\n    EventType = \"com.example.orders.transaction.v1\",\n    MaximumEventBytes = 16 * 1024 * 1024,\n});\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> custom = <span class=\"hljs-keyword\">new</span> ChangeTransactionCloudEventFormatter(<span class=\"hljs-keyword\">new</span> ChangeTransactionCloudEventOptions\n{\n    EventType = <span class=\"hljs-string\">&quot;com.example.orders.transaction.v1&quot;</span>,\n    MaximumEventBytes = <span class=\"hljs-number\">16</span> * <span class=\"hljs-number\">1024</span> * <span class=\"hljs-number\">1024</span>,\n});\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Option</th>\n<th>Default</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>EventType</code></td>\n<td><code>io.bluetusk.streams.transaction.v1</code></td>\n</tr>\n<tr>\n<td><code>DataContentType</code></td>\n<td><code>application/vnd.bluetusk.change-transaction+binary;version=1</code></td>\n</tr>\n<tr>\n<td><code>MaximumEventBytes</code></td>\n<td>384 MiB</td>\n</tr>\n<tr>\n<td><code>Envelope</code></td>\n<td><code>ChangeTransactionEnvelopeOptions</code> (256 MiB per envelope, 1,000,000 changes)</td>\n</tr>\n</tbody>\n</table>\n<p>An event larger than <code>MaximumEventBytes</code> throws <code>InvalidOperationException</code>\n(“The structured CloudEvent requires approximately … bytes”) before any JSON\nis written, so a partial event never reaches the destination. Most brokers accept\nfar smaller messages than the default, so set the limit to what your broker\nallows. See <a href=\"/documentation/real-time/streams-configuration#cloudevents\">configuration</a> for every envelope\nlimit.</p>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-concepts#acknowledge-after-your-work-is-durable\">Concepts: acknowledge after your work is durable</a></li>\n<li><a href=\"/documentation/real-time/sync\">Sync</a> has ready-made Kafka, NATS and webhook destinations.</li>\n</ul>\n"
       }
     ]
   },
@@ -1859,7 +5021,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1156,
+    "order": 1179,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -1885,41 +5047,61 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "categoryLabel": "Real time",
     "listed": false,
     "slug": "streams-prepared-transactions",
-    "summary": "Prepared-transaction delivery is an opt-in Streams preview feature. The default PreparedTransactionMode.Fail behavior rejects every two-phase pgoutput message before changing assembler state. Enable PreparedTransactio…",
+    "summary": "This guide shows you how to receive PostgreSQL prepared transactions (PREPARE TRANSACTION) as separate prepare, commit and rollback deliveries, so a destination can stage changes before they are final.",
     "keywords": [
       "docs",
       "streams",
       "prepared",
       "transactions"
     ],
-    "order": 1158,
-    "title": "Prepared and two-phase transactions",
+    "order": 1181,
+    "title": "Prepared (two-phase) transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
     "headings": [
       {
-        "id": "prepared-and-two-phase-transactions",
-        "text": "Prepared and two-phase transactions",
+        "id": "prepared-two-phase-transactions",
+        "text": "Prepared (two-phase) transactions",
         "level": 1
       },
       {
-        "id": "lifecycle-deliveries",
-        "text": "Lifecycle deliveries",
+        "id": "turn-it-on",
+        "text": "Turn it on",
         "level": 2
       },
       {
-        "id": "relay-compatibility",
-        "text": "Relay compatibility",
+        "id": "handle-the-three-lifecycle-deliveries",
+        "text": "Handle the three lifecycle deliveries",
+        "level": 2
+      },
+      {
+        "id": "expect-ordinary-commits-too",
+        "text": "Expect ordinary commits too",
+        "level": 2
+      },
+      {
+        "id": "make-every-step-safe-to-repeat",
+        "text": "Make every step safe to repeat",
+        "level": 2
+      },
+      {
+        "id": "relay-and-stored-formats",
+        "text": "Relay and stored formats",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
         "level": 2
       }
     ],
-    "wordCount": 536,
+    "wordCount": 647,
     "readMinutes": 3,
-    "searchText": "Prepared and two-phase transactions Prepared-transaction delivery is an opt-in Streams preview feature. The default `PreparedTransactionMode.Fail` behavior rejects every two-phase pgoutput message before changing assembler state. Enable `PreparedTransactionMode.Stage` only when the destination can durably stage source changes without making them visible. `PostgreSqlConsistentSnapshotSource` automatically selects pgoutput protocol 3 and enables the PostgreSQL `two_phase` option when staging is enabled. Code that manually composes a replication stream must configure both the replication request and decoder consistently: PostgreSQL can emit a two-phase transaction as one ordinary committed transaction, including its changes, when logical decoding did not process that transaction at `PREPARE TRANSACTION` time. This can occur while a consumer is starting or catching up. It is PostgreSQL's documented fallback and does not lose changes: consumers must always handle ordinary committed deliveries in addition to the staged lifecycle below. A workflow that must observe a staged delivery can first emit and consume a non-transactional logical message as a stream-readiness barrier before it begins the prepared transaction. Lifecycle deliveries Streams does not keep an acknowledged prepared transaction only in process memory. It exposes three ordered delivery states instead: `ChangeTransaction.Outcome` Changes Required destination action `Prepared` Complete source transaction Durably stage all changes under the source identity, transaction ID, and `GlobalTransactionId`; do not expose them. `Committed` with `IsTwoPhase == true` Empty Atomically make the corresponding staged changes visible and record the final lifecycle delivery. `RolledBack` Empty Atomically discard the corresponding staged changes and record the final lifecycle delivery. Ordinary commits and synthetic logical-message transactions have `Outcome == Committed`, a null `GlobalTransactionId`, and `IsTwoPhase == false`",
+    "searchText": "Prepared (two-phase) transactions This guide shows you how to receive PostgreSQL prepared transactions (`PREPARE TRANSACTION`) as separate prepare, commit and rollback deliveries, so a destination can stage changes before they are final. **Note:** This is a preview feature. It is off by default. Without two-phase decoding (the default), PostgreSQL sends a prepared transaction only when it commits, as an ordinary transaction. If two-phase messages arrive while `PreparedTransactionMode` is `Fail` (the default), Streams stops with `PreparedTransactionNotSupportedException`. Turn staging on only if your destination can store changes durably without making them visible, and later publish or discard them. Turn it on Set the mode on the transaction assembly options: With the [snapshot source](snapshot-bootstrap.md), pass these options as `PostgreSqlConsistentSnapshotOptions.TransactionAssembly`. The source then creates the slot with two-phase decoding and uses pgoutput protocol 3. If you read a slot yourself, the slot must have two-phase decoding enabled, and the replication request and decoder must agree: The source server also needs `max_prepared_transactions` above 0, or applications cannot run `PREPARE TRANSACTION` at all. Handle the three lifecycle deliveries A two-phase transaction arrives as two deliveries: the prepare, then either a commit or a rollback. Check `Outcome`: `Outcome` `Changes` What your destination must do before acknowledging `Prepared` All of the transaction's changes Store them durably under the `GlobalTransactionId`, hidden. `Committed` with `IsTwoPhase == true` Empty Make the staged changes visible, atomically. `RolledBack` Empty Discard the staged changes, atomically. `Committed` with `IsTwoPhase == false` All changes An ordinary transaction. Apply it as usual. `GlobalTransactionId` is the name given to `PREPARE TRANSACTION`, and is `null` for ordinary transactions. Each lifecycle delivery is acknowledged and checkpointed on its own, following t",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Prepared and two-phase transactions</h1>\n<p>Prepared-transaction delivery is an opt-in Streams preview feature. The default\n<code>PreparedTransactionMode.Fail</code> behavior rejects every two-phase pgoutput message\nbefore changing assembler state. Enable <code>PreparedTransactionMode.Stage</code> only\nwhen the destination can durably stage source changes without making them\nvisible.</p>\n"
+        "html": "<h1>Prepared (two-phase) transactions</h1>\n<p>This guide shows you how to receive PostgreSQL prepared transactions\n(<code>PREPARE TRANSACTION</code>) as separate prepare, commit and rollback deliveries, so\na destination can stage changes before they are final.</p>\n<blockquote>\n<p><strong>Note:</strong> This is a preview feature. It is off by default.</p>\n</blockquote>\n<p>Without two-phase decoding (the default), PostgreSQL sends a prepared\ntransaction only when it commits, as an ordinary transaction. If two-phase\nmessages arrive while <code>PreparedTransactionMode</code> is <code>Fail</code> (the default), Streams\nstops with <code>PreparedTransactionNotSupportedException</code>.</p>\n<p>Turn staging on only if your destination can store changes durably without\nmaking them visible, and later publish or discard them.</p>\n<h2>Turn it on</h2>\n<p>Set the mode on the transaction assembly options:</p>\n"
       },
       {
         "kind": "code",
@@ -1929,17 +5111,33 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p><code>PostgreSqlConsistentSnapshotSource</code> automatically selects pgoutput protocol 3\nand enables the PostgreSQL <code>two_phase</code> option when staging is enabled. Code that\nmanually composes a replication stream must configure both the replication\nrequest and decoder consistently:</p>\n"
+        "html": "<p>With the <a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot source</a>, pass these options as\n<code>PostgreSqlConsistentSnapshotOptions.TransactionAssembly</code>. The source then\ncreates the slot with two-phase decoding and uses pgoutput protocol 3.</p>\n<p>If you read a slot yourself, the slot must have two-phase decoding enabled, and\nthe replication request and decoder must agree:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var source = replication.StartReplicationAsync(\n    new BlueTuskPgOutputReplicationOptions\n    {\n        SlotName = slotName,\n        PublicationNames = [publicationName],\n        ProtocolVersion = 3,\n        StreamingMode = BlueTuskLogicalStreamingMode.On,\n        TwoPhase = true,\n    }).DecodePgOutputAsync(\n    new BlueTuskPgOutputDecoderOptions\n    {\n        ProtocolVersion = 3,\n        StreamingMode = BlueTuskPgOutputStreamingMode.On,\n        TwoPhase = true,\n    });\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> source = replication.StartReplicationAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputReplicationOptions\n    {\n        SlotName = slotName,\n        PublicationNames = [publicationName],\n        ProtocolVersion = <span class=\"hljs-number\">3</span>,\n        StreamingMode = BlueTuskLogicalStreamingMode.On,\n        TwoPhase = <span class=\"hljs-literal\">true</span>,\n    }).DecodePgOutputAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputDecoderOptions\n    {\n        ProtocolVersion = <span class=\"hljs-number\">3</span>,\n        StreamingMode = BlueTuskPgOutputStreamingMode.On,\n        TwoPhase = <span class=\"hljs-literal\">true</span>,\n    });\n",
+        "code": "await replication.CreateReplicationSlotAsync(slotName, twoPhase: true);\n",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> replication.CreateReplicationSlotAsync(slotName, twoPhase: <span class=\"hljs-literal\">true</span>);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "code",
+        "code": "var changes = new PgOutputChangeStream(\n    replication\n        .StartReplicationAsync(new BlueTuskPgOutputReplicationOptions\n        {\n            SlotName = slotName,\n            PublicationNames = [publicationName],\n            ProtocolVersion = 3,\n            StreamingMode = BlueTuskLogicalStreamingMode.On,\n            TwoPhase = true,\n        })\n        .DecodePgOutputAsync(new BlueTuskPgOutputDecoderOptions\n        {\n            ProtocolVersion = 3,\n            StreamingMode = BlueTuskPgOutputStreamingMode.On,\n            TwoPhase = true,\n        }),\n    sourceIdentity,\n    assembly);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> changes = <span class=\"hljs-keyword\">new</span> PgOutputChangeStream(\n    replication\n        .StartReplicationAsync(<span class=\"hljs-keyword\">new</span> BlueTuskPgOutputReplicationOptions\n        {\n            SlotName = slotName,\n            PublicationNames = [publicationName],\n            ProtocolVersion = <span class=\"hljs-number\">3</span>,\n            StreamingMode = BlueTuskLogicalStreamingMode.On,\n            TwoPhase = <span class=\"hljs-literal\">true</span>,\n        })\n        .DecodePgOutputAsync(<span class=\"hljs-keyword\">new</span> BlueTuskPgOutputDecoderOptions\n        {\n            ProtocolVersion = <span class=\"hljs-number\">3</span>,\n            StreamingMode = BlueTuskPgOutputStreamingMode.On,\n            TwoPhase = <span class=\"hljs-literal\">true</span>,\n        }),\n    sourceIdentity,\n    assembly);\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>PostgreSQL can emit a two-phase transaction as one ordinary committed\ntransaction, including its changes, when logical decoding did not process that\ntransaction at <code>PREPARE TRANSACTION</code> time. This can occur while a consumer is\nstarting or catching up. It is PostgreSQL’s documented fallback and does not\nlose changes: consumers must always handle ordinary committed deliveries in\naddition to the staged lifecycle below. A workflow that must observe a staged\ndelivery can first emit and consume a non-transactional logical message as a\nstream-readiness barrier before it begins the prepared transaction.</p>\n<h2>Lifecycle deliveries</h2>\n<p>Streams does not keep an acknowledged prepared transaction only in process\nmemory. It exposes three ordered delivery states instead:</p>\n<table>\n<thead>\n<tr>\n<th><code>ChangeTransaction.Outcome</code></th>\n<th>Changes</th>\n<th>Required destination action</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Prepared</code></td>\n<td>Complete source transaction</td>\n<td>Durably stage all changes under the source identity, transaction ID, and <code>GlobalTransactionId</code>; do not expose them.</td>\n</tr>\n<tr>\n<td><code>Committed</code> with <code>IsTwoPhase == true</code></td>\n<td>Empty</td>\n<td>Atomically make the corresponding staged changes visible and record the final lifecycle delivery.</td>\n</tr>\n<tr>\n<td><code>RolledBack</code></td>\n<td>Empty</td>\n<td>Atomically discard the corresponding staged changes and record the final lifecycle delivery.</td>\n</tr>\n</tbody>\n</table>\n<p>Ordinary commits and synthetic logical-message transactions have\n<code>Outcome == Committed</code>, a null <code>GlobalTransactionId</code>, and <code>IsTwoPhase == false</code>.\nPrepared, commit-prepared, and rollback-prepared deliveries preserve the\nPostgreSQL transaction ID and global transaction ID. Streamed prepared\ntransactions use the same bounded memory and disk-spool limits as ordinary\nstreamed transactions.</p>\n<p>Acknowledgement means the lifecycle action is durable. For <code>Prepared</code>, the\nconsumer must finish durable staging before acknowledging. For the two final\nstates, it must atomically finalize or discard the staged state before\nacknowledging. The normal destination → checkpoint → replication-feedback\nordering then applies independently to every lifecycle delivery.</p>\n<p>Crashes can redeliver any state, so all three actions must be idempotent. A\ndestination should retain a compact final-state tombstone for at least its\nconfigured replay/resume window. BlueTusk continues to advertise at-least-once\ndelivery and does not infer cross-system exactly-once behavior from PostgreSQL\ntwo-phase commit.</p>\n<h2>Relay compatibility</h2>\n<p>Transaction relay envelopes use format 2 for lifecycle outcome and global\ntransaction ID metadata. The decoder continues to accept integrity-checked\nformat 1 envelopes, treating them as ordinary committed transactions. New\nwriters always emit format 2. Unknown future versions and invalid lifecycle\ncombinations fail closed.</p>\n<p>The feature is covered by fake ordinary and streamed pgoutput sequences, disk\nspilling, format 1-to-2 upgrade fixtures, and live PostgreSQL prepared-commit\nacceptance. It remains preview until the complete Streams 1.0 format-upgrade and\n72-hour fault-injected endurance gates pass.</p>\n"
+        "html": "<p>The source server also needs <code>max_prepared_transactions</code> above 0, or\napplications cannot run <code>PREPARE TRANSACTION</code> at all.</p>\n<h2>Handle the three lifecycle deliveries</h2>\n<p>A two-phase transaction arrives as two deliveries: the prepare, then either a\ncommit or a rollback. Check <code>Outcome</code>:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await foreach (var delivery in changes.ReadTransactionsAsync())\n{\n    var transaction = delivery.Transaction;\n    switch (transaction.Outcome)\n    {\n        case ChangeTransactionOutcome.Prepared:\n            // Stage every change under transaction.GlobalTransactionId; keep it hidden.\n            break;\n        case ChangeTransactionOutcome.Committed when transaction.IsTwoPhase:\n            // Make the staged changes for transaction.GlobalTransactionId visible.\n            break;\n        case ChangeTransactionOutcome.RolledBack:\n            // Discard the staged changes for transaction.GlobalTransactionId.\n            break;\n        default:\n            // An ordinary committed transaction: apply it as usual.\n            break;\n    }\n\n    await delivery.AcknowledgeAsync();\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> delivery <span class=\"hljs-keyword\">in</span> changes.ReadTransactionsAsync())\n{\n    <span class=\"hljs-keyword\">var</span> transaction = delivery.Transaction;\n    <span class=\"hljs-keyword\">switch</span> (transaction.Outcome)\n    {\n        <span class=\"hljs-keyword\">case</span> ChangeTransactionOutcome.Prepared:\n            <span class=\"hljs-comment\">// Stage every change under transaction.GlobalTransactionId; keep it hidden.</span>\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> ChangeTransactionOutcome.Committed <span class=\"hljs-keyword\">when</span> transaction.IsTwoPhase:\n            <span class=\"hljs-comment\">// Make the staged changes for transaction.GlobalTransactionId visible.</span>\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> ChangeTransactionOutcome.RolledBack:\n            <span class=\"hljs-comment\">// Discard the staged changes for transaction.GlobalTransactionId.</span>\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-literal\">default</span>:\n            <span class=\"hljs-comment\">// An ordinary committed transaction: apply it as usual.</span>\n            <span class=\"hljs-keyword\">break</span>;\n    }\n\n    <span class=\"hljs-keyword\">await</span> delivery.AcknowledgeAsync();\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th><code>Outcome</code></th>\n<th><code>Changes</code></th>\n<th>What your destination must do before acknowledging</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Prepared</code></td>\n<td>All of the transaction’s changes</td>\n<td>Store them durably under the <code>GlobalTransactionId</code>, hidden.</td>\n</tr>\n<tr>\n<td><code>Committed</code> with <code>IsTwoPhase == true</code></td>\n<td>Empty</td>\n<td>Make the staged changes visible, atomically.</td>\n</tr>\n<tr>\n<td><code>RolledBack</code></td>\n<td>Empty</td>\n<td>Discard the staged changes, atomically.</td>\n</tr>\n<tr>\n<td><code>Committed</code> with <code>IsTwoPhase == false</code></td>\n<td>All changes</td>\n<td>An ordinary transaction. Apply it as usual.</td>\n</tr>\n</tbody>\n</table>\n<p><code>GlobalTransactionId</code> is the name given to <code>PREPARE TRANSACTION</code>, and is <code>null</code>\nfor ordinary transactions. Each lifecycle delivery is acknowledged and\ncheckpointed on its own, following the usual\n<a href=\"/documentation/real-time/streams-concepts#acknowledge-after-your-work-is-durable\">acknowledgement rule</a>.\nLarge prepared transactions are spooled to disk under the same limits as any\nother transaction.</p>\n<h2>Expect ordinary commits too</h2>\n<p>PostgreSQL may send a two-phase transaction as one ordinary committed\ntransaction, with all its changes, if decoding had not reached the transaction\nwhen it was prepared. This happens while a consumer is starting or catching up.\nNothing is lost, but your code must handle ordinary commits as well as the\nstaged lifecycle. If a workflow must see the staged form, emit and consume a\nnon-transactional logical message (<code>pg_logical_emit_message(false, ...)</code>) before\nit prepares the transaction, to be sure the consumer has caught up.</p>\n<h2>Make every step safe to repeat</h2>\n<p>After a crash, any of the three deliveries can arrive again. Make staging,\npublishing and discarding idempotent, keyed by <code>GlobalTransactionId</code>. Keep a\nsmall record of finished transactions for as long as a redelivery can happen.\nDelivery is at least once; PostgreSQL two-phase commit does not make it\nexactly once across systems.</p>\n<h2>Relay and stored formats</h2>\n<p>The <a href=\"/documentation/real-time/durable-relay\">durable relay</a> stores the outcome and global transaction\nID using envelope format 2. It still reads format 1 envelopes written before\nthis feature, as ordinary committed transactions. Unknown future formats stop\nthe read with an error. See the\n<a href=\"/documentation/real-time/streams-format-compatibility\">format compatibility registry</a>.</p>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-concepts\">Concepts</a></li>\n<li><a href=\"/documentation/real-time/streams-configuration#transaction-assembly-and-spooling\">Configuration: transaction assembly</a></li>\n</ul>\n"
       }
     ]
   },
@@ -1960,7 +5158,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1160,
+    "order": 1184,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -2011,7 +5209,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1161,
+    "order": 1185,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -2037,46 +5235,131 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "categoryLabel": "Real time",
     "listed": false,
     "slug": "streams-sample",
-    "summary": "The BlueTusk.Samples.Streams worker demonstrates the complete first-run path: an exported PostgreSQL snapshot, bounded binary COPY batches, transition to the matching pgoutput position, and transaction acknowledgement…",
+    "summary": "This page shows you how to run BlueTusk.Samples.Streams, a hosted worker in this repository that copies an existing table and then prints every committed change to it.",
     "keywords": [
       "docs",
       "streams",
       "sample"
     ],
-    "order": 1162,
-    "title": "Snapshot-then-stream sample",
+    "order": 1186,
+    "title": "Run the snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
     "headings": [
       {
-        "id": "snapshot-then-stream-sample",
-        "text": "Snapshot-then-stream sample",
+        "id": "run-the-snapshot-then-stream-sample",
+        "text": "Run the snapshot-then-stream sample",
         "level": 1
+      },
+      {
+        "id": "1-create-the-table-and-publication",
+        "text": "1. Create the table and publication",
+        "level": 2
+      },
+      {
+        "id": "2-run-the-sample",
+        "text": "2. Run the sample",
+        "level": 2
+      },
+      {
+        "id": "3-make-a-change",
+        "text": "3. Make a change",
+        "level": 2
+      },
+      {
+        "id": "settings",
+        "text": "Settings",
+        "level": 2
+      },
+      {
+        "id": "what-happens-when-you-restart-it",
+        "text": "What happens when you restart it",
+        "level": 2
+      },
+      {
+        "id": "before-you-copy-this-into-an-application",
+        "text": "Before you copy this into an application",
+        "level": 2
+      },
+      {
+        "id": "clean-up",
+        "text": "Clean up",
+        "level": 2
       }
     ],
-    "wordCount": 281,
-    "readMinutes": 2,
-    "searchText": "Snapshot-then-stream sample The `BlueTusk.Samples.Streams` worker demonstrates the complete first-run path: an exported PostgreSQL snapshot, bounded binary COPY batches, transition to the matching `pgoutput` position, and transaction acknowledgement by a hosted consumer. Create the sample table and provision the publication. The snapshot source must create the logical slot itself so it can export the matching snapshot; therefore this setup deliberately uses `--skip-slot`. The sample logs raw snapshot batches and CDC change types. A real destination must durably and idempotently apply a complete source transaction before it acknowledges the delivery. The sample passes no delivery observer, so the stream confirms each acknowledged commit position to PostgreSQL itself and the slot releases WAL as the sample runs. To resume from a durable position after a restart, configure a checkpoint store and `CheckpointingChangeDeliveryObserver` as described in [state stores](state-stores.md); memory state is only suitable for tests and ephemeral development. The sample explicitly enables `RestartSnapshot` recovery. If the process stops after creating its slot, the next process verifies that the slot is inactive, logical, `pgoutput`, and bound to the configured database before replacing it. The consumer then receives `ResetSnapshotAsync` with a new epoch; an idempotent destination must discard or supersede the abandoned epoch. The sample's table shape is intentionally fixed so binary column ordinals and PostgreSQL type OIDs remain explicit. Production mappings should use the typed mapping builder or the [EF-derived mapping adapter](typed-mappings.md).",
+    "wordCount": 638,
+    "readMinutes": 3,
+    "searchText": "Run the snapshot-then-stream sample This page shows you how to run `BlueTusk.Samples.Streams`, a hosted worker in this repository that copies an existing table and then prints every committed change to it. The sample uses `AddBlueTuskStreams().AddHostedConsumer<T>()` with a `PostgreSqlConsistentSnapshotSource`, the path described in [snapshot and catch-up](snapshot-bootstrap.md) and [hosting](hosting-observability.md). You need the .NET 10 SDK, a clone of this repository, and a PostgreSQL 15 to 18 test server with `wal_level = logical` (the `bluetusk-postgres` container from the [5-minute first app](../getting-started/quickstart.md#1-start-postgresql) works). 1. Create the table and publication In `psql`: The sample's column list is fixed to this shape: `id bigint`, `description text`, `updated_at timestamptz`. Create the publication, but not the slot. The snapshot source must create the slot itself to get a matching snapshot. With the [`bluetusk-streams` tool](cli.md): Or in SQL: `CREATE PUBLICATION app_changes FOR TABLE app.orders;`. **Warning:** This uses the `postgres` superuser and `SSL Mode=Disable`, which is only acceptable for a local test container. Elsewhere use a login with `REPLICATION` and `SELECT` on the table, and keep the default `SSL Mode=VerifyFull`. 2. Run the sample From the repository root, in the same terminal: On Linux or macOS, use `export` for each variable. The worker copies the existing rows, then waits for changes: 3. Make a change In a second terminal, insert a row: The sample prints each change's full `ChangeId`, then a summary line: Settings Setting Default Meaning `BLUETUSK_STREAMS_SOURCE` (required) Source connection string. `BlueTusk__Streams__Slot` (required) Slot the sample creates. `BlueTusk__Streams__Publications__0` (required) Publication to read. `BlueTusk__Streams__Sample__Schema` `app` Schema of the table to copy. `BlueTusk__Streams__Sample__Table` `orders` Table to copy. Without the three required settings the sample prints",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Snapshot-then-stream sample</h1>\n<p>The <code>BlueTusk.Samples.Streams</code> worker demonstrates the complete first-run path:\nan exported PostgreSQL snapshot, bounded binary COPY batches, transition to the\nmatching <code>pgoutput</code> position, and transaction acknowledgement by a hosted\nconsumer.</p>\n<p>Create the sample table and provision the publication. The snapshot source must\ncreate the logical slot itself so it can export the matching snapshot; therefore\nthis setup deliberately uses <code>--skip-slot</code>.</p>\n"
+        "html": "<h1>Run the snapshot-then-stream sample</h1>\n<p>This page shows you how to run <code>BlueTusk.Samples.Streams</code>, a hosted worker in\nthis repository that copies an existing table and then prints every committed\nchange to it.</p>\n<p>The sample uses <code>AddBlueTuskStreams().AddHostedConsumer&lt;T&gt;()</code> with a\n<code>PostgreSqlConsistentSnapshotSource</code>, the path described in\n<a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot and catch-up</a> and\n<a href=\"/documentation/real-time/streams-hosting\">hosting</a>. You need the .NET 10 SDK, a clone of this\nrepository, and a PostgreSQL 15 to 18 test server with <code>wal_level = logical</code>\n(the <code>bluetusk-postgres</code> container from the\n<a href=\"/documentation/getting-started/quickstart#1-start-postgresql\">5-minute first app</a>\nworks).</p>\n<h2>1. Create the table and publication</h2>\n<p>In <code>psql</code>:</p>\n"
       },
       {
         "kind": "code",
-        "code": "CREATE SCHEMA IF NOT EXISTS app;\nCREATE TABLE app.orders (\n    id bigint PRIMARY KEY,\n    description text NOT NULL,\n    updated_at timestamptz NOT NULL DEFAULT clock_timestamp()\n);\n",
-        "highlighted": "<span class=\"hljs-keyword\">CREATE</span> SCHEMA IF <span class=\"hljs-keyword\">NOT</span> <span class=\"hljs-keyword\">EXISTS</span> app;\n<span class=\"hljs-keyword\">CREATE TABLE</span> app.orders (\n    id <span class=\"hljs-type\">bigint</span> <span class=\"hljs-keyword\">PRIMARY KEY</span>,\n    description text <span class=\"hljs-keyword\">NOT NULL</span>,\n    updated_at timestamptz <span class=\"hljs-keyword\">NOT NULL</span> <span class=\"hljs-keyword\">DEFAULT</span> clock_timestamp()\n);\n",
+        "code": "CREATE SCHEMA IF NOT EXISTS app;\nCREATE TABLE app.orders (\n    id bigint PRIMARY KEY,\n    description text NOT NULL,\n    updated_at timestamptz NOT NULL DEFAULT clock_timestamp()\n);\nINSERT INTO app.orders (id, description) VALUES (1, 'existing row 1'), (2, 'existing row 2');\n",
+        "highlighted": "<span class=\"hljs-keyword\">CREATE</span> SCHEMA IF <span class=\"hljs-keyword\">NOT</span> <span class=\"hljs-keyword\">EXISTS</span> app;\n<span class=\"hljs-keyword\">CREATE TABLE</span> app.orders (\n    id <span class=\"hljs-type\">bigint</span> <span class=\"hljs-keyword\">PRIMARY KEY</span>,\n    description text <span class=\"hljs-keyword\">NOT NULL</span>,\n    updated_at timestamptz <span class=\"hljs-keyword\">NOT NULL</span> <span class=\"hljs-keyword\">DEFAULT</span> clock_timestamp()\n);\n<span class=\"hljs-keyword\">INSERT INTO</span> app.orders (id, description) <span class=\"hljs-keyword\">VALUES</span> (<span class=\"hljs-number\">1</span>, <span class=\"hljs-string\">&#x27;existing row 1&#x27;</span>), (<span class=\"hljs-number\">2</span>, <span class=\"hljs-string\">&#x27;existing row 2&#x27;</span>);\n",
         "language": "sql"
       },
       {
+        "kind": "html",
+        "html": "<p>The sample’s column list is fixed to this shape: <code>id bigint</code>, <code>description text</code>, <code>updated_at timestamptz</code>.</p>\n<p>Create the publication, but not the slot. The snapshot source must create the\nslot itself to get a matching snapshot. With the\n<a href=\"/documentation/real-time/streams-cli\"><code>bluetusk-streams</code> tool</a>:</p>\n"
+      },
+      {
         "kind": "code",
-        "code": "$env:BLUETUSK_STREAMS_SOURCE = \"Host=localhost;Database=app;Username=streams;Password=...\"\nbluetusk-streams provision --direct-only --skip-slot `\n  --publication app_changes --slot app_sample_stream --table app.orders\n\n$env:BlueTusk__Streams__Slot = \"app_sample_stream\"\n$env:BlueTusk__Streams__Publications__0 = \"app_changes\"\ndotnet run --project samples/BlueTusk.Samples.Streams\n",
-        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_SOURCE</span> = <span class=\"hljs-string\">&quot;Host=localhost;Database=app;Username=streams;Password=...&quot;</span>\nbluetusk<span class=\"hljs-literal\">-streams</span> provision <span class=\"hljs-literal\">--direct-only</span> <span class=\"hljs-literal\">--skip-slot</span> `\n  <span class=\"hljs-literal\">--publication</span> app_changes <span class=\"hljs-literal\">--slot</span> app_sample_stream <span class=\"hljs-literal\">--table</span> app.orders\n\n<span class=\"hljs-variable\">$env:BlueTusk__Streams__Slot</span> = <span class=\"hljs-string\">&quot;app_sample_stream&quot;</span>\n<span class=\"hljs-variable\">$env:BlueTusk__Streams__Publications__0</span> = <span class=\"hljs-string\">&quot;app_changes&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.Streams\n",
+        "code": "$env:BLUETUSK_STREAMS_SOURCE = \"Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable\"\nbluetusk-streams provision --direct-only --skip-slot `\n  --publication app_changes --slot app_sample_stream --table app.orders\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_STREAMS_SOURCE</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\nbluetusk<span class=\"hljs-literal\">-streams</span> provision <span class=\"hljs-literal\">--direct-only</span> <span class=\"hljs-literal\">--skip-slot</span> `\n  <span class=\"hljs-literal\">--publication</span> app_changes <span class=\"hljs-literal\">--slot</span> app_sample_stream <span class=\"hljs-literal\">--table</span> app.orders\n",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>The sample logs raw snapshot batches and CDC change types. A real destination\nmust durably and idempotently apply a complete source transaction before it\nacknowledges the delivery. The sample passes no delivery observer, so the stream\nconfirms each acknowledged commit position to PostgreSQL itself and the slot\nreleases WAL as the sample runs. To resume from a durable position after a\nrestart, configure a checkpoint store and <code>CheckpointingChangeDeliveryObserver</code>\nas described in <a href=\"/documentation/real-time/state-stores\">state stores</a>; memory state is only suitable\nfor tests and ephemeral development.</p>\n<p>The sample explicitly enables <code>RestartSnapshot</code> recovery. If the process stops\nafter creating its slot, the next process verifies that the slot is inactive,\nlogical, <code>pgoutput</code>, and bound to the configured database before replacing it.\nThe consumer then receives <code>ResetSnapshotAsync</code> with a new epoch; an idempotent\ndestination must discard or supersede the abandoned epoch.</p>\n<p>The sample’s table shape is intentionally fixed so binary column ordinals and\nPostgreSQL type OIDs remain explicit. Production mappings should use the typed\nmapping builder or the <a href=\"/documentation/real-time/streams-typed-mappings\">EF-derived mapping adapter</a>.</p>\n"
+        "html": "<p>Or in SQL: <code>CREATE PUBLICATION app_changes FOR TABLE app.orders;</code>.</p>\n<blockquote>\n<p><strong>Warning:</strong> This uses the <code>postgres</code> superuser and <code>SSL Mode=Disable</code>, which\nis only acceptable for a local test container. Elsewhere use a login with\n<code>REPLICATION</code> and <code>SELECT</code> on the table, and keep the default\n<code>SSL Mode=VerifyFull</code>.</p>\n</blockquote>\n<h2>2. Run the sample</h2>\n<p>From the repository root, in the same terminal:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:BlueTusk__Streams__Slot = \"app_sample_stream\"\n$env:BlueTusk__Streams__Publications__0 = \"app_changes\"\ndotnet run --project samples/BlueTusk.Samples.Streams\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:BlueTusk__Streams__Slot</span> = <span class=\"hljs-string\">&quot;app_sample_stream&quot;</span>\n<span class=\"hljs-variable\">$env:BlueTusk__Streams__Publications__0</span> = <span class=\"hljs-string\">&quot;app_changes&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.Streams\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>On Linux or macOS, use <code>export</code> for each variable. The worker copies the\nexisting rows, then waits for changes:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "SNAPSHOT RESET c498c113-d6cf-48a3-8033-2e65dfa38fbe Initial consistent snapshot.\nSNAPSHOT START c498c113-d6cf-48a3-8033-2e65dfa38fbe tables=1\nSNAPSHOT BATCH app.orders sequence=0 rows=2\nSNAPSHOT COMPLETE c498c113-d6cf-48a3-8033-2e65dfa38fbe rows=2\n",
+        "highlighted": "SNAPSHOT RESET c498c113-d6cf-48a3-8033-2e65dfa38fbe Initial consistent snapshot.\nSNAPSHOT START c498c113-d6cf-48a3-8033-2e65dfa38fbe tables=1\nSNAPSHOT BATCH app.orders sequence=0 rows=2\nSNAPSHOT COMPLETE c498c113-d6cf-48a3-8033-2e65dfa38fbe rows=2\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>3. Make a change</h2>\n<p>In a second terminal, insert a row:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker exec bluetusk-postgres psql -U postgres -c \"INSERT INTO app.orders (id, description) VALUES (3, 'new row');\"\n",
+        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;INSERT INTO app.orders (id, description) VALUES (3, &#x27;new row&#x27;);&quot;</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The sample prints each change’s full <code>ChangeId</code>, then a summary line:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "CHANGE ChangeId { Source = ChangeSourceIdentity { ... }, CommitEndPosition = 0/57BDCA0, TransactionId = 1491, Ordinal = 0 } InsertChange\nTRANSACTION xid=1491 commit=0/57BDCA0 changes=1\n",
+        "highlighted": "CHANGE ChangeId { Source = ChangeSourceIdentity { ... }, CommitEndPosition = 0/57BDCA0, TransactionId = 1491, Ordinal = 0 } InsertChange\nTRANSACTION xid=1491 commit=0/57BDCA0 changes=1\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Settings</h2>\n<table>\n<thead>\n<tr>\n<th>Setting</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BLUETUSK_STREAMS_SOURCE</code></td>\n<td>(required)</td>\n<td>Source connection string.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__Slot</code></td>\n<td>(required)</td>\n<td>Slot the sample creates.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__Publications__0</code></td>\n<td>(required)</td>\n<td>Publication to read.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__Sample__Schema</code></td>\n<td><code>app</code></td>\n<td>Schema of the table to copy.</td>\n</tr>\n<tr>\n<td><code>BlueTusk__Streams__Sample__Table</code></td>\n<td><code>orders</code></td>\n<td>Table to copy.</td>\n</tr>\n</tbody>\n</table>\n<p>Without the three required settings the sample prints a message and exits with\ncode 2.</p>\n<h2>What happens when you restart it</h2>\n<p>The sample sets <code>ExistingSlotMode = RestartSnapshot</code>. On the next start it\nchecks that the slot is inactive, logical, uses <code>pgoutput</code> and belongs to the\nconfigured database, drops it, and copies the table again under a new snapshot\nepoch. It does not resume from a checkpoint. A real destination must discard or\nreplace the rows of the earlier epoch in <code>ResetSnapshotAsync</code>.</p>\n<h2>Before you copy this into an application</h2>\n<p>The sample is deliberately small. A production worker should also:</p>\n<ul>\n<li><strong>Save a checkpoint if it must resume.</strong> The sample passes no delivery\nobserver. The stream still confirms each acknowledged transaction to\nPostgreSQL, so the slot releases WAL while the sample runs, but nothing\nrecords a position across restarts. To resume instead of copying again, add\na checkpoint store as in\n<a href=\"/documentation/real-time/snapshot-bootstrap#3-copy-then-stream-then-resume\">snapshot and catch-up</a>.</li>\n<li><strong>Apply changes durably and idempotently</strong> before acknowledging each\ntransaction.</li>\n<li><strong>Map rows to types</strong> with a <a href=\"/documentation/real-time/streams-typed-mappings\">typed mapping</a> instead of a\nhand-written column list.</li>\n</ul>\n<h2>Clean up</h2>\n<p>Stop the sample with Ctrl+C, then drop the slot so it stops holding WAL:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "SELECT pg_drop_replication_slot('app_sample_stream');\nDROP PUBLICATION app_changes;\nDROP TABLE app.orders;\n",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> pg_drop_replication_slot(<span class=\"hljs-string\">&#x27;app_sample_stream&#x27;</span>);\n<span class=\"hljs-keyword\">DROP</span> PUBLICATION app_changes;\n<span class=\"hljs-keyword\">DROP</span> <span class=\"hljs-keyword\">TABLE</span> app.orders;\n",
+        "language": "sql"
       }
     ]
   },
@@ -2085,14 +5368,14 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "categoryLabel": "Real time",
     "listed": false,
     "slug": "streams-typed-mappings",
-    "summary": "Streams always retains the dynamic ChangeRow and its explicit per-column states. Typed mapping is an optional projection over that lossless row; it does not replace it and never manufactures a complete CLR object from…",
+    "summary": "This guide shows you how to turn the rows in a change into instances of your own classes, either by convention, with explicit column bindings, or from an EF Core model.",
     "keywords": [
       "docs",
       "streams",
       "typed",
       "mappings"
     ],
-    "order": 1165,
+    "order": 1190,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -2103,53 +5386,88 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       },
       {
-        "id": "convention-and-explicit-mapping",
-        "text": "Convention and explicit mapping",
+        "id": "map-a-table-to-a-class",
+        "text": "Map a table to a class",
         "level": 2
       },
       {
-        "id": "partial-rows-remain-partial",
-        "text": "Partial rows remain partial",
+        "id": "handle-partial-rows",
+        "text": "Handle partial rows",
         "level": 2
       },
       {
-        "id": "drift-and-failure-policy",
-        "text": "Drift and failure policy",
+        "id": "decide-what-happens-when-the-schema-changes",
+        "text": "Decide what happens when the schema changes",
         "level": 2
       },
       {
-        "id": "snapshot-and-transaction-consumer-lifecycle",
-        "text": "Snapshot and transaction consumer lifecycle",
+        "id": "build-mappings-from-an-ef-core-model",
+        "text": "Build mappings from an EF Core model",
+        "level": 2
+      },
+      {
+        "id": "use-mappings-with-nativeaot-and-trimming",
+        "text": "Use mappings with NativeAOT and trimming",
+        "level": 2
+      },
+      {
+        "id": "snapshot-rows",
+        "text": "Snapshot rows",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
         "level": 2
       }
     ],
-    "wordCount": 728,
-    "readMinutes": 4,
-    "searchText": "Typed change mappings Streams always retains the dynamic `ChangeRow` and its explicit per-column states. Typed mapping is an optional projection over that lossless row; it does not replace it and never manufactures a complete CLR object from an incomplete PostgreSQL tuple. Convention and explicit mapping `ChangeEntityMappingBuilder<T>` maps public writable CLR properties by convention. Pascal-case property names map to snake-case PostgreSQL columns. Table, key, column, expected type OID, and decoder overrides are explicit and contribute to the stable mapping fingerprint. Property setters and default decoders are compiled once while the mapping is built. The default decoder handles the common pgoutput text forms and fixed-width binary scalar forms without reflection per row. A custom decoder can be supplied for application types. The EF adapter will build the same core mapping contract from EF metadata; it does not create a second mapping system. Rows sharing already-validated, immutable relation metadata reuse that validation. Each mapping retains at most one additional validated relation instance, so reconnects cannot grow an unbounded cache. A new instance is still checked against the schema fingerprint; a matching relation ID alone is never enough to accept a schema change. Failed validation is not cached and still follows your schema-change policy. Common scalar setters remain strongly typed to avoid boxing each value. Convention mapping preserves the model's public-property metadata for trimming. It caches a setter and decoder without constructing new generic types at runtime; NativeAOT uses expression interpretation when dynamic code is unavailable. Generic application wrappers around the builder must carry the same `DynamicallyAccessedMembers(PublicProperties)` requirement on their model type. Explicit custom decoders remain supported. This does not make EF model discovery or every optional connector NativeAOT-compatible; validate the packages and mapping con",
+    "wordCount": 894,
+    "readMinutes": 5,
+    "searchText": "Typed change mappings This guide shows you how to turn the rows in a change into instances of your own classes, either by convention, with explicit column bindings, or from an EF Core model. A mapping is an optional layer over the dynamic `ChangeRow`. The original row, with every [column state](concepts.md#what-a-column-value-can-be), is always still available, and a mapping never invents a complete object from an incomplete row. Map a table to a class Start with a class that has a public parameterless constructor and public settable properties: Build the mapping from the table (`ChangeTable`) that Streams reports for the change, for example `insert.NewRow.Table`. Map by convention: `Id` binds to `id`, `Description` to `description`, and so on (PascalCase to snake_case): Or bind columns explicitly and check their PostgreSQL type OIDs: `Map` returns `InsertChange<T>`, `UpdateChange<T>`, `DeleteChange<T>` or `TruncateChange<T>` for the mapped table, and returns any other change unchanged. Build the mapping once and reuse it; property setters and decoders are prepared when you call `Build`. The default decoders handle these .NET types: Value encoding Decoded by default `Text` (streamed changes, by default) `string`, `byte[]`, `bool`, `short`, `int`, `long`, `float`, `double`, `decimal`, `Guid`, `DateTime`, `DateTimeOffset`, enums `Binary` (snapshot rows) `byte[]`, `bool`, `short`, `int`, `long`, `float`, `double`, `Guid` For anything else, pass a `decoder` (`ChangeColumnDecoder<TProperty>`) to `Property`. A failed decode throws `TypedChangeDecodingException`. Handle partial rows `ChangeRow<T>.HasValue` is `true` only when every mapped column had a value. It is `false` when any mapped column is not published, missing from an old row, or an unchanged TOASTed value. In that case `Value` is not set; use `ChangeRow<T>.Columns` to read the raw row instead. A database `NULL` in a non-nullable property is a decoding failure, not a default value. Use nullable property types for",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Typed change mappings</h1>\n<p>Streams always retains the dynamic <code>ChangeRow</code> and its explicit per-column states. Typed mapping is an optional projection over that lossless row; it does not replace it and never manufactures a complete CLR object from an incomplete PostgreSQL tuple.</p>\n<h2>Convention and explicit mapping</h2>\n<p><code>ChangeEntityMappingBuilder&lt;T&gt;</code> maps public writable CLR properties by convention. Pascal-case property names map to snake-case PostgreSQL columns. Table, key, column, expected type OID, and decoder overrides are explicit and contribute to the stable mapping fingerprint.</p>\n"
+        "html": "<h1>Typed change mappings</h1>\n<p>This guide shows you how to turn the rows in a change into instances of your\nown classes, either by convention, with explicit column bindings, or from an\nEF Core model.</p>\n<p>A mapping is an optional layer over the dynamic <code>ChangeRow</code>. The original row,\nwith every <a href=\"/documentation/real-time/streams-concepts#what-a-column-value-can-be\">column state</a>, is always\nstill available, and a mapping never invents a complete object from an\nincomplete row.</p>\n<h2>Map a table to a class</h2>\n<p>Start with a class that has a public parameterless constructor and public\nsettable properties:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var mapping = new ChangeEntityMappingBuilder<Order>()\n    .ToTable(\"sales\", \"orders\")\n    .HasKey(\"id\")\n    .Property(order => order.Id, \"id\", expectedTypeOid: 23)\n    .Property(order => order.DisplayName, \"display_name\", expectedTypeOid: 25)\n    .Build(relation);\n\nChange mapped = mapping.Map(dynamicChange);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> mapping = <span class=\"hljs-keyword\">new</span> ChangeEntityMappingBuilder&lt;Order&gt;()\n    .ToTable(<span class=\"hljs-string\">&quot;sales&quot;</span>, <span class=\"hljs-string\">&quot;orders&quot;</span>)\n    .HasKey(<span class=\"hljs-string\">&quot;id&quot;</span>)\n    .Property(order =&gt; order.Id, <span class=\"hljs-string\">&quot;id&quot;</span>, expectedTypeOid: <span class=\"hljs-number\">23</span>)\n    .Property(order =&gt; order.DisplayName, <span class=\"hljs-string\">&quot;display_name&quot;</span>, expectedTypeOid: <span class=\"hljs-number\">25</span>)\n    .Build(relation);\n\nChange mapped = mapping.Map(dynamicChange);\n",
+        "code": "public sealed class Order\n{\n    public long Id { get; set; }\n\n    public string Description { get; set; } = \"\";\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">Order</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">long</span> Id { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; }\n\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-built_in\">string</span> Description { <span class=\"hljs-keyword\">get</span>; <span class=\"hljs-keyword\">set</span>; } = <span class=\"hljs-string\">&quot;&quot;</span>;\n}\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Property setters and default decoders are compiled once while the mapping is built. The default decoder handles the common pgoutput text forms and fixed-width binary scalar forms without reflection per row. A custom decoder can be supplied for application types. The EF adapter will build the same core mapping contract from EF metadata; it does not create a second mapping system.</p>\n<p>Rows sharing already-validated, immutable relation metadata reuse that validation.\nEach mapping retains at most one additional validated relation instance, so\nreconnects cannot grow an unbounded cache. A new instance is still checked against\nthe schema fingerprint; a matching relation ID alone is never enough to accept a\nschema change. Failed validation is not cached and still follows your schema-change\npolicy. Common scalar setters remain strongly typed to avoid boxing each value.</p>\n<p>Convention mapping preserves the model’s public-property metadata for trimming.\nIt caches a setter and decoder without constructing new generic types at runtime;\nNativeAOT uses expression interpretation when dynamic code is unavailable.\nGeneric application wrappers around the builder must carry the same\n<code>DynamicallyAccessedMembers(PublicProperties)</code> requirement on their model type.\nExplicit custom decoders remain supported. This does not make EF model discovery\nor every optional connector NativeAOT-compatible; validate the packages and\nmapping configuration used by the application.</p>\n<p>The database-free core smoke application can be published and run directly:</p>\n"
+        "html": "<p>Build the mapping from the table (<code>ChangeTable</code>) that Streams reports for the\nchange, for example <code>insert.NewRow.Table</code>. Map by convention: <code>Id</code> binds to\n<code>id</code>, <code>Description</code> to <code>description</code>, and so on (PascalCase to snake_case):</p>\n"
       },
       {
         "kind": "code",
-        "code": "dotnet publish tests/BlueTusk.Streams.NativeAotSmoke -c Release -r win-x64 -o artifacts/streams-aot\n./artifacts/streams-aot/BlueTusk.Streams.NativeAotSmoke.exe\n",
-        "highlighted": "dotnet publish tests/BlueTusk.Streams.NativeAotSmoke <span class=\"hljs-literal\">-c</span> Release <span class=\"hljs-literal\">-r</span> win<span class=\"hljs-literal\">-x64</span> <span class=\"hljs-literal\">-o</span> artifacts/streams<span class=\"hljs-literal\">-aot</span>\n./artifacts/streams<span class=\"hljs-literal\">-aot</span>/BlueTusk.Streams.NativeAotSmoke.exe\n",
-        "language": "powershell"
+        "code": "var mapping = new ChangeEntityMappingBuilder<Order>().Build(relation);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> mapping = <span class=\"hljs-keyword\">new</span> ChangeEntityMappingBuilder&lt;Order&gt;().Build(relation);\n",
+        "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>It checks convention and explicit mappings, nullable/enum values, and small and\n4 MiB spool replay. To exercise trimming separately, publish with\n<code>-p:PublishAot=false -p:PublishTrimmed=true -p:TrimMode=full</code>. Choose the runtime\nidentifier for the target OS and run the produced executable on that OS.</p>\n<p><code>BlueTusk.Streams.EntityFrameworkCore</code> derives the table/schema, primary-key order, CLR properties, and column overrides from an EF <code>IModel</code>:</p>\n"
+        "html": "<p>Or bind columns explicitly and check their PostgreSQL type OIDs:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var mapping = new ChangeEntityMappingBuilder<Order>()\n    .ToTable(\"app\", \"orders\")\n    .HasKey(\"id\")\n    .Property(order => order.Id, \"id\", expectedTypeOid: 20)\n    .Property(order => order.Description, \"description\", expectedTypeOid: 25)\n    .Build(relation);\n\nif (mapping.Map(dynamicChange) is InsertChange<Order> { NewRow.HasValue: true } insert)\n{\n    Console.WriteLine($\"Order {insert.NewRow.Value!.Id}: {insert.NewRow.Value.Description}\");\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> mapping = <span class=\"hljs-keyword\">new</span> ChangeEntityMappingBuilder&lt;Order&gt;()\n    .ToTable(<span class=\"hljs-string\">&quot;app&quot;</span>, <span class=\"hljs-string\">&quot;orders&quot;</span>)\n    .HasKey(<span class=\"hljs-string\">&quot;id&quot;</span>)\n    .Property(order =&gt; order.Id, <span class=\"hljs-string\">&quot;id&quot;</span>, expectedTypeOid: <span class=\"hljs-number\">20</span>)\n    .Property(order =&gt; order.Description, <span class=\"hljs-string\">&quot;description&quot;</span>, expectedTypeOid: <span class=\"hljs-number\">25</span>)\n    .Build(relation);\n\n<span class=\"hljs-keyword\">if</span> (mapping.Map(dynamicChange) <span class=\"hljs-keyword\">is</span> InsertChange&lt;Order&gt; { NewRow.HasValue: <span class=\"hljs-literal\">true</span> } insert)\n{\n    Console.WriteLine(<span class=\"hljs-string\">$&quot;Order <span class=\"hljs-subst\">{insert.NewRow.Value!.Id}</span>: <span class=\"hljs-subst\">{insert.NewRow.Value.Description}</span>&quot;</span>);\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>Map</code> returns <code>InsertChange&lt;T&gt;</code>, <code>UpdateChange&lt;T&gt;</code>, <code>DeleteChange&lt;T&gt;</code> or\n<code>TruncateChange&lt;T&gt;</code> for the mapped table, and returns any other change\nunchanged. Build the mapping once and reuse it; property setters and decoders\nare prepared when you call <code>Build</code>.</p>\n<p>The default decoders handle these .NET types:</p>\n<table>\n<thead>\n<tr>\n<th>Value encoding</th>\n<th>Decoded by default</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Text</code> (streamed changes, by default)</td>\n<td><code>string</code>, <code>byte[]</code>, <code>bool</code>, <code>short</code>, <code>int</code>, <code>long</code>, <code>float</code>, <code>double</code>, <code>decimal</code>, <code>Guid</code>, <code>DateTime</code>, <code>DateTimeOffset</code>, enums</td>\n</tr>\n<tr>\n<td><code>Binary</code> (snapshot rows)</td>\n<td><code>byte[]</code>, <code>bool</code>, <code>short</code>, <code>int</code>, <code>long</code>, <code>float</code>, <code>double</code>, <code>Guid</code></td>\n</tr>\n</tbody>\n</table>\n<p>For anything else, pass a <code>decoder</code> (<code>ChangeColumnDecoder&lt;TProperty&gt;</code>) to\n<code>Property</code>. A failed decode throws <code>TypedChangeDecodingException</code>.</p>\n<h2>Handle partial rows</h2>\n<p><code>ChangeRow&lt;T&gt;.HasValue</code> is <code>true</code> only when every mapped column had a value.\nIt is <code>false</code> when any mapped column is not published, missing from an old row,\nor an unchanged TOASTed value. In that case <code>Value</code> is not set; use\n<code>ChangeRow&lt;T&gt;.Columns</code> to read the raw row instead.</p>\n<p>A database <code>NULL</code> in a non-nullable property is a decoding failure, not a\ndefault value. Use nullable property types for nullable columns.</p>\n<p>For complete old rows on update and delete, set the table’s replica identity to\n<code>FULL</code>.</p>\n<h2>Decide what happens when the schema changes</h2>\n<p>Each mapping has two fingerprints:</p>\n<ul>\n<li><code>SchemaFingerprint</code> describes the table: schema, name, replica identity, and\neach column’s name, type, modifier and key flag.</li>\n<li><code>MappingFingerprint</code> adds your class and its column bindings.</li>\n</ul>\n<p>Use <code>MappingFingerprint</code> as the <code>mappingFingerprint</code> of your checkpoint, so a\nchanged mapping cannot silently reuse an old checkpoint.</p>\n<p>When a change arrives for a table whose shape differs from the one you built\nthe mapping with, the <code>ChangeMappingPolicy</code> decides what happens:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var mapping = new ChangeEntityMappingBuilder<Order>().Build(\n    relation,\n    new ChangeMappingPolicy\n    {\n        SchemaChangeMode = SchemaChangeMode.Fail,\n        DecodingFailureMode = TypedDecodingFailureMode.ContinueDynamically,\n    });\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> mapping = <span class=\"hljs-keyword\">new</span> ChangeEntityMappingBuilder&lt;Order&gt;().Build(\n    relation,\n    <span class=\"hljs-keyword\">new</span> ChangeMappingPolicy\n    {\n        SchemaChangeMode = SchemaChangeMode.Fail,\n        DecodingFailureMode = TypedDecodingFailureMode.ContinueDynamically,\n    });\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th><code>SchemaChangeMode</code></th>\n<th>When the table shape changes</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>PauseAndReload</code> (default)</td>\n<td>Throws <code>ChangeSchemaReloadRequiredException</code> with both table definitions. Rebuild the mapping and retry.</td>\n</tr>\n<tr>\n<td><code>Fail</code></td>\n<td>Throws <code>ChangeSchemaMismatchException</code>.</td>\n</tr>\n<tr>\n<td><code>ContinueDynamically</code></td>\n<td>Returns the untyped change.</td>\n</tr>\n<tr>\n<td><code>ApplicationCallback</code></td>\n<td>Calls <code>SchemaChangeCallback</code>, which returns <code>Pause</code>, <code>Fail</code> or <code>ContinueDynamically</code>.</td>\n</tr>\n</tbody>\n</table>\n<table>\n<thead>\n<tr>\n<th><code>TypedDecodingFailureMode</code></th>\n<th>When a value cannot be decoded</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Pause</code> (default)</td>\n<td>Throws <code>TypedChangeDecodingException</code>.</td>\n</tr>\n<tr>\n<td><code>ContinueDynamically</code></td>\n<td>Returns the untyped change.</td>\n</tr>\n<tr>\n<td><code>ApplicationCallback</code></td>\n<td>Calls <code>DecodingFailureCallback</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>Do not acknowledge a delivery after a mapping exception. Fix the cause, then\nrestart; the transaction is delivered again.</p>\n<h2>Build mappings from an EF Core model</h2>\n<p><code>BlueTusk.Streams.EntityFrameworkCore</code> reads table, schema, key and column names\nfrom your EF Core model:</p>\n"
       },
       {
         "kind": "code",
@@ -2159,7 +5477,27 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>Validation runs at startup. A table mismatch, keyless entity, unpublished mapped property, shadow/field-only property without a public CLR setter, duplicate column binding, or unpublished primary-key column fails with a stable <code>BTSEF...</code> diagnostic. The adapter deliberately rejects a partial EF entity instead of filling missing properties with CLR defaults and claiming a complete value.</p>\n<p><code>SchemaFingerprint</code> describes the complete source relation shape: schema, table, replica identity, ordered columns, PostgreSQL type identity, modifiers, and key flags. It deliberately excludes the transient relation OID. <code>MappingFingerprint</code> additionally describes the CLR type, property/column bindings, expected OIDs, and configured keys. Both are SHA-256 fingerprints over canonical data and are suitable for checkpoint compatibility checks.</p>\n<h2>Partial rows remain partial</h2>\n<p><code>ChangeRow&lt;T&gt;.HasValue</code> is true only when every mapped member was materialised. The value is absent when any mapped column is:</p>\n<ul>\n<li>not published;</li>\n<li>unavailable in an old-row image; or</li>\n<li>an unchanged TOAST value.</li>\n</ul>\n<p>The original <code>ChangeRow</code> remains available through <code>ChangeRow&lt;T&gt;.Columns</code>, including database null and decoding-failure state. A database null assigned to a non-nullable CLR property is a typed decoding failure, not a default CLR value.</p>\n<h2>Drift and failure policy</h2>\n<p>The default schema mode is <code>PauseAndReload</code>. A changed relation raises <code>ChangeSchemaReloadRequiredException</code> with both fingerprints and relation definitions. The other deliberate modes are <code>Fail</code>, <code>ContinueDynamically</code>, and <code>ApplicationCallback</code>.</p>\n<p>Typed decoding failures also pause by default. Dynamic continuation and application callback are opt-in. Dynamic continuation returns the original untyped change so an operator policy can preserve information without claiming successful typed decoding.</p>\n<h2>Snapshot and transaction consumer lifecycle</h2>\n<p><code>IChangeStreamConsumer</code> keeps bootstrap delivery separate from normal transaction delivery:</p>\n<ol>\n<li><code>ResetSnapshotAsync</code> establishes a new epoch and identifies an abandoned epoch when restarting.</li>\n<li><code>StartSnapshotAsync</code> declares the bounded table set.</li>\n<li><code>ConsumeSnapshotBatchAsync</code> delivers immutable, keyed snapshot rows.</li>\n<li><code>CompleteSnapshotAsync</code> closes that epoch.</li>\n<li><code>ConsumeTransactionAsync</code> receives normal acknowledgement-bearing transaction deliveries.</li>\n</ol>\n<p>Snapshot row identity is the snapshot epoch plus table identity and a length-delimited hash of the key states and values. It is intentionally distinct from <code>ChangeId</code>, which is derived from WAL transaction identity.</p>\n"
+        "html": "<p>with a context such as:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "public sealed class ShopContext : DbContext\n{\n    public DbSet<Order> Orders => Set<Order>();\n\n    protected override void OnConfiguring(DbContextOptionsBuilder options) =>\n        options.UseBlueTusk(\"Host=localhost;Database=app\");\n\n    protected override void OnModelCreating(ModelBuilder model) =>\n        model.Entity<Order>(order =>\n        {\n            order.ToTable(\"orders\", \"app\");\n            order.Property(o => o.Id).HasColumnName(\"id\");\n            order.Property(o => o.Description).HasColumnName(\"description\");\n        });\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">ShopContext</span> : <span class=\"hljs-title\">DbContext</span>\n{\n    <span class=\"hljs-keyword\">public</span> DbSet&lt;Order&gt; Orders =&gt; Set&lt;Order&gt;();\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">void</span> <span class=\"hljs-title\">OnConfiguring</span>(<span class=\"hljs-params\">DbContextOptionsBuilder options</span>)</span> =&gt;\n        options.UseBlueTusk(<span class=\"hljs-string\">&quot;Host=localhost;Database=app&quot;</span>);\n\n    <span class=\"hljs-function\"><span class=\"hljs-keyword\">protected</span> <span class=\"hljs-keyword\">override</span> <span class=\"hljs-keyword\">void</span> <span class=\"hljs-title\">OnModelCreating</span>(<span class=\"hljs-params\">ModelBuilder model</span>)</span> =&gt;\n        model.Entity&lt;Order&gt;(order =&gt;\n        {\n            order.ToTable(<span class=\"hljs-string\">&quot;orders&quot;</span>, <span class=\"hljs-string\">&quot;app&quot;</span>);\n            order.Property(o =&gt; o.Id).HasColumnName(<span class=\"hljs-string\">&quot;id&quot;</span>);\n            order.Property(o =&gt; o.Description).HasColumnName(<span class=\"hljs-string\">&quot;description&quot;</span>);\n        });\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Building the model does not open a connection. <code>Create</code> checks the model\nagainst the table at startup and throws <code>EfChangeMappingValidationException</code>\nwith one or more <code>BTSEF...</code> codes if, for example, the table differs, the entity\nhas no key, a mapped property or key column is not published, a property has\nno public setter, or two properties bind the same column. It never fills\nmissing properties with defaults.</p>\n<h2>Use mappings with NativeAOT and trimming</h2>\n<blockquote>\n<p><strong>New in 1.1.0:</strong> NativeAOT support for typed mappings is not in 1.0.0 or\n1.1.0-rc.1.</p>\n</blockquote>\n<p>Convention mapping keeps the public-property metadata it needs for trimming and\nworks under NativeAOT. If you wrap <code>ChangeEntityMappingBuilder&lt;T&gt;</code> in your own\ngeneric code, put\n<code>[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]</code>\non your type parameter too. EF Core model discovery and some optional packages\nare not NativeAOT compatible; test the packages you use.</p>\n<h2>Snapshot rows</h2>\n<p>Snapshot batches (see <a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot and catch-up</a>) contain\n<code>ChangeSnapshotRow</code> values. Map them with <code>mapping.MapRow(row.Row)</code>. Copied\nvalues use binary encoding, so text columns need a decoder:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var mapping = new ChangeEntityMappingBuilder<Order>()\n    .Property(\n        order => order.Description,\n        \"description\",\n        decoder: (column, value) => Encoding.UTF8.GetString(value.Data.Span))\n    .Build(relation);\n",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> mapping = <span class=\"hljs-keyword\">new</span> ChangeEntityMappingBuilder&lt;Order&gt;()\n    .Property(\n        order =&gt; order.Description,\n        <span class=\"hljs-string\">&quot;description&quot;</span>,\n        decoder: (column, <span class=\"hljs-keyword\">value</span>) =&gt; Encoding.UTF8.GetString(<span class=\"hljs-keyword\">value</span>.Data.Span))\n    .Build(relation);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>This decoder works for both text and binary values, because PostgreSQL sends\n<code>text</code> as UTF-8 in both forms. A snapshot row’s identity is its\n<code>SnapshotRowId</code> (epoch, table and key), not a <code>ChangeId</code>.</p>\n<h2>Related pages</h2>\n<ul>\n<li><a href=\"/documentation/real-time/streams-concepts\">Concepts</a></li>\n<li><a href=\"/documentation/real-time/streams-configuration#typed-mappings\">Configuration: mapping policy</a></li>\n</ul>\n"
       }
     ]
   },
@@ -2175,7 +5513,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1168,
+    "order": 1193,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -2208,7 +5546,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1169,
+    "order": 1196,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -2240,7 +5578,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1170,
+    "order": 1198,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -2421,7 +5759,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1172,
+    "order": 1200,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
