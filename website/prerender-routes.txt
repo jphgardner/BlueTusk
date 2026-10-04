@@ -154,6 +154,7 @@
 /documentation/operations/operations-application-platform-health
 /documentation/operations/operations-approval-evidence
 /documentation/operations/operations-core-performance-evidence
+/documentation/operations/operations-core-recovery-rehearsals
 /documentation/operations/operations-endurance-disturbance-evidence
 /documentation/operations/operations-fuzz-finding-handoff
 /documentation/operations/operations-observability

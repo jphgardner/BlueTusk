@@ -1647,7 +1647,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1130,
+    "order": 1131,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -1685,7 +1685,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1150,
+    "order": 1151,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -1717,7 +1717,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1151,
+    "order": 1152,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -1769,7 +1769,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1152,
+    "order": 1153,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -1811,7 +1811,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1153,
+    "order": 1154,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -1854,7 +1854,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1155,
+    "order": 1156,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -1887,7 +1887,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1157,
+    "order": 1158,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -1955,7 +1955,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1159,
+    "order": 1160,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -2006,7 +2006,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1160,
+    "order": 1161,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -2038,7 +2038,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1161,
+    "order": 1162,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -2087,7 +2087,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1164,
+    "order": 1165,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -2170,7 +2170,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1167,
+    "order": 1168,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -2203,7 +2203,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1168,
+    "order": 1169,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -2235,7 +2235,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1169,
+    "order": 1170,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -2416,7 +2416,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1171,
+    "order": 1172,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
