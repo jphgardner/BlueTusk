@@ -1,5 +1,9 @@
 # BlueTusk.Documents
 
+> **Preview.** This family is `0.1.0-preview.1` and is not published to a
+> package feed yet. It is not part of the 1.1.0 release and its API may change.
+> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
+
 BlueTusk.Documents `0.1.0-preview.1` provides typed PostgreSQL JSONB documents and optimistic atomic write sessions. The core accepts `DbDataSource`, depends on neither Npgsql nor EF Core, and requires explicit `JsonTypeInfo<T>` metadata for serialization and deserialization. BlueTusk's native data source works directly.
 
 ```csharp
@@ -166,7 +170,7 @@ Historical or future document schema versions are explicit and are not deseriali
 
 `BlueTusk.Documents.Live` creates an ID-ordered bounded query plan over the typed store. It snapshots JSONB containment filters, fingerprints schema/collection/schema version/filter/window/limit, declares the document-table dependency and compares rows using document revisions. The tenant resolver receives the server's authenticated `LiveSecurityScope`; no tenant query argument is accepted from the client. The caller versions authorization/query behavior through the plan and scope policy versions. The result is the first bounded page, including the store's byte limit; it is a live window rather than a full collection subscription.
 
-Use the existing `PostgreSqlLiveInvalidationStore` and `LiveInvalidationConsumer` to persist committed Streams invalidations before acknowledging WAL, then refresh Live sessions authoritatively. Table dependencies currently invalidate all windows over that table; query execution rechecks each authenticated tenant filter. This does not provide row-level ACL policy automatically. The actual PostgreSQL integration test publishes the document table, consumes real pgoutput, maps one atomic replace/insert transaction, deduplicates its durable invalidation, and verifies tenant-scoped Live update/add/remove diffs. It runs in its own database because a slot created while other sessions create and write tables in the same database can fail permanently; see [creating a slot while the schema changes](../streams/README.md#creating-a-slot-while-the-schema-changes).
+Use the existing `PostgreSqlLiveInvalidationStore` and `LiveInvalidationConsumer` to persist committed Streams invalidations before acknowledging WAL, then refresh Live sessions authoritatively. Table dependencies currently invalidate all windows over that table; query execution rechecks each authenticated tenant filter. This does not provide row-level ACL policy automatically. The actual PostgreSQL integration test publishes the document table, consumes real pgoutput, maps one atomic replace/insert transaction, deduplicates its durable invalidation, and verifies tenant-scoped Live update/add/remove diffs. It runs in its own database because a slot created while other sessions create and write tables in the same database can fail permanently; see [creating a slot while the schema changes](../streams/troubleshooting.md#a-new-slot-fails-with-could-not-map-filenumber).
 
 ## Operator readiness
 

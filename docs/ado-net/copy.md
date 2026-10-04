@@ -1,5 +1,8 @@
 # COPY
 
+This page helps you import and export many rows quickly with PostgreSQL's
+`COPY` command, as raw text, CSV or binary streams, or as typed binary rows.
+
 `BlueTuskConnection.CopyFrom`/`CopyTo` and `CopyFromAsync`/`CopyToAsync` stream raw PostgreSQL COPY payloads without buffering the complete transfer. The SQL command selects text, CSV, or binary format, so the same APIs can preserve any PostgreSQL-supported COPY representation.
 
 ```csharp
@@ -32,7 +35,7 @@ The result reports PostgreSQL's overall and per-column COPY formats, rows affect
 For text and CSV data, the synchronous `CopyTextFrom`/`CopyTextTo` and asynchronous `CopyTextFromAsync`/`CopyTextToAsync` APIs accept caller-owned `TextReader` and `TextWriter` instances. They transcode strict UTF-8 incrementally, including Unicode values split across COPY chunks:
 
 ```csharp
-using var source = new StringReader("1,\"Chloé 🐘\"\n");
+using var source = new StringReader("1,\"Chloé Zoë\"\n");
 await connection.CopyTextFromAsync(
     "COPY app.people (id, name) FROM STDIN WITH (FORMAT CSV)",
     source);
@@ -52,7 +55,7 @@ await using var importer = await connection.BeginBinaryImportAsync(
 
 await importer.StartRowAsync();
 await importer.WriteAsync(42);
-await importer.WriteAsync("Chloé 🐘");
+await importer.WriteAsync("Chloé Zoë");
 
 var rows = await importer.CompleteAsync();
 ```
@@ -93,7 +96,7 @@ If cancellation wins while an import is waiting to start, BlueTusk sends a Postg
 
 Startup and completion errors reported by PostgreSQL are exposed as `BlueTuskException`, including their `SqlState`. A fully drained server error does not by itself make the physical connection unusable. For example, a failed check constraint reports `23514`; the transaction may still need a rollback.
 
-`CompleteAsync` finishes COPY and checks PostgreSQL's row count. It does not commit an enclosing transaction: call that transaction's `CommitAsync` separately. Do not assume a successful return from a rollback-based benchmark measures durable commit performance. For request-level timing and allocation measurement, see the [Provider capture guide](../operations/provider-request-capture.md).
+`CompleteAsync` finishes COPY and checks PostgreSQL's row count. It does not commit an enclosing transaction: call that transaction's `CommitAsync` separately.
 
 The asynchronous import path retains the `bluetusk.copy.bytes` counter and records `bluetusk.commands.duration` from startup through completion or cleanup. Buffered bytes that were never sent are not counted as transferred bytes.
 
@@ -104,7 +107,7 @@ using var importer = connection.BeginBinaryImport(
     "COPY app.people (id, name) FROM STDIN BINARY");
 importer.StartRow();
 importer.Write(42);
-importer.Write("Chloé 🐘");
+importer.Write("Chloé Zoë");
 var rows = importer.Complete();
 
 using var exporter = connection.BeginBinaryExport(

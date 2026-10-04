@@ -1,86 +1,188 @@
 # Typed change mappings
 
-Streams always retains the dynamic `ChangeRow` and its explicit per-column states. Typed mapping is an optional projection over that lossless row; it does not replace it and never manufactures a complete CLR object from an incomplete PostgreSQL tuple.
+This guide shows you how to turn the rows in a change into instances of your
+own classes, either by convention, with explicit column bindings, or from an
+EF Core model.
 
-## Convention and explicit mapping
+A mapping is an optional layer over the dynamic `ChangeRow`. The original row,
+with every [column state](concepts.md#what-a-column-value-can-be), is always
+still available, and a mapping never invents a complete object from an
+incomplete row.
 
-`ChangeEntityMappingBuilder<T>` maps public writable CLR properties by convention. Pascal-case property names map to snake-case PostgreSQL columns. Table, key, column, expected type OID, and decoder overrides are explicit and contribute to the stable mapping fingerprint.
+## Map a table to a class
+
+Start with a class that has a public parameterless constructor and public
+settable properties:
+
+```csharp
+public sealed class Order
+{
+    public long Id { get; set; }
+
+    public string Description { get; set; } = "";
+}
+```
+
+Build the mapping from the table (`ChangeTable`) that Streams reports for the
+change, for example `insert.NewRow.Table`. Map by convention: `Id` binds to
+`id`, `Description` to `description`, and so on (PascalCase to snake_case):
+
+```csharp
+var mapping = new ChangeEntityMappingBuilder<Order>().Build(relation);
+```
+
+Or bind columns explicitly and check their PostgreSQL type OIDs:
 
 ```csharp
 var mapping = new ChangeEntityMappingBuilder<Order>()
-    .ToTable("sales", "orders")
+    .ToTable("app", "orders")
     .HasKey("id")
-    .Property(order => order.Id, "id", expectedTypeOid: 23)
-    .Property(order => order.DisplayName, "display_name", expectedTypeOid: 25)
+    .Property(order => order.Id, "id", expectedTypeOid: 20)
+    .Property(order => order.Description, "description", expectedTypeOid: 25)
     .Build(relation);
 
-Change mapped = mapping.Map(dynamicChange);
+if (mapping.Map(dynamicChange) is InsertChange<Order> { NewRow.HasValue: true } insert)
+{
+    Console.WriteLine($"Order {insert.NewRow.Value!.Id}: {insert.NewRow.Value.Description}");
+}
 ```
 
-Property setters and default decoders are compiled once while the mapping is built. The default decoder handles the common pgoutput text forms and fixed-width binary scalar forms without reflection per row. A custom decoder can be supplied for application types. The EF adapter will build the same core mapping contract from EF metadata; it does not create a second mapping system.
+`Map` returns `InsertChange<T>`, `UpdateChange<T>`, `DeleteChange<T>` or
+`TruncateChange<T>` for the mapped table, and returns any other change
+unchanged. Build the mapping once and reuse it; property setters and decoders
+are prepared when you call `Build`.
 
-Rows sharing already-validated, immutable relation metadata reuse that validation.
-Each mapping retains at most one additional validated relation instance, so
-reconnects cannot grow an unbounded cache. A new instance is still checked against
-the schema fingerprint; a matching relation ID alone is never enough to accept a
-schema change. Failed validation is not cached and still follows your schema-change
-policy. Common scalar setters remain strongly typed to avoid boxing each value.
+The default decoders handle these .NET types:
 
-Convention mapping preserves the model's public-property metadata for trimming.
-It caches a setter and decoder without constructing new generic types at runtime;
-NativeAOT uses expression interpretation when dynamic code is unavailable.
-Generic application wrappers around the builder must carry the same
-`DynamicallyAccessedMembers(PublicProperties)` requirement on their model type.
-Explicit custom decoders remain supported. This does not make EF model discovery
-or every optional connector NativeAOT-compatible; validate the packages and
-mapping configuration used by the application.
+| Value encoding | Decoded by default |
+| --- | --- |
+| `Text` (streamed changes, by default) | `string`, `byte[]`, `bool`, `short`, `int`, `long`, `float`, `double`, `decimal`, `Guid`, `DateTime`, `DateTimeOffset`, enums |
+| `Binary` (snapshot rows) | `byte[]`, `bool`, `short`, `int`, `long`, `float`, `double`, `Guid` |
 
-The database-free core smoke application can be published and run directly:
+For anything else, pass a `decoder` (`ChangeColumnDecoder<TProperty>`) to
+`Property`. A failed decode throws `TypedChangeDecodingException`.
 
-```powershell
-dotnet publish tests/BlueTusk.Streams.NativeAotSmoke -c Release -r win-x64 -o artifacts/streams-aot
-./artifacts/streams-aot/BlueTusk.Streams.NativeAotSmoke.exe
+## Handle partial rows
+
+`ChangeRow<T>.HasValue` is `true` only when every mapped column had a value.
+It is `false` when any mapped column is not published, missing from an old row,
+or an unchanged TOASTed value. In that case `Value` is not set; use
+`ChangeRow<T>.Columns` to read the raw row instead.
+
+A database `NULL` in a non-nullable property is a decoding failure, not a
+default value. Use nullable property types for nullable columns.
+
+For complete old rows on update and delete, set the table's replica identity to
+`FULL`.
+
+## Decide what happens when the schema changes
+
+Each mapping has two fingerprints:
+
+- `SchemaFingerprint` describes the table: schema, name, replica identity, and
+  each column's name, type, modifier and key flag.
+- `MappingFingerprint` adds your class and its column bindings.
+
+Use `MappingFingerprint` as the `mappingFingerprint` of your checkpoint, so a
+changed mapping cannot silently reuse an old checkpoint.
+
+When a change arrives for a table whose shape differs from the one you built
+the mapping with, the `ChangeMappingPolicy` decides what happens:
+
+```csharp
+var mapping = new ChangeEntityMappingBuilder<Order>().Build(
+    relation,
+    new ChangeMappingPolicy
+    {
+        SchemaChangeMode = SchemaChangeMode.Fail,
+        DecodingFailureMode = TypedDecodingFailureMode.ContinueDynamically,
+    });
 ```
 
-It checks convention and explicit mappings, nullable/enum values, and small and
-4 MiB spool replay. To exercise trimming separately, publish with
-`-p:PublishAot=false -p:PublishTrimmed=true -p:TrimMode=full`. Choose the runtime
-identifier for the target OS and run the produced executable on that OS.
+| `SchemaChangeMode` | When the table shape changes |
+| --- | --- |
+| `PauseAndReload` (default) | Throws `ChangeSchemaReloadRequiredException` with both table definitions. Rebuild the mapping and retry. |
+| `Fail` | Throws `ChangeSchemaMismatchException`. |
+| `ContinueDynamically` | Returns the untyped change. |
+| `ApplicationCallback` | Calls `SchemaChangeCallback`, which returns `Pause`, `Fail` or `ContinueDynamically`. |
 
-`BlueTusk.Streams.EntityFrameworkCore` derives the table/schema, primary-key order, CLR properties, and column overrides from an EF `IModel`:
+| `TypedDecodingFailureMode` | When a value cannot be decoded |
+| --- | --- |
+| `Pause` (default) | Throws `TypedChangeDecodingException`. |
+| `ContinueDynamically` | Returns the untyped change. |
+| `ApplicationCallback` | Calls `DecodingFailureCallback`. |
+
+Do not acknowledge a delivery after a mapping exception. Fix the cause, then
+restart; the transaction is delivered again.
+
+## Build mappings from an EF Core model
+
+`BlueTusk.Streams.EntityFrameworkCore` reads table, schema, key and column names
+from your EF Core model:
 
 ```csharp
 var mapping = BlueTuskEfChangeMappingFactory.Create<Order>(dbContext.Model, relation);
 ```
 
-Validation runs at startup. A table mismatch, keyless entity, unpublished mapped property, shadow/field-only property without a public CLR setter, duplicate column binding, or unpublished primary-key column fails with a stable `BTSEF...` diagnostic. The adapter deliberately rejects a partial EF entity instead of filling missing properties with CLR defaults and claiming a complete value.
+with a context such as:
 
-`SchemaFingerprint` describes the complete source relation shape: schema, table, replica identity, ordered columns, PostgreSQL type identity, modifiers, and key flags. It deliberately excludes the transient relation OID. `MappingFingerprint` additionally describes the CLR type, property/column bindings, expected OIDs, and configured keys. Both are SHA-256 fingerprints over canonical data and are suitable for checkpoint compatibility checks.
+```csharp
+public sealed class ShopContext : DbContext
+{
+    public DbSet<Order> Orders => Set<Order>();
 
-## Partial rows remain partial
+    protected override void OnConfiguring(DbContextOptionsBuilder options) =>
+        options.UseBlueTusk("Host=localhost;Database=app");
 
-`ChangeRow<T>.HasValue` is true only when every mapped member was materialised. The value is absent when any mapped column is:
+    protected override void OnModelCreating(ModelBuilder model) =>
+        model.Entity<Order>(order =>
+        {
+            order.ToTable("orders", "app");
+            order.Property(o => o.Id).HasColumnName("id");
+            order.Property(o => o.Description).HasColumnName("description");
+        });
+}
+```
 
-- not published;
-- unavailable in an old-row image; or
-- an unchanged TOAST value.
+Building the model does not open a connection. `Create` checks the model
+against the table at startup and throws `EfChangeMappingValidationException`
+with one or more `BTSEF...` codes if, for example, the table differs, the entity
+has no key, a mapped property or key column is not published, a property has
+no public setter, or two properties bind the same column. It never fills
+missing properties with defaults.
 
-The original `ChangeRow` remains available through `ChangeRow<T>.Columns`, including database null and decoding-failure state. A database null assigned to a non-nullable CLR property is a typed decoding failure, not a default CLR value.
+## Use mappings with NativeAOT and trimming
 
-## Drift and failure policy
+> **New in 1.1.0:** NativeAOT support for typed mappings is not in 1.0.0 or
+> 1.1.0-rc.1.
 
-The default schema mode is `PauseAndReload`. A changed relation raises `ChangeSchemaReloadRequiredException` with both fingerprints and relation definitions. The other deliberate modes are `Fail`, `ContinueDynamically`, and `ApplicationCallback`.
+Convention mapping keeps the public-property metadata it needs for trimming and
+works under NativeAOT. If you wrap `ChangeEntityMappingBuilder<T>` in your own
+generic code, put
+`[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]`
+on your type parameter too. EF Core model discovery and some optional packages
+are not NativeAOT compatible; test the packages you use.
 
-Typed decoding failures also pause by default. Dynamic continuation and application callback are opt-in. Dynamic continuation returns the original untyped change so an operator policy can preserve information without claiming successful typed decoding.
+## Snapshot rows
 
-## Snapshot and transaction consumer lifecycle
+Snapshot batches (see [snapshot and catch-up](snapshot-bootstrap.md)) contain
+`ChangeSnapshotRow` values. Map them with `mapping.MapRow(row.Row)`. Copied
+values use binary encoding, so text columns need a decoder:
 
-`IChangeStreamConsumer` keeps bootstrap delivery separate from normal transaction delivery:
+```csharp
+var mapping = new ChangeEntityMappingBuilder<Order>()
+    .Property(
+        order => order.Description,
+        "description",
+        decoder: (column, value) => Encoding.UTF8.GetString(value.Data.Span))
+    .Build(relation);
+```
 
-1. `ResetSnapshotAsync` establishes a new epoch and identifies an abandoned epoch when restarting.
-2. `StartSnapshotAsync` declares the bounded table set.
-3. `ConsumeSnapshotBatchAsync` delivers immutable, keyed snapshot rows.
-4. `CompleteSnapshotAsync` closes that epoch.
-5. `ConsumeTransactionAsync` receives normal acknowledgement-bearing transaction deliveries.
+This decoder works for both text and binary values, because PostgreSQL sends
+`text` as UTF-8 in both forms. A snapshot row's identity is its
+`SnapshotRowId` (epoch, table and key), not a `ChangeId`.
 
-Snapshot row identity is the snapshot epoch plus table identity and a length-delimited hash of the key states and values. It is intentionally distinct from `ChangeId`, which is derived from WAL transaction identity.
+## Related pages
+
+- [Concepts](concepts.md)
+- [Configuration: mapping policy](configuration.md#typed-mappings)

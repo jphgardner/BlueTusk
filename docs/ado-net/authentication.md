@@ -1,9 +1,15 @@
 # Authentication
 
-BlueTusk negotiates PostgreSQL SCRAM-SHA-256, SCRAM-SHA-256-PLUS channel
-binding, PostgreSQL 18+ OAUTHBEARER, GSSAPI/Kerberos and SSPI, legacy MD5
-challenges, and cleartext password challenges. TLS server
-certificate validation uses the platform policy by default. See PostgreSQL's
+This page helps you choose how your app proves its identity to PostgreSQL:
+passwords and password files, callbacks, access tokens, Kerberos and TLS client
+certificates.
+
+BlueTusk supports SCRAM-SHA-256, SCRAM-SHA-256-PLUS (channel binding),
+PostgreSQL 18+ OAUTHBEARER, GSSAPI/Kerberos and SSPI, legacy MD5, and
+cleartext passwords. By default it requires TLS (`SSL Mode=VerifyFull`) and
+validates the server certificate with the operating system's trust store. The
+connection-string keywords are listed in [Configuration](configuration.md#security-and-tls).
+See PostgreSQL's
 [password authentication](https://www.postgresql.org/docs/current/auth-password.html)
 and [encryption options](https://www.postgresql.org/docs/current/encryption-options.html)
 for server configuration guidance.
@@ -161,9 +167,9 @@ certificate rather than accepting every certificate.
 
 PostgreSQL MD5 challenges are supported for legacy servers, but MD5 is
 deprecated by PostgreSQL and SCRAM should be preferred. A cleartext password
-challenge is accepted over TLS. On plaintext transport it fails closed unless
-`Allow Unencrypted Password=true` is explicitly configured for a trusted
-compatibility environment.
+challenge is accepted over TLS. Without TLS, BlueTusk stops with an error
+unless `Allow Unencrypted Password=true` is set for a trusted compatibility
+environment.
 
 Authentication protocol buffers are overwritten after transport flushes and
 temporary writable password/MD5/OAUTHBEARER/GSSAPI buffers are cleared. Immutable .NET strings

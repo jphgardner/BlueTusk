@@ -13,7 +13,7 @@
     "categoryLabel": "Getting started",
     "slug": "provider-overview",
     "source": "docs/ado-net/README.md",
-    "summary": "Connect a .NET application, run safe SQL, and choose the right command, transaction, batch, or bulk API.",
+    "summary": "Use BlueTusk.Data for direct PostgreSQL commands, transactions, batches, COPY and notifications from .NET.",
     "keywords": ["ado.net", "quickstart", "connection"],
     "order": 20
   },
@@ -158,7 +158,7 @@
     "categoryLabel": "Real time",
     "slug": "platform",
     "source": "docs/realtime-platform/README.md",
-    "summary": "Choose Streams, Sync, Live, Continuous Graph, or Control Plane from the outcome your application needs.",
+    "summary": "Pick the real-time product you need: Streams, Sync, Live, Control Plane or Continuous Graph.",
     "keywords": ["streams", "sync", "live", "contracts"],
     "order": 10
   },
@@ -167,7 +167,7 @@
     "categoryLabel": "Real time",
     "slug": "contracts",
     "source": "docs/realtime-platform/contracts.md",
-    "summary": "Understand when work is durable, when it may be replayed, and what each real-time product guarantees.",
+    "summary": "What each real-time product delivers, when checkpoints move, and what can be duplicated or lost.",
     "keywords": ["contract", "delivery", "checkpoint"],
     "order": 20
   },
@@ -393,7 +393,7 @@
     "categoryLabel": "Getting started",
     "slug": "quickstart",
     "source": "docs/getting-started/quickstart.md",
-    "summary": "Create a .NET console app, install BlueTusk, run a parameterized PostgreSQL query, and understand data-source ownership.",
+    "summary": "Start PostgreSQL, create a .NET console app, and run a parameterized query in five minutes.",
     "keywords": ["quickstart", "install", "query", "connection", "sample"],
     "order": 5
   },
@@ -402,7 +402,7 @@
     "categoryLabel": "Getting started",
     "slug": "concepts",
     "source": "docs/getting-started/concepts.md",
-    "summary": "Learn data-source ownership, sessions, capabilities, type identity, checkpoints, source identity, and release-state vocabulary.",
+    "summary": "The shared vocabulary: data sources, parameters, the type catalogue, logical replication, acknowledgement and checkpoints.",
     "keywords": ["concepts", "data source", "session", "checkpoint", "capability"],
     "order": 8
   },
@@ -429,7 +429,7 @@
     "categoryLabel": "Real time",
     "slug": "operations",
     "source": "docs/realtime-platform/operations.md",
-    "summary": "Operate source identity, checkpoints, relay storage, destinations, failover, reconciliation, rebuilds, and endurance evidence.",
+    "summary": "Runbook for restarts, crashes, failover, WAL growth, restores and rebuilds of the real-time products.",
     "keywords": ["operations", "incident", "failover", "checkpoint", "rebuild"],
     "order": 125
   },
@@ -484,8 +484,8 @@
     "categoryLabel": "Getting started",
     "slug": "install",
     "source": "docs/getting-started/install.md",
-    "summary": "Choose the stable or RC channel, install the smallest NuGet/npm package set, pin exact versions, and verify the resolved dependency graph.",
-    "keywords": ["install", "nuget", "npm", "packages", "1.1.0-rc.1", "versions"],
+    "summary": "Choose packages and a version, add them to a .NET or npm project, and install the bluetusk tool and templates.",
+    "keywords": ["install", "nuget", "npm", "packages", "versions", "1.1.0", "templates", "tool"],
     "order": 2
   },
   {
@@ -506,5 +506,266 @@
     "summary": "Take a BlueTusk application from package selection to a secure, bounded, observable, recoverable, and operator-owned production deployment.",
     "keywords": ["production", "checklist", "deployment", "security", "slo", "rollback", "runbook"],
     "order": 2
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "overview",
+    "source": "docs/getting-started/overview.md",
+    "summary": "What BlueTusk is, the product families and their status, and where to start.",
+    "keywords": ["overview", "products", "families", "status", "introduction"],
+    "order": 1
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "release-1-1-0",
+    "source": "docs/releases/1.1.0.md",
+    "summary": "What 1.1.0 contains, what is new since 1.1.0-rc.1, and how to upgrade.",
+    "keywords": ["release notes", "1.1.0", "upgrade", "whats new"],
+    "order": 4
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "quickstart",
+    "source": "docs/ado-net/quickstart.md",
+    "summary": "Create a table, write rows in a transaction, read them back, and register the data source with dependency injection.",
+    "keywords": ["quickstart", "transaction", "reader", "dependency injection"],
+    "order": 1
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "concepts",
+    "source": "docs/ado-net/concepts.md",
+    "summary": "How data sources, connections, commands, protocols, preparation, transactions and pooling work.",
+    "keywords": ["concepts", "data source", "protocol", "prepare", "pool"],
+    "order": 2
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "configuration",
+    "source": "docs/ado-net/configuration.md",
+    "summary": "Every connection-string keyword and data source option, with types and defaults.",
+    "keywords": ["configuration", "connection string", "keywords", "options"],
+    "order": 3
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "troubleshooting",
+    "source": "docs/ado-net/troubleshooting.md",
+    "summary": "Fix connection, TLS, authentication, pool, timeout, cancellation and type-mapping problems.",
+    "keywords": ["troubleshooting", "errors", "tls", "timeout", "pool"],
+    "order": 4
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "quickstart",
+    "source": "docs/ef-core/quickstart.md",
+    "summary": "Define a DbContext, create and apply a migration, and query PostgreSQL with LINQ.",
+    "keywords": ["quickstart", "dbcontext", "migrations", "linq"],
+    "order": 11
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "concepts",
+    "source": "docs/ef-core/concepts.md",
+    "summary": "How the EF Core provider maps types, batches SaveChanges, handles transactions and builds migrations.",
+    "keywords": ["concepts", "mapping", "batching", "migrations"],
+    "order": 12
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "configuration",
+    "source": "docs/ef-core/configuration.md",
+    "summary": "UseBlueTusk overloads, provider options, model-building extensions and scaffolding options.",
+    "keywords": ["configuration", "UseBlueTusk", "options", "scaffold"],
+    "order": 13
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "troubleshooting",
+    "source": "docs/ef-core/troubleshooting.md",
+    "summary": "Fix setup, translation, migration, concurrency and type-mapping problems.",
+    "keywords": ["troubleshooting", "errors", "migrations", "translation"],
+    "order": 14
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-quickstart",
+    "source": "docs/streams/quickstart.md",
+    "summary": "Prepare PostgreSQL, run a hosted Streams consumer, and process committed transactions with a durable checkpoint.",
+    "keywords": ["streams", "quickstart", "cdc", "replication"],
+    "order": 31
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-concepts",
+    "source": "docs/streams/concepts.md",
+    "summary": "Transactions, acknowledgement, checkpoints, state stores, spooling, snapshots and redelivery.",
+    "keywords": ["streams", "concepts", "checkpoint", "acknowledge"],
+    "order": 32
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-configuration",
+    "source": "docs/streams/configuration.md",
+    "summary": "Streams options, configuration keys, state stores and limits, with defaults.",
+    "keywords": ["streams", "configuration", "options", "slot", "publication"],
+    "order": 33
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-troubleshooting",
+    "source": "docs/streams/troubleshooting.md",
+    "summary": "Fix replication slot, publication, privilege, source identity, spool and lease problems.",
+    "keywords": ["streams", "troubleshooting", "slot", "wal"],
+    "order": 34
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync-quickstart",
+    "source": "docs/sync/quickstart.md",
+    "summary": "Copy a PostgreSQL table into another database with Sync and watch inserts, updates and deletes arrive.",
+    "keywords": ["sync", "quickstart", "replicate"],
+    "order": 91
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync-concepts",
+    "source": "docs/sync/concepts.md",
+    "summary": "Pipelines, whole-transaction apply, idempotency, ordering, checkpoints, rebuilds and retries.",
+    "keywords": ["sync", "concepts", "idempotency", "rebuild"],
+    "order": 92
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync-configuration",
+    "source": "docs/sync/configuration.md",
+    "summary": "Sync options and every destination option, with defaults.",
+    "keywords": ["sync", "configuration", "destinations", "kafka", "s3", "webhooks"],
+    "order": 93
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync-troubleshooting",
+    "source": "docs/sync/troubleshooting.md",
+    "summary": "Fix destination, duplicate, mapping, lag and permission problems.",
+    "keywords": ["sync", "troubleshooting", "lag", "retry"],
+    "order": 94
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-quickstart",
+    "source": "docs/live/quickstart.md",
+    "summary": "Register an authorized live query in ASP.NET Core and show updating rows in a browser.",
+    "keywords": ["live", "quickstart", "browser", "asp.net core"],
+    "order": 111
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-concepts",
+    "source": "docs/live/concepts.md",
+    "summary": "Registered queries, subscriber scope, re-query and diff, snapshots, resume, batching and transports.",
+    "keywords": ["live", "concepts", "subscription", "resume"],
+    "order": 112
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-configuration",
+    "source": "docs/live/configuration.md",
+    "summary": "Live server options, transport settings and browser client options, with defaults.",
+    "keywords": ["live", "configuration", "options", "client"],
+    "order": 113
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-troubleshooting",
+    "source": "docs/live/troubleshooting.md",
+    "summary": "Fix missing updates, authorization, reconnect, resume, limit and proxy problems.",
+    "keywords": ["live", "troubleshooting", "sse", "signalr"],
+    "order": 114
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live-clients",
+    "source": "docs/live/clients.md",
+    "summary": "Use Live from Angular, React, Vue, Svelte or plain TypeScript.",
+    "keywords": ["live", "angular", "react", "vue", "svelte", "npm"],
+    "order": 115
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-quickstart",
+    "source": "docs/control-plane/quickstart.md",
+    "summary": "Host the Control Plane API and dashboard, register a component, and query the inventory.",
+    "keywords": ["control plane", "quickstart", "dashboard"],
+    "order": 121
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-concepts",
+    "source": "docs/control-plane/concepts.md",
+    "summary": "Inventory, components, health, operations, fleet operations, audit and authorization.",
+    "keywords": ["control plane", "concepts", "fleet", "audit"],
+    "order": 122
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-configuration",
+    "source": "docs/control-plane/configuration.md",
+    "summary": "Control Plane options, endpoints, authorization policies, persistence and Kubernetes settings.",
+    "keywords": ["control plane", "configuration", "options"],
+    "order": 123
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-troubleshooting",
+    "source": "docs/control-plane/troubleshooting.md",
+    "summary": "Fix authorization, missing inventory, stale health, rejected operations and Kubernetes problems.",
+    "keywords": ["control plane", "troubleshooting"],
+    "order": 124
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-operations",
+    "source": "docs/control-plane/operations.md",
+    "summary": "Turn on audited operator actions: pause, resume, rebuild and fleet operations.",
+    "keywords": ["control plane", "operations", "audit", "fleet"],
+    "order": 125
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane-kubernetes",
+    "source": "docs/control-plane/kubernetes.md",
+    "summary": "Install and use the BlueTusk Kubernetes operator.",
+    "keywords": ["control plane", "kubernetes", "operator", "crd"],
+    "order": 126
   }
 ]

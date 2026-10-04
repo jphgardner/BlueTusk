@@ -1,5 +1,11 @@
 # Keep graph query results current
 
+> **Preview, not part of 1.1.0.** Continuous Graph needs a PostgreSQL server
+> that provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so
+> this product waits for a PostgreSQL release that ships it. Packages published
+> as `1.0.0` and `1.1.0-rc.1` are for evaluation only. See
+> [product status](../getting-started/install.md#product-status).
+
 BlueTusk Continuous Graph runs a bounded PostgreSQL SQL/PGQ query, keeps its
 result available to Live clients, and updates that result after relevant
 committed changes.

@@ -1,166 +1,122 @@
-# Use BlueTusk with Entity Framework Core
+# EF Core provider
 
-Use this guide when an application already uses EF Core, or when you want LINQ,
-change tracking, and migrations on top of BlueTusk's PostgreSQL connection
-pool. If you only need SQL commands, start with the
-[ADO.NET guide](../ado-net/README.md).
+This page helps you decide whether to use BlueTusk's Entity Framework Core
+provider and where to start. The provider lets you use LINQ, change tracking,
+migrations and database-first scaffolding with PostgreSQL, on top of BlueTusk's
+own PostgreSQL driver. It does not use Npgsql.
 
-## What you will build
+## When to use it
 
-A normal ASP.NET Core application with:
+Use the EF Core provider when:
 
-- one application-owned `BlueTuskDataSource`;
-- one scoped `DbContext` per unit of work;
-- LINQ queries and `SaveChangesAsync`; and
-- migrations run as a controlled deployment step.
+- your application already uses EF Core, or you want LINQ queries and change
+  tracking instead of hand-written SQL;
+- you want EF Core migrations to own your PostgreSQL schema, including
+  PostgreSQL-only objects such as enums, extensions, `GIN` indexes and
+  row-level security; or
+- you want to generate entity classes from an existing database.
 
-## 1. Install the provider
+Use the [ADO.NET provider](../ado-net/README.md) (`BlueTusk.Data`) instead when
+you only need SQL commands, binary `COPY`, notifications or replication. You can
+use both in one application: they share the same data source and connection
+pool.
 
-Keep all BlueTusk packages on the same exact version:
+## What it supports
+
+- **Queries**: standard LINQ, plus PostgreSQL operators and functions through
+  `EF.Functions` (arrays, ranges, JSON, full-text search, window functions and
+  more).
+- **PostgreSQL types**: arrays and `List<T>`, ranges and multiranges, `json`
+  and `jsonb` (including EF's `ToJson()`), network, geometric and bit-string
+  types, and your own enums, composites and domains.
+- **Saving**: change tracking, generated keys (identity columns), sequences,
+  `xmin` optimistic concurrency, transactions and savepoints.
+  **New in 1.1.0:** `SaveChanges` sends inserts, updates and deletes in
+  batches of up to 42 statements. In 1.0.0 and 1.1.0-rc.1 each statement was
+  a separate command.
+- **Migrations**: tables, keys, indexes and sequences, plus PostgreSQL enums,
+  domains, extensions, collations, partitioning, triggers, views, functions,
+  publications and row-level security.
+- **Scaffolding**: `dotnet ef dbcontext scaffold` or the `bluetusk scaffold`
+  command.
+
+## Packages
+
+| Package | Install it when | Notes |
+| --- | --- | --- |
+| `BlueTusk.EntityFrameworkCore` | Always | The provider. Brings in `BlueTusk.Data`. |
+| `BlueTusk.EntityFrameworkCore.Design` | You use `dotnet ef` (migrations or scaffolding) | Design-time services. |
+| `Microsoft.EntityFrameworkCore.Design` | You use `dotnet ef` | Microsoft's design-time package. Not installed for you. |
+| `BlueTusk.Tool` | You want the `bluetusk scaffold` command | A .NET tool, not a project package. |
+| `BlueTusk.Extensions.*.EntityFrameworkCore` | You use PostGIS, pgvector, citext or TimescaleDB | See [PostgreSQL extensions](../extensions/README.md). |
 
 ```powershell
 dotnet add package BlueTusk.EntityFrameworkCore
-dotnet add package BlueTusk.EntityFrameworkCore.Design
-dotnet add package Microsoft.EntityFrameworkCore.Design
 ```
 
-See [installation](../getting-started/install.md) for stable and preview version
-selection.
+Keep every BlueTusk package on the same version. See
+[Install BlueTusk](../getting-started/install.md) for release channels and
+version pinning.
 
-## 2. Create the model and context
+## Requirements and status
 
-```csharp
-using Microsoft.EntityFrameworkCore;
+- .NET 10 (`net10.0`).
+- EF Core **10.0.11**. Use version 10.0.11 for `Microsoft.EntityFrameworkCore.*`
+  packages and the `dotnet-ef` tool.
+- PostgreSQL 15, 16, 17 or 18. PostgreSQL 19 is preview only.
 
-public sealed class Order
-{
-    public long Id { get; set; }
-    public string Customer { get; set; } = "";
-    public decimal Total { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-}
+The EF Core provider is part of the Core release line. `1.0.0` is the current
+stable release and `1.1.0-rc.1` is the release candidate. `1.1.0` is not
+published yet. PostgreSQL 19 property-graph (SQL/PGQ) queries through EF Core
+are a [preview feature](../graph/README.md).
 
-public sealed class OrdersContext(DbContextOptions<OrdersContext> options)
-    : DbContext(options)
-{
-    public DbSet<Order> Orders => Set<Order>();
+## A taste of the code
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Order>(order =>
-        {
-            order.ToTable("orders", "app");
-            order.HasKey(x => x.Id);
-            order.Property(x => x.Customer).HasMaxLength(200);
-            order.Property(x => x.Total).HasPrecision(18, 2);
-        });
-    }
-}
-```
-
-## 3. Register it once
-
-The data source is a singleton because it owns the physical connection pool.
-The context remains scoped:
+Create one data source for the application, then give it to EF Core:
 
 ```csharp
 using BlueTusk.Data;
 using Microsoft.EntityFrameworkCore;
 
-builder.Services.AddSingleton(_ =>
-    new BlueTuskDataSourceBuilder(
-        builder.Configuration.GetConnectionString("PostgreSQL")!)
-        .Build());
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
 
-builder.Services.AddDbContext<OrdersContext>((services, options) =>
-    options.UseBlueTusk(services.GetRequiredService<BlueTuskDataSource>()));
+var options = new DbContextOptionsBuilder<LibraryContext>()
+    .UseBlueTusk(dataSource)
+    .Options;
+
+await using var db = new LibraryContext(options);
+var classics = await db.Books
+    .Where(book => book.Published < 1970)
+    .OrderBy(book => book.Title)
+    .ToListAsync();
 ```
 
-Do not create a new data source for every request. Doing so creates new pools
-instead of reusing healthy PostgreSQL sessions.
+`LibraryContext` is an ordinary `DbContext`. The
+[quick start](quickstart.md) builds it step by step.
 
-## 4. Read and write data
+## Guides
 
-```csharp
-app.MapGet("/orders/{id:long}", async (long id, OrdersContext db) =>
-    await db.Orders.AsNoTracking().SingleOrDefaultAsync(order => order.Id == id)
-        is { } order
-        ? Results.Ok(order)
-        : Results.NotFound());
+| Task | Where |
+| --- | --- |
+| Register the provider in an app with dependency injection | [Concepts: data source and DbContext](concepts.md#how-long-should-the-data-source-and-dbcontext-live) |
+| Create and apply migrations | [Quick start](quickstart.md) and [Concepts: migrations](concepts.md#how-do-migrations-work) |
+| Generate a model from an existing database | [Concepts: scaffolding](concepts.md#how-do-i-start-from-an-existing-database) and [scaffold options](configuration.md#scaffold-command-options) |
+| Map PostgreSQL enums, arrays, ranges and JSON | [Concepts: type mapping](concepts.md#how-are-net-types-mapped-to-postgresql) and [model configuration](configuration.md#model-configuration) |
+| Handle concurrency conflicts and retries | [Concepts: concurrency](concepts.md#how-do-i-detect-concurrent-updates) |
+| Use PostGIS, pgvector, citext or TimescaleDB | [PostgreSQL extensions](../extensions/README.md) |
+| Look up a PostgreSQL function, operator or migration helper | [Full EF Core reference](reference.md) |
 
-app.MapPost("/orders", async (Order order, OrdersContext db) =>
-{
-    db.Orders.Add(order);
-    await db.SaveChangesAsync();
-    return Results.Created($"/orders/{order.Id}", order);
-});
-```
+## Next steps
 
-Use `AsNoTracking` for read-only results. Keep a context inside one request or
-unit of work; it is not thread-safe.
+1. [Quick start](quickstart.md): build a working app with migrations in about
+   ten minutes.
+2. [Concepts](concepts.md): lifetimes, type mapping, batching, concurrency,
+   transactions and migrations.
+3. [Configuration](configuration.md): every `UseBlueTusk` option, model
+   configuration method and scaffold option.
+4. [Troubleshooting](troubleshooting.md): common errors and how to fix them.
 
-### Save several changes together
-
-Add or change the entities first, then call `SaveChangesAsync` once:
-
-```csharp
-db.Orders.AddRange(newOrders);
-await db.SaveChangesAsync(cancellationToken);
-```
-
-In the 1.2 candidate, BlueTusk automatically groups writes into bounded batches
-instead of sending each entity in a separate database round trip. The default
-is up to 42 modification commands per batch. Generated IDs and computed values
-still flow back to the correct entities. Normal EF logging, interceptors,
-optimistic-concurrency checks and transaction handling remain in use.
-
-This does not turn a `DbContext` into a parallel writer. Do not run overlapping
-operations on the same context. For large imports that do not need change
-tracking, consider [binary COPY](../ado-net/copy.md).
-
-You can retain one-command batches when diagnosing an application-specific
-issue:
-
-```csharp
-options.UseBlueTusk(dataSource, provider => provider.MaxBatchSize(1));
-```
-
-Leave the default in place until your own measurements justify another limit.
-See [batching, transactions and recovery](reference.md#savechanges-batching)
-for the bounds and failure behavior.
-
-## 5. Create and apply migrations
-
-```powershell
-dotnet ef migrations add InitialCreate
-dotnet ef migrations script --idempotent --output artifacts/database.sql
-```
-
-Review the SQL and apply it through a deployment job using a migration role.
-Do not let every application replica race to migrate the database at startup.
-
-## Verify the setup
-
-Run the repository's executable example when developing BlueTusk itself:
-
-```powershell
-$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Database=app;Username=app;Password=local-only;SSL Mode=Disable;Channel Binding=Disable"
-dotnet run --project samples/BlueTusk.Samples.EntityFrameworkCore
-```
-
-The TLS-disabled connection is for an isolated local database only.
-
-## Production defaults
-
-- Supply the connection string from the deployment secret store.
-- Enable TLS certificate and hostname validation.
-- Set explicit command timeouts and a measured maximum pool size.
-- Use a least-privilege application role and a separate migration role.
-- Log query duration and failure metadata, not parameter values.
-
-## Go deeper only when needed
-
-The [EF Core reference](reference.md) covers PostgreSQL mappings, translated
-operators and functions, arrays, migrations, scaffolding, extension packages,
-and SQL/PGQ. The [specification-test record](specification-tests.md) is evidence
-for provider maintainers rather than required application reading.
+The [full EF Core reference](reference.md) covers every translated function,
+operator and migration feature in depth. The
+[specification-test record](specification-tests.md) is for provider
+maintainers.

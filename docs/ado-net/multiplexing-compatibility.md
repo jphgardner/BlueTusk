@@ -1,26 +1,50 @@
 # Multiplexing compatibility
 
-BlueTusk multiplexing is an opt-in throughput path for independent,
-session-neutral commands created directly from a `BlueTuskDataSource`. It does
-not turn PostgreSQL sessions into logical connections and never moves an active
-session-scoped operation between physical connections.
+This page helps you decide whether multiplexing suits your workload, and shows
+which commands it shares across connections and which it keeps on a dedicated
+session.
+
+Multiplexing is opt-in. It runs independent commands created directly from a
+`BlueTuskDataSource` over a small number of shared physical connections. It
+never moves session state, such as a transaction, between connections.
+
+```csharp
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .EnableMultiplexing()
+    .Build();
+
+// Shared: an independent statement from the data source.
+await using var count = dataSource.CreateCommand("SELECT count(*) FROM app.orders");
+var orders = await count.ExecuteScalarAsync<long>();
+
+// Fail instead of falling back to a dedicated session.
+await using var strict = dataSource.CreateCommand("SELECT now()");
+strict.MultiplexingMode = BlueTuskMultiplexingMode.Require;
+var now = await strict.ExecuteScalarAsync<DateTimeOffset>();
+```
+
+You can also turn it on with `Multiplexing=true` in the connection string.
+Options are listed in [Configuration](configuration.md#multiplexing-options).
 
 ## Routing matrix
 
-| Surface | Automatic route | Reason and evidence |
+"Affine" means the command runs on a dedicated session, as it would without
+multiplexing.
+
+| Command | Route | Why |
 | --- | --- | --- |
-| Independent text and parameterised commands | Multiplexed | A bounded FIFO scheduler writes at most the configured pipeline size, with one PostgreSQL `Sync` group per command. |
-| Explicit `BlueTuskConnection` | Affine | The caller owns the logical/physical lease. `Require` fails before execution instead of silently falling back. |
+| Independent text and parameterised commands from the data source | Shared | A first-in, first-out queue writes up to `MaxPipelineCommands` commands per flush, each with its own PostgreSQL `Sync`. |
+| Commands on an explicit `BlueTuskConnection` | Dedicated | You own the session. `Require` throws before execution instead of falling back. |
 | Transactions and savepoints | Affine | Transaction state, failures, and savepoints belong to one backend. |
 | Explicitly prepared commands and SQL `PREPARE`/`EXECUTE`/`DEALLOCATE` | Affine | Prepared statement identity belongs to a backend session. |
-| Sequential readers and cursors | Affine | A portal remains live until the reader completes or is disposed. `Require` fails closed. |
+| Sequential readers and cursors | Affine | A portal remains live until the reader completes or is disposed. `Require` throws. |
 | COPY import/export | Affine | COPY changes the protocol state until completion, cancellation, or abort recovery. |
 | Large objects and `lo_*`/legacy large-object routines | Affine | Descriptors and their owning transaction belong to one connection. |
 | `LISTEN`/`UNLISTEN` and notification APIs | Affine | Listener registration and the notification pump own dedicated session state. `NOTIFY` is conservatively routed affine as well. |
 | Temporary objects and `pg_temp` | Affine | Temporary schemas and objects belong to one backend. |
 | Session advisory locks | Affine | Lock ownership is the backend process. Transaction-scoped advisory-lock routines are conservatively affine too. |
 | `SET`, `RESET`, `SHOW`, `set_config`, `current_setting`, `currval`, and `lastval` | Affine | These mutate or observe session-local settings/sequence state. |
-| `CALL`, `DO`, and unknown stateful user routines | Affine by explicit policy | `CALL` and `DO` fail closed automatically. SQL text cannot prove an arbitrary function is pure; set `MultiplexingMode.Disable` for a known stateful routine. |
+| `CALL`, `DO`, and unknown stateful user routines | Affine | `CALL` and `DO` always use a dedicated session. SQL text cannot prove a function has no side effects on the session; set `MultiplexingMode.Disable` for a stateful routine. |
 | Replication | Dedicated | Replication owns an unpooled physical/logical `COPY BOTH` session and never enters the statement scheduler. |
 
 `MultiplexingMode.Auto` uses this routing table,
@@ -30,10 +54,11 @@ skips quoted strings, quoted identifiers, dollar-quoted bodies, line comments,
 and nested block comments before inspecting tokens. It remains conservative;
 it is not a SQL authorisation boundary.
 
-## Scheduler and failure invariants
+## How the scheduler behaves
 
-- The channel, pipeline group, worker count, commands per lease, and graceful
-  shutdown duration are independently bounded.
+- The queue size, pipeline size, worker count, commands per lease and shutdown
+  time each have their own limit (see
+  [Configuration](configuration.md#multiplexing-options)).
 - Accepted commands are serviced FIFO per lane. Multiple lanes increase
   concurrency without allowing one lane to retain a pool lease beyond
   `MaxCommandsPerLease`.
@@ -58,61 +83,8 @@ per-data-source point-in-time view.
 
 ## PgBouncer
 
-Live CI exercises bounded multiplexing through PgBouncer 1.24 in both session
-and transaction modes. Session-affine transactions, temporary objects, and
-explicit preparation retain their separate acceptance tests. Transaction mode
-requires PgBouncer protocol-level prepared-statement support when an
-application explicitly prepares statements; BlueTusk does not emulate
-session-affine state on top of transaction pooling.
-
-## Reproduce
-
-Use an isolated PostgreSQL 18 test database:
-
-```powershell
-$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
-dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj `
-  --configuration Release `
-  --filter FullyQualifiedName~BlueTuskMultiplexingIntegrationTests
-```
-
-Start the repository PgBouncer fixtures and run their matrix:
-
-```powershell
-docker compose -f eng/compose/postgres.yml --profile compatibility-tests up -d --build --wait pgbouncer-session18 pgbouncer-transaction18
-dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj `
-  --configuration Release `
-  --filter FullyQualifiedName~PgBouncer
-```
-
-Run the release comparison and its machine gate:
-
-```powershell
-$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = $env:BLUETUSK_TEST_CONNECTION_STRING
-$env:BLUETUSK_BENCHMARK_ARTIFACTS = "artifacts/benchmarks"
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- `
-  --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-build -- `
-  --multiplexing-paired-evidence artifacts/benchmarks/multiplexing-paired-evidence.json
-./eng/verify-multiplexing-performance.ps1 `
-  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json `
-  -PairedReportPath artifacts/benchmarks/multiplexing-paired-evidence.json
-```
-
-The checked-in MediumRun, not a development ShortRun, is the regression
-authority. It reports mean, P95, P99, operations per second, and managed
-allocation for BlueTusk multiplexed, BlueTusk ordinary pooled, Npgsql
-multiplexed, and Npgsql ordinary pooled paths. Results from one loopback
-machine are evidence for this workload, not a universal provider-performance
-claim.
-
-The exact-candidate workflow uses the full report for absolute latency,
-allocation and pooled-path comparisons. Provider-relative latency comes from
-five alternating paired trials: each trial records 501 blocks, each block
-contains 32 bursts per provider, and execution order reverses between blocks
-and trials. The verifier calculates each trial's mean/P95/P99 ratio from raw
-timings and gates the median trial ratio. The paired phase runs before the long
-BenchmarkDotNet suite so prior thread-pool, database and thermal state cannot
-contaminate it. With 501 observations per trial, P99 is the sixth-slowest block
-rather than a decision dominated by one or two scheduler spikes; alternation
-also avoids measuring all of one provider before all of the other.
+Multiplexing is tested through PgBouncer 1.24 in both session and transaction
+modes. In transaction mode, explicit preparation needs PgBouncer's
+protocol-level prepared-statement support, and BlueTusk does not emulate
+session state on top of transaction pooling. See
+[Troubleshooting](troubleshooting.md#pgbouncer-and-prepared-statements).

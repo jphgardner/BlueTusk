@@ -1,5 +1,10 @@
 # Large objects
 
+This page helps you store and stream binary data as PostgreSQL large objects.
+For most data, a `bytea` column read with a
+[sequential reader](sequential-readers.md) is simpler; use large objects when
+you need seekable, chunked access to very large values.
+
 PostgreSQL large objects are addressed by an unsigned object identifier and accessed through a transactional descriptor. BlueTusk exposes that descriptor as a synchronous and asynchronous stream:
 
 ```csharp

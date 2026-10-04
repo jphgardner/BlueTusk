@@ -54,13 +54,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 467,
+    "wordCount": 512,
     "readMinutes": 3,
-    "searchText": "Query a PostgreSQL property graph PostgreSQL SQL/PGQ lets you describe vertices and edges over ordinary tables and query relationships with `GRAPH_TABLE`. BlueTusk supports raw parameterized SQL, typed schema discovery, EF model/migrations, and a bounded typed EF query builder. This feature requires the server to report SQL/PGQ capability. Do not enable it from a PostgreSQL version string alone. SQL/PGQ was removed in PostgreSQL 19 Beta 4. This is preview functionality on the pinned historical Beta 3 fixture, not a production PostgreSQL 19 feature. Keep it on the separate [Graph release track](../releases/release-tracks.md); other products do not wait for its future availability. Run the complete example The sample creates temporary tables and a temporary graph, queries one edge, prints `Ada knows Grace`, and removes the graph. TLS is disabled only for the isolated local container. 1. Check capability BlueTusk probes PostgreSQL's documented information-schema graph views. A major version check is not sufficient. 2. Define a graph over relational tables The relational tables remain authoritative. A property graph defines how their keys, labels, endpoints, and properties form a graph view. 3. Query it safely Parameters are bound outside the SQL text. Graph names and labels are schema identifiers and should come from trusted application configuration, not user input. 4. Inspect an existing graph Use discovery for diagnostics, tooling, or validation. Define production graph changes through reviewed migrations. What to use next Use EF graph configuration when the application owns graph migrations. Use the typed EF graph builder when you need compile-time entity/property selection and a supported bounded pattern. Use [Continuous Graph](../continuous-graph/README.md) when a bounded graph result must remain current after committed changes. The [SQL/PGQ reference](reference.md) documents EF configuration, migrations, reverse engineering, typed matching, the exact supported q",
+    "searchText": "Query a PostgreSQL property graph **Preview, not part of 1.1.0.** Graph needs a PostgreSQL server that provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so this feature waits for a PostgreSQL release that ships it. Do not use it in production. See [product status](../getting-started/install.md#product-status). PostgreSQL SQL/PGQ lets you describe vertices and edges over ordinary tables and query relationships with `GRAPH_TABLE`. BlueTusk supports raw parameterized SQL, typed schema discovery, EF model/migrations, and a bounded typed EF query builder. This feature requires the server to report SQL/PGQ capability. Do not enable it from a PostgreSQL version string alone. SQL/PGQ was removed in PostgreSQL 19 Beta 4. This is preview functionality on the pinned historical Beta 3 fixture, not a production PostgreSQL 19 feature. Keep it on the separate [Graph release track](../releases/release-tracks.md); other products do not wait for its future availability. Run the complete example The sample creates temporary tables and a temporary graph, queries one edge, prints `Ada knows Grace`, and removes the graph. TLS is disabled only for the isolated local container. 1. Check capability BlueTusk probes PostgreSQL's documented information-schema graph views. A major version check is not sufficient. 2. Define a graph over relational tables The relational tables remain authoritative. A property graph defines how their keys, labels, endpoints, and properties form a graph view. 3. Query it safely Parameters are bound outside the SQL text. Graph names and labels are schema identifiers and should come from trusted application configuration, not user input. 4. Inspect an existing graph Use discovery for diagnostics, tooling, or validation. Define production graph changes through reviewed migrations. What to use next Use EF graph configuration when the application owns graph migrations. Use the typed EF graph builder when you need compile-time entity/property selectio",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Query a PostgreSQL property graph</h1>\n<p>PostgreSQL SQL/PGQ lets you describe vertices and edges over ordinary tables\nand query relationships with <code>GRAPH_TABLE</code>. BlueTusk supports raw parameterized\nSQL, typed schema discovery, EF model/migrations, and a bounded typed EF query\nbuilder.</p>\n<p>This feature requires the server to report SQL/PGQ capability. Do not enable it\nfrom a PostgreSQL version string alone. SQL/PGQ was removed in PostgreSQL 19\nBeta 4. This is preview functionality on the pinned historical Beta 3 fixture,\nnot a production PostgreSQL 19 feature. Keep it on the separate\n<a href=\"/documentation/operations/releases-release-tracks\">Graph release track</a>; other products do not wait\nfor its future availability.</p>\n<h2>Run the complete example</h2>\n"
+        "html": "<h1>Query a PostgreSQL property graph</h1>\n<blockquote>\n<p><strong>Preview, not part of 1.1.0.</strong> Graph needs a PostgreSQL server that\nprovides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so this\nfeature waits for a PostgreSQL release that ships it. Do not use it in\nproduction. See <a href=\"/documentation/getting-started/install#product-status\">product status</a>.</p>\n</blockquote>\n<p>PostgreSQL SQL/PGQ lets you describe vertices and edges over ordinary tables\nand query relationships with <code>GRAPH_TABLE</code>. BlueTusk supports raw parameterized\nSQL, typed schema discovery, EF model/migrations, and a bounded typed EF query\nbuilder.</p>\n<p>This feature requires the server to report SQL/PGQ capability. Do not enable it\nfrom a PostgreSQL version string alone. SQL/PGQ was removed in PostgreSQL 19\nBeta 4. This is preview functionality on the pinned historical Beta 3 fixture,\nnot a production PostgreSQL 19 feature. Keep it on the separate\n<a href=\"/documentation/operations/releases-release-tracks\">Graph release track</a>; other products do not wait\nfor its future availability.</p>\n<h2>Run the complete example</h2>\n"
       },
       {
         "kind": "code",
@@ -127,7 +127,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1045,
+    "order": 1049,
     "title": "ContinuousGraph public API compatibility",
     "sourcePath": "docs/continuous-graph/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/api-compatibility.md",
@@ -160,7 +160,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1046,
+    "order": 1050,
     "title": "BlueTusk Continuous Graph",
     "sourcePath": "docs/continuous-graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/reference.md",
@@ -340,7 +340,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1047,
+    "order": 1051,
     "title": "BlueTusk Continuous Graph 0.1.0-preview.1",
     "sourcePath": "docs/continuous-graph/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-0.1.0-preview.1.md",
@@ -392,7 +392,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1048,
+    "order": 1052,
     "title": "BlueTusk ContinuousGraph 1.0.0 release record",
     "sourcePath": "docs/continuous-graph/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-1.0.0.md",
@@ -424,7 +424,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1083,
+    "order": 1098,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",

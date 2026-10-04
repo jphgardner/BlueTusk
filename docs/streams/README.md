@@ -1,203 +1,125 @@
 # BlueTusk Streams
 
-BlueTusk Streams turns PostgreSQL logical replication into complete committed
-transactions an application can process and acknowledge. It handles large
-transaction spooling, source identity, checkpoints, leases, restart, and a
-no-gap initial snapshot.
+BlueTusk Streams lets your .NET code react to every committed change in
+PostgreSQL. It reads the write-ahead log through logical replication and gives
+you whole transactions, in commit order, that you acknowledge when your work is
+done. After a restart it carries on from the last acknowledged transaction.
 
-Use Streams when application code needs a reliable change feed. Use the lower
-level [replication API](../replication/README.md) only when you need raw protocol
-messages.
+## When to use Streams
 
-## Run the sample
+Use Streams when you need to run your own code for every committed insert,
+update, delete or truncate. For example:
 
-The sample creates a hosted snapshot-then-stream consumer and prints each
-committed transaction:
+- keep a read model, cache or search index in step with the database;
+- publish integration events after a transaction commits;
+- write an audit trail.
+
+Use something else when:
+
+| You want to | Use |
+| --- | --- |
+| Copy changes into PostgreSQL, Redis, NATS, Kafka, OpenSearch, S3 or a webhook without writing the apply code | [Sync](../sync/README.md) |
+| Push live query results to browsers | [Live](../live/README.md) |
+| Read raw replication protocol messages | The [replication API](../replication/README.md) |
+| Run a query now | The [ADO.NET provider](../ado-net/README.md) |
+
+Streams delivers each transaction **at least once**. Make your work safe to
+repeat, or store your progress in the same transaction as your work. See
+[delivery guarantees](../realtime-platform/contracts.md).
+
+## Packages
+
+| Package | What it adds |
+| --- | --- |
+| `BlueTusk.Streams` | Transactions, changes, acknowledgement, checkpoints, snapshot bootstrap and large-transaction spooling. Start here. |
+| `BlueTusk.Streams.Storage.PostgreSql` | Durable checkpoint and lease store, and the durable relay, in PostgreSQL. |
+| `BlueTusk.Streams.DependencyInjection` | Hosted snapshot-then-stream consumers and a health check. |
+| `BlueTusk.Streams.Storage.File` | Checkpoint store on one host's local disk. |
+| `BlueTusk.Streams.Storage.Redis` | Checkpoint store in Redis. |
+| `BlueTusk.Streams.EntityFrameworkCore` | Typed change mappings built from an EF Core model. |
+| `BlueTusk.Streams.CloudEvents` | One CloudEvents JSON event per transaction. |
+| `BlueTusk.Streams.Aspire` | Wires Streams workers into a .NET Aspire AppHost. |
+| `BlueTusk.Streams.Testing` | Test deliveries and a conformance suite for custom state stores. |
+| `BlueTusk.Streams.Tool` | The `bluetusk-streams` command for validating and provisioning PostgreSQL. |
 
 ```powershell
-$env:BLUETUSK_STREAMS_SOURCE = "Host=localhost;Database=app;Username=replicator;Password=local-only;SSL Mode=Disable;Channel Binding=Disable"
-$env:BlueTusk__Streams__Slot = "orders_sample"
-$env:BlueTusk__Streams__Publications__0 = "app_changes"
-dotnet run --project samples/BlueTusk.Samples.Streams
+dotnet add package BlueTusk.Streams
+dotnet add package BlueTusk.Streams.Storage.PostgreSql
 ```
 
-Create the PostgreSQL publication and replication role first. The TLS-disabled
-connection is for an isolated local database only.
+See [Install BlueTusk](../getting-started/install.md) to choose a channel and
+pin a version.
 
-## The processing rule
+**Status:** Core. Streams ships on the shared Core version line. `1.0.0` (stable)
+and `1.1.0-rc.1` are published; `1.1.0` is not released yet. It supports
+.NET 10 and PostgreSQL 15, 16, 17 and 18 (19 is preview).
+[Prepared-transaction delivery](prepared-transactions.md) is an opt-in preview.
+
+## Choose how to run a consumer
+
+Most applications run Streams inside a .NET hosted service. Pick the shape that
+matches your job:
+
+| You want | Use | Start with |
+| --- | --- | --- |
+| A worker that processes new changes and resumes where it stopped | A hosted worker with a PostgreSQL checkpoint store | [Quick start](quickstart.md) |
+| To copy the existing rows first, then stream new changes | `AddBlueTuskStreams().AddHostedConsumer<T>()` | [Snapshot and catch-up](snapshot-bootstrap.md), [hosting](hosting-observability.md) |
+| Several consumers that each read the same changes at their own pace | The durable relay | [Durable relay](durable-relay.md) |
+| To build the pipeline from its parts | `PgOutputChangeStream` and delivery observers | [Concepts](concepts.md) |
+
+## What the code looks like
+
+Register a hosted worker:
 
 ```csharp
-await foreach (var delivery in changes.ReadTransactionsAsync())
-{
-    await ApplyTheCompleteTransactionAsync(delivery.Transaction);
-    await SaveCheckpointAsync(delivery.Transaction.CommitEndPosition);
-    await delivery.AcknowledgeAsync();
-}
+builder.Services.AddSingleton(BlueTuskDataSource.Create(connectionString));
+builder.Services.AddHostedService<OrdersStreamWorker>();
 ```
 
-Do not acknowledge before the downstream effect and checkpoint are durable. A
-crash can redeliver the last unconfirmed transaction, so the downstream write
-must use stable change identities or an atomic checkpoint.
-
-For a new data set, use [snapshot and catch-up](snapshot-bootstrap.md) rather
-than combining an unrelated table export with a later WAL position.
-
-## What Streams provides
-
-- immutable source, relation, column, row, transaction, change, and stable change-ID models;
-- explicit value, database-null, not-published, unavailable-old-value, unchanged-TOAST, and decoding-failure column states;
-- exact/unknown changed-column sets that require a complete old row before claiming exactness;
-- ordinary, streamed, and opt-in prepared transaction assembly by PostgreSQL transaction ID;
-- insert, update, delete, truncate, transactional/nontransactional logical message, origin, timestamp, LSN, and ordering preservation;
-- bounded change, relation, transaction-memory, individual-record, and total spool-storage accounting;
-- versioned disk envelopes with completion footers, per-record CRC32 integrity, atomic `.partial` to `.ready` publication, and pluggable at-rest protection;
-- restart-safe spool accounting that includes pre-existing `.partial` and `.ready` artifacts in the configured disk ceiling;
-- streaming materialisation of spooled changes, with spool deletion tied to delivery acknowledgement, nack, or disposal;
-- explicit one-shot acknowledgement semantics that stop a source read if a delivery is skipped or rejected; and
-- public API baselines plus fake pgoutput and PostgreSQL 15–19 integration coverage.
-
-Prepared/two-phase transactions fail closed by default. The opt-in
-experimental mode outside the default V1 contract exposes durable prepare,
-commit-prepared, and rollback-prepared lifecycle deliveries for destinations
-that explicitly support invisible staging. See
-[prepared and two-phase transactions](prepared-transactions.md).
-
-## Reading transactions
-
-`PgOutputChangeStream` accepts the decoded pgoutput sequence from a dedicated logical replication connection. This low-level composition is the Phase 1 integration surface; hosted configuration and durable acknowledgement arrive in later phases.
+Inside the worker, read committed transactions and acknowledge each one after
+your work is done:
 
 ```csharp
-var identity = new ChangeSourceIdentity(
-    systemIdentifier,
-    databaseName,
-    slotName,
-    canonicalPublicationFingerprint);
-
-IChangeStream changes = new PgOutputChangeStream(
-    replication.StartReplicationAsync(slotName, publicationName)
-        .DecodePgOutputAsync(),
-    identity,
-    new TransactionAssemblyOptions
-    {
-        MaxInMemoryTransactionBytes = 4 * 1024 * 1024,
-        MaxTransactionBytes = 1024L * 1024 * 1024,
-        MaxSpoolBytes = 10L * 1024 * 1024 * 1024,
-        SpoolDirectory = dedicatedSpoolDirectory,
-        // Opt in only when ApplyIdempotentlyAsync durably stages PREPARE.
-        PreparedTransactionMode = PreparedTransactionMode.Fail,
-    });
-
-await foreach (var delivery in changes.ReadTransactionsAsync())
+await foreach (var delivery in changes.ReadTransactionsAsync(stoppingToken))
 {
-    await foreach (var change in delivery.Transaction.Changes)
+    // Do your work for the whole transaction...
+    await foreach (var change in delivery.Transaction.Changes.WithCancellation(stoppingToken))
     {
-        await ApplyIdempotentlyAsync(change);
+        Console.WriteLine($"{change.Kind} in transaction {delivery.Transaction.TransactionId}");
     }
 
-    await delivery.AcknowledgeAsync();
+    // ...then acknowledge it. Streams saves the checkpoint and tells PostgreSQL.
+    await delivery.AcknowledgeAsync(stoppingToken);
 }
 ```
 
-The transaction change set is asynchronous so a large transaction can be read record-by-record from disk. `MaterializeAsync` is a deliberate convenience for bounded transactions and allocates the complete result.
+The [quick start](quickstart.md) builds this worker end to end, including the
+replication connection and the checkpoint store.
 
-## Failure behavior
+## Next steps
 
-Incomplete ordinary or streamed transactions are discarded when the source ends, allowing PostgreSQL to redeliver them from the last durable checkpoint. Stream abort removes its partial spool. Tampered, truncated, incompatible, or wrong-protector spool data fails closed. Limit exhaustion pauses the read with a diagnostic exception; it never drops a change or splits a source transaction.
+- [Quick start](quickstart.md): stream changes from a table and resume after a restart, in about 10 minutes.
+- [Concepts](concepts.md): transactions, column states, acknowledgement, checkpoints, leases, spooling, snapshots and the relay.
+- Guides:
+  - [Snapshot and catch-up](snapshot-bootstrap.md): copy existing rows, then stream without a gap.
+  - [Checkpoint and lease stores](state-stores.md): PostgreSQL, file, Redis and custom stores.
+  - [Durable relay](durable-relay.md): feed many consumer groups from one slot.
+  - [Hosting and observability](hosting-observability.md): hosted consumers, health checks, metrics and traces.
+  - [Typed mappings](typed-mappings.md): map rows to your own classes or an EF Core model.
+  - [CloudEvents](cloudevents.md): publish one event per transaction.
+  - [Aspire](aspire.md): wire Streams workers in an Aspire AppHost.
+  - [The `bluetusk-streams` tool](cli.md): validate and provision PostgreSQL.
+  - [Prepared transactions](prepared-transactions.md): stage two-phase transactions (preview).
+  - [Snapshot-then-stream sample](sample.md): run the sample worker in this repository.
+- [Configuration](configuration.md): every option, default and configuration key.
+- [Troubleshooting](troubleshooting.md): common errors and how to fix them.
 
-`CheckpointingChangeDeliveryObserver` implements the locked destination → compare-and-swap checkpoint → PostgreSQL feedback sequence. The checkpoint includes the source system/database/slot/publication identity, output plug-in, mapping fingerprint, acknowledged commit-end LSN, format version, and store generation. `MemoryChangeStreamStateStore` supplies the same monotonic compare-and-swap and fencing behavior as the durable stores for tests and ephemeral development only.
+## Reference records
 
-```csharp
-var checkpointIdentity = ChangeStreamCheckpoint.CreateInitial(
-    identity,
-    databaseIdentity,
-    "pgoutput",
-    mappingFingerprint);
-var stateKey = ChangeStreamStateKey.Create(identity, consumerGroup);
-
-await using var acknowledgement =
-    await CheckpointingChangeDeliveryObserver.AcquireAsync(
-        memoryStateStore,
-        stateKey,
-        uniqueWorkerId,
-        TimeSpan.FromSeconds(30),
-        checkpointIdentity,
-        new LogicalReplicationFeedbackSender(replication));
-```
-
-Only the active fenced lease may mutate a checkpoint. Backward positions, stale generations, incompatible source/mapping identities, and expired owners fail closed. If feedback fails after the checkpoint is durable, retry sends feedback from the stored position without rewriting or advancing the checkpoint. A nack never advances either checkpoint or feedback.
-
-The observer renews its lease on a timer, three times per lease duration, independently of acknowledgements, so an idle consumer or a slow destination keeps ownership. Each acknowledgement still renews and verifies the lease first; if the store reports the lease lost, the acknowledgement fails with `ChangeStreamLeaseLostException` before any checkpoint is written. Disposing the observer stops renewal and releases the lease. `PostgreSqlRelayChangeDeliveryObserver` renews its source lease the same way.
-
-### Position feedback without an observer
-
-A `PgOutputChangeStream` reading from a BlueTusk replication connection reports progress to PostgreSQL even when no delivery observer is attached. This covers streams created directly over `StartReplicationAsync(...).DecodePgOutputAsync()` and the stream created by `PostgreSqlConsistentSnapshotSource`, so hosted Streams consumers and direct Sync pipelines without an `observerFactory` are included. After `AcknowledgeAsync` completes, the stream confirms that transaction's commit-end position to the WAL sender that delivered it. The slot's `confirmed_flush_lsn` then advances and PostgreSQL can release the WAL behind it. Feedback is at-least-once: a delivery that is nacked, disposed or never acknowledged is not confirmed, and PostgreSQL redelivers it after a restart.
-
-When an observer is attached, the observer owns position feedback, as `CheckpointingChangeDeliveryObserver` and `PostgreSqlRelayChangeDeliveryObserver` do after their durable write. A custom observer that never sends feedback still holds WAL. Without an observer there is no durable checkpoint, so a restart cannot resume from a known position. Use an observer and a checkpoint store when a consumer must resume.
-
-See [checkpoint and lease stores](state-stores.md) for backend guarantees, file-store deployment constraints, and the custom-store conformance kit.
-
-See the [PostgreSQL durable relay](durable-relay.md) for source append ordering, group fan-out/replay, retention, storage bounds, and health signals.
-
-See [prepared and two-phase transactions](prepared-transactions.md) for the
-opt-in staging contract, final lifecycle deliveries, decoder configuration, and
-relay format 1-to-2 compatibility.
-
-The [format compatibility registry](format-compatibility.md) records every
-durable or externally visible Streams format, its readable range, and the test
-fixture that proves its compatibility policy.
-
-The [public API compatibility policy](api-compatibility.md) describes the
-machine-enforced Streams 1.0 candidate freeze and its release gate.
-
-`BlueTusk.Streams.Testing` includes `ChangeDeliveryTestFactory`, allowing
-downstream products to exercise acknowledge/nack ordering through the public
-Streams contract without importing replication protocol types.
-
-See [typed mappings](typed-mappings.md) for convention and explicit mappings, schema and mapping fingerprints, partial-row safety, decoding policy, and the snapshot consumer lifecycle.
-
-See [consistent snapshot bootstrap](snapshot-bootstrap.md) for exported-snapshot lifetime, keyset binary COPY, bounded parallelism, restart epochs, and the PostgreSQL 15–19 no-gap proof.
-
-See [hosting and observability](hosting-observability.md) for hosted-worker registration, health states, readiness behavior, and exporter-neutral OpenTelemetry instruments.
-
-See [CloudEvents](cloudevents.md) for transaction-preserving structured JSON, deterministic IDs, integrity-checked payloads, and acknowledgement responsibility.
-
-See the [validation and provisioning CLI](cli.md) for idempotent source/relay setup, safe shared-control checks, and machine-readable diagnostic codes.
-
-See [Aspire integration](aspire.md) for secret-preserving source/control resource wiring and explicit relay versus direct delivery configuration.
-
-See the [snapshot-then-stream sample](sample.md) for a runnable hosted consumer using exported-snapshot binary COPY followed by transaction-preserving CDC.
-
-See the [1.0.0 release record](release-notes-1.0.0.md) for the package list,
-guarantees, evidence gate, and support boundary.
-See the coordinated [1.1.0-rc.1 release record](../releases/1.1.0-rc.1.md) for
-the public RC version, exact commit, registry verification, and stable gate.
-
-## Creating a slot while the schema changes
-
-PostgreSQL 15 to 19 can create a logical slot that fails when it decodes
-changes. This happens when, in the slot's database, a transaction creates or
-alters a table and commits while the slot is still being created. An older
-transaction must still be open elsewhere in the cluster, and a third
-transaction must then write to that table. The read fails with a
-`BlueTuskServerException` such as
-`could not map filenumber "base/…" to relation OID`. PostgreSQL 15 says
-`filenode` instead of `filenumber`. The error can also read
-`pg_attribute catalog is missing N attribute(s) for relation OID …`.
-
-The error comes from the server's logical decoding, and the decoder fails the
-same way each time it rereads the same WAL. Reconnecting to the same slot
-therefore normally fails again. The upstream fix is still under review as of
-October 2026; see the pgsql-hackers thread "Historic snapshot doesn't track txns
-committed in BUILDING_SNAPSHOT state".
-
-- Avoid the risk by creating slots, including temporary ones, at a point when
-  nothing in that database runs migrations or creates tables. The risk only
-  exists until slot creation returns; later schema changes are decoded normally.
-- To recover, drop the slot and create a new one. The new slot starts at a new
-  WAL position, so rebuild derived state with
-  [snapshot and catch-up](snapshot-bootstrap.md) instead of resuming from the
-  old checkpoint.
-
-## Performance baseline
-
-The checked-in Ryzen 7 5800X/.NET 10 ShortRun measures 422 ns and 852 B per change for a materialised 1,000-insert transaction. A 4 MiB durable spill, integrity check, streamed read, flush, and cleanup measures 38.3 ms and 12.1 MiB. See the [benchmark report](../../benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.StreamsTransactionBenchmarks-report-github.md). ShortRun values guide regression work and are not universal production claims.
+- [Public API compatibility policy](api-compatibility.md)
+- [Format compatibility registry](format-compatibility.md)
+- [Release endurance record](release-endurance.md)
+- Release notes: [1.0.0](release-notes-1.0.0.md),
+  [0.1.0-preview.1](release-notes-0.1.0-preview.1.md),
+  [1.1.0-rc.1](../releases/1.1.0-rc.1.md)
+- [Transaction benchmark baseline](../../benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.StreamsTransactionBenchmarks-report-github.md)

@@ -1,5 +1,9 @@
 # BlueTusk.Workflows
 
+> **Preview.** This family is `0.1.0-preview.1` and is not published to a
+> package feed yet. It is not part of the 1.1.0 release and its API may change.
+> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
+
 Use the shared [storage maintenance contract](../jobs/maintenance.md) for
 workflow state and its dispatch Jobs. [Durable-format support](../jobs/durable-format.md)
 documents same-format restart/configuration rollback and the unsupported

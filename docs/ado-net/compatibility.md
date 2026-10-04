@@ -1,30 +1,31 @@
-# ADO.NET V1 compatibility
+# ADO.NET compatibility
 
-This matrix is the V1 contract for provider-neutral ADO.NET consumers. A
-capability marked excluded fails explicitly; it is not silently approximated.
-The live acceptance suite is
-`tests/BlueTusk.CompatibilityTests/AdoNetV1CompatibilityTests.cs`.
+This page helps you check which standard ADO.NET features `BlueTusk.Data`
+supports before you port code to it, including code written for Npgsql. A
+feature marked **Not supported** throws an exception; BlueTusk never silently
+approximates it.
 
-| Surface | V1 status | Contract |
+| Feature | Status | Details |
 | --- | --- | --- |
 | Text commands | Supported | `CommandType.Text`, named or positional parameters, sync/async execution and local transactions. |
 | Stored procedures and functions | Supported through SQL text | Use `CALL ...` for procedures and `SELECT ...` for functions. PostgreSQL `OUT` and `INOUT` values are read from returned result rows. |
-| `CommandType.StoredProcedure` | Excluded | Setting it throws `NotSupportedException`; BlueTusk does not invent a provider-specific routine-name convention. |
+| `CommandType.StoredProcedure` | Not supported | Setting it throws `NotSupportedException`. Write `CALL` or `SELECT` SQL instead. |
 | Parameter directions | `Input` supported | `Output`, `InputOutput` and `ReturnValue` throw `NotSupportedException`. Use PostgreSQL result rows for output values. |
-| Local transactions | Supported | `BeginTransaction`, command enlistment, commit, rollback, savepoints and async equivalents. |
-| `System.Transactions` ambient/distributed enlistment | Excluded | V1 does not promise promotable, distributed or ambient enlistment. Keep work inside an explicit `DbTransaction`. |
+| Local transactions | Supported | `BeginTransaction`, command enlistment, commit, rollback and async equivalents. |
+| Savepoints | Supported through SQL | Run `SAVEPOINT`, `ROLLBACK TO SAVEPOINT` and `RELEASE SAVEPOINT` as enlisted commands. `DbTransaction.Save`, `Release` and named `Rollback` throw `NotSupportedException`. |
+| `System.Transactions` ambient/distributed enlistment | Not supported | No promotable, distributed or ambient enlistment. Keep work inside an explicit `DbTransaction`. |
 | `CommandBehavior.Default` | Supported | All rows and result sets are buffered unless sequential access is selected. |
 | `SingleRow` | Supported | At most the first row is exposed. |
 | `SingleResult` | Supported | `NextResult` returns false after the first result set. |
 | `SequentialAccess` | Supported | Uses the incremental portal reader; combine with `SingleRow`, `SingleResult` or `CloseConnection` as needed. |
 | `CloseConnection` | Supported | Closing or disposing the reader closes its logical connection. |
-| `SchemaOnly` and `KeyInfo` | Excluded | Both throw `NotSupportedException`; they are never silently ignored. |
+| `SchemaOnly` and `KeyInfo` | Not supported | Both throw `NotSupportedException`; they are never silently ignored. |
 | Reader schema | Supported | `GetColumnSchema`, `GetSchemaTable` and async equivalents expose names, ordinals, CLR/provider types and available origin metadata. |
 | Connection schema | Supported | `MetaDataCollections`, `DataSourceInformation`, `DataTypes`, `Restrictions`, `ReservedWords`, `Databases`, `Schemas`, `Tables` and `Columns`. Live catalogue collections require an open connection. |
-| Dapper | Supported | Parameter binding, command execution and POCO materialisation are covered by live acceptance tests. |
+| Dapper | Supported | Parameter binding, command execution and mapping to your classes are tested against a real server. |
 | Dependency injection | Supported | `BlueTusk.Data.DependencyInjection` registers one shared `BlueTuskDataSource` as both its concrete type and `DbDataSource`. |
 | Readiness health check | Supported | The DI integration registers a `bluetusk` check tagged `bluetusk` and `ready`; it opens a connection and executes `SELECT 1`. |
-| PostgreSQL 19 native `REPACK` | Supported on PostgreSQL 19+ | Typed sync/async execution, every documented command shape, safe identifier quoting, non-multiplexed routing, cancellation, and `pg_stat_progress_repack` monitoring. PostgreSQL 19 GA certification remains a release gate while 19 is in beta. |
+| PostgreSQL 19 native `REPACK` | New in 1.1.0; preview | Requires PostgreSQL 19, which is in preview. See [Native REPACK](repack.md). |
 
 ## Host registration
 
@@ -56,6 +57,11 @@ command.CommandText = "CALL app.rotate_keys(@tenant_id)";
 
 Read procedure/function output from the returned row rather than output
 parameters. Replace `TransactionScope` with an explicit local transaction.
-Applications that require ambient/distributed transactions, output parameters,
-`SchemaOnly` or `KeyInfo` must stay on a provider that implements those
-contracts for V1.
+If your app needs ambient or distributed transactions, output parameters,
+`SchemaOnly` or `KeyInfo`, keep it on a provider that implements them.
+
+Also review connection strings when you migrate: BlueTusk has no keyword
+aliases, ignores unknown keywords by default (Npgsql rejects them; see
+[Reject unknown keywords](configuration.md#reject-unknown-keywords)) and
+defaults to `SSL Mode=VerifyFull`. See
+[Configuration](configuration.md#how-the-connection-string-is-parsed).

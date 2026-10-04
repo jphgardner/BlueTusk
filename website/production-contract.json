@@ -5,7 +5,7 @@
     "initialRawBytes": 950000,
     "initialBrotliBytes": 225280,
     "largestLazyBrotliBytes": 286720,
-    "totalDistributionBytes": 25165824
+    "totalDistributionBytes": 33554432
   },
   "minimumPrerenderedRoutes": 177,
   "requiredAssets": [

@@ -1,118 +1,106 @@
 # BlueTusk documentation
 
-Start with the outcome you need. You do not need to read the whole library or
-adopt every BlueTusk product.
+BlueTusk is a PostgreSQL platform for .NET 10. Use this page to find the guide
+for what you want to do.
 
-## New to BlueTusk?
+## Start here
 
-Follow these four guides once, in order:
+New to BlueTusk? Read these in order. Together they take about 20 minutes.
 
-1. [Choose and install packages](getting-started/install.md).
-2. [Run your first query](getting-started/quickstart.md).
-3. [Learn the core concepts](getting-started/concepts.md).
-4. [Prepare for production](operations/production-checklist.md).
+1. [What is BlueTusk?](getting-started/overview.md): the products and how they fit together.
+2. [Install BlueTusk](getting-started/install.md): choose packages and a version.
+3. [5-minute first app](getting-started/quickstart.md): connect and run a query.
+4. [Core concepts](getting-started/concepts.md): the vocabulary every product uses.
 
-The [support matrix](../VERSIONING.md) is the authority for supported .NET,
-EF Core, PostgreSQL, and package versions.
+## Products
 
-## Choose your goal
+Every product has the same set of pages, in the order you need them:
+an overview, a quick start, concepts, task guides, configuration and
+troubleshooting.
 
-Each row is a short reading path. Start at the left and stop when you have the
-information you need.
+| Product | What it does | Quick start | Concepts | Configuration | Troubleshooting |
+| --- | --- | --- | --- | --- | --- |
+| [ADO.NET](ado-net/README.md) | Connections, commands, transactions, COPY, notifications | [Quick start](ado-net/quickstart.md) | [Concepts](ado-net/concepts.md) | [Configuration](ado-net/configuration.md) | [Troubleshooting](ado-net/troubleshooting.md) |
+| [EF Core](ef-core/README.md) | LINQ, change tracking, migrations and scaffolding | [Quick start](ef-core/quickstart.md) | [Concepts](ef-core/concepts.md) | [Configuration](ef-core/configuration.md) | [Troubleshooting](ef-core/troubleshooting.md) |
+| [Streams](streams/README.md) | Process every committed change, in order | [Quick start](streams/quickstart.md) | [Concepts](streams/concepts.md) | [Configuration](streams/configuration.md) | [Troubleshooting](streams/troubleshooting.md) |
+| [Sync](sync/README.md) | Copy committed changes to another database, cache, broker or index | [Quick start](sync/quickstart.md) | [Concepts](sync/concepts.md) | [Configuration](sync/configuration.md) | [Troubleshooting](sync/troubleshooting.md) |
+| [Live](live/README.md) | Push live query results to browsers and .NET clients | [Quick start](live/quickstart.md) | [Concepts](live/concepts.md) | [Configuration](live/configuration.md) | [Troubleshooting](live/troubleshooting.md) |
+| [Control Plane](control-plane/README.md) | Inspect and operate running BlueTusk components | [Quick start](control-plane/quickstart.md) | [Concepts](control-plane/concepts.md) | [Configuration](control-plane/configuration.md) | [Troubleshooting](control-plane/troubleshooting.md) |
 
-| I want to…                        | Start                                                      | Build                                          | Operate                                                  |
-| --------------------------------- | ---------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------- |
-| Connect a .NET application        | [Install](getting-started/install.md)                      | [First query](getting-started/quickstart.md)   | [Provider choices](ado-net/README.md)                    |
-| Use EF Core                       | [Provider choices](ado-net/README.md)                      | [EF Core guide](ef-core/README.md)             | [Deployment](operations/deployment.md)                   |
-| Stream committed database changes | [Real-time overview](realtime-platform/README.md)          | [Streams](streams/README.md)                   | [Snapshot and catch-up](streams/snapshot-bootstrap.md)   |
-| Keep another system in sync       | [Delivery guarantees](realtime-platform/contracts.md)      | [Sync](sync/README.md)                         | [Recovery and rebuilds](realtime-platform/operations.md) |
-| Push live updates to users        | [Live](live/README.md)                                     | [Security](security.md)                        | [Observability](operations/observability.md)             |
-| Query connected data              | [SQL/PGQ](graph/README.md)                                 | [Continuous Graph](continuous-graph/README.md) | [Real-time operations](realtime-platform/operations.md)  |
-| Take a service to production      | [Production checklist](operations/production-checklist.md) | [Deployment](operations/deployment.md)         | [Troubleshooting](operations/troubleshooting.md)         |
+Related provider topics:
 
-## How the library is organized
+- [PostgreSQL types](types/README.md): how .NET values map to PostgreSQL types.
+- [PostgreSQL extensions](extensions/README.md): pgvector, PostGIS,
+  TimescaleDB, citext, hstore, ltree and pg_trgm.
+- [Cloud identity](ado-net/cloud-identity.md): AWS, Azure and Google Cloud
+  sign-in.
+- [Replication protocol](replication/README.md): raw logical and physical
+  replication, for when Streams is too high level.
+- [Pipeline mode](pipeline-mode.md): low-level PostgreSQL pipelining.
 
-### 1. Learn the essentials
+Real-time products share one delivery model. Read
+[delivery guarantees](realtime-platform/contracts.md) once before you build
+with Streams, Sync or Live, and see
+[choosing a real-time product](realtime-platform/README.md) if you are not
+sure which one you need.
 
-Use the [installation guide](getting-started/install.md),
-[quickstart](getting-started/quickstart.md), and
-[core concepts](getting-started/concepts.md) for the first query, architecture,
-and concepts shared by the rest of the platform.
+## Preview products
 
-### 2. Build with .NET
+These are not part of the 1.1.0 release. You can evaluate them, but their API
+and behavior may change.
 
-- [ADO.NET provider](ado-net/README.md) — connections, commands, transactions,
-  pooling, COPY, authentication, routing, types, and notifications.
-- [EF Core provider](ef-core/README.md) — LINQ, migrations, scaffolding, and
-  provider-specific behavior.
-- [PostgreSQL extensions](extensions/README.md) — PostGIS, pgvector,
-  TimescaleDB, and the extension SDK.
-- [Replication](replication/README.md) — low-level PostgreSQL replication
-  protocols and decoding.
+- [Graph (SQL/PGQ)](graph/README.md) and
+  [Continuous Graph](continuous-graph/README.md) need a PostgreSQL server that
+  provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so
+  they wait for a PostgreSQL release that ships it.
+- The ecosystem families are `0.1.0-preview.1` and not published yet. Each is
+  released when its own checks pass:
+  [Events](events/README.md), [Jobs](jobs/README.md),
+  [Workflows](workflows/README.md), [Documents](documents/README.md),
+  [Schema](schema/README.md), [Projections](projections/README.md),
+  [Search](search/README.md), [Sql](sql/README.md), [Studio](studio/README.md)
+  and [Edge](edge/README.md). See the
+  [ecosystem release plan](ecosystem/release-qualification.md).
 
-### 3. Build real-time systems
+## Run in production
 
-The products compose, but they solve different problems:
+Work through the [production checklist](operations/production-checklist.md)
+first. Then use the guide for each task:
 
-```text
-PostgreSQL changes
-       │
-       ▼
-    Streams ─────► Sync ───────────► another data system
-       │
-       ├─────────► Live ───────────► connected application clients
-       │
-       └─────────► Continuous Graph ► maintained graph query results
+| Task | Guide |
+| --- | --- |
+| Deploy | [Deployment](operations/deployment.md) |
+| Secure | [Security](security.md) |
+| Monitor | [Observability](operations/observability.md) |
+| Size and tune | [Performance and capacity](operations/performance.md) |
+| Fix problems | [Troubleshooting](operations/troubleshooting.md) |
+| Upgrade or roll back | [Upgrade guide](operations/upgrade-guide.md) |
+| Recover real-time products | [Recovery and rebuilds](realtime-platform/operations.md) |
 
-Control Plane observes and manages these running components.
-```
+## Reference
 
-- [Platform overview](realtime-platform/README.md) explains which product to
-  choose.
-- [Delivery guarantees](realtime-platform/contracts.md) defines checkpoints,
-  acknowledgement, retries, and duplicate handling.
-- [Streams](streams/README.md), [Sync](sync/README.md), [Live](live/README.md),
-  [Control Plane](control-plane/README.md), and
-  [Continuous Graph](continuous-graph/README.md) contain the product guides.
+For maintainers, reviewers and incident investigations:
 
-### 4. Run in production
-
-Start with the [production checklist](operations/production-checklist.md), then
-use the focused guides for:
-
-- [Deployment](operations/deployment.md)
-- [Security](security.md)
-- [Observability](operations/observability.md)
-- [Performance and capacity](operations/performance.md)
-- [Troubleshooting](operations/troubleshooting.md)
-- [Upgrades and rollback](operations/upgrade-guide.md)
-
-### 5. Engineering reference
-
-Architecture decisions, API compatibility records, test evidence, endurance
-plans, approvals, and release records are maintained for reviewers and
-incident investigations. They are searchable on the documentation website,
-but deliberately separated from the normal learning paths.
-
-- [Architecture overview](architecture/overview.md)
-- [Architecture decisions](architecture/decisions/)
-- [Allocation discipline](architecture/allocation-discipline.md)
+- [Support matrix and versioning](../VERSIONING.md)
+- [Architecture overview](architecture/overview.md) and
+  [architecture decisions](architecture/decisions/)
 - [API compatibility](api-compatibility.md)
-- [Repository layout](contributing/repository-layout.md)
-- [Testing](contributing/testing.md)
-- [Release process](release-process.md)
+- Product references: [EF Core](ef-core/reference.md),
+  [Sync](sync/reference.md), [Live](live/reference.md),
+  [Control Plane](control-plane/reference.md), [types](types/reference.md)
+- [Release process](release-process.md) and
+  [release readiness records](v1-release-readiness.md)
+- [Contributing](../CONTRIBUTING.md), [development setup](contributing/development.md),
+  [testing](contributing/testing.md) and
+  [repository layout](contributing/repository-layout.md)
 
-## Reading conventions
+## Conventions in these docs
 
-- Commands and paths are written from the repository root unless a guide says
-  otherwise.
-- Examples use parameterized SQL and explicit resource ownership.
-- Product availability, test evidence, and production approval are separate
-  claims.
-- Version-sensitive behavior links to the support matrix or a release record.
-- Guarantees describe the actual durability boundary and duplicate behavior;
-  they do not rely on an “exactly once” slogan.
+- Shell commands are PowerShell. Where bash differs, the page says so.
+- Examples use parameters for every value. Never build SQL from user input.
+- `SSL Mode=Disable` appears only in examples that use a local test container.
+  Keep the default, `VerifyFull`, everywhere else.
+- **New in 1.1.0** marks a feature that is not in `1.0.0` or `1.1.0-rc.1`.
 
-The public documentation is generated from these Markdown files. If a guide
-and the software disagree, report the affected package version, PostgreSQL
-version, smallest reproducer, and guide URL.
+Found a mistake? Open an issue with the page URL, the package version, the
+PostgreSQL version and the smallest example that shows the problem.

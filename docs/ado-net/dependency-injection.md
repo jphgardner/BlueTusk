@@ -1,10 +1,18 @@
 # Dependency injection and health checks
 
-`BlueTusk.Data.DependencyInjection` provides the V1 host-registration surface
-for applications that use `Microsoft.Extensions.DependencyInjection` and
+This page helps you register a BlueTusk data source in an ASP.NET Core, worker
+or other generic-host app, and expose a database readiness check. It uses
+`BlueTusk.Data.DependencyInjection`, which works with
+`Microsoft.Extensions.DependencyInjection` and
 `Microsoft.Extensions.Diagnostics.HealthChecks`.
 
-## Registration
+```powershell
+dotnet add package BlueTusk.Data.DependencyInjection
+```
+
+The [quick start](quickstart.md) shows a complete minimal API.
+
+## Register the data source
 
 ```csharp
 services.AddDataSource(
@@ -12,7 +20,7 @@ services.AddDataSource(
     builder =>
     {
         builder.ConfigureDiagnostics(diagnostics);
-        builder.ConfigureTypes(types);
+        builder.MapComposite<Address>("app.address");
     },
     healthCheckName: "postgresql");
 ```
@@ -24,9 +32,10 @@ instance is resolvable as:
 - `DbDataSource` for provider-neutral application and library code.
 
 Do not register a data source as transient or create one per request. The data
-source owns the physical pool and immutable provider configuration.
+source owns the physical pool and immutable provider configuration. All
+parameters are described in [Configuration](configuration.md#dependency-injection-registration).
 
-## Consuming the data source
+## Use the data source in a service
 
 Provider-neutral service:
 
@@ -61,7 +70,8 @@ BlueTusk-only surface.
 
 ## Readiness health check
 
-When `healthCheckName` is supplied, registration adds a check tagged:
+Registration always adds a health check. Its name is `healthCheckName`
+(default `bluetusk`) and it is tagged:
 
 - `bluetusk`
 - `ready`
@@ -80,6 +90,17 @@ It does not prove:
 - that the application has domain-level read/write permission.
 
 Add separate checks for those responsibilities.
+
+To serve only readiness checks on one endpoint, filter by tag:
+
+```csharp
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+});
+```
 
 ## Liveness versus readiness
 
@@ -109,16 +130,11 @@ If an application owns multiple PostgreSQL configurations, register named
 wrapper services or explicit application abstractions. Avoid service-locator
 selection by raw connection string.
 
-## Testing registrations
+## Test your registration
 
-A unit test can resolve both service types and assert reference equality. A
-live integration test should execute the readiness check against the selected
-PostgreSQL test container.
-
-The repository coverage is in
-`tests/BlueTusk.Data.DependencyInjection.Tests`. Live cases read
-`BLUETUSK_TEST_CONNECTION_STRING` and skip when it is absent; the dedicated CI
-matrix supplies it.
+A unit test can resolve `BlueTuskDataSource` and `DbDataSource` and check that
+they are the same instance. An integration test can run the readiness check
+against a PostgreSQL test container.
 
 ## Migration from Npgsql DI
 
@@ -132,5 +148,4 @@ abstractions. Replace the registration and review provider-specific:
 - routine invocation conventions; and
 - ambient transaction assumptions.
 
-See the [ADO.NET compatibility matrix](compatibility.md) for intentional V1
-exclusions.
+See [Compatibility](compatibility.md) for features BlueTusk does not support.

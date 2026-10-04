@@ -11,13 +11,19 @@
   <url><loc>https://bluetusk.io/documentation</loc></url>
   <url><loc>https://bluetusk.io/community</loc></url>
   <url><loc>https://bluetusk.io/documentation/getting-started/handbook</loc></url>
+  <url><loc>https://bluetusk.io/documentation/getting-started/overview</loc></url>
   <url><loc>https://bluetusk.io/documentation/getting-started/install</loc></url>
   <url><loc>https://bluetusk.io/documentation/getting-started/release-1-1-rc1</loc></url>
+  <url><loc>https://bluetusk.io/documentation/getting-started/release-1-1-0</loc></url>
   <url><loc>https://bluetusk.io/documentation/getting-started/quickstart</loc></url>
   <url><loc>https://bluetusk.io/documentation/getting-started/concepts</loc></url>
   <url><loc>https://bluetusk.io/documentation/getting-started/architecture</loc></url>
   <url><loc>https://bluetusk.io/documentation/getting-started/provider-overview</loc></url>
   <url><loc>https://bluetusk.io/documentation/getting-started/project-overview</loc></url>
+  <url><loc>https://bluetusk.io/documentation/provider/quickstart</loc></url>
+  <url><loc>https://bluetusk.io/documentation/provider/concepts</loc></url>
+  <url><loc>https://bluetusk.io/documentation/provider/configuration</loc></url>
+  <url><loc>https://bluetusk.io/documentation/provider/troubleshooting</loc></url>
   <url><loc>https://bluetusk.io/documentation/provider/authentication</loc></url>
   <url><loc>https://bluetusk.io/documentation/provider/cloud-identity</loc></url>
   <url><loc>https://bluetusk.io/documentation/provider/dependency-injection</loc></url>
@@ -41,21 +47,44 @@
   <url><loc>https://bluetusk.io/documentation/provider/replication-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/provider/types-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/ef-core/overview</loc></url>
+  <url><loc>https://bluetusk.io/documentation/ef-core/quickstart</loc></url>
+  <url><loc>https://bluetusk.io/documentation/ef-core/concepts</loc></url>
+  <url><loc>https://bluetusk.io/documentation/ef-core/configuration</loc></url>
+  <url><loc>https://bluetusk.io/documentation/ef-core/troubleshooting</loc></url>
   <url><loc>https://bluetusk.io/documentation/ef-core/specification-tests</loc></url>
   <url><loc>https://bluetusk.io/documentation/ef-core/ef-core-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/platform</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/contracts</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/streams</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/streams-quickstart</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/streams-concepts</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/streams-configuration</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/streams-troubleshooting</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/snapshot-bootstrap</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/durable-relay</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/state-stores</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/streams-hosting</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/streams-endurance</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/sync</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/sync-quickstart</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/sync-concepts</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/sync-configuration</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/sync-troubleshooting</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/sync-endurance</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/live</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/live-quickstart</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/live-concepts</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/live-configuration</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/live-troubleshooting</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/live-clients</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/control-plane</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/control-plane-quickstart</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/control-plane-concepts</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/control-plane-configuration</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/control-plane-troubleshooting</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/control-plane-operations</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/operations</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/control-plane-kubernetes</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/continuous-graph</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/control-plane-api-compatibility</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/control-plane-reference</loc></url>
@@ -178,6 +207,7 @@
   <url><loc>https://bluetusk.io/documentation/operations/releases-1-0-0-publication-record</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/releases-1-1-0-candidate</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/releases-1-2-0-plan</loc></url>
+  <url><loc>https://bluetusk.io/documentation/operations/releases</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/releases-release-tracks</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/schema</loc></url>
   <url><loc>https://bluetusk.io/documentation/operations/schema-catalogue-attestation</loc></url>

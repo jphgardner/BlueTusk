@@ -1,18 +1,26 @@
 # Asynchronous notifications
 
-`BlueTuskConnection` exposes PostgreSQL `LISTEN`/`NOTIFY` as an asynchronous stream:
+This page helps you receive PostgreSQL `LISTEN`/`NOTIFY` messages in .NET, for
+example to wake a worker when a row changes. Notifications are not durable: a
+listener that is not connected misses them. To process every committed change,
+use [Streams](../streams/README.md).
+
+`BlueTuskConnection` exposes notifications as an asynchronous stream:
 
 ```csharp
 await using var connection = new BlueTuskConnection(connectionString);
 await connection.OpenAsync();
 await connection.ListenAsync("orders");
 
-await foreach (var notification in connection.Notifications)
+await foreach (var notification in connection.Notifications.WithCancellation(stoppingToken))
 {
     Console.WriteLine(
-        $"{notification.ProcessId}: {notification.Channel} — {notification.Payload}");
+        $"{notification.ProcessId}: {notification.Channel}: {notification.Payload}");
 }
 ```
+
+The loop runs until `stoppingToken` is cancelled, which throws
+`OperationCanceledException`, or until the connection closes.
 
 The synchronous path uses a dedicated blocking listener session and a long-running worker, while normal commands continue on the connection's primary session:
 
@@ -42,4 +50,4 @@ Calling `ListenAsync` repeatedly for the same channel is idempotent. Use `Unlist
 
 BlueTusk uses a dedicated, non-pooled physical session for each active channel. This keeps the logical connection's normal session available for commands while the notification consumer is waiting and prevents session-level `LISTEN` state from leaking through the connection pool. Listener sessions do not count toward the data source's configured pool limit or pool statistics, so applications with many channels should include them in server connection-capacity planning.
 
-The stream has a bounded 1,024-notification buffer and applies backpressure rather than dropping messages. Consume a connection's `Notifications` stream from one enumeration. A listener transport or protocol failure faults that enumeration; close the connection and reopen it to establish a new notification lifetime.
+The stream buffers up to 1,024 notifications and then applies backpressure rather than dropping messages. Consume a connection's `Notifications` stream from one enumeration. A listener transport or protocol failure faults that enumeration; close the connection and reopen it to establish a new notification lifetime.

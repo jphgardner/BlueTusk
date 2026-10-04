@@ -16,7 +16,7 @@ defines the maximum production output:
 | Initial JavaScript and CSS, raw | 950 kB | Prevent unbounded startup growth |
 | Initial JavaScript and CSS, Brotli | 220 KiB | Bound the expected compressed transfer |
 | Largest lazy JavaScript or CSS asset, Brotli | 275 KiB | Bound documentation-route payload growth |
-| Complete static distribution | 20 MiB | Bound 135 prerendered routes and the machine-readable guide set |
+| Complete static distribution | 32 MiB | Bound every prerendered documentation route and the machine-readable guide set |
 
 Angular independently enforces its configured initial bundle ceiling. The
 post-build verifier measures the emitted files, compresses JavaScript and CSS

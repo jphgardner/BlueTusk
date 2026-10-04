@@ -1,5 +1,9 @@
 # BlueTusk.Edge
 
+> **Preview.** This family is `0.1.0-preview.1` and is not published to a
+> package feed yet. It is not part of the 1.1.0 release and its API may change.
+> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
+
 BlueTusk.Edge `0.1.0-preview.1` supplies offline synchronization contracts and a bounded coordinator. BlueTusk.Edge.Sqlite provides a durable file cache and queued mutations. BlueTusk.Edge.Server supplies a PostgreSQL record repository with an atomic mutation inbox, consistent snapshots and a retained change feed. BlueTusk.Edge.Http and BlueTusk.Edge.AspNetCore connect that repository through authenticated HTTP. `@bluetusk/edge` supplies durable IndexedDB storage, an interoperable HTTP client and a bounded reconnect helper.
 
 ```csharp

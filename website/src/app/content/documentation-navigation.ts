@@ -101,11 +101,19 @@ export const DOCUMENTATION_JOURNEYS: readonly DocumentationJourney[] = [
     eyebrow: 'CHANGE DATA CAPTURE',
     title: 'Stream committed changes',
     description:
-      'Start with the delivery model, then build a recoverable snapshot-and-stream pipeline.',
+      'Run a consumer first, learn the delivery model, then add a no-gap snapshot.',
     icon: 'sync_alt',
     steps: [
-      { label: 'Start', title: 'Real-time overview', route: '/documentation/real-time/platform' },
-      { label: 'Build', title: 'Streams', route: '/documentation/real-time/streams' },
+      {
+        label: 'Start',
+        title: 'Streams quick start',
+        route: '/documentation/real-time/streams-quickstart',
+      },
+      {
+        label: 'Learn',
+        title: 'Streams concepts',
+        route: '/documentation/real-time/streams-concepts',
+      },
       {
         label: 'Harden',
         title: 'Snapshot and replay',
@@ -121,8 +129,12 @@ export const DOCUMENTATION_JOURNEYS: readonly DocumentationJourney[] = [
       'Deliver whole source transactions to PostgreSQL, Redis, NATS, OpenSearch, Kafka, or S3.',
     icon: 'multiple_stop',
     steps: [
-      { label: 'Start', title: 'Delivery guarantees', route: '/documentation/real-time/contracts' },
-      { label: 'Build', title: 'Sync destinations', route: '/documentation/real-time/sync' },
+      {
+        label: 'Start',
+        title: 'Sync quick start',
+        route: '/documentation/real-time/sync-quickstart',
+      },
+      { label: 'Learn', title: 'Delivery guarantees', route: '/documentation/real-time/contracts' },
       {
         label: 'Operate',
         title: 'Recovery and rebuilds',
@@ -138,7 +150,11 @@ export const DOCUMENTATION_JOURNEYS: readonly DocumentationJourney[] = [
       'Register an authorized query and deliver bounded updates to web and .NET clients.',
     icon: 'bolt',
     steps: [
-      { label: 'Start', title: 'Live queries', route: '/documentation/real-time/live' },
+      {
+        label: 'Start',
+        title: 'Live quick start',
+        route: '/documentation/real-time/live-quickstart',
+      },
       { label: 'Secure', title: 'Security model', route: '/documentation/operations/security' },
       {
         label: 'Operate',
@@ -151,7 +167,7 @@ export const DOCUMENTATION_JOURNEYS: readonly DocumentationJourney[] = [
     id: 'graph-data',
     eyebrow: 'CONNECTED DATA',
     title: 'Query and maintain a graph',
-    description: 'Model relationships with SQL/PGQ, then keep authorized graph results current.',
+    description: 'Preview: model relationships with SQL/PGQ, then keep graph results current.',
     icon: 'hub',
     steps: [
       { label: 'Start', title: 'SQL/PGQ graph queries', route: '/documentation/graph/sql-pgq' },
