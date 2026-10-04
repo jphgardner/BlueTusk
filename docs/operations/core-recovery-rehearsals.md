@@ -113,6 +113,7 @@ Each evidence directory contains:
 | --- | --- |
 | `rehearsal-report.json` | Commit, operator, image, package identities and SHA-512 hashes, probe source hashes, phase list, measurements and the result |
 | `phases/*.json` | One report per probe phase: version, checks, observations and failures |
+| `phases/*.log` | The console output of each probe phase, kept for diagnosis |
 | `backup/rehearsal.dump.enc` | Backup/restore only: the encrypted backup that was restored |
 | `approval-details.json` | Only when the rehearsal passed: the measured `details` object for the approval record |
 

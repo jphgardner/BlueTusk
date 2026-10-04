@@ -266,8 +266,10 @@ function Invoke-Probe([object] $Probe, [string] $Phase, [object] $Server, [strin
     $reportPath = Join-Path $phaseRoot ('{0:D2}-{1}-{2}.json' -f $index, $Label, $Phase)
     $statePath = Join-Path $work 'probe-state.json'
     $applicationName = "bluetusk-rehearsal-$Label"
+    # The throwaway server is reachable only on loopback and has no certificate, so TLS is disabled
+    # explicitly (BlueTusk defaults to SSL Mode=VerifyFull).
     $env:BLUETUSK_REHEARSAL_CONNECTION_STRING =
-        "Host=127.0.0.1;Port=$($Server.Port);Database=rehearsal;Username=postgres;Password=$password;Application Name=$applicationName"
+        "Host=127.0.0.1;Port=$($Server.Port);Database=rehearsal;Username=postgres;Password=$password;SSL Mode=Disable;Channel Binding=Disable;Application Name=$applicationName"
     try
     {
         $output = & dotnet (Join-Path $Probe.Binary 'CoreRecoveryProbe.dll') $Phase $statePath $reportPath 2>&1
@@ -277,6 +279,9 @@ function Invoke-Probe([object] $Probe, [string] $Phase, [object] $Server, [strin
     {
         Remove-Item Env:\BLUETUSK_REHEARSAL_CONNECTION_STRING -ErrorAction SilentlyContinue
     }
+    # Retain the probe console output next to its report; it never contains the connection string.
+    $logPath = [IO.Path]::ChangeExtension($reportPath, '.log')
+    [IO.File]::WriteAllLines($logPath, [string[]]@($output | ForEach-Object { $_.ToString().Replace($password, '***') }))
     if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf))
     {
         throw "The $Label $Phase probe produced no report (exit $exitCode): $(($output | Select-Object -Last 20) -join [Environment]::NewLine)"

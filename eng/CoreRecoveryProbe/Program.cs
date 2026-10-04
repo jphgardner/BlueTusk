@@ -184,7 +184,7 @@ internal sealed class RecoveryProbe(string phase, string statePath, string repor
 
         if (phase != "seed")
         {
-            _observations["checkpointBefore"] = await ReadCheckpointAsync(dataSource, streams, control);
+            await CheckAsync("checkpointReadableBefore", async () => { _observations["checkpointBefore"] = await ReadCheckpointAsync(dataSource, streams, control); return true; });
             await ReconcileOrdersAsync(dataSource, state);
             await ReconcileStreamsAsync(streams, state);
             await ReconcileControlPlaneAsync(control, state);
@@ -196,7 +196,7 @@ internal sealed class RecoveryProbe(string phase, string statePath, string repor
         await AdvanceLiveAsync(dataSource, live, state);
         await AdvanceControlPlaneAsync(control, state, version);
         await AdvanceSyncAsync(dataSource, sync, state);
-        _observations["checkpointAfter"] = await ReadCheckpointAsync(dataSource, streams, control);
+        await CheckAsync("checkpointReadableAfter", async () => { _observations["checkpointAfter"] = await ReadCheckpointAsync(dataSource, streams, control); return true; });
 
         state.CompletedPhases++;
         state.PhaseVersions.Add(phase + "@" + version);
