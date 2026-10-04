@@ -127,6 +127,23 @@
           "continuous-graph-v1.1.0"
         ]
       }
+    },
+    {
+      "name": "expansion-candidate-readiness",
+      "workflow": ".github/workflows/expansion-candidate-readiness.yml",
+      "minimumConfiguredReviewers": 1,
+      "preventSelfReview": false,
+      "canAdminsBypass": false,
+      "requiredSecrets": [
+        "V1_GOVERNANCE_TOKEN"
+      ],
+      "deploymentBranchPolicy": {
+        "protectedBranches": false,
+        "customBranchPolicies": true,
+        "requiredPatterns": [
+          "main"
+        ]
+      }
     }
   ],
   "maintenancePolicy": {

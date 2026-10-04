@@ -108,24 +108,19 @@ try
     Set-Content -LiteralPath $failoverPath `
         -Value "name: fixture`non:`n  workflow_dispatch:`njobs:`n  fixture:`n    runs-on: ubuntu-latest`n    steps:`n      - run: true`n" `
         -Encoding utf8
-    Assert-Rejected -ExpectedMessage 'protected independent candidate readiness' -Arguments $arguments
 
     # The committed governance is the owner-authorized sole-maintainer mode, so the
     # readiness environment must follow it exactly: self-review is permitted there.
+    # Each case below declares its own readiness environment on a copy of that governance.
     $governance = Get-Content -LiteralPath $governancePath -Raw |
         ConvertFrom-Json -AsHashtable
     if ([string]$governance.maintenancePolicy.mode -cne 'sole-maintainer')
     {
         throw 'This self-test expects the committed sole-maintainer governance mode.'
     }
-    $readinessEnvironment = @{
-        name = 'expansion-candidate-readiness'
-        workflow = '.github/workflows/expansion-candidate-readiness.yml'
-        minimumConfiguredReviewers = 1
-        preventSelfReview = $true
-        canAdminsBypass = $false
-    }
-    $governance.environments += $readinessEnvironment
+    $governance.environments = @($governance.environments | Where-Object {
+        [string]$_.name -cne 'expansion-candidate-readiness'
+    })
     $testGovernance = Join-Path $temporaryRoot 'governance.json'
     function Write-Governance
     {
@@ -134,6 +129,17 @@ try
     }
     Write-Governance
     $arguments.GovernancePath = $testGovernance
+    Assert-Rejected -ExpectedMessage 'protected independent candidate readiness' -Arguments $arguments
+
+    $readinessEnvironment = @{
+        name = 'expansion-candidate-readiness'
+        workflow = '.github/workflows/expansion-candidate-readiness.yml'
+        minimumConfiguredReviewers = 1
+        preventSelfReview = $true
+        canAdminsBypass = $false
+    }
+    $governance.environments += $readinessEnvironment
+    Write-Governance
     # Sole-maintainer mismatch: a governed-mode reviewer flag cannot be declared here.
     Assert-Rejected -ExpectedMessage 'protected independent candidate readiness' -Arguments $arguments
     $readinessEnvironment.preventSelfReview = $false

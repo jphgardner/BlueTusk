@@ -143,7 +143,7 @@ foreach ($environment in $environments)
             ForEach-Object { [string]$_ }
     )
     if ($requiredSecrets.Count -lt 1 -or
-        $requiredSecrets.Count -ne ($requiredSecrets | Sort-Object -Unique).Count -or
+        $requiredSecrets.Count -ne @($requiredSecrets | Sort-Object -Unique).Count -or
         @($requiredSecrets | Where-Object {
             $_ -notmatch '^[A-Z][A-Z0-9_]*$'
         }).Count -ne 0)
