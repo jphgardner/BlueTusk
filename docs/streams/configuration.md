@@ -116,7 +116,8 @@ The same class configures the relay; see [below](#postgresql-storage-and-relay).
 | `KeyPrefix` | `string` | `bluetusk:streams` | Key prefix. Must not contain `{` or `}`. |
 
 `CheckpointingChangeDeliveryObserver.AcquireAsync` takes the lease duration as
-an argument; the samples use 30 seconds. Renew at about a third of that. See
+an argument; the samples use 30 seconds. The observer renews the lease by
+itself every third of that duration. See
 [checkpoint and lease stores](state-stores.md).
 
 ## PostgreSQL storage and relay

@@ -26,8 +26,7 @@ builder.Services
         "orders-read-model",
         services => new PostgreSqlConsistentSnapshotSource(
             services.GetRequiredService<BlueTuskDataSource>(),
-            snapshotOptions,
-            observerFactory: replication => new ConfirmOnAcknowledge(replication)),
+            snapshotOptions),
         new SnapshotThenStreamOptions { MaximumSnapshotAttempts = 3 });
 ```
 
@@ -48,33 +47,14 @@ restart it.
 
 ## Confirm positions to PostgreSQL
 
-A snapshot source without an observer never tells PostgreSQL how far you have
-read, so the slot keeps every WAL file while the worker runs. Pass an
-`observerFactory` that confirms each acknowledged transaction:
+You do not need an observer for the slot to release WAL. When your consumer
+acknowledges a transaction, the snapshot source's stream confirms its position
+to PostgreSQL, so the slot's `confirmed_flush_lsn` moves forward while the
+worker runs. See [how the slot releases WAL](concepts.md#how-the-slot-releases-wal).
 
-```csharp
-// Confirms each acknowledged transaction to PostgreSQL so the slot can
-// release WAL. Without an observer the slot keeps all WAL until it is dropped.
-sealed class ConfirmOnAcknowledge(BlueTuskLogicalReplicationConnection replication)
-    : IChangeDeliveryObserver
-{
-    private readonly LogicalReplicationFeedbackSender _feedback = new(replication);
-
-    public ValueTask AcknowledgeAsync(
-        ChangeTransaction transaction,
-        CancellationToken cancellationToken = default) =>
-        _feedback.SendFeedbackAsync(transaction.CommitEndPosition, cancellationToken);
-
-    public ValueTask NackAsync(
-        ChangeTransaction transaction,
-        Exception? failure,
-        CancellationToken cancellationToken = default) =>
-        ValueTask.CompletedTask;
-}
-```
-
-This is enough for a consumer that rebuilds from a snapshot on every start. To
-resume instead, use a checkpoint store as shown in
+This is enough for a consumer that rebuilds from a snapshot on every start.
+Nothing records a position across restarts, though. To resume instead, pass an
+`observerFactory` that returns a checkpointing observer, as shown in
 [snapshot and catch-up](snapshot-bootstrap.md#3-copy-then-stream-then-resume).
 
 ## Check health
@@ -156,7 +136,7 @@ Each snapshot attempt is a `bluetusk.streams.snapshot` activity tagged with
 `delivery.duration` measures from delivery to acknowledgement, so a growing
 value usually means your own work is slow. A rising
 `delivery.settlement.failures` count means acknowledgements are failing, for
-example because a checkpoint write or lease renewal failed.
+example because a checkpoint write failed or the lease was lost.
 
 ## Find out why spooling is slow
 

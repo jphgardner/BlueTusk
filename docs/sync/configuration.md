@@ -31,7 +31,9 @@ hosted worker, a health check named `bluetusk_sync` (tags `bluetusk`, `sync`,
 
 Each `PipelineId` can be registered once. The transform and destination types
 are resolved from dependency injection as singletons. An
-`ISyncRetryClassifier` registered in the container is used by every pipeline.
+`ISyncRetryClassifier` registered in the container is used by every pipeline
+and replaces the destination's own classification
+([retries](#retry-transient-destination-errors)).
 
 ```csharp
 builder.Services.AddSingleton(new PostgreSqlSyncDestination(new PostgreSqlSyncOptions
@@ -56,14 +58,14 @@ Streams. See [Streams configuration](../streams/configuration.md).
 | --- | --- | --- | --- |
 | `PipelineId` | `string` | required | Stable pipeline name. The destination keys its checkpoint and transform version by it. |
 | `PoisonRecordPolicy` | `SyncPoisonRecordPolicy` | `Pause` | `Pause`, `QuarantineAndPause` or `QuarantineAndAdvance`. Quarantine policies need a quarantine sink. |
-| `Retry` | `SyncRetryOptions` | `new()` | Backoff for errors your classifier marks as transient. |
+| `Retry` | `SyncRetryOptions` | `new()` | Attempts and backoff for errors classified as transient. |
 | `RateLimit` | `SyncRateLimitOptions` | `new()` | Optional pacing. No limit by default. |
 
 `SyncRetryOptions`:
 
 | Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `MaximumAttempts` | `int` | `5` | Total attempts, including the first (1 to 100). |
+| `MaximumAttempts` | `int` | `5` | Total attempts, including the first (1 to 100). `1` turns retries off. |
 | `InitialDelay` | `TimeSpan` | 100 ms | Delay before the second attempt. |
 | `MaximumDelay` | `TimeSpan` | 10 s | Upper limit for any delay. |
 | `BackoffFactor` | `double` | `2` | Multiplier per attempt (at least 1). |
@@ -97,8 +99,36 @@ var pipelineOptions = new SyncPipelineOptions
 
 ## Retry transient destination errors
 
-Sync retries nothing unless an `ISyncRetryClassifier` returns `true` for the
-failure. `SyncRetryContext` gives you `PipelineId`, `Destination`, `Operation`
+Sync retries a failed destination operation only when the failure is
+classified as transient. Who classifies it:
+
+1. An `ISyncRetryClassifier` registered in the container (or passed to
+   `SyncPipeline`), if there is one. It decides for every pipeline.
+2. Otherwise, the destination itself, if it implements
+   `ISyncRetryClassifier`. Of the built-in destinations, only
+   `PostgreSqlSyncDestination` does.
+3. Otherwise, nothing is retried.
+
+`PostgreSqlSyncDestination` treats these as transient: lost or refused
+connections (SQLSTATE `08000`, `08001`, `08003`, `08004`, `08006`, `08007`),
+serialization failures (`40001`), deadlocks (`40P01`), resource limits
+(`53000`, `53200`, `53300`, `53400`), objects in use (`55006`), lock timeouts
+(`55P03`), server shutdown or restart (`57P01`, `57P02`, `57P03`), idle-session
+timeouts (`57P05`), I/O errors (`58030`), any provider `DbException` with
+`IsTransient = true`, and timeout, socket and I/O exceptions. Everything else
+is permanent and stops the pipeline at once: constraint, permission, schema
+and data errors, cancellation, and Sync's own durability, transform-version
+and source-identity errors. Each destination operation runs in one database
+transaction and applies idempotently, so a retry never applies work twice.
+
+> **New in 1.1.0:** In 1.0.0 and 1.1.0-rc.1 the PostgreSQL destination did not
+> classify its errors, so without a registered classifier its first failure
+> stopped the pipeline. Set `MaximumAttempts = 1` to keep that behaviour.
+
+For the other destinations, or to change the PostgreSQL choices, register a
+classifier. It replaces the destination's own classification, so if you also
+use the PostgreSQL destination, your classifier decides for its errors too.
+`SyncRetryContext` gives you `PipelineId`, `Destination`, `Operation`
 (`SyncPipelineOperation`), `Attempt` and `Exception`. This classifier retries
 lost connections and PostgreSQL errors that are safe to repeat:
 

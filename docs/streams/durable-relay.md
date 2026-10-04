@@ -104,10 +104,9 @@ finds the identical transaction already stored and does not store it twice.
 
 `relayWriter.Source.LastCommitPosition` is the last stored position, so a
 restarted worker carries on from there. A second worker for the same slot fails
-with `ChangeRelayLeaseUnavailableException`. The lease is renewed on every
-append; if the source can be quiet for longer than the lease, renew it on a
-timer with `relay.RenewSourceLeaseAsync(relayWriter.Lease, duration)` as the
-[quick start](quickstart.md) does for its checkpoint lease.
+with `ChangeRelayLeaseUnavailableException`. The observer also renews the
+source lease on a timer, three times per lease duration, so a quiet source
+keeps it. Disposing `relayWriter` stops renewal and releases the lease.
 
 ## 2. Read as a consumer group
 

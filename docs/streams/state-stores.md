@@ -65,31 +65,15 @@ Console.WriteLine(checkpoints.Checkpoint is null
   `AcknowledgedCommitPosition`. The [quick start](quickstart.md) shows the
   whole worker.
 
-Disposing the observer releases the lease, so a clean shutdown lets the next
-process start straight away.
+The observer renews the lease in the background, three times per lease
+duration, until you dispose it. Disposing it stops renewal and releases the
+lease, so a clean shutdown lets the next process start straight away. See
+[leases](concepts.md#checkpoints-leases-and-fencing) for what happens when a
+lease is lost.
 
 > **Note:** Keep the state schema out of your source publication. A
 > `FOR ALL TABLES` publication in the same database would capture checkpoint
 > writes. Prefer a separate control database, or publish named tables only.
-
-## Keep the lease alive while idle
-
-The observer renews the lease each time you acknowledge. If no transaction
-arrives for longer than the lease duration, the lease expires and the next
-acknowledgement fails with `ChangeStreamLeaseLostException`. Renew it on a
-timer, about every third of the lease duration:
-
-```csharp
-var renewed = await store.RenewAsync(checkpoints.Lease, TimeSpan.FromSeconds(30));
-if (renewed is null)
-{
-    throw new ChangeStreamLeaseLostException("Another worker owns this consumer group now.");
-}
-```
-
-`RenewAsync` returns `null` when the lease has expired or another worker owns
-it. Stop reading in that case. The [quick start](quickstart.md) has a complete
-`KeepLeaseAsync` loop.
 
 ## Check the slot before resuming
 

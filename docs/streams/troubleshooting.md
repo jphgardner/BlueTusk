@@ -39,8 +39,8 @@ The relay equivalents are `ChangeRelayLeaseUnavailableException`:
 
 | Message | Cause | Fix |
 | --- | --- | --- |
-| `ChangeStreamLeaseLostException`: "The lease for consumer group '...' was lost." | No acknowledgement renewed the lease for longer than its duration, or another worker took over. | Renew the lease on a timer while idle, as the [quick start](quickstart.md) does. Restart the worker; it resumes from the checkpoint. |
-| `ChangeRelayLeaseLostException`: "The relay source lease was lost before append." | Same, for a relay source worker. | Renew with `relay.RenewSourceLeaseAsync` on a timer. |
+| `ChangeStreamLeaseLostException`: "The lease for consumer group '...' was lost." | The lease expired before the observer could renew it (for example, the state store was unreachable for longer than the lease duration), or another worker took over. | Restart the worker; it resumes from the checkpoint. If it recurs, check the store or use a longer lease. |
+| `ChangeRelayLeaseLostException`: "The relay source lease was lost before append." | Same, for a relay source worker. | Restart the source worker; it resumes from the relay's last stored position. |
 | `ChangeRelayLeaseLostException`: "The relay consumer-group lease was lost." | A relay group's background renewal failed, for example during a database outage. | Restart the consumer. |
 | `ChangeStreamCheckpointWriteException`: "The change-stream checkpoint write failed with status Fenced." | A newer owner holds the lease. Other statuses: `Conflict` (concurrent write), `BackwardMovement`, `Incompatible`. | Stop this worker. Do not retry the write; let the current owner continue. |
 
@@ -115,7 +115,7 @@ FROM pg_replication_slots;
 | --- | --- |
 | A consumer is stopped or slow. | Restart it or speed it up. With many consumers, use the [relay](durable-relay.md). |
 | A slot is no longer used. | Drop it: `SELECT pg_drop_replication_slot('<name>');` The slot must be inactive. Its consumer group must then start again from a snapshot. |
-| The consumer acknowledges, but `confirmed_flush_lsn` never moves. | The stream has no delivery observer, so PostgreSQL is never told. Add one (see [hosting](hosting-observability.md#confirm-positions-to-postgresql)). |
+| The consumer acknowledges, but `confirmed_flush_lsn` never moves. | A custom observer that never sends feedback replaces the stream's own confirmation. (On 1.0.0 and 1.1.0-rc.1, a stream without an observer never confirmed either.) | Send the position from your observer, or use a built-in one or none. See [how the slot releases WAL](concepts.md#how-the-slot-releases-wal). |
 | A relay group is stopped. | The relay frees WAL anyway; check relay storage with `GetHealthAsync` instead. |
 
 As a safety net, set PostgreSQL's `max_slot_wal_keep_size` so a forgotten slot

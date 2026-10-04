@@ -59,8 +59,10 @@ Traces use the `BlueTusk.Sync` activity source (`sync.transaction.consume`,
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| `BlueTuskException: Could not open a PostgreSQL connection matching Any across 1 configured host(s).` on the first failure | No `ISyncRetryClassifier` is registered, so nothing is retried. | Register a classifier ([example](configuration.md#retry-transient-destination-errors)) and tune `SyncRetryOptions`. |
-| The same error after several attempts; `bluetusk.sync.retries` rose | Retries ran out (`MaximumAttempts`, default 5). | Fix the destination, then restart. Raise `MaximumAttempts` or `MaximumDelay` to ride out longer outages. |
+| `BlueTuskException: Could not open a PostgreSQL connection matching Any across 1 configured host(s).` after several attempts; `bluetusk.sync.retries` rose | The PostgreSQL destination retried until `MaximumAttempts` (default 5) ran out. | Fix the destination, then restart. Raise `MaximumAttempts` or `MaximumDelay` to ride out longer outages. |
+| A NATS, Redis, OpenSearch, Kafka or S3 error stops the pipeline at once | These destinations do not classify errors, so nothing is retried. | Register an `ISyncRetryClassifier` ([how](configuration.md#retry-transient-destination-errors)). |
+| A PostgreSQL error you expect to be retried stops the pipeline at once | Your registered classifier replaces the destination's own, or the SQLSTATE is not transient. | Return `true` for it in your classifier. |
+| Your `IPostgreSqlSyncMutationWriter` runs the same transaction more than once | The destination retried a transient error, such as a lock timeout, in a new database transaction. | Expected. Keep non-database side effects out of the writer. |
 | `WebhookSyncDeliveryException: Webhook receiver '<host>' returned HTTP 400; the Sync checkpoint was not advanced.` | A non-transient status. Only 408, 425, 429 and 5xx are retried. | Fix the receiver. |
 | `WebhookSyncProtocolException` about `BlueTusk-Delivery-Status` | The receiver replied 2xx without `applied` or `duplicate`. | Return the header. Sync never treats an unclear success as applied. |
 | `KafkaSyncDeliveryException: Kafka did not confirm an atomic transaction...` | The commit outcome is unknown. | Restart the worker; provisioning reloads the state topic and resolves it. |
@@ -133,39 +135,17 @@ FROM pg_replication_slots;
 
 ## Why does WAL keep growing with a direct pipeline?
 
-A pipeline registered with `AddHostedPipeline` and a
-`PostgreSqlConsistentSnapshotSource` without an observer never tells
-PostgreSQL how far it got, so `confirmed_flush_lsn` stays at the snapshot
-point and PostgreSQL keeps all WAL until the slot is dropped or replaced. Pass
-an observer that sends feedback after each acknowledged transaction:
+A running direct pipeline confirms each transaction to PostgreSQL after the
+destination commits it, so `confirmed_flush_lsn` moves forward and the slot
+releases WAL ([how](../streams/concepts.md#how-the-slot-releases-wal)). If WAL
+still grows:
 
-```csharp
-public sealed class FeedbackObserver(LogicalReplicationFeedbackSender feedback)
-    : IChangeDeliveryObserver
-{
-    public ValueTask AcknowledgeAsync(
-        ChangeTransaction transaction,
-        CancellationToken cancellationToken = default) =>
-        feedback.SendFeedbackAsync(transaction.CommitEndPosition, cancellationToken);
-
-    public ValueTask NackAsync(
-        ChangeTransaction transaction,
-        Exception? failure,
-        CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
-}
-```
-
-```csharp
-var sourceWithFeedback = new PostgreSqlConsistentSnapshotSource(
-    source,
-    snapshotOptions,
-    replication => new FeedbackObserver(new LogicalReplicationFeedbackSender(replication)));
-```
-
-Sync acknowledges only after the destination commit, so the slot never moves
-past applied data. For production, prefer the
-[durable relay](../streams/durable-relay.md), which manages this for you.
-Always drop slots you no longer use.
+| Cause | Fix |
+| --- | --- |
+| The worker or pipeline stopped. The slot keeps WAL from its last confirmed position. | Fix the cause and restart, or drop a slot you no longer need. |
+| The pipeline is slow. | See [lag keeps growing](#lag-keeps-growing). |
+| Your `observerFactory` observer never sends feedback; it replaces the stream's own confirmation. | Send the position from its `AcknowledgeAsync`, or remove the `observerFactory`. |
+| The worker runs 1.0.0 or 1.1.0-rc.1, where a source without an observer never confirmed positions. | Upgrade to 1.1.0, or pass an observer that sends the position. |
 
 ## Permission and start-up errors
 

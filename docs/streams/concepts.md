@@ -91,11 +91,33 @@ what "done" means:
 | --- | --- |
 | `CheckpointingChangeDeliveryObserver` | Renews the lease, saves the checkpoint with compare-and-swap, then sends the position to PostgreSQL. |
 | `PostgreSqlRelayChangeDeliveryObserver` | Appends the transaction to the [durable relay](durable-relay.md), then sends the position to PostgreSQL. |
-| None | Nothing. PostgreSQL is never told the position, so the slot keeps all WAL. |
+| None | The stream confirms the commit position to PostgreSQL itself. Nothing is saved, so a restart cannot resume from a known position. |
 
-Always use an observer that confirms positions in a long-running consumer. The
-[hosting guide](hosting-observability.md#confirm-positions-to-postgresql) shows
-the smallest one for hosted snapshot consumers.
+### How the slot releases WAL
+
+PostgreSQL keeps WAL from the slot's `confirmed_flush_lsn` onwards, and that
+position only moves when the consumer confirms a position. A
+`PgOutputChangeStream` that reads from a BlueTusk replication connection
+confirms it as follows:
+
+- **With no observer**, the stream confirms each transaction's commit-end
+  position after `AcknowledgeAsync` completes. This covers streams you build
+  over `StartReplicationAsync(...).DecodePgOutputAsync()`, the stream inside
+  `PostgreSqlConsistentSnapshotSource`, hosted consumers, and Sync pipelines
+  without an `observerFactory`.
+- **With an observer**, the observer owns confirmation. The two built-in
+  observers confirm after their durable write. A custom observer that never
+  sends feedback holds WAL until the slot is dropped.
+
+A delivery that is rejected, disposed or never acknowledged is not confirmed,
+so PostgreSQL sends it again after a restart.
+
+When a consumer must resume after a restart, use
+`CheckpointingChangeDeliveryObserver` and a [state store](state-stores.md).
+
+> **New in 1.1.0:** In 1.0.0 and 1.1.0-rc.1 a stream without an observer never
+> confirmed a position, so its slot kept all WAL. An observer you added only to
+> send feedback still works, but you can remove it.
 
 ## Checkpoints, leases and fencing
 
@@ -112,10 +134,19 @@ generation, a checkpoint can never move backwards, and a worker whose lease
 expired is rejected even if it is still running. A new owner always receives a
 higher fencing token than any earlier owner.
 
-`CheckpointingChangeDeliveryObserver` renews the lease each time you
-acknowledge. Renew it on a timer as well (the [quick start](quickstart.md) does)
-or an idle worker loses its lease and the next acknowledgement fails with
-`ChangeStreamLeaseLostException`.
+`CheckpointingChangeDeliveryObserver` renews its lease on a timer, three times
+per lease duration, whether or not transactions arrive. An idle worker, or one
+still working on a slow transaction, keeps its lease. Each acknowledgement also
+renews and checks the lease first. If the lease expired (for example because
+the store could not be reached for longer than the lease duration) or another
+worker took it over, the acknowledgement fails with
+`ChangeStreamLeaseLostException` before any checkpoint is written. Disposing
+the observer stops renewal and releases the lease.
+`PostgreSqlRelayChangeDeliveryObserver` renews its source lease the same way.
+
+> **New in 1.1.0:** In 1.0.0 and 1.1.0-rc.1 the observers renewed the lease
+> only when you acknowledged, so an idle worker needed its own renewal timer.
+> You can remove that timer.
 
 Choose a store in [checkpoint and lease stores](state-stores.md).
 

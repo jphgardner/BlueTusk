@@ -107,11 +107,12 @@ replace the rows of the earlier epoch in `ResetSnapshotAsync`.
 
 The sample is deliberately small. A production worker should also:
 
-- **Confirm positions to PostgreSQL.** The sample passes no delivery observer,
-  so PostgreSQL is never told how far it has read and the slot keeps all WAL
-  while the sample runs. Add the observer from
-  [hosting and observability](hosting-observability.md#confirm-positions-to-postgresql),
-  or a checkpoint store as in [snapshot and catch-up](snapshot-bootstrap.md#3-copy-then-stream-then-resume).
+- **Save a checkpoint if it must resume.** The sample passes no delivery
+  observer. The stream still confirms each acknowledged transaction to
+  PostgreSQL, so the slot releases WAL while the sample runs, but nothing
+  records a position across restarts. To resume instead of copying again, add
+  a checkpoint store as in
+  [snapshot and catch-up](snapshot-bootstrap.md#3-copy-then-stream-then-resume).
 - **Apply changes durably and idempotently** before acknowledging each
   transaction.
 - **Map rows to types** with a [typed mapping](typed-mappings.md) instead of a

@@ -113,8 +113,10 @@ Use the direct slot for small tables and development. Use the relay for
 production: it resumes without re-copying, and several pipelines can share one
 slot.
 
-> **Note:** A direct slot only moves forward when PostgreSQL receives feedback.
-> See [WAL keeps growing](troubleshooting.md#why-does-wal-keep-growing-with-a-direct-pipeline).
+With a direct slot, the source stream confirms each transaction to PostgreSQL
+after the destination has applied it, so the slot releases WAL as the pipeline
+runs. You do not need an `observerFactory` for this. See
+[how the slot releases WAL](../streams/concepts.md#how-the-slot-releases-wal).
 
 ## Changing the transform: rebuild and repair
 
@@ -143,9 +145,13 @@ document writer, Redis and OpenSearch support it.
 
 ## Failures, retries and poison data
 
-**Destination errors are not retried by default.** A failed write stops the
-pipeline unless you register an `ISyncRetryClassifier` that says the error is
-transient. Then `SyncRetryOptions` controls the backoff. See
+**Only transient errors are retried.** The PostgreSQL destination decides for
+itself which of its errors are transient (lost connections, deadlocks, lock
+timeouts and similar) and retries them with the backoff in `SyncRetryOptions`
+(up to 5 attempts by default). The other built-in destinations do not classify
+their errors, so a failure from one of them stops the pipeline unless you
+register an `ISyncRetryClassifier`. (The webhook destination first retries
+transient HTTP responses and network errors by itself.) See
 [retries](configuration.md#retry-transient-destination-errors).
 
 **A stopped pipeline stays stopped.** The hosted worker logs

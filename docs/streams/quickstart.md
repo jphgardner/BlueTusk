@@ -133,9 +133,6 @@ sealed class OrdersStreamWorker(BlueTuskDataSource dataSource, IConfiguration co
         var resumeFrom = checkpoints.Checkpoint?.AcknowledgedCommitPosition ?? default;
         Console.WriteLine($"Consumer group '{consumerGroup}' starts after {resumeFrom}");
 
-        using var stop = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-        var keepLease = KeepLeaseAsync(store, checkpoints, stop);
-
         // 4. Read committed transactions from the slot, after the checkpoint.
         var changes = new PgOutputChangeStream(
             replication
@@ -148,40 +145,32 @@ sealed class OrdersStreamWorker(BlueTuskDataSource dataSource, IConfiguration co
                         ProtocolVersion = 2,
                         StreamingMode = BlueTuskLogicalStreamingMode.On,
                     },
-                    stop.Token)
+                    stoppingToken)
                 .DecodePgOutputAsync(
                     new BlueTuskPgOutputDecoderOptions
                     {
                         ProtocolVersion = 2,
                         StreamingMode = BlueTuskPgOutputStreamingMode.On,
                     },
-                    stop.Token),
+                    stoppingToken),
             source,
             observer: checkpoints);
 
-        try
+        await foreach (var delivery in changes.ReadTransactionsAsync(stoppingToken))
         {
-            await foreach (var delivery in changes.ReadTransactionsAsync(stop.Token))
+            var transaction = delivery.Transaction;
+            Console.WriteLine(
+                $"Transaction {transaction.TransactionId} committed at " +
+                $"{transaction.CommitEndPosition} ({transaction.Changes.Count} changes)");
+
+            await foreach (var change in transaction.Changes.WithCancellation(stoppingToken))
             {
-                var transaction = delivery.Transaction;
-                Console.WriteLine(
-                    $"Transaction {transaction.TransactionId} committed at " +
-                    $"{transaction.CommitEndPosition} ({transaction.Changes.Count} changes)");
-
-                await foreach (var change in transaction.Changes.WithCancellation(stop.Token))
-                {
-                    Console.WriteLine($"  {change.Kind,-6} {Describe(change)}");
-                }
-
-                // 5. Acknowledge only after your work is done. This stores the
-                //    checkpoint, then confirms the position to PostgreSQL.
-                await delivery.AcknowledgeAsync(stop.Token);
+                Console.WriteLine($"  {change.Kind,-6} {Describe(change)}");
             }
-        }
-        finally
-        {
-            await stop.CancelAsync();
-            await keepLease;
+
+            // 5. Acknowledge only after your work is done. This stores the
+            //    checkpoint, then confirms the position to PostgreSQL.
+            await delivery.AcknowledgeAsync(stoppingToken);
         }
     }
 
@@ -209,37 +198,14 @@ sealed class OrdersStreamWorker(BlueTuskDataSource dataSource, IConfiguration co
         });
         return $"{row.Table} {string.Join(", ", columns)}";
     }
-
-    // The lease is renewed on every acknowledgement. Renew it while the
-    // stream is idle too, and stop reading if another worker takes over.
-    private static async Task KeepLeaseAsync(
-        IChangeStreamLeaseStore store,
-        CheckpointingChangeDeliveryObserver checkpoints,
-        CancellationTokenSource stop)
-    {
-        using var timer = new PeriodicTimer(LeaseDuration / 3);
-        try
-        {
-            while (await timer.WaitForNextTickAsync(stop.Token))
-            {
-                if (await store.RenewAsync(checkpoints.Lease, LeaseDuration, stop.Token) is null)
-                {
-                    Console.Error.WriteLine("The consumer-group lease was lost. Stopping.");
-                    await stop.CancelAsync();
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-        }
-    }
 }
 ```
 
 The numbered comments: (1) the store keeps one checkpoint row per consumer
 group in the `bluetusk_streams` schema; (2) the **source identity** names the
 server, database, slot and publication; (3) the **lease** stops a second copy
-from taking over; (4) Streams assembles complete transactions; (5)
+from taking over, and the observer renews it in the background until it is
+disposed; (4) Streams assembles complete transactions; (5)
 `AcknowledgeAsync` saves the checkpoint, then lets the slot release that WAL.
 
 ## 5. Run it
