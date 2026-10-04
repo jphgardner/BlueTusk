@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.Documents.Live;
 using BlueTusk.Documents.Streams;
@@ -15,7 +16,7 @@ using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Documents.Tests;
 
-public sealed class DocumentIntegrationTests
+public sealed partial class DocumentIntegrationTests(DocumentWalDatabaseFixture walDatabase) : IClassFixture<DocumentWalDatabaseFixture>
 {
     private static readonly ChangeSourceIdentity Source = new("system", "documents", "slot", "publication");
     private static readonly DocumentCollectionDefinition<IntegrationDocument> Collection = new("orders", IntegrationJsonContext.Default.IntegrationDocument);
@@ -136,89 +137,174 @@ public sealed class DocumentIntegrationTests
     [Fact]
     public async Task Real_document_WAL_drives_typed_transactions_and_durable_Live_authoritative_diffs()
     {
-        var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING")
-            ?? throw new InvalidOperationException("Set BLUETUSK_TEST_CONNECTION_STRING to a disposable logical-replication PostgreSQL database.");
         var schema = "documents_integrated_" + Guid.NewGuid().ToString("N");
         var controlSchema = "documents_live_" + Guid.NewGuid().ToString("N");
         var publication = "documents_pub_" + Guid.NewGuid().ToString("N");
         var slot = "documents_slot_" + Guid.NewGuid().ToString("N");
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         var token = timeout.Token;
-        await using var source = BlueTuskDataSource.Create(connectionString);
+        // The slot decodes every transaction in its database, so it is created in a database
+        // that the concurrently running test classes never write to (see DocumentWalDatabaseFixture).
+        var source = await walDatabase.GetSourceAsync(token);
         await using var store = new DocumentStore(source, new DocumentStoreOptions { Schema = schema });
         await store.InitializeAsync(token);
         await DocumentStreamDeployment.EnableFullReplicaIdentityAsync(source, schema, token);
+        using (var setup = store.OpenSession("tenant"))
+        {
+            setup.Insert(Collection, "1", new IntegrationDocument("first", 1));
+            _ = await setup.SaveChangesAsync(token);
+        }
+
+        await using (var create = source.CreateCommand($"CREATE PUBLICATION \"{publication}\" FOR TABLE \"{schema}\".documents"))
+        {
+            _ = await create.ExecuteNonQueryAsync(token);
+        }
+
+        var live = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions { ControlDataSource = source, ControlSchema = controlSchema });
+        var plan = DocumentLiveQuery.Create(store, Collection, "orders", "primary", "1", static scope => scope.Scope, maximumResults: 2);
+        var arguments = plan.Bind(new Dictionary<string, object?>());
+        await using var session = new LiveQuerySession<StoredDocument<IntegrationDocument>, string>(plan, arguments, new LiveSecurityScope("tenant", "policy-1"), live);
+        await using var otherTenant = new LiveQuerySession<StoredDocument<IntegrationDocument>, string>(plan, arguments, new LiveSecurityScope("other", "policy-1"), live);
+        Assert.Single(Assert.Single((await session.StartAsync(token)).Events).Rows!);
+        Assert.Empty(Assert.Single((await otherTenant.StartAsync(token)).Events).Rows!);
+        await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(source.CreateDedicatedSessionOptions(), token);
+        var system = await replication.IdentifySystemAsync(token);
+        _ = await replication.CreateReplicationSlotAsync(slot, temporary: true, cancellationToken: token);
+        var stream = new PgOutputChangeStream(replication.StartReplicationAsync(slot, publication, cancellationToken: token).DecodePgOutputAsync(),
+            new ChangeSourceIdentity(system.SystemIdentifier, system.DatabaseName!, slot, publication));
+        await using var enumerator = stream.ReadTransactionsAsync(token).GetAsyncEnumerator(token);
+        var pending = enumerator.MoveNextAsync().AsTask();
+        var original = (await store.LoadAsync("tenant", Collection, "1", token))!;
+        using (var write = store.OpenSession("tenant"))
+        {
+            write.Replace(Collection, "1", original.Value with { Count = 2 }, original.Revision);
+            write.Insert(Collection, "2", new IntegrationDocument("second", 2));
+            _ = await write.SaveChangesAsync(token);
+        }
+
+        Assert.True(await pending.WaitAsync(token));
+        var delivery = enumerator.Current;
+        var mapper = new DocumentChangeMapper<IntegrationDocument>("tenant", Collection, new DocumentStreamOptions { Schema = schema, RequireCompleteNewDocuments = true });
+        var mapped = await mapper.MapTransactionAsync(delivery.Transaction, token);
+        Assert.Equal(2, mapped.Changes.Count);
+        Assert.All(mapped.Changes, static change => Assert.True(change.NewImage!.HasValue));
+        Assert.Equal(2, mapped.Changes[0].NewImage!.Value!.Count);
+        var consumer = new LiveInvalidationConsumer("primary", live);
+        await consumer.ConsumeTransactionAsync(delivery, token);
+        Assert.Equal(ChangeDeliveryState.Acknowledged, delivery.State);
+        var cursor = await live.GetCurrentCursorAsync("primary", token);
+        Assert.Equal(cursor, await live.AppendAsync("primary", delivery.Transaction, token));
+        var difference = (await session.RefreshToCurrentAsync(token))!;
+        Assert.Contains(difference.Events, static item => item.Kind == LiveEventKind.RowUpdated && item.Key == "1" && item.Row!.Value.Count == 2);
+        Assert.Contains(difference.Events, static item => item.Kind == LiveEventKind.RowAdded && item.Key == "2");
+        Assert.Empty((await otherTenant.RefreshToCurrentAsync(token))!.Events);
+
+        pending = enumerator.MoveNextAsync().AsTask();
+        using (var delete = store.OpenSession("tenant"))
+        {
+            delete.Delete(Collection, "1", (await store.LoadAsync("tenant", Collection, "1", token))!.Revision);
+            _ = await delete.SaveChangesAsync(token);
+        }
+
+        Assert.True(await pending.WaitAsync(token));
+        delivery = enumerator.Current;
+        var removed = Assert.Single((await mapper.MapTransactionAsync(delivery.Transaction, token)).Changes);
+        Assert.Equal(ChangeKind.Delete, removed.Kind);
+        Assert.NotNull(removed.OldImage!.Revision);
+        await consumer.ConsumeTransactionAsync(delivery, token);
+        Assert.Contains((await session.RefreshToCurrentAsync(token))!.Events, static item => item.Kind == LiveEventKind.RowRemoved && item.Key == "1");
+    }
+
+    // Deterministic form of the CI failure "could not map filenumber ... to relation OID".
+    // PostgreSQL 15-19 do not record a catalog-changing transaction that commits while a
+    // new logical slot is in BUILDING_SNAPSHOT. If an older transaction is still open when
+    // the slot reaches FULL_SNAPSHOT, a transaction that starts then and writes to the new
+    // table is decoded with a historic snapshot that cannot see the table, and every retry
+    // of that slot fails the same way. Only a slot in the same database is exposed, which is
+    // why the WAL tests run in their own database.
+    [Fact]
+    public async Task Catalog_churn_committed_while_a_slot_builds_poisons_only_slots_in_the_same_database()
+    {
+        var suffix = Guid.NewGuid().ToString("N");
+        var churnSchema = "documents_churn_" + suffix;
+        var sharedPublication = "documents_churn_pub_" + suffix;
+        var sharedSlot = "documents_churn_slot_" + suffix;
+        var isolatedSlot = "documents_isolated_slot_" + suffix;
+        var schema = "documents_isolated_" + suffix;
+        var isolatedPublication = "documents_isolated_pub_" + suffix;
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        var token = timeout.Token;
+        await using var shared = BlueTuskDataSource.Create(DocumentWalDatabaseFixture.RequiredConnectionString());
+        var isolated = await walDatabase.GetSourceAsync(token);
+        await using var store = new DocumentStore(isolated, new DocumentStoreOptions { Schema = schema });
+        await store.InitializeAsync(token);
+        await DocumentStreamDeployment.EnableFullReplicaIdentityAsync(isolated, schema, token);
+        await ExecuteAsync(isolated, $"CREATE PUBLICATION \"{isolatedPublication}\" FOR TABLE \"{schema}\".documents", token);
+        await ExecuteAsync(shared, $"CREATE SCHEMA \"{churnSchema}\"; CREATE TABLE \"{churnSchema}\".anchor(id int PRIMARY KEY); CREATE PUBLICATION \"{sharedPublication}\" FOR TABLE \"{churnSchema}\".anchor", token);
         try
         {
-            using (var setup = store.OpenSession("tenant"))
+            await using var sharedReplication = await BlueTuskLogicalReplicationConnection.OpenAsync(shared.CreateDedicatedSessionOptions(), token);
+            await using var isolatedReplication = await BlueTuskLogicalReplicationConnection.OpenAsync(isolated.CreateDedicatedSessionOptions(), token);
+            var system = await isolatedReplication.IdentifySystemAsync(token);
+            string[] slots = [sharedSlot, isolatedSlot];
+
             {
-                setup.Insert(Collection, "1", new IntegrationDocument("first", 1));
-                _ = await setup.SaveChangesAsync(token);
+                // An open transaction holds both new slots in BUILDING_SNAPSHOT.
+                await using var building = await HeldTransaction.BeginAsync(shared, "SELECT 1", token);
+                var sharedCreation = sharedReplication.CreateReplicationSlotAsync(sharedSlot, temporary: true, cancellationToken: token).AsTask();
+                var isolatedCreation = isolatedReplication.CreateReplicationSlotAsync(isolatedSlot, temporary: true, cancellationToken: token).AsTask();
+                await WaitUntilSlotsAwaitTransactionAsync(shared, slots, building.TransactionId, token);
+
+                // A newer transaction stays open across FULL_SNAPSHOT, then a table is created
+                // and committed while the slots are still building.
+                await using var full = await HeldTransaction.BeginAsync(shared, "SELECT 1", token);
+                await ExecuteAsync(shared, $"CREATE TABLE \"{churnSchema}\".created_while_building(id int PRIMARY KEY)", token);
+                await building.CommitAsync(token);
+                await WaitUntilSlotsAwaitTransactionAsync(shared, slots, full.TransactionId, token);
+
+                // This write starts in FULL_SNAPSHOT and commits after the consistent point.
+                await using var write = await HeldTransaction.BeginAsync(shared, $"INSERT INTO \"{churnSchema}\".created_while_building VALUES (1)", token);
+                await full.CommitAsync(token);
+                _ = await sharedCreation.WaitAsync(token);
+                _ = await isolatedCreation.WaitAsync(token);
+                await write.CommitAsync(token);
             }
 
-            await using (var create = source.CreateCommand($"CREATE PUBLICATION \"{publication}\" FOR TABLE \"{schema}\".documents"))
+            using (var sharedRead = CancellationTokenSource.CreateLinkedTokenSource(token))
             {
-                _ = await create.ExecuteNonQueryAsync(token);
+                sharedRead.CancelAfter(TimeSpan.FromSeconds(15));
+                var failure = await Assert.ThrowsAsync<BlueTuskServerException>(async () =>
+                {
+                    await foreach (var _ in sharedReplication.StartReplicationAsync(sharedSlot, sharedPublication, sharedRead.Token).DecodePgOutputAsync(cancellationToken: sharedRead.Token))
+                    {
+                    }
+                });
+                // PostgreSQL 15 says "filenode" and 16 and later say "filenumber". When the invisible
+                // table was later altered, PostgreSQL finds the newer row but not its columns. If
+                // PostgreSQL ever decodes this slot, the upstream fix has shipped: revisit
+                // docs/streams/README.md.
+                Assert.Matches(PoisonedSlotError(), failure.Message);
             }
 
-            var live = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions { ControlDataSource = source, ControlSchema = controlSchema });
-            var plan = DocumentLiveQuery.Create(store, Collection, "orders", "primary", "1", static scope => scope.Scope, maximumResults: 2);
-            var arguments = plan.Bind(new Dictionary<string, object?>());
-            await using var session = new LiveQuerySession<StoredDocument<IntegrationDocument>, string>(plan, arguments, new LiveSecurityScope("tenant", "policy-1"), live);
-            await using var otherTenant = new LiveQuerySession<StoredDocument<IntegrationDocument>, string>(plan, arguments, new LiveSecurityScope("other", "policy-1"), live);
-            Assert.Single(Assert.Single((await session.StartAsync(token)).Events).Rows!);
-            Assert.Empty(Assert.Single((await otherTenant.StartAsync(token)).Events).Rows!);
-            await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(source.CreateDedicatedSessionOptions(), token);
-            var system = await replication.IdentifySystemAsync(token);
-            _ = await replication.CreateReplicationSlotAsync(slot, temporary: true, cancellationToken: token);
-            var stream = new PgOutputChangeStream(replication.StartReplicationAsync(slot, publication, cancellationToken: token).DecodePgOutputAsync(),
-                new ChangeSourceIdentity(system.SystemIdentifier, system.DatabaseName!, slot, publication));
+            var stream = new PgOutputChangeStream(isolatedReplication.StartReplicationAsync(isolatedSlot, isolatedPublication, cancellationToken: token).DecodePgOutputAsync(),
+                new ChangeSourceIdentity(system.SystemIdentifier, system.DatabaseName!, isolatedSlot, isolatedPublication));
             await using var enumerator = stream.ReadTransactionsAsync(token).GetAsyncEnumerator(token);
             var pending = enumerator.MoveNextAsync().AsTask();
-            var original = (await store.LoadAsync("tenant", Collection, "1", token))!;
-            using (var write = store.OpenSession("tenant"))
+            using (var session = store.OpenSession("tenant"))
             {
-                write.Replace(Collection, "1", original.Value with { Count = 2 }, original.Revision);
-                write.Insert(Collection, "2", new IntegrationDocument("second", 2));
-                _ = await write.SaveChangesAsync(token);
+                session.Insert(Collection, "1", new IntegrationDocument("isolated", 1));
+                _ = await session.SaveChangesAsync(token);
             }
 
             Assert.True(await pending.WaitAsync(token));
-            var delivery = enumerator.Current;
             var mapper = new DocumentChangeMapper<IntegrationDocument>("tenant", Collection, new DocumentStreamOptions { Schema = schema, RequireCompleteNewDocuments = true });
-            var mapped = await mapper.MapTransactionAsync(delivery.Transaction, token);
-            Assert.Equal(2, mapped.Changes.Count);
-            Assert.All(mapped.Changes, static change => Assert.True(change.NewImage!.HasValue));
-            Assert.Equal(2, mapped.Changes[0].NewImage!.Value!.Count);
-            var consumer = new LiveInvalidationConsumer("primary", live);
-            await consumer.ConsumeTransactionAsync(delivery, token);
-            Assert.Equal(ChangeDeliveryState.Acknowledged, delivery.State);
-            var cursor = await live.GetCurrentCursorAsync("primary", token);
-            Assert.Equal(cursor, await live.AppendAsync("primary", delivery.Transaction, token));
-            var difference = (await session.RefreshToCurrentAsync(token))!;
-            Assert.Contains(difference.Events, static item => item.Kind == LiveEventKind.RowUpdated && item.Key == "1" && item.Row!.Value.Count == 2);
-            Assert.Contains(difference.Events, static item => item.Kind == LiveEventKind.RowAdded && item.Key == "2");
-            Assert.Empty((await otherTenant.RefreshToCurrentAsync(token))!.Events);
-
-            pending = enumerator.MoveNextAsync().AsTask();
-            using (var delete = store.OpenSession("tenant"))
-            {
-                delete.Delete(Collection, "1", (await store.LoadAsync("tenant", Collection, "1", token))!.Revision);
-                _ = await delete.SaveChangesAsync(token);
-            }
-
-            Assert.True(await pending.WaitAsync(token));
-            delivery = enumerator.Current;
-            var removed = Assert.Single((await mapper.MapTransactionAsync(delivery.Transaction, token)).Changes);
-            Assert.Equal(ChangeKind.Delete, removed.Kind);
-            Assert.NotNull(removed.OldImage!.Revision);
-            await consumer.ConsumeTransactionAsync(delivery, token);
-            Assert.Contains((await session.RefreshToCurrentAsync(token))!.Events, static item => item.Kind == LiveEventKind.RowRemoved && item.Key == "1");
+            var inserted = Assert.Single((await mapper.MapTransactionAsync(enumerator.Current.Transaction, token)).Changes);
+            Assert.Equal(ChangeKind.Insert, inserted.Kind);
+            Assert.Equal("isolated", inserted.NewImage!.Value!.Name);
         }
         finally
         {
-            await using var cleanup = source.CreateCommand($"DROP PUBLICATION IF EXISTS \"{publication}\"; DROP SCHEMA IF EXISTS \"{schema}\" CASCADE; DROP SCHEMA IF EXISTS \"{controlSchema}\" CASCADE");
-            _ = await cleanup.ExecuteNonQueryAsync();
+            await ExecuteAsync(shared, $"DROP PUBLICATION IF EXISTS \"{sharedPublication}\"; DROP SCHEMA IF EXISTS \"{churnSchema}\" CASCADE", CancellationToken.None);
         }
     }
 
@@ -247,6 +333,75 @@ public sealed class DocumentIntegrationTests
     private static ChangeRow Row(ChangeTable table, string tenant, string collection, string id, string json, long revision) =>
         new(table, [Text(tenant), Text(collection), Text(id), Text(revision.ToString(System.Globalization.CultureInfo.InvariantCulture)), Text("1"), Text(json)]);
     private static ChangeColumnValue Text(string value) => ChangeColumnValue.FromValue(Encoding.UTF8.GetBytes(value), ChangeValueEncoding.Text);
+
+    [System.Text.RegularExpressions.GeneratedRegex("^(could not map file(node|number) \"[^\"]+\" to relation OID|pg_attribute catalog is missing [0-9]+ attribute\\(s\\) for relation OID [0-9]+)$")]
+    private static partial System.Text.RegularExpressions.Regex PoisonedSlotError();
+
+    private static Task ExecuteAsync(BlueTuskDataSource source, string sql, CancellationToken cancellationToken) =>
+        DocumentWalDatabaseFixture.ExecuteAsync(source, sql, cancellationToken);
+
+    // Logical slot creation waits on the transactions it must see finish (XactLockTableWait),
+    // which pg_locks exposes as an ungranted transactionid lock held by the slot's walsender.
+    private static async Task WaitUntilSlotsAwaitTransactionAsync(BlueTuskDataSource source, string[] slots, long transactionId, CancellationToken cancellationToken)
+    {
+        var names = string.Join(", ", slots.Select(static slot => "'" + slot + "'"));
+        var sql = $"SELECT count(DISTINCT s.slot_name) FROM pg_replication_slots s JOIN pg_locks l ON l.pid = s.active_pid " +
+            $"WHERE s.slot_name IN ({names}) AND l.locktype = 'transactionid' AND NOT l.granted AND l.transactionid::text::bigint = {transactionId}";
+        while (true)
+        {
+            await using var command = source.CreateCommand(sql);
+            if (Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken), System.Globalization.CultureInfo.InvariantCulture) == slots.Length)
+            {
+                return;
+            }
+
+            await Task.Delay(10, cancellationToken);
+        }
+    }
+
+    private sealed class HeldTransaction : IAsyncDisposable
+    {
+        private readonly BlueTuskConnection _connection;
+        private readonly System.Data.Common.DbTransaction _transaction;
+
+        private HeldTransaction(BlueTuskConnection connection, System.Data.Common.DbTransaction transaction, long transactionId)
+        {
+            _connection = connection;
+            _transaction = transaction;
+            TransactionId = transactionId;
+        }
+
+        internal long TransactionId { get; }
+
+        internal static async Task<HeldTransaction> BeginAsync(BlueTuskDataSource source, string sql, CancellationToken cancellationToken)
+        {
+            var connection = await source.OpenConnectionAsync(cancellationToken);
+            try
+            {
+                var transaction = await connection.BeginTransactionAsync(cancellationToken);
+                await using var command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = sql;
+                _ = await command.ExecuteNonQueryAsync(cancellationToken);
+                command.CommandText = "SELECT txid_current() % 4294967296";
+                var transactionId = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken), System.Globalization.CultureInfo.InvariantCulture);
+                return new HeldTransaction(connection, transaction, transactionId);
+            }
+            catch
+            {
+                await connection.DisposeAsync();
+                throw;
+            }
+        }
+
+        internal Task CommitAsync(CancellationToken cancellationToken) => _transaction.CommitAsync(cancellationToken);
+
+        public async ValueTask DisposeAsync()
+        {
+            await _transaction.DisposeAsync();
+            await _connection.DisposeAsync();
+        }
+    }
 
     private sealed class Observer : IChangeDeliveryObserver
     {

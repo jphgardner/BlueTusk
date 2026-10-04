@@ -28,7 +28,11 @@ CREATE PUBLICATION app_changes FOR TABLE app.orders;
 
 Create the logical slot through controlled provisioning or the application
 bootstrap process. Give every consumer its own slot; two independent consumers
-must not race over one checkpoint.
+must not race over one checkpoint. Do not create a slot while migrations or
+other table creation run in the same database: PostgreSQL can create a slot that
+then fails on every attempt to decode writes to the new tables. See
+[creating a slot while the schema changes](../streams/README.md#creating-a-slot-while-the-schema-changes)
+for the symptoms and the recovery.
 
 ## 2. Open a dedicated session
 

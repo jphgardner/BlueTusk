@@ -172,6 +172,32 @@ guarantees, evidence gate, and support boundary.
 See the coordinated [1.1.0-rc.1 release record](../releases/1.1.0-rc.1.md) for
 the public RC version, exact commit, registry verification, and stable gate.
 
+## Creating a slot while the schema changes
+
+PostgreSQL 15 to 19 can create a logical slot that fails when it decodes
+changes. This happens when, in the slot's database, a transaction creates or
+alters a table and commits while the slot is still being created. An older
+transaction must still be open elsewhere in the cluster, and a third
+transaction must then write to that table. The read fails with a
+`BlueTuskServerException` such as
+`could not map filenumber "base/…" to relation OID`. PostgreSQL 15 says
+`filenode` instead of `filenumber`. The error can also read
+`pg_attribute catalog is missing N attribute(s) for relation OID …`.
+
+The error comes from the server's logical decoding, and the decoder fails the
+same way each time it rereads the same WAL. Reconnecting to the same slot
+therefore normally fails again. The upstream fix is still under review as of
+October 2026; see the pgsql-hackers thread "Historic snapshot doesn't track txns
+committed in BUILDING_SNAPSHOT state".
+
+- Avoid the risk by creating slots, including temporary ones, at a point when
+  nothing in that database runs migrations or creates tables. The risk only
+  exists until slot creation returns; later schema changes are decoded normally.
+- To recover, drop the slot and create a new one. The new slot starts at a new
+  WAL position, so rebuild derived state with
+  [snapshot and catch-up](snapshot-bootstrap.md) instead of resuming from the
+  old checkpoint.
+
 ## Performance baseline
 
 The checked-in Ryzen 7 5800X/.NET 10 ShortRun measures 422 ns and 852 B per change for a materialised 1,000-insert transaction. A 4 MiB durable spill, integrity check, streamed read, flush, and cleanup measures 38.3 ms and 12.1 MiB. See the [benchmark report](../../benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.StreamsTransactionBenchmarks-report-github.md). ShortRun values guide regression work and are not universal production claims.
