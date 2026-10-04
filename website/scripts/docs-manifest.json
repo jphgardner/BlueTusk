@@ -167,7 +167,7 @@
     "categoryLabel": "Real time",
     "slug": "contracts",
     "source": "docs/realtime-platform/contracts.md",
-    "summary": "Understand when work is durable, when it may be replayed, and what each real-time product guarantees.",
+    "summary": "What each real-time product delivers, when checkpoints move, and what can be duplicated or lost.",
     "keywords": ["contract", "delivery", "checkpoint"],
     "order": 20
   },
@@ -429,7 +429,7 @@
     "categoryLabel": "Real time",
     "slug": "operations",
     "source": "docs/realtime-platform/operations.md",
-    "summary": "Operate source identity, checkpoints, relay storage, destinations, failover, reconciliation, rebuilds, and endurance evidence.",
+    "summary": "Runbook for restarts, crashes, failover, WAL growth, restores and rebuilds of the real-time products.",
     "keywords": ["operations", "incident", "failover", "checkpoint", "rebuild"],
     "order": 125
   },
