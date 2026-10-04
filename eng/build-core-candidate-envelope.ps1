@@ -47,8 +47,8 @@ $artifacts = @(foreach ($role in $contract.requiredArtifactRoles)
     else { $record.workflowFile = $binding.workflowFile; $record.runId = $runId }
     $record
 })
-$approvalContract = Read-CoreEvidenceJson (Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json')
-$approvals = @(foreach ($id in $approvalContract.gates.id)
+Import-Module (Join-Path $PSScriptRoot 'approval-release-tracks.psm1') -Force
+$approvals = @(foreach ($id in @(Get-ApprovalTrackGateIds -ReleaseTrack Core))
 {
     $relativePath = "approvals/$id.json"
     $path = Resolve-CoreEvidenceFile $root $relativePath

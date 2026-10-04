@@ -170,6 +170,8 @@ jobs:
           ./eng/test-endurance-workflow-sbom-contract.ps1
           ./eng/test-live-control-plane-endurance-verifier.ps1
           ./eng/verify-v1.1-release-contract.ps1
+          ./eng/test-v1.1-release-contract-verifier.ps1
+          ./eng/test-core-recovery-rehearsal.ps1
           ./eng/test-release-track-verifier.ps1
           'Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search',
           'Sql', 'Studio', 'Edge', 'Workflows' |

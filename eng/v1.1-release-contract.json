@@ -56,10 +56,29 @@
     "continuousGraphEnduranceHours": 24,
     "backupRestoreRehearsal": true,
     "rollbackRehearsal": true,
-    "independentPilots": 2,
     "postgresql19GaDigestRequiredForCore": false,
     "graphEvidenceRequiredForCore": false
   },
+  "waivedReleaseGates": [
+    {
+      "gate": "independentPilots",
+      "previousRequirement": 2,
+      "approvalGateIds": [
+        "application-pilot-a",
+        "application-pilot-b"
+      ],
+      "scope": "1.1.0",
+      "decision": "owner-decisions-20261002 decision 3, option (b)",
+      "delegatedBy": "repository owner",
+      "delegatedAt": "2026-10-04T00:43:03+01:00",
+      "delegationQuote": "do what needs to be done",
+      "reason": "Independent pilots cannot be produced by engineering and no pilot approval may be fabricated.",
+      "retainedGates": [
+        "backupRestoreRehearsal",
+        "rollbackRehearsal"
+      ]
+    }
+  ],
   "enduranceExecution": {
     "namespace": "bluetusk-endurance",
     "launcher": "eng/deploy-kubernetes-endurance.ps1",

@@ -2,6 +2,41 @@
   "schemaVersion": 1,
   "approvalSchemaVersion": 4,
   "minimumSummaryLength": 40,
+  "releaseTracks": {
+    "Legacy": {
+      "description": "Historical 1.0.0 V1 track: every gate, including both independent application pilots.",
+      "requiredGates": [
+        "independent-release-review",
+        "security-review",
+        "application-pilot-a",
+        "application-pilot-b",
+        "website-deployment-acceptance",
+        "backup-restore-rehearsal",
+        "rollback-rehearsal",
+        "incident-response-game-day",
+        "slo-owner-approval",
+        "maintainer-signoff"
+      ],
+      "waivedGates": []
+    },
+    "Core": {
+      "description": "1.1.0 Core track. Independent pilots are waived by eng/v1.1-release-contract.json waivedReleaseGates (owner delegation 2026-10-04); both recovery rehearsals stay required.",
+      "requiredGates": [
+        "independent-release-review",
+        "security-review",
+        "website-deployment-acceptance",
+        "backup-restore-rehearsal",
+        "rollback-rehearsal",
+        "incident-response-game-day",
+        "slo-owner-approval",
+        "maintainer-signoff"
+      ],
+      "waivedGates": [
+        "application-pilot-a",
+        "application-pilot-b"
+      ]
+    }
+  },
   "gates": [
     {
       "id": "independent-release-review",

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Core recovery-rehearsal probe. The same source is restored and built against one exact set of
+    BlueTusk Core packages: the 1.1.0 candidate packages from build-v1-candidate-packages.ps1, or the
+    published 1.0.0 packages for the rollback target. Processes share only PostgreSQL and a small
+    state file, never CLR types. Driven by eng/run-core-recovery-rehearsal.ps1; not part of a solution.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RootNamespace>BlueTusk.RecoveryProbe</RootNamespace>
+    <!-- Exact package versions come from the rehearsal, not from central package management. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <Target Name="RequireBlueTuskPackageVersion" BeforeTargets="CollectPackageReferences;PrepareForBuild">
+    <Error Condition="'$(BlueTuskPackageVersion)' == ''"
+           Text="Set BlueTuskPackageVersion to the exact BlueTusk Core package version under rehearsal." />
+  </Target>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <PackageReference Include="BlueTusk.Data" Version="[$(BlueTuskPackageVersion)]" />
+    <PackageReference Include="BlueTusk.Streams" Version="[$(BlueTuskPackageVersion)]" />
+    <PackageReference Include="BlueTusk.Streams.Storage.PostgreSql" Version="[$(BlueTuskPackageVersion)]" />
+    <PackageReference Include="BlueTusk.Streams.Testing" Version="[$(BlueTuskPackageVersion)]" />
+    <PackageReference Include="BlueTusk.Live" Version="[$(BlueTuskPackageVersion)]" />
+    <PackageReference Include="BlueTusk.Live.DependencyInjection" Version="[$(BlueTuskPackageVersion)]" />
+    <PackageReference Include="BlueTusk.ControlPlane" Version="[$(BlueTuskPackageVersion)]" />
+    <PackageReference Include="BlueTusk.Sync" Version="[$(BlueTuskPackageVersion)]" />
+    <PackageReference Include="BlueTusk.Sync.PostgreSql" Version="[$(BlueTuskPackageVersion)]" />
+  </ItemGroup>
+</Project>

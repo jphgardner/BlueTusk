@@ -184,10 +184,85 @@ foreach ($flag in @(
 if ([int]$gates.streamsEnduranceHours -ne 72 -or
     [int]$gates.syncEnduranceHours -ne 24 -or
     [int]$gates.liveAndControlPlaneEnduranceHours -ne 24 -or
-    [int]$gates.continuousGraphEnduranceHours -ne 24 -or
-    [int]$gates.independentPilots -ne 2)
+    [int]$gates.continuousGraphEnduranceHours -ne 24)
 {
-    throw 'The 1.1 endurance or independent-pilot minimums were weakened.'
+    throw 'The 1.1 endurance minimums were weakened.'
+}
+
+# Independent pilots are not a 1.1.0 gate: the owner delegated decision 3 to
+# option (b) on 2026-10-04 ("do what needs to be done"). The waiver must be
+# recorded exactly once, must name the two approval gates it removes, and must
+# keep both recovery rehearsals. Reintroducing pilots is allowed only as the
+# complete original rule (independentPilots = 2, no waiver, and the Core
+# approval track requiring both pilot approvals); any mixture fails closed.
+$pilotGateIds = @('application-pilot-a', 'application-pilot-b')
+$pilotGateProperty = $gates.PSObject.Properties['independentPilots']
+$waiverProperty = $contract.PSObject.Properties['waivedReleaseGates']
+$waivers = @(if ($null -ne $waiverProperty) { $waiverProperty.Value })
+if ($null -ne $pilotGateProperty)
+{
+    if (($pilotGateProperty.Value -isnot [long] -and $pilotGateProperty.Value -isnot [int]) -or
+        [int]$pilotGateProperty.Value -ne 2 -or $waivers.Count -ne 0)
+    {
+        throw 'Independent pilots may only be reintroduced as the full two-pilot gate with no recorded waiver.'
+    }
+}
+else
+{
+    if ($waivers.Count -ne 1)
+    {
+        throw 'The 1.1 release contract must record exactly one waiver: the owner-delegated independent-pilot waiver.'
+    }
+    $waiver = $waivers[0]
+    $expectedWaiverProperties = @(
+        'gate', 'previousRequirement', 'approvalGateIds', 'scope', 'decision', 'delegatedBy',
+        'delegatedAt', 'delegationQuote', 'reason', 'retainedGates')
+    if (@(Compare-Object $expectedWaiverProperties @($waiver.PSObject.Properties.Name)).Count -ne 0 -or
+        [string]$waiver.gate -cne 'independentPilots' -or
+        [int]$waiver.previousRequirement -ne 2 -or
+        @(Compare-Object $pilotGateIds @($waiver.approvalGateIds) -SyncWindow 0 -CaseSensitive).Count -ne 0 -or
+        [string]$waiver.scope -cne [string]$contract.releaseVersion -or
+        [string]$waiver.decision -cne 'owner-decisions-20261002 decision 3, option (b)' -or
+        [string]$waiver.delegatedBy -cne 'repository owner' -or
+        # ConvertFrom-Json parses timestamps, so the exact recorded text is checked on the raw contract.
+        (Get-Content -LiteralPath $ContractPath -Raw) -cnotmatch '"delegatedAt":\s*"2026-10-04T00:43:03\+01:00"' -or
+        [string]$waiver.delegationQuote -cne 'do what needs to be done' -or
+        [string]::IsNullOrWhiteSpace([string]$waiver.reason) -or
+        @(Compare-Object @('backupRestoreRehearsal', 'rollbackRehearsal') @($waiver.retainedGates) -SyncWindow 0 -CaseSensitive).Count -ne 0)
+    {
+        throw 'The independent-pilot waiver does not exactly record the 2026-10-04 owner delegation and the retained rehearsals.'
+    }
+    foreach ($retained in @($waiver.retainedGates))
+    {
+        if ($gates.PSObject.Properties[[string]$retained].Value -ne $true)
+        {
+            throw "The independent-pilot waiver requires retained gate '$retained' to stay enabled."
+        }
+    }
+}
+# The retained rehearsals must stay executable for real against the exact candidate.
+foreach ($path in @(
+        'eng/run-core-recovery-rehearsal.ps1',
+        'eng/verify-core-recovery-rehearsal.ps1',
+        'eng/test-core-recovery-rehearsal.ps1',
+        'eng/CoreRecoveryProbe/CoreRecoveryProbe.csproj',
+        'eng/CoreRecoveryProbe/Program.cs',
+        'docs/operations/core-recovery-rehearsals.md'))
+{
+    if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $path) -PathType Leaf))
+    {
+        throw "Required 1.1 recovery-rehearsal asset '$path' is missing."
+    }
+}
+Import-Module (Join-Path $PSScriptRoot 'approval-release-tracks.psm1') -Force
+$coreApprovalGates = @(Get-ApprovalTrackGateIds -ReleaseTrack Core -ReleaseContractPath $ContractPath)
+$corePilotApprovals = @($pilotGateIds | Where-Object { $_ -cin $coreApprovalGates })
+if (($null -eq $pilotGateProperty -and $corePilotApprovals.Count -ne 0) -or
+    ($null -ne $pilotGateProperty -and $corePilotApprovals.Count -ne $pilotGateIds.Count) -or
+    'backup-restore-rehearsal' -cnotin $coreApprovalGates -or
+    'rollback-rehearsal' -cnotin $coreApprovalGates)
+{
+    throw 'The Core approval track does not match the 1.1 independent-pilot rule or dropped a recovery rehearsal.'
 }
 
 $endurance = $contract.enduranceExecution
@@ -291,4 +366,6 @@ if ($contract.compatibility.continuousGraphRequiresQualifiedSqlPgqServer -ne $tr
 Write-Output (
     "Verified the BlueTusk 1.1 source-version contract: five core release tracks and Graph preview, " +
     "$($nuGetProjects.Count) new NuGet packages, $($npmProjects.Count) new npm packages, " +
-    'guarded Kubernetes endurance, and disabled stable publication.')
+    'guarded Kubernetes endurance, required backup/restore and rollback rehearsals, ' +
+    $(if ($null -eq $pilotGateProperty) { 'independent pilots waived for 1.1.0 by the 2026-10-04 owner delegation, ' } else { 'two independent pilots, ' }) +
+    'and disabled stable publication.')

@@ -26,14 +26,16 @@ if (-not (Test-Path -LiteralPath $directory -PathType Container))
     throw "Approval-evidence directory '$directory' does not exist."
 }
 
-$contract = Get-Content -LiteralPath (
-    Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json') -Raw |
-    ConvertFrom-Json
-$gateIds = @($contract.gates | ForEach-Object { [string]$_.id })
-if ($gateIds.Count -ne 10 -or
-    @($gateIds | Select-Object -Unique).Count -ne $gateIds.Count)
+# The historical 1.0.0 Legacy track binds all ten gates. The 1.1.0 Core track
+# binds the eight gates left after the recorded independent-pilot waiver
+# (eng/v1.1-release-contract.json waivedReleaseGates); pilot files are rejected.
+Import-Module (Join-Path $PSScriptRoot 'approval-release-tracks.psm1') -Force
+$gateIds = @(Get-ApprovalTrackGateIds -ReleaseTrack $ReleaseTrack)
+$pilotsRequired = 'application-pilot-a' -cin $gateIds -and 'application-pilot-b' -cin $gateIds
+if (-not $pilotsRequired -and
+    (('application-pilot-a' -cin $gateIds) -or ('application-pilot-b' -cin $gateIds)))
 {
-    throw 'The V1 approval contract must define exactly ten unique gates.'
+    throw 'Independent application pilots must be required or waived together.'
 }
 
 $files = @(Get-ChildItem -LiteralPath $directory -Recurse -File)
@@ -51,7 +53,7 @@ if ($files.Count -ne $expectedNames.Count -or
     $missingNames.Count -ne 0)
 {
     throw (
-        'The approval directory must contain exactly the ten canonical JSON files. ' +
+        "The approval directory must contain exactly the $($gateIds.Count) canonical $ReleaseTrack JSON files. " +
         "Missing: $(if ($missingNames.Count) { $missingNames -join ', ' } else { '<none>' }); " +
         "unexpected: $(if ($unexpectedFiles.Count) { $unexpectedFiles.FullName -join ', ' } else { '<none>' }); " +
         "subdirectories: $(if ($subdirectories.Count) { $subdirectories.FullName -join ', ' } else { '<none>' }).")
@@ -71,25 +73,28 @@ foreach ($gateId in $gateIds)
     $approvals[$gateId] = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
 }
 
-$pilotA = $approvals['application-pilot-a']
-$pilotB = $approvals['application-pilot-b']
-foreach ($identityField in @('applicationName', 'operatorOrganisation'))
+if ($pilotsRequired)
 {
+    $pilotA = $approvals['application-pilot-a']
+    $pilotB = $approvals['application-pilot-b']
+    foreach ($identityField in @('applicationName', 'operatorOrganisation'))
+    {
+        if ([string]::Equals(
+                [string]$pilotA.details.$identityField,
+                [string]$pilotB.details.$identityField,
+                [StringComparison]::OrdinalIgnoreCase))
+        {
+            throw (
+                "Application pilots A and B must have distinct '$identityField' values.")
+        }
+    }
     if ([string]::Equals(
-            [string]$pilotA.details.$identityField,
-            [string]$pilotB.details.$identityField,
+            [string]$pilotA.approvedBy,
+            [string]$pilotB.approvedBy,
             [StringComparison]::OrdinalIgnoreCase))
     {
-        throw (
-            "Application pilots A and B must have distinct '$identityField' values.")
+        throw 'Application pilots A and B must have distinct accountable approvers.'
     }
-}
-if ([string]::Equals(
-        [string]$pilotA.approvedBy,
-        [string]$pilotB.approvedBy,
-        [StringComparison]::OrdinalIgnoreCase))
-{
-    throw 'Application pilots A and B must have distinct accountable approvers.'
 }
 
 $requiredFamilies = @(
@@ -115,32 +120,35 @@ if ($ReleaseTrack -eq 'Core')
         throw 'Core maintainer sign-off must identify exactly the five 1.1.0 stable versions and five core prerelease families.'
     }
 }
-$pilotFamilies = @(
-    @($pilotA.details.enabledProductFamilies) +
-    @($pilotB.details.enabledProductFamilies) |
-        ForEach-Object { [string]$_ } |
-        Sort-Object -Unique
-)
-$unknownPilotFamilies = @(
-    $pilotFamilies | Where-Object { $_ -notin $requiredFamilies }
-)
-$missingPilotFamilies = @(
-    $requiredFamilies | Where-Object { $_ -notin $pilotFamilies }
-)
-if ($unknownPilotFamilies.Count -ne 0 -or $missingPilotFamilies.Count -ne 0)
+if ($pilotsRequired)
 {
-    throw (
-        "Application pilots must collectively cover exactly the $ReleaseTrack product " +
-        "families. Missing: " +
-        "$(if ($missingPilotFamilies.Count) { $missingPilotFamilies -join ', ' } else { '<none>' }); " +
-        "unknown: " +
-        "$(if ($unknownPilotFamilies.Count) { $unknownPilotFamilies -join ', ' } else { '<none>' }).")
-}
-if ($ReleaseTrack -eq 'Legacy' -and
-    'ContinuousGraph' -notin @($pilotA.details.enabledProductFamilies) -and
-    'ContinuousGraph' -notin @($pilotB.details.enabledProductFamilies))
-{
-    throw 'At least one independent application pilot must exercise ContinuousGraph.'
+    $pilotFamilies = @(
+        @($pilotA.details.enabledProductFamilies) +
+        @($pilotB.details.enabledProductFamilies) |
+            ForEach-Object { [string]$_ } |
+            Sort-Object -Unique
+    )
+    $unknownPilotFamilies = @(
+        $pilotFamilies | Where-Object { $_ -notin $requiredFamilies }
+    )
+    $missingPilotFamilies = @(
+        $requiredFamilies | Where-Object { $_ -notin $pilotFamilies }
+    )
+    if ($unknownPilotFamilies.Count -ne 0 -or $missingPilotFamilies.Count -ne 0)
+    {
+        throw (
+            "Application pilots must collectively cover exactly the $ReleaseTrack product " +
+            "families. Missing: " +
+            "$(if ($missingPilotFamilies.Count) { $missingPilotFamilies -join ', ' } else { '<none>' }); " +
+            "unknown: " +
+            "$(if ($unknownPilotFamilies.Count) { $unknownPilotFamilies -join ', ' } else { '<none>' }).")
+    }
+    if ($ReleaseTrack -eq 'Legacy' -and
+        'ContinuousGraph' -notin @($pilotA.details.enabledProductFamilies) -and
+        'ContinuousGraph' -notin @($pilotB.details.enabledProductFamilies))
+    {
+        throw 'At least one independent application pilot must exercise ContinuousGraph.'
+    }
 }
 
 $websiteApproval = $approvals['website-deployment-acceptance']
@@ -174,7 +182,7 @@ if ($independentReviewUtc -lt $latestOperationalApprovalUtc)
 {
     throw (
         'Independent release review must not predate any operational, security, ' +
-        'pilot, recovery, game-day, or SLO approval.')
+        'pilot, recovery, game-day, or SLO approval required by the release track.')
 }
 $maintainerSignoffUtc = [DateTimeOffset]$approvals['maintainer-signoff'].approvedUtc
 $latestPreSignoffApprovalUtc = $independentReviewUtc
@@ -191,8 +199,16 @@ if ($maintainerSignoffUtc -lt $latestPreSignoffApprovalUtc)
     throw 'Maintainer sign-off must be the final V1 approval decision.'
 }
 
+$pilotSummary = if ($pilotsRequired)
+{
+    "two independent pilots covering the $ReleaseTrack families"
+}
+else
+{
+    'independent pilots waived for 1.1.0 by the recorded owner delegation, both recovery rehearsals bound'
+}
 Write-Output (
-    "V1 approval-evidence set passed: $($gateIds.Count) gate-specific records, " +
-    "two independent pilots covering the $ReleaseTrack families, exact website " +
+    "$ReleaseTrack approval-evidence set passed: $($gateIds.Count) gate-specific records, " +
+    "$pilotSummary, exact website " +
     'production-metrics binding, and ' +
     'ordered independent review and maintainer sign-off.')
