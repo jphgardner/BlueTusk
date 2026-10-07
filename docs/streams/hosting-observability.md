@@ -45,6 +45,66 @@ the host. By default .NET then stops the host
 (`BackgroundServiceExceptionBehavior.StopHost`), so your orchestrator can
 restart it.
 
+## Resume from a checkpoint as a hosted service
+
+A worker that must continue from its durable checkpoint after a restart, rather than take a new snapshot, registers a stream factory instead of a snapshot source. Write the factory as an async iterator: the host calls it once when the worker starts, passes each delivery to the consumer, and disposes the iterator when the worker stops or faults, so everything opened with `await using` inside it is released in reverse order.
+
+```csharp
+services.AddSingleton<OrdersConsumer>();
+services
+    .AddBlueTuskStreams()
+    .AddHostedConsumer<OrdersConsumer>("orders", ResumeOrdersAsync);
+
+static async IAsyncEnumerable<ChangeTransactionDelivery> ResumeOrdersAsync(
+    IServiceProvider services,
+    [EnumeratorCancellation] CancellationToken cancellationToken)
+{
+    var store = services.GetRequiredService<IChangeStreamStateStore>();
+    await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(
+        replicationConnectionString, cancellationToken);
+    var system = await replication.IdentifySystemAsync(cancellationToken);
+    var source = new ChangeSourceIdentity(
+        system.SystemIdentifier, system.DatabaseName!, "orders_slot", "orders_publication");
+    await using var observer = await CheckpointingChangeDeliveryObserver.AcquireAsync(
+        store,
+        ChangeStreamStateKey.Create(source, "orders"),
+        workerId,
+        TimeSpan.FromSeconds(30),
+        ChangeStreamCheckpoint.CreateInitial(source, system.DatabaseName!, "pgoutput", mappingFingerprint),
+        new LogicalReplicationFeedbackSender(replication),
+        cancellationToken);
+
+    var start = BlueTuskLogSequenceNumber.Zero;
+    if (observer.Checkpoint is { } checkpoint)
+    {
+        start = checkpoint.AcknowledgedCommitPosition;
+        await replication.ValidateResumeCheckpointAsync(
+            new BlueTuskLogicalReplicationCheckpoint(
+                system.SystemIdentifier, system.DatabaseName!, "orders_slot", "pgoutput", start),
+            cancellationToken);
+    }
+
+    var changes = new PgOutputChangeStream(
+        replication.StartReplicationAsync(
+                new BlueTuskPgOutputReplicationOptions
+                {
+                    SlotName = "orders_slot",
+                    PublicationNames = ["orders_publication"],
+                    StartPosition = start,
+                },
+                cancellationToken)
+            .DecodePgOutputAsync(cancellationToken: cancellationToken),
+        source,
+        observer: observer);
+    await foreach (var delivery in changes.ReadTransactionsAsync(cancellationToken))
+    {
+        yield return delivery;
+    }
+}
+```
+
+The slot must be a durable (non-temporary) slot created before the first run. The consumer receives only `ConsumeTransactionAsync` calls and must acknowledge each delivery after its effect is durable. The observer then writes the checkpoint and confirms the commit to PostgreSQL, so the slot's `confirmed_flush_lsn` advances and WAL is released. After a restart the worker continues after the last checkpointed commit; an unacknowledged transaction is delivered again. Stopping the worker disposes the observer, which releases the consumer-group lease, and then closes the replication connection. `ValidateResumeCheckpointAsync` rejects a slot that is still active, so a replacement worker that starts while the previous WAL sender is still exiting faults and must be restarted.
+
 ## Confirm positions to PostgreSQL
 
 You do not need an observer for the slot to release WAL. When your consumer

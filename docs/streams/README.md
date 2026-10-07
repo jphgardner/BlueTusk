@@ -64,6 +64,7 @@ matches your job:
 | --- | --- | --- |
 | A worker that processes new changes and resumes where it stopped | A hosted worker with a PostgreSQL checkpoint store | [Quick start](quickstart.md) |
 | To copy the existing rows first, then stream new changes | `AddBlueTuskStreams().AddHostedConsumer<T>()` | [Snapshot and catch-up](snapshot-bootstrap.md), [hosting](hosting-observability.md) |
+| A hosted worker that resumes from its checkpoint after a restart | `AddBlueTuskStreams().AddHostedConsumer<T>(name, streamFactory)` | [Resume from a checkpoint](hosting-observability.md#resume-from-a-checkpoint-as-a-hosted-service) |
 | Several consumers that each read the same changes at their own pace | The durable relay | [Durable relay](durable-relay.md) |
 | To build the pipeline from its parts | `PgOutputChangeStream` and delivery observers | [Concepts](concepts.md) |
 

@@ -2,6 +2,16 @@
   "schemaVersion": 1,
   "baseline": "1.0.0-candidate",
   "normalization": "utf8-lf",
+  "reviewedAdditions": [
+    {
+      "release": "1.1.0",
+      "path": "src/BlueTusk.Streams.DependencyInjection/PublicAPI.Unshipped.txt",
+      "sha256": "dbb74240f5bc8a4f33702981c70afd1db836839c0ba6ae26e5e53ac3f083675d",
+      "signatures": [
+        "BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder.AddHostedConsumer<TConsumer>(string! name, System.Func<System.IServiceProvider!, System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<BlueTusk.Streams.ChangeTransactionDelivery!>!>! streamFactory) -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder!"
+      ]
+    }
+  ],
   "files": [
     {
       "path": "src/BlueTusk.Streams/PublicAPI.Unshipped.txt",

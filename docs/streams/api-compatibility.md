@@ -24,3 +24,12 @@ delivery carrying the database and publication OIDs used by protected consumers.
 Existing factory methods and their signatures remain unchanged, so this is a
 source- and binary-compatible addition. The Streams.Testing API baseline and
 freeze digest advance together; the runtime Streams public API is unchanged.
+
+A reviewed 1.1.0 addition is recorded under `reviewedAdditions` in the freeze
+manifest with its release, the new baseline digest and the exact added
+signatures. The candidate digest stays in `files`, and the compatibility test
+checks that removing the listed signatures reproduces it, so an addition cannot
+change or remove any part of the frozen surface. The only such addition is the
+`BlueTuskStreamsBuilder.AddHostedConsumer<TConsumer>(name, streamFactory)`
+overload for a hosted consumer that resumes from its checkpoint. It raised the
+Streams API budget from 1624 to 1625 signatures.

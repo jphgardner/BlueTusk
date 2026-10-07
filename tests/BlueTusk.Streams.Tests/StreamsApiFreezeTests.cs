@@ -31,14 +31,51 @@ public sealed class StreamsApiFreezeTests
             .Order(StringComparer.Ordinal)
             .ToArray();
 
+        // A reviewed 1.1.0 addition records the new file digest and its exact added signatures.
+        // Removing those signatures must reproduce the frozen candidate digest, so an addition
+        // can never change or remove part of the candidate surface.
+        var reviewedAdditions = root.GetProperty("reviewedAdditions")
+            .EnumerateArray()
+            .ToDictionary(
+                item => item.GetProperty("path").GetString()!,
+                item => new
+                {
+                    Release = item.GetProperty("release").GetString()!,
+                    Digest = item.GetProperty("sha256").GetString()!,
+                    Signatures = item.GetProperty("signatures")
+                        .EnumerateArray()
+                        .Select(signature => signature.GetString()!)
+                        .ToArray(),
+                },
+                StringComparer.Ordinal);
+
         Assert.Equal(discovered, registered.Keys.Order(StringComparer.Ordinal));
+        Assert.All(reviewedAdditions.Keys, path => Assert.Contains(path, discovered));
         foreach (var path in discovered)
         {
             var contents = File.ReadAllText(Path.Combine(repositoryRoot, path)).Replace("\r\n", "\n", StringComparison.Ordinal);
-            var digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(contents))).ToLowerInvariant();
-            Assert.Equal(registered[path], digest);
+            if (!reviewedAdditions.TryGetValue(path, out var addition))
+            {
+                Assert.Equal(registered[path], Digest(contents));
+                continue;
+            }
+
+            Assert.Equal("1.1.0", addition.Release);
+            Assert.Equal(addition.Digest, Digest(contents));
+            Assert.NotEmpty(addition.Signatures);
+            var lines = contents.Split('\n').ToList();
+            foreach (var signature in addition.Signatures)
+            {
+                Assert.Single(lines, line => string.Equals(line, signature, StringComparison.Ordinal));
+                _ = lines.Remove(signature);
+            }
+
+            Assert.Equal(registered[path], Digest(string.Join('\n', lines)));
         }
     }
+
+    private static string Digest(string contents) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(contents))).ToLowerInvariant();
 
     private static string FindRepositoryRoot()
     {

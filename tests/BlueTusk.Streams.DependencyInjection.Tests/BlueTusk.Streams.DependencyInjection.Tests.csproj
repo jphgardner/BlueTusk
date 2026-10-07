@@ -21,5 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BlueTusk.Streams.DependencyInjection\BlueTusk.Streams.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
   </ItemGroup>
 </Project>
