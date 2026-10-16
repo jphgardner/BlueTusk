@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload qualified family capacity evidence
         if: inputs.family != 'All'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: expansion-${{ env.CAPACITY_SLUG }}-capacity-${{ inputs.candidate_sha }}
           path: ${{ env.EVIDENCE_ROOT }}
@@ -102,7 +102,7 @@ jobs:
 
       - name: Retain partial family diagnostics separately on failure
         if: failure() && inputs.family != 'All'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ env.CAPACITY_SLUG }}-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.EVIDENCE_ROOT }}
@@ -111,7 +111,7 @@ jobs:
 
       - name: Upload the combined diagnostic campaign, which is never release evidence
         if: always() && inputs.family == 'All'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ecosystem-performance-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.EVIDENCE_ROOT }}
