@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
-      - uses: actions/setup-node@1e60f620b9541d5c243b7c465e4c271cb43572c8 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
           node-version: 24.13.0
           cache: npm
