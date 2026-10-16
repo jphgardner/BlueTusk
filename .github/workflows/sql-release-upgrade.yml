@@ -85,7 +85,7 @@ jobs:
         run: ./eng/verify-expansion-release-upgrade.ps1 -Family Sql -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
 
       - name: Upload qualified Sql upgrade evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: expansion-sql-upgrade-${{ inputs.candidate_sha }}
           path: ${{ env.EVIDENCE_ROOT }}
@@ -94,7 +94,7 @@ jobs:
 
       - name: Retain partial diagnostics separately on failure
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sql-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.EVIDENCE_ROOT }}

@@ -61,7 +61,7 @@ jobs:
 
       - name: Retain core application integration results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: core-application-postgresql-${{ github.sha }}-${{ github.run_id }}
           path: artifacts/application-postgresql-core
@@ -236,7 +236,7 @@ jobs:
 
       - name: Retain raw Core unit regression evidence
         if: always() && github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: core-test-regression-${{ matrix.os }}-${{ github.sha }}-${{ github.run_id }}
           path: artifacts/core-regression/${{ matrix.os }}
@@ -297,7 +297,7 @@ jobs:
         run: npm audit --audit-level=moderate
 
       - name: Archive static website
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: bluetusk-website
           path: website/dist/website/browser
@@ -330,7 +330,7 @@ jobs:
           -Commit ${{ github.sha }}
 
       - name: Archive immutable V1 package evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: v1-candidate-packages-${{ github.sha }}
           path: |
@@ -373,7 +373,7 @@ jobs:
           -ExpectedCommit ${{ github.sha }}
 
       - name: Archive immutable core package evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: v1.1-core-packages-${{ github.sha }}
           path: |
@@ -441,7 +441,7 @@ jobs:
 
       - name: Archive publish measurements
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: provider-core-publish-${{ matrix.rid }}
           path: artifacts/provider-core-smoke/${{ matrix.rid }}/report.json
@@ -491,7 +491,7 @@ jobs:
 
       - name: Retain raw Core stable compatibility evidence
         if: always() && github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: core-test-compatibility-postgresql-${{ matrix.major }}-${{ github.sha }}-${{ github.run_id }}
           path: artifacts/core-compatibility/postgresql-${{ matrix.major }}
@@ -549,7 +549,7 @@ jobs:
           ./eng/build-core-test-manifest.ps1 -Kind Compatibility `
             -EvidenceRoot artifacts/core-test-evidence/compatibility -ExpectedCommit ${{ github.sha }}
       - name: Retain complete immutable Core test matrices
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: v1.1-core-test-evidence-${{ github.sha }}-${{ github.run_id }}
           path: artifacts/core-test-evidence
@@ -584,7 +584,7 @@ jobs:
           --logger trx --results-directory artifacts/test-results/postgres19-provider
       - name: Retain provider preview results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: historical-postgres19-provider-${{ github.sha }}-${{ github.run_id }}
           path: artifacts/test-results/postgres19-provider
