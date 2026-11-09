@@ -1,4 +1,5 @@
 using BlueTusk.Data.Internal;
+using BlueTusk.EntityFrameworkCore.Graphs;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,11 +18,22 @@ public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
     {
         AdminDatabase = copyFrom.AdminDatabase;
         DataSource = copyFrom.DataSource;
+        GraphBackend = copyFrom.GraphBackend;
     }
 
     internal string? AdminDatabase { get; private set; }
 
     internal IProviderDataSource? DataSource { get; private set; }
+
+    internal BlueTuskPropertyGraphBackend GraphBackend { get; private set; } =
+        BlueTuskPropertyGraphBackend.Relational;
+
+    internal static BlueTuskPropertyGraphBackend GetGraphBackend(IDbContextOptions options) =>
+        options.FindExtension<BlueTuskOptionsExtension>()?.GraphBackend
+        ?? BlueTuskPropertyGraphBackend.Relational;
+
+    internal BlueTuskOptionsExtension WithGraphBackend(BlueTuskPropertyGraphBackend backend) =>
+        new(this) { GraphBackend = backend };
 
     public override DbContextOptionsExtensionInfo Info => _info ??= new ExtensionInfo(this);
 
