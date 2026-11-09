@@ -23,21 +23,22 @@ if ($tracks.schemaVersion -ne 1 -or $tracks.releaseVersion -cne '1.1.0' -or
 {
     throw 'Release tracks must retain five core families, isolated Graph preview, and explicit stable/preview PostgreSQL support.'
 }
-$requirements = @('supported-server-release-and-image-digest', 'sql-pgq-capability-probe',
+$requirements = @('supported-server-release-and-image-digest', 'postgresql-15-18-without-sql-pgq',
     'exact-candidate-differential-security-and-recovery-tests', 'exact-candidate-performance-evidence',
     '24-hour-endurance', 'independent-release-approval')
 if ($tracks.graph.stablePublicationEligible -ne $false -or
-    $tracks.graph.requiredServerCapability -cne 'SQL/PGQ GRAPH_TABLE' -or
+    $tracks.graph.nativeRequiredServerCapability -cne 'SQL/PGQ GRAPH_TABLE' -or
+    $tracks.graph.portablePostgreSqlImage -cnotmatch '^postgres:18(?:\.\d+)?-alpine@sha256:[0-9a-f]{64}$' -or
     $tracks.graph.versionNumberAloneEstablishesSupport -ne $false -or
     @($tracks.graph.qualificationRequirements).Count -ne $requirements.Count -or
     @(Compare-Object $requirements @($tracks.graph.qualificationRequirements) -SyncWindow 0).Count -ne 0 -or
     $tracks.graph.historicalPreviewMilestone -cne '19beta3')
 {
-    throw 'Graph must remain preview-only until a supported SQL/PGQ server and its separate release evidence are qualified.'
+    throw 'Graph must remain preview-only until portable PostgreSQL and independent release evidence are qualified.'
 }
 if ($Family -eq 'ContinuousGraph' -and $Channel -eq 'stable')
 {
-    throw 'ContinuousGraph stable publication is unavailable: qualify a supported SQL/PGQ server and the independent Graph release track first.'
+    throw 'ContinuousGraph stable publication is unavailable: qualify portable PostgreSQL on the independent Graph release track first.'
 }
 $families = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'product-families.json') -Raw | ConvertFrom-Json
 foreach ($coreFamily in $core)

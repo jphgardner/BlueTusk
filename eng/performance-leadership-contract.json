@@ -32,7 +32,7 @@
     "Sync": "Debezium Server 3.6.1.Final plus native destination clients",
     "Live": "ASP.NET Core SignalR 10",
     "ControlPlane": "BlueTusk 1.0.0 plus absolute scaling budgets",
-    "ContinuousGraph": "prepared PostgreSQL GRAPH_TABLE plus BlueTusk 1.0.0 full requery"
+    "ContinuousGraph": "prepared PostgreSQL joins plus portable authoritative full requery"
   },
   "workloads": {
     "Provider": {
@@ -116,5 +116,5 @@
     "ControlPlane": 24,
     "ContinuousGraph": 24
   },
-  "graphStablePublicationRequiresQualifiedSqlPgqServer": true
+  "graphStablePublicationRequiresPortablePostgreSqlEvidence": true
 }

@@ -53,7 +53,7 @@ jobs:
           ./eng/verify-application-candidate-restore.ps1
           dotnet format applications/BlueTusk.Applications.slnx --no-restore --verify-no-changes
           dotnet build applications/BlueTusk.Applications.slnx -c Release --no-restore
-          dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore --filter 'ReleaseTrack!=ContinuousGraphPreview'
+          dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore --filter 'ReleaseTrack!=ContinuousGraphPortable'
 
       - name: Test core applications against digest-pinned stable PostgreSQL
         shell: pwsh

@@ -2,12 +2,16 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BlueTusk.ContinuousGraph;
 using BlueTusk.Data;
+using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.Live;
+using BlueTusk.Streams;
+using BlueTusk.Streams.Testing;
+using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlueTusk.Benchmarks;
 
-/// <summary>Registration, authoritative requery, and invalidation/diff over a live PostgreSQL 19 graph.</summary>
+/// <summary>Traversal and maintenance over a portable PostgreSQL graph.</summary>
 [MemoryDiagnoser]
 [JsonExporterAttribute.Brief]
 [Orderer(SummaryOrderPolicy.Declared)]
@@ -25,6 +29,10 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
     private LiveSecurityScope _securityScope = null!;
     private AdvancingInvalidationLog _invalidations = null!;
     private LiveQuerySession<GraphPath, int> _session = null!;
+    private ContinuousGraphIncrementalSession<GraphPath, int> _scoped = null!;
+    private ContinuousGraphIncrementalSession<GraphPath, int> _trusted = null!;
+    private ChangeTransactionDelivery _update = null!;
+    private BlueTuskCommand _prepared = null!;
     private int _disposed;
 
     [Params(1_000, 100_000, 1_000_000)]
@@ -38,13 +46,6 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
     {
         _dataSource = BlueTuskDataSource.Create(GetConnectionString());
         _administration = await _dataSource.OpenConnectionAsync();
-        if (_administration.SupportsSqlPgq is not true)
-        {
-            throw new InvalidOperationException(
-                $"Continuous Graph benchmarks require PostgreSQL 19 SQL/PGQ; " +
-                $"connected to {_administration.ServerVersion}.");
-        }
-
         await DropGraphObjectsAsync();
         await ExecuteAsync(
             $"""
@@ -59,22 +60,14 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
             SELECT value, 'person-' || value::text
             FROM generate_series(1, {EdgeCount + 1}) AS value;
             INSERT INTO {FriendshipsTable}
-            SELECT value - 1, 1, value
+            SELECT value - 1,
+                CASE WHEN value <= 1001 OR value % 2 = 0 THEN 1 ELSE value - 1 END,
+                value
             FROM generate_series(2, {EdgeCount + 1}) AS value;
-            CREATE PROPERTY GRAPH {GraphName}
-                VERTEX TABLES (
-                    {PeopleTable} AS people
-                    KEY (id)
-                    LABEL person PROPERTIES (id AS "Id", name AS "Name"))
-                EDGE TABLES (
-                    {FriendshipsTable} AS friendships
-                    KEY (id)
-                    SOURCE KEY (from_id) REFERENCES people (id)
-                    DESTINATION KEY (to_id) REFERENCES people (id)
-                    LABEL knows PROPERTIES (
-                        id AS "Id",
-                        from_id AS "FromPersonId",
-                        to_id AS "ToPersonId"));
+            CREATE INDEX ON {FriendshipsTable} (from_id, to_id);
+            CREATE INDEX ON {FriendshipsTable} (to_id, from_id);
+            ANALYZE {PeopleTable};
+            ANALYZE {FriendshipsTable};
             """);
         _contextFactory = new GraphContextFactory(_dataSource);
         _definition = CreateDefinition();
@@ -92,6 +85,45 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
         _ = await _session.StartAsync();
         _ = await AuthoritativeGraphRequeryAsync();
         _ = await AffectedGraphRefreshAndDiffAsync();
+        var incrementalOptions = new ContinuousGraphIncrementalOptions<GraphPath, int>
+        {
+            ResultOrdering = Comparer<GraphPath>.Create(static (left, right) =>
+                left.DestinationId.CompareTo(right.DestinationId)),
+            KeyOrdering = Comparer<int>.Default,
+            MaximumRepairInterval = TimeSpan.FromHours(1),
+        };
+        _scoped = _plan.CreateIncrementalSession(_arguments, _securityScope, incrementalOptions);
+        var updatedEdgeId = EdgeCount + 2;
+        _trusted = _plan.CreateAutomaticIncrementalSession(_arguments, _securityScope, incrementalOptions,
+            resultLimit: null, trustedProjector: new BenchmarkProjector(_plan.Fingerprint, _securityScope));
+        await InitializeAsync(_scoped);
+        await InitializeAsync(_trusted);
+        await ExecuteAsync($"UPDATE {FriendshipsTable} SET id = {updatedEdgeId} WHERE id = 1");
+        _update = CreateUpdate(updatedEdgeId);
+        if (await ScopedUpdateAsync() != ContinuousGraphMaintenanceTier.AuthoritativeDelta ||
+            await TrustedUpdateAsync() != ContinuousGraphMaintenanceTier.TrustedCdcDelta)
+        {
+            throw new InvalidOperationException("Portable Graph benchmark did not exercise both delta tiers.");
+        }
+
+        _prepared = new BlueTuskCommand(
+            $"""
+            SELECT e.id, v.id, v.name
+            FROM {PeopleTable} AS anchor
+            JOIN {FriendshipsTable} AS e ON e.to_id = anchor.id
+            JOIN {PeopleTable} AS v ON v.id = e.from_id
+            WHERE anchor.id = @source
+            ORDER BY v.id
+            LIMIT @top
+            """, _administration);
+        _prepared.Parameters.Add(new BlueTuskParameter<int>(EdgeCount + 1) { ParameterName = "source" });
+        _prepared.Parameters.Add(new BlueTuskParameter<int>(TopN) { ParameterName = "top" });
+        await _prepared.PrepareAsync();
+
+        if (Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_PLAN_DIRECTORY") is { Length: > 0 } directory)
+        {
+            await CapturePlansAsync(directory);
+        }
     }
 
     [GlobalCleanup]
@@ -124,6 +156,54 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
             _session.Status.AuthoritativeQueryCount;
     }
 
+    [Benchmark]
+    public async Task<ContinuousGraphMaintenanceTier> ScopedUpdateAsync() =>
+        await EvaluateUpdateAsync(_scoped);
+
+    [Benchmark]
+    public async Task<ContinuousGraphMaintenanceTier> TrustedUpdateAsync() =>
+        await EvaluateUpdateAsync(_trusted);
+
+    [Benchmark]
+    public async Task<ContinuousGraphMaintenanceTier> FullRepairUpdateAsync()
+    {
+        await using var proposal = await _scoped.PrepareRepairAsync("benchmark-forced-full-requery");
+        return proposal.Evaluation.MaintenanceTier;
+    }
+
+    [Benchmark]
+    public async Task<int> PreparedSelectiveTraversalAsync()
+    {
+        await using var reader = await _prepared.ExecuteReaderAsync();
+        var rows = new List<GraphPath>();
+        while (await reader.ReadAsync())
+        {
+            rows.Add(new GraphPath
+            {
+                RelationshipId = reader.GetInt32(0),
+                DestinationId = reader.GetInt32(1),
+                DestinationName = reader.GetString(2),
+            });
+        }
+
+        return rows.Count;
+    }
+
+    [Benchmark]
+    public async Task<int> TypedSelectiveTraversalAsync()
+    {
+        await using var context = _contextFactory.CreateDbContext();
+        return (await Traversal(context, EdgeCount + 1, BlueTuskGraphEdgeDirection.Incoming)
+            .ToListAsync()).Count;
+    }
+
+    [Benchmark]
+    public async Task<int> TypedBoundedTraversalAsync()
+    {
+        await using var context = _contextFactory.CreateDbContext();
+        return (await BoundedTraversal(context, 1).ToListAsync()).Count;
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -134,6 +214,26 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
         if (_session is not null)
         {
             await _session.DisposeAsync();
+        }
+
+        if (_update is not null)
+        {
+            await _update.DisposeAsync();
+        }
+
+        if (_scoped is not null)
+        {
+            await _scoped.DisposeAsync();
+        }
+
+        if (_trusted is not null)
+        {
+            await _trusted.DisposeAsync();
+        }
+
+        if (_prepared is not null)
+        {
+            await _prepared.DisposeAsync();
         }
 
         if (_administration is not null)
@@ -171,38 +271,154 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
             [new LiveQueryParameter("sourceId", typeof(int))],
             new Dictionary<string, object?> { ["sourceId"] = 1 },
             TopN,
-            (context, arguments) =>
-            {
-                var sourceId = arguments.Get<int>("sourceId");
-                return context.PropertyGraph(GraphName)
-                    .Match(pattern => pattern
-                        .Vertex<GraphPerson>("source", person => person.Id == sourceId)
-                        .Outgoing<GraphFriendship>("relationship")
-                        .Vertex<GraphPerson>("destination"))
-                    .Select<GraphPath>(projection => projection
-                        .Property<GraphFriendship, int>(
-                            "relationship",
-                            friendship => friendship.Id,
-                            result => result.RelationshipId)
-                        .Property<GraphPerson, int>(
-                            "destination",
-                            person => person.Id,
-                            result => result.DestinationId)
-                        .Property<GraphPerson, string>(
-                            "destination",
-                            person => person.Name,
-                            result => result.DestinationName))
-                    .OrderBy(result => result.DestinationId)
-                    .Take(TopN);
-            },
+            (context, arguments) => Traversal(context, arguments.Get<int>("sourceId"),
+                BlueTuskGraphEdgeDirection.Outgoing),
             result => result.DestinationId,
             GraphPathComparer.Instance);
 
     private async Task DropGraphObjectsAsync()
     {
-        await ExecuteAsync($"DROP PROPERTY GRAPH IF EXISTS {GraphName}");
         await ExecuteAsync($"DROP TABLE IF EXISTS {FriendshipsTable}");
         await ExecuteAsync($"DROP TABLE IF EXISTS {PeopleTable}");
+    }
+
+    private IQueryable<GraphPath> Traversal(
+        GraphContext context, int sourceId, BlueTuskGraphEdgeDirection direction)
+    {
+        var match = context.PropertyGraph(GraphName).Match(pattern =>
+        {
+            pattern.Vertex<GraphPerson>("source", person => person.Id == sourceId);
+            _ = direction switch
+            {
+                BlueTuskGraphEdgeDirection.Incoming => pattern.Incoming<GraphFriendship>("relationship"),
+                BlueTuskGraphEdgeDirection.Undirected => pattern.Undirected<GraphFriendship>("relationship"),
+                _ => pattern.Outgoing<GraphFriendship>("relationship"),
+            };
+
+            return pattern.Vertex<GraphPerson>("destination");
+        });
+        return match.Select<GraphPath>(projection => projection
+                .Property<GraphFriendship, int>("relationship", edge => edge.Id, row => row.RelationshipId)
+                .Property<GraphPerson, int>("destination", person => person.Id, row => row.DestinationId)
+                .Property<GraphPerson, string>("destination", person => person.Name, row => row.DestinationName))
+            .OrderBy(result => result.DestinationId)
+            .Take(TopN);
+    }
+
+    private IQueryable<GraphEndpoint> BoundedTraversal(GraphContext context, int sourceId) =>
+        context.PropertyGraph(GraphName)
+            .Match(pattern => pattern
+                .Vertex<GraphPerson>("source", person => person.Id == sourceId)
+                .OutgoingPath<GraphFriendship>("relationship", 1, 2)
+                .Vertex<GraphPerson>("destination"))
+            .Select<GraphEndpoint>(projection => projection
+                .Property<GraphPerson, int>("destination", person => person.Id, row => row.Id))
+            .OrderBy(result => result.Id)
+            .Take(TopN);
+
+    private async Task CapturePlansAsync(string directory)
+    {
+        Directory.CreateDirectory(directory);
+        await using var context = _contextFactory.CreateDbContext();
+        await context.Database.OpenConnectionAsync();
+        foreach (var (label, source, direction, bounded) in new[]
+        {
+            ("selective", EdgeCount + 1, BlueTuskGraphEdgeDirection.Incoming, false),
+            ("selective-undirected", EdgeCount + 1, BlueTuskGraphEdgeDirection.Undirected, false),
+            ("high-degree", 1, BlueTuskGraphEdgeDirection.Outgoing, false),
+            ("bounded", 1, BlueTuskGraphEdgeDirection.Outgoing, true),
+        })
+        {
+            IQueryable query = bounded ? BoundedTraversal(context, source) : Traversal(context, source, direction);
+            await using var command = query.CreateDbCommand();
+            command.CommandText = "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) " + command.CommandText;
+            await using var reader = await command.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
+            {
+                throw new InvalidOperationException("PostgreSQL returned no traversal plan.");
+            }
+
+            var plan = reader.GetString(0);
+            await File.WriteAllTextAsync(Path.Combine(directory, $"{label}-{EdgeCount}-{TopN}.json"), plan);
+        }
+    }
+
+    private static async Task InitializeAsync(ContinuousGraphIncrementalSession<GraphPath, int> session)
+    {
+        await using var initial = await session.PrepareInitialAsync();
+        await initial.CommitAsync();
+    }
+
+    private async Task<ContinuousGraphMaintenanceTier> EvaluateUpdateAsync(
+        ContinuousGraphIncrementalSession<GraphPath, int> session)
+    {
+        // Dispose the proposal without committing so each measurement starts from the same snapshot.
+        await using var proposal = await session.PrepareTransactionAsync(_update.Transaction);
+        return proposal.Evaluation.MaintenanceTier;
+    }
+
+    private static ChangeTransactionDelivery CreateUpdate(int updatedEdgeId)
+    {
+        var source = new ChangeSourceIdentity("benchmark", "graph", "slot", "publication");
+        var position = new BlueTuskLogSequenceNumber(1);
+        var table = new ChangeTable(1, "public", FriendshipsTable, 'f',
+            [
+                new ChangeColumn(0, "id", 23, -1, IsKey: true),
+                new ChangeColumn(1, "from_id", 23, -1, IsKey: false),
+                new ChangeColumn(2, "to_id", 23, -1, IsKey: false),
+            ]);
+        var sourceId = ChangeColumnValue.FromValue("1"u8.ToArray(), ChangeValueEncoding.Text);
+        var targetId = ChangeColumnValue.FromValue("2"u8.ToArray(), ChangeValueEncoding.Text);
+        var newId = ChangeColumnValue.FromValue(System.Text.Encoding.UTF8.GetBytes(
+            updatedEdgeId.ToString(System.Globalization.CultureInfo.InvariantCulture)), ChangeValueEncoding.Text);
+        var before = new ChangeRow(table, [sourceId, sourceId, targetId]);
+        var after = new ChangeRow(table, [newId, sourceId, targetId]);
+        return ChangeDeliveryTestFactory.CreateCommitted(source, 1, position,
+            [new UpdateChange(new ChangeId(source, position, 1, 0), before, after, new ChangedColumnSet(true, [0]))]);
+    }
+
+    private sealed class BenchmarkProjector(string fingerprint, LiveSecurityScope scope)
+        : IContinuousGraphCdcProjector<GraphPath, int>
+    {
+        public ContinuousGraphCdcTrustContract TrustContract { get; } = new(fingerprint,
+            HasCompleteOldAndNewValues: true, HasExactChangedColumns: true,
+            HasSufficientReplicaIdentity: true, EnforcesSecurityScope: true);
+
+        public async ValueTask<ContinuousGraphIncrementalResult<GraphPath, int>> ProjectAsync(
+            ChangeTransaction transaction, LiveQueryExecutionContext context,
+            CancellationToken cancellationToken = default)
+        {
+            if (context.SecurityScope != scope)
+            {
+                return ContinuousGraphIncrementalResult<GraphPath, int>.RequiresRepair("benchmark-scope-mismatch");
+            }
+
+            await foreach (var change in transaction.Changes.WithCancellation(cancellationToken))
+            {
+                if (change is not UpdateChange update || update.NewRow.Table.Name != FriendshipsTable)
+                {
+                    continue;
+                }
+
+                var row = update.NewRow;
+                var columns = row.Table.Columns;
+                if (ChangeValueDecoders.Decode<int>(columns[1], row[1]) != context.Arguments.Get<int>("sourceId"))
+                {
+                    break;
+                }
+
+                var target = ChangeValueDecoders.Decode<int>(columns[2], row[2]);
+                return ContinuousGraphIncrementalResult<GraphPath, int>.Exact([target],
+                    [new GraphPath
+                    {
+                        DestinationId = target,
+                        RelationshipId = ChangeValueDecoders.Decode<int>(columns[0], row[0]),
+                        DestinationName = FormattableString.Invariant($"person-{target}"),
+                    }]);
+            }
+
+            return ContinuousGraphIncrementalResult<GraphPath, int>.RequiresRepair("benchmark-update-not-found");
+        }
     }
 
     private async Task ExecuteAsync(string sql)
@@ -229,13 +445,10 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
     private sealed class GraphContextFactory(BlueTuskDataSource dataSource) :
         IDbContextFactory<GraphContext>
     {
-        public GraphContext CreateDbContext()
-        {
-            var options = new DbContextOptionsBuilder<GraphContext>()
-                .UseBlueTusk(dataSource)
-                .Options;
-            return new GraphContext(options);
-        }
+        private readonly DbContextOptions<GraphContext> _options =
+            new DbContextOptionsBuilder<GraphContext>().UseBlueTusk(dataSource).Options;
+
+        public GraphContext CreateDbContext() => new(_options);
     }
 
     private sealed class GraphContext(DbContextOptions<GraphContext> options) :
@@ -308,6 +521,11 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
         public int DestinationId { get; set; }
 
         public string DestinationName { get; set; } = string.Empty;
+    }
+
+    private sealed class GraphEndpoint
+    {
+        public int Id { get; set; }
     }
 
     private sealed class GraphPathComparer : IEqualityComparer<GraphPath>

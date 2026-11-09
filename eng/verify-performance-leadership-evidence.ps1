@@ -7,7 +7,7 @@ param(
     [ValidatePattern('^[0-9a-f]{40}$')]
     [string] $ExpectedCommit,
 
-    [ValidateSet('Core', 'ContinuousGraphPreview')]
+    [ValidateSet('Core', 'ContinuousGraphPreview', 'ContinuousGraphPortable')]
     [string] $Scope = 'Core',
 
     [string] $ContractPath = (Join-Path $PSScriptRoot 'performance-leadership-contract.json')
@@ -216,6 +216,11 @@ foreach ($environmentName in $environmentNames)
     if ($digests.Count -eq 0 -or $digests.Where({ $_ -notmatch '@sha256:[0-9a-f]{64}$' }).Count -ne 0)
     {
         throw "Environment '$environmentName' has missing or mutable container image evidence."
+    }
+    if ($Scope -eq 'ContinuousGraphPortable' -and
+        $tracks.graph.portablePostgreSqlImage -cnotin $digests)
+    {
+        throw "Portable Graph evidence for '$environmentName' must include the pinned portable PostgreSQL fixture."
     }
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
     Assert-NotDiagnostic $manifest "Environment manifest '$environmentName'"

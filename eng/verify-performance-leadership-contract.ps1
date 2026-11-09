@@ -83,9 +83,9 @@ if ($contract.enduranceHours.Streams -ne 72 -or
     $contract.enduranceHours.Live -ne 24 -or
     $contract.enduranceHours.ControlPlane -ne 24 -or
     $contract.enduranceHours.ContinuousGraph -ne 24 -or
-    $contract.graphStablePublicationRequiresQualifiedSqlPgqServer -ne $true)
+    $contract.graphStablePublicationRequiresPortablePostgreSqlEvidence -ne $true)
 {
-    throw 'Endurance duration or the qualified SQL/PGQ Graph publication gate was weakened.'
+    throw 'Endurance duration or the portable PostgreSQL Graph publication gate was weakened.'
 }
 if (@($contract.workloads.Sync.destinations).Count -ne 7 -or
     @(Compare-Object @('nats', 'redis', 'opensearch', 'postgresql', 'kafka', 's3', 'webhooks') `
