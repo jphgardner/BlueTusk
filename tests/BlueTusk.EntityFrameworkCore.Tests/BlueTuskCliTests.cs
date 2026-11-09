@@ -48,18 +48,20 @@ public sealed class BlueTuskCliTests
     }
 
     [Theory]
-    [InlineData("package", "1.1.0-rc.2.local.1", false, false, 0, "All restored BlueTusk dependencies")]
-    [InlineData("package", "1.1.0-rc.1", false, false, 1, "Pin the candidate version")]
-    [InlineData("project", "1.1.0-rc.2.local.1", false, false, 1, "Restore against the candidate feed")]
-    [InlineData("package", "1.1.0-rc.2.local.1", true, false, 1, "wrong SHA-256")]
-    [InlineData("package", "1.1.0-rc.2.local.1", false, true, 1, "different NuGet content hash")]
+    [InlineData("package", "1.1.0-rc.2.local.1", false, false, 0, "All restored BlueTusk dependencies", null)]
+    [InlineData("package", "1.1.0-rc.1", false, false, 1, "Pin the candidate version",
+        "dotnet restore --configfile ./NuGet.Config --force")]
+    [InlineData("project", "1.1.0-rc.2.local.1", false, false, 1, "Restore against the candidate feed", null)]
+    [InlineData("package", "1.1.0-rc.2.local.1", true, false, 1, "wrong SHA-256", null)]
+    [InlineData("package", "1.1.0-rc.2.local.1", false, true, 1, "different NuGet content hash", null)]
     public void Doctor_checks_the_local_manifest_and_restored_project(
         string dependencyType,
         string resolvedVersion,
         bool changeArchive,
         bool changeRestoredHash,
         int expectedExitCode,
-        string expectedMessage)
+        string expectedMessage,
+        string? expectedCommandHint)
     {
         const string candidateVersion = "1.1.0-rc.2.local.1";
         var directory = Directory.CreateTempSubdirectory("bluetusk-doctor-");
@@ -104,8 +106,25 @@ public sealed class BlueTuskCliTests
                 error);
 
             Assert.Equal(expectedExitCode, exitCode);
-            Assert.Contains(expectedMessage, output.ToString(), StringComparison.Ordinal);
             Assert.Equal(string.Empty, error.ToString());
+            using var report = JsonDocument.Parse(output.ToString());
+            Assert.Equal(1, report.RootElement.GetProperty("schemaVersion").GetInt32());
+            Assert.Equal(expectedExitCode == 0 ? "ready" : "not-ready",
+                report.RootElement.GetProperty("status").GetString());
+
+            var checks = report.RootElement.GetProperty("checks").EnumerateArray().ToArray();
+            var check = Assert.Single(checks, item =>
+                item.GetProperty("Name").GetString() == (changeArchive ? "package-manifest" : "project-assets"));
+            Assert.Equal(expectedExitCode == 0 ? "pass" : "fail", check.GetProperty("status").GetString());
+            Assert.Contains(expectedMessage, check.GetProperty("Message").GetString(), StringComparison.Ordinal);
+            if (expectedCommandHint is null)
+            {
+                Assert.All(checks, item => Assert.False(item.TryGetProperty("commandHint", out _)));
+            }
+            else
+            {
+                Assert.Equal(expectedCommandHint, check.GetProperty("commandHint").GetString());
+            }
         }
         finally
         {

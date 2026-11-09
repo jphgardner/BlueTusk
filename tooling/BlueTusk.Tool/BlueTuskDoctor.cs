@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using BlueTusk.Data;
 
 namespace BlueTusk.Tool;
@@ -10,6 +11,7 @@ internal static partial class BlueTuskDoctor
     private static readonly JsonSerializerOptions ReportJsonOptions = new()
     {
         WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     public static async Task<int> RunAsync(
@@ -212,6 +214,7 @@ internal static partial class BlueTuskDoctor
                         check.Name,
                         status = check.Status.ToString().ToLowerInvariant(),
                         check.Message,
+                        commandHint = check.CommandHint,
                     }),
                 },
                 ReportJsonOptions));
@@ -246,5 +249,9 @@ internal static partial class BlueTuskDoctor
         Fail,
     }
 
-    private sealed record DoctorCheck(string Name, DoctorCheckStatus Status, string Message);
+    private sealed record DoctorCheck(
+        string Name,
+        DoctorCheckStatus Status,
+        string Message,
+        string? CommandHint = null);
 }

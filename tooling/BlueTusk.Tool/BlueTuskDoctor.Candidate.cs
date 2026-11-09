@@ -49,7 +49,8 @@ internal static partial class BlueTuskDoctor
                 else if (!library.Name.AsSpan(separator + 1).Equals(version.AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
                     checks.Add(new DoctorCheck("project-assets", DoctorCheckStatus.Fail,
-                        "A restored BlueTusk version differs from the candidate. Pin the candidate version and restore again."));
+                        "A restored BlueTusk version differs from the candidate. Pin the candidate version and restore again.",
+                        CommandHint: "dotnet restore --configfile ./NuGet.Config --force"));
                     failed = true;
                 }
                 else if (!library.Value.TryGetProperty("sha512", out var restoredHash) ||

@@ -59,6 +59,11 @@ every BlueTusk package in the project. Omit `--project-assets` to check
 only the candidate files. Omit `--local-only` and supply a connection to
 run the PostgreSQL checks in the same report.
 
+If a restored BlueTusk package version differs from the candidate, the JSON
+`project-assets` check includes an optional `commandHint`. Pin the candidate
+version from the manifest first, then run the command from the directory
+containing your project or solution and its candidate `NuGet.Config`.
+
 ## Scaffold an EF Core model
 
 Generate entity classes and a `DbContext` from a PostgreSQL schema:
