@@ -136,7 +136,7 @@ Use a new output directory for each capture; existing evidence is not overwritte
 `eng/v1.1-candidate-readiness.json` is a draft aggregation contract, explicitly
 marked as migration in progress. `eng/build-core-candidate-envelope.ps1` now
 builds its schema 4 envelope from seven run records, fourteen canonical artifact
-roles and ten approval records. `eng/verify-core-candidate-bindings.ps1` verifies
+roles and eight approval records. `eng/verify-core-candidate-bindings.ps1` verifies
 exact commit and producer bindings, file digests and sizes, root containment,
 approval schemas and approval ordering. Its self-test exercises a synthetic
 binding set and rejects malformed or stale substitutions; it is part of the
@@ -303,8 +303,7 @@ any candidate can be approved. Hashing report JSON alone cannot qualify them.
 
 The historical `v1-candidate-readiness.yml` aggregator and its V1 evidence schema
 still describe a six-family, PostgreSQL-19-GA-qualified 1.0 candidate. They are
-not a valid 1.2 core release gate. The 1.2 candidate aggregator must be migrated
-to this track policy, exact 1.2 versions, the scoped performance manifest,
+not a valid 1.1 Core release gate. The Core candidate aggregator must apply this track policy, exact 1.1 versions, the scoped performance manifest,
 Live/Control Plane endurance and current connector evidence before publication
 can be enabled. Keep the existing protections and independent approvals;
 do not bypass the old aggregator or reinterpret its historical artifacts.

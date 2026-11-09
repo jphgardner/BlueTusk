@@ -45,7 +45,7 @@ Retention requires every applicable group to pass a transaction and the resume w
 
 `ISyncDestination` advertises transactional batches, idempotent upserts, deletes, checkpoint co-location, reconciliation, and alias-swap support. Source transactions stay intact. Transform fingerprints are stable and changes require an explicit migration or rebuild. Poison records pause unless an operator explicitly chooses quarantine-and-advance.
 
-PostgreSQL atomically applies writes and its destination checkpoint. NATS uses stable change IDs for JetStream deduplication. Redis uses idempotent materialisation with atomic scripts or batches. OpenSearch uses stable document IDs, bulk operations, versioned rebuild indexes, and alias swaps. All four connectors must pass the same conformance suite before the first Sync preview.
+PostgreSQL atomically applies writes and its destination checkpoint. NATS uses stable change IDs for JetStream deduplication. Redis uses idempotent materialisation with atomic scripts or batches. OpenSearch uses stable document IDs, bulk operations, versioned rebuild indexes, and alias swaps. Those four destinations shipped first. The current Core gate covers all seven destinations, including Kafka, S3, and Webhooks, with the required connector conformance and endurance evidence.
 
 ## Live
 
