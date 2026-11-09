@@ -48,14 +48,16 @@ public sealed class BlueTuskCliTests
     }
 
     [Theory]
-    [InlineData("package", "1.1.0-rc.2.local.1", false, 0, "All restored BlueTusk dependencies")]
-    [InlineData("package", "1.1.0-rc.1", false, 1, "Pin the candidate version")]
-    [InlineData("project", "1.1.0-rc.2.local.1", false, 1, "Restore against the candidate feed")]
-    [InlineData("package", "1.1.0-rc.2.local.1", true, 1, "wrong SHA-256")]
+    [InlineData("package", "1.1.0-rc.2.local.1", false, false, 0, "All restored BlueTusk dependencies")]
+    [InlineData("package", "1.1.0-rc.1", false, false, 1, "Pin the candidate version")]
+    [InlineData("project", "1.1.0-rc.2.local.1", false, false, 1, "Restore against the candidate feed")]
+    [InlineData("package", "1.1.0-rc.2.local.1", true, false, 1, "wrong SHA-256")]
+    [InlineData("package", "1.1.0-rc.2.local.1", false, true, 1, "different NuGet content hash")]
     public void Doctor_checks_the_local_manifest_and_restored_project(
         string dependencyType,
         string resolvedVersion,
         bool changeArchive,
+        bool changeRestoredHash,
         int expectedExitCode,
         string expectedMessage)
     {
@@ -85,11 +87,13 @@ public sealed class BlueTuskCliTests
             }
 
             var assets = Path.Combine(directory.FullName, "project.assets.json");
+            byte[] restoredContent = changeRestoredHash ? [1, 2, 4] : content;
+            var sha512 = Convert.ToBase64String(SHA512.HashData(restoredContent));
             File.WriteAllText(assets, JsonSerializer.Serialize(new
             {
                 libraries = new Dictionary<string, object>
                 {
-                    [$"BlueTusk.Data/{resolvedVersion}"] = new { type = dependencyType },
+                    [$"BlueTusk.Data/{resolvedVersion}"] = new { type = dependencyType, sha512 },
                 },
             }));
             using var output = new StringWriter();

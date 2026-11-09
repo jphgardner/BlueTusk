@@ -40,7 +40,7 @@ internal static partial class BlueTuskDoctor
                         "A BlueTusk dependency resolved from a project. Restore against the candidate feed using PackageReference."));
                     failed = true;
                 }
-                else if (!packages.Contains(id))
+                else if (!packages.TryGetValue(id, out var packageHash))
                 {
                     checks.Add(new DoctorCheck("project-assets", DoctorCheckStatus.Fail,
                         "A restored BlueTusk package is missing from the manifest. Select the candidate manifest covering this application's package set."));
@@ -50,6 +50,13 @@ internal static partial class BlueTuskDoctor
                 {
                     checks.Add(new DoctorCheck("project-assets", DoctorCheckStatus.Fail,
                         "A restored BlueTusk version differs from the candidate. Pin the candidate version and restore again."));
+                    failed = true;
+                }
+                else if (!library.Value.TryGetProperty("sha512", out var restoredHash) ||
+                    !string.Equals(restoredHash.GetString(), packageHash, StringComparison.Ordinal))
+                {
+                    checks.Add(new DoctorCheck("project-assets", DoctorCheckStatus.Fail,
+                        $"Restored package '{id}' has a missing or different NuGet content hash. Restore from the verified candidate feed with a fresh packages directory."));
                     failed = true;
                 }
             }
@@ -62,7 +69,7 @@ internal static partial class BlueTuskDoctor
             else if (!failed)
             {
                 checks.Add(new DoctorCheck("project-assets", DoctorCheckStatus.Pass,
-                    "All restored BlueTusk dependencies are package IDs and versions listed in the candidate feed."));
+                    "All restored BlueTusk dependencies match the package IDs, versions, and content hashes in the candidate feed."));
             }
         }
         catch (OperationCanceledException)
@@ -77,12 +84,12 @@ internal static partial class BlueTuskDoctor
         }
     }
 
-    private static async Task<(string? Version, HashSet<string> Packages)> CheckManifestAsync(
+    private static async Task<(string? Version, Dictionary<string, string> Packages)> CheckManifestAsync(
         string manifestPath,
         List<DoctorCheck> checks,
         CancellationToken cancellationToken)
     {
-        var packages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var packages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         try
         {
             using var manifest = await ReadJsonAsync(manifestPath, cancellationToken).ConfigureAwait(false);
@@ -98,6 +105,7 @@ internal static partial class BlueTuskDoctor
 
             var directory = Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
             var archives = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var suffix = $".{version}.nupkg";
             var failures = 0;
             foreach (var archive in root.GetProperty("archives").EnumerateArray())
             {
@@ -110,11 +118,17 @@ internal static partial class BlueTuskDoctor
                     throw new FormatException();
                 }
 
+                var fromFeed = relativePath.StartsWith("feed/", StringComparison.OrdinalIgnoreCase);
+                if (fromFeed && (!relativePath.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) ||
+                    relativePath.Length <= 5 + suffix.Length))
+                {
+                    throw new FormatException();
+                }
+
                 var path = Path.Combine(directory, relativePath);
-                if (!File.Exists(path) ||
-                    (File.GetAttributes(Path.GetDirectoryName(path)!) & FileAttributes.ReparsePoint) != 0 ||
-                    (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0 ||
-                    !await MatchesDigestAsync(path, expected, cancellationToken).ConfigureAwait(false))
+                var (matches, packageHash) = await CheckArchiveAsync(path, expected, fromFeed, cancellationToken)
+                    .ConfigureAwait(false);
+                if (!matches)
                 {
                     checks.Add(new DoctorCheck("package-manifest", DoctorCheckStatus.Fail,
                         $"Archive '{relativePath}' is missing, linked, or has the wrong SHA-256. Replace it from the verified candidate."));
@@ -122,14 +136,9 @@ internal static partial class BlueTuskDoctor
                     continue;
                 }
 
-                var suffix = $".{version}.nupkg";
-                if (relativePath.StartsWith("feed/", StringComparison.OrdinalIgnoreCase))
+                if (fromFeed && !packages.TryAdd(relativePath[5..^suffix.Length], packageHash!))
                 {
-                    if (!relativePath.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) ||
-                        !packages.Add(relativePath[5..^suffix.Length]))
-                    {
-                        throw new FormatException();
-                    }
+                    throw new FormatException();
                 }
             }
 
@@ -138,7 +147,8 @@ internal static partial class BlueTuskDoctor
                 return (null, packages);
             }
 
-            if (packages.Count == 0)
+            if (packages.Count == 0 ||
+                root.TryGetProperty("nugetCount", out var count) && count.GetInt32() != packages.Count)
             {
                 throw new FormatException();
             }
@@ -184,11 +194,34 @@ internal static partial class BlueTuskDoctor
         return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task<bool> MatchesDigestAsync(string path, string expected, CancellationToken cancellationToken)
+    private static async Task<(bool Matches, string? PackageHash)> CheckArchiveAsync(
+        string path,
+        string expected,
+        bool fromFeed,
+        CancellationToken cancellationToken)
     {
+        if (!File.Exists(path) ||
+            (File.GetAttributes(Path.GetDirectoryName(path)!) & FileAttributes.ReparsePoint) != 0 ||
+            (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+        {
+            return (false, null);
+        }
+
         await using var stream = File.OpenRead(path);
         var actual = await SHA256.HashDataAsync(stream, cancellationToken).ConfigureAwait(false);
-        return Convert.ToHexString(actual).Equals(expected, StringComparison.OrdinalIgnoreCase);
+        if (!Convert.ToHexString(actual).Equals(expected, StringComparison.OrdinalIgnoreCase))
+        {
+            return (false, null);
+        }
+
+        if (!fromFeed)
+        {
+            return (true, null);
+        }
+
+        stream.Position = 0;
+        var packageHash = await SHA512.HashDataAsync(stream, cancellationToken).ConfigureAwait(false);
+        return (true, Convert.ToBase64String(packageHash));
     }
 
     private static bool IsBlueTuskPackage(string id) =>

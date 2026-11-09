@@ -52,8 +52,9 @@ bluetusk doctor --local-only --package-manifest ./candidate/sha256.json `
 
 The manifest must be at the root of the extracted candidate, with its
 archive paths relative to that root. Doctor verifies the SHA-256 digests of
-the listed NuGet and npm archives and checks the restored BlueTusk NuGet
-IDs and versions against the manifest's feed. Use a manifest that covers
+the listed NuGet and npm archives. It also compares the restored BlueTusk
+NuGet IDs, versions, and SHA-512 content hashes with the unsigned archives
+in the local candidate feed. Use a manifest that covers
 every BlueTusk package in the project. Omit `--project-assets` to check
 only the candidate files. Omit `--local-only` and supply a connection to
 run the PostgreSQL checks in the same report.
