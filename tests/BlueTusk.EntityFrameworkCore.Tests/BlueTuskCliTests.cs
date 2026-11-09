@@ -139,7 +139,7 @@ public sealed class BlueTuskCliTests
         using var output = new StringWriter();
         using var error = new StringWriter();
         var result = BlueTuskCli.Run(
-            ["doctor", "--connection", $"Host=localhost;{secret}=value", "--json"],
+            ["doctor", "--connection", $"Host=localhost;Port={secret}", "--json"],
             output,
             error);
 
