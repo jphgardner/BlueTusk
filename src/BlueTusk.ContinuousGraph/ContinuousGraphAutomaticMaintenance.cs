@@ -252,12 +252,7 @@ internal static class ContinuousGraphKeyScope
         {
             var value = affectedKeys.First();
             Expression<Func<TKey>> parameter = () => value;
-            return Expression.Call(
-                typeof(object),
-                nameof(object.Equals),
-                Type.EmptyTypes,
-                Expression.Convert(key, typeof(object)),
-                Expression.Convert(parameter.Body, typeof(object)));
+            return CreateScalarKeyFilter(key, parameter.Body);
         }
 
         var keys = affectedKeys.ToArray();
@@ -269,6 +264,14 @@ internal static class ContinuousGraphKeyScope
             keyParameter.Body,
             key);
     }
+
+    internal static MethodCallExpression CreateScalarKeyFilter(Expression key, Expression value) =>
+        Expression.Call(
+            typeof(object),
+            nameof(object.Equals),
+            Type.EmptyTypes,
+            Expression.Convert(key, typeof(object)),
+            Expression.Convert(value, typeof(object)));
 
     private static bool IsTrailingOperation(MethodCallExpression call) =>
         (call.Method.DeclaringType == typeof(Queryable) &&

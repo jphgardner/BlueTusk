@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.Diagnostics;
 using BlueTusk.Client;
 using BlueTusk.Data;
@@ -8,6 +9,7 @@ using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
 using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Xunit.Sdk;
 
 namespace BlueTusk.ContinuousGraph.Tests;
@@ -190,6 +192,86 @@ public sealed class ContinuousGraphQueryIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Single_key_delta_rebinds_graph_arguments_and_detects_parallel_edges()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var connectionString = GetConnectionString();
+        await using var admin = new BlueTuskConnection(connectionString);
+        await admin.OpenAsync(token);
+        await ResetSchemaAsync(admin, native: false);
+        try
+        {
+            await CreateSchemaAsync(admin, native: false);
+            await ExecuteAsync(admin, $"INSERT INTO {FriendshipsTable} VALUES (12, 2, 3);", token);
+            var observer = new GraphReadObserver();
+            var factory = new GraphContextFactory(connectionString, BlueTuskPropertyGraphBackend.Relational, observer);
+            var plan = await ContinuousGraphQueryCompiler.CompileAsync(factory, CreateDefinition(), cancellationToken: token);
+            var options = new ContinuousGraphIncrementalOptions<FriendResult, int>
+            {
+                ResultOrdering = Comparer<FriendResult>.Create(static (left, right) => left.TargetId.CompareTo(right.TargetId)),
+                KeyOrdering = Comparer<int>.Default,
+            };
+            var source = new ChangeSourceIdentity("single-key", "graph", "slot", "publication");
+            var table = new ChangeTable(1, "public", FriendshipsTable, 'f',
+                [new ChangeColumn(0, "to_id", 23, -1, IsKey: false)]);
+
+            await AssertUpdateAsync(1, 2, 20, "2"u8.ToArray(), expectDuplicate: false);
+            await AssertUpdateAsync(2, 3, 21, "3"u8.ToArray(), expectDuplicate: true);
+
+            async Task AssertUpdateAsync(
+                int sourceId, int targetId, int relationshipId, byte[] encodedKey, bool expectDuplicate)
+            {
+                var arguments = plan.Bind(new Dictionary<string, object?> { ["sourceId"] = sourceId });
+                await using var session = plan.CreateIncrementalSession(
+                    arguments, new LiveSecurityScope("tenant:integration", "policy-v1"), options);
+                await using (var initial = await session.PrepareInitialAsync(cancellationToken: token))
+                {
+                    await initial.CommitAsync(token);
+                }
+
+                await ExecuteAsync(admin,
+                    $"UPDATE {FriendshipsTable} SET id = {relationshipId} WHERE from_id = {sourceId} AND to_id = {targetId};",
+                    token);
+                await using (var delivery = CreateChange(1))
+                await using (var update = await session.PrepareTransactionAsync(delivery.Transaction, token))
+                {
+                    Assert.Equal(ContinuousGraphMaintenanceTier.AuthoritativeDelta, update.Evaluation.MaintenanceTier);
+                    var commandText = Assert.IsType<string>(observer.LastCommandText);
+                    Assert.Contains("LIMIT 2", commandText, StringComparison.Ordinal);
+                    Assert.DoesNotContain("ORDER BY", commandText, StringComparison.Ordinal);
+                    var change = Assert.Single(update.Evaluation.Batch!.Events);
+                    Assert.Equal(targetId, change.Key);
+                    Assert.Equal(relationshipId, change.Row!.RelationshipId);
+                    await update.CommitAsync(token);
+                }
+
+                if (expectDuplicate)
+                {
+                    await ExecuteAsync(admin,
+                        $"INSERT INTO {FriendshipsTable} VALUES (30, {sourceId}, {targetId});", token);
+                    await using var delivery = CreateChange(2);
+                    var duplicate = await Assert.ThrowsAsync<ContinuousGraphIncrementalException>(
+                        () => session.PrepareTransactionAsync(delivery.Transaction, token).AsTask());
+                    Assert.Contains("duplicate row key", duplicate.Message, StringComparison.Ordinal);
+                }
+
+                ChangeTransactionDelivery CreateChange(uint sequence)
+                {
+                    var position = new BlueTuskLogSequenceNumber(sequence);
+                    var endpoint = new ChangeRow(table, [ChangeColumnValue.FromValue(encodedKey, ChangeValueEncoding.Text)]);
+                    return ChangeDeliveryTestFactory.CreateCommitted(source, sequence, position,
+                        [new UpdateChange(new ChangeId(source, position, sequence, 0),
+                            endpoint, endpoint, new ChangedColumnSet(false, []))]);
+                }
+            }
+        }
+        finally
+        {
+            await ResetSchemaAsync(admin, native: false);
+        }
+    }
+
     private static async Task AssertBlockedExecutionCancelsAsync(
         string connectionString,
         ContinuousGraphQueryPlan<FriendResult, int> plan,
@@ -345,36 +427,55 @@ public sealed class ContinuousGraphQueryIntegrationTests
         }.ConnectionString;
     }
 
-    private sealed class GraphContextFactory(string connectionString, BlueTuskPropertyGraphBackend backend) :
-        IDbContextFactory<GraphContext>
+    private sealed class GraphReadObserver : DbCommandInterceptor
     {
-        public GraphContext CreateDbContext()
+        public string? LastCommandText { get; private set; }
+
+        public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
+            DbCommand command,
+            CommandEventData eventData,
+            InterceptionResult<DbDataReader> result,
+            CancellationToken cancellationToken = default)
         {
-            var options = new DbContextOptionsBuilder<GraphContext>()
-                .UseBlueTusk(connectionString, options => options.UseGraphCompatibility(backend))
-                .Options;
-            return new GraphContext(options);
+            LastCommandText = command.CommandText;
+            return ValueTask.FromResult(result);
         }
+    }
+
+    private sealed class GraphContextFactory(
+        string connectionString,
+        BlueTuskPropertyGraphBackend backend,
+        params IInterceptor[] interceptors) : IDbContextFactory<GraphContext>
+    {
+        private readonly DbContextOptions<GraphContext> _options = new DbContextOptionsBuilder<GraphContext>()
+            .UseBlueTusk(connectionString, options => options.UseGraphCompatibility(backend))
+            .AddInterceptors(interceptors)
+            .Options;
+
+        public GraphContext CreateDbContext() => new(_options);
     }
 
     private sealed class RoleContextFactory(BlueTuskDataSource dataSource, string role)
         : IDbContextFactory<GraphContext>
     {
+        private readonly DbContextOptions<GraphContext> _options = new DbContextOptionsBuilder<GraphContext>()
+            .UseBlueTusk(dataSource).Options;
+
         public GraphContext CreateDbContext() => throw new NotSupportedException("Use the asynchronous factory.");
 
         public async Task<GraphContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
         {
-            var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var context = new GraphContext(_options);
             try
             {
+                await context.Database.OpenConnectionAsync(cancellationToken);
+                var connection = (BlueTuskConnection)context.Database.GetDbConnection();
                 await ExecuteAsync(connection, $"SET ROLE {role};", cancellationToken);
-                var options = new DbContextOptionsBuilder<GraphContext>()
-                    .UseBlueTusk(connection, contextOwnsConnection: true).Options;
-                return new GraphContext(options);
+                return context;
             }
             catch
             {
-                await connection.DisposeAsync();
+                await context.DisposeAsync();
                 throw;
             }
         }

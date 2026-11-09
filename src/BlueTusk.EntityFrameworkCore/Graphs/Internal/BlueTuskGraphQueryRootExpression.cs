@@ -33,6 +33,14 @@ internal sealed class BlueTuskGraphQueryRootExpression : EntityQueryRootExpressi
 
     public BlueTuskGraphSqlArguments CreateSqlArguments() => new(Values, _types);
 
+    public BlueTuskGraphQueryRootExpression WithArgumentParameter(ParameterExpression parameter) =>
+        new(EntityType, Sql, parameter, _types);
+
+    public bool HasSameSqlShape(BlueTuskGraphQueryRootExpression other) =>
+        ReferenceEquals(EntityType, other.EntityType) &&
+        string.Equals(Sql, other.Sql, StringComparison.Ordinal) &&
+        _types.AsSpan().SequenceEqual(other._types);
+
     public override Expression DetachQueryProvider() => new BlueTuskGraphQueryRootExpression(EntityType, Sql, Values, _types);
 
     public override EntityQueryRootExpression UpdateEntityType(IEntityType entityType)
