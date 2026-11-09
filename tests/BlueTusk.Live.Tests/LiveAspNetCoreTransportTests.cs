@@ -3,7 +3,9 @@ using System.Text;
 using System.Text.Json;
 using BlueTusk.Live.AspNetCore;
 using BlueTusk.Live.ServerSentEvents;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BlueTusk.Live.Tests;
@@ -80,6 +82,64 @@ public sealed class LiveAspNetCoreTransportTests
     }
 
     [Fact]
+    public async Task Sse_conflict_for_an_authenticated_reconnect_to_another_replica_requires_a_fresh_request()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var (replicaA, resolverA) = await CreateAsync();
+        await using var source = replicaA;
+        var (replicaB, resolverB) = await CreateAsync(replica: 'b');
+        await using var target = replicaB;
+        var protector = Protector();
+        using var parameters = JsonDocument.Parse("{}");
+        var request = new LiveSubscriptionRequest
+        {
+            Query = "orders",
+            Parameters = parameters.RootElement,
+        };
+        await using var original = await LiveTransportSession.OpenAsync(
+            request, Principal(), resolverA, protector, cancellationToken: cancellationToken);
+        var resumeToken = Assert.IsType<string>(Assert.Single(original.Replay).ResumeToken);
+
+        var builder = WebApplication.CreateSlimBuilder();
+        builder.Services.AddSingleton<ILiveTransportSubscriptionResolver>(resolverB);
+        builder.Services.AddBlueTuskLiveAspNetCore(protector);
+        await using var application = builder.Build();
+        application.MapBlueTuskLiveServerSentEvents();
+        var endpoint = Assert.Single(((IEndpointRouteBuilder)application).DataSources.SelectMany(static item => item.Endpoints));
+        var handle = Assert.IsType<RequestDelegate>(endpoint.RequestDelegate);
+
+        Assert.Equal(StatusCodes.Status409Conflict, await SendAsync(resumeToken, Principal()));
+        Assert.Equal(0, target.Status.SubscriberCount);
+        Assert.Equal(StatusCodes.Status400BadRequest, await SendAsync("not-a-token", Principal()));
+        var signatureStart = resumeToken.LastIndexOf('.') + 1;
+        var tampered = resumeToken[..signatureStart] +
+            (resumeToken[signatureStart] == 'A' ? "B" : "A") + resumeToken[(signatureStart + 1)..];
+        Assert.Equal(StatusCodes.Status400BadRequest, await SendAsync(tampered, Principal()));
+        Assert.Equal(StatusCodes.Status401Unauthorized,
+            await SendAsync(resumeToken, new ClaimsPrincipal(new ClaimsIdentity())));
+
+        await using var fresh = await LiveTransportSession.OpenAsync(
+            request, Principal(), resolverB, protector, cancellationToken: cancellationToken);
+        var replacement = Assert.Single(fresh.Replay);
+        Assert.Equal(LiveResumeTokenValidationStatus.Valid,
+            protector.Validate(Assert.IsType<string>(replacement.ResumeToken), target.Identity).Status);
+
+        async Task<int> SendAsync(string token, ClaimsPrincipal principal)
+        {
+            var payload = JsonSerializer.SerializeToUtf8Bytes(request with { ResumeToken = token });
+            await using var body = new MemoryStream(payload);
+            var context = new DefaultHttpContext { RequestServices = application.Services, User = principal };
+            context.Request.Method = HttpMethods.Post;
+            context.Request.ContentType = "application/json";
+            context.Request.ContentLength = payload.Length;
+            context.Request.Body = body;
+            context.RequestAborted = cancellationToken;
+            await handle(context);
+            return context.Response.StatusCode;
+        }
+    }
+
+    [Fact]
     public async Task Sse_writer_emits_sequence_event_and_single_line_json_data()
     {
         var context = new DefaultHttpContext();
@@ -125,13 +185,13 @@ public sealed class LiveAspNetCoreTransportTests
         Assert.Same(options, provider.GetRequiredService<LiveAspNetCoreOptions>());
     }
 
-    private static async ValueTask<(LiveSharedSubscription<Row, int> Shared, Resolver Resolver)> CreateAsync()
+    private static async ValueTask<(LiveSharedSubscription<Row, int> Shared, Resolver Resolver)> CreateAsync(char replica = 'a')
     {
         var invalidations = new NoChangesLog();
         var plan = new LiveQueryPlan<Row, int>(
             "orders",
             "database",
-            new string('a', 64),
+            new string(replica, 64),
             LiveQueryCapabilities.SingleTable |
                 LiveQueryCapabilities.TenantFilter |
                 LiveQueryCapabilities.DeterministicOrdering |

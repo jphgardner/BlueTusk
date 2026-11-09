@@ -1,6 +1,6 @@
 # @bluetusk/live
 
-Framework-neutral BlueTusk Live client for the fetch-streaming SSE endpoint. It applies keyed result events, persists the latest signed resume token through an application callback, reconnects with bounded exponential backoff, and discards a stale token only after the server explicitly reports an expired replay window.
+Framework-neutral BlueTusk Live client for the fetch-streaming SSE endpoint. It applies keyed result events, persists the latest signed resume token through an application callback, reconnects with bounded exponential backoff, and drops the token when the server signals that a fresh result is required.
 
 ```ts
 const query = new BlueTuskLiveClient({

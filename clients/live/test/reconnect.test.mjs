@@ -3,7 +3,7 @@ import { readFile, realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
 import test from "node:test";
 import { pathToFileURL } from "node:url";
-import { deferred, message, response, tick } from "./support.mjs";
+import { deferred, message, observeUntil, response, tick } from "./support.mjs";
 
 let clientModule = new URL("../dist/index.js", import.meta.url);
 const installedRoot = process.env.BLUETUSK_LIVE_TEST_PACKAGE_ROOT;
@@ -23,6 +23,46 @@ const { BlueTuskLiveClient } = await import(clientModule.href);
 
 const reset = { kind: "ResetRequired", sequence: null, resumeToken: null, event: null };
 const request = { query: "orders", parameters: {}, resumeToken: "expired" };
+
+test("a resume conflict on another replica retries the authorized query and installs its snapshot", { timeout: 2000 }, async () => {
+  const requests = [];
+  const tokens = [];
+  const client = new BlueTuskLiveClient({
+    endpoint: "/live",
+    headers: { "X-API-Key": "test-key" },
+    onResumeToken: (token) => tokens.push(token),
+    fetch: async (_, init) => {
+      assert.equal(new Headers(init.headers).get("X-API-Key"), "test-key");
+      requests.push(JSON.parse(init.body));
+      if (requests.length === 1) return new Response(null, { status: 409 });
+      return response([message("InitialResult", 1, { rows: [{ id: 1, value: "replica-b" }], order: [1] })]);
+    }
+  });
+  const query = client.createQuery({ ...request, resumeToken: "replica-a-token" });
+  const state = await observeUntil(query, (value) => value.lastSequence === 1);
+  assert.deepEqual(requests, [
+    { query: "orders", parameters: {}, resumeToken: "replica-a-token" },
+    { query: "orders", parameters: {} }
+  ]);
+  assert.deepEqual(tokens, [null, "token-1"]);
+  assert.deepEqual(state.rows, [{ id: 1, value: "replica-b" }]);
+});
+
+for (const status of [400, 401, 403]) {
+  test(`HTTP ${status} does not clear the token or retry`, { timeout: 2000 }, async () => {
+    const tokens = [];
+    let calls = 0;
+    const client = new BlueTuskLiveClient({
+      endpoint: "/live",
+      onResumeToken: (token) => tokens.push(token),
+      fetch: async () => { calls++; return new Response(null, { status }); }
+    });
+    const state = await observeUntil(client.createQuery(request), (value) => value.phase === "faulted");
+    assert.equal(state.error.status, status);
+    assert.equal(calls, 1);
+    assert.deepEqual(tokens, []);
+  });
+}
 
 for (const behaviour of ["503", "empty", "reset", "expired-again"]) {
   test(`repeated ${behaviour} responses increase reconnect backoff`, { timeout: 2000 }, async () => {
