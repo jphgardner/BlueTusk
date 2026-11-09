@@ -711,16 +711,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
         }
 
         var affectedSet = affected.ToHashSet(_plan.LivePlan.KeyComparer);
-        var visibleAffected = new Dictionary<TKey, TResult>(
-            Math.Min(affected.Length, _snapshot!.Rows.Count),
-            _plan.LivePlan.KeyComparer);
-        foreach (var key in affected)
-        {
-            if (_snapshot.KeyIndexes.TryGetValue(key, out var index))
-            {
-                visibleAffected.Add(key, _snapshot.Rows[index]);
-            }
-        }
+        var snapshot = _snapshot!;
 
         var authoritative = new Dictionary<TKey, TResult>(
             _plan.LivePlan.KeyComparer);
@@ -743,9 +734,12 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
 
         foreach (var key in affected)
         {
-            var wasVisible = visibleAffected.TryGetValue(key, out var previous);
-            var isVisible = authoritative.TryGetValue(key, out var current);
-            if (wasVisible && !isVisible)
+            if (!snapshot.KeyIndexes.TryGetValue(key, out var previousIndex))
+            {
+                continue;
+            }
+
+            if (!authoritative.TryGetValue(key, out var current))
             {
                 return await PrepareRepairCoreAsync(
                     transaction.CommitEndPosition,
@@ -755,9 +749,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                     cancellationToken).ConfigureAwait(false);
             }
 
-            if (wasVisible &&
-                isVisible &&
-                _options.ResultOrdering.Compare(current!, previous!) > 0)
+            if (_options.ResultOrdering.Compare(current, snapshot.Rows[previousIndex]) > 0)
             {
                 return await PrepareRepairCoreAsync(
                     transaction.CommitEndPosition,
