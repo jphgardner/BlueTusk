@@ -118,3 +118,28 @@ It then calls the maintenance endpoint, applies actual source DDL, launches a th
 process, completes the ticket and verifies SSE resets plus subsequent WAL updates.
 Full production performance, high availability, security deployment, automated rebuild scheduling/recovery
 and endurance gates remain required.
+
+## Run from installed candidate packages
+
+Set `BlueTuskOrdersPackageVersion` to use package references in the existing
+starter. The feed must contain the required Core packages and matching Events
+and Projections packages built from the same source. Configure NuGet package
+source mapping so `BlueTusk` and `BlueTusk.*` resolve only from the candidate
+feed. Use a fresh global packages directory when verifying archive provenance.
+
+```powershell
+$project = './samples/BlueTusk.Projections.Orders.Live'
+$version = '<exact candidate version>'
+$env:NUGET_PACKAGES = '<fresh packages directory>'
+dotnet restore $project --configfile '<candidate NuGet.Config>' "-p:BlueTuskOrdersPackageVersion=$version"
+dotnet build $project -c Release --no-restore "-p:BlueTuskOrdersPackageVersion=$version" -o '<isolated output>'
+```
+
+Check the resulting `obj/project.assets.json` for the expected BlueTusk package
+IDs and versions. Launch `BlueTusk.Projections.Orders.Live.dll` from the isolated
+output with the same sample settings above. To exercise the installed build
+with the repository's integration test, build the test harness separately and
+set `BLUETUSK_ORDERS_SAMPLE_DLL` to the absolute path of that sample DLL. Run the
+`OrdersLiveSampleTests` filter with `--no-build` and the test fixture connection
+string. The harness launches the specified DLL for each process and provisions
+fresh database resources on each test run.
