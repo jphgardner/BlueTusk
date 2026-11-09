@@ -18,7 +18,7 @@ if ($environment.sourceCommit -cne $ExpectedCommit -or
 }
 $results = Join-Path $CapturePath 'benchmarks/results'
 $report = Get-Content -LiteralPath (
-    Join-Path $results 'BlueTusk.Benchmarks.ContinuousGraphBenchmarks-report-brief.json') -Raw | ConvertFrom-Json
+    Join-Path $results 'BlueTusk.Benchmarks.ContinuousGraphBenchmarks-report-full.json') -Raw | ConvertFrom-Json
 $contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw |
     ConvertFrom-Json
 $resources = Get-Content -LiteralPath (Join-Path $CapturePath 'plans/benchmark-process-resources.json') -Raw |
@@ -37,6 +37,16 @@ function Get-Measurement([string] $Method, [string] $Parameters)
     {
         throw "Missing or insufficient benchmark samples for '$Method' ($Parameters)."
     }
+    $samples = @($matches[0].Measurements | Where-Object {
+        $_.IterationMode -ceq 'Workload' -and $_.IterationStage -ceq 'Actual'
+    })
+    if ($samples.Count -lt 3 -or @($samples | Where-Object {
+        $_.Operations -le 0 -or -not [double]::IsFinite([double]$_.Nanoseconds) -or $_.Nanoseconds -le 0
+    }).Count -gt 0)
+    {
+        throw "Missing or invalid raw workload samples for '$Method' ($Parameters)."
+    }
+
     $p95 = [double]$matches[0].Statistics.Percentiles.P95
     $allocated = [double]$matches[0].Memory.BytesAllocatedPerOperation
     if (-not [double]::IsFinite($p95) -or $p95 -le 0 -or -not [double]::IsFinite($allocated) -or $allocated -le 0)
@@ -55,6 +65,7 @@ function Get-PlanNodes($Node)
     }
 }
 
+$failures = [System.Collections.Generic.List[string]]::new()
 foreach ($edges in $contract.workloads.ContinuousGraph.edgeCounts)
 {
     foreach ($top in $contract.workloads.ContinuousGraph.topN)
@@ -66,9 +77,12 @@ foreach ($edges in $contract.workloads.ContinuousGraph.edgeCounts)
             @{ Method = 'ScopedUpdateAsync'; Limit = $contract.comparisonRules.authoritativeDeltaMaximumFullRequeryRatio }))
         {
             $delta = Get-Measurement $tier.Method $parameters
-            if ($delta.P95 / $repair.P95 -gt $tier.Limit -or $delta.Allocated / $repair.Allocated -gt $tier.Limit)
+            $latencyRatio = $delta.P95 / $repair.P95
+            $allocationRatio = $delta.Allocated / $repair.Allocated
+            if ($latencyRatio -gt $tier.Limit -or $allocationRatio -gt $tier.Limit)
             {
-                throw "$($tier.Method) exceeded the full-requery P95 or allocation ratio of $($tier.Limit) for $parameters."
+                $failures.Add(('{0} ({1}) uses {2:P1} of full-repair P95 and {3:P1} of allocation, limit {4:P0}.' -f
+                    $tier.Method, $parameters, $latencyRatio, $allocationRatio, $tier.Limit))
             }
         }
         foreach ($method in @('PreparedSelectiveTraversalAsync', 'TypedSelectiveTraversalAsync', 'TypedBoundedTraversalAsync'))
@@ -112,11 +126,22 @@ foreach ($kind in @('latency', 'allocation'))
     try
     {
         $budget | ConvertTo-Json -Depth 32 | Set-Content -LiteralPath $graphBudget.FullName -Encoding utf8NoBOM
-        & (Join-Path $PSScriptRoot "verify-$kind-budgets.ps1") -BudgetFile $graphBudget.FullName -BaselinePath $results
+        try
+        {
+            & (Join-Path $PSScriptRoot "verify-$kind-budgets.ps1") -BudgetFile $graphBudget.FullName -BaselinePath $results
+        }
+        catch
+        {
+            $failures.Add($_.Exception.Message)
+        }
     }
     finally
     {
         Remove-Item -LiteralPath $graphBudget.FullName
     }
+}
+if ($failures.Count -gt 0)
+{
+    throw ($failures -join [Environment]::NewLine)
 }
 Write-Output 'Verified portable Graph traversal plans, delta cost ratios, and existing absolute budgets.'

@@ -14,6 +14,7 @@ namespace BlueTusk.Benchmarks;
 /// <summary>Traversal and maintenance over a portable PostgreSQL graph.</summary>
 [MemoryDiagnoser]
 [JsonExporterAttribute.Brief]
+[JsonExporterAttribute.Full]
 [Orderer(SummaryOrderPolicy.Declared)]
 public class ContinuousGraphBenchmarks : IAsyncDisposable
 {

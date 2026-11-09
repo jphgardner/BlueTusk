@@ -182,7 +182,7 @@ if (-not [string]::IsNullOrWhiteSpace($ExpectedPostgreSqlImage) -and
         $ExpectedPostgreSqlImage,
         [StringComparison]::Ordinal))
 {
-    $failures.Add('The PostgreSQL image does not match the expected GA digest.')
+    $failures.Add('The PostgreSQL image does not match the expected portable fixture digest.')
 }
 
 if ($null -eq $report.harness)

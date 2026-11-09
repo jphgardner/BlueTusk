@@ -65,7 +65,7 @@ jobs:
           $env:BLUETUSK_GRAPH_PLAN_DIRECTORY = Join-Path $capture 'plans'
           dotnet restore benchmarks/BlueTusk.Benchmarks --locked-mode
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-restore -- --job medium --inProcess --filter '*ContinuousGraphBenchmarks*' --exporters json --artifacts (Join-Path $capture 'benchmarks')
+          dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-restore -- --job medium --inProcess --filter '*ContinuousGraphBenchmarks*' --artifacts (Join-Path $capture 'benchmarks')
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           ./eng/verify-portable-graph-benchmarks.ps1 -CapturePath $capture -ExpectedCommit (git rev-parse HEAD).Trim() -ExpectedOs $env:CAPTURE_OS
       - name: Retain the reports and execution plans

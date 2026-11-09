@@ -52,7 +52,7 @@ if ($LASTEXITCODE -ne 0)
 }
 $sourceBranch = ($sourceBranchOutput -join [Environment]::NewLine).Trim()
 
-$trackedStatus = (& git -C $RepositoryRoot status --porcelain --untracked-files=no)
+$trackedStatus = (& git -C $RepositoryRoot status --porcelain --untracked-files=normal)
 if ($LASTEXITCODE -ne 0)
 {
     throw 'ContinuousGraph endurance could not inspect the repository status.'
@@ -60,7 +60,7 @@ if ($LASTEXITCODE -ne 0)
 if (-not [string]::IsNullOrWhiteSpace(($trackedStatus -join [Environment]::NewLine)))
 {
     throw (
-        'ContinuousGraph endurance requires a clean tracked worktree so the ' +
+        'ContinuousGraph endurance requires a clean worktree so the ' +
         'report identifies the exact tested source.')
 }
 
