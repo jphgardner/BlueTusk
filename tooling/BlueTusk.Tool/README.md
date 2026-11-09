@@ -27,8 +27,8 @@ bluetusk doctor --require-tls --require-streams --extension pgcrypto
 
 `bluetusk doctor` checks the PostgreSQL version, the TLS session, logical WAL
 settings, replication capacity and required extensions. It never prints the
-connection string. It exits with a non-zero code when a check fails, so you can
-use it in CI or a deployment preflight job.
+connection string or raw transport and server errors. It exits with code 1
+when a check fails and code 2 for invalid command usage.
 
 | Option | Meaning |
 | --- | --- |
@@ -38,6 +38,25 @@ use it in CI or a deployment preflight job.
 | `--extension <name>` | Fail unless the extension is installed. Repeat for several extensions. |
 | `--timeout <seconds>` | Time limit for the checks, from 1 to 120. Default: 10. |
 | `--json` | Write the result as JSON. |
+
+## Check a local package candidate
+
+After restoring the application against the candidate feed, pass its NuGet
+assets file to check the resolved dependency graph. This command reads the
+files without evaluating the project or running restore.
+
+```powershell
+bluetusk doctor --local-only --package-manifest ./candidate/sha256.json `
+  --project-assets ./MyApp/obj/project.assets.json --json
+```
+
+The manifest must be at the root of the extracted candidate, with its
+archive paths relative to that root. Doctor verifies the SHA-256 digests of
+the listed NuGet and npm archives and checks the restored BlueTusk NuGet
+IDs and versions against the manifest's feed. Use a manifest that covers
+every BlueTusk package in the project. Omit `--project-assets` to check
+only the candidate files. Omit `--local-only` and supply a connection to
+run the PostgreSQL checks in the same report.
 
 ## Scaffold an EF Core model
 
