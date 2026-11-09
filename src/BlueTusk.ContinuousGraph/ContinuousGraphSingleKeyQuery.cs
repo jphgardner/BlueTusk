@@ -20,11 +20,12 @@ internal sealed class ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>(
 {
     public static ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>? TryCreate(
         TContext context,
-        Expression query,
+        IQueryable<TResult> query,
         Expression<Func<TResult, TKey>> keySelector)
     {
         if ((typeof(TKey) != typeof(int) && typeof(TKey) != typeof(long) && typeof(TKey) != typeof(Guid)) ||
-            FindRoot(query) is not { } root ||
+            FindRoot(query.Expression) is not { } root ||
+            !ReferenceEquals(query.Provider, root.QueryProvider) ||
             HasExpressionInterceptor(context))
         {
             return null;
@@ -58,9 +59,10 @@ internal sealed class ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>(
             EF.CompileAsyncQuery<TContext, object[], TKey, TResult>(lambda));
     }
 
-    public IAsyncEnumerable<TResult>? TryExecute(TContext context, Expression query, TKey key)
+    public IAsyncEnumerable<TResult>? TryExecute(TContext context, IQueryable<TResult> query, TKey key)
     {
-        if (FindRoot(query) is not { Values: ConstantExpression { Value: object[] arguments } } root ||
+        if (FindRoot(query.Expression) is not { Values: ConstantExpression { Value: object[] arguments } } root ||
+            !ReferenceEquals(query.Provider, root.QueryProvider) ||
             !template.HasSameSqlShape(root) ||
             !ReferenceEquals(model, context.Model) ||
             !options.TryGetTarget(out var registrationOptions) ||

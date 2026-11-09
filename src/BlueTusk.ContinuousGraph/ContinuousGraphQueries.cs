@@ -551,7 +551,7 @@ public static class ContinuousGraphQueryCompiler
                 ContinuousGraphMaintenanceCapabilities.TrustedCdcProjection;
             var singleKeyQuery = capturedImpact.Backend == BlueTuskPropertyGraphBackend.Relational
                 ? ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>.TryCreate(
-                    context, query.Expression, definition.KeySelector)
+                    context, query, definition.KeySelector)
                 : null;
             automaticEvaluatorFactory = (projector, options) =>
                 new ContinuousGraphTieredEvaluator<TResult, TKey>(
@@ -564,7 +564,7 @@ public static class ContinuousGraphQueryCompiler
                                 .ConfigureAwait(false);
                         var scopedQuery = CreateExecutionQuery(scopedContext, execution.Arguments);
                         if (keys.Count == 1 &&
-                            singleKeyQuery?.TryExecute(scopedContext, scopedQuery.Expression, keys.First()) is { } probe)
+                            singleKeyQuery?.TryExecute(scopedContext, scopedQuery, keys.First()) is { } probe)
                         {
                             var rows = new List<TResult>(2);
                             await foreach (var row in probe.WithCancellation(token).ConfigureAwait(false))
