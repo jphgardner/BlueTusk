@@ -1,13 +1,15 @@
 # Upgrade guide
 
-BlueTusk product families are independently versioned. Upgrade the lowest
-dependency first and keep package versions consistent with the family manifest.
+Upgrade a coordinated Core package set as a unit. Use the
+[release tracks](../releases/release-tracks.md) to identify Core, preview, and
+separately qualified families.
 
 ## Before upgrading
 
 Record:
 
-- current and target BlueTusk versions;
+- exact current and target package versions, feeds, and lockfiles;
+- candidate source commit and archive digests for a local or staged rollout;
 - .NET and EF Core versions;
 - PostgreSQL major/minor version;
 - installed extension versions;
@@ -19,7 +21,7 @@ Read the relevant stable release notes and API/format compatibility document.
 The 1.x line follows semantic versioning; an incompatible public contract
 change requires a new major version.
 
-## Dependency order
+## Core package compatibility
 
 The release/dependency order is:
 
@@ -28,18 +30,23 @@ The release/dependency order is:
 3. Sync
 4. Live
 5. Control Plane
-6. ContinuousGraph
 
-EF Core and extension packages must use compatible Provider-family versions.
-Do not mix an arbitrary set of locally built packages because they share a
-similar version string.
+Use the exact version from the candidate's manifest for each Core NuGet
+package and each installed `@bluetusk/live` client or framework adapter.
+Keep the Provider, EF Core integration, and Provider extensions on that
+same coordinated version. Check the resolved dependency graph after restore
+and retain the NuGet and npm lockfiles alongside the manifest.
 
-The current public package RC uses exact `1.1.0-rc.1` versions across all six
-families and three npm clients. Do not mix RC and stable family packages, and
-do not treat an RC deployment as stable migration or pilot evidence. Current
-package-consumer application source and image workflows pin `1.1.0-rc.1`.
-Historical `1.0.0-rc.1` application observations remain immutable records,
-not a version recommendation or reusable evidence for a new deployment.
+The [prerelease train manifest](../../eng/prerelease-train.json) declares the
+source tree's train. The [release-track manifest](../../eng/release-tracks.json)
+defines the Core families and PostgreSQL majors. Verify publication and
+qualification for the exact version before deploying it. A locally verified
+candidate can be rehearsed using a local feed and matching npm tarballs.
+
+Check the family policy for separately versioned expansion packages such as
+Events and Projections. For an application using these families, resolve and
+verify their dependency closure against the selected Core set as part of the
+same rehearsal.
 
 ## Provider upgrade
 
@@ -55,6 +62,14 @@ Review:
 
 Run focused compatibility tests against every PostgreSQL major used by the
 application.
+
+Rehearse recovery with a pool size of one. Interrupt a command or terminate
+its backend, then open a fresh logical connection and verify a simple query
+succeeds. Test the same scenario with the application's EF Core connection
+interceptors and transaction settings. After a write loses its response,
+reconcile using the application's durable operation identifier before any
+retry. Keep existing recovery workarounds until the installed packages pass
+the application's own checks.
 
 ## EF Core upgrade
 
@@ -98,8 +113,12 @@ format or mapping:
 4. retain rollback-compatible state; and
 5. use a controlled snapshot/rebuild when no safe in-place transition exists.
 
-Any change to source identity, schema fingerprint or mapping fingerprint must be
-treated as a data migration, not merely a code deployment.
+Treat changes to source identity, schema fingerprint, or mapping fingerprint
+as data migrations. Keep the source slot and publication, relay state,
+consumer checkpoint, and destination idempotency records in the rehearsal.
+Confirm a resumed consumer starts from its durable position and advances only
+after the destination commits. For Live, check resume with an existing token,
+recovery after an expired token, and backoff after repeated short streams.
 
 ## PostgreSQL upgrade
 
@@ -112,9 +131,10 @@ For a major upgrade:
 - rehearse logical replication/slot handling; and
 - validate capability guards.
 
-PostgreSQL 19 SQL/PGQ remains pre-GA-sensitive until the recorded GA programme
-passes. Raw SQL remains the escape hatch for server syntax outside the
-documented typed subset.
+Continuous Graph has a separate preview track. Verify the actual SQL/PGQ
+`GRAPH_TABLE` capability for the server and configuration in use. The server
+major alone cannot establish compatibility. Keep historical PostgreSQL 19
+Beta 3 fixtures separate from Core qualification.
 
 For a minor upgrade, still rehearse the production topology and failover path.
 The endurance-disturbance contract requires one real same-major PostgreSQL
@@ -149,12 +169,20 @@ Rollback must account for:
 When binary rollback cannot safely read new state, prefer a forward fix or a
 documented rebuild from the authoritative source.
 
+Record the last durable checkpoint and destination position before and after
+rollback. Preserve the slot and idempotency records while deciding whether to
+resume, replay, or take a fresh snapshot. If a request ended with an unknown
+write outcome, verify the destination or source of record before replaying it.
+
 ## Verification checklist
 
 - Release build has zero warnings.
 - Public API and format checks pass.
 - Provider/EF/extension tests pass against the deployed PostgreSQL versions.
 - Candidate packages contain the expected repository commit.
+- A package-only restore resolves every consumed BlueTusk family and client to
+  the recorded artifacts. The application passes database recovery and Live
+  reconnect smoke tests with those installed packages.
 - Vulnerability audit and SBOM/provenance checks pass.
 - Operational dashboards and alerts recognize the new version.
 - Backup, restore and rollback were rehearsed.
