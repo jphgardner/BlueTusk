@@ -149,6 +149,7 @@ public sealed class InMemoryManagedDeploymentStore :
     private readonly object _sync = new();
     private readonly Dictionary<string, ManagedDeployment> _deployments =
         new(StringComparer.Ordinal);
+    private readonly SortedSet<string> _deploymentIds = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ManagedDeploymentLease> _leases =
         new(StringComparer.Ordinal);
     private readonly Dictionary<string, long> _fencingTokens =
@@ -209,6 +210,38 @@ public sealed class InMemoryManagedDeploymentStore :
         }
     }
 
+    public ValueTask<ManagedDeploymentPage> QueryAsync(
+        ManagedDeploymentQuery query, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        query.Validate();
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (_sync)
+        {
+            if (_deploymentIds.Count == 0 || (query.AfterDeploymentId is { } after &&
+                StringComparer.Ordinal.Compare(after, _deploymentIds.Max) >= 0))
+            {
+                return ValueTask.FromResult(new ManagedDeploymentPage([], null));
+            }
+            var range = query.AfterDeploymentId is null ? _deploymentIds
+                : _deploymentIds.GetViewBetween(query.AfterDeploymentId, _deploymentIds.Max!);
+            var page = new List<ManagedDeployment>(query.PageSize + 1);
+            foreach (var id in range)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (string.Equals(id, query.AfterDeploymentId, StringComparison.Ordinal)) continue;
+                var deployment = _deployments[id];
+                if (!query.Matches(deployment)) continue;
+                page.Add(deployment);
+                if (page.Count > query.PageSize) break;
+            }
+            var hasMore = page.Count > query.PageSize;
+            if (hasMore) page.RemoveAt(page.Count - 1);
+            return ValueTask.FromResult(new ManagedDeploymentPage(page.Select(Copy).ToArray(),
+                hasMore ? page[^1].Spec.DeploymentId : null));
+        }
+    }
+
     public ValueTask<ManagedDeployment> PutAsync(
         ManagedDeploymentSpec spec,
         long expectedGeneration,
@@ -240,6 +273,7 @@ public sealed class InMemoryManagedDeploymentStore :
                         null,
                         _timeProvider.GetUtcNow()));
                 _deployments.Add(spec.DeploymentId, created);
+                _deploymentIds.Add(spec.DeploymentId);
                 return ValueTask.FromResult(Copy(created));
             }
 

@@ -14,6 +14,16 @@ PostgreSQL/EF query results remain authoritative. CDC will be used only to inval
 
 ## Core delivery contracts
 
+Affected-row diffs with unchanged membership and order use persistent chunks
+of 256 rows. A replacement copies its chunk and a logarithmic path of chunk
+references; it does not clone the complete result array or rebuild the key
+index. Historical snapshots remain immutable. Initial results and authoritative
+membership/order changes still build complete snapshots; full enumeration or
+serialization still visits every row. Continuous Graph uses indexed neighbour
+checks for unchanged membership/order and retains full-result merge and repair
+costs when ranks or membership change. Its end-to-end cost targets still require
+separate scaling qualification.
+
 The core package currently provides:
 
 - exact typed parameter binding for a restricted scalar allowlist;

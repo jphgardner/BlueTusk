@@ -5,7 +5,24 @@ namespace BlueTusk.ControlPlane;
 
 public sealed record ControlPlaneOverview(
     DateTimeOffset ObservedAt,
-    IReadOnlyList<ControlPlaneSourceSnapshot> Sources);
+    IReadOnlyList<ControlPlaneSourceSnapshot> Sources)
+{
+    public IReadOnlyList<ControlPlaneInstanceStatus> Instances { get; init; } = [];
+}
+
+public enum ControlPlaneInstanceAvailability
+{
+    Current,
+    Stale,
+    Unavailable,
+}
+
+public sealed record ControlPlaneInstanceStatus(
+    string InstanceName,
+    ControlPlaneInstanceAvailability Availability,
+    DateTimeOffset AttemptedAt,
+    DateTimeOffset? LastSuccessfulObservationAt,
+    string? DiagnosticCode);
 
 public sealed record ControlPlaneSourceSnapshot(
     string SourceKey,
@@ -22,7 +39,12 @@ public sealed record ControlPlaneSourceSnapshot(
     ControlPlaneRelaySnapshot Relay,
     IReadOnlyList<ControlPlaneConsumerGroupSnapshot> ConsumerGroups,
     IReadOnlyList<ControlPlaneSnapshotRunSnapshot> SnapshotRuns,
-    IReadOnlyList<ControlPlaneCheckpointSnapshot> Checkpoints);
+    IReadOnlyList<ControlPlaneCheckpointSnapshot> Checkpoints)
+{
+    public DateTimeOffset? ObservedAt { get; init; }
+
+    public bool IsStale { get; init; }
+}
 
 public sealed record ControlPlaneSlotSnapshot(
     bool SourceReachable,

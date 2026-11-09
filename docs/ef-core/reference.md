@@ -2384,15 +2384,18 @@ queries are dependency-tracked by PostgreSQL, and `security_invoker` changes
 whose privileges and row-level-security policies apply to underlying relations;
 review both the query and grants as security-sensitive schema.
 
-PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext, pgvector, PostGIS, and TimescaleDB EF packages provide their own extension lifecycle migration helpers. The complete schema surface defined by product-spec sections 19 and 21 is implemented and acceptance-tested across PostgreSQL 15–19. Ownership, privileges, and application-specific grants remain deliberately explicit migrations rather than generated model metadata.
+The portable Graph backend uses ordinary table and index migrations. The native
+SQL/PGQ backend emits capability-guarded graph DDL. The optional citext,
+pgvector, PostGIS, and TimescaleDB EF packages provide their own extension
+lifecycle migration helpers. Ownership, privileges, and application-specific
+grants remain explicit migrations.
 
-## PostgreSQL 19 property-graph queries
+## Typed property-graph queries
 
-`PropertyGraph` creates a typed SQL/PGQ query from graph metadata configured in
-the EF model. The V1 contract translates linear directed paths to `GRAPH_TABLE`,
-keeps captured predicate values parameterized, and returns a composable
-`IQueryable`. It supports outer relational filters, joins, grouping, ordering,
-pagination, DTO projections, and tracked entity materialization:
+`PropertyGraph` creates a typed query from graph metadata configured with
+`HasPropertyGraph`. The portable candidate defaults to parameterized joins on
+PostgreSQL 15–18. Native mode uses `GRAPH_TABLE` only after explicit opt-in and
+server capability verification. The query returns a composable `IQueryable`:
 
 ```csharp
 var friends = await context.PropertyGraph("social", "application")
@@ -2409,8 +2412,9 @@ var friends = await context.PropertyGraph("social", "application")
     .ToListAsync(cancellationToken);
 ```
 
-The exact supported expression subset and raw-SQL-only remainder are documented
-in the [SQL/PGQ guide](../graph/README.md).
+See the [Graph quickstart](../graph/README.md) for backend selection and the
+published-package boundary. The [Graph reference](../graph/reference.md)
+documents supported shapes, indexes and migrations.
 
 ## Database-first scaffolding
 

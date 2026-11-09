@@ -2,46 +2,46 @@ import { Component, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
-import { sourceUrl } from '../content/catalog';
+import { CodePanel, StatusPill } from '../shared/technical-ui';
+import { GRAPH_COMPATIBILITY } from '../content/catalog';
 
 @Component({
   selector: 'bt-graph-page',
-  imports: [RouterLink, MatButtonModule, MatIconModule, CodePanel, SourceLink, StatusPill],
+  imports: [RouterLink, MatButtonModule, MatIconModule, CodePanel, StatusPill],
   template: `
     <section class="page-hero graph-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> POSTGRESQL 19 SQL/PGQ</span>
-        <h1>Query relationships <em>inside PostgreSQL.</em></h1>
+        <span class="eyebrow">PORTABLE GRAPH · LOCALLY VERIFIED</span>
+        <h1>Query relationships <em>in the PostgreSQL you run.</em></h1>
         <p>
-          Define property graphs over relational tables, query them with SQL/PGQ, or maintain an
-          authorized result as committed data changes. Every graph surface is capability guarded
-          because PostgreSQL 19 is still a prerelease dependency.
+          BlueTusk Graphs runs typed EF queries and Continuous Graph on
+          {{ compatibility.portableTarget }} without SQL/PGQ. It uses the tables you already have.
+          The implementation passed local compatibility tests and is still in release qualification.
         </p>
         <div class="hero-actions">
-          <a mat-flat-button routerLink="/documentation/graph/sql-pgq" class="primary-action"
-            >Read the SQL/PGQ guide</a
-          ><a
-            mat-stroked-button
-            routerLink="/documentation/real-time/continuous-graph"
-            class="secondary-action"
-            >Read Continuous Graph</a
+          <a mat-flat-button routerLink="/graph" fragment="graph-availability" class="primary-action"
+            >Check compatibility</a
+          ><a mat-stroked-button routerLink="/documentation/graph/sql-pgq" class="secondary-action"
+            >Read the Graph quickstart</a
           >
         </div>
       </div>
       <div class="node-field" aria-hidden="true">
-        <i></i><i></i><i></i><i></i><i></i><span>SQL/PGQ</span><span>WAL</span
-        ><span>Authorized results</span>
+        <i></i><i></i><i></i><i></i><i></i><span>Nodes + edges</span><span>PostgreSQL</span
+        ><span>Graph results</span>
       </div>
     </section>
 
-    <section class="page-section">
+    <section id="graph-availability" class="page-section" aria-labelledby="graph-availability-title">
       <header class="section-head">
         <div>
-          <span>TWO DIFFERENT JOBS</span>
-          <h2>Query now or maintain a result.</h2>
+          <span>GRAPH AVAILABILITY</span>
+          <h2 id="graph-availability-title">Two ways to run a graph query.</h2>
         </div>
-        <p>Choose based on when the answer is needed and who owns delivery.</p>
+        <p>
+          BlueTusk Graphs is the EF default in the portable candidate. Use native SQL/PGQ by
+          opting in on a server with verified support.
+        </p>
       </header>
       <div class="comparison-grid">
         @for (model of models; track model.id) {
@@ -63,44 +63,52 @@ import { sourceUrl } from '../content/catalog';
                 </div>
               }
             </dl>
-            <a [routerLink]="model.route">Read the guide <mat-icon>arrow_forward</mat-icon></a>
+            <a [routerLink]="model.route" [fragment]="model.fragment">
+              {{ model.action }} <mat-icon>arrow_forward</mat-icon>
+            </a>
           </article>
         }
       </div>
     </section>
 
-    <section class="page-section capability-guard">
+    <section class="page-section capability-guard" aria-labelledby="continuous-graph-title">
       <div>
-        <span class="section-kicker">FAIL-CLOSED CAPABILITY CHECK</span>
-        <h2>Graph APIs stay off until the server proves support.</h2>
+        <span class="section-kicker">CONTINUOUS GRAPH</span>
+        <h2 id="continuous-graph-title">Keep graph results current.</h2>
         <p>
-          BlueTusk checks the authenticated server’s catalogue and SQL/PGQ capability. A major
-          version number alone is not treated as proof.
+          Continuous Graph refreshes a registered query after relevant commits. It updates affected
+          results when their scope is known and reruns the query when a change could affect the
+          full result.
         </p>
-        <bt-source-link [href]="source('docs/graph/reference.md')" label="Capability contract" />
+        <a class="back-link" routerLink="/documentation/real-time/continuous-graph">
+          Read the Continuous Graph guide <mat-icon>arrow_forward</mat-icon>
+        </a>
       </div>
-      <div class="version-rail">
-        @for (version of versions; track version.number) {
-          <article [class.enabled]="version.enabled">
-            <strong>{{ version.number }}</strong
-            ><span>{{ version.state }}</span
-            ><small>{{ version.detail }}</small>
-          </article>
-        }
-      </div>
+      <aside class="graph-release-note">
+        <bt-status label="Qualification pending" stage="pending" />
+        <h3>What must pass before release</h3>
+        <p>
+          Local tests passed on {{ compatibility.portableTarget }}, including the Topology and Fraud
+          application journeys. Local Windows and Linux benchmarks met the full-query target and
+          missed the scoped-update target. Exact-candidate performance and 24-hour recovery still
+          need to pass. The public <code>1.1.0-rc.1</code> packages predate portable Graph.
+        </p>
+        <a routerLink="/evidence">See current evidence</a>
+      </aside>
     </section>
 
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>QUERY SURFACES</span>
-          <h2>Use SQL directly or a bounded typed query.</h2>
+          <span>QUERY EXAMPLES</span>
+          <h2>Start with portable EF queries.</h2>
         </div>
         <nav class="segmented-tabs" aria-label="Graph query example">
           @for (sample of samples; track sample.id) {
             <button
               type="button"
               [class.active]="activeSample() === sample.id"
+              [attr.aria-pressed]="activeSample() === sample.id"
               (click)="activeSample.set(sample.id)"
             >
               {{ sample.label }}
@@ -129,7 +137,10 @@ import { sourceUrl } from '../content/catalog';
           <span>RUNNABLE EXAMPLES</span>
           <h2>See the recovery model in application code.</h2>
         </div>
-        <p>These samples require a PostgreSQL 19 server with the negotiated SQL/PGQ capability.</p>
+        <p>
+          The candidate samples run on the portable backend. Use the guide with a checkout or
+          local package that contains the portable implementation.
+        </p>
       </header>
       <div>
         @for (sample of workloads; track sample.title) {
@@ -138,9 +149,9 @@ import { sourceUrl } from '../content/catalog';
             ><small>{{ sample.kicker }}</small>
             <h3>{{ sample.title }}</h3>
             <p>{{ sample.body }}</p>
-            <a [href]="sample.href" target="_blank" rel="noreferrer"
-              >Open sample <mat-icon>open_in_new</mat-icon></a
-            >
+            <a routerLink="/documentation/real-time/continuous-graph" fragment="run-a-working-example">
+              Read sample instructions <mat-icon>arrow_forward</mat-icon>
+            </a>
           </article>
         }
       </div>
@@ -148,67 +159,52 @@ import { sourceUrl } from '../content/catalog';
   `,
 })
 export class GraphPage {
-  protected readonly source = sourceUrl;
-  protected readonly activeSample = signal('raw');
+  protected readonly compatibility = GRAPH_COMPATIBILITY;
+  protected readonly activeSample = signal('ef');
   protected readonly models = [
     {
-      id: 'sql',
+      id: 'portable',
       icon: 'account_tree',
-      kicker: 'DATABASE QUERY',
-      title: 'PostgreSQL SQL/PGQ',
-      status: 'PostgreSQL 19 prerelease',
-      stage: 'preview',
-      body: 'Create property-graph metadata over relational tables and query it when the application needs an answer.',
+      kicker: 'DEFAULT IN THE PORTABLE CANDIDATE',
+      title: 'BlueTusk Graphs',
+      status: GRAPH_COMPATIBILITY.portableStatus,
+      stage: 'gate-passed',
+      body: 'Define the graph once in EF Core. BlueTusk uses ordinary PostgreSQL joins over your existing vertex and edge tables.',
       route: '/documentation/graph/sql-pgq',
+      fragment: undefined,
+      action: 'Read the Graph quickstart',
       rows: [
-        { label: 'Execution', value: 'One PostgreSQL query' },
-        { label: 'Result owner', value: 'The calling application' },
-        {
-          label: 'Availability',
-          value: 'Prerelease evaluation; stable waits for PostgreSQL 19 GA',
-        },
+        { label: 'Locally verified', value: GRAPH_COMPATIBILITY.portableTarget },
+        { label: 'Server requirements', value: 'Ordinary PostgreSQL tables and indexes' },
+        { label: 'Scope', value: 'Typed EF Core queries and Continuous Graph' },
       ],
     },
     {
-      id: 'continuous',
-      icon: 'hub',
-      kicker: 'MAINTAINED RESULT',
-      title: 'Continuous Graph',
-      status: '1.1 RC · PG19 gated',
+      id: 'native',
+      icon: 'terminal',
+      kicker: 'OPTIONAL BACKEND',
+      title: 'Native SQL/PGQ',
+      status: GRAPH_COMPATIBILITY.nativeStatus,
       stage: 'preview',
-      body: 'Use Streams and Live to refresh a registered graph query after relevant committed changes while preserving authorization.',
-      route: '/documentation/real-time/continuous-graph',
+      body: 'Use the database’s own property graph and GRAPH_TABLE support when the connected server reports the required capability.',
+      route: '/documentation/graph/sql-pgq',
+      fragment: 'select-native-sql-pgq',
+      action: 'Read the native setup',
       rows: [
-        { label: 'Execution', value: 'Scoped update or authoritative repair' },
-        { label: 'Result owner', value: 'A registered Live query and security scope' },
-        { label: 'Recovery', value: 'Checkpointed source delivery and replay' },
-        {
-          label: 'Availability',
-          value: 'Public RC; stable waits for PostgreSQL 19 GA and endurance',
-        },
+        { label: 'Preview fixture', value: GRAPH_COMPATIBILITY.nativeFixture },
+        { label: 'Server requirements', value: 'Verified SQL/PGQ capability' },
+        { label: 'Version boundary', value: 'PostgreSQL 19 Beta 4 removed SQL/PGQ' },
       ],
-    },
-  ] as const;
-  protected readonly versions = [
-    { number: '15', state: 'Unavailable', detail: 'No SQL/PGQ capability', enabled: false },
-    { number: '16', state: 'Unavailable', detail: 'No SQL/PGQ capability', enabled: false },
-    { number: '17', state: 'Unavailable', detail: 'No SQL/PGQ capability', enabled: false },
-    { number: '18', state: 'Unavailable', detail: 'No SQL/PGQ capability', enabled: false },
-    {
-      number: '19',
-      state: 'Guarded',
-      detail: 'Enable only after capability negotiation',
-      enabled: true,
     },
   ] as const;
   protected readonly samples = [
     {
       id: 'raw',
-      label: 'Raw SQL',
+      label: 'Native SQL/PGQ',
       icon: 'terminal',
       title: 'Run SQL/PGQ directly',
       detail:
-        'Use the Provider when the query is naturally expressed as SQL or falls outside the typed EF subset.',
+        'Use GRAPH_TABLE only on a server that reports SQL/PGQ and already has the native property graph.',
       tags: ['MATCH', 'GRAPH_TABLE', 'Parameterized values'],
       file: 'GraphQuery.cs',
       code: `await using var command = dataSource.CreateCommand("""
@@ -224,11 +220,11 @@ await using var reader = await command.ExecuteReaderAsync();`,
     },
     {
       id: 'ef',
-      label: 'EF Core',
+      label: 'Portable EF Core',
       icon: 'data_object',
-      title: 'Build a typed linear path',
+      title: 'Query existing tables with EF Core',
       detail:
-        'Use model metadata for supported bounded shapes. BlueTusk quotes identifiers, binds captured values, and rejects unsupported patterns.',
+        'Map vertices and edges with HasPropertyGraph. The portable backend turns the typed query into parameterized joins.',
       tags: ['Model metadata', 'Typed projection', 'Composable IQueryable'],
       file: 'GraphContext.cs',
       code: `var friends = await context.PropertyGraph("social", "application")
@@ -245,7 +241,7 @@ await using var reader = await command.ExecuteReaderAsync();`,
     },
   ] as const;
   protected readonly selectedSample = computed(
-    () => this.samples.find((sample) => sample.id === this.activeSample()) ?? this.samples[0],
+    () => this.samples.find((sample) => sample.id === this.activeSample()) ?? this.samples[1],
   );
   protected readonly workloads = [
     {
@@ -253,14 +249,12 @@ await using var reader = await command.ExecuteReaderAsync();`,
       kicker: 'FRAUD',
       title: 'Connected financial risk',
       body: 'Register a bounded transfer path and observe an authorized result change after a relevant commit.',
-      href: 'https://github.com/jphgardner/BlueTusk/tree/main/samples/BlueTusk.Samples.ContinuousGraph.Fraud',
     },
     {
       icon: 'router',
       kicker: 'NETWORK',
       title: 'Changing network topology',
       body: 'Maintain gateway relationships and expose updates through the same checkpoint and replay model.',
-      href: 'https://github.com/jphgardner/BlueTusk/tree/main/samples/BlueTusk.Samples.ContinuousGraph.Network',
     },
   ] as const;
 }

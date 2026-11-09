@@ -1,7 +1,7 @@
 # BlueTusk Continuous Graph
 
-`BlueTusk.ContinuousGraph` is the published stable graph family. Trusted
-server code registers bounded typed SQL/PGQ queries; the compiler validates the
+`BlueTusk.ContinuousGraph` provides the maintained graph runtime. Trusted
+server code registers bounded typed graph queries; the compiler validates the
 query against EF property-graph metadata and then delegates gap-free
 invalidation, authoritative requery, and keyed result diffs to BlueTusk Live.
 It never reads replication or pgoutput messages.
@@ -64,13 +64,13 @@ The V1 query envelope permits outer `Where`, `Select`, deterministic
 `OrderBy`/`ThenBy`, one bounded `Take`, and `AsNoTracking`. Ordering must include
 the direct result key. The ordinary typed graph builder remains responsible for
 safe graph-pattern and projection translation, and EF must produce
-`GRAPH_TABLE` SQL at registration. Unsupported query operators, translation
+the resolved backend SQL at registration. Unsupported query operators, translation
 failures, unbounded results, and unstable ordering fail before clients can
 subscribe.
 
 ### Expanded graph patterns in 1.2
 
-The typed builder supports the PostgreSQL 19 SQL/PGQ shapes needed by larger
+Both backends support the typed patterns needed by larger
 relationship models:
 
 ```csharp
@@ -89,22 +89,18 @@ var related = context.PropertyGraph("payments", "risk")
             "target", account => account.Id, result => result.TargetId));
 ```
 
-- `Undirected` matches either edge direction using PostgreSQL's native
-  `-[...]-` syntax. `Outgoing` and `Incoming` remain directional.
-- `LabelsAnyOf` emits the SQL/PGQ `label-a|label-b` OR expression. Every selected
+- `Undirected` matches either edge direction. `Outgoing` and `Incoming` remain directional.
+- `LabelsAnyOf` matches any of the named labels. Every selected
   label must exist on the resolved element table, and projected properties must
   be identical across those labels.
 - `OutgoingPath`, `IncomingPath`, and `UndirectedPath` accept a bounded range of
-  one to eight hops. PostgreSQL 19 does not provide native variable-length path
-  syntax, so BlueTusk compiles the range into fixed-hop `GRAPH_TABLE` branches
+  one to eight hops. BlueTusk compiles the range into fixed-hop query branches
   joined with `UNION ALL`. At most 64 branches are allowed.
 
 A multi-hop edge variable cannot be projected because one match can contain
 several edges. Project the start and end vertices instead. Repeating a path is
 allowed only when the edge connects the same vertex element table to itself.
-These rules are checked during translation. The generated SQL has also been
-materialised against the digest-pinned PostgreSQL 19 Beta 3 development image;
-PostgreSQL 19 GA and its exact digest remain mandatory for stable publication.
+These rules are checked during translation. Portable acceptance runs on PostgreSQL 15–18. Native regression coverage uses the pinned Beta 3 fixture.
 
 Continuous Graph treats variable-length and undirected patterns as broad-impact
 queries. They receive authoritative full repair rather than affected-key delta
@@ -114,11 +110,11 @@ when the ordinary endpoint proof remains complete.
 
 ## Capability and correctness
 
-The production capability probe opens the factory context and requires
-`BlueTuskConnection.SupportsSqlPgq == true`. PostgreSQL 15–18 and PostgreSQL 19
-servers without the negotiated SQL/PGQ capability are rejected. A custom
-`IContinuousGraphCapabilityProbe` exists for deterministic tests; bypassing the
-production probe in an application is not a compatibility promise.
+The compiler verifies that the query originates from the typed graph builder and
+that its graph and table dependencies match the registration. Portable
+registration requires no SQL/PGQ capability. In explicit native mode the
+capability probe checks the connected PostgreSQL server. The backend and resolved
+mappings are part of replay identity.
 
 The compiled plan owns an ordinary `LiveQueryPlan`. Bind only its declared
 scalar arguments, create a session with the caller's complete
@@ -140,7 +136,7 @@ var update = await session.RefreshToCurrentAsync(cancellationToken);
 ```
 
 The initial result uses Live's cursor-reserve/query/replay boundary. Later
-affected transactions are coalesced, the authorised `GRAPH_TABLE` query is run
+affected transactions are coalesced, the authorised graph query is run
 again, and keyed additions, updates, removals, reorderings, or a bounded reset
 are emitted. PostgreSQL/EF query execution—not CDC row images—is always the
 source of client-visible data. The context factory and registered query remain
@@ -163,7 +159,7 @@ tiers; it is not inferred again from a replication message.
    rows directly from complete old/new tuples.
 2. **Authoritative scoped delta.** The automatic default extracts affected
    element keys and runs the compiler-generated, prepared key-scoped
-   `GRAPH_TABLE` query.
+   graph query.
 3. **Authoritative repair.** The original complete query is rerun whenever
    correctness of either delta path cannot be proven.
 
@@ -250,12 +246,11 @@ registers a high-value transfer traversal and shows a newly suspicious transfer
 entering the authorised result after an affected edge changes. The executable
 [network sample](../../samples/BlueTusk.Samples.ContinuousGraph.Network)
 registers gateway dependencies and shows a vertex health update becoming a
-keyed Live graph event. Both use connection-scoped temporary property graphs,
-require PostgreSQL 19, and use the deterministic in-memory invalidation log
-only to keep the sample self-contained:
+keyed Live graph event. Both use temporary tables on the default portable backend. An in-memory
+invalidation log keeps each sample self-contained:
 
 ```powershell
-$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
+$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
 dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Fraud
 dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Network
 ```
@@ -335,10 +330,10 @@ rather than attempting to suppress repair.
 The two 1.0.0 packages remain immutable. `BlueTusk.ContinuousGraph` contains
 the runtime; `BlueTusk.ContinuousGraph.ControlPlane` contains the optional
 operations adapter. The coordinated `1.1.0-rc.1` packages are public for
-production-like evaluation. Stable `1.1.0` remains blocked until PostgreSQL 19
-GA is digest-pinned, every lower product family has passed its exact stable-
-candidate gates, the 24-hour Continuous Graph endurance run is archived, and
-the performance-leadership evidence passes. The release script
+production-like evaluation and predate the portable backend. Portable Graph
+has passed local compatibility checks on PostgreSQL 15–18. Stable qualification requires a
+supported PostgreSQL matrix, exact candidate dependencies, 24-hour recovery
+endurance, and performance evidence. The release script
 machine-enforces dependency readiness and protected tag ordering. The 1.0
 public surface remains a compatible subset of the hash-locked 1.1 candidate
 surface; see the
@@ -350,17 +345,15 @@ Live session handoff, unsupported-server rejection, and fail-closed query
 shapes. Incremental state-machine tests cover exact top-N updates, repair
 fallbacks, bounded affected keys, two-phase lifecycle handling, rollback,
 duplicate delivery, evaluator contract failures, and replay-before-ack
-recovery. The opt-in PostgreSQL 19
-acceptance test creates a real property graph,
-materialises the initial result, mutates an affected vertex, observes the
-authoritative keyed update, and cancellation-aborts a graph query blocked on an
-exclusive table lock.
+recovery. Live acceptance verifies typed results, affected-key updates, cancellation,
+and row-level security across pooled reads and repairs. The native case
+runs on the pinned historical fixture.
 
-Run that live gate against the repository's PostgreSQL 19 service:
+Run that live gate against the repository's PostgreSQL 18 service:
 
 ```powershell
-docker compose -f eng/compose/postgres.yml --profile preview up -d postgres19
-$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
+docker compose -f eng/compose/postgres.yml up -d --wait postgres18
+$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
 dotnet test tests/BlueTusk.ContinuousGraph.Tests
 ```
 
@@ -370,7 +363,7 @@ Run only the deterministic incremental contract:
 dotnet test tests/BlueTusk.ContinuousGraph.Tests/BlueTusk.ContinuousGraph.Tests.csproj --filter FullyQualifiedName~ContinuousGraphIncrementalTests
 ```
 
-The checked-in live workload measures capability-guarded registration,
+The checked-in live workload measures registration,
 authoritative materialisation of 999 graph paths, and an affected invalidation
 through PostgreSQL requery plus keyed Live diff. On the repository's reference
 machine the ShortRun recorded 988 µs/103,446 B, 2.827 ms/666,055 B, and

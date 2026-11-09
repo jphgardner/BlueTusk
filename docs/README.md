@@ -49,10 +49,10 @@ sure which one you need.
 These are not part of the 1.1.0 release. You can evaluate them, but their API
 and behavior may change.
 
-- [Graph (SQL/PGQ)](graph/README.md) and
-  [Continuous Graph](continuous-graph/README.md) need a PostgreSQL server that
-  provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so
-  they wait for a PostgreSQL release that ships it.
+- [BlueTusk Graphs](graph/README.md) and
+  [Continuous Graph](continuous-graph/README.md) are locally verified on
+  PostgreSQL 15–18 without SQL/PGQ. See the
+  [Graph release status](releases/release-tracks.md#portable-graph-status) for package availability.
 - The ecosystem families are `0.1.0-preview.1` and not published yet. Each is
   released when its own checks pass:
   [Events](events/README.md), [Jobs](jobs/README.md),

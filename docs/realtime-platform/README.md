@@ -13,7 +13,7 @@ applications need only one or two of them.
 | Keep another PostgreSQL database, Redis, NATS, OpenSearch, Kafka, S3 or a webhook up to date | [Sync](../sync/README.md) | [Sync quick start](../sync/quickstart.md) |
 | Show users a query result that updates by itself | [Live](../live/README.md) | [Live quick start](../live/quickstart.md) |
 | See and operate the running components | [Control Plane](../control-plane/README.md) | [Control Plane quick start](../control-plane/quickstart.md) |
-| Keep a graph query result current (preview) | [Continuous Graph](../continuous-graph/README.md) | [Graph guide](../graph/README.md) |
+| Keep a graph query result current (qualification pending) | [Continuous Graph](../continuous-graph/README.md) | [Graph guide](../graph/README.md) |
 
 Not sure? Start with Streams. Sync and Live are built on it, and the Streams
 quick start teaches the setup every real-time product needs.
@@ -30,7 +30,7 @@ PostgreSQL (wal_level = logical)
         │
         ├──► Live ──────► browsers and .NET clients
         │
-        └──► Continuous Graph (preview)
+        └──► Continuous Graph (separate release track)
 
  Control Plane shows and operates all of them.
 ```

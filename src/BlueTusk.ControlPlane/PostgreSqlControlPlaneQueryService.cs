@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Streams.Storage.PostgreSql;
 using BlueTusk.TypeSystem;
 
@@ -14,21 +14,36 @@ public sealed class PostgreSqlControlPlaneQueryOptions
     public TimeSpan SnapshotCacheDuration { get; init; } =
         TimeSpan.FromMilliseconds(250);
 
+    public TimeSpan InstanceTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
+    public TimeSpan RefreshBudget { get; init; } = TimeSpan.FromSeconds(30);
+
     internal void Validate()
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumParallelInstances);
         ArgumentOutOfRangeException.ThrowIfLessThan(
             SnapshotCacheDuration,
             TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(InstanceTimeout, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(InstanceTimeout.TotalMilliseconds, uint.MaxValue - 1d);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(RefreshBudget, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(RefreshBudget.TotalMilliseconds, uint.MaxValue - 1d);
     }
 }
 
+[SuppressMessage("Design", "CA1001", Justification =
+    "The concurrency semaphore never exposes its wait handle and must outlive timed-out provider reads.")]
 public sealed class PostgreSqlControlPlaneQueryService : IControlPlaneQueryService
 {
     private readonly ControlPlanePostgreSqlSource[] _instances;
     private readonly TimeProvider _timeProvider;
     private readonly PostgreSqlControlPlaneQueryOptions _options;
+    private readonly Func<ControlPlanePostgreSqlSource, CancellationToken,
+        ValueTask<IReadOnlyList<ControlPlaneSourceSnapshot>>> _readInstance;
     private readonly object _cacheGate = new();
+    private readonly SemaphoreSlim _readConcurrency;
+    private readonly Dictionary<string, PendingInstanceRead> _pendingReads = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, InstanceObservation> _lastGood = new(StringComparer.Ordinal);
     private ControlPlaneOverview? _cachedOverview;
     private DateTimeOffset _cacheExpiresAt;
     private Task<ControlPlaneOverview>? _inflightOverview;
@@ -40,10 +55,12 @@ public sealed class PostgreSqlControlPlaneQueryService : IControlPlaneQueryServi
     {
     }
 
-    private PostgreSqlControlPlaneQueryService(
+    internal PostgreSqlControlPlaneQueryService(
         IEnumerable<ControlPlanePostgreSqlSource> instances,
         PostgreSqlControlPlaneQueryOptions options,
-        TimeProvider? timeProvider)
+        TimeProvider? timeProvider,
+        Func<ControlPlanePostgreSqlSource, CancellationToken,
+            ValueTask<IReadOnlyList<ControlPlaneSourceSnapshot>>>? readInstance = null)
     {
         ArgumentNullException.ThrowIfNull(instances);
         ArgumentNullException.ThrowIfNull(options);
@@ -68,6 +85,8 @@ public sealed class PostgreSqlControlPlaneQueryService : IControlPlaneQueryServi
 
         _timeProvider = timeProvider ?? TimeProvider.System;
         _options = options;
+        _readInstance = readInstance ?? ReadInstanceAsync;
+        _readConcurrency = new SemaphoreSlim(options.MaximumParallelInstances);
     }
 
     public static PostgreSqlControlPlaneQueryService Create(
@@ -79,7 +98,9 @@ public sealed class PostgreSqlControlPlaneQueryService : IControlPlaneQueryServi
     public async ValueTask<ControlPlaneOverview> GetOverviewAsync(
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         Task<ControlPlaneOverview> flight;
+        TaskCompletionSource<ControlPlaneOverview>? refresh = null;
         lock (_cacheGate)
         {
             var now = _timeProvider.GetUtcNow();
@@ -88,59 +109,180 @@ public sealed class PostgreSqlControlPlaneQueryService : IControlPlaneQueryServi
                 return _cachedOverview;
             }
 
-            flight = _inflightOverview ??= LoadAndCacheOverviewAsync();
+            if (_inflightOverview is null)
+            {
+                refresh = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                _inflightOverview = refresh.Task;
+            }
+            flight = _inflightOverview;
         }
 
+        // Install the flight before starting work, including synchronously completing reads.
+        if (refresh is not null)
+        {
+            _ = LoadAndCacheOverviewAsync(refresh);
+        }
         return await flight.WaitAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<ControlPlaneOverview> LoadAndCacheOverviewAsync()
+    private async Task LoadAndCacheOverviewAsync(TaskCompletionSource<ControlPlaneOverview> completion)
     {
         try
         {
-            using var concurrency = new SemaphoreSlim(
-                Math.Min(_options.MaximumParallelInstances, _instances.Length));
-            var snapshots = new ConcurrentBag<ControlPlaneSourceSnapshot>();
-            var tasks = _instances.Select(async instance =>
-            {
-                await concurrency.WaitAsync(CancellationToken.None).ConfigureAwait(false);
-                try
-                {
-                    var instanceSnapshots = await ReadInstanceAsync(
-                        instance,
-                        CancellationToken.None).ConfigureAwait(false);
-                    foreach (var snapshot in instanceSnapshots)
-                    {
-                        snapshots.Add(snapshot);
-                    }
-                }
-                finally
-                {
-                    concurrency.Release();
-                }
-            }).ToArray();
-            await Task.WhenAll(tasks).ConfigureAwait(false);
-
+            using var budget = new CancellationTokenSource(_options.RefreshBudget, _timeProvider);
+            var results = await Task.WhenAll(_instances.Select(instance =>
+                ObserveInstanceAsync(instance, budget.Token))).ConfigureAwait(false);
             var overview = new ControlPlaneOverview(
                 _timeProvider.GetUtcNow(),
-                snapshots.OrderBy(source => source.InstanceName, StringComparer.Ordinal)
+                results.SelectMany(result => result.Sources)
+                    .OrderBy(source => source.InstanceName, StringComparer.Ordinal)
                     .ThenBy(source => source.DatabaseName, StringComparer.Ordinal)
                     .ThenBy(source => source.SlotName, StringComparer.Ordinal)
-                    .ToArray());
+                    .ToArray())
+            {
+                Instances = results.Select(result => result.Status)
+                    .OrderBy(status => status.InstanceName, StringComparer.Ordinal).ToArray(),
+            };
             lock (_cacheGate)
             {
                 _cachedOverview = overview;
                 _cacheExpiresAt = overview.ObservedAt + _options.SnapshotCacheDuration;
+                _inflightOverview = null;
             }
-
-            return overview;
+            completion.TrySetResult(overview);
+        }
+        catch (Exception exception)
+        {
+            completion.TrySetException(exception);
         }
         finally
         {
             lock (_cacheGate)
             {
-                _inflightOverview = null;
+                if (ReferenceEquals(_inflightOverview, completion.Task))
+                {
+                    _inflightOverview = null;
+                }
             }
+        }
+    }
+
+    private async Task<InstanceResult> ObserveInstanceAsync(
+        ControlPlanePostgreSqlSource instance, CancellationToken budget)
+    {
+        var attemptedAt = _timeProvider.GetUtcNow();
+        PendingInstanceRead pending;
+        var start = false;
+        lock (_cacheGate)
+        {
+            if (!_pendingReads.TryGetValue(instance.InstanceName, out pending!))
+            {
+                pending = new PendingInstanceRead();
+                _pendingReads.Add(instance.InstanceName, pending);
+                start = true;
+            }
+        }
+        if (start)
+        {
+            _ = ReadAndCompleteInstanceAsync(instance, pending, budget);
+        }
+
+        InstanceObservation? observation = null;
+        string? diagnostic;
+        try
+        {
+            var result = await pending.Completion.Task.WaitAsync(
+                _options.InstanceTimeout, _timeProvider, budget).ConfigureAwait(false);
+            observation = result.Observation;
+            diagnostic = result.Diagnostic;
+        }
+        catch (TimeoutException)
+        {
+            pending.Cancel();
+            diagnostic = "instance_timeout";
+        }
+        catch (OperationCanceledException) when (budget.IsCancellationRequested)
+        {
+            pending.Cancel();
+            diagnostic = "refresh_budget_exceeded";
+        }
+
+        lock (_cacheGate)
+        {
+            if (observation is not null)
+            {
+                _lastGood[instance.InstanceName] = observation;
+            }
+            else
+            {
+                _lastGood.TryGetValue(instance.InstanceName, out observation);
+            }
+        }
+        return new InstanceResult(
+            observation is null ? [] : diagnostic is null ? observation.Sources
+                : observation.Sources.Select(source => source with { IsStale = true }).ToArray(),
+            new ControlPlaneInstanceStatus(instance.InstanceName,
+                diagnostic is null ? ControlPlaneInstanceAvailability.Current
+                    : observation is not null ? ControlPlaneInstanceAvailability.Stale
+                    : ControlPlaneInstanceAvailability.Unavailable,
+                attemptedAt, observation?.ObservedAt, diagnostic));
+    }
+
+    private async Task ReadAndCompleteInstanceAsync(
+        ControlPlanePostgreSqlSource instance, PendingInstanceRead pending, CancellationToken budget)
+    {
+        var acquired = false;
+        InstanceReadResult result;
+        try
+        {
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(budget, pending.Cancellation.Token);
+            await _readConcurrency.WaitAsync(linked.Token).ConfigureAwait(false);
+            acquired = true;
+            var sources = await _readInstance(instance, linked.Token).ConfigureAwait(false);
+            linked.Token.ThrowIfCancellationRequested();
+            var observedAt = _timeProvider.GetUtcNow();
+            result = new(new InstanceObservation(observedAt,
+                sources.Select(source => source with { ObservedAt = observedAt }).ToArray()), null);
+        }
+        catch (OperationCanceledException)
+        {
+            result = new(null, budget.IsCancellationRequested ? "refresh_budget_exceeded" : "instance_timeout");
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // Provider messages can contain credentials or connection strings.
+            result = new(null, exception is ControlPlaneStorageVersionException
+                ? "unsupported_storage_version" : "instance_unavailable");
+        }
+        finally
+        {
+            if (acquired)
+            {
+                _readConcurrency.Release();
+            }
+            lock (_cacheGate)
+            {
+                _pendingReads.Remove(instance.InstanceName);
+            }
+            pending.Cancellation.Dispose();
+        }
+        pending.Completion.TrySetResult(result);
+    }
+
+    private sealed record InstanceObservation(DateTimeOffset ObservedAt, IReadOnlyList<ControlPlaneSourceSnapshot> Sources);
+    private sealed record InstanceReadResult(InstanceObservation? Observation, string? Diagnostic);
+    private sealed record InstanceResult(IReadOnlyList<ControlPlaneSourceSnapshot> Sources, ControlPlaneInstanceStatus Status);
+
+    private sealed class PendingInstanceRead
+    {
+        public CancellationTokenSource Cancellation { get; } = new();
+        public TaskCompletionSource<InstanceReadResult> Completion { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void Cancel()
+        {
+            try { Cancellation.Cancel(); }
+            catch (ObjectDisposedException) { /* The read completed at the deadline. */ }
         }
     }
 

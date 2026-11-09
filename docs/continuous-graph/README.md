@@ -1,23 +1,16 @@
 # Keep graph query results current
 
-> **Preview, not part of 1.1.0.** Continuous Graph needs a PostgreSQL server
-> that provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so
-> this product waits for a PostgreSQL release that ships it. Packages published
-> as `1.0.0` and `1.1.0-rc.1` are for evaluation only. See
-> [product status](../getting-started/install.md#product-status).
+Continuous Graph runs a bounded typed graph query and maintains the result for
+Live clients after relevant committed changes. The default BlueTusk Graphs
+backend uses ordinary PostgreSQL joins on versions 15–18. Use it for fraud paths,
+dependency maps, and network reachability.
 
-BlueTusk Continuous Graph runs a bounded PostgreSQL SQL/PGQ query, keeps its
-result available to Live clients, and updates that result after relevant
-committed changes.
-
-This is a **preview product**. PostgreSQL 19 Beta 4 removed SQL/PGQ; the pinned
-Beta 3 fixture below is for historical preview development only. Graph will
-need a supported server with the actual SQL/PGQ capability and its own release
-evidence. It does not block the five core [release tracks](../releases/release-tracks.md).
-
-Use it for fraud paths, dependency maps, network reachability, and other views
-where relationships change over time. Start with [SQL/PGQ](../graph/README.md)
-if you have not yet defined and queried a PostgreSQL property graph.
+**Availability.** The portable implementation passed local compatibility tests
+on PostgreSQL 15–18. Use a checkout or local candidate containing the change.
+The public `1.1.0-rc.1` packages predate it. The native SQL/PGQ backend is an
+explicit opt-in and its historical Beta 3 coverage is separate.
+[Stable qualification](../releases/release-tracks.md#portable-graph-status)
+is still open.
 
 ## The safe mental model
 
@@ -27,7 +20,7 @@ whose correctness it can prove:
 | Tier                       | What happens                                                                  | Use                                                  |
 | -------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------- |
 | Trusted CDC delta          | Explicitly trusted application code updates known affected results in memory. | Fastest; opt in only with a complete trust contract. |
-| Authoritative scoped query | BlueTusk reruns generated `GRAPH_TABLE` SQL for affected keys.                | Automatic incremental default.                       |
+| Authoritative scoped query | BlueTusk reruns the typed graph query for affected keys.                    | Automatic incremental default.                       |
 | Full authoritative repair  | BlueTusk reruns the complete registered query and diffs the result.           | Safety fallback and periodic drift repair.           |
 
 Unknown schemas, incomplete old rows, truncation, two-phase commits, affected-key
@@ -41,8 +34,8 @@ The fraud and network samples create their schema, compile a query, execute the
 initial result, and exercise updates:
 
 ```powershell
-docker compose -f eng/compose/postgres.yml --profile preview up -d postgres19
-$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
+docker compose -f eng/compose/postgres.yml up -d --wait postgres18
+$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
 
 dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Fraud
 dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Network
@@ -131,7 +124,7 @@ browser.
 
 ## Production checklist
 
-- Require PostgreSQL's SQL/PGQ capability; do not infer it from a version string.
+- Use BlueTusk Graphs by default. For native mode, verify SQL/PGQ capability on the target server.
 - Keep `LiveSecurityScope`, PostgreSQL permissions, and RLS active on every query.
 - Bound result rows, affected keys, hops, top-N, execution time, and concurrency.
 - Persist replay append, session commit, and Streams acknowledgement in order.

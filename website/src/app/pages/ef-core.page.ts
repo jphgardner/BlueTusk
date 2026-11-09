@@ -216,7 +216,7 @@ export class EfCorePage {
       icon: 'shield',
       kicker: 'CAPABILITIES',
       title: 'Optional features are checked',
-      body: 'Extensions and PostgreSQL 19 SQL/PGQ activate only when the connected server exposes the required capability.',
+      body: 'Extensions and native SQL/PGQ require server capability checks. The portable Graph candidate uses ordinary PostgreSQL tables and passed local tests on versions 15–18.',
     },
     {
       icon: 'history',

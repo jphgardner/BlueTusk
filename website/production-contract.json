@@ -10,6 +10,7 @@
   "minimumPrerenderedRoutes": 177,
   "requiredAssets": [
     "favicon.ico",
+    "bluetusk-mark.png",
     "robots.txt",
     "sitemap.xml",
     "llms.txt",

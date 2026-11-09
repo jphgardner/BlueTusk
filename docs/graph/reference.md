@@ -1,15 +1,16 @@
-# PostgreSQL 19 SQL/PGQ V1 candidate
+# BlueTusk Graphs reference
 
-The cross-milestone test and publication cadence is documented in the
-[PostgreSQL 19 compatibility programme](../postgresql19-programme.md).
+Use `HasPropertyGraph` with the default BlueTusk Graphs backend for portable
+typed queries. Vertex and edge definitions describe tables, keys, labels, and
+exposed scalar columns. Queries run on those tables under the caller's database
+role. EF global filters on the source entity do not automatically apply to
+the graph SQL. Put tenant and authorization checks in PostgreSQL row-level
+security or in the authorized graph query.
 
-BlueTusk's published `1.0.0` Provider family exposes PostgreSQL 19
-SQL/PGQ through raw ADO.NET SQL, a typed EF query subset, and read-only
-property-graph schema discovery. Stable support remains gated on PostgreSQL 19
-GA and the exact-candidate PostgreSQL 15–19 matrix. ADO.NET
-sessions enable `SupportsSqlPgq` only after probing the documented
-`information_schema.property_graphs` view; a major-version check alone is not
-used as evidence.
+Native SQL/PGQ is selected through the EF context's graph compatibility option.
+It can also be used directly through the command APIs. ADO.NET detects
+`SupportsSqlPgq` through the server catalogue. Native release evidence is
+tracked in the [PostgreSQL compatibility programme](../postgresql19-programme.md).
 
 The live PostgreSQL 19 Beta 3 acceptance tests cover:
 
@@ -31,26 +32,27 @@ The live PostgreSQL 19 Beta 3 acceptance tests cover:
 - the normal provider suite, including cancellation, pipeline mode, types,
   COPY, replication, and EF regression coverage.
 
-The discovery API reads only PostgreSQL 19's documented information-schema
-views: [`property_graphs`](https://www.postgresql.org/docs/19/infoschema-property-graphs.html),
-[`pg_element_tables`](https://www.postgresql.org/docs/19/infoschema-pg-element-tables.html),
-[`pg_element_table_key_columns`](https://www.postgresql.org/docs/19/infoschema-pg-element-table-key-columns.html),
-[`pg_element_table_labels`](https://www.postgresql.org/docs/19/infoschema-pg-element-table-labels.html),
-[`pg_element_table_properties`](https://www.postgresql.org/docs/19/infoschema-pg-element-table-properties.html),
-[`pg_edge_table_components`](https://www.postgresql.org/docs/19/infoschema-pg-edge-table-components.html),
-[`pg_labels`](https://www.postgresql.org/docs/19/infoschema-pg-labels.html),
-[`pg_label_properties`](https://www.postgresql.org/docs/19/infoschema-pg-label-properties.html),
-and [`pg_property_data_types`](https://www.postgresql.org/docs/19/infoschema-pg-property-data-types.html).
+Native discovery reads the information-schema views exposed by the historical
+SQL/PGQ fixture. These include `property_graphs`, `pg_element_tables`,
+`pg_element_table_key_columns`, `pg_element_table_labels`,
+`pg_element_table_properties`, `pg_edge_table_components`, `pg_labels`,
+`pg_label_properties`, and `pg_property_data_types`. Portable graphs are
+defined in EF metadata and do not use these views.
 
-## Raw SQL example
+## Native raw SQL example
 
-The executable `BlueTusk.Samples.Graph` project checks the capability, creates
-temporary vertex/edge tables, defines a property graph, and reads a directed
-edge through `GRAPH_TABLE`:
+For the portable EF sample, follow the [Graph quickstart](README.md#run-the-sample).
+Use `GRAPH_TABLE` directly only after `SupportsSqlPgq` succeeds and the native
+property graph exists. For example, given a graph named `social_graph` with
+`person` vertices and `follows` edges:
 
-```powershell
-$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
-dotnet run --project samples/BlueTusk.Samples.Graph
+```sql
+SELECT *
+FROM GRAPH_TABLE (
+  social_graph
+  MATCH (source IS person)-[edge IS follows]->(target IS person)
+  COLUMNS (source.name AS source_name, target.name AS target_name)
+);
 ```
 
 ## Typed schema discovery
@@ -122,9 +124,10 @@ modelBuilder.HasPropertyGraph(
     schema: "application");
 ```
 
-The model snapshot stores a deterministic provider annotation. Migration
-diffing emits graph creation after its relational tables and graph removal
-before table removal. A graph rename or schema move emits `ALTER PROPERTY
+The model snapshot stores the resolved backend. Portable graph definitions emit
+ordinary table and index migrations. In native mode, migration diffing emits
+graph creation after its relational tables and graph removal before table
+removal. A graph rename or schema move emits `ALTER PROPERTY
 GRAPH`; changing an element definition emits drop/create because PostgreSQL's
 individual label/element alterations cannot represent every model change as
 one atomic command.
@@ -135,6 +138,16 @@ properties, keys and endpoints directly and validates the definition before
 adding the operation. The strongly typed model builder above remains the
 preferred source of truth; the migration builder makes the generated schema
 change readable and reviewable.
+
+Use the same compatibility setting at runtime and design time. Legacy snapshots
+with no backend describe native graphs. To retain native migrations, set
+`UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq)` in both
+configurations. Maintain separate migration histories if you deploy both modes.
+For a portable deployment with a native migration history, establish a reviewed
+relational baseline from the existing schema and migration history. Fresh
+portable installations must start with a migration sequence that contains
+portable table DDL. An existing preview database may need a guarded migration
+to drop its native graph object before changing dependent tables.
 
 All generated graph DDL is executed inside a server-side guard. PostgreSQL
 15–18 receive SQLSTATE `0A000` with a BlueTusk-specific requirement message;
@@ -200,15 +213,15 @@ Supported now:
 - the typed schema model and inspector are read-only discovery APIs;
 - EF models, migrations, and database-first scaffolding retain property-graph
   schema semantics; and
-- typed EF queries support alternating linear vertex/edge paths, incoming and
-  outgoing edges, one metadata label per typed element, direct scalar property
+- typed EF queries support linear vertex/edge patterns, both edge directions,
+  undirected paths, label OR matching, and direct scalar property
   projections, and vertex predicates made from direct property comparisons to
   captured or constant values joined by `&&` or `||`.
 
-Still raw-SQL-only or planned are variable-length paths, undirected edges,
-multi-label typed matching, graph predicates beyond the documented comparison
-subset, expression-valued properties, entire-element projections inside mixed
-DTOs, and other SQL/PGQ constructs not represented by the builder. Unsupported
+Typed paths can span one to eight hops per bounded segment and at most 64
+fixed branches. Unbounded paths and predicates beyond the documented comparison
+subset require other SQL. The portable renderer supports column-valued
+properties. Native SQL can express additional graph constructs. Unsupported
 typed constructs raise `BlueTuskGraphTranslationException`; there is no string
 concatenation fallback. Schema inspection remains read-only.
 

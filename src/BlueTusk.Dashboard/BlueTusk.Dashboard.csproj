@@ -9,6 +9,13 @@
   <Import Project="..\..\eng\versions\ControlPlane.props" />
 
   <ItemGroup>
+    <EmbeddedResource Include="Assets/dashboard.js" LogicalName="BlueTusk.Dashboard.dashboard.js" />
+    <EmbeddedResource Include="Assets/dashboard.css" LogicalName="BlueTusk.Dashboard.dashboard.css" />
+    <EmbeddedResource Include="../../website/src/brand.css" LogicalName="BlueTusk.Dashboard.brand.css" />
+    <EmbeddedResource Include="../../website/public/bluetusk-mark.png" LogicalName="BlueTusk.Dashboard.bluetusk-mark.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\BlueTusk.ControlPlane\BlueTusk.ControlPlane.csproj" />
   </ItemGroup>
