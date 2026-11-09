@@ -229,9 +229,12 @@ public static class BlueTuskCli
     private static DoctorOptions ParseDoctorOptions(string[] arguments)
     {
         string? connectionString = null;
+        string? packageManifest = null;
+        string? projectAssets = null;
         var extensions = new List<string>();
         var requireStreams = false;
         var requireTls = false;
+        var localOnly = false;
         var json = false;
         var help = false;
         var timeoutSeconds = 10;
@@ -256,6 +259,15 @@ public static class BlueTuskCli
                 case "--connection":
                     connectionString = ReadValue(arguments, ref index, argument);
                     break;
+                case "--local-only":
+                    localOnly = true;
+                    break;
+                case "--package-manifest":
+                    packageManifest = ReadValue(arguments, ref index, argument);
+                    break;
+                case "--project-assets":
+                    projectAssets = ReadValue(arguments, ref index, argument);
+                    break;
                 case "--extension":
                     extensions.Add(ReadValue(arguments, ref index, argument));
                     break;
@@ -268,7 +280,7 @@ public static class BlueTuskCli
 
                     break;
                 default:
-                    throw new ArgumentException($"Unknown doctor option '{argument}'.");
+                    throw new ArgumentException("Unknown doctor option.");
             }
         }
 
@@ -277,8 +289,24 @@ public static class BlueTuskCli
             return DoctorOptions.HelpOnly;
         }
 
-        connectionString ??= Environment.GetEnvironmentVariable(ConnectionEnvironmentVariable);
-        if (string.IsNullOrWhiteSpace(connectionString))
+        if (projectAssets is not null && packageManifest is null)
+        {
+            throw new ArgumentException("Use --package-manifest with --project-assets.");
+        }
+
+        if (localOnly && (packageManifest is null || connectionString is not null ||
+            requireStreams || requireTls || extensions.Count != 0))
+        {
+            throw new ArgumentException(
+                "--local-only requires --package-manifest and cannot be combined with server options.");
+        }
+
+        if (!localOnly)
+        {
+            connectionString ??= Environment.GetEnvironmentVariable(ConnectionEnvironmentVariable);
+        }
+
+        if (!localOnly && string.IsNullOrWhiteSpace(connectionString))
         {
             throw new ArgumentException(
                 $"A connection string is required through --connection or {ConnectionEnvironmentVariable}.");
@@ -291,7 +319,9 @@ public static class BlueTuskCli
             requireTls,
             json,
             extensions.Distinct(StringComparer.Ordinal).ToArray(),
-            Help: false);
+            Help: false,
+            PackageManifest: packageManifest,
+            ProjectAssets: projectAssets);
     }
 
     private static string ReadValue(
@@ -337,6 +367,11 @@ public static class BlueTuskCli
         output.WriteLine("  --require-tls                 Fail when the current PostgreSQL session is not encrypted.");
         output.WriteLine("  --require-streams             Require logical WAL and available replication settings.");
         output.WriteLine("  --extension <name>            Require an installed extension; repeatable.");
+        output.WriteLine();
+        output.WriteLine("Local candidate checks:");
+        output.WriteLine("  --package-manifest <file>     Verify SHA-256 digests in a local candidate manifest.");
+        output.WriteLine("  --project-assets <file>       Check restored BlueTusk packages against that manifest.");
+        output.WriteLine("  --local-only                  Check candidate files without connecting to a server.");
         output.WriteLine("  --json                        Write a versioned machine-readable report.");
         output.WriteLine();
         output.WriteLine("The command is read-only and never prints the supplied connection string.");
@@ -408,13 +443,15 @@ public static class BlueTuskCli
 }
 
 internal sealed record DoctorOptions(
-    string ConnectionString,
+    string? ConnectionString,
     int TimeoutSeconds,
     bool RequireStreams,
     bool RequireTls,
     bool Json,
     IReadOnlyList<string> RequiredExtensions,
-    bool Help)
+    bool Help,
+    string? PackageManifest = null,
+    string? ProjectAssets = null)
 {
     public static DoctorOptions HelpOnly { get; } = new(
         "",

@@ -118,3 +118,38 @@ It then calls the maintenance endpoint, applies actual source DDL, launches a th
 process, completes the ticket and verifies SSE resets plus subsequent WAL updates.
 Full production performance, high availability, security deployment, automated rebuild scheduling/recovery
 and endurance gates remain required.
+
+## Run from installed candidate packages
+
+Set `BlueTuskOrdersPackageVersion` to use package references in the existing
+starter. The feed must contain the required Core packages and matching Events
+and Projections packages built from the same source. Configure NuGet package
+source mapping so `BlueTusk` and `BlueTusk.*` resolve only from the candidate
+feed. Use a fresh global packages directory when verifying archive provenance.
+
+```powershell
+$project = './samples/BlueTusk.Projections.Orders.Live'
+$version = '<exact candidate version>'
+$env:NUGET_PACKAGES = '<fresh packages directory>'
+dotnet restore $project --configfile '<candidate NuGet.Config>' "-p:BlueTuskOrdersPackageVersion=$version"
+dotnet build $project -c Release --no-restore "-p:BlueTuskOrdersPackageVersion=$version" -o '<isolated output>'
+```
+
+Check the resulting `obj/project.assets.json` for the expected BlueTusk package
+IDs and versions. Launch `BlueTusk.Projections.Orders.Live.dll` from the isolated
+output with the same sample settings above. To exercise the installed build,
+build `tests/BlueTusk.Projections.Tests` separately in Release mode. Set
+`BLUETUSK_TEST_CONNECTION_STRING` to a local logical-replication test database
+and run the following command with a new results directory.
+
+```powershell
+pwsh ./samples/BlueTusk.Projections.Orders.Live/verify-warm-runs.ps1 `
+  -SampleDll '<isolated output>/BlueTusk.Projections.Orders.Live.dll' `
+  -TestDll './tests/BlueTusk.Projections.Tests/bin/Release/net10.0/BlueTusk.Projections.Tests.dll' `
+  -PackageVersion $version -ResultsDirectory '<new results directory>'
+```
+
+The runner checks the application's package versions and runs the built
+integration test three times with fresh PostgreSQL resources on each run.
+The timing starts after restore and build and includes process startup,
+test setup, and cleanup. Each run keeps its own log and TRX result.

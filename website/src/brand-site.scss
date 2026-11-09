@@ -1,0 +1,159 @@
+.site-shell {
+  --mat-button-filled-container-color: var(--bt-action);
+  --mat-button-filled-label-text-color: var(--bt-on-action);
+}
+
+.site-shell .mat-mdc-unelevated-button {
+  --mat-button-filled-container-shape: 8px;
+}
+
+.site-footer {
+  background: var(--bt-deep);
+  border-color: var(--bt-line);
+}
+
+.hero {
+  border-bottom: 1px solid var(--bt-line-soft);
+  background: var(--bt-deep);
+}
+
+.hero .hero-glow {
+  background:
+    radial-gradient(ellipse at 88% 10%, var(--bt-highlight) 0%, transparent 57%),
+    radial-gradient(ellipse at 16% 110%, var(--bt-raised) 0%, transparent 55%),
+    linear-gradient(#ffffff08 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff08 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
+}
+
+.hero .hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(330px, 0.9fr);
+  gap: clamp(2.5rem, 7vw, 7rem);
+  align-items: center;
+  width: min(100% - 64px, 1240px);
+  padding: clamp(4rem, 9vw, 8rem) 0;
+  text-align: left;
+}
+
+.hero-copy .release-label {
+  border: 1px solid color-mix(in srgb, var(--bt-accent) 30%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bt-accent) 8%, transparent);
+}
+
+.hero .hero-copy h1 {
+  max-width: 15ch;
+  margin: 24px 0 0;
+  color: var(--bt-ink);
+  font-size: clamp(3.25rem, 5.9vw, 6rem);
+  line-height: 0.99;
+  letter-spacing: -0.072em;
+}
+
+.hero-copy h1 em { display: block; }
+
+.hero-copy > p {
+  max-width: 49ch;
+  margin: 23px 0 0;
+  color: var(--bt-secondary);
+  font-size: clamp(1rem, 1.6vw, 1.19rem);
+  line-height: 1.65;
+}
+
+.hero .hero-actions {
+  justify-content: flex-start;
+  margin-top: 26px;
+}
+
+.hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.25rem;
+  margin-top: 29px;
+  color: var(--bt-muted);
+  font: 500 0.68rem/1.4 var(--bt-mono);
+}
+
+.hero-facts span::before {
+  content: '·';
+  margin-right: 0.5rem;
+  color: var(--bt-accent);
+}
+
+.platform-map {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--bt-line);
+  border-radius: 18px;
+  background: var(--bt-deep);
+  box-shadow: 0 26px 70px #0007;
+}
+
+.platform-map figcaption,
+.map-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  color: var(--bt-secondary);
+  background: var(--bt-panel);
+}
+
+.platform-map figcaption { font-size: 0.85rem; font-weight: 700; }
+.map-label,
+.map-footer span:first-child {
+  flex-shrink: 0;
+  color: var(--bt-accent);
+  font: 600 0.62rem/1.4 var(--bt-mono);
+  letter-spacing: 0.08em;
+}
+
+.map-label i {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.map-flow { padding: 1.35rem; }
+.map-node {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--bt-line);
+  border-radius: 9px;
+  background: var(--bt-panel);
+}
+.map-node:hover { border-color: var(--bt-accent); background: var(--bt-raised); }
+.map-node mat-icon { margin: auto; color: var(--bt-blue); }
+.map-node img { border-radius: 8px; }
+.map-node strong, .map-node small { display: block; }
+.map-node strong { color: var(--bt-ink); font-size: 0.88rem; }
+.map-node small { margin-top: 0.2rem; color: var(--bt-secondary); font-size: 0.72rem; }
+.map-node-core {
+  border-color: color-mix(in srgb, var(--bt-accent) 48%, var(--bt-line));
+  background: color-mix(in srgb, var(--bt-accent) 10%, var(--bt-panel));
+}
+.map-step { color: var(--bt-muted); font: 500 0.68rem var(--bt-mono); }
+.map-connector { display: block; height: 17px; margin-left: 1.9rem; border-left: 1px dashed var(--bt-accent); }
+.map-footer { font-size: 0.72rem; border-top: 1px solid var(--bt-line); }
+.architecture-wrap { padding-top: 3rem; }
+.page-hero, .docs-hero, .evidence-hero { border-color: var(--bt-line); }
+
+@media (max-width: 900px) {
+  .hero .hero-inner { grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr); gap: 2rem; }
+}
+
+@media (max-width: 690px) {
+  .hero .hero-inner { grid-template-columns: 1fr; width: min(100% - 36px, 480px); padding: 3.5rem 0 2.5rem; }
+  .hero .hero-copy h1 { font-size: clamp(2.9rem, 12vw, 4.2rem); }
+  .platform-map figcaption, .map-footer { padding-inline: 0.8rem; }
+  .map-flow { padding: 0.8rem; }
+  .architecture-wrap { padding-top: 1.75rem; }
+}

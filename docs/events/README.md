@@ -127,6 +127,10 @@ distinct transactions in source commit order; do not dispatch them concurrently 
 consumer. The bounded processor materializes only selected business-event envelopes, not all source
 rows. Transactions are never split across inbox commits to fit a bound.
 
+The [recoverable outbox recipe](../../samples/BlueTusk.Events.RecoverableOutbox/README.md)
+demonstrates target commit, interrupted acknowledgment, and idempotent redelivery
+using the PostgreSQL Streams checkpoint store.
+
 This committed-CDC processor does not implement historical snapshot delivery or durable independent
 per-stream remote subscription offsets. Use core replay for an existing local outbox, or establish an
 explicit source bootstrap/replay policy before wiring a remote live event subscription. Source identity

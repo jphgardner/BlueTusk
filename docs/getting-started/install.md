@@ -47,7 +47,7 @@ Some features documented here are new in `1.1.0` and are not in `1.0.0` or
 | Sync | 1.1.0 | Core |
 | Live (NuGet and npm) | 1.1.0 | Core |
 | Control Plane | 1.1.0 | Core |
-| Graph (SQL/PGQ) and Continuous Graph | Not part of 1.1.0 | Preview. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that ships it. |
+| BlueTusk Graphs and Continuous Graph | Separate release track | Portable Graph is verified locally on PostgreSQL 15–18 without SQL/PGQ. The public 1.1.0-rc.1 packages predate it. See [Graph availability](../graph/README.md). |
 | Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio, Edge | `0.1.0-preview.1` | Preview. Not published; each family is released when its own checks pass. |
 
 ## Choose packages
@@ -156,6 +156,54 @@ List the resolved versions and confirm every BlueTusk package has the same one:
 dotnet list package --include-transitive
 npm ls @bluetusk/live
 ```
+
+### Check a local candidate
+
+Read `packageVersion` in the candidate's `sha256.json` and use it for all
+Core pins. If the manifest lists a package your application needs as omitted,
+choose a candidate that includes it.
+
+Point a solution-level `NuGet.Config` at the extracted candidate feed. Use
+package source mapping so that every `BlueTusk` package comes from that feed
+and other dependencies come from their usual source. For a solution next to
+the `candidate` directory, the configuration looks like this.
+
+```xml
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="candidate" value="./candidate/feed" />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+  <packageSourceMapping>
+    <packageSource key="candidate">
+      <package pattern="BlueTusk" />
+      <package pattern="BlueTusk.*" />
+    </packageSource>
+    <packageSource key="nuget.org">
+      <package pattern="*" />
+    </packageSource>
+  </packageSourceMapping>
+</configuration>
+```
+
+Pin the project to the candidate version before restoring. Install the matching
+Live tarballs directly. This example uses React and assumes the candidate
+contains a `BlueTusk.Tool` with local candidate checks.
+
+```powershell
+$version = (Get-Content ./candidate/sha256.json -Raw | ConvertFrom-Json).packageVersion
+$env:NUGET_PACKAGES = Join-Path (Get-Location) '.candidate-packages'
+dotnet restore ./MyApp/MyApp.csproj --configfile ./NuGet.Config
+npm install --save-exact "./candidate/live/bluetusk-live-$version.tgz" "./candidate/live/bluetusk-live-react-$version.tgz"
+dotnet tool install --tool-path ./.candidate-tools BlueTusk.Tool --version $version --configfile ./NuGet.Config
+./.candidate-tools/bluetusk doctor --local-only --package-manifest ./candidate/sha256.json --project-assets ./MyApp/obj/project.assets.json --json
+```
+
+Use a fresh packages directory for each candidate. Doctor verifies each
+archive against the manifest and compares the application's resolved NuGet
+package IDs, versions, and content hashes against the candidate feed. Check
+the installed JavaScript versions with `npm ls @bluetusk/live @bluetusk/live-react`.
 
 ## Next steps
 

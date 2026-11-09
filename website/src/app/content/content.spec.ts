@@ -36,6 +36,12 @@ describe('website content integrity', () => {
     expect(PRODUCT_STATUSES.find((item) => item.id === 'sync')?.limitations.join(' ')).toContain(
       'exact candidate',
     );
+    const graph = PRODUCT_STATUSES.find((item) => item.id === 'continuous-graph');
+    expect(graph?.stage).toBe('preview');
+    expect(graph?.limitations.join(' ')).toContain('PostgreSQL 15–18 without SQL/PGQ');
+    expect(graph?.gateState).toContain('stable qualification pending');
+    expect(EVIDENCE.find((item) => item.id === 'graph-portable-local')?.value).toBe('15–18 · local');
+    expect(EVIDENCE.find((item) => item.id === 'graph-pg19')?.value).toBe('Beta 3 fixture');
   });
 
   it('records the documented specification and compatibility evidence', () => {

@@ -71,6 +71,54 @@ public sealed class BlueTuskConnectionPoolTests
         Assert.Equal(["ROLLBACK"], session.Commands);
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Open_session_without_protocol_boundary_is_discarded(bool pendingReset, bool failsWhileIdle)
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var lease = await pool.RentAsync(CancellationToken.None);
+        var session = Assert.IsType<FakePhysicalSession>(lease.Session);
+        lease.MarkDirty();
+        session.AtReadyBoundary = failsWhileIdle;
+        pool.Return(lease);
+        session.AtReadyBoundary = false;
+
+        var replacement = pendingReset
+            ? await pool.RentForCommandAsync(CancellationToken.None)
+            : await pool.RentAsync(CancellationToken.None);
+
+        Assert.NotSame(session, replacement.Session);
+        Assert.True(session.Disposed);
+        Assert.Empty(session.Commands);
+        Assert.Equal(2, pool.Statistics.Opened);
+        Assert.Equal(1, pool.Statistics.Discarded);
+        pool.Return(replacement);
+    }
+
+    [Theory]
+    [InlineData(BlueTuskTransactionStatus.InTransaction)]
+    [InlineData(BlueTuskTransactionStatus.FailedTransaction)]
+    public async Task Reusable_transaction_still_requires_rollback_before_deferred_reset(BlueTuskTransactionStatus status)
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var lease = await pool.RentAsync(CancellationToken.None);
+        var session = Assert.IsType<FakePhysicalSession>(lease.Session);
+        session.TransactionStatus = status;
+        lease.MarkDirty();
+        pool.Return(lease);
+
+        var next = await pool.RentForCommandAsync(CancellationToken.None);
+
+        Assert.Same(session, next.Session);
+        Assert.Equal(["ROLLBACK", "DISCARD ALL"], session.Commands);
+        Assert.False(next.RequiresReset);
+        Assert.Equal(0, pool.Statistics.Discarded);
+        pool.Return(next);
+    }
+
     [Fact]
     public async Task Reuse_rolls_back_resets_and_reports_statistics()
     {
@@ -760,6 +808,10 @@ public sealed class BlueTuskConnectionPoolTests
     private sealed class FakePhysicalSession : IBlueTuskPhysicalSession
     {
         public bool IsOpen => !Disposed;
+
+        public bool AtReadyBoundary { get; set; } = true;
+
+        public bool IsReusable => IsOpen && AtReadyBoundary;
 
         public BlueTuskHostEndpoint Endpoint { get; } = new("localhost", 5432);
 

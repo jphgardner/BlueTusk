@@ -155,7 +155,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 if (allowPendingReset &&
                     IsCurrent(pooledSession) &&
                     !IsExpired(pooledSession, includeIdleLifetime: true) &&
-                    pooledSession.Session.IsOpen &&
+                    pooledSession.Session.IsReusable &&
                     pooledSession.Session.TransactionStatus == BlueTuskTransactionStatus.Idle &&
                     TryLeaseCurrent(pooledSession))
                 {
@@ -287,7 +287,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 if (allowPendingReset &&
                     IsCurrent(pooledSession) &&
                     !IsExpired(pooledSession, includeIdleLifetime: true) &&
-                    pooledSession.Session.IsOpen &&
+                    pooledSession.Session.IsReusable &&
                     pooledSession.Session.TransactionStatus == BlueTuskTransactionStatus.Idle &&
                     TryLeaseCurrent(pooledSession))
                 {
@@ -562,7 +562,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         var now = _timeProvider.GetUtcNow();
         var discard = Volatile.Read(ref _disposed) != 0 ||
             session.Generation != Volatile.Read(ref _generation) ||
-            !session.Session.IsOpen ||
+            !session.Session.IsReusable ||
             IsExpired(session, includeIdleLifetime: false, now);
         PoolWaiter? recipient = null;
         if (!discard)
@@ -649,7 +649,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             Interlocked.Decrement(ref _idle);
             if (Volatile.Read(ref _disposed) == 0 &&
                 fastSession.Generation == Volatile.Read(ref _generation) &&
-                fastSession.Session.IsOpen &&
+                fastSession.Session.IsReusable &&
                 !IsExpired(fastSession, includeIdleLifetime: true) &&
                 (allowPendingReset || !fastSession.RequiresReset) &&
                 fastSession.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
@@ -675,7 +675,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
                 Interlocked.Decrement(ref _idle);
                 if (pooledSession.Generation == _generation &&
-                    pooledSession.Session.IsOpen &&
+                    pooledSession.Session.IsReusable &&
                     !IsExpired(pooledSession, includeIdleLifetime: true) &&
                     (allowPendingReset || !pooledSession.RequiresReset) &&
                     pooledSession.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
@@ -969,7 +969,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         CancellationToken cancellationToken)
     {
         var session = pooledSession.Session;
-        if (!session.IsOpen)
+        if (!session.IsReusable)
         {
             return false;
         }
@@ -987,13 +987,13 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 _ = await session.ExecuteSimpleQueryAsync("ROLLBACK", cancellationToken).ConfigureAwait(false);
             }
 
-            if (!session.IsOpen || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
+            if (!session.IsReusable || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
             {
                 return false;
             }
 
             _ = await session.ExecuteSimpleQueryAsync("DISCARD ALL", cancellationToken).ConfigureAwait(false);
-            if (!session.IsOpen || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
+            if (!session.IsReusable || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
             {
                 return false;
             }
@@ -1015,7 +1015,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
     private static bool ResetAndValidate(BlueTuskPooledSession pooledSession)
     {
         var session = pooledSession.Session;
-        if (!session.IsOpen)
+        if (!session.IsReusable)
         {
             return false;
         }
@@ -1033,13 +1033,13 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 _ = session.ExecuteSimpleQuery("ROLLBACK");
             }
 
-            if (!session.IsOpen || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
+            if (!session.IsReusable || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
             {
                 return false;
             }
 
             _ = session.ExecuteSimpleQuery("DISCARD ALL");
-            if (!session.IsOpen || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
+            if (!session.IsReusable || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
             {
                 return false;
             }

@@ -199,6 +199,64 @@
       ],
       "title": "Streams spool completion failures",
       "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "Compare sustained pool waiters with Provider queue latency and active leases during recovery.",
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 40 },
+      "id": 13,
+      "targets": [
+        {
+          "expr": "sum by (job) (bluetusk_pool_waiters)",
+          "legendFormat": "{{job}} waiters",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (job) (bluetusk_pool_leases)",
+          "legendFormat": "{{job}} leases",
+          "refId": "B"
+        }
+      ],
+      "title": "Provider pool waiters and leases",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "Discarded physical sessions and completed resets per second. A backend interruption can cause a short discard spike while subsequent commands recover.",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 40 },
+      "id": 14,
+      "targets": [
+        {
+          "expr": "sum by (job) (rate(bluetusk_pool_discards_total[$__rate_interval]))",
+          "legendFormat": "{{job}} discards",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (job) (rate(bluetusk_pool_resets_total[$__rate_interval]))",
+          "legendFormat": "{{job}} resets",
+          "refId": "B"
+        }
+      ],
+      "title": "Provider session discards and resets",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "Server-side resume token validation outcomes. Compare with Live clients and gateway request rates to investigate repeated reconnects.",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 40 },
+      "id": 15,
+      "targets": [
+        {
+          "expr": "sum by (job, bluetusk_live_resume_outcome) (rate(bluetusk_live_resume_validations_total[$__rate_interval]))",
+          "legendFormat": "{{job}} {{bluetusk_live_resume_outcome}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Live resume token outcomes",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -222,5 +280,5 @@
   "timezone": "browser",
   "title": "BlueTusk V1 Production",
   "uid": "bluetusk-v1-production",
-  "version": 2
+  "version": 3
 }

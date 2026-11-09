@@ -52,6 +52,9 @@
     <Project Path="src/BlueTusk.Events.Streams/BlueTusk.Events.Streams.csproj" />
     <Project Path="src/BlueTusk.Events/BlueTusk.Events.csproj" />
   </Folder>
+  <Folder Name="/Events/Samples/">
+    <Project Path="samples/BlueTusk.Events.RecoverableOutbox/BlueTusk.Events.RecoverableOutbox.csproj" />
+  </Folder>
   <Folder Name="/Events/Tests/">
     <Project Path="tests/BlueTusk.Events.NativeAotSmoke/BlueTusk.Events.NativeAotSmoke.csproj" />
     <Project Path="tests/BlueTusk.Events.Tests/BlueTusk.Events.Tests.csproj" />

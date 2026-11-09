@@ -17,6 +17,13 @@ const string mutationPolicy = "DashboardPreview.Mutate";
 const string graphExecutionPolicy = "DashboardPreview.GraphExecute";
 
 var builder = WebApplication.CreateSlimBuilder(args);
+var demoDeploymentCount = builder.Configuration.GetValue<int>("BlueTusk:Dashboard:DemoDeploymentCount");
+ArgumentOutOfRangeException.ThrowIfNegative(demoDeploymentCount);
+ArgumentOutOfRangeException.ThrowIfGreaterThan(demoDeploymentCount, 10_000);
+if (demoDeploymentCount != 0 && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException("Generated deployment inventory is available only in Development.");
+}
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -50,8 +57,15 @@ builder.Services.AddSingleton<IControlPlaneSyncQueryService>(
     services => services.GetRequiredService<DashboardPublicPreviewQueries>());
 builder.Services.AddSingleton<IControlPlaneLiveQueryService>(
     services => services.GetRequiredService<DashboardPublicPreviewQueries>());
-builder.Services.AddSingleton<IControlPlaneFleetQueryService>(
-    services => services.GetRequiredService<DashboardPublicPreviewQueries>());
+if (demoDeploymentCount > 0)
+{
+    builder.Services.AddSingleton(await DashboardDemoInventory.CreateAsync(demoDeploymentCount));
+}
+else
+{
+    builder.Services.AddSingleton<IControlPlaneFleetQueryService>(
+        services => services.GetRequiredService<DashboardPublicPreviewQueries>());
+}
 
 var graphConnectionString = builder.Configuration["BlueTusk:Dashboard:GraphConnectionString"] ??
     Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_CONNECTION_STRING");
@@ -116,7 +130,8 @@ app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
 app.MapGet("/preview", () => Results.Ok(new
 {
     release = "1.1.0-rc.2",
-    mode = "read-only public preview",
+    mode = demoDeploymentCount > 0 ? "read-only local demonstration" : "read-only public preview",
+    generatedDeploymentCount = demoDeploymentCount,
     mutationsEnabled = false,
     graph = new
     {
@@ -128,8 +143,9 @@ app.MapGet("/preview", () => Results.Ok(new
 }));
 app.MapBlueTuskDashboard(options =>
 {
-    options.BrandLabel = "Public preview";
+    options.BrandLabel = demoDeploymentCount > 0 ? "Local demonstration" : "Public preview";
     options.DataProvenanceNotice =
+        demoDeploymentCount > 0 ? "Local demonstration: generated deployment inventory in memory. These are sample deployments, not your ERP or production infrastructure. Operations are disabled." :
         "Live data boundary: Continuous Graph executes the Kubernetes topology in PostgreSQL. " +
         "Streams, Sync, Live, and managed-deployment telemetry are not connected to this public environment, " +
         "so those inventories are intentionally empty.";

@@ -84,7 +84,7 @@ Use this index to find the canonical HTML documentation. The complete curated gu
 - [Enable operator actions](https://bluetusk.io/documentation/real-time/control-plane-operations): Turn on audited operator actions: pause, resume, rebuild and fleet operations.
 - [Real-time operations](https://bluetusk.io/documentation/real-time/operations): Runbook for restarts, crashes, failover, WAL growth, restores and rebuilds of the real-time products.
 - [Manage deployments with Kubernetes](https://bluetusk.io/documentation/real-time/control-plane-kubernetes): Install and use the BlueTusk Kubernetes operator.
-- [Keep graph query results current](https://bluetusk.io/documentation/real-time/continuous-graph): Keep a bounded SQL/PGQ result current with incremental updates and authoritative repair.
+- [Keep graph query results current](https://bluetusk.io/documentation/real-time/continuous-graph): Keep a bounded graph result current with scoped PostgreSQL queries, durable replay, and full repair when needed.
 
 ## Extensions
 
@@ -92,7 +92,7 @@ Use this index to find the canonical HTML documentation. The complete curated gu
 
 ## Graph
 
-- [Query a PostgreSQL property graph](https://bluetusk.io/documentation/graph/sql-pgq): Define a PostgreSQL property graph, run a safe GRAPH_TABLE query, and inspect or map it from .NET.
+- [Query connected data with BlueTusk Graphs](https://bluetusk.io/documentation/graph/sql-pgq): Run typed EF graph queries over existing PostgreSQL tables and opt in to native SQL/PGQ where supported.
 
 ## Operations
 

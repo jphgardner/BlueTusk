@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using BlueTusk.Protocol;
 
 namespace BlueTusk.Client;
@@ -37,7 +38,9 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
     public int FetchSize { get; }
 
-    internal bool SyncSent { get; }
+    internal bool SyncSent { get; private set; }
+
+    internal void MarkSyncSent() => SyncSent = true;
 
     public string? CommandTag { get; private set; }
 
@@ -140,10 +143,9 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         {
             return CancelAndAbortAsync(cancellationToken);
         }
-        catch
+        catch (Exception exception)
         {
-            _session.AbortPortal(this);
-            throw;
+            return AbortAndThrowAsync(exception);
         }
     }
 
@@ -185,16 +187,15 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
     private async ValueTask<BlueTuskPortalRow?> CancelAndAbortAsync(
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await _session!.CancelAsync(CancellationToken.None).ConfigureAwait(false);
-        }
-        finally
-        {
-            await _session!.AbortPortalAsync(this).ConfigureAwait(false);
-        }
-
+        await _session!.CancelPortalAsync(this).ConfigureAwait(false);
         throw new OperationCanceledException(cancellationToken);
+    }
+
+    private async ValueTask<BlueTuskPortalRow?> AbortAndThrowAsync(Exception exception)
+    {
+        await _session!.AbortPortalAsync(this).ConfigureAwait(false);
+        ExceptionDispatchInfo.Capture(exception).Throw();
+        return null;
     }
 
     internal void SetCommandTag(string commandTag) => CommandTag = commandTag;
@@ -213,7 +214,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         _currentRow = null;
         try
         {
-            row?.Finish();
+            if (!_completed) { row?.Finish(); }
         }
         finally
         {
@@ -240,20 +241,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
         var row = _currentRow;
         _currentRow = null;
-        try
-        {
-            if (row is not null)
-            {
-                await row.FinishAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-        }
-        finally
-        {
-            if (!_completed)
-            {
-                await session.AbortPortalAsync(this).ConfigureAwait(false);
-            }
-        }
+        await session.DisposePortalAsync(this, row).ConfigureAwait(false);
 
         if (row is not null)
         {

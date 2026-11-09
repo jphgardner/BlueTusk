@@ -165,12 +165,15 @@ What happens when resuming is not possible:
 | --- | --- | --- |
 | Token older than `ResumeTokenLifetime` (30 min) | `ResumeTokenExpired`, HTTP 409 | Drops the token, reconnects, receives a full result. |
 | Events after the token were pruned | `ReplayUnavailable`, HTTP 409 | Same. |
-| Token signed by an unknown key, tampered, or for another subscription | `InvalidResumeToken`, HTTP 400 | Stops with `phase: "faulted"`. |
+| Correctly signed token belongs to a different subscription identity, such as a replica with its own replay sequence | SSE HTTP 409 after authorization | Drops the token and requests a full result for the authorized subscription. |
+| Token is malformed, tampered, or signed by an unknown key | `InvalidResumeToken`, HTTP 400 | Stops with `phase: "faulted"`. |
 | Server restarted | Replay continues; a `ResultReset` (`ServerRestart`) follows | Applies the reset. |
 
 A resume token is not a saved result. A new page that only has a stored token
 still needs a full result; the client handles that by requiring an
 `InitialResult` or `ResultReset` before it accepts deltas.
+The SSE retry resolves and authorizes the requested subscription again. A token
+for a different identity cannot replay its events on the new subscription.
 
 ## Batching on the client
 

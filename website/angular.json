@@ -31,7 +31,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/tailwind.css", "src/styles.scss"]
+            "styles": ["src/brand.css", "src/tailwind.css", "src/styles.scss", "src/brand-site.scss"]
           },
           "configurations": {
             "production": {

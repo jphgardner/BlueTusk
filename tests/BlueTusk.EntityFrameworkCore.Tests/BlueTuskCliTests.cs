@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text.Json;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.Tool;
@@ -43,6 +45,108 @@ public sealed class BlueTuskCliTests
             output,
             error));
         Assert.Contains("1 to 120", error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("package", "1.1.0-rc.2.local.1", false, false, 0, "All restored BlueTusk dependencies", null)]
+    [InlineData("package", "1.1.0-rc.1", false, false, 1, "Pin the candidate version",
+        "dotnet restore --configfile ./NuGet.Config --force")]
+    [InlineData("project", "1.1.0-rc.2.local.1", false, false, 1, "Restore against the candidate feed", null)]
+    [InlineData("package", "1.1.0-rc.2.local.1", true, false, 1, "wrong SHA-256", null)]
+    [InlineData("package", "1.1.0-rc.2.local.1", false, true, 1, "different NuGet content hash", null)]
+    public void Doctor_checks_the_local_manifest_and_restored_project(
+        string dependencyType,
+        string resolvedVersion,
+        bool changeArchive,
+        bool changeRestoredHash,
+        int expectedExitCode,
+        string expectedMessage,
+        string? expectedCommandHint)
+    {
+        const string candidateVersion = "1.1.0-rc.2.local.1";
+        var directory = Directory.CreateTempSubdirectory("bluetusk-doctor-");
+        try
+        {
+            var archiveName = $"BlueTusk.Data.{candidateVersion}.nupkg";
+            var feed = directory.CreateSubdirectory("feed");
+            var archivePath = Path.Combine(feed.FullName, archiveName);
+            byte[] content = [1, 2, 3];
+            File.WriteAllBytes(archivePath, content);
+            var manifest = Path.Combine(directory.FullName, "sha256.json");
+            File.WriteAllText(manifest, JsonSerializer.Serialize(new
+            {
+                schemaVersion = 1,
+                sourceCommit = new string('a', 40),
+                packageVersion = candidateVersion,
+                archives = new[]
+                {
+                    new { path = $"feed/{archiveName}", sha256 = Convert.ToHexString(SHA256.HashData(content)) },
+                },
+            }));
+            if (changeArchive)
+            {
+                File.WriteAllBytes(archivePath, [1, 2, 4]);
+            }
+
+            var assets = Path.Combine(directory.FullName, "project.assets.json");
+            byte[] restoredContent = changeRestoredHash ? [1, 2, 4] : content;
+            var sha512 = Convert.ToBase64String(SHA512.HashData(restoredContent));
+            File.WriteAllText(assets, JsonSerializer.Serialize(new
+            {
+                libraries = new Dictionary<string, object>
+                {
+                    [$"BlueTusk.Data/{resolvedVersion}"] = new { type = dependencyType, sha512 },
+                },
+            }));
+            using var output = new StringWriter();
+            using var error = new StringWriter();
+            var exitCode = BlueTuskCli.Run(
+                ["doctor", "--local-only", "--package-manifest", manifest, "--project-assets", assets, "--json"],
+                output,
+                error);
+
+            Assert.Equal(expectedExitCode, exitCode);
+            Assert.Equal(string.Empty, error.ToString());
+            using var report = JsonDocument.Parse(output.ToString());
+            Assert.Equal(1, report.RootElement.GetProperty("schemaVersion").GetInt32());
+            Assert.Equal(expectedExitCode == 0 ? "ready" : "not-ready",
+                report.RootElement.GetProperty("status").GetString());
+
+            var checks = report.RootElement.GetProperty("checks").EnumerateArray().ToArray();
+            var check = Assert.Single(checks, item =>
+                item.GetProperty("Name").GetString() == (changeArchive ? "package-manifest" : "project-assets"));
+            Assert.Equal(expectedExitCode == 0 ? "pass" : "fail", check.GetProperty("status").GetString());
+            Assert.Contains(expectedMessage, check.GetProperty("Message").GetString(), StringComparison.Ordinal);
+            if (expectedCommandHint is null)
+            {
+                Assert.All(checks, item => Assert.False(item.TryGetProperty("commandHint", out _)));
+            }
+            else
+            {
+                Assert.Equal(expectedCommandHint, check.GetProperty("commandHint").GetString());
+            }
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Doctor_does_not_print_credential_fragments_from_connection_errors()
+    {
+        const string secret = "credential-fragment-123";
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+        var result = BlueTuskCli.Run(
+            ["doctor", "--connection", $"Host=localhost;Port={secret}", "--json"],
+            output,
+            error);
+
+        Assert.Equal(1, result);
+        Assert.Contains("supported option names", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(secret, output.ToString(), StringComparison.Ordinal);
+        Assert.Equal(string.Empty, error.ToString());
     }
 
     [Fact]

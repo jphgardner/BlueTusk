@@ -2,24 +2,24 @@
 @use './app/docs/docs-hub.page';
 
 :root {
-  --bg: #0c1324;
-  --bg-deep: #070d1f;
-  --surface-low: #11182a;
-  --surface: #151d31;
-  --surface-high: #20283b;
-  --line: #2c384d;
-  --line-soft: rgba(139, 145, 153, 0.22);
-  --text: #dce1fb;
-  --muted: #a8b2c4;
-  --dim: #728096;
-  --primary: #9acbfb;
-  --primary-strong: #4f9edb;
-  --cyan: #4cd7f6;
-  --green: #53e0a2;
-  --amber: #f2c46d;
+  --bg: var(--bt-canvas);
+  --bg-deep: var(--bt-deep);
+  --surface-low: var(--bt-deep);
+  --surface: var(--bt-panel);
+  --surface-high: var(--bt-raised);
+  --line: var(--bt-line);
+  --line-soft: var(--bt-line-soft);
+  --text: var(--bt-ink);
+  --muted: var(--bt-secondary);
+  --dim: var(--bt-muted);
+  --primary: var(--bt-blue);
+  --primary-strong: var(--bt-blue);
+  --accent-color: var(--bt-accent);
+  --green: var(--bt-green);
+  --amber: var(--bt-amber);
   --purple: #ddb7ff;
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+  --font-sans: var(--bt-font);
+  --font-mono: var(--bt-mono);
 }
 
 html {
@@ -29,8 +29,8 @@ html {
     (
       color: (
         theme-type: dark,
-        primary: mat.$azure-palette,
-        tertiary: mat.$cyan-palette,
+        primary: mat.$blue-palette,
+        tertiary: mat.$violet-palette,
       ),
       typography: Inter,
       density: -1,
@@ -49,8 +49,8 @@ body {
   color: var(--text);
   background-color: var(--bg);
   background-image:
-    linear-gradient(rgba(51, 103, 145, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(51, 103, 145, 0.045) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--bt-ink) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--bt-ink) 3%, transparent) 1px, transparent 1px);
   background-size: 24px 24px;
   font-family: var(--font-sans);
   color-scheme: dark;
@@ -68,12 +68,12 @@ a {
 }
 
 ::selection {
-  color: var(--cyan);
-  background: rgba(76, 215, 246, 0.22);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 22%, transparent);
 }
 
 :focus-visible {
-  outline: 2px solid var(--cyan);
+  outline: 2px solid var(--accent-color);
   outline-offset: 3px;
 }
 
@@ -89,7 +89,7 @@ a {
   top: 0;
   width: 100%;
   border-bottom: 1px solid var(--line-soft);
-  background: rgba(7, 13, 31, 0.86);
+  background: color-mix(in srgb, var(--bt-deep) 91%, transparent);
   backdrop-filter: blur(16px);
 }
 
@@ -106,7 +106,7 @@ a {
   flex: 0 0 auto;
   align-items: center;
   gap: 9px;
-  color: var(--primary);
+  color: var(--text);
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.035em;
@@ -116,7 +116,7 @@ a {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  filter: drop-shadow(0 0 10px rgba(76, 215, 246, 0.16));
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent-color) 16%, transparent));
 }
 
 .desktop-nav {
@@ -144,7 +144,7 @@ a {
   bottom: 0;
   left: 0;
   height: 2px;
-  background: var(--cyan);
+  background: var(--accent-color);
   content: '';
   opacity: 0;
   transform: scaleX(0.35);
@@ -153,7 +153,7 @@ a {
 
 .desktop-nav a:hover,
 .desktop-nav a.active {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .desktop-nav a.active::after {
@@ -175,7 +175,7 @@ a {
 }
 
 .topbar-actions .mat-mdc-icon-button:hover {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .github-link {
@@ -196,10 +196,9 @@ a {
 .topbar-cta.mat-mdc-unelevated-button,
 .primary-action.mat-mdc-unelevated-button {
   min-height: 38px;
-  border-radius: 4px;
-  color: #c9e3ff;
-  background: #336791;
-  box-shadow: 0 0 15px rgba(154, 203, 251, 0.18);
+  border-radius: 8px;
+  color: var(--bt-on-action);
+  background: var(--bt-action);
   font-weight: 700;
 }
 
@@ -211,7 +210,7 @@ a {
 
 .topbar-cta.mat-mdc-unelevated-button:hover,
 .primary-action.mat-mdc-unelevated-button:hover {
-  background: #3e79a8;
+  background: var(--bt-action-hover);
 }
 
 .mobile-menu-trigger {
@@ -234,7 +233,7 @@ a {
   width: min(100%, 440px);
   height: 100%;
   overflow: hidden;
-  border-left: 1px solid rgba(76, 215, 246, 0.24);
+  border-left: 1px solid color-mix(in srgb, var(--accent-color) 24%, transparent);
   background: #0b1325;
   box-shadow: -24px 0 70px rgba(0, 0, 0, 0.42);
 }
@@ -254,7 +253,7 @@ a {
 }
 
 .mobile-nav-sheet > header span {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -291,13 +290,13 @@ a {
 
 .mobile-nav-sheet > nav > a:hover,
 .mobile-nav-sheet > nav > a.active {
-  border-color: rgba(76, 215, 246, 0.2);
+  border-color: color-mix(in srgb, var(--accent-color) 20%, transparent);
   color: var(--text);
-  background: rgba(76, 215, 246, 0.06);
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
 }
 
 .mobile-nav-sheet > nav > a > mat-icon:first-child {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .mobile-nav-sheet > nav > a > mat-icon:last-child {
@@ -345,7 +344,7 @@ a {
   align-items: center;
   gap: 5px;
   min-height: 44px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 12px;
 }
 
@@ -364,7 +363,7 @@ a {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 12%, rgba(54, 132, 191, 0.14), transparent 38%),
+    radial-gradient(circle at 50% 12%, color-mix(in srgb, var(--bt-accent) 12%, transparent), transparent 38%),
     linear-gradient(to bottom, rgba(51, 103, 145, 0.05), transparent 70%);
   pointer-events: none;
 }
@@ -387,7 +386,7 @@ a {
 .section-heading-split > div > span,
 .evidence-header > div > span,
 .community-section > div > span {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
@@ -399,17 +398,17 @@ a {
   align-items: center;
   gap: 8px;
   padding: 7px 10px;
-  border: 1px solid rgba(76, 215, 246, 0.18);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 18%, transparent);
   border-radius: 3px;
-  background: rgba(76, 215, 246, 0.045);
+  background: color-mix(in srgb, var(--accent-color) 4.5%, transparent);
 }
 
 .release-label span {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--cyan);
-  box-shadow: 0 0 9px var(--cyan);
+  background: var(--accent-color);
+  box-shadow: 0 0 9px var(--accent-color);
 }
 
 .hero h1 {
@@ -422,7 +421,7 @@ a {
 }
 
 .hero h1 em {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-style: normal;
 }
 
@@ -453,12 +452,12 @@ a {
   border-color: rgba(154, 203, 251, 0.2);
   border-radius: 4px;
   color: var(--text);
-  background: rgba(25, 31, 49, 0.66);
+  background: color-mix(in srgb, var(--bt-panel) 72%, transparent);
 }
 
 .secondary-action.mat-mdc-outlined-button:hover {
-  border-color: rgba(76, 215, 246, 0.7);
-  color: var(--cyan);
+  border-color: color-mix(in srgb, var(--accent-color) 70%, transparent);
+  color: var(--accent-color);
 }
 
 .architecture-wrap,
@@ -489,13 +488,13 @@ a {
   border: 1px solid rgba(139, 145, 153, 0.28);
   border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 0 44px rgba(76, 215, 246, 0.075);
+  box-shadow: 0 0 44px color-mix(in srgb, var(--accent-color) 7.5%, transparent);
 }
 
 .architecture-frame img {
   display: block;
   width: 100%;
-  border: 1px solid rgba(76, 215, 246, 0.08);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 8%, transparent);
   border-radius: 5px;
   background: #061127;
 }
@@ -592,12 +591,12 @@ a {
   right: 0;
   width: 90px;
   height: 90px;
-  background: radial-gradient(circle at top right, rgba(76, 215, 246, 0.08), transparent 70%);
+  background: radial-gradient(circle at top right, color-mix(in srgb, var(--accent-color) 8%, transparent), transparent 70%);
   content: '';
 }
 
 .ecosystem-card:hover {
-  border-color: rgba(76, 215, 246, 0.48);
+  border-color: color-mix(in srgb, var(--accent-color) 48%, transparent);
   background: #151e33;
   transform: translateY(-2px);
 }
@@ -612,7 +611,7 @@ a {
 .card-topline > mat-icon {
   width: 28px;
   height: 28px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 28px;
 }
 
@@ -687,7 +686,7 @@ a {
   gap: 6px;
   margin-top: auto;
   padding-top: 18px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
@@ -773,8 +772,8 @@ a {
 }
 
 .code-tabs .mat-button-toggle-checked {
-  color: var(--cyan);
-  background: rgba(76, 215, 246, 0.09);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 9%, transparent);
 }
 
 .code-filebar {
@@ -815,7 +814,7 @@ a {
 }
 
 .code-filebar button:hover {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .code-filebar mat-icon {
@@ -867,7 +866,7 @@ a {
   position: relative;
   min-height: 330px;
   padding: 30px;
-  background: rgba(12, 19, 36, 0.96);
+  background: color-mix(in srgb, var(--bt-canvas) 96%, transparent);
 }
 
 .capability-index {
@@ -880,7 +879,7 @@ a {
 }
 
 .capability-grid article > small {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -1084,7 +1083,7 @@ a {
   margin-top: 12px;
   margin-bottom: 92px;
   padding: 56px;
-  border: 1px solid rgba(76, 215, 246, 0.22);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 22%, transparent);
   border-radius: 7px;
   background: linear-gradient(90deg, rgba(51, 103, 145, 0.12), transparent 65%), var(--surface-low);
 }
@@ -1150,12 +1149,12 @@ a {
   font-family: var(--font-mono);
   font-size: 10px;
   text-decoration: underline;
-  text-decoration-color: rgba(76, 215, 246, 0.28);
+  text-decoration-color: color-mix(in srgb, var(--accent-color) 28%, transparent);
   text-underline-offset: 3px;
 }
 
 .footer-links a:hover {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .search-backdrop {
@@ -1172,7 +1171,7 @@ a {
 .search-panel {
   width: min(100%, 660px);
   padding: 18px;
-  border: 1px solid rgba(76, 215, 246, 0.25);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 25%, transparent);
   border-radius: 7px;
   background: #0d1528;
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45);
@@ -1187,7 +1186,7 @@ a {
 
 .search-input-row > mat-icon {
   margin-top: 17px;
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .search-field {
@@ -1228,7 +1227,7 @@ a {
 }
 
 .search-results > a > mat-icon:first-child {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .search-results > a > mat-icon:last-child {
@@ -1274,9 +1273,9 @@ a {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 78% 45%, rgba(76, 215, 246, 0.08), transparent 32%),
-    linear-gradient(rgba(51, 103, 145, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(51, 103, 145, 0.035) 1px, transparent 1px);
+    radial-gradient(circle at 78% 45%, color-mix(in srgb, var(--accent-color) 8%, transparent), transparent 32%),
+    linear-gradient(color-mix(in srgb, var(--bt-ink) 2.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--bt-ink) 2.5%, transparent) 1px, transparent 1px);
   background-size:
     auto,
     24px 24px,
@@ -1303,7 +1302,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -1314,13 +1313,13 @@ a {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--cyan);
-  box-shadow: 0 0 8px var(--cyan);
+  background: var(--accent-color);
+  box-shadow: 0 0 8px var(--accent-color);
 }
 
 .detail-signal {
   padding: 30px;
-  border: 1px solid rgba(76, 215, 246, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 20%, transparent);
   border-radius: 7px;
   background: rgba(12, 19, 36, 0.84);
 }
@@ -1328,7 +1327,7 @@ a {
 .detail-signal-icon mat-icon {
   width: 32px;
   height: 32px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 32px;
 }
 
@@ -1356,8 +1355,8 @@ a {
   display: block;
   width: 36%;
   height: 1px;
-  background: var(--cyan);
-  box-shadow: 0 0 8px var(--cyan);
+  background: var(--accent-color);
+  box-shadow: 0 0 8px var(--accent-color);
 }
 
 .detail-signal > span {
@@ -1369,7 +1368,7 @@ a {
 .detail-card {
   min-height: 370px;
   padding: 32px;
-  background: rgba(12, 19, 36, 0.96);
+  background: color-mix(in srgb, var(--bt-canvas) 96%, transparent);
 }
 
 .detail-card-index {
@@ -1409,7 +1408,7 @@ a {
 .detail-card li mat-icon {
   width: 14px;
   height: 14px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 14px;
 }
 
@@ -1446,7 +1445,7 @@ a {
   padding: 14px 18px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  color: var(--cyan);
+  color: var(--accent-color);
   background: var(--bg-deep);
   font-family: var(--font-mono);
   font-size: 11px;
@@ -1478,7 +1477,7 @@ a {
   z-index: -1;
   inset: 0 -10vw;
   background:
-    radial-gradient(circle at 76% 40%, rgba(76, 215, 246, 0.1), transparent 30%),
+    radial-gradient(circle at 76% 40%, color-mix(in srgb, var(--accent-color) 10%, transparent), transparent 30%),
     linear-gradient(to bottom, rgba(51, 103, 145, 0.04), transparent);
   content: '';
 }
@@ -1493,7 +1492,7 @@ a {
 }
 
 .page-hero h1 em {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-style: normal;
 }
 
@@ -1532,7 +1531,7 @@ a {
 .docs-category > header span,
 .result-summary > span,
 .security-report > div > span {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 650;
@@ -1562,7 +1561,7 @@ a {
 .registry-diagram,
 .contribution-terminal {
   padding: 28px;
-  border: 1px solid rgba(76, 215, 246, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 20%, transparent);
   border-radius: 7px;
   background: rgba(9, 17, 35, 0.88);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
@@ -1573,7 +1572,7 @@ a {
 .registry-diagram small,
 .contribution-terminal > small,
 .control-panel > small {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.1em;
@@ -1597,7 +1596,7 @@ a {
   align-items: center;
   gap: 7px;
   margin-top: 18px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 650;
@@ -1682,12 +1681,12 @@ a {
 
 .layer-explorer > nav button.active {
   color: var(--text);
-  background: rgba(76, 215, 246, 0.08);
-  box-shadow: inset 2px 0 var(--cyan);
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+  box-shadow: inset 2px 0 var(--accent-color);
 }
 
 .layer-explorer > nav button > mat-icon:first-child {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .layer-explorer button strong,
@@ -1711,13 +1710,13 @@ a {
   min-height: 430px;
   padding: 44px;
   background:
-    radial-gradient(circle at 85% 12%, rgba(76, 215, 246, 0.08), transparent 28%), var(--bg-deep);
+    radial-gradient(circle at 85% 12%, color-mix(in srgb, var(--accent-color) 8%, transparent), transparent 28%), var(--bg-deep);
 }
 
 .layer-detail > mat-icon {
   width: 38px;
   height: 38px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 38px;
 }
 
@@ -1796,7 +1795,7 @@ a {
 
 .journey-grid article > mat-icon,
 .schema-grid article > mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .journey-grid small,
@@ -1834,9 +1833,9 @@ a {
 
 .journey-flow span {
   padding: 5px 7px;
-  border: 1px solid rgba(76, 215, 246, 0.18);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 18%, transparent);
   border-radius: 2px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
 }
@@ -1892,9 +1891,9 @@ a {
   gap: 1px;
   margin-bottom: 92px;
   overflow: hidden;
-  border: 1px solid rgba(76, 215, 246, 0.16);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 16%, transparent);
   border-radius: 7px;
-  background: rgba(76, 215, 246, 0.16);
+  background: color-mix(in srgb, var(--accent-color) 16%, transparent);
 }
 
 .crosscut-band article {
@@ -1906,11 +1905,11 @@ a {
 
 .crosscut-band mat-icon {
   flex: 0 0 auto;
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .crosscut-band small {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
 }
@@ -1964,7 +1963,7 @@ a {
 }
 
 .terminal-card code b {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-weight: 500;
 }
 
@@ -2003,7 +2002,7 @@ a {
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 50%;
-  color: var(--cyan);
+  color: var(--accent-color);
   background: var(--bg-deep);
   content: '›';
 }
@@ -2016,7 +2015,7 @@ a {
 
 .stack-flow mat-icon {
   margin-top: 32px;
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .stack-flow strong {
@@ -2087,7 +2086,7 @@ a {
 }
 
 .destination-matrix strong mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .filter-input {
@@ -2134,7 +2133,7 @@ a {
 }
 
 .type-grid small {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
 }
@@ -2172,7 +2171,7 @@ a {
 }
 
 .feature-rail > article > mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .feature-rail small {
@@ -2198,7 +2197,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
   font-weight: 650;
@@ -2289,7 +2288,7 @@ a {
 }
 
 .mini-console button:hover {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .mini-console button mat-icon {
@@ -2335,7 +2334,7 @@ a {
 }
 
 .metric-cluster > div strong {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 25px;
 }
@@ -2376,8 +2375,8 @@ a {
 }
 
 .segmented-tabs button.active {
-  color: var(--cyan);
-  background: rgba(76, 215, 246, 0.1);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 10%, transparent);
 }
 
 .tab-feature {
@@ -2393,17 +2392,17 @@ a {
 .tab-feature > div:first-child {
   padding: 42px;
   border-right: 1px solid var(--line-soft);
-  background: radial-gradient(circle at 15% 5%, rgba(76, 215, 246, 0.09), transparent 35%);
+  background: radial-gradient(circle at 15% 5%, color-mix(in srgb, var(--accent-color) 9%, transparent), transparent 35%);
 }
 
 .tab-feature > div:first-child mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .tab-feature > div:first-child small {
   display: block;
   margin-top: 44px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
 }
@@ -2526,7 +2525,7 @@ a {
 }
 
 .lane-map article > mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .lane-map small,
@@ -2579,13 +2578,13 @@ a {
 
 .sequence-track button.active {
   color: var(--text);
-  background: rgba(76, 215, 246, 0.08);
-  box-shadow: inset 0 -2px var(--cyan);
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+  box-shadow: inset 0 -2px var(--accent-color);
 }
 
 .sequence-track button > span {
   grid-row: 1 / 3;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
 }
 
@@ -2602,18 +2601,18 @@ a {
   gap: 28px;
   padding: 46px;
   background:
-    radial-gradient(circle at 88% 40%, rgba(76, 215, 246, 0.08), transparent 28%), var(--bg-deep);
+    radial-gradient(circle at 88% 40%, color-mix(in srgb, var(--accent-color) 8%, transparent), transparent 28%), var(--bg-deep);
 }
 
 .sequence-explorer > article > mat-icon {
   width: 38px;
   height: 38px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 38px;
 }
 
 .sequence-explorer article small {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
 }
@@ -2633,9 +2632,9 @@ a {
   display: inline-block;
   margin-top: 20px;
   padding: 8px 10px;
-  border-left: 2px solid var(--cyan);
+  border-left: 2px solid var(--accent-color);
   color: var(--text);
-  background: rgba(76, 215, 246, 0.06);
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
   font-family: var(--font-mono);
   font-size: 9px;
 }
@@ -2665,7 +2664,7 @@ a {
 .timeline-flow mat-icon {
   display: block;
   margin-top: 35px;
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .timeline-flow h3 {
@@ -2738,7 +2737,7 @@ a {
 }
 
 .control-panel article mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .control-panel article strong,
@@ -2779,7 +2778,7 @@ a {
 
 .registry-diagram > div > mat-icon {
   grid-row: 1 / 3;
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .registry-diagram span {
@@ -2826,9 +2825,9 @@ a {
 }
 
 .filter-bar button.active {
-  border-color: rgba(76, 215, 246, 0.2);
-  color: var(--cyan);
-  background: rgba(76, 215, 246, 0.08);
+  border-color: color-mix(in srgb, var(--accent-color) 20%, transparent);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
 }
 
 .extension-grid article {
@@ -2845,10 +2844,10 @@ a {
   width: 42px;
   height: 42px;
   place-items: center;
-  border: 1px solid rgba(76, 215, 246, 0.28);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 28%, transparent);
   border-radius: 4px;
-  color: var(--cyan);
-  background: rgba(76, 215, 246, 0.06);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 700;
@@ -2892,13 +2891,13 @@ a {
   background:
     radial-gradient(
       circle at 50% 50%,
-      rgba(76, 215, 246, 0.16),
+      color-mix(in srgb, var(--accent-color) 16%, transparent),
       transparent 4%,
       transparent 24%,
-      rgba(76, 215, 246, 0.04) 24.5%,
+      color-mix(in srgb, var(--accent-color) 4%, transparent) 24.5%,
       transparent 25%
     ),
-    linear-gradient(30deg, transparent 49.8%, rgba(76, 215, 246, 0.16) 50%, transparent 50.2%),
+    linear-gradient(30deg, transparent 49.8%, color-mix(in srgb, var(--accent-color) 16%, transparent) 50%, transparent 50.2%),
     linear-gradient(-28deg, transparent 49.8%, rgba(221, 183, 255, 0.14) 50%, transparent 50.2%),
     var(--bg-deep);
 }
@@ -2909,10 +2908,10 @@ a {
   height: 18px;
   border: 3px solid var(--bg-deep);
   border-radius: 50%;
-  background: var(--cyan);
+  background: var(--accent-color);
   box-shadow:
-    0 0 0 1px var(--cyan),
-    0 0 16px rgba(76, 215, 246, 0.7);
+    0 0 0 1px var(--accent-color),
+    0 0 16px color-mix(in srgb, var(--accent-color) 70%, transparent);
 }
 
 .node-field i:nth-child(1) {
@@ -2976,8 +2975,9 @@ a {
   background: var(--surface-low);
 }
 
-.comparison-grid > article[data-tone='continuous'] {
-  border-color: rgba(221, 183, 255, 0.18);
+.comparison-grid > article[data-tone='portable'] {
+  border-color: color-mix(in srgb, var(--accent-color) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent-color) 6%, var(--surface-low));
 }
 
 .comparison-grid header {
@@ -2987,7 +2987,7 @@ a {
 }
 
 .comparison-grid header > mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .comparison-grid header small {
@@ -3030,7 +3030,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
 }
@@ -3048,52 +3048,36 @@ a {
   gap: 70px;
 }
 
-.version-rail {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1px;
-  overflow: hidden;
-  border: 1px solid var(--line-soft);
-  border-radius: 6px;
-  background: var(--line-soft);
+#graph-availability {
+  scroll-margin-top: 84px;
 }
 
-.version-rail article {
-  min-width: 0;
-  padding: 24px 12px;
-  background: var(--surface-low);
-  text-align: center;
+.graph-release-note {
+  padding: 1.4rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent-color);
+  border-radius: 8px;
+  background: var(--surface);
 }
 
-.version-rail article.enabled {
-  background: rgba(76, 215, 246, 0.08);
+.graph-release-note h3 {
+  margin: 0.8rem 0 0.5rem;
 }
 
-.version-rail strong,
-.version-rail span,
-.version-rail small {
-  display: block;
+.graph-release-note p {
+  margin: 0.4rem 0 0.9rem;
+  color: var(--muted);
+  line-height: 1.6;
 }
 
-.version-rail strong {
-  color: var(--dim);
-  font-family: var(--font-mono);
-  font-size: 24px;
+.graph-release-note a {
+  color: var(--accent-color);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
-.version-rail .enabled strong {
-  color: var(--cyan);
-}
-
-.version-rail span {
-  margin-top: 12px;
-  font-size: 10px;
-}
-
-.version-rail small {
-  margin-top: 6px;
-  color: var(--dim);
-  font-size: 8px;
+.guide-graph-note {
+  margin: 1.2rem 0;
 }
 
 .sample-workloads > div {
@@ -3254,7 +3238,7 @@ a {
 .evidence-records > article > strong {
   display: block;
   margin-top: 38px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 28px;
 }
@@ -3285,7 +3269,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .evidence-records footer mat-icon {
@@ -3366,7 +3350,7 @@ a {
 }
 
 .contribution-terminal > div span {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 9px;
 }
@@ -3398,7 +3382,7 @@ a {
 }
 
 .contribution-areas article > mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .contribution-areas small {
@@ -3424,7 +3408,7 @@ a {
   align-items: center;
   gap: 5px;
   margin-top: 15px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
 }
@@ -3525,14 +3509,14 @@ a {
   max-width: 740px;
   margin: 34px auto 0;
   padding: 15px 17px;
-  border: 1px solid rgba(76, 215, 246, 0.28);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 28%, transparent);
   border-radius: 6px;
   background: var(--bg-deep);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
 }
 
 .docs-search mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .docs-search input {
@@ -3563,7 +3547,7 @@ a {
 }
 
 .docs-stats strong {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 12px;
 }
 
@@ -3603,8 +3587,8 @@ a {
 }
 
 .docs-categories a:hover {
-  color: var(--cyan);
-  background: rgba(76, 215, 246, 0.06);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
 }
 
 .docs-categories a span {
@@ -3660,7 +3644,7 @@ a {
 }
 
 .guide-list > a:hover {
-  border-color: rgba(76, 215, 246, 0.35);
+  border-color: color-mix(in srgb, var(--accent-color) 35%, transparent);
   background: var(--surface);
 }
 
@@ -3685,7 +3669,7 @@ a {
 }
 
 .guide-list > a > mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .result-summary {
@@ -3722,7 +3706,7 @@ a {
   align-items: center;
   gap: 7px;
   margin-bottom: 28px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 10px;
 }
@@ -3764,7 +3748,7 @@ a {
 }
 
 .guide-sidebar .guide-section-index a.active {
-  border-color: rgba(76, 215, 246, 0.16);
+  border-color: color-mix(in srgb, var(--accent-color) 16%, transparent);
 }
 
 .guide-sidebar .guide-section-index mat-icon {
@@ -3780,9 +3764,9 @@ a {
 .guide-sidebar nav a.active,
 .guide-sidebar nav a:hover,
 .guide-toc nav a:hover {
-  border-left-color: var(--cyan);
-  color: var(--cyan);
-  background: rgba(76, 215, 246, 0.05);
+  border-left-color: var(--accent-color);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 5%, transparent);
 }
 
 .guide-toc nav a.nested {
@@ -3794,7 +3778,7 @@ a {
   align-items: center;
   gap: 5px;
   margin-top: 24px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
 }
@@ -3819,7 +3803,7 @@ a {
   align-items: center;
   gap: 4px;
   min-width: 0;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 9px;
 }
@@ -3882,7 +3866,7 @@ a {
   align-items: center;
   gap: 6px;
   margin-top: 10px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 10px;
 }
@@ -3919,7 +3903,7 @@ a {
 }
 
 .guide-orientation small {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
   letter-spacing: 0.08em;
@@ -3950,15 +3934,15 @@ a {
 }
 
 .guide-orientation nav a:hover {
-  border-color: rgba(76, 215, 246, 0.35);
-  color: var(--cyan);
+  border-color: color-mix(in srgb, var(--accent-color) 35%, transparent);
+  color: var(--accent-color);
 }
 
 .guide-orientation nav mat-icon {
   flex: 0 0 auto;
   width: 14px;
   height: 14px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 14px;
 }
 
@@ -3994,9 +3978,9 @@ a {
 }
 
 .guide-content a {
-  color: var(--cyan);
+  color: var(--accent-color);
   text-decoration: underline;
-  text-decoration-color: rgba(76, 215, 246, 0.35);
+  text-decoration-color: color-mix(in srgb, var(--accent-color) 35%, transparent);
   text-underline-offset: 3px;
 }
 
@@ -4094,7 +4078,7 @@ a {
 }
 
 .guide-content th {
-  color: var(--cyan);
+  color: var(--accent-color);
   background: var(--surface);
   font-family: var(--font-mono);
   font-size: 9px;
@@ -4108,10 +4092,10 @@ a {
 .guide-journey {
   margin: 0 0 48px;
   padding: 24px;
-  border: 1px solid rgba(76, 215, 246, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 20%, transparent);
   border-radius: 7px;
   background:
-    linear-gradient(135deg, rgba(76, 215, 246, 0.07), transparent 45%), var(--surface-low);
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 7%, transparent), transparent 45%), var(--surface-low);
 }
 
 .guide-journey > header {
@@ -4123,7 +4107,7 @@ a {
 
 .guide-journey > header small,
 .guide-journey li small {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 8px;
   letter-spacing: 0.08em;
@@ -4135,7 +4119,7 @@ a {
 }
 
 .guide-journey > header > mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .guide-journey > p {
@@ -4175,8 +4159,8 @@ a {
 }
 
 .guide-journey li.current > span {
-  border-color: var(--cyan);
-  background: rgba(76, 215, 246, 0.08);
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
 }
 
 .guide-journey li small,
@@ -4197,12 +4181,12 @@ a {
   align-self: center;
   width: 16px;
   height: 16px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 16px;
 }
 
 .guide-journey li > a:hover {
-  border-color: rgba(76, 215, 246, 0.35);
+  border-color: color-mix(in srgb, var(--accent-color) 35%, transparent);
 }
 
 .guide-mobile-index,
@@ -4243,7 +4227,7 @@ a {
 
 .guide-mobile-index summary small,
 .guide-mobile-toc summary span {
-  color: var(--cyan);
+  color: var(--accent-color);
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.08em;
@@ -4289,16 +4273,16 @@ a {
 .guide-mobile-index nav a.active,
 .guide-mobile-index nav a:hover,
 .guide-mobile-toc nav a:hover {
-  color: var(--cyan);
-  background: rgba(76, 215, 246, 0.06);
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
 }
 
 .guide-content blockquote {
   margin: 24px 0;
   padding: 4px 20px;
-  border-left: 2px solid var(--cyan);
+  border-left: 2px solid var(--accent-color);
   color: var(--muted);
-  background: rgba(76, 215, 246, 0.05);
+  background: color-mix(in srgb, var(--accent-color) 5%, transparent);
 }
 
 .guide-pagination {
@@ -4333,7 +4317,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 11px;
 }
 
@@ -4352,7 +4336,7 @@ a {
 }
 
 .not-found > mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .not-found p {
@@ -4360,7 +4344,7 @@ a {
 }
 
 .not-found a {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 /* Home role selector */
@@ -4398,12 +4382,12 @@ a {
 
 .path-layout nav button.active {
   color: var(--text);
-  background: rgba(76, 215, 246, 0.07);
-  box-shadow: inset 2px 0 var(--cyan);
+  background: color-mix(in srgb, var(--accent-color) 7%, transparent);
+  box-shadow: inset 2px 0 var(--accent-color);
 }
 
 .path-layout nav mat-icon {
-  color: var(--cyan);
+  color: var(--accent-color);
 }
 
 .path-layout nav small,
@@ -4429,7 +4413,7 @@ a {
   justify-content: center;
   padding: 52px;
   background:
-    radial-gradient(circle at 83% 16%, rgba(76, 215, 246, 0.1), transparent 30%), var(--bg-deep);
+    radial-gradient(circle at 83% 16%, color-mix(in srgb, var(--accent-color) 10%, transparent), transparent 30%), var(--bg-deep);
 }
 
 .path-layout > article > span {
@@ -4444,7 +4428,7 @@ a {
 .path-layout > article > mat-icon {
   width: 36px;
   height: 36px;
-  color: var(--cyan);
+  color: var(--accent-color);
   font-size: 36px;
 }
 
@@ -4652,7 +4636,7 @@ a {
     border: 1px solid var(--line-soft);
     border-radius: 6px;
     background:
-      linear-gradient(110deg, rgba(76, 215, 246, 0.055), transparent 55%), var(--surface-low);
+      linear-gradient(110deg, color-mix(in srgb, var(--accent-color) 5.5%, transparent), transparent 55%), var(--surface-low);
   }
 
   .architecture-mobile-flow li:not(:last-child)::after {
@@ -4660,14 +4644,14 @@ a {
     z-index: 1;
     right: 24px;
     bottom: -14px;
-    color: var(--cyan);
+    color: var(--accent-color);
     font-size: 18px;
     content: '↓';
   }
 
   .architecture-mobile-flow span {
     grid-column: 1 / -1;
-    color: var(--cyan);
+    color: var(--accent-color);
     font-family: var(--font-mono);
     font-size: 9px;
     letter-spacing: 0.08em;

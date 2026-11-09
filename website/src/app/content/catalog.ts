@@ -4,6 +4,13 @@ export const REPOSITORY_URL = 'https://github.com/jphgardner/BlueTusk';
 export const sourceUrl = (path: string, anchor = '') =>
   `${REPOSITORY_URL}/blob/main/${path}${anchor ? `#${anchor}` : ''}`;
 
+export const GRAPH_COMPATIBILITY = {
+  portableTarget: 'PostgreSQL 15–18',
+  portableStatus: 'Locally verified',
+  nativeFixture: 'PostgreSQL 19 Beta 3',
+  nativeStatus: 'Historical preview',
+} as const;
+
 export const PRODUCT_STATUSES: readonly ProductStatus[] = [
   {
     id: 'provider',
@@ -69,11 +76,14 @@ export const PRODUCT_STATUSES: readonly ProductStatus[] = [
     id: 'continuous-graph',
     name: 'Continuous Graph',
     version: '1.1.0-rc.1',
-    stage: 'gate-passed',
-    packageState: 'Public NuGet RC',
-    gateState: 'PostgreSQL 19 GA and 24-hour test pending',
+    stage: 'preview',
+    packageState: 'Public RC contains the native preview',
+    gateState: 'Portable compatibility passed locally; stable qualification pending',
     evidence: ['Three safe update modes', 'Full-query repair fallback', 'Metrics for each mode'],
-    limitations: ['Stable support waits for PostgreSQL 19 GA and the exact 24-hour test'],
+    limitations: [
+      `Portable mode passed local checks on ${GRAPH_COMPATIBILITY.portableTarget} without SQL/PGQ. The public RC predates it`,
+      `Native preview evidence covers the pinned ${GRAPH_COMPATIBILITY.nativeFixture} fixture`,
+    ],
   },
 ] as const;
 
@@ -328,16 +338,29 @@ export const EVIDENCE: readonly EvidenceRecord[] = [
     sourcePath: 'docs/live/reference.md',
   },
   {
+    id: 'graph-portable-local',
+    subsystem: 'Graph',
+    kind: 'compatibility',
+    status: 'passed',
+    value: '15–18 · local',
+    label: 'Portable Graph compatibility',
+    detail:
+      '63 graph tests passed without skips on each major version. Topology and Fraud passed with locally built packages. Local Windows and Linux benchmarks met the full-query target and missed the scoped-update target. Exact-candidate performance and 24-hour recovery remain open.',
+    asOf: '2026-11-09',
+    sourcePath: 'docs/releases/release-tracks.md',
+    anchor: 'portable-graph-status',
+  },
+  {
     id: 'graph-pg19',
     subsystem: 'Graph',
     kind: 'compatibility',
     status: 'guarded',
-    value: 'GA pending',
-    label: 'PostgreSQL 19 graph queries',
+    value: 'Beta 3 fixture',
+    label: 'Native SQL/PGQ preview',
     detail:
-      'Beta 3 is tested from a fixed container image. Stable support waits for the final PostgreSQL 19 release.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/postgresql19-programme.md',
+      'Historical testing uses a pinned PostgreSQL 19 Beta 3 image. Beta 4 removed SQL/PGQ.',
+    asOf: '2026-09-24',
+    sourcePath: 'docs/graph/README.md',
   },
   {
     id: 'operational-approvals',
@@ -478,10 +501,10 @@ export const SITE_SEARCH: readonly SearchRecord[] = [
   },
   {
     title: 'Graph',
-    description: 'Capability-guarded SQL/PGQ and incremental graph results.',
+    description: 'Portable EF graph queries verified locally on PostgreSQL 15–18, plus optional native SQL/PGQ.',
     route: '/graph',
     group: 'Products',
-    keywords: 'property graph fraud network reactive',
+    keywords: 'property graph portable sql/pgq joins postgres fraud network reactive',
   },
   {
     title: 'Engineering evidence',

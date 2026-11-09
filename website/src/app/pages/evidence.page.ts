@@ -1,5 +1,5 @@
 import { Component, computed, effect, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { EVIDENCE, PRODUCT_STATUSES, sourceUrl } from '../content/catalog';
@@ -8,11 +8,11 @@ import { StatusPill } from '../shared/technical-ui';
 
 @Component({
   selector: 'bt-evidence-page',
-  imports: [FormsModule, MatIconModule, StatusPill],
+  imports: [FormsModule, MatIconModule, RouterLink, StatusPill],
   template: `
     <section class="page-hero evidence-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> EVIDENCE SNAPSHOT · 29 AUG 2026</span>
+        <span class="eyebrow"><i class="live-dot"></i> RELEASE EVIDENCE</span>
         <h1>Separate what passed from <em>what remains open.</em></h1>
         <p>
           This page records package publication, compatibility, tests, security, performance, and
@@ -155,8 +155,10 @@ import { StatusPill } from '../shared/technical-ui';
           Streams and Sync stable promotion still require their exact long-running recovery gates.
         </li>
         <li>
-          SQL/PGQ remains capability guarded until PostgreSQL 19 GA and exact-candidate evidence
-          pass.
+          The <a routerLink="/graph" fragment="graph-availability">portable Graph path</a> passed local
+          checks on PostgreSQL 15–18. Local Windows and Linux benchmarks passed the full-query target
+          and missed the scoped-update target. The exact candidate still needs to pass both performance
+          targets and complete 24-hour recovery. Native preview evidence covers the pinned Beta 3 fixture.
         </li>
       </ul>
     </section>

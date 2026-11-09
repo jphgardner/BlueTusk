@@ -1,15 +1,17 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using BlueTusk.Data;
 
 namespace BlueTusk.Tool;
 
-internal static class BlueTuskDoctor
+internal static partial class BlueTuskDoctor
 {
     private const int MinimumSupportedPostgreSqlVersion = 150000;
     private static readonly JsonSerializerOptions ReportJsonOptions = new()
     {
         WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     public static async Task<int> RunAsync(
@@ -23,30 +25,60 @@ internal static class BlueTuskDoctor
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(options.TimeoutSeconds));
         var checks = new List<DoctorCheck>();
 
+        if (options.PackageManifest is not null)
+        {
+            await CheckCandidateAsync(options.PackageManifest, options.ProjectAssets, checks, timeout.Token)
+                .ConfigureAwait(false);
+        }
+
+        if (options.ConnectionString is not null)
+        {
+            await CheckServerAsync(options, options.ConnectionString, checks, timeout.Token).ConfigureAwait(false);
+        }
+
+        WriteReport(options, checks, output);
+        if (checks.Any(static check => check.Status is DoctorCheckStatus.Fail))
+        {
+            if (!options.Json)
+            {
+                error.WriteLine("BlueTusk doctor found production-blocking failures.");
+            }
+
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private static async Task CheckServerAsync(
+        DoctorOptions options,
+        string connectionString,
+        List<DoctorCheck> checks,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            await using var connection = new BlueTuskConnection(options.ConnectionString);
-            await connection.OpenAsync(timeout.Token).ConfigureAwait(false);
+            await using var connection = new BlueTuskConnection(connectionString);
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
             var versionNumber = await ScalarAsync<int>(
                 connection,
                 "SELECT current_setting('server_version_num')::int4",
-                timeout.Token).ConfigureAwait(false);
-            var database = await ScalarAsync<string>(
-                connection,
-                "SELECT current_database()",
-                timeout.Token).ConfigureAwait(false);
+                cancellationToken).ConfigureAwait(false);
+            var supported = versionNumber >= MinimumSupportedPostgreSqlVersion;
             Add(
                 checks,
-                versionNumber >= MinimumSupportedPostgreSqlVersion,
+                supported,
                 "postgresql",
-                versionNumber >= MinimumSupportedPostgreSqlVersion ? DoctorCheckStatus.Pass : DoctorCheckStatus.Fail,
-                $"PostgreSQL {FormatVersion(versionNumber)}; database '{database}'.");
+                DoctorCheckStatus.Pass,
+                supported
+                    ? $"PostgreSQL {FormatVersion(versionNumber)}; the minimum supported version is met."
+                    : $"PostgreSQL {FormatVersion(versionNumber)}; upgrade to a supported server (15 or later).");
 
             var tls = await ScalarAsync<bool>(
                 connection,
                 "SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()",
-                timeout.Token).ConfigureAwait(false);
+                cancellationToken).ConfigureAwait(false);
             Add(
                 checks,
                 tls || !options.RequireTls,
@@ -63,15 +95,15 @@ internal static class BlueTuskDoctor
                 var walLevel = await ScalarAsync<string>(
                     connection,
                     "SELECT current_setting('wal_level')",
-                    timeout.Token).ConfigureAwait(false);
+                    cancellationToken).ConfigureAwait(false);
                 var maxSlots = await ScalarAsync<int>(
                     connection,
                     "SELECT current_setting('max_replication_slots')::int4",
-                    timeout.Token).ConfigureAwait(false);
+                    cancellationToken).ConfigureAwait(false);
                 var maxSenders = await ScalarAsync<int>(
                     connection,
                     "SELECT current_setting('max_wal_senders')::int4",
-                    timeout.Token).ConfigureAwait(false);
+                    cancellationToken).ConfigureAwait(false);
                 var streamsReady = string.Equals(walLevel, "logical", StringComparison.Ordinal) &&
                     maxSlots > 0 &&
                     maxSenders > 0;
@@ -80,7 +112,8 @@ internal static class BlueTuskDoctor
                     streamsReady,
                     "streams",
                     streamsReady ? DoctorCheckStatus.Pass : DoctorCheckStatus.Fail,
-                    $"wal_level={walLevel}; max_replication_slots={maxSlots}; max_wal_senders={maxSenders}.");
+                    $"wal_level={walLevel}; max_replication_slots={maxSlots}; max_wal_senders={maxSenders}." +
+                    (streamsReady ? "" : " Enable logical WAL and configure at least one slot and sender."));
             }
 
             foreach (var extension in options.RequiredExtensions)
@@ -88,7 +121,7 @@ internal static class BlueTuskDoctor
                 var installed = await ExtensionInstalledAsync(
                     connection,
                     extension,
-                    timeout.Token).ConfigureAwait(false);
+                    cancellationToken).ConfigureAwait(false);
                 Add(
                     checks,
                     installed,
@@ -96,15 +129,18 @@ internal static class BlueTuskDoctor
                     installed ? DoctorCheckStatus.Pass : DoctorCheckStatus.Fail,
                     installed
                         ? $"Extension '{extension}' is installed."
-                        : $"Required extension '{extension}' is not installed.");
+                        : $"Ask the database administrator to install the required extension '{extension}'.");
             }
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
+            // Transport and PostgreSQL errors can contain individual credentials or connection fields.
             checks.Add(new DoctorCheck(
                 "connection",
                 DoctorCheckStatus.Fail,
-                Sanitize(exception.Message, options.ConnectionString)));
+                exception is ArgumentException or FormatException
+                    ? "Check the connection string syntax and supported option names."
+                    : "Could not complete the PostgreSQL checks. Check reachability, credentials, TLS and role permissions."));
         }
         catch (OperationCanceledException)
         {
@@ -113,19 +149,6 @@ internal static class BlueTuskDoctor
                 DoctorCheckStatus.Fail,
                 $"Diagnostics exceeded the {options.TimeoutSeconds}-second timeout."));
         }
-
-        WriteReport(options, checks, output);
-        if (checks.Any(static check => check.Status is DoctorCheckStatus.Fail))
-        {
-            if (!options.Json)
-            {
-                error.WriteLine("BlueTusk doctor found production-blocking failures.");
-            }
-
-            return 1;
-        }
-
-        return 0;
     }
 
     private static async ValueTask<T> ScalarAsync<T>(
@@ -191,6 +214,7 @@ internal static class BlueTuskDoctor
                         check.Name,
                         status = check.Status.ToString().ToLowerInvariant(),
                         check.Message,
+                        commandHint = check.CommandHint,
                     }),
                 },
                 ReportJsonOptions));
@@ -218,11 +242,6 @@ internal static class BlueTuskDoctor
                 CultureInfo.InvariantCulture,
                 $"{versionNumber / 10000}.{versionNumber / 100 % 100}.{versionNumber % 100}");
 
-    private static string Sanitize(string message, string connectionString) =>
-        string.IsNullOrEmpty(connectionString)
-            ? message
-            : message.Replace(connectionString, "<connection string redacted>", StringComparison.Ordinal);
-
     private enum DoctorCheckStatus
     {
         Pass,
@@ -230,5 +249,9 @@ internal static class BlueTuskDoctor
         Fail,
     }
 
-    private sealed record DoctorCheck(string Name, DoctorCheckStatus Status, string Message);
+    private sealed record DoctorCheck(
+        string Name,
+        DoctorCheckStatus Status,
+        string Message,
+        string? CommandHint = null);
 }

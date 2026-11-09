@@ -85,6 +85,9 @@ public static class BlueTuskLiveServerSentEventsEndpointRouteBuilderExtensions
             {
                 LiveSubscriptionConnectStatus.QuotaExceeded => StatusCodes.Status429TooManyRequests,
                 LiveSubscriptionConnectStatus.NotStarted => StatusCodes.Status503ServiceUnavailable,
+                LiveSubscriptionConnectStatus.InvalidResumeToken
+                    when exception.TokenStatus is LiveResumeTokenValidationStatus.IdentityMismatch
+                    => StatusCodes.Status409Conflict,
                 LiveSubscriptionConnectStatus.InvalidResumeToken => StatusCodes.Status400BadRequest,
                 LiveSubscriptionConnectStatus.ResumeTokenExpired or
                 LiveSubscriptionConnectStatus.ReplayUnavailable or

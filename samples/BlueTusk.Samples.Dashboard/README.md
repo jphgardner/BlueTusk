@@ -22,6 +22,22 @@ dotnet run --project samples/BlueTusk.Samples.Dashboard `
   --urls http://127.0.0.1:5217
 ```
 
+To review filtered deployment pages with generated data, explicitly enable the
+development-only demonstration inventory:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+dotnet run --project samples/BlueTusk.Samples.Dashboard -- `
+  --urls http://127.0.0.1:5217 `
+  --BlueTusk:Dashboard:DemoDeploymentCount 10000
+```
+
+Open `http://127.0.0.1:5217/bluetusk/deployments?pageSize=25`. The banner identifies
+the data as generated local inventory. It is held only in memory, remains
+read-only, and is rejected outside Development. Omit the setting to retain the
+public preview's empty telemetry inventories. The count must be from 0 through
+10,000.
+
 Open `http://127.0.0.1:5217/bluetusk/overview`. A provenance banner states the
 public preview's exact live-data boundary. Empty product sections are reported
 as not connected rather than healthy, while the graph page exposes live
@@ -52,7 +68,8 @@ security scope is accepted. The graph database initializer, collector RBAC,
 workload isolation, and network policies are in
 `deploy/kubernetes/dashboard-preview/graph-database.yaml` and
 `deploy/kubernetes/dashboard-preview/kubernetes.yaml`. This remains explicit
-non-gating preview evidence until PostgreSQL 19 GA is available.
+non-gating preview evidence until a supported SQL/PGQ-capable server has passed
+the separate Graph qualification track. PostgreSQL 19 GA alone does not qualify it.
 
 The `/preview` endpoint reports the graph execution mode, database identity,
 data classification, and registered fingerprint. Both health

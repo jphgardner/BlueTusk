@@ -1,14 +1,19 @@
+using System.Net;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using BlueTusk.Dashboard;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace BlueTusk.ControlPlane.Tests;
 
@@ -18,13 +23,179 @@ public sealed class DashboardEndpointTests
         new(JsonSerializerDefaults.Web);
 
     [Fact]
+    public async Task Deployment_inventory_real_browser_checks_mobile_keyboard_and_no_script_navigation()
+    {
+        var browserModule = Environment.GetEnvironmentVariable("BLUETUSK_DASHBOARD_BROWSER_MODULE");
+        if (string.IsNullOrWhiteSpace(browserModule))
+            throw Xunit.Sdk.SkipException.ForSkip("BLUETUSK_DASHBOARD_BROWSER_MODULE must identify an installed playwright-core module for browser qualification.");
+        var repository = new DirectoryInfo(AppContext.BaseDirectory);
+        while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "BlueTusk.slnx"))) repository = repository.Parent;
+        Assert.NotNull(repository);
+        var output = Path.Combine(repository.FullName, "artifacts", "erp-recovery", "dashboard-browser-" + Guid.NewGuid().ToString("N"));
+        var store = new FleetInventoryTestStore();
+        for (var index = 0; index < 10_000; index++) await store.PutAsync(FleetInventoryTestStore.Spec(index), 0);
+        await using var application = InventoryApplication(new ManagedDeploymentFleetQueryService(store));
+        await application.StartAsync(TestContext.Current.CancellationToken);
+        var start = new System.Diagnostics.ProcessStartInfo("node")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+        foreach (var argument in new[] { Path.Combine(repository.FullName, "eng", "test-dashboard-inventory-browser.mjs"),
+                     "--base-url", application.Urls.Single(), "--module", browserModule, "--output", output })
+            start.ArgumentList.Add(argument);
+        using var browser = System.Diagnostics.Process.Start(start)!;
+        var stdout = browser.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderr = browser.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        deadline.CancelAfter(TimeSpan.FromSeconds(60));
+        try
+        {
+            await browser.WaitForExitAsync(deadline.Token);
+            Assert.True(browser.ExitCode == 0, await stdout + await stderr);
+            using var result = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(output, "result.json"), deadline.Token));
+            Assert.True(result.RootElement.GetProperty("passed").GetBoolean());
+            Assert.Equal(5, result.RootElement.GetProperty("checks").GetArrayLength());
+        }
+        finally { if (!browser.HasExited) browser.Kill(entireProcessTree: true); }
+    }
+
+    [Fact]
+    public async Task Deployment_inventory_routes_are_bounded_authorized_and_use_direct_lookup()
+    {
+        var store = new FleetInventoryTestStore();
+        for (var index = 0; index < 10_000; index++) await store.PutAsync(FleetInventoryTestStore.Spec(index), 0);
+        await using var application = InventoryApplication(new ManagedDeploymentFleetQueryService(store));
+        await application.StartAsync(TestContext.Current.CancellationToken);
+        using var client = new HttpClient { BaseAddress = new Uri(application.Urls.Single()) };
+        string[] protectedRoutes = ["/operations/deployments", "/operations/deployments/deployment-000001",
+            "/operations/api/v1/fleet/deployments", "/operations/api/v1/fleet/deployments/deployment-000001"];
+        foreach (var path in protectedRoutes)
+        {
+            using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+        client.DefaultRequestHeaders.Add("X-Test-Role", "unprivileged");
+        foreach (var path in protectedRoutes)
+        {
+            using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+        Assert.Equal(0, store.PageReads);
+        Assert.Equal(0, store.DirectReads);
+        client.DefaultRequestHeaders.Remove("X-Test-Role");
+        client.DefaultRequestHeaders.Add("X-Test-Role", "reader");
+        var html = await client.GetStringAsync("/operations/deployments?tenant=tenant-a&pageSize=17", TestContext.Current.CancellationToken);
+        Assert.Equal(17, System.Text.RegularExpressions.Regex.Count(html, "<tr data-state="));
+        Assert.Contains("Next page", html, StringComparison.Ordinal);
+        Assert.Contains("after=deployment-000032", html, StringComparison.Ordinal);
+        Assert.Contains("On this page", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("vault-secret-name", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("private-value", html, StringComparison.Ordinal);
+
+        using var page = JsonDocument.Parse(await client.GetStringAsync(
+            "/operations/api/v1/fleet/deployments?tenant=tenant-a&pageSize=17", TestContext.Current.CancellationToken));
+        Assert.Equal(17, page.RootElement.GetProperty("data").GetProperty("deployments").GetArrayLength());
+        Assert.Equal("deployment-000032", page.RootElement.GetProperty("data").GetProperty("nextAfterDeploymentId").GetString());
+        using var next = JsonDocument.Parse(await client.GetStringAsync(
+            "/operations/api/v1/fleet/deployments?tenant=tenant-a&pageSize=17&after=deployment-000032", TestContext.Current.CancellationToken));
+        Assert.Equal("deployment-000034", next.RootElement.GetProperty("data").GetProperty("deployments")[0].GetProperty("deploymentId").GetString());
+        var pageReads = store.PageReads;
+        using var detail = await client.GetAsync("/operations/deployments/deployment-009999", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, detail.StatusCode);
+        using var apiDetail = JsonDocument.Parse(await client.GetStringAsync(
+            "/operations/api/v1/fleet/deployments/deployment-009999", TestContext.Current.CancellationToken));
+        Assert.Equal("deployment-009999", apiDetail.RootElement.GetProperty("data").GetProperty("deploymentId").GetString());
+        Assert.Equal(2, store.DirectReads);
+        Assert.Equal(pageReads, store.PageReads);
+        using var missing = await client.GetAsync("/operations/deployments/missing", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+
+        foreach (var bad in new[] { "pageSize=0", "pageSize=501", "pageSize=x", "state=unknown", "workloadKind=999", "after=%00", "tenant=&tenant=tenant-a" })
+        {
+            using var response = await client.GetAsync("/operations/api/v1/fleet/deployments?" + bad, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+        Assert.Equal(pageReads, store.PageReads);
+        var reflected = await client.GetStringAsync("/operations/deployments?prefix=" + Uri.EscapeDataString("\"><script>alert(1)</script>"),
+            TestContext.Current.CancellationToken);
+        Assert.DoesNotContain("<script>alert(1)</script>", reflected, StringComparison.Ordinal);
+        Assert.Contains("&lt;script&gt;", reflected, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Legacy_fleet_services_fail_explicitly_instead_of_silently_loading_the_complete_inventory()
+    {
+        var legacy = new LegacyFleetService();
+        await using var application = InventoryApplication(legacy);
+        await application.StartAsync(TestContext.Current.CancellationToken);
+        using var client = new HttpClient { BaseAddress = new Uri(application.Urls.Single()) };
+        client.DefaultRequestHeaders.Add("X-Test-Role", "reader");
+        foreach (var route in new[] { "/operations/deployments", "/operations/deployments/example",
+                     "/operations/api/v1/fleet/deployments", "/operations/api/v1/fleet/deployments/example" })
+        {
+            using var response = await client.GetAsync(route, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.NotImplemented, response.StatusCode);
+        }
+        Assert.Equal(0, legacy.OverviewReads);
+    }
+
+    private static WebApplication InventoryApplication(IControlPlaneFleetQueryService fleet)
+    {
+        var builder = WebApplication.CreateSlimBuilder();
+        builder.WebHost.UseSetting("urls", "http://127.0.0.1:0");
+        builder.Logging.ClearProviders();
+        builder.Services.AddAuthentication("InventoryTests")
+            .AddScheme<AuthenticationSchemeOptions, InventoryTestAuthentication>("InventoryTests", _ => { });
+        builder.Services.AddAuthorization(options => options.AddPolicy("inventory-read", policy => policy.RequireRole("reader")));
+        builder.Services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
+        builder.Services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
+        builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
+        builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(new FakeContinuousGraphQueryService());
+        builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(new FakeContinuousGraphExecutionService());
+        builder.Services.AddSingleton(fleet);
+        builder.Services.AddSingleton(new ControlPlaneOperationExecutor(new RoleControlPlaneAuthorizer(),
+            new RecordingAuditStore(), new RecordingOperationHandler()));
+        var application = builder.Build();
+        application.UseAuthentication();
+        application.UseAuthorization();
+        application.MapBlueTuskDashboard(options => { options.RoutePrefix = "/operations"; options.ReadAuthorizationPolicy = "inventory-read"; });
+        return application;
+    }
+
+    private sealed class LegacyFleetService : IControlPlaneFleetQueryService
+    {
+        public int OverviewReads { get; private set; }
+        public ValueTask<ControlPlaneFleetOverview> GetFleetOverviewAsync(CancellationToken cancellationToken = default)
+        {
+            OverviewReads++;
+            return ValueTask.FromResult(new ControlPlaneFleetOverview(DateTimeOffset.UtcNow, []));
+        }
+    }
+
+    private sealed class InventoryTestAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger, UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    {
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        {
+            if (!Request.Headers.TryGetValue("X-Test-Role", out var role)) return Task.FromResult(AuthenticateResult.NoResult());
+            var identity = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "inventory-test"),
+                new Claim(ClaimTypes.Role, role.ToString())], "InventoryTests");
+            return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), "InventoryTests")));
+        }
+    }
+
+    [Fact]
     public async Task Dashboard_maps_authorized_pages_and_HTML_encodes_inventory_values()
     {
         var builder = WebApplication.CreateSlimBuilder();
         var audit = new RecordingAuditStore();
         var handler = new RecordingOperationHandler();
+        var queries = new FakeQueryService();
         builder.Services.AddAuthorization();
-        builder.Services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
+        builder.Services.AddSingleton<IControlPlaneQueryService>(queries);
         builder.Services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
         builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
         builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
@@ -53,7 +224,7 @@ public sealed class DashboardEndpointTests
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
             .ToArray();
-        Assert.Equal(34, endpoints.Length);
+        Assert.Equal(37, endpoints.Length);
         Assert.All(
             endpoints,
             endpoint => Assert.Contains(
@@ -81,6 +252,16 @@ public sealed class DashboardEndpointTests
         Assert.DoesNotContain("<td><script>", html, StringComparison.Ordinal);
         Assert.Contains(">Missing<", html, StringComparison.Ordinal);
 
+        queries.EmitUnavailable = true;
+        var staleHtml = await InvokeHtmlAsync(sources, application.Services, context.User);
+        Assert.Contains("Instance availability", staleHtml, StringComparison.Ordinal);
+        Assert.Contains(">Stale<", staleHtml, StringComparison.Ordinal);
+        Assert.Contains(">Unavailable<", staleHtml, StringComparison.Ordinal);
+        Assert.Contains("Last successful observation", staleHtml, StringComparison.Ordinal);
+        Assert.Contains("&lt;offline&gt;", staleHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("All sources healthy", staleHtml, StringComparison.Ordinal);
+        queries.EmitUnavailable = false;
+
         var overview = Assert.Single(
             endpoints,
             endpoint => endpoint.RoutePattern.RawText == "/operations/overview");
@@ -90,6 +271,8 @@ public sealed class DashboardEndpointTests
             context.User);
         Assert.Contains("Operational overview", overviewHtml, StringComparison.Ordinal);
         Assert.Contains("Needs attention", overviewHtml, StringComparison.Ordinal);
+        Assert.Contains("Product coverage", overviewHtml, StringComparison.Ordinal);
+        Assert.Contains("src=\"/operations/assets/bluetusk-mark.png\"", overviewHtml, StringComparison.Ordinal);
         Assert.Contains("Production &lt;west&gt;", overviewHtml, StringComparison.Ordinal);
         Assert.Contains("Live source &lt;script&gt;alert(&#x27;no&#x27;)&lt;/script&gt;", overviewHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("<script>alert('no')</script>", overviewHtml, StringComparison.Ordinal);
@@ -505,12 +688,13 @@ public sealed class DashboardEndpointTests
 
     private sealed class FakeQueryService : IControlPlaneQueryService
     {
+        public bool EmitUnavailable { get; set; }
+
         public ValueTask<ControlPlaneOverview> GetOverviewAsync(
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return ValueTask.FromResult(
-                new ControlPlaneOverview(
+            var overview = new ControlPlaneOverview(
                     new DateTimeOffset(2026, 8, 3, 16, 0, 0, TimeSpan.Zero),
                     [new ControlPlaneSourceSnapshot(
                         "primary/fingerprint",
@@ -560,7 +744,26 @@ public sealed class DashboardEndpointTests
                             1,
                             true,
                             new DateTimeOffset(2026, 8, 3, 16, 1, 0, TimeSpan.Zero),
-                            2)])]));
+                            2)])]);
+            if (EmitUnavailable)
+            {
+                overview = overview with
+                {
+                    Sources = overview.Sources.Select(source => source with
+                    {
+                        IsStale = true,
+                        ObservedAt = overview.ObservedAt,
+                    }).ToArray(),
+                    Instances =
+                    [
+                        new("<script>", ControlPlaneInstanceAvailability.Stale,
+                            overview.ObservedAt.AddMinutes(1), overview.ObservedAt, "instance_timeout"),
+                        new("<offline>", ControlPlaneInstanceAvailability.Unavailable,
+                            overview.ObservedAt.AddMinutes(1), null, "instance_unavailable"),
+                    ],
+                };
+            }
+            return ValueTask.FromResult(overview);
         }
     }
 
@@ -749,6 +952,17 @@ public sealed class DashboardEndpointTests
     {
         private readonly string[] _deploymentIds =
             deploymentIds.Length == 0 ? ["<deployment>"] : deploymentIds;
+
+        public async ValueTask<ControlPlaneFleetOverview> GetDeploymentPageAsync(
+            ManagedDeploymentQuery query, CancellationToken cancellationToken = default)
+        {
+            query.Validate();
+            return await GetFleetOverviewAsync(cancellationToken);
+        }
+
+        public async ValueTask<ControlPlaneManagedDeploymentSnapshot?> GetDeploymentAsync(
+            string deploymentId, CancellationToken cancellationToken = default) =>
+            (await GetFleetOverviewAsync(cancellationToken)).Deployments.SingleOrDefault(item => item.DeploymentId == deploymentId);
 
         public ValueTask<ControlPlaneFleetOverview> GetFleetOverviewAsync(
             CancellationToken cancellationToken = default)

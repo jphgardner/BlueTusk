@@ -39,15 +39,17 @@ public sealed class EventStreamsDeliveryTests
     {
         await using var fixture = await EventDatabase.CreateAsync();
         var source = new ChangeSourceIdentity("system", "database", "slot", "publication");
-        var observer = new FailingAcknowledgmentObserver();
+        var observer = new FailingAcknowledgmentObserver(fixture);
         var processor = new PostgreSqlEventDeliveryProcessor(fixture.DataSource, fixture.Store,
             new EventOutboxChangeDecoder(fixture.Schema), "consumer", source);
         await using var delivery = Delivery(source, fixture.Schema, 1, 2, observer);
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await processor.ProcessAsync(delivery, fixture.HandleAsync));
         Assert.Equal(ChangeDeliveryState.Active, delivery.State);
         Assert.Equal(2, await fixture.EffectCountAsync());
-        Assert.Equal(new EventStreamsDeliveryResult(2, 0), await processor.ProcessAsync(delivery, fixture.HandleAsync));
-        Assert.Equal(ChangeDeliveryState.Acknowledged, delivery.State);
+        await delivery.DisposeAsync();
+        await using var replay = new ChangeTransactionDelivery(delivery.Transaction, observer);
+        Assert.Equal(new EventStreamsDeliveryResult(2, 0), await processor.ProcessAsync(replay, fixture.HandleAsync));
+        Assert.Equal(ChangeDeliveryState.Acknowledged, replay.State);
         Assert.Equal(2, await fixture.EffectCountAsync());
     }
 
@@ -295,19 +297,23 @@ public sealed class EventStreamsDeliveryTests
                 "event", "1", "2026-09-27 12:00:00+00", "\\x7b7d"))), observer);
     }
 
-    private sealed class FailingAcknowledgmentObserver : IChangeDeliveryObserver
+    private sealed class FailingAcknowledgmentObserver(EventDatabase? fixture = null) : IChangeDeliveryObserver
     {
         private bool _first = true;
 
-        public ValueTask AcknowledgeAsync(ChangeTransaction transaction, CancellationToken cancellationToken = default)
+        public async ValueTask AcknowledgeAsync(ChangeTransaction transaction, CancellationToken cancellationToken = default)
         {
+            // A separate connection can see the effects before source acknowledgment begins.
+            if (fixture is not null)
+            {
+                Assert.Equal(2, await fixture.EffectCountAsync());
+            }
+
             if (_first)
             {
                 _first = false;
                 throw new InvalidOperationException("Intentional failure after target commit.");
             }
-
-            return ValueTask.CompletedTask;
         }
 
         public ValueTask NackAsync(ChangeTransaction transaction, Exception? failure, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;

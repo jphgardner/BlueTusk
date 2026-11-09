@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { GRAPH_COMPATIBILITY } from '../content/catalog';
 
 interface CodeExample {
   id: string;
@@ -78,8 +79,8 @@ export class Home {
     {
       name: 'Graph',
       icon: 'share',
-      description: 'Query connected data and keep graph results updated as PostgreSQL changes.',
-      status: 'RC public · waits for PG 19',
+      description: `Query relationships and maintain results. Portable Graph passed local checks on ${GRAPH_COMPATIBILITY.portableTarget} without SQL/PGQ.`,
+      status: 'Locally verified · release pending',
       statusKind: 'graph',
       tone: 'purple',
       route: '/graph',
@@ -133,10 +134,10 @@ export class Home {
       icon: 'share',
       label: 'Connect the data',
       title: 'Start with Graph',
-      body: 'Query relationships inside PostgreSQL or keep graph results updated as data changes.',
+      body: 'Run typed graph queries over your existing PostgreSQL tables. See which versions passed local testing and what remains before release.',
       route: '/graph',
       action: 'Explore Graph',
-      proof: 'Waits for PostgreSQL 19 GA',
+      proof: `${GRAPH_COMPATIBILITY.portableTarget} verified locally`,
     },
   ] as const;
 

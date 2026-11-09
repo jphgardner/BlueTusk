@@ -151,6 +151,8 @@ export interface LiveClientOptions {
   readonly initialRetryDelayMs?: number;
   readonly maximumRetryDelayMs?: number;
   readonly retryJitter?: number;
+  /** Streaming time before a failure clears reconnect backoff. Default 30,000 ms. */
+  readonly healthyStreamDurationMs?: number;
   readonly random?: () => number;
   readonly onResumeToken?: (token: string | null) => void;
   /** Already available SSE frames per reduction/publication batch. Default 64; use 1 for per-event snapshots. */
@@ -398,8 +400,10 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
 
   async #run(signal: AbortSignal): Promise<void> {
     let attempt = 0;
+    let immediateResetAvailable = true;
     this.#setPhase("connecting");
     while (!signal.aborted) {
+      let streamStarted: number | undefined;
       try {
         const response = await this.#client.open(
           {
@@ -416,15 +420,14 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
         }
 
         if (response.status === 409 && this.#resumeToken !== undefined) {
+          try { await response.body?.cancel(); } catch { /* The response may already be closed. */ }
           this.#resumeToken = undefined;
           this.#requiresAuthoritative = true;
           this.#persistResumeToken(null);
           if (!this.#isCurrent(signal)) {
             return;
           }
-          attempt = 0;
-          this.#setPhase("reconnecting");
-          continue;
+          throw new LiveResetRequiredError();
         }
 
         if (!response.ok) {
@@ -438,7 +441,7 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
           throw new LiveProtocolError("BlueTusk Live response has no streaming body.");
         }
 
-        attempt = 0;
+        streamStarted = performance.now();
         this.#setPhase("live");
         for await (const frames of parseSseBatches(response.body, this.#client.maximumBatchEvents, signal)) {
           if (!this.#isCurrent(signal)) {
@@ -465,13 +468,22 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
           return;
         }
 
+        if (streamStarted !== undefined &&
+            performance.now() - streamStarted >= this.#client.healthyStreamDurationMs) {
+          attempt = 0;
+          immediateResetAvailable = true;
+        }
+
         this.#setState({
           ...this.#state,
           phase: "reconnecting",
           error: failure instanceof LiveResetRequiredError ? null : failure
         });
-        if (!(failure instanceof LiveResetRequiredError)) {
-          await this.#client.delay(attempt++, signal);
+        if (failure instanceof LiveResetRequiredError && immediateResetAvailable) {
+          immediateResetAvailable = false;
+        } else {
+          await this.#client.delay(attempt, signal);
+          attempt = Math.min(attempt + 1, 20);
         }
       }
     }
@@ -573,7 +585,7 @@ export class LiveQuery<TRow, TKey extends LiveKey, TParameters extends object> {
 export class BlueTuskLiveClient {
   readonly #options: Required<Pick<
     LiveClientOptions,
-    "endpoint" | "initialRetryDelayMs" | "maximumRetryDelayMs" | "retryJitter" | "random" | "maximumBatchEvents"
+    "endpoint" | "initialRetryDelayMs" | "maximumRetryDelayMs" | "retryJitter" | "random" | "maximumBatchEvents" | "healthyStreamDurationMs"
   >> & LiveClientOptions;
   readonly #fetch: typeof globalThis.fetch;
 
@@ -586,6 +598,10 @@ export class BlueTuskLiveClient {
     const maximumRetryDelayMs = options.maximumRetryDelayMs ?? 15_000;
     const retryJitter = options.retryJitter ?? 0.2;
     const maximumBatchEvents = options.maximumBatchEvents ?? 64;
+    const healthyStreamDurationMs = options.healthyStreamDurationMs ?? 30_000;
+    if (!Number.isFinite(healthyStreamDurationMs) || healthyStreamDurationMs <= 0) {
+      throw new RangeError("healthyStreamDurationMs must be finite and greater than zero.");
+    }
     if (!Number.isSafeInteger(maximumBatchEvents) || maximumBatchEvents < 1 || maximumBatchEvents > 1024) {
       throw new RangeError("maximumBatchEvents must be an integer from 1 through 1024.");
     }
@@ -616,12 +632,17 @@ export class BlueTuskLiveClient {
       maximumRetryDelayMs,
       retryJitter,
       maximumBatchEvents,
+      healthyStreamDurationMs,
       random: options.random ?? Math.random
     };
   }
 
   get maximumBatchEvents(): number {
     return this.#options.maximumBatchEvents;
+  }
+
+  get healthyStreamDurationMs(): number {
+    return this.#options.healthyStreamDurationMs;
   }
 
   createQuery<TRow, TKey extends LiveKey, TParameters extends object>(
@@ -677,7 +698,7 @@ export class BlueTuskLiveClient {
       this.#options.initialRetryDelayMs * (2 ** Math.min(attempt, 20))
     );
     const jitter = 1 + ((this.#options.random() * 2) - 1) * this.#options.retryJitter;
-    const milliseconds = Math.max(0, Math.round(base * jitter));
+    const milliseconds = Math.min(this.#options.maximumRetryDelayMs, Math.max(0, Math.round(base * jitter)));
     await abortableDelay(milliseconds, signal);
   }
 }

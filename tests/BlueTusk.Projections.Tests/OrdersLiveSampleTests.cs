@@ -190,8 +190,8 @@ public sealed class OrdersLiveSampleTests
 
     private static Process Start(ProjectionDatabase db, string publication, string slot, int port, string apiKey, int version = 1, Guid? recoveryId = null, Action<string>? log = null)
     {
-        var projectRoot = FindRoot();
-        var executable = Path.Combine(projectRoot, "samples", "BlueTusk.Projections.Orders.Live", "bin", "Release", "net10.0", "BlueTusk.Projections.Orders.Live.dll");
+        var executable = Environment.GetEnvironmentVariable("BLUETUSK_ORDERS_SAMPLE_DLL")
+            ?? Path.Combine(FindRoot(), "samples", "BlueTusk.Projections.Orders.Live", "bin", "Release", "net10.0", "BlueTusk.Projections.Orders.Live.dll");
         var start = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
         start.ArgumentList.Add(executable);
         start.Environment["BLUETUSK_SAMPLE_CONNECTION_STRING"] = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");

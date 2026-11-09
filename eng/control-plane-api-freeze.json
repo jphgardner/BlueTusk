@@ -9,7 +9,7 @@
     },
     {
       "path": "src/BlueTusk.ControlPlane/PublicAPI.Unshipped.txt",
-      "sha256": "120651d7d55abc77e2776b030fcb559e69e0d1d64ae986a4faf95f4d5372afca"
+      "sha256": "4336ecc3bc233ff9a9e71d7ecbf54fc2724f628a0520337c1c93e51318ed1ce4"
     },
     {
       "path": "src/BlueTusk.ControlPlane.Kubernetes/PublicAPI.Shipped.txt",

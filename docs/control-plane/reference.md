@@ -50,6 +50,25 @@ var queries = new PostgreSqlControlPlaneQueryService(
 
 ## Dashboard
 
+PostgreSQL inventory refreshes isolate failures per configured instance.
+`PostgreSqlControlPlaneQueryOptions.InstanceTimeout` defaults to five seconds
+and includes time waiting for a concurrency slot; `RefreshBudget` defaults to
+30 seconds for the complete refresh. Both must be positive finite durations.
+`MaximumParallelInstances` bounds active reads, including provider calls that
+ignore cancellation. Such a call is retained as one pending read per instance;
+later refreshes do not launch duplicate calls against it. Healthy instances can
+continue to refresh while capacity remains available.
+
+`ControlPlaneOverview.Instances` reports `Current`, `Stale`, or `Unavailable`
+with a safe diagnostic code, attempt time, and last successful observation time.
+Failed reads retain the last successful source observations as `IsStale`;
+their `ObservedAt` values remain the original times. An instance with no prior
+successful read has no invented source rows. Canceling a caller cancels that
+caller's wait; the shared refresh continues within its own budget. The next
+refresh retries failures after the cache expires. The dashboard displays
+unavailable instances and stale observations and excludes stale rows from its
+healthy-source count.
+
 `MapBlueTuskDashboard` adds a complete, server-rendered operational dashboard and
 versioned JSON APIs. Its `/overview` page assesses the whole BlueTusk estate and
 links directly to anything that needs attention. Inventory pages cover sources,
@@ -89,6 +108,47 @@ The HTML routes below are available under the configured `RoutePrefix` (which is
 - `/graphs` and `/graphs/{queryFingerprint}`
 - `/deployments` and `/deployments/{deploymentId}`
 - `/snapshots`, `/consumer-groups`, and `/checkpoints` for fleet-wide views
+
+### Bounded deployment inventory
+
+The deployment list uses `GetDeploymentPageAsync(ManagedDeploymentQuery)` and
+details use `GetDeploymentAsync(deploymentId)`. Opening a detail route calls the
+store's keyed lookup without enumerating the fleet. The equivalent redacted
+JSON routes are `/api/v1/fleet/deployments` and
+`/api/v1/fleet/deployments/{deploymentId}`. All four routes retain the configured
+read authorization policy; mutation policies and operator/admin controls remain
+separate.
+
+The list accepts `pageSize` (default 100, maximum 500), `after` (exclusive
+deployment ID), `prefix` (literal deployment-ID prefix), `tenant`, `provider`,
+`region`, `state`, and `workloadKind`. Exact filters and prefixes are case
+sensitive. A page returns `nextAfterDeploymentId` only when another matching
+row exists. Next-page links preserve filters; submitting new filters restarts
+the cursor. Counts and capacity cards describe the current page. The local
+text/health filter is explicitly limited to that page.
+
+PostgreSQL applies these filters before an ordinal cursor and `LIMIT`, reading
+at most `pageSize + 1` deployment documents. Idempotent initialization adds
+ordinal deployment-ID and tenant/deployment-ID indexes. The in-memory development
+store maintains an ordered ID index and copies only the selected page. Values,
+including SQL wildcard characters in a prefix, remain literal parameters.
+Pagination visits a changing inventory rather than holding a transaction across
+browser requests; refresh from the first page to include new IDs inserted before
+the cursor.
+
+Custom `IManagedDeploymentStore` and `IControlPlaneFleetQueryService`
+implementations must implement the new bounded-page and direct-lookup methods
+to support these routes. Default interface methods preserve binary compatibility
+and report unsupported operations; the dashboard returns 501 rather than
+silently loading the entire inventory. Existing complete-overview methods and
+the legacy `/api/fleet` and `/api/v1/fleet` exports keep their full-inventory
+contract. The cross-product `/overview` and other resource inventories still
+need separate scaling qualification.
+
+The dashboard assets are embedded from `src/BlueTusk.Dashboard/Assets` so the
+package remains self-contained. The mobile menu closes with Escape and restores
+focus. Wide tables scroll inside their container, including visually hidden
+headings. Server filtering and pagination also work without JavaScript.
 
 ```csharp
 builder.Services.AddSingleton<IControlPlaneQueryService>(queries);
