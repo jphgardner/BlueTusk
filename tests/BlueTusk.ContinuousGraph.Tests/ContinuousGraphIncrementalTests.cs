@@ -6,10 +6,176 @@ using BlueTusk.TypeSystem;
 
 namespace BlueTusk.ContinuousGraph.Tests;
 
-public sealed class ContinuousGraphIncrementalTests
+public sealed class ContinuousGraphIncrementalTests(ITestOutputHelper output)
 {
     private static readonly ChangeSourceIdentity Source =
         new("graph-system", "graph-database", "graph-slot", "graph-publication");
+
+    [Theory]
+    [InlineData(10)]
+    [InlineData(1_000)]
+    [InlineData(100_000)]
+    [InlineData(1_000_000)]
+    public async Task One_visible_replacement_has_bounded_comparisons_and_allocations(int count)
+    {
+        var rows = Enumerable.Range(0, count).Select(index => new GraphRow(index, (count - index) * 10, "original")).ToList();
+        var comparisons = 0;
+        var options = new ContinuousGraphIncrementalOptions<GraphRow, int>
+        {
+            ResultOrdering = Comparer<GraphRow>.Create((left, right) =>
+            {
+                comparisons++;
+                return right.Score.CompareTo(left.Score);
+            }),
+            KeyOrdering = Comparer<int>.Default,
+            MaximumRepairInterval = TimeSpan.FromHours(1),
+        };
+        var evaluator = new QueueEvaluator();
+        await using var session = CreateSession(rows, evaluator, options, resultLimit: count);
+        var initial = await CommitInitialAsync(session, TestContext.Current.CancellationToken);
+        var updated = rows[count / 2] with { Name = "changed" };
+        var exact = ContinuousGraphIncrementalResult<GraphRow, int>.Exact([updated.Id], [updated]);
+        await using var source = Delivery(10, 10);
+        evaluator.Enqueue(exact);
+        await using (var warmup = await session.PrepareTransactionAsync(source.Transaction)) { }
+        evaluator.Enqueue(exact);
+        comparisons = 0;
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var pending = session.PrepareTransactionAsync(source.Transaction);
+        var completesSynchronously = pending.IsCompletedSuccessfully;
+        await using var delivery = await pending;
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        output.WriteLine($"{count} visible rows: {comparisons} comparisons, {allocated} allocated bytes");
+
+        Assert.True(completesSynchronously);
+        Assert.InRange(comparisons, 1, 4);
+        Assert.InRange(allocated, 1, 32_768);
+        Assert.Equal(ContinuousGraphEvaluationMode.Incremental, delivery.Evaluation.Mode);
+        var batch = Assert.IsType<LiveDiffBatch<GraphRow, int>>(delivery.Evaluation.Batch);
+        Assert.Single(batch.Events);
+        Assert.Equal(updated, batch.Snapshot.Rows[count / 2]);
+        Assert.Equal("original", initial.Rows[count / 2].Name);
+        await delivery.CommitAsync();
+        Assert.Equal(1, evaluator.AuthoritativeExecutions);
+    }
+
+    [Fact]
+    public async Task Adjacent_replacements_use_each_others_new_ranks_without_mutating_history()
+    {
+        var rows = new List<GraphRow> { new(1, 100, "one"), new(2, 90, "two"), new(3, 80, "three") };
+        var evaluator = new QueueEvaluator();
+        await using var session = CreateSession(rows, evaluator, resultLimit: 3);
+        var initial = await CommitInitialAsync(session, TestContext.Current.CancellationToken);
+        // Both improve while retaining their order. Comparing row 2 to the
+        // previous row 1 would incorrectly suggest a rank change.
+        evaluator.Enqueue(ContinuousGraphIncrementalResult<GraphRow, int>.Exact([1, 2],
+            [new GraphRow(1, 120, "ONE"), new GraphRow(2, 110, "TWO")]));
+        await using var source = Delivery(10, 10);
+        await using var delivery = await session.PrepareTransactionAsync(source.Transaction);
+        var batch = Assert.IsType<LiveDiffBatch<GraphRow, int>>(delivery.Evaluation.Batch);
+        Assert.Equal([1, 2, 3], batch.Snapshot.Keys);
+        Assert.All(batch.Events, change => Assert.Equal(LiveEventKind.RowUpdated, change.Kind));
+        Assert.Equal(["one", "two", "three"], initial.Rows.Select(row => row.Name));
+        await delivery.CommitAsync();
+        Assert.Equal(1, evaluator.AuthoritativeExecutions);
+    }
+
+    [Fact]
+    public async Task Improving_rank_reorders_the_visible_result_and_hidden_rows_keep_the_top_n_boundary()
+    {
+        var rows = new List<GraphRow> { new(1, 100, "one"), new(2, 90, "two"), new(3, 80, "three") };
+        var evaluator = new QueueEvaluator();
+        await using var session = CreateSession(rows, evaluator);
+        var initial = await CommitInitialAsync(session, TestContext.Current.CancellationToken);
+        evaluator.Enqueue(ContinuousGraphIncrementalResult<GraphRow, int>.Exact([2], [new GraphRow(2, 110, "TWO")]));
+        await using (var source = Delivery(10, 10))
+        await using (var delivery = await session.PrepareTransactionAsync(source.Transaction))
+        {
+            Assert.Equal([2, 1], delivery.Evaluation.Batch!.Snapshot.Keys);
+            Assert.Contains(delivery.Evaluation.Batch.Events, change => change.Kind == LiveEventKind.ResultReordered);
+            await delivery.CommitAsync();
+        }
+        evaluator.Enqueue(ContinuousGraphIncrementalResult<GraphRow, int>.Exact([3], [new GraphRow(3, 95, "hidden")]));
+        await using (var source = Delivery(11, 11))
+        await using (var delivery = await session.PrepareTransactionAsync(source.Transaction))
+        {
+            Assert.Null(delivery.Evaluation.Batch);
+            await delivery.CommitAsync();
+        }
+        evaluator.Enqueue(ContinuousGraphIncrementalResult<GraphRow, int>.Exact([3], [new GraphRow(3, 105, "visible")]));
+        await using (var source = Delivery(12, 12))
+        await using (var delivery = await session.PrepareTransactionAsync(source.Transaction))
+        {
+            Assert.Equal([2, 3], delivery.Evaluation.Batch!.Snapshot.Keys);
+            await delivery.CommitAsync();
+        }
+        Assert.Equal([1, 2], initial.Keys);
+        Assert.Equal(1, evaluator.AuthoritativeExecutions);
+    }
+
+    [Fact]
+    public async Task Equal_scores_keep_key_order_and_admit_new_rows_when_the_window_is_not_full()
+    {
+        var rows = new List<GraphRow> { new(2, 100, "two"), new(4, 100, "four") };
+        var evaluator = new QueueEvaluator();
+        await using var session = CreateSession(rows, evaluator, resultLimit: 3);
+        await CommitInitialAsync(session, TestContext.Current.CancellationToken);
+        evaluator.Enqueue(ContinuousGraphIncrementalResult<GraphRow, int>.Exact([3], [new GraphRow(3, 100, "three")]));
+        await using (var source = Delivery(10, 10))
+        await using (var delivery = await session.PrepareTransactionAsync(source.Transaction))
+        {
+            Assert.Equal([2, 3, 4], delivery.Evaluation.Batch!.Snapshot.Keys);
+            await delivery.CommitAsync();
+        }
+        evaluator.Enqueue(ContinuousGraphIncrementalResult<GraphRow, int>.Exact([1], [new GraphRow(1, 100, "one")]));
+        await using (var source = Delivery(11, 11))
+        await using (var delivery = await session.PrepareTransactionAsync(source.Transaction))
+        {
+            Assert.Equal([1, 2, 3], delivery.Evaluation.Batch!.Snapshot.Keys);
+            await delivery.CommitAsync();
+        }
+        Assert.Equal(1, evaluator.AuthoritativeExecutions);
+    }
+
+    [Fact]
+    public async Task Mixed_top_n_changes_match_an_independent_model_across_retries_and_repairs()
+    {
+        var random = new Random(0xB1_7E);
+        var rows = Enumerable.Range(0, 128).Select(index => new GraphRow(index, random.Next(100), "initial")).ToList();
+        var evaluator = new QueueEvaluator();
+        await using var session = CreateSession(rows, evaluator, resultLimit: 16);
+        var current = await CommitInitialAsync(session, TestContext.Current.CancellationToken);
+        var history = new List<(LiveResultSnapshot<GraphRow, int> Snapshot, GraphRow[] Rows)>();
+        for (var transaction = 1; transaction <= 300; transaction++)
+        {
+            var affected = new HashSet<int>();
+            while (affected.Count < 4) affected.Add(random.Next(200));
+            foreach (var key in affected)
+            {
+                rows.RemoveAll(row => row.Id == key);
+                if (random.Next(4) != 0) rows.Add(new GraphRow(key, random.Next(100), $"change-{transaction}"));
+            }
+            var exact = ContinuousGraphIncrementalResult<GraphRow, int>.Exact(affected,
+                rows.Where(row => affected.Contains(row.Id)).ToArray());
+            await using var source = Delivery((uint)transaction, (ulong)transaction);
+            if (transaction % 17 == 0)
+            {
+                evaluator.Enqueue(exact);
+                await using var abandoned = await session.PrepareTransactionAsync(source.Transaction);
+            }
+            evaluator.Enqueue(exact);
+            await using (var delivery = await session.PrepareTransactionAsync(source.Transaction))
+            {
+                current = delivery.Evaluation.Batch?.Snapshot ?? current;
+                Assert.Equal(rows.OrderByDescending(row => row.Score).ThenBy(row => row.Id).Take(16), current.Rows);
+                await delivery.CommitAsync();
+            }
+            if (transaction % 31 == 0) history.Add((current, current.Rows.ToArray()));
+        }
+        Assert.All(history, snapshot => Assert.Equal(snapshot.Rows, snapshot.Snapshot.Rows));
+        Assert.True(session.Status.IncrementalTransactions > 0);
+        Assert.True(session.Status.FallbackRepairs > 0);
+    }
 
     [Fact]
     public async Task Evaluation_lifecycle_emits_committed_metrics()
@@ -475,8 +641,10 @@ public sealed class ContinuousGraphIncrementalTests
     private static ContinuousGraphIncrementalSession<GraphRow, int> CreateSession(
         List<GraphRow> authoritative,
         QueueEvaluator evaluator,
-        ContinuousGraphIncrementalOptions<GraphRow, int>? options = null)
+        ContinuousGraphIncrementalOptions<GraphRow, int>? options = null,
+        int resultLimit = 2)
     {
+        var sessionOptions = options ?? CreateOptions();
         var livePlan = new LiveQueryPlan<GraphRow, int>(
             "risk-network",
             "graph-database",
@@ -486,14 +654,15 @@ public sealed class ContinuousGraphIncrementalTests
                 LiveQueryCapabilities.BoundedTake,
             [new LiveTableDependency("graph", "vertices")],
             [],
-            3,
+            Math.Max(3, resultLimit),
             (_, cancellationToken) =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 evaluator.AuthoritativeExecutions++;
                 IReadOnlyList<GraphRow> rows = authoritative
-                    .Order(CreateOptions().ResultOrdering)
-                    .Take(2)
+                    .Order(sessionOptions.ResultOrdering)
+                    .ThenBy(row => row.Id, sessionOptions.KeyOrdering)
+                    .Take(resultLimit)
                     .ToArray();
                 return ValueTask.FromResult(rows);
             },
@@ -509,8 +678,8 @@ public sealed class ContinuousGraphIncrementalTests
             arguments,
             new LiveSecurityScope("tenant:alpha", "policy-v1"),
             evaluator,
-            options ?? CreateOptions(),
-            resultLimit: 2);
+            sessionOptions,
+            resultLimit);
     }
 
     private static ContinuousGraphIncrementalOptions<GraphRow, int>
@@ -526,7 +695,7 @@ public sealed class ContinuousGraphIncrementalTests
         Comparer<GraphRow>.Create(
             static (left, right) => right.Score.CompareTo(left.Score));
 
-    private static async ValueTask CommitInitialAsync(
+    private static async ValueTask<LiveResultSnapshot<GraphRow, int>> CommitInitialAsync(
         ContinuousGraphIncrementalSession<GraphRow, int> session,
         CancellationToken cancellationToken)
     {
@@ -537,6 +706,7 @@ public sealed class ContinuousGraphIncrementalTests
             ContinuousGraphEvaluationMode.Initial,
             initial.Evaluation.Mode);
         await initial.CommitAsync(cancellationToken);
+        return initial.Evaluation.Batch!.Snapshot;
     }
 
     private static ChangeTransactionDelivery Delivery(

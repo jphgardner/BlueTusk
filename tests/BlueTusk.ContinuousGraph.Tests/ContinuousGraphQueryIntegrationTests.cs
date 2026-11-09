@@ -1,8 +1,12 @@
 using System.Diagnostics;
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.Live;
 using BlueTusk.Live.Testing;
+using BlueTusk.Streams;
+using BlueTusk.Streams.Testing;
+using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
 using Xunit.Sdk;
 
@@ -13,32 +17,48 @@ public sealed class ContinuousGraphQueryIntegrationTests
     private const string PeopleTable = "bluetusk_continuous_graph_people";
     private const string FriendshipsTable = "bluetusk_continuous_graph_friendships";
     private const string GraphName = "bluetusk_continuous_graph";
+    private const string AlphaRole = "bluetusk_graph_alpha";
+    private const string BetaRole = "bluetusk_graph_beta";
 
-    [Fact]
-    public async Task PostgreSQL_19_requeries_affected_graphs_and_cancels_blocked_execution()
+    [Theory]
+    [InlineData(BlueTuskPropertyGraphBackend.Relational)]
+    [InlineData(BlueTuskPropertyGraphBackend.NativeSqlPgq)]
+    public async Task PostgreSQL_requeries_affected_graphs_and_cancels_blocked_execution(
+        BlueTuskPropertyGraphBackend backend)
     {
         var connectionString = GetConnectionString();
         await using var administration = new BlueTuskConnection(connectionString);
         await administration.OpenAsync(TestContext.Current.CancellationToken);
-        if (administration.SupportsSqlPgq is not true)
+        var native = backend == BlueTuskPropertyGraphBackend.NativeSqlPgq;
+        var factory = new GraphContextFactory(connectionString, backend);
+        if (native && administration.SupportsSqlPgq is not true)
         {
-            throw SkipException.ForSkip(
-                $"Continuous Graph live acceptance requires PostgreSQL 19 SQL/PGQ; " +
-                $"the configured server is {administration.ServerVersion}.");
+            await Assert.ThrowsAsync<ContinuousGraphCapabilityException>(
+                () => ContinuousGraphQueryCompiler.CompileAsync(
+                    factory, CreateDefinition(), cancellationToken: TestContext.Current.CancellationToken).AsTask());
+            return;
         }
 
-        await ResetSchemaAsync(administration);
+        await ResetSchemaAsync(administration, native);
         try
         {
-            await CreateSchemaAsync(administration);
-            var factory = new GraphContextFactory(connectionString);
+            await CreateSchemaAsync(administration, native);
+            var definition = CreateDefinition();
             var plan = await ContinuousGraphQueryCompiler.CompileAsync(
                 factory,
-                CreateDefinition(),
+                definition,
                 cancellationToken: TestContext.Current.CancellationToken);
             var arguments = plan.Bind(
                 new Dictionary<string, object?> { ["sourceId"] = 1 });
             var securityScope = new LiveSecurityScope("tenant:integration", "policy-v1");
+            await using (var scopeContext = factory.CreateDbContext())
+            {
+                var limited = definition.QueryFactory(scopeContext, arguments).Take(1).AsNoTracking();
+                var scopedRows = await ContinuousGraphKeyScope.Apply(limited, definition.KeySelector, [3])
+                    .ToListAsync(TestContext.Current.CancellationToken);
+                Assert.Equal(3, Assert.Single(scopedRows).TargetId);
+            }
+
             var invalidations = new InMemoryLiveInvalidationLog();
             await using var session = plan.CreateSession(
                 arguments,
@@ -70,7 +90,103 @@ public sealed class ContinuousGraphQueryIntegrationTests
         }
         finally
         {
-            await ResetSchemaAsync(administration);
+            await ResetSchemaAsync(administration, native);
+        }
+    }
+
+    [Fact]
+    public async Task Portable_graph_preserves_RLS_during_scoped_delta_and_repair_on_a_reused_connection()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var connectionString = GetConnectionString();
+        await using var admin = new BlueTuskConnection(connectionString);
+        await admin.OpenAsync(token);
+        await ResetSchemaAsync(admin, native: false);
+        try
+        {
+            await CreateSchemaAsync(admin, native: false);
+            await ExecuteAsync(admin,
+                $"""
+                CREATE ROLE {AlphaRole} NOLOGIN;
+                CREATE ROLE {BetaRole} NOLOGIN;
+                ALTER TABLE {PeopleTable} ADD COLUMN reader text NOT NULL DEFAULT '{AlphaRole}';
+                ALTER TABLE {FriendshipsTable} ADD COLUMN reader text NOT NULL DEFAULT '{AlphaRole}';
+                UPDATE {PeopleTable} SET reader = '{BetaRole}' WHERE id = 3;
+                INSERT INTO {PeopleTable} VALUES (4, 'Beta source', '{BetaRole}');
+                UPDATE {FriendshipsTable} SET reader = '{BetaRole}', from_id = 4 WHERE id = 11;
+                ALTER TABLE {PeopleTable} ENABLE ROW LEVEL SECURITY;
+                ALTER TABLE {FriendshipsTable} ENABLE ROW LEVEL SECURITY;
+                CREATE POLICY graph_reader ON {PeopleTable} USING (reader = current_user);
+                CREATE POLICY graph_reader ON {FriendshipsTable} USING (reader = current_user);
+                GRANT SELECT ON {PeopleTable}, {FriendshipsTable} TO {AlphaRole}, {BetaRole};
+                """, token);
+
+            var pooled = new BlueTuskConnectionStringBuilder(connectionString)
+            {
+                Pooling = true,
+                MaximumPoolSize = 1,
+            }.ConnectionString;
+            await using var dataSource = BlueTuskDataSource.Create(pooled);
+            var alpha = await ContinuousGraphQueryCompiler.CompileAsync(new RoleContextFactory(dataSource, AlphaRole),
+                CreateDefinition(), cancellationToken: token);
+            var beta = await ContinuousGraphQueryCompiler.CompileAsync(new RoleContextFactory(dataSource, BetaRole),
+                CreateDefinition(), cancellationToken: token);
+            var alphaArguments = alpha.Bind(new Dictionary<string, object?> { ["sourceId"] = 1 });
+            var alphaScope = new LiveSecurityScope("alpha", "rls-v1");
+            var betaScope = new LiveSecurityScope("beta", "rls-v1");
+            var betaArguments = beta.Bind(new Dictionary<string, object?> { ["sourceId"] = 4 });
+
+            await using var session = alpha.CreateIncrementalSession(alphaArguments, alphaScope,
+                new ContinuousGraphIncrementalOptions<FriendResult, int>
+                {
+                    ResultOrdering = Comparer<FriendResult>.Create(static (left, right) => left.TargetId.CompareTo(right.TargetId)),
+                    KeyOrdering = Comparer<int>.Default,
+                });
+            await using (var initial = await session.PrepareInitialAsync(cancellationToken: token))
+            {
+                Assert.Equal("Grace", Assert.Single(initial.Evaluation.Batch!.Snapshot.Rows).TargetName);
+                await initial.CommitAsync(token);
+            }
+
+            Assert.Empty(await beta.LivePlan.ExecuteAsync(new LiveQueryExecutionContext(alphaArguments, betaScope), token));
+            Assert.Equal("Linus", Assert.Single(await beta.LivePlan.ExecuteAsync(
+                new LiveQueryExecutionContext(betaArguments, betaScope), token)).TargetName);
+            Assert.Empty(await alpha.LivePlan.ExecuteAsync(new LiveQueryExecutionContext(betaArguments, alphaScope), token));
+
+            await ExecuteAsync(admin, $"UPDATE {FriendshipsTable} SET id = 12 WHERE id = 10;", token);
+            var source = new ChangeSourceIdentity("rls", "graph", "slot", "publication");
+            var position = new BlueTuskLogSequenceNumber(1);
+            var table = new ChangeTable(1, "public", FriendshipsTable, 'f',
+                [new ChangeColumn(0, "to_id", 23, -1, IsKey: false)]);
+            var endpoint = new ChangeRow(table, [ChangeColumnValue.FromValue("2"u8.ToArray(), ChangeValueEncoding.Text)]);
+            await using (var delivery = ChangeDeliveryTestFactory.CreateCommitted(source, 1, position,
+                [new UpdateChange(new ChangeId(source, position, 1, 0), endpoint, endpoint, new ChangedColumnSet(false, []))]))
+            await using (var scoped = await session.PrepareTransactionAsync(delivery.Transaction, token))
+            {
+                Assert.Equal(ContinuousGraphMaintenanceTier.AuthoritativeDelta, scoped.Evaluation.MaintenanceTier);
+                Assert.Equal(12, Assert.Single(scoped.Evaluation.Batch!.Snapshot.Rows).RelationshipId);
+                await scoped.CommitAsync(token);
+            }
+
+            await ExecuteAsync(admin, $"UPDATE {PeopleTable} SET reader = '{BetaRole}' WHERE id = 2;", token);
+            var repairPosition = new BlueTuskLogSequenceNumber(2);
+            var people = new ChangeTable(2, "public", PeopleTable, 'f',
+                [new ChangeColumn(0, "id", 23, -1, IsKey: true)]);
+            var person = new ChangeRow(people, [ChangeColumnValue.FromValue("2"u8.ToArray(), ChangeValueEncoding.Text)]);
+            await using (var delivery = ChangeDeliveryTestFactory.CreateCommitted(source, 2, repairPosition,
+                [new UpdateChange(new ChangeId(source, repairPosition, 2, 0), person, person, new ChangedColumnSet(false, []))]))
+            await using (var repair = await session.PrepareTransactionAsync(delivery.Transaction, token))
+            {
+                Assert.Equal(ContinuousGraphMaintenanceTier.AuthoritativeRepair, repair.Evaluation.MaintenanceTier);
+                Assert.Empty(repair.Evaluation.Batch!.Snapshot.Rows);
+                Assert.Empty(await alpha.LivePlan.ExecuteAsync(new LiveQueryExecutionContext(alphaArguments, alphaScope), token));
+                await repair.CommitAsync(token);
+            }
+        }
+        finally
+        {
+            await ResetSchemaAsync(admin, native: false);
+            await ExecuteAsync(admin, $"DROP ROLE IF EXISTS {AlphaRole}, {BetaRole};", token);
         }
     }
 
@@ -140,7 +256,7 @@ public sealed class ContinuousGraphQueryIntegrationTests
             result => result.TargetId,
             new FriendResultComparer());
 
-    private static async Task CreateSchemaAsync(BlueTuskConnection connection)
+    private static async Task CreateSchemaAsync(BlueTuskConnection connection, bool native)
     {
         await ExecuteAsync(
             connection,
@@ -156,6 +272,16 @@ public sealed class ContinuousGraphQueryIntegrationTests
                 (1, 'Ada'), (2, 'Grace'), (3, 'Linus');
             INSERT INTO {FriendshipsTable} VALUES
                 (10, 1, 2), (11, 1, 3);
+            """,
+            TestContext.Current.CancellationToken);
+        if (!native)
+        {
+            return;
+        }
+
+        await ExecuteAsync(
+            connection,
+            $"""
             CREATE PROPERTY GRAPH {GraphName}
                 VERTEX TABLES (
                     {PeopleTable} AS people
@@ -174,12 +300,17 @@ public sealed class ContinuousGraphQueryIntegrationTests
             TestContext.Current.CancellationToken);
     }
 
-    private static async Task ResetSchemaAsync(BlueTuskConnection connection)
+    private static async Task ResetSchemaAsync(BlueTuskConnection connection, bool native)
     {
+        if (native)
+        {
+            await ExecuteAsync(connection, $"DROP PROPERTY GRAPH IF EXISTS {GraphName};",
+                TestContext.Current.CancellationToken);
+        }
+
         await ExecuteAsync(
             connection,
             $"""
-            DROP PROPERTY GRAPH IF EXISTS {GraphName};
             DROP TABLE IF EXISTS {FriendshipsTable};
             DROP TABLE IF EXISTS {PeopleTable};
             """,
@@ -214,15 +345,38 @@ public sealed class ContinuousGraphQueryIntegrationTests
         }.ConnectionString;
     }
 
-    private sealed class GraphContextFactory(string connectionString) :
+    private sealed class GraphContextFactory(string connectionString, BlueTuskPropertyGraphBackend backend) :
         IDbContextFactory<GraphContext>
     {
         public GraphContext CreateDbContext()
         {
             var options = new DbContextOptionsBuilder<GraphContext>()
-                .UseBlueTusk(connectionString)
+                .UseBlueTusk(connectionString, options => options.UseGraphCompatibility(backend))
                 .Options;
             return new GraphContext(options);
+        }
+    }
+
+    private sealed class RoleContextFactory(BlueTuskDataSource dataSource, string role)
+        : IDbContextFactory<GraphContext>
+    {
+        public GraphContext CreateDbContext() => throw new NotSupportedException("Use the asynchronous factory.");
+
+        public async Task<GraphContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+        {
+            var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            try
+            {
+                await ExecuteAsync(connection, $"SET ROLE {role};", cancellationToken);
+                var options = new DbContextOptionsBuilder<GraphContext>()
+                    .UseBlueTusk(connection, contextOwnsConnection: true).Options;
+                return new GraphContext(options);
+            }
+            catch
+            {
+                await connection.DisposeAsync();
+                throw;
+            }
         }
     }
 

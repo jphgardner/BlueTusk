@@ -25,6 +25,8 @@ public sealed class ContinuousGraphQueryCompilerTests
             ["graphs.friendships", "graphs.people"],
             first.Dependencies.Select(static dependency => dependency.ToString()));
         Assert.Equal(first.Fingerprint, second.Fingerprint);
+        Assert.Contains("[Microsoft.EntityFrameworkCore.Query.Internal.FromSqlQueryRootExpression]",
+            first.ImpactPlan.CanonicalQuery, StringComparison.Ordinal);
         Assert.True(first.LivePlan.Capabilities.HasFlag(LiveQueryCapabilities.BoundedTake));
         Assert.True(first.LivePlan.Capabilities.HasFlag(LiveQueryCapabilities.DeterministicOrdering));
         Assert.False(first.LivePlan.Capabilities.HasFlag(LiveQueryCapabilities.SingleTable));
@@ -78,6 +80,24 @@ public sealed class ContinuousGraphQueryCompilerTests
     }
 
     [Fact]
+    public async Task Compiler_requires_all_tables_in_the_actual_graph_root_to_be_registered()
+    {
+        var exception = await Assert.ThrowsAsync<ContinuousGraphQueryRegistrationException>(
+            () => ContinuousGraphQueryCompiler.CompileAsync(new GraphContextFactory(), CreateDefinition(["people"]))
+                .AsTask());
+        Assert.Contains("outside its registered dependencies", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Compiler_rejects_raw_SQL_even_after_a_typed_root_was_built()
+    {
+        var exception = await Assert.ThrowsAsync<ContinuousGraphQueryRegistrationException>(
+            () => ContinuousGraphQueryCompiler.CompileAsync(new GraphContextFactory(),
+                CreateDefinition(["people", "friendships"], QueryDefect.ForgedRoot)).AsTask());
+        Assert.Contains("typed graph root", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Compiler_fails_closed_when_PostgreSQL_19_capability_is_unavailable()
     {
         var exception = await Assert.ThrowsAsync<ContinuousGraphCapabilityException>(
@@ -92,6 +112,7 @@ public sealed class ContinuousGraphQueryCompilerTests
     [Theory]
     [InlineData(QueryDefect.MissingTake, "bounded Take")]
     [InlineData(QueryDefect.MissingKeyOrder, "includes result key")]
+    [InlineData(QueryDefect.ReplacedKeyOrder, "includes result key")]
     [InlineData(QueryDefect.Skip, "Skip")]
     public async Task Compiler_rejects_unbounded_nondeterministic_or_unsupported_shapes(
         QueryDefect defect,
@@ -148,6 +169,11 @@ public sealed class ContinuousGraphQueryCompilerTests
                 {
                     QueryDefect.MissingTake => query.OrderBy(result => result.TargetId),
                     QueryDefect.MissingKeyOrder => query.OrderBy(result => result.TargetName).Take(20),
+                    QueryDefect.ReplacedKeyOrder => query.OrderBy(result => result.TargetId)
+                        .OrderBy(result => result.TargetName).Take(20),
+                    QueryDefect.ForgedRoot => context.Database.SqlQueryRaw<FriendResult>(
+                            "SELECT 1 AS \"SourceId\", 2 AS \"TargetId\", 'fake' AS \"TargetName\" /* GRAPH_TABLE */")
+                        .OrderBy(result => result.TargetId).Take(20),
                     QueryDefect.Skip => query.OrderBy(result => result.TargetId).Skip(1).Take(20),
                     _ => query
                         .Where(result => result.TargetName != "blocked")
@@ -165,6 +191,8 @@ public sealed class ContinuousGraphQueryCompilerTests
         MissingTake,
         MissingKeyOrder,
         Skip,
+        ReplacedKeyOrder,
+        ForgedRoot,
     }
 
     public enum GraphPatternKind

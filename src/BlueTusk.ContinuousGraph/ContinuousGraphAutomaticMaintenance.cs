@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using BlueTusk.Live;
 using BlueTusk.Streams;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlueTusk.ContinuousGraph;
 
@@ -223,14 +224,8 @@ internal static class ContinuousGraphKeyScope
             source = call.Arguments[0];
         }
 
-        var contains = Expression.Call(
-            typeof(Enumerable),
-            nameof(Enumerable.Contains),
-            [typeof(TKey)],
-            Expression.Constant(affectedKeys.ToArray()),
-            keySelector.Body);
         var predicate = Expression.Lambda<Func<TResult, bool>>(
-            contains,
+            CreateKeyFilter<TKey>(keySelector.Body, affectedKeys),
             keySelector.Parameters);
         source = Expression.Call(
             typeof(Queryable),
@@ -249,12 +244,40 @@ internal static class ContinuousGraphKeyScope
         return query.Provider.CreateQuery<TResult>(source);
     }
 
+    private static MethodCallExpression CreateKeyFilter<TKey>(Expression key, IReadOnlyCollection<TKey> affectedKeys)
+    {
+        // Use scalar equality for the common one-key delta. EF can reuse the
+        // parameterized statement and PostgreSQL can use the endpoint index directly.
+        if (affectedKeys.Count == 1)
+        {
+            var value = affectedKeys.First();
+            Expression<Func<TKey>> parameter = () => value;
+            return Expression.Call(
+                typeof(object),
+                nameof(object.Equals),
+                Type.EmptyTypes,
+                Expression.Convert(key, typeof(object)),
+                Expression.Convert(parameter.Body, typeof(object)));
+        }
+
+        var keys = affectedKeys.ToArray();
+        Expression<Func<TKey[]>> keyParameter = () => keys;
+        return Expression.Call(
+            typeof(Enumerable),
+            nameof(Enumerable.Contains),
+            [typeof(TKey)],
+            keyParameter.Body,
+            key);
+    }
+
     private static bool IsTrailingOperation(MethodCallExpression call) =>
-        call.Method.DeclaringType == typeof(Queryable) &&
+        (call.Method.DeclaringType == typeof(Queryable) &&
         call.Method.Name is
             nameof(Queryable.OrderBy) or
             nameof(Queryable.OrderByDescending) or
             nameof(Queryable.ThenBy) or
             nameof(Queryable.ThenByDescending) or
-            nameof(Queryable.Take);
+            nameof(Queryable.Take)) ||
+        (call.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
+            call.Method.Name == nameof(EntityFrameworkQueryableExtensions.AsNoTracking));
 }
