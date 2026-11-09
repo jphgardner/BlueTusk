@@ -1,6 +1,7 @@
 using System.Globalization;
 using BlueTusk.ContinuousGraph;
 using BlueTusk.ControlPlane;
+using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.Live;
 using Microsoft.EntityFrameworkCore;
 
@@ -325,7 +326,7 @@ internal sealed class DashboardGraphContextFactory(string connectionString) :
     public DashboardGraphContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<DashboardGraphContext>()
-            .UseBlueTusk(connectionString)
+            .UseBlueTusk(connectionString, options => options.UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq))
             .Options;
         return new DashboardGraphContext(options);
     }

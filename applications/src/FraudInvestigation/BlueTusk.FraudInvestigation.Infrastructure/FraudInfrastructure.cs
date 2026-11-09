@@ -31,6 +31,8 @@ public sealed class FraudDbContext(DbContextOptions<FraudDbContext> options) : D
         {
             entity.ToTable("transfers");
             entity.HasKey(transfer => transfer.Id);
+            entity.HasIndex(transfer => transfer.SourceId);
+            entity.HasIndex(transfer => transfer.DestinationId);
             entity.Property(transfer => transfer.TenantId).HasMaxLength(80);
             entity.Property(transfer => transfer.Currency).HasMaxLength(3);
             entity.Property(transfer => transfer.Amount).HasPrecision(20, 4);

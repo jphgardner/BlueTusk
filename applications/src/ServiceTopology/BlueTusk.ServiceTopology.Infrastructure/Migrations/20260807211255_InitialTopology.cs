@@ -77,39 +77,11 @@ public partial class InitialTopology : Migration
             table: "services",
             columns: new[] { "TenantId", "Name" },
             unique: true);
-
-        migrationBuilder.CreatePropertyGraph(
-            "service_topology_graph",
-            graph => graph
-                .Vertex(
-                    "services",
-                    "services",
-                    "topology",
-                    vertex => vertex
-                        .HasKey("Id")
-                        .HasLabel(
-                            "service",
-                            label => label
-                                .Property("Id")
-                                .Property("Name")
-                                .Property("Health")))
-                .Edge(
-                    "dependencies",
-                    "dependencies",
-                    "topology",
-                    edge => edge
-                        .HasKey("Id")
-                        .HasLabel("depends_on")
-                        .HasSource("services", ["SourceId"], ["Id"])
-                        .HasDestination("services", ["DestinationId"], ["Id"])),
-            "topology");
     }
 
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropPropertyGraph("service_topology_graph", "topology");
-
         migrationBuilder.DropTable(
             name: "dependencies",
             schema: "topology");
