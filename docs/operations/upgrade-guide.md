@@ -42,6 +42,10 @@ source tree's train. The [release-track manifest](../../eng/release-tracks.json)
 defines the Core families and PostgreSQL majors. Verify publication and
 qualification for the exact version before deploying it. A locally verified
 candidate can be rehearsed using a local feed and matching npm tarballs.
+Follow the [local candidate install checks](../getting-started/install.md#check-a-local-candidate)
+to isolate the restore and verify the resolved package graph. Keep the
+manifest and doctor report with the upgrade evidence. Repeat the restore
+check for the rollback version before scheduling the change.
 
 Check the family policy for separately versioned expansion packages such as
 Events and Projections. For an application using these families, resolve and

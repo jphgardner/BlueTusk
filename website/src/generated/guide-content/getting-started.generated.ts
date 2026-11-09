@@ -216,13 +216,18 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       },
       {
+        "id": "check-a-local-candidate",
+        "text": "Check a local candidate",
+        "level": 3
+      },
+      {
         "id": "next-steps",
         "text": "Next steps",
         "level": 2
       }
     ],
-    "wordCount": 938,
-    "readMinutes": 5,
+    "wordCount": 1162,
+    "readMinutes": 6,
     "searchText": "Install BlueTusk This page helps you choose the BlueTusk packages and the version you need, and add them to a .NET or JavaScript project. Requirements Requirement Version .NET .NET 10 (`net10.0`) EF Core (only for `BlueTusk.EntityFrameworkCore`) 10.0.11 PostgreSQL 15, 16, 17 or 18. PostgreSQL 19 is preview only. Node.js (only for the browser clients) A current LTS release Streams, Sync and Live also need PostgreSQL logical replication: `wal_level = logical` on the server and a role with the `REPLICATION` attribute. The [Streams quick start](../streams/quickstart.md) shows the setup. The [support matrix](../../VERSIONING.md) is the authority on supported versions. Choose a version All Core packages share one version number. Use the same exact version for every BlueTusk package in an application. Version Status Use it when `1.1.0` Next release. In release qualification; **not published yet**. When it is published, use it for all new and existing applications. `1.1.0-rc.1` Public release candidate, published 2026-08-29. You want to evaluate 1.1 before `1.1.0` is published. `1.0.0` Stable release, published 2026-08-23. You need a stable package today. When `1.1.0` is published, `1.0.0` and `1.1.0-rc.1` will be deprecated on NuGet and npm and will point to `1.1.0`. To move an existing application, see the [upgrade guide](../operations/upgrade-guide.md). Some features documented here are new in `1.1.0` and are not in `1.0.0` or `1.1.0-rc.1`. Those pages say **New in 1.1.0**. The [1.1.0 release notes](../releases/1.1.0.md) list them all. Product status Family Version line Status Provider (ADO.NET, EF Core, extensions, cloud identity, `bluetusk` tool) 1.1.0 Core Streams 1.1.0 Core Sync 1.1.0 Core Live (NuGet and npm) 1.1.0 Core Control Plane 1.1.0 Core Graph (SQL/PGQ) and Continuous Graph Not part of 1.1.0 Preview. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that ships it. Events, Jobs, Workflows, Documents, Schema, Projections",
     "blocks": [
       {
@@ -307,7 +312,27 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<h2>Next steps</h2>\n<ol>\n<li>Build the <a href=\"/documentation/getting-started/quickstart\">5-minute first app</a>.</li>\n<li>Read the <a href=\"/documentation/getting-started/concepts\">core concepts</a>.</li>\n<li>Open the guide for your product from the <a href=\"/documentation/getting-started/handbook\">documentation home</a>.</li>\n</ol>\n"
+        "html": "<h3>Check a local candidate</h3>\n<p>Read <code>packageVersion</code> in the candidate’s <code>sha256.json</code> and use it for all\nCore pins. If the manifest lists a package your application needs as omitted,\nchoose a candidate that includes it.</p>\n<p>Point a solution-level <code>NuGet.Config</code> at the extracted candidate feed. Use\npackage source mapping so that every <code>BlueTusk</code> package comes from that feed\nand other dependencies come from their usual source. For a solution next to\nthe <code>candidate</code> directory, the configuration looks like this.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "<configuration>\n  <packageSources>\n    <clear />\n    <add key=\"candidate\" value=\"./candidate/feed\" />\n    <add key=\"nuget.org\" value=\"https://api.nuget.org/v3/index.json\" />\n  </packageSources>\n  <packageSourceMapping>\n    <packageSource key=\"candidate\">\n      <package pattern=\"BlueTusk\" />\n      <package pattern=\"BlueTusk.*\" />\n    </packageSource>\n    <packageSource key=\"nuget.org\">\n      <package pattern=\"*\" />\n    </packageSource>\n  </packageSourceMapping>\n</configuration>\n",
+        "highlighted": "<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">configuration</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">packageSources</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">clear</span> /&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">add</span> <span class=\"hljs-attr\">key</span>=<span class=\"hljs-string\">&quot;candidate&quot;</span> <span class=\"hljs-attr\">value</span>=<span class=\"hljs-string\">&quot;./candidate/feed&quot;</span> /&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">add</span> <span class=\"hljs-attr\">key</span>=<span class=\"hljs-string\">&quot;nuget.org&quot;</span> <span class=\"hljs-attr\">value</span>=<span class=\"hljs-string\">&quot;https://api.nuget.org/v3/index.json&quot;</span> /&gt;</span>\n  <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">packageSources</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">packageSourceMapping</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">packageSource</span> <span class=\"hljs-attr\">key</span>=<span class=\"hljs-string\">&quot;candidate&quot;</span>&gt;</span>\n      <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">package</span> <span class=\"hljs-attr\">pattern</span>=<span class=\"hljs-string\">&quot;BlueTusk&quot;</span> /&gt;</span>\n      <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">package</span> <span class=\"hljs-attr\">pattern</span>=<span class=\"hljs-string\">&quot;BlueTusk.*&quot;</span> /&gt;</span>\n    <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">packageSource</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">packageSource</span> <span class=\"hljs-attr\">key</span>=<span class=\"hljs-string\">&quot;nuget.org&quot;</span>&gt;</span>\n      <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">package</span> <span class=\"hljs-attr\">pattern</span>=<span class=\"hljs-string\">&quot;*&quot;</span> /&gt;</span>\n    <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">packageSource</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">packageSourceMapping</span>&gt;</span>\n<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">configuration</span>&gt;</span>\n",
+        "language": "xml"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Pin the project to the candidate version before restoring. Install the matching\nLive tarballs directly. This example uses React and assumes the candidate\ncontains a <code>BlueTusk.Tool</code> with local candidate checks.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$version = (Get-Content ./candidate/sha256.json -Raw | ConvertFrom-Json).packageVersion\n$env:NUGET_PACKAGES = Join-Path (Get-Location) '.candidate-packages'\ndotnet restore ./MyApp/MyApp.csproj --configfile ./NuGet.Config\nnpm install --save-exact \"./candidate/live/bluetusk-live-$version.tgz\" \"./candidate/live/bluetusk-live-react-$version.tgz\"\ndotnet tool install --tool-path ./.candidate-tools BlueTusk.Tool --version $version --configfile ./NuGet.Config\n./.candidate-tools/bluetusk doctor --local-only --package-manifest ./candidate/sha256.json --project-assets ./MyApp/obj/project.assets.json --json\n",
+        "highlighted": "<span class=\"hljs-variable\">$version</span> = (<span class=\"hljs-built_in\">Get-Content</span> ./candidate/sha256.json <span class=\"hljs-literal\">-Raw</span> | <span class=\"hljs-built_in\">ConvertFrom-Json</span>).packageVersion\n<span class=\"hljs-variable\">$env:NUGET_PACKAGES</span> = <span class=\"hljs-built_in\">Join-Path</span> (<span class=\"hljs-built_in\">Get-Location</span>) <span class=\"hljs-string\">&#x27;.candidate-packages&#x27;</span>\ndotnet restore ./MyApp/MyApp.csproj <span class=\"hljs-literal\">--configfile</span> ./NuGet.Config\nnpm install <span class=\"hljs-literal\">--save-exact</span> <span class=\"hljs-string\">&quot;./candidate/live/bluetusk-live-<span class=\"hljs-variable\">$version</span>.tgz&quot;</span> <span class=\"hljs-string\">&quot;./candidate/live/bluetusk-live-react-<span class=\"hljs-variable\">$version</span>.tgz&quot;</span>\ndotnet tool install <span class=\"hljs-literal\">--tool-path</span> ./.candidate<span class=\"hljs-literal\">-tools</span> BlueTusk.Tool <span class=\"hljs-literal\">--version</span> <span class=\"hljs-variable\">$version</span> <span class=\"hljs-literal\">--configfile</span> ./NuGet.Config\n./.candidate<span class=\"hljs-literal\">-tools</span>/bluetusk doctor <span class=\"hljs-literal\">--local-only</span> <span class=\"hljs-literal\">--package-manifest</span> ./candidate/sha256.json <span class=\"hljs-literal\">--project-assets</span> ./MyApp/obj/project.assets.json <span class=\"hljs-literal\">--json</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use a fresh packages directory for each candidate. Doctor verifies each\narchive against the manifest and compares the application’s resolved NuGet\npackage IDs, versions, and content hashes against the candidate feed. Check\nthe installed JavaScript versions with <code>npm ls @bluetusk/live @bluetusk/live-react</code>.</p>\n<h2>Next steps</h2>\n<ol>\n<li>Build the <a href=\"/documentation/getting-started/quickstart\">5-minute first app</a>.</li>\n<li>Read the <a href=\"/documentation/getting-started/concepts\">core concepts</a>.</li>\n<li>Open the guide for your product from the <a href=\"/documentation/getting-started/handbook\">documentation home</a>.</li>\n</ol>\n"
       }
     ]
   },

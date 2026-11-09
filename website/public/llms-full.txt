@@ -280,6 +280,54 @@ dotnet list package --include-transitive
 npm ls @bluetusk/live
 ```
 
+### Check a local candidate
+
+Read `packageVersion` in the candidate's `sha256.json` and use it for all
+Core pins. If the manifest lists a package your application needs as omitted,
+choose a candidate that includes it.
+
+Point a solution-level `NuGet.Config` at the extracted candidate feed. Use
+package source mapping so that every `BlueTusk` package comes from that feed
+and other dependencies come from their usual source. For a solution next to
+the `candidate` directory, the configuration looks like this.
+
+```xml
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="candidate" value="./candidate/feed" />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+  <packageSourceMapping>
+    <packageSource key="candidate">
+      <package pattern="BlueTusk" />
+      <package pattern="BlueTusk.*" />
+    </packageSource>
+    <packageSource key="nuget.org">
+      <package pattern="*" />
+    </packageSource>
+  </packageSourceMapping>
+</configuration>
+```
+
+Pin the project to the candidate version before restoring. Install the matching
+Live tarballs directly. This example uses React and assumes the candidate
+contains a `BlueTusk.Tool` with local candidate checks.
+
+```powershell
+$version = (Get-Content ./candidate/sha256.json -Raw | ConvertFrom-Json).packageVersion
+$env:NUGET_PACKAGES = Join-Path (Get-Location) '.candidate-packages'
+dotnet restore ./MyApp/MyApp.csproj --configfile ./NuGet.Config
+npm install --save-exact "./candidate/live/bluetusk-live-$version.tgz" "./candidate/live/bluetusk-live-react-$version.tgz"
+dotnet tool install --tool-path ./.candidate-tools BlueTusk.Tool --version $version --configfile ./NuGet.Config
+./.candidate-tools/bluetusk doctor --local-only --package-manifest ./candidate/sha256.json --project-assets ./MyApp/obj/project.assets.json --json
+```
+
+Use a fresh packages directory for each candidate. Doctor verifies each
+archive against the manifest and compares the application's resolved NuGet
+package IDs, versions, and content hashes against the candidate feed. Check
+the installed JavaScript versions with `npm ls @bluetusk/live @bluetusk/live-react`.
+
 ## Next steps
 
 1. Build the [5-minute first app](quickstart.md).
@@ -13367,6 +13415,10 @@ source tree's train. The [release-track manifest](../../eng/release-tracks.json)
 defines the Core families and PostgreSQL majors. Verify publication and
 qualification for the exact version before deploying it. A locally verified
 candidate can be rehearsed using a local feed and matching npm tarballs.
+Follow the [local candidate install checks](../getting-started/install.md#check-a-local-candidate)
+to isolate the restore and verify the resolved package graph. Keep the
+manifest and doctor report with the upgrade evidence. Repeat the restore
+check for the rollback version before scheduling the change.
 
 Check the family policy for separately versioned expansion packages such as
 Events and Projections. For an application using these families, resolve and
