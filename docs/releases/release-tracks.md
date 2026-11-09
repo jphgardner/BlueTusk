@@ -1,6 +1,6 @@
 # Core products and Graph preview
 
-BlueTusk 1.2 has two readiness tracks. Provider, Streams, Sync, Live and Control
+BlueTusk has separate Core and Graph readiness tracks. Provider, Streams, Sync, Live and Control
 Plane can qualify for release without waiting for Graph. Continuous Graph is
 retained as preview work, including its compiler, incremental engine, dashboard
 and examples. Sharing a source version does not make every family production
@@ -9,12 +9,11 @@ qualified.
 | Track | Server support | Required evidence |
 | --- | --- | --- |
 | Five core families | PostgreSQL 15–18 stable; PostgreSQL 19 preview | Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval |
-| Continuous Graph preview | Historical, digest-pinned PostgreSQL 19 Beta 3 fixture with SQL/PGQ | Separate preview tests and performance results; not production evidence |
-| Future Graph stable | A supported server release that actually provides SQL/PGQ | Capability probe, differential/security/recovery tests, unchanged Graph cost limits, 24-hour endurance and independent release approval |
+| Portable Graph preview | PostgreSQL 15–18, with a digest-pinned PostgreSQL 18 release fixture | Differential, security, and recovery tests on the candidate, unchanged Graph cost limits on Windows and Linux, 24-hour endurance, and independent approval |
+| Historical native Graph | Digest-pinned PostgreSQL 19 Beta 3 with SQL/PGQ | Separate compatibility and regression evidence. A future native release requires a verified capability probe, result parity, and permissions checks. |
 
 PostgreSQL 19 Beta 4 [removed SQL/PGQ](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/).
-PostgreSQL 19 GA alone will therefore not qualify Graph. A future server version
-has not been assigned here. Native PostgreSQL 19 `REPACK` remains preview
+Portable Graph qualifies independently using PostgreSQL 15–18. Native PostgreSQL 19 `REPACK` remains preview
 compatibility work until the GA matrix passes.
 
 ## Verify the track and its measurements
@@ -36,7 +35,7 @@ Continuous Graph. All stable package-publication flags remain disabled.
     -ExpectedCommit <full-40-character-sha> -Scope Core
 ```
 
-Performance evidence schema 3 names `Core` or `ContinuousGraphPreview`.
+Performance evidence records the scope and source commit. The portable Graph workflow measures its own Windows and Linux matrix.
 `Core` requires every declared core workload, including all seven Sync
 destinations, on both Windows and Linux. `ContinuousGraphPreview` requires its
 own complete matrix and cannot certify a core release. Preview results cannot
@@ -51,10 +50,8 @@ produces `v1.1-core-packages-<sha>` independently of optional historical
 six-family packaging. The separate `postgresql-preview.yml` workflow retains
 the historical PostgreSQL 19 Beta 3 matrix; it is not current Beta 4 support or
 stable qualification. Compile-time and shared API checks still cover Graph.
-The package-only application job runs Orders on the pinned stable database.
-Topology and Fraud integration tests are retained in that manual preview
-workflow. Their absence from core runtime validation is explicit, not a set of
-skipped Graph tests reported as successful Graph qualification.
+The package-only Core application job runs Orders on the pinned stable database.
+The portable Graph workflow runs Topology and Fraud against the exact candidate packages.
 
 The existing protected `PostgreSQL 19 live matrix` status is preserved as a
 provider-only check on the last verified historical fixture; it does not run
@@ -64,12 +61,11 @@ This historical compatibility check is not a claim that Beta 4 or GA passed.
 
 ```powershell
 ./eng/test-applications-postgresql.ps1 -ReleaseTrack Core
-./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPreview
+./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPortable
 ./eng/test-application-postgresql-tracks.ps1
 ```
 
-Application plans deliberately use `lastVerifiedMilestone`, not the latest
-announced milestone. Core plans never read the PostgreSQL 19 programme. The
+Each application track selects its pinned stable PostgreSQL image. The
 reader requires exactly the named test set for each track and rejects skips,
 failures, substitutions, mismatched counters and cross-track results. A new
 capture directory preserves the TRX and hash; local results do not replace the

@@ -1,15 +1,16 @@
-# PostgreSQL 19 SQL/PGQ V1 candidate
+# BlueTusk Graphs reference
 
-The cross-milestone test and publication cadence is documented in the
-[PostgreSQL 19 compatibility programme](../postgresql19-programme.md).
+Use `HasPropertyGraph` with the default BlueTusk Graphs backend for portable
+typed queries. Vertex and edge definitions describe tables, keys, labels, and
+exposed scalar columns. Queries run on those tables under the caller's database
+role. EF global filters on the source entity do not automatically apply to
+the graph SQL. Put tenant and authorization checks in PostgreSQL row-level
+security or in the authorized graph query.
 
-BlueTusk's published `1.0.0` Provider family exposes PostgreSQL 19
-SQL/PGQ through raw ADO.NET SQL, a typed EF query subset, and read-only
-property-graph schema discovery. Stable support remains gated on PostgreSQL 19
-GA and the exact-candidate PostgreSQL 15–19 matrix. ADO.NET
-sessions enable `SupportsSqlPgq` only after probing the documented
-`information_schema.property_graphs` view; a major-version check alone is not
-used as evidence.
+Native SQL/PGQ is selected through the EF context's graph compatibility option.
+It can also be used directly through the command APIs. ADO.NET detects
+`SupportsSqlPgq` through the server catalogue. Native release evidence is
+tracked in the [PostgreSQL compatibility programme](../postgresql19-programme.md).
 
 The live PostgreSQL 19 Beta 3 acceptance tests cover:
 
@@ -122,8 +123,8 @@ modelBuilder.HasPropertyGraph(
     schema: "application");
 ```
 
-The model snapshot stores a deterministic provider annotation. Migration
-diffing emits graph creation after its relational tables and graph removal
+The model snapshot stores the resolved backend. Portable graph definitions emit
+ordinary table and index migrations. In native mode, migration diffing emits graph creation after its relational tables and graph removal
 before table removal. A graph rename or schema move emits `ALTER PROPERTY
 GRAPH`; changing an element definition emits drop/create because PostgreSQL's
 individual label/element alterations cannot represent every model change as
@@ -135,6 +136,16 @@ properties, keys and endpoints directly and validates the definition before
 adding the operation. The strongly typed model builder above remains the
 preferred source of truth; the migration builder makes the generated schema
 change readable and reviewable.
+
+Use the same compatibility setting at runtime and design time. Legacy snapshots
+with no backend describe native graphs. To retain native migrations, set
+`UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq)` in both
+configurations. Maintain separate migration histories if you deploy both modes.
+For a portable deployment with a native migration history, establish a reviewed
+relational baseline from the existing schema and migration history. Fresh
+portable installations must start with a migration sequence that contains
+portable table DDL. An existing preview database may need a guarded migration
+to drop its native graph object before changing dependent tables.
 
 All generated graph DDL is executed inside a server-side guard. PostgreSQL
 15–18 receive SQLSTATE `0A000` with a BlueTusk-specific requirement message;
@@ -200,15 +211,15 @@ Supported now:
 - the typed schema model and inspector are read-only discovery APIs;
 - EF models, migrations, and database-first scaffolding retain property-graph
   schema semantics; and
-- typed EF queries support alternating linear vertex/edge paths, incoming and
-  outgoing edges, one metadata label per typed element, direct scalar property
+- typed EF queries support linear vertex/edge patterns, both edge directions,
+  undirected paths, label OR matching, and direct scalar property
   projections, and vertex predicates made from direct property comparisons to
   captured or constant values joined by `&&` or `||`.
 
-Still raw-SQL-only or planned are variable-length paths, undirected edges,
-multi-label typed matching, graph predicates beyond the documented comparison
-subset, expression-valued properties, entire-element projections inside mixed
-DTOs, and other SQL/PGQ constructs not represented by the builder. Unsupported
+Typed paths can span one to eight hops per bounded segment and at most 64
+fixed branches. Unbounded paths and predicates beyond the documented comparison
+subset require other SQL. The portable renderer supports column-valued
+properties. Native SQL can express additional graph constructs. Unsupported
 typed constructs raise `BlueTuskGraphTranslationException`; there is no string
 concatenation fallback. Schema inspection remains read-only.
 
