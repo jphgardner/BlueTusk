@@ -1,8 +1,10 @@
 using System.Linq.Expressions;
+using BlueTusk.EntityFrameworkCore.Graphs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -243,6 +245,14 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
 
     protected override Expression VisitExtension(Expression extensionExpression)
     {
+#pragma warning disable EF1001 // Use EF's relational FromSql shaper for typed graph projections.
+        if (extensionExpression is BlueTuskGraphQueryRootExpression graph)
+        {
+            return base.VisitExtension(new FromSqlQueryRootExpression(
+                graph.EntityType, graph.Sql, graph.CreateSqlArguments()));
+        }
+#pragma warning restore EF1001
+
         if (extensionExpression is BlueTuskSetReturningFunctionQueryRootExpression function)
         {
             return TranslateSetReturningFunction(function) ?? base.VisitExtension(extensionExpression);

@@ -1,4 +1,10 @@
 #nullable enable
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend.NativeSqlPgq = 0 -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend.Relational = 1 -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphDefinition.Backend.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphDefinition.Backend.init -> void
+BlueTusk.EntityFrameworkCore.Infrastructure.BlueTuskDbContextOptionsBuilder.UseGraphCompatibility(BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend backend) -> BlueTusk.EntityFrameworkCore.Infrastructure.BlueTuskDbContextOptionsBuilder!
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgeDirection.Undirected = 2 -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgeDirection
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.LabelExpression.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression?
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.LabelExpression.init -> void

@@ -9,19 +9,12 @@ var connectionString = Environment.GetEnvironmentVariable(
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     Console.Error.WriteLine(
-        "Set BLUETUSK_CONNECTION_STRING to a PostgreSQL 19 database.");
+        "Set BLUETUSK_CONNECTION_STRING to a PostgreSQL database.");
     return 1;
 }
 
 await using var connection = new BlueTuskConnection(connectionString);
 await connection.OpenAsync();
-if (connection.SupportsSqlPgq is not true)
-{
-    Console.Error.WriteLine(
-        $"Continuous Graph requires PostgreSQL 19 SQL/PGQ; " +
-        $"the server is {connection.ServerVersion}.");
-    return 2;
-}
 
 await ExecuteAsync(
     """
@@ -37,103 +30,79 @@ await ExecuteAsync(
         (1, 'Contoso Treasury'), (2, 'New Vendor'), (3, 'Long-term Supplier');
     INSERT INTO fraud_transfers VALUES
         (100, 1, 2, 25000), (101, 1, 3, 500);
-    CREATE TEMP PROPERTY GRAPH fraud_graph
-        VERTEX TABLES (
-            fraud_accounts AS accounts
-            KEY (id)
-            LABEL account PROPERTIES (
-                id AS "Id",
-                display_name AS "DisplayName"))
-        EDGE TABLES (
-            fraud_transfers AS transfers
-            KEY (id)
-            SOURCE KEY (source_id) REFERENCES accounts (id)
-            DESTINATION KEY (destination_id) REFERENCES accounts (id)
-            LABEL transfer PROPERTIES (
-                id AS "Id",
-                source_id AS "SourceId",
-                destination_id AS "DestinationId",
-                amount AS "Amount"));
     """);
 
-try
-{
-    var contextFactory = new FraudContextFactory(connection);
-    var definition = new ContinuousGraphQueryDefinition<FraudContext, FraudPath, long>(
-        "high-value-outgoing-transfers",
-        "fraud-demo",
-        "1",
-        "fraud_graph",
-        graphSchema: null,
-        ["accounts", "transfers"],
-        [
-            new LiveQueryParameter("accountId", typeof(long)),
-            new LiveQueryParameter("minimumAmount", typeof(decimal)),
-        ],
-        new Dictionary<string, object?>
-        {
-            ["accountId"] = 1L,
-            ["minimumAmount"] = 10_000m,
-        },
-        25,
-        (context, arguments) =>
-        {
-            var accountId = arguments.Get<long>("accountId");
-            var minimumAmount = arguments.Get<decimal>("minimumAmount");
-            return context.PropertyGraph("fraud_graph")
-                .Match(pattern => pattern
-                    .Vertex<Account>("source", account => account.Id == accountId)
-                    .Outgoing<Transfer>("transfer")
-                    .Vertex<Account>("target"))
-                .Select<FraudPath>(projection => projection
-                    .Property<Transfer, long>(
-                        "transfer", transfer => transfer.Id, result => result.TransferId)
-                    .Property<Account, long>(
-                        "source", account => account.Id, result => result.SourceId)
-                    .Property<Account, long>(
-                        "target", account => account.Id, result => result.TargetId)
-                    .Property<Account, string>(
-                        "target",
-                        account => account.DisplayName,
-                        result => result.TargetName)
-                    .Property<Transfer, decimal>(
-                        "transfer", transfer => transfer.Amount, result => result.Amount))
-                .Where(result => result.Amount >= minimumAmount)
-                .OrderByDescending(result => result.Amount)
-                .ThenBy(result => result.TransferId)
-                .Take(25);
-        },
-        result => result.TransferId,
-        FraudPathComparer.Instance);
-    var plan = await ContinuousGraphQueryCompiler.CompileAsync(
-        contextFactory,
-        definition);
-    var arguments = plan.Bind(
-        new Dictionary<string, object?>
-        {
-            ["accountId"] = 1L,
-            ["minimumAmount"] = 10_000m,
-        });
-    var invalidations = new InMemoryLiveInvalidationLog();
-    await using var session = plan.CreateSession(
-        arguments,
-        new LiveSecurityScope("tenant:fraud-demo", "policy-v1"),
-        invalidations);
-    var initial = await session.StartAsync();
-    Print("Initial high-value paths", initial);
-
-    await ExecuteAsync(
-        "UPDATE fraud_transfers SET amount = 15000 WHERE id = 101");
-    _ = invalidations.Append("fraud-demo", plan.Dependencies);
-    var refresh = await session.RefreshToCurrentAsync();
-    if (refresh is not null)
+var contextFactory = new FraudContextFactory(connection);
+var definition = new ContinuousGraphQueryDefinition<FraudContext, FraudPath, long>(
+    "high-value-outgoing-transfers",
+    "fraud-demo",
+    "1",
+    "fraud_graph",
+    graphSchema: null,
+    ["accounts", "transfers"],
+    [
+        new LiveQueryParameter("accountId", typeof(long)),
+        new LiveQueryParameter("minimumAmount", typeof(decimal)),
+    ],
+    new Dictionary<string, object?>
     {
-        Print("After the transfer change", refresh);
-    }
-}
-finally
+        ["accountId"] = 1L,
+        ["minimumAmount"] = 10_000m,
+    },
+    25,
+    (context, arguments) =>
+    {
+        var accountId = arguments.Get<long>("accountId");
+        var minimumAmount = arguments.Get<decimal>("minimumAmount");
+        return context.PropertyGraph("fraud_graph")
+            .Match(pattern => pattern
+                .Vertex<Account>("source", account => account.Id == accountId)
+                .Outgoing<Transfer>("transfer")
+                .Vertex<Account>("target"))
+            .Select<FraudPath>(projection => projection
+                .Property<Transfer, long>(
+                    "transfer", transfer => transfer.Id, result => result.TransferId)
+                .Property<Account, long>(
+                    "source", account => account.Id, result => result.SourceId)
+                .Property<Account, long>(
+                    "target", account => account.Id, result => result.TargetId)
+                .Property<Account, string>(
+                    "target",
+                    account => account.DisplayName,
+                    result => result.TargetName)
+                .Property<Transfer, decimal>(
+                    "transfer", transfer => transfer.Amount, result => result.Amount))
+            .Where(result => result.Amount >= minimumAmount)
+            .OrderByDescending(result => result.Amount)
+            .ThenBy(result => result.TransferId)
+            .Take(25);
+    },
+    result => result.TransferId,
+    FraudPathComparer.Instance);
+var plan = await ContinuousGraphQueryCompiler.CompileAsync(
+    contextFactory,
+    definition);
+var arguments = plan.Bind(
+    new Dictionary<string, object?>
+    {
+        ["accountId"] = 1L,
+        ["minimumAmount"] = 10_000m,
+    });
+var invalidations = new InMemoryLiveInvalidationLog();
+await using var session = plan.CreateSession(
+    arguments,
+    new LiveSecurityScope("tenant:fraud-demo", "policy-v1"),
+    invalidations);
+var initial = await session.StartAsync();
+Print("Initial high-value paths", initial);
+
+await ExecuteAsync(
+    "UPDATE fraud_transfers SET amount = 15000 WHERE id = 101");
+_ = invalidations.Append("fraud-demo", plan.Dependencies);
+var refresh = await session.RefreshToCurrentAsync();
+if (refresh is not null)
 {
-    await ExecuteAsync("DROP PROPERTY GRAPH IF EXISTS fraud_graph");
+    Print("After the transfer change", refresh);
 }
 
 return 0;
@@ -188,14 +157,14 @@ internal sealed class FraudContext(DbContextOptions<FraudContext> options) :
     {
         modelBuilder.Entity<Account>(entity =>
         {
-            entity.ToTable("fraud_accounts");
+            entity.ToTable("fraud_accounts", "pg_temp");
             entity.HasKey(account => account.Id);
             entity.Property(account => account.Id).HasColumnName("id");
             entity.Property(account => account.DisplayName).HasColumnName("display_name");
         });
         modelBuilder.Entity<Transfer>(entity =>
         {
-            entity.ToTable("fraud_transfers");
+            entity.ToTable("fraud_transfers", "pg_temp");
             entity.HasKey(transfer => transfer.Id);
             entity.Property(transfer => transfer.Id).HasColumnName("id");
             entity.Property(transfer => transfer.SourceId).HasColumnName("source_id");

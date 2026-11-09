@@ -1,5 +1,6 @@
 using System.Data.Common;
 using BlueTusk.Data.Internal;
+using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -9,6 +10,7 @@ internal sealed class BlueTuskRelationalConnection : RelationalConnection
 {
     private readonly IProviderServices _providerServices;
     private readonly IProviderDataSource? _dataSource;
+    private readonly bool _requiresSqlPgq;
 
     public BlueTuskRelationalConnection(
         RelationalConnectionDependencies dependencies,
@@ -17,9 +19,40 @@ internal sealed class BlueTuskRelationalConnection : RelationalConnection
     {
         _providerServices = providerServices;
         _dataSource = dependencies.ContextOptions.FindExtension<BlueTuskOptionsExtension>()?.DataSource;
+        _requiresSqlPgq = BlueTuskOptionsExtension.GetGraphBackend(dependencies.ContextOptions)
+            == BlueTuskPropertyGraphBackend.NativeSqlPgq;
     }
 
     internal IProviderDataSource? DataSource => _dataSource;
+
+    public override bool Open(bool errorsExpected = false)
+    {
+        var opened = base.Open(errorsExpected);
+        if (_requiresSqlPgq && !SupportsSqlPgq())
+        {
+            Close();
+            throw MissingSqlPgq();
+        }
+
+        return opened;
+    }
+
+    public override async Task<bool> OpenAsync(CancellationToken cancellationToken, bool errorsExpected = false)
+    {
+        var opened = await base.OpenAsync(cancellationToken, errorsExpected).ConfigureAwait(false);
+        if (_requiresSqlPgq && !SupportsSqlPgq())
+        {
+            await CloseAsync().ConfigureAwait(false);
+            throw MissingSqlPgq();
+        }
+
+        return opened;
+    }
+
+    private bool SupportsSqlPgq() => _providerServices.GetConnection(DbConnection).Capabilities?.SupportsSqlPgq == true;
+
+    private static BlueTuskGraphTranslationException MissingSqlPgq() =>
+        new("Native SQL/PGQ was selected in EF, but the PostgreSQL connection does not support it.");
 
     protected override DbConnection CreateDbConnection()
     {

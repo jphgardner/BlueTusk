@@ -1,6 +1,10 @@
 using System.Linq.Expressions;
+using BlueTusk.EntityFrameworkCore.Graphs;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.Internal;
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
@@ -14,7 +18,59 @@ internal sealed class BlueTuskParameterBasedSqlProcessor(
         ParametersCacheDecorator parametersDecorator)
         => new BlueTuskSqlNullabilityProcessor(Dependencies, Parameters)
             .Process(selectExpression, parametersDecorator);
+
+#pragma warning disable EF1001 // Relational parameter expansion is EF's provider extension point.
+    protected override Expression ExpandFromSqlParameter(
+        Expression queryExpression,
+        ParametersCacheDecorator parametersDecorator)
+        => new BlueTuskGraphRelationalParameterProcessor(Dependencies).Expand(queryExpression, parametersDecorator);
+#pragma warning restore EF1001
 }
+
+#pragma warning disable EF1001 // Uses the same relational binding and name allocation as EF's FromSql path.
+internal sealed class BlueTuskGraphRelationalParameterProcessor(RelationalParameterBasedSqlProcessorDependencies dependencies)
+    : RelationalParameterProcessor(dependencies)
+{
+    private Dictionary<FromSqlExpression, Expression>? _graphTables;
+
+    protected override Expression VisitExtension(Expression expression)
+    {
+        if (expression is not FromSqlExpression { Arguments: BlueTuskGraphSqlArguments arguments } fromSql)
+        {
+            return base.VisitExtension(expression);
+        }
+
+        if (arguments.Values is not QueryParameterExpression parameter)
+        {
+            return base.VisitExtension(fromSql.Update(arguments.Values));
+        }
+
+        _graphTables ??= new(ReferenceEqualityComparer.Instance);
+        if (_graphTables.TryGetValue(fromSql, out var visited))
+        {
+            return visited;
+        }
+
+        // Graph values have already been extracted into the current EF query
+        // context. Only their types and the invariant name enter the template.
+        var parameters = new IRelationalParameter[arguments.Types.Length];
+        for (var index = 0; index < parameters.Length; index++)
+        {
+            var type = arguments.Types[index];
+            var mapping = Dependencies.TypeMappingSource.GetMapping(type);
+            // The same EF argument can occur more than once in a composed
+            // query. Each table occurrence needs distinct command parameters.
+            var name = FormattableString.Invariant($"__g{_graphTables.Count}_{index}");
+            var sqlParameter = (SqlParameterExpression)base.VisitExtension(new SqlParameterExpression(
+                "bluetusk-graph:" + name, name, type, nullable: false, translationMode: null, mapping));
+            parameters[index] = new TypeMappedRelationalParameter(sqlParameter.Name, sqlParameter.Name, mapping, nullable: false);
+        }
+
+        return _graphTables[fromSql] = fromSql.Update(
+            Expression.Constant(new CompositeRelationalParameter(parameter.Name, parameters)));
+    }
+}
+#pragma warning restore EF1001
 
 internal sealed class BlueTuskSqlNullabilityProcessor(
     RelationalParameterBasedSqlProcessorDependencies dependencies,

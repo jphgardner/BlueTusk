@@ -225,6 +225,19 @@ var benchmarkTypes = typeof(ProtocolParserBenchmarks).Assembly
         (!liveBenchmarkTypes.Contains(type) ||
             !string.IsNullOrWhiteSpace(competitiveConnectionString)))
     .ToArray();
+using var benchmarkProcess = System.Diagnostics.Process.GetCurrentProcess();
+var cpuAtStart = benchmarkProcess.TotalProcessorTime;
 _ = BenchmarkSwitcher
     .FromTypes(benchmarkTypes)
     .Run(args, configuration);
+if (Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_PLAN_DIRECTORY") is { Length: > 0 } graphPlanDirectory)
+{
+    benchmarkProcess.Refresh();
+    Directory.CreateDirectory(graphPlanDirectory);
+    await File.WriteAllTextAsync(Path.Combine(graphPlanDirectory, "benchmark-process-resources.json"),
+        System.Text.Json.JsonSerializer.Serialize(new
+        {
+            benchmarkProcessCpuMilliseconds = (benchmarkProcess.TotalProcessorTime - cpuAtStart).TotalMilliseconds,
+            benchmarkProcessPeakRssBytes = benchmarkProcess.PeakWorkingSet64,
+        }));
+}

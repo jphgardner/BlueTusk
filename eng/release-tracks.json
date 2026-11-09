@@ -9,11 +9,12 @@
   "graphEvidenceRequiredForCorePublication": false,
   "graph": {
     "stablePublicationEligible": false,
-    "requiredServerCapability": "SQL/PGQ GRAPH_TABLE",
+    "nativeRequiredServerCapability": "SQL/PGQ GRAPH_TABLE",
+    "portablePostgreSqlImage": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
     "versionNumberAloneEstablishesSupport": false,
     "qualificationRequirements": [
       "supported-server-release-and-image-digest",
-      "sql-pgq-capability-probe",
+      "postgresql-15-18-without-sql-pgq",
       "exact-candidate-differential-security-and-recovery-tests",
       "exact-candidate-performance-evidence",
       "24-hour-endurance",

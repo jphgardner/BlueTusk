@@ -33,7 +33,7 @@ public static class BlueTuskPropertyGraphModelBuilderExtensions
         schema ??= modelBuilder.Model.GetDefaultSchema();
         var builder = new BlueTuskPropertyGraphBuilder(modelBuilder, name, schema);
         configure(builder);
-        var definition = builder.Build();
+        var definition = builder.Build() with { Backend = BlueTuskPropertyGraphBackend.Relational };
 
         var graphs = BlueTuskPropertyGraphMetadata.Get(modelBuilder.Model)
             .Where(graph =>

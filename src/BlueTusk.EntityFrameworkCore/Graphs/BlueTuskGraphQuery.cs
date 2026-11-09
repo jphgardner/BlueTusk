@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace BlueTusk.EntityFrameworkCore.Graphs;
 
@@ -335,10 +336,19 @@ public sealed class BlueTuskGraphMatch
         configure(projection);
         var translation = BlueTuskGraphSqlTranslator.Translate(
             _context, _graph, _pattern.Steps, projection.Projections, typeof(TResult));
-        BlueTuskGraphQueryCapture.Record(_context, translation.ImpactPlan);
-        return _context.Model.FindEntityType(typeof(TResult)) is null
+        var query = _context.Model.FindEntityType(typeof(TResult)) is null
             ? _context.Database.SqlQueryRaw<TResult>(translation.Sql, translation.Parameters)
             : _context.Set<TResult>().FromSqlRaw(translation.Sql, translation.Parameters);
+#pragma warning disable EF1001 // Preserve EF's relational root and supply a graph-specific argument shape.
+        if (query.Expression is FromSqlQueryRootExpression root &&
+            Array.TrueForAll(translation.Parameters, static value => value is not System.Data.Common.DbParameter))
+        {
+            query = query.Provider.CreateQuery<TResult>(new BlueTuskGraphQueryRootExpression(
+                root.QueryProvider!, root.EntityType, root.Sql, translation.Parameters));
+        }
+#pragma warning restore EF1001
+        BlueTuskGraphQueryCapture.Record(_context, query.Expression, translation.ImpactPlan);
+        return query;
     }
 }
 

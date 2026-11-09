@@ -72,41 +72,11 @@ public partial class InitialFraud : Migration
             schema: "fraud",
             table: "transfers",
             columns: new[] { "TenantId", "RecordedAt" });
-
-        migrationBuilder.CreatePropertyGraph(
-            "fraud_graph",
-            graph => graph
-                .Vertex(
-                    "accounts",
-                    "accounts",
-                    "fraud",
-                    vertex => vertex
-                        .HasKey("Id")
-                        .HasLabel(
-                            "account",
-                            label => label.Property("Id").Property("DisplayName")))
-                .Edge(
-                    "transfers",
-                    "transfers",
-                    "fraud",
-                    edge => edge
-                        .HasKey("Id")
-                        .HasLabel(
-                            "transfer",
-                            label => label
-                                .Property("Id")
-                                .Property("Amount")
-                                .Property("Currency"))
-                        .HasSource("accounts", ["SourceId"], ["Id"])
-                        .HasDestination("accounts", ["DestinationId"], ["Id"])),
-            "fraud");
     }
 
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropPropertyGraph("fraud_graph", "fraud");
-
         migrationBuilder.DropTable(
             name: "accounts",
             schema: "fraud");

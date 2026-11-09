@@ -262,10 +262,12 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             .ToArray();
     }
 
-    private static IReadOnlyList<BlueTuskPropertyGraphDefinition> GetGraphs(IRelationalModel? model) =>
+    private static BlueTuskPropertyGraphDefinition[] GetGraphs(IRelationalModel? model) =>
         model is null
             ? Array.Empty<BlueTuskPropertyGraphDefinition>()
-            : BlueTuskPropertyGraphMetadata.Get(model.Model);
+            : BlueTuskPropertyGraphMetadata.Get(model.Model)
+                .Where(graph => graph.Backend == BlueTuskPropertyGraphBackend.NativeSqlPgq)
+                .ToArray();
 
     private static MigrationOperation[] RemoveSystemColumnOperations(
         IReadOnlyList<MigrationOperation> operations)

@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <BlueTuskProductFamily>ContinuousGraph</BlueTuskProductFamily>
-    <Description>Capability-guarded SQL/PGQ queries with bounded incremental maintenance and authoritative Live repair.</Description>
+    <Description>Portable PostgreSQL graph queries with bounded incremental maintenance and authoritative Live repair.</Description>
     <PackageTags>postgresql;sql-pgq;graph;live-query;realtime</PackageTags>
   </PropertyGroup>
 

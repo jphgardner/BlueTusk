@@ -711,17 +711,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
         }
 
         var affectedSet = affected.ToHashSet(_plan.LivePlan.KeyComparer);
-        var visibleAffected = new Dictionary<TKey, TResult>(
-            Math.Min(affected.Length, _snapshot!.Rows.Count),
-            _plan.LivePlan.KeyComparer);
-        for (var index = 0; index < _snapshot.Rows.Count; index++)
-        {
-            var key = _snapshot.Keys[index];
-            if (affectedSet.Contains(key))
-            {
-                visibleAffected.Add(key, _snapshot.Rows[index]);
-            }
-        }
+        var snapshot = _snapshot!;
 
         var authoritative = new Dictionary<TKey, TResult>(
             _plan.LivePlan.KeyComparer);
@@ -744,9 +734,12 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
 
         foreach (var key in affected)
         {
-            var wasVisible = visibleAffected.TryGetValue(key, out var previous);
-            var isVisible = authoritative.TryGetValue(key, out var current);
-            if (wasVisible && !isVisible)
+            if (!snapshot.KeyIndexes.TryGetValue(key, out var previousIndex))
+            {
+                continue;
+            }
+
+            if (!authoritative.TryGetValue(key, out var current))
             {
                 return await PrepareRepairCoreAsync(
                     transaction.CommitEndPosition,
@@ -756,9 +749,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                     cancellationToken).ConfigureAwait(false);
             }
 
-            if (wasVisible &&
-                isVisible &&
-                _options.ResultOrdering.Compare(current!, previous!) > 0)
+            if (_options.ResultOrdering.Compare(current, snapshot.Rows[previousIndex]) > 0)
             {
                 return await PrepareRepairCoreAsync(
                     transaction.CommitEndPosition,
@@ -773,14 +764,86 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             _plan.LivePlan.KeySelector,
             _options.ResultOrdering,
             _options.KeyOrdering);
+        var batch = TryDiffInPlace(authoritative, comparer, out var inPlace)
+            ? inPlace
+            : DiffMergedAffected(authoritative, affectedSet, comparer);
+        var nextSequence = batch.Events.Count == 0
+            ? _nextSequence
+            : checked(batch.LastSequence + 1);
+        return CreateDelivery(new Proposal(
+            batch.Snapshot,
+            transaction.CommitEndPosition,
+            transaction.TransactionId,
+            nextSequence,
+            ContinuousGraphEvaluationMode.Incremental,
+            result.MaintenanceTier,
+            batch.Events.Count == 0 ? null : batch,
+            result.Detail,
+            IsRepair: false,
+            IsFallback: false,
+            AffectedKeyCount: affected.Length,
+            QueryCount: result.MaintenanceTier is
+                ContinuousGraphMaintenanceTier.AuthoritativeDelta ? 1 : 0));
+    }
+
+    private bool TryDiffInPlace(
+        Dictionary<TKey, TResult> authoritative,
+        ResultComparer comparer,
+        out LiveDiffBatch<TResult, TKey> batch)
+    {
+        var snapshot = _snapshot!;
+        var replacements = new List<TResult>(Math.Min(authoritative.Count, snapshot.Rows.Count));
+        foreach (var (key, row) in authoritative)
+        {
+            if (!snapshot.KeyIndexes.TryGetValue(key, out var index))
+            {
+                // A hidden row cannot change a full top-N if it still ranks
+                // behind the last visible row, including that row's replacement.
+                if (snapshot.Rows.Count < _resultLimit ||
+                    comparer.Compare(row, ReplacementAt(snapshot.Rows.Count - 1)) < 0)
+                {
+                    batch = null!;
+                    return false;
+                }
+                continue;
+            }
+
+            // Only pairs adjacent to affected rows can change order. Use all
+            // proposed neighbour values so adjacent replacements are checked
+            // together rather than against an obsolete rank.
+            if ((index > 0 && comparer.Compare(ReplacementAt(index - 1), row) > 0) ||
+                (index + 1 < snapshot.Rows.Count && comparer.Compare(row, ReplacementAt(index + 1)) > 0))
+            {
+                batch = null!;
+                return false;
+            }
+            replacements.Add(row);
+        }
+
+        batch = LiveResultDiffer.DiffAffected(
+            snapshot, replacements, _plan.LivePlan.KeySelector,
+            _plan.LivePlan.RowComparer, _options.DiffOptions, _nextSequence);
+        return true;
+
+        TResult ReplacementAt(int index) =>
+            authoritative.TryGetValue(snapshot.Keys[index], out var replacement)
+                ? replacement : snapshot.Rows[index];
+    }
+
+    private LiveDiffBatch<TResult, TKey> DiffMergedAffected(
+        Dictionary<TKey, TResult> authoritative,
+        HashSet<TKey> affectedSet,
+        ResultComparer comparer)
+    {
+        var snapshot = _snapshot!;
         var candidates = authoritative.Values.ToArray();
         Array.Sort(candidates, comparer);
-        var unaffected = new List<TResult>(_snapshot.Rows.Count);
-        for (var index = 0; index < _snapshot.Rows.Count; index++)
+        var unaffected = new List<TResult>(snapshot.Rows.Count);
+        for (var index = 0; index < snapshot.Rows.Count; index++)
         {
-            if (!affectedSet.Contains(_snapshot.Keys[index]))
+            if (!affectedSet.Contains(snapshot.Keys[index]))
             {
-                unaffected.Add(_snapshot.Rows[index]);
+                unaffected.Add(snapshot.Rows[index]);
             }
         }
 
@@ -803,13 +866,13 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                 ordered[target] = candidates[right++];
             }
         }
-        var membershipAndOrderUnchanged = ordered.Length == _snapshot.Rows.Count;
+        var membershipAndOrderUnchanged = ordered.Length == snapshot.Rows.Count;
         if (membershipAndOrderUnchanged)
         {
             for (var index = 0; index < ordered.Length; index++)
             {
                 if (!_plan.LivePlan.KeyComparer.Equals(
-                    _snapshot.Keys[index],
+                    snapshot.Keys[index],
                     _plan.LivePlan.KeySelector(ordered[index])))
                 {
                     membershipAndOrderUnchanged = false;
@@ -825,7 +888,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                 .Where(row => affectedSet.Contains(_plan.LivePlan.KeySelector(row)))
                 .ToArray();
             batch = LiveResultDiffer.DiffAffected(
-                _snapshot,
+                snapshot,
                 affectedRows,
                 _plan.LivePlan.KeySelector,
                 _plan.LivePlan.RowComparer,
@@ -835,7 +898,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
         else
         {
             batch = LiveResultDiffer.Diff(
-                _snapshot,
+                snapshot,
                 ordered,
                 _plan.LivePlan.KeySelector,
                 _plan.LivePlan.RowComparer,
@@ -843,23 +906,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                 _options.DiffOptions,
                 _nextSequence);
         }
-        var nextSequence = batch.Events.Count == 0
-            ? _nextSequence
-            : checked(batch.LastSequence + 1);
-        return CreateDelivery(new Proposal(
-            batch.Snapshot,
-            transaction.CommitEndPosition,
-            transaction.TransactionId,
-            nextSequence,
-            ContinuousGraphEvaluationMode.Incremental,
-            result.MaintenanceTier,
-            batch.Events.Count == 0 ? null : batch,
-            result.Detail,
-            IsRepair: false,
-            IsFallback: false,
-            AffectedKeyCount: affected.Length,
-            QueryCount: result.MaintenanceTier is
-                ContinuousGraphMaintenanceTier.AuthoritativeDelta ? 1 : 0));
+        return batch;
     }
 
     private async ValueTask<ContinuousGraphEvaluationDelivery<TResult, TKey>>

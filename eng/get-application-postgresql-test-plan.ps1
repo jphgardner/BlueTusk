@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Core', 'ContinuousGraphPreview')]
+    [ValidateSet('Core', 'ContinuousGraphPortable')]
     [string] $ReleaseTrack = 'Core',
     [string] $ConfigurationDirectory = $PSScriptRoot
 )
@@ -33,24 +33,8 @@ if ($ReleaseTrack -eq 'Core')
 }
 else
 {
-    $programme = Get-Content -LiteralPath (
-        Join-Path $ConfigurationDirectory 'postgresql19-programme.json') -Raw | ConvertFrom-Json
-    # A newly announced milestone is not evidence. Use the explicitly qualified
-    # historical fixture; never fall through to an unqualified current image.
-    $milestone = [string]$programme.lastVerifiedMilestone
-    $milestoneRecords = @($programme.milestones | Where-Object { $_.version -ceq $milestone })
-    if ($programme.schemaVersion -ne 1 -or
-        $milestone -cne $tracks.graph.historicalPreviewMilestone -or
-        $milestoneRecords.Count -ne 1 -or $milestoneRecords[0].status -cne 'verified')
-    {
-        throw 'Graph application tests require exactly one qualified historical SQL/PGQ fixture.'
-    }
-    $image = [string]$milestoneRecords[0].image
-    $expectedPattern = '^postgres:' + [regex]::Escape($milestone) + '-alpine@sha256:[0-9a-f]{64}$'
-    if ($image -cnotmatch $expectedPattern)
-    {
-        throw 'The historical Graph application fixture must have its exact milestone and immutable image digest.'
-    }
+    $image = [string]$tracks.graph.portablePostgreSqlImage
+    $milestone = 'portable'
     $tests = @(
         "$testClass.Topology_migrations_tenant_isolation_and_graph_paths_work",
         "$testClass.Fraud_migrations_tenant_isolation_and_graph_investigations_work"

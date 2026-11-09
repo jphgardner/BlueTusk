@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Core', 'ContinuousGraphPreview')]
+    [ValidateSet('Core', 'ContinuousGraphPortable')]
     [string] $ReleaseTrack = 'Core',
     [string] $OutputRoot,
     [switch] $ValidateOnly

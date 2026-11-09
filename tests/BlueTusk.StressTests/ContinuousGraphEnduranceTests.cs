@@ -35,7 +35,6 @@ public sealed class ContinuousGraphEnduranceTests
         var connectionString = GetConnectionString();
         await using var administration = new BlueTuskConnection(connectionString);
         await administration.OpenAsync(TestContext.Current.CancellationToken);
-        RequireSqlPgq(administration);
 
         await ResetSchemaAsync(administration);
         await DropReplaySchemaAsync(administration);
@@ -81,7 +80,6 @@ public sealed class ContinuousGraphEnduranceTests
         var connectionString = GetConnectionString();
         await using var administration = new BlueTuskConnection(connectionString);
         await administration.OpenAsync(TestContext.Current.CancellationToken);
-        RequireSqlPgq(administration);
 
         await using var replayDataSource = BlueTuskDataSource.Create(connectionString);
         var replay = CreateReplayStore(replayDataSource);
@@ -137,7 +135,6 @@ public sealed class ContinuousGraphEnduranceTests
         var connectionString = GetConnectionString();
         await using var administration = new BlueTuskConnection(connectionString);
         await administration.OpenAsync(TestContext.Current.CancellationToken);
-        RequireSqlPgq(administration);
 
         var stopwatch = Stopwatch.StartNew();
         var startedAt = DateTimeOffset.UtcNow;
@@ -582,20 +579,8 @@ public sealed class ContinuousGraphEnduranceTests
                 (1, 'Ada'), (2, 'Grace'), (3, 'Linus');
             INSERT INTO {FriendshipsTable} VALUES
                 (10, 1, 2), (11, 1, 3);
-            CREATE PROPERTY GRAPH {GraphName}
-                VERTEX TABLES (
-                    {PeopleTable} AS people
-                    KEY (id)
-                    LABEL person PROPERTIES (id AS "Id", name AS "Name"))
-                EDGE TABLES (
-                    {FriendshipsTable} AS friendships
-                    KEY (id)
-                    SOURCE KEY (from_id) REFERENCES people (id)
-                    DESTINATION KEY (to_id) REFERENCES people (id)
-                    LABEL knows PROPERTIES (
-                        id AS "Id",
-                        from_id AS "FromPersonId",
-                        to_id AS "ToPersonId"));
+            CREATE INDEX ON {FriendshipsTable} (from_id);
+            CREATE INDEX ON {FriendshipsTable} (to_id);
             """,
             TestContext.Current.CancellationToken);
     }
@@ -610,7 +595,6 @@ public sealed class ContinuousGraphEnduranceTests
         await ExecuteAsync(
             connection,
             $"""
-            DROP PROPERTY GRAPH IF EXISTS {GraphName};
             DROP TABLE IF EXISTS {FriendshipsTable};
             DROP TABLE IF EXISTS {PeopleTable};
             """,
@@ -687,15 +671,6 @@ public sealed class ContinuousGraphEnduranceTests
         }
     }
 
-    private static void RequireSqlPgq(BlueTuskConnection connection)
-    {
-        if (connection.SupportsSqlPgq is not true)
-        {
-            throw SkipException.ForSkip(
-                $"Continuous Graph endurance requires PostgreSQL 19 SQL/PGQ; " +
-                $"the configured server is {connection.ServerVersion}.");
-        }
-    }
 
     private static string GetConnectionString()
     {

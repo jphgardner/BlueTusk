@@ -9,19 +9,12 @@ var connectionString = Environment.GetEnvironmentVariable(
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     Console.Error.WriteLine(
-        "Set BLUETUSK_CONNECTION_STRING to a PostgreSQL 19 database.");
+        "Set BLUETUSK_CONNECTION_STRING to a PostgreSQL database.");
     return 1;
 }
 
 await using var connection = new BlueTuskConnection(connectionString);
 await connection.OpenAsync();
-if (connection.SupportsSqlPgq is not true)
-{
-    Console.Error.WriteLine(
-        $"Continuous Graph requires PostgreSQL 19 SQL/PGQ; " +
-        $"the server is {connection.ServerVersion}.");
-    return 2;
-}
 
 await ExecuteAsync(
     """
@@ -40,90 +33,67 @@ await ExecuteAsync(
         (3, 'payments', 'degraded');
     INSERT INTO network_links VALUES
         (10, 1, 2, 12), (11, 1, 3, 42);
-    CREATE TEMP PROPERTY GRAPH network_graph
-        VERTEX TABLES (
-            network_services AS services
-            KEY (id)
-            LABEL service PROPERTIES (
-                id AS "Id", name AS "Name", health AS "Health"))
-        EDGE TABLES (
-            network_links AS links
-            KEY (id)
-            SOURCE KEY (source_id) REFERENCES services (id)
-            DESTINATION KEY (destination_id) REFERENCES services (id)
-            LABEL link PROPERTIES (
-                id AS "Id",
-                source_id AS "SourceId",
-                destination_id AS "DestinationId",
-                latency_ms AS "LatencyMilliseconds"));
     """);
 
-try
-{
-    var contextFactory = new NetworkContextFactory(connection);
-    var definition =
-        new ContinuousGraphQueryDefinition<NetworkContext, ServiceDependency, int>(
-            "gateway-dependencies",
-            "network-demo",
-            "1",
-            "network_graph",
-            graphSchema: null,
-            ["services", "links"],
-            [new LiveQueryParameter("serviceId", typeof(int))],
-            new Dictionary<string, object?> { ["serviceId"] = 1 },
-            20,
-            (context, arguments) =>
-            {
-                var serviceId = arguments.Get<int>("serviceId");
-                return context.PropertyGraph("network_graph")
-                    .Match(pattern => pattern
-                        .Vertex<Service>("source", service => service.Id == serviceId)
-                        .Outgoing<ServiceLink>("link")
-                        .Vertex<Service>("target"))
-                    .Select<ServiceDependency>(projection => projection
-                        .Property<ServiceLink, int>(
-                            "link", link => link.Id, result => result.LinkId)
-                        .Property<Service, int>(
-                            "target", service => service.Id, result => result.TargetId)
-                        .Property<Service, string>(
-                            "target", service => service.Name, result => result.TargetName)
-                        .Property<Service, string>(
-                            "target", service => service.Health, result => result.Health)
-                        .Property<ServiceLink, int>(
-                            "link",
-                            link => link.LatencyMilliseconds,
-                            result => result.LatencyMilliseconds))
-                    .OrderByDescending(result => result.LatencyMilliseconds)
-                    .ThenBy(result => result.LinkId)
-                    .Take(20);
-            },
-            result => result.LinkId,
-            ServiceDependencyComparer.Instance);
-    var plan = await ContinuousGraphQueryCompiler.CompileAsync(
-        contextFactory,
-        definition);
-    var arguments = plan.Bind(
-        new Dictionary<string, object?> { ["serviceId"] = 1 });
-    var invalidations = new InMemoryLiveInvalidationLog();
-    await using var session = plan.CreateSession(
-        arguments,
-        new LiveSecurityScope("tenant:network-demo", "policy-v1"),
-        invalidations);
-    var initial = await session.StartAsync();
-    Print("Initial gateway dependencies", initial);
+var contextFactory = new NetworkContextFactory(connection);
+var definition =
+    new ContinuousGraphQueryDefinition<NetworkContext, ServiceDependency, int>(
+        "gateway-dependencies",
+        "network-demo",
+        "1",
+        "network_graph",
+        graphSchema: null,
+        ["services", "links"],
+        [new LiveQueryParameter("serviceId", typeof(int))],
+        new Dictionary<string, object?> { ["serviceId"] = 1 },
+        20,
+        (context, arguments) =>
+        {
+            var serviceId = arguments.Get<int>("serviceId");
+            return context.PropertyGraph("network_graph")
+                .Match(pattern => pattern
+                    .Vertex<Service>("source", service => service.Id == serviceId)
+                    .Outgoing<ServiceLink>("link")
+                    .Vertex<Service>("target"))
+                .Select<ServiceDependency>(projection => projection
+                    .Property<ServiceLink, int>(
+                        "link", link => link.Id, result => result.LinkId)
+                    .Property<Service, int>(
+                        "target", service => service.Id, result => result.TargetId)
+                    .Property<Service, string>(
+                        "target", service => service.Name, result => result.TargetName)
+                    .Property<Service, string>(
+                        "target", service => service.Health, result => result.Health)
+                    .Property<ServiceLink, int>(
+                        "link",
+                        link => link.LatencyMilliseconds,
+                        result => result.LatencyMilliseconds))
+                .OrderByDescending(result => result.LatencyMilliseconds)
+                .ThenBy(result => result.LinkId)
+                .Take(20);
+        },
+        result => result.LinkId,
+        ServiceDependencyComparer.Instance);
+var plan = await ContinuousGraphQueryCompiler.CompileAsync(
+    contextFactory,
+    definition);
+var arguments = plan.Bind(
+    new Dictionary<string, object?> { ["serviceId"] = 1 });
+var invalidations = new InMemoryLiveInvalidationLog();
+await using var session = plan.CreateSession(
+    arguments,
+    new LiveSecurityScope("tenant:network-demo", "policy-v1"),
+    invalidations);
+var initial = await session.StartAsync();
+Print("Initial gateway dependencies", initial);
 
-    await ExecuteAsync(
-        "UPDATE network_services SET health = 'healthy' WHERE id = 3");
-    _ = invalidations.Append("network-demo", plan.Dependencies);
-    var refresh = await session.RefreshToCurrentAsync();
-    if (refresh is not null)
-    {
-        Print("After payments recovered", refresh);
-    }
-}
-finally
+await ExecuteAsync(
+    "UPDATE network_services SET health = 'healthy' WHERE id = 3");
+_ = invalidations.Append("network-demo", plan.Dependencies);
+var refresh = await session.RefreshToCurrentAsync();
+if (refresh is not null)
 {
-    await ExecuteAsync("DROP PROPERTY GRAPH IF EXISTS network_graph");
+    Print("After payments recovered", refresh);
 }
 
 return 0;
@@ -179,7 +149,7 @@ internal sealed class NetworkContext(DbContextOptions<NetworkContext> options) :
     {
         modelBuilder.Entity<Service>(entity =>
         {
-            entity.ToTable("network_services");
+            entity.ToTable("network_services", "pg_temp");
             entity.HasKey(service => service.Id);
             entity.Property(service => service.Id).HasColumnName("id");
             entity.Property(service => service.Name).HasColumnName("name");
@@ -187,7 +157,7 @@ internal sealed class NetworkContext(DbContextOptions<NetworkContext> options) :
         });
         modelBuilder.Entity<ServiceLink>(entity =>
         {
-            entity.ToTable("network_links");
+            entity.ToTable("network_links", "pg_temp");
             entity.HasKey(link => link.Id);
             entity.Property(link => link.Id).HasColumnName("id");
             entity.Property(link => link.SourceId).HasColumnName("source_id");

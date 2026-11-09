@@ -53,12 +53,12 @@ try
 {
     Reset-Configuration
     $core = & $planner -ReleaseTrack Core -ConfigurationDirectory $scratch
-    $preview = & $planner -ReleaseTrack ContinuousGraphPreview -ConfigurationDirectory $scratch
+    $portable = & $planner -ReleaseTrack ContinuousGraphPortable -ConfigurationDirectory $scratch
     if ($core.milestone -cne 'stable' -or @($core.expectedTests).Count -ne 1 -or
-        $preview.milestone -cne '19beta3' -or @($preview.expectedTests).Count -ne 2 -or
-        $core.image -eq $preview.image -or $core.stableGraphQualification -ne $false -or
-        $preview.stableGraphQualification -ne $false)
-    { throw 'Application test plans lost their separate stable/core and historical/preview identity.' }
+        $portable.milestone -cne 'portable' -or @($portable.expectedTests).Count -ne 2 -or
+        $core.stableGraphQualification -ne $false -or
+        $portable.stableGraphQualification -ne $false)
+    { throw 'Application test plans lost their separate stable/core and portable Graph identity.' }
 
     # Core must not read even a malformed or unavailable Graph milestone record.
     '{}' | Set-Content -LiteralPath (Join-Path $scratch 'postgresql19-programme.json') -Encoding utf8NoBOM
@@ -70,14 +70,11 @@ try
         @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.endurancePostgreSqlImage = "postgres:19beta3-alpine@sha256:$('a' * 64)"} },
         @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.endurancePostgreSqlImage = $null} },
         @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.releaseVersion = '1.0.0'} },
-        @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.scope = 'ContinuousGraphPreview'} },
+        @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.scope = 'ContinuousGraphPortable'} },
         @{ track = 'Core'; file = 'release-tracks.json'; change = {param($c) $c.postgresql19RequiredForCorePublication = $true} },
-        @{ track = 'ContinuousGraphPreview'; file = 'postgresql19-programme.json'; change = {param($c) $c.lastVerifiedMilestone = '19beta4'} },
-        @{ track = 'ContinuousGraphPreview'; file = 'postgresql19-programme.json'; change = {param($c) $c.milestones[1].status = 'pending'} },
-        @{ track = 'ContinuousGraphPreview'; file = 'postgresql19-programme.json'; change = {param($c) $c.milestones += $c.milestones[1]} },
-        @{ track = 'ContinuousGraphPreview'; file = 'postgresql19-programme.json'; change = {param($c) $c.milestones[1].image = 'postgres:19beta3-alpine'} },
-        @{ track = 'ContinuousGraphPreview'; file = 'postgresql19-programme.json'; change = {param($c) $c.milestones[1].image = "postgres:19beta4-alpine@sha256:$('a' * 64)"} },
-        @{ track = 'ContinuousGraphPreview'; file = 'release-tracks.json'; change = {param($c) $c.graph.stablePublicationEligible = $true} }
+        @{ track = 'ContinuousGraphPortable'; file = 'release-tracks.json'; change = {param($c) $c.graph.portablePostgreSqlImage = 'postgres:18-alpine'} },
+        @{ track = 'ContinuousGraphPortable'; file = 'release-tracks.json'; change = {param($c) $c.graph.portablePostgreSqlImage = "postgres:19beta3-alpine@sha256:$('a' * 64)"} },
+        @{ track = 'ContinuousGraphPortable'; file = 'release-tracks.json'; change = {param($c) $c.graph.stablePublicationEligible = $true} }
     )
     foreach ($case in $planCases)
     {
@@ -108,7 +105,7 @@ try
         {param($d) $null = $d.TestRun.RemoveChild($d.TestRun.ResultSummary)}
     )
     $trxPath = Join-Path $scratch 'tests.trx'
-    foreach ($track in @('Core', 'ContinuousGraphPreview'))
+    foreach ($track in @('Core', 'ContinuousGraphPortable'))
     {
         $document = Write-TrxFixture $track
         $document.Save($trxPath)
@@ -124,7 +121,7 @@ try
             if (-not $rejected) { throw 'An invalid application integration result was accepted.' }
             $rejectedResults++
         }
-        $otherTrack = if ($track -eq 'Core') { 'ContinuousGraphPreview' } else { 'Core' }
+        $otherTrack = if ($track -eq 'Core') { 'ContinuousGraphPortable' } else { 'Core' }
         (Write-TrxFixture $otherTrack).Save($trxPath)
         $rejected = $false
         try { & $verifier -TrxPath $trxPath -ReleaseTrack $track | Out-Null }
@@ -135,13 +132,13 @@ try
 
     $repositoryRoot = Split-Path $PSScriptRoot -Parent
     $build = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/build.yml') -Raw
-    $previewWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/postgresql-preview.yml') -Raw
+    $portableWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/portable-graph.yml') -Raw
     if ($build -notmatch '(?m)^  postgresql19-provider-compatibility:' -or
         $build -notmatch '(?m)^    name: PostgreSQL 19 live matrix\s*$' -or
         -not $build.Contains('test-applications-postgresql.ps1 -ReleaseTrack Core', [StringComparison]::Ordinal) -or
-        -not $build.Contains("--filter 'ReleaseTrack!=ContinuousGraphPreview'", [StringComparison]::Ordinal) -or
-        $build -match 'test-applications-postgresql.ps1\s+-ReleaseTrack ContinuousGraphPreview' -or
-        -not $previewWorkflow.Contains('-ReleaseTrack ContinuousGraphPreview', [StringComparison]::Ordinal))
+        -not $build.Contains("--filter 'ReleaseTrack!=ContinuousGraphPortable'", [StringComparison]::Ordinal) -or
+        $build -match 'test-applications-postgresql.ps1\s+-ReleaseTrack ContinuousGraphPortable' -or
+        -not $portableWorkflow.Contains('-ReleaseTrack ContinuousGraphPortable', [StringComparison]::Ordinal))
     { throw 'Core CI must run stable application tests, preserve provider preview status, and isolate Graph application runtime tests.' }
     Write-Output "Application track self-tests passed: independent plans, two valid TRX fixtures, $rejectedPlans rejected plans and $rejectedResults rejected result sets. Synthetic fixtures are NOT release evidence."
 }

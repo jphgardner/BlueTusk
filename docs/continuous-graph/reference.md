@@ -214,11 +214,19 @@ columns in one observed transaction.
 
 ### Ordered mutation and fallbacks
 
-The session indexes visible result keys and retains the ordered top-N. For a
-small exact change it sorts only affected candidates, merges them with the
-already ordered unaffected sequence, and uses Live's affected-key mutation path
-when membership and order are unchanged. The latter clones only the row array
-and shares the immutable key/index structure.
+The session uses Live's existing immutable key index to locate affected visible
+rows. It checks their proposed values against adjacent ranks, including the
+proposed values of affected neighbours. When membership and order remain
+unchanged, it uses Live's persistent snapshot chunks without scanning or
+copying the complete result. A still-hidden candidate behind a full top-N
+boundary needs no result mutation.
+
+If a candidate enters the window or a row improves across a neighbour, the
+session sorts the affected candidates, merges them with the ordered unaffected
+sequence, and applies the authoritative membership/order diff. This path still
+visits the complete visible result. Rank worsening and visible removals retain
+authoritative repair to recover hidden candidates. Prepared proposals share
+immutable history and change committed state only after replay persistence.
 
 The session forces authoritative repair for incomplete or undecodable tuples,
 unknown schemas, truncation, commit-prepared, unsafe deletes, affected-key

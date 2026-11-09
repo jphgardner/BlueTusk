@@ -52,7 +52,7 @@ if ($LASTEXITCODE -ne 0)
 }
 $sourceBranch = ($sourceBranchOutput -join [Environment]::NewLine).Trim()
 
-$trackedStatus = (& git -C $RepositoryRoot status --porcelain --untracked-files=no)
+$trackedStatus = (& git -C $RepositoryRoot status --porcelain --untracked-files=normal)
 if ($LASTEXITCODE -ne 0)
 {
     throw 'ContinuousGraph endurance could not inspect the repository status.'
@@ -60,7 +60,7 @@ if ($LASTEXITCODE -ne 0)
 if (-not [string]::IsNullOrWhiteSpace(($trackedStatus -join [Environment]::NewLine)))
 {
     throw (
-        'ContinuousGraph endurance requires a clean tracked worktree so the ' +
+        'ContinuousGraph endurance requires a clean worktree so the ' +
         'report identifies the exact tested source.')
 }
 
@@ -94,11 +94,11 @@ if (-not [string]::IsNullOrWhiteSpace($CandidateProvenancePath))
 if ($Duration -ge [TimeSpan]::FromHours(24) -and
     ([string]::IsNullOrWhiteSpace($candidateProvenanceSha256) -or
      [string]$PostgreSqlImage -notmatch
-        '^postgres:19(?:\.0)?[^@\s]*@sha256:[0-9a-f]{64}$'))
+        '^postgres:(15|16|17|18)(?:\.\d+)?-alpine@sha256:[0-9a-f]{64}$'))
 {
     throw (
         'The 24-hour ContinuousGraph gate requires clean candidate-package ' +
-        'provenance and a digest-pinned PostgreSQL 19 GA image.')
+        'provenance and a digest-pinned portable PostgreSQL image.')
 }
 
 $fullReportPath = if ([IO.Path]::IsPathRooted($ReportPath))

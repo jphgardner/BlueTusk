@@ -1,0 +1,90 @@
+name: Portable Graph application acceptance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  graph-matrix:
+    name: Portable Graph on PostgreSQL ${{ matrix.major }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        major: [15, 16, 17, 18]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Start PostgreSQL
+        run: docker compose -f eng/compose/postgres.yml up -d --wait postgres${{ matrix.major }}
+      - name: Require real graph acceptance with zero skips
+        shell: pwsh
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable # ggignore
+        run: |
+          $results = Join-Path $PWD 'artifacts/portable-graph-matrix'
+          dotnet test tests/BlueTusk.EntityFrameworkCore.Tests -c Release --filter 'FullyQualifiedName~PropertyGraph|FullyQualifiedName~PortableGraph' --logger 'trx;LogFileName=ef.trx' --results-directory $results
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet test tests/BlueTusk.ContinuousGraph.Tests -c Release --logger 'trx;LogFileName=live.trx' --results-directory $results
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          foreach ($file in @('ef.trx', 'live.trx')) {
+            [xml]$testRun = Get-Content (Join-Path $results $file) -Raw
+            $counters = $testRun.TestRun.ResultSummary.Counters
+            if ([int]$counters.total -lt 1 -or [int]$counters.total -ne [int]$counters.passed) {
+              throw "Graph acceptance did not pass every test in $file."
+            }
+          }
+      - name: Retain the graph matrix results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: portable-graph-postgres-${{ matrix.major }}-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/portable-graph-matrix
+          if-no-files-found: error
+          retention-days: 90
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml stop postgres${{ matrix.major }}
+
+  graph-applications:
+    name: Portable Graph application integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Build exact local RC feed
+        shell: pwsh
+        run: ./eng/build-prerelease-packages.ps1
+      - name: Restore Graph application package consumers from the exact candidate
+        shell: pwsh
+        run: |
+          dotnet restore applications/BlueTusk.Applications.slnx `
+            --configfile eng/nuget/applications-candidate.config `
+            --packages artifacts/application-nuget-cache `
+            --force-evaluate --no-http-cache
+          ./eng/verify-application-candidate-restore.ps1
+      - name: Test both Graph applications on pinned PostgreSQL 18
+        shell: pwsh
+        run: >-
+          ./eng/test-applications-postgresql.ps1
+          -ReleaseTrack ContinuousGraphPortable
+          -OutputRoot artifacts/application-postgresql-graph-portable
+      - name: Retain portable Graph application results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: portable-graph-applications-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/application-postgresql-graph-portable
+          if-no-files-found: error
+          retention-days: 90

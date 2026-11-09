@@ -11,7 +11,7 @@ $temporary = Join-Path (
 [IO.Directory]::CreateDirectory($temporary) | Out-Null
 
 $commit = '0123456789abcdef0123456789abcdef01234567'
-$image = 'postgres:19-alpine@sha256:' + ('a' * 64)
+$image = 'postgres:18-alpine@sha256:' + ('a' * 64)
 $provenancePath = Join-Path $temporary 'build-provenance.json'
 $reportPath = Join-Path $temporary 'report.json'
 $rejections = 0
@@ -136,7 +136,7 @@ try
         -ExpectedPostgreSqlImage $image
 
     Assert-Rejected { param($value) $value.sourceCommit = 'f' * 40 }
-    Assert-Rejected { param($value) $value.postgresqlImage = 'postgres:19-alpine@sha256:' + ('c' * 64) }
+    Assert-Rejected { param($value) $value.postgresqlImage = 'postgres:18-alpine@sha256:' + ('c' * 64) }
     Assert-Rejected { param($value) $value.harness.actualDuration = '23:59:59' }
     Assert-Rejected { param($value) $value.harness.evaluations = 99999 }
     Assert-Rejected { param($value) $value.harness.committedEvaluations = 99899 }

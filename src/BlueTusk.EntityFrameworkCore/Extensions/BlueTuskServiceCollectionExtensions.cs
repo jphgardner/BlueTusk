@@ -43,6 +43,8 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IModelRuntimeInitializer, BlueTuskModelRuntimeInitializer>()
             .TryAdd<IConstructorBindingFactory, BlueTuskConstructorBindingFactory>()
             .TryAdd<IChangeDetector, BlueTuskChangeDetector>()
+            .TryAdd<IModelCustomizer, BlueTuskModelCustomizer>()
+            .TryAdd<IModelCacheKeyFactory, BlueTuskModelCacheKeyFactory>()
             .TryAdd<IProviderConventionSetBuilder, BlueTuskConventionSetBuilder>()
             .TryAdd<IMigrationsAnnotationProvider, BlueTuskMigrationsAnnotationProvider>()
             .TryAdd<IMigrationsModelDiffer, BlueTuskMigrationsModelDiffer>()

@@ -5,7 +5,7 @@
 
 ## Context
 
-Rerunning every registered `GRAPH_TABLE` query for every affected transaction is
+Rerunning every registered graph query for every affected transaction is
 correct but can waste database work when a transaction touches a small, known
 set of result keys. Replication row images cannot safely replace query results:
 they may omit columns and old values, do not carry the caller's security
@@ -28,7 +28,7 @@ A CDC projector is eligible only when it is explicitly registered and presents
 a matching schema/impact fingerprint plus complete old/new values, exact
 changed-column knowledge, sufficient replica identity, and enforcement of the
 original Live security scope. Otherwise it is not invoked. Scoped and complete
-queries execute the registered `GRAPH_TABLE` query under the original
+queries execute the registered graph query under the original
 permissions and RLS boundary.
 
 The session can update its materialised result without a full query only when

@@ -47,28 +47,30 @@ runs a complete shared-subscription lifecycle that coalesces 100 relevant
 invalidations into one authoritative refresh and fans the update out through
 bounded channels to 64 subscribers.
 
-`ContinuousGraphBenchmarks` uses a 1,000-vertex/999-edge PostgreSQL 19 property
-graph to measure trusted plan compilation, authoritative `GRAPH_TABLE` requery,
-and the complete affected-invalidation path through authoritative requery plus
-keyed Live diff. Its constant-time synthetic invalidation log isolates the
-application path without accumulating benchmark-history entries; PostgreSQL
-query and provider costs remain included.
-
-The 2026-08-03 reference ShortRun records 988 µs/103,446 B for registration,
-2.827 ms/666,055 B for authoritative 999-row requery, and
-4.225 ms/888,159 B for affected requery plus keyed diff. These are local
-regression measurements with three iterations, not production latency claims.
+Run the portable Graph benchmarks on pinned PostgreSQL 18. The fixture has
+1K, 100K, and 1M edges with indexed endpoints. It compares prepared and typed
+selective traversals, exercises bounded paths and a high-degree anchor, and
+measures trusted CDC, scoped repair, and full requery for the same edge update.
 
 ```powershell
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*LiveQueryBenchmarks*' --exporters json
+docker compose -f eng/compose/postgres.yml up -d --wait postgres18
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
+$capture = Join-Path $PWD 'artifacts/portable-graph'
+$commit = (git rev-parse HEAD).Trim()
+$os = if ($IsWindows) { 'windows' } else { 'linux' }
+$image = (Get-Content eng/release-tracks.json -Raw | ConvertFrom-Json).graph.portablePostgreSqlImage
+New-Item -ItemType Directory -Path $capture | Out-Null
+@{ sourceCommit = $commit; os = $os; architecture = 'x64'; containerImageDigests = @($image) } |
+    ConvertTo-Json | Set-Content (Join-Path $capture 'environment.json')
+$env:BLUETUSK_GRAPH_PLAN_DIRECTORY = Join-Path $capture 'plans'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium --inProcess --filter '*ContinuousGraphBenchmarks*' --artifacts (Join-Path $capture 'benchmarks')
+./eng/verify-portable-graph-benchmarks.ps1 -CapturePath $capture -ExpectedCommit $commit -ExpectedOs $os
 ```
 
-Run the Continuous Graph workload against PostgreSQL 19:
-
-```powershell
-$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*ContinuousGraphBenchmarks*' --exporters json
-```
+The verifier checks the existing Graph latency and allocation budgets, the
+delta-to-requery ratios, and selective endpoint index usage as the fixture
+grows. Use the dedicated Windows and Linux workflow for exact-candidate
+capture. Historical SQL/PGQ results belong to the separate native fixture.
 
 `EntityFrameworkCoreBenchmarks` uses one long-lived `BlueTuskDataSource` and a
 1,000-row table to measure fresh parameterized EF query compilation plus first
@@ -83,12 +85,15 @@ while reporting per-operation cost.
 both a prepared raw `GRAPH_TABLE` command and BlueTusk's typed EF graph query
 root. Both paths fully consume or materialize the results.
 
-Run the six application workloads against an isolated PostgreSQL 19 database:
+Run the portable graph and EF workloads against an isolated PostgreSQL 18 database:
 
 ```powershell
-$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*EntityFrameworkCoreBenchmarks*' '*SqlPgqBenchmarks*' '*ContinuousGraphBenchmarks*'
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*EntityFrameworkCoreBenchmarks*' '*ContinuousGraphBenchmarks*'
 ```
+
+To measure historical SQL/PGQ, start the pinned Beta 3 fixture and run
+SqlPgqBenchmarks against port 5419 separately.
 
 These live fixtures use fixed `bluetusk_benchmark_*` object names and recreate
 their own tables/graph, so the configured database must be dedicated to the
@@ -119,7 +124,7 @@ Live-specific work from the performance strategy.
 Set a dedicated live connection string and run the comparison explicitly:
 
 ```powershell
-$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium --filter '*ProviderComparisonBenchmarks*'
 ```
 

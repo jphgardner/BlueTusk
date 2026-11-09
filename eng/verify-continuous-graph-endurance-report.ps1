@@ -137,9 +137,9 @@ if ($RequiredDuration -ge $releaseDuration)
         $failures.Add('The release report has no candidate package/SBOM provenance.')
     }
     if ([string]$report.postgresqlImage -notmatch
-        '^postgres:19(?:\.0)?[^@\s]*@sha256:[0-9a-f]{64}$')
+        '^postgres:(15|16|17|18)(?:\.\d+)?-alpine@sha256:[0-9a-f]{64}$')
     {
-        $failures.Add('The release report has no digest-pinned PostgreSQL 19 GA image.')
+        $failures.Add('The release report has no digest-pinned portable PostgreSQL image.')
     }
 }
 
@@ -182,7 +182,7 @@ if (-not [string]::IsNullOrWhiteSpace($ExpectedPostgreSqlImage) -and
         $ExpectedPostgreSqlImage,
         [StringComparison]::Ordinal))
 {
-    $failures.Add('The PostgreSQL image does not match the expected GA digest.')
+    $failures.Add('The PostgreSQL image does not match the expected portable fixture digest.')
 }
 
 if ($null -eq $report.harness)

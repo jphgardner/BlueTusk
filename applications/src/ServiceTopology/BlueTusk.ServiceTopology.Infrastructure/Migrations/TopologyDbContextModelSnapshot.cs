@@ -17,7 +17,7 @@ namespace BlueTusk.ServiceTopology.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("topology")
-                .HasPropertyGraphs("[{\"name\":\"service_topology_graph\",\"schema\":\"topology\",\"elementTables\":[{\"alias\":\"services\",\"kind\":\"Vertex\",\"table\":\"services\",\"schema\":\"topology\",\"keyColumns\":[\"Id\"],\"labels\":[{\"name\":\"service\",\"properties\":[{\"expression\":\"Id\",\"name\":\"Id\",\"isColumn\":true},{\"expression\":\"Name\",\"name\":\"Name\",\"isColumn\":true},{\"expression\":\"Health\",\"name\":\"Health\",\"isColumn\":true}]}],\"source\":null,\"destination\":null},{\"alias\":\"dependencies\",\"kind\":\"Edge\",\"table\":\"dependencies\",\"schema\":\"topology\",\"keyColumns\":[\"Id\"],\"labels\":[{\"name\":\"depends_on\",\"properties\":[]}],\"source\":{\"vertexTableAlias\":\"services\",\"edgeKeyColumns\":[\"SourceId\"],\"vertexKeyColumns\":[\"Id\"]},\"destination\":{\"vertexTableAlias\":\"services\",\"edgeKeyColumns\":[\"DestinationId\"],\"vertexKeyColumns\":[\"Id\"]}}]}]")
+                .HasPropertyGraphs("[{\"name\":\"service_topology_graph\",\"schema\":\"topology\",\"elementTables\":[{\"alias\":\"services\",\"kind\":\"Vertex\",\"table\":\"services\",\"schema\":\"topology\",\"keyColumns\":[\"Id\"],\"labels\":[{\"name\":\"service\",\"properties\":[{\"expression\":\"Id\",\"name\":\"Id\",\"isColumn\":true},{\"expression\":\"Name\",\"name\":\"Name\",\"isColumn\":true},{\"expression\":\"Health\",\"name\":\"Health\",\"isColumn\":true}]}],\"source\":null,\"destination\":null},{\"alias\":\"dependencies\",\"kind\":\"Edge\",\"table\":\"dependencies\",\"schema\":\"topology\",\"keyColumns\":[\"Id\"],\"labels\":[{\"name\":\"depends_on\",\"properties\":[]}],\"source\":{\"vertexTableAlias\":\"services\",\"edgeKeyColumns\":[\"SourceId\"],\"vertexKeyColumns\":[\"Id\"]},\"destination\":{\"vertexTableAlias\":\"services\",\"edgeKeyColumns\":[\"DestinationId\"],\"vertexKeyColumns\":[\"Id\"]}}],\"backend\":\"Relational\"}]")
                 .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -45,6 +45,10 @@ namespace BlueTusk.ServiceTopology.Infrastructure.Migrations
 
                     b.HasIndex("TenantId", "SourceId", "DestinationId")
                         .IsUnique();
+
+                    b.HasIndex("DestinationId");
+
+                    b.HasIndex("SourceId");
 
                     b.ToTable("dependencies", "topology");
                 });

@@ -1,6 +1,8 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace BlueTusk.EntityFrameworkCore.Graphs.Internal;
 
@@ -9,6 +11,10 @@ internal static class BlueTuskPropertyGraphMetadata
     public const string AnnotationName = "BlueTusk:PropertyGraphs";
 
     private static readonly JsonSerializerOptions SerializerOptions = CreateSerializerOptions();
+    private static readonly ConditionalWeakTable<IModel, IReadOnlyList<BlueTuskPropertyGraphDefinition>> RuntimeGraphs = new();
+
+    internal static IReadOnlyList<BlueTuskPropertyGraphDefinition> GetRuntimeGraphs(IModel model) =>
+        RuntimeGraphs.GetValue(model, static key => Get(key));
 
     public static IReadOnlyList<BlueTuskPropertyGraphDefinition> Get(IReadOnlyAnnotatable annotatable)
     {

@@ -30,7 +30,8 @@ public class SqlPgqBenchmarks : IAsyncDisposable
         }
 
         _options = new DbContextOptionsBuilder<GraphContext>()
-            .UseBlueTusk(_dataSource)
+            .UseBlueTusk(_dataSource, options => options.UseGraphCompatibility(
+                BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend.NativeSqlPgq))
             .Options;
         await DropGraphObjectsAsync();
         await ExecuteAsync(
