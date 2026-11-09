@@ -1,21 +1,41 @@
-# Core products and Graph preview
+# Core products and Graph qualification
 
-BlueTusk 1.2 has two readiness tracks. Provider, Streams, Sync, Live and Control
-Plane can qualify for release without waiting for Graph. Continuous Graph is
-retained as preview work, including its compiler, incremental engine, dashboard
-and examples. Sharing a source version does not make every family production
-qualified.
+Provider, Streams, Sync, Live and Control Plane can qualify for release
+independently of Graph. Portable BlueTusk Graphs and Continuous Graph have
+their own release gate on PostgreSQL 15–18. Native SQL/PGQ regression coverage
+uses a separate historical fixture.
 
 | Track | Server support | Required evidence |
 | --- | --- | --- |
 | Five core families | PostgreSQL 15–18 stable; PostgreSQL 19 preview | Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval |
-| Continuous Graph preview | Historical, digest-pinned PostgreSQL 19 Beta 3 fixture with SQL/PGQ | Separate preview tests and performance results; not production evidence |
-| Future Graph stable | A supported server release that actually provides SQL/PGQ | Capability probe, differential/security/recovery tests, unchanged Graph cost limits, 24-hour endurance and independent release approval |
+| Portable Graph | PostgreSQL 15–18, no SQL/PGQ required | Exact candidate packages, compatibility and security, Windows and Linux performance, 24-hour recovery, and independent approval |
+| Native SQL/PGQ preview | Historical, digest-pinned PostgreSQL 19 Beta 3 fixture | Capability checks and native regression evidence on the pinned fixture |
 
 PostgreSQL 19 Beta 4 [removed SQL/PGQ](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/).
-PostgreSQL 19 GA alone will therefore not qualify Graph. A future server version
-has not been assigned here. Native PostgreSQL 19 `REPACK` remains preview
+Native mode requires the actual server capability. Native PostgreSQL 19 `REPACK` remains preview
 compatibility work until the GA matrix passes.
+
+## Portable Graph status
+
+The portable implementation passed 63 graph tests without skips on each of
+PostgreSQL 15, 16, 17, and 18 in the local compatibility run. The Topology and
+Fraud application journeys also passed with locally built candidate packages.
+Selective directed and undirected queries used endpoint indexes on the
+million-edge fixture. Separate native regression checks passed on the pinned
+PostgreSQL 19 Beta 3 fixture.
+
+The current public `1.1.0-rc.1` packages predate the portable backend. A local
+follow-up on Windows and Linux (WSL2) met the full-requery target: P95 was
+2.764 ms on Windows and 1.799 ms on Linux. Scoped-update P95 was 46.9% and
+46.6% of full repair respectively, above the 35% limit on both hosts. Short
+recovery tests completed 371 committed evaluations across both hosts with no
+ordering or reconciliation errors. The exact candidate still needs to pass the
+Windows and Linux matrix and a 24-hour recovery run. Full-requery P95 must be at most **3.61 ms**,
+and scoped-update P95 must be at most **35%** of full repair on matched
+workloads. The recovery run requires at least 100,000 evaluations, at least
+99.9% committed outcomes, lifecycle P95 at or below one second, and zero
+ordering or reconciliation errors. The local compatibility and recovery smoke
+tests do not supply that evidence.
 
 ## Verify the track and its measurements
 
@@ -36,10 +56,10 @@ Continuous Graph. All stable package-publication flags remain disabled.
     -ExpectedCommit <full-40-character-sha> -Scope Core
 ```
 
-Performance evidence schema 3 names `Core` or `ContinuousGraphPreview`.
+Core and Graph use separate performance evidence.
 `Core` requires every declared core workload, including all seven Sync
-destinations, on both Windows and Linux. `ContinuousGraphPreview` requires its
-own complete matrix and cannot certify a core release. Preview results cannot
+destinations, on both Windows and Linux. Portable Graph requires its own
+complete matrix. Historical native preview results cannot
 substitute for missing core workloads. Confidence intervals, allocation,
 latency, CPU and memory limits have not been reduced. Verifier self-tests use
 synthetic fixtures only; their success is not a performance result.
@@ -51,10 +71,9 @@ produces `v1.1-core-packages-<sha>` independently of optional historical
 six-family packaging. The separate `postgresql-preview.yml` workflow retains
 the historical PostgreSQL 19 Beta 3 matrix; it is not current Beta 4 support or
 stable qualification. Compile-time and shared API checks still cover Graph.
-The package-only application job runs Orders on the pinned stable database.
-Topology and Fraud integration tests are retained in that manual preview
-workflow. Their absence from core runtime validation is explicit, not a set of
-skipped Graph tests reported as successful Graph qualification.
+The Core package-only application job runs Orders on the pinned stable database.
+Topology and Fraud are checked independently on the portable Graph track.
+The historical preview workflow retains separate native regression coverage.
 
 The existing protected `PostgreSQL 19 live matrix` status is preserved as a
 provider-only check on the last verified historical fixture; it does not run
@@ -64,9 +83,12 @@ This historical compatibility check is not a claim that Beta 4 or GA passed.
 
 ```powershell
 ./eng/test-applications-postgresql.ps1 -ReleaseTrack Core
-./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPreview
 ./eng/test-application-postgresql-tracks.ps1
 ```
+
+From a checkout with the portable Graph implementation and its release tools,
+run `./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPortable`
+for the portable application lane.
 
 Application plans deliberately use `lastVerifiedMilestone`, not the latest
 announced milestone. Core plans never read the PostgreSQL 19 programme. The

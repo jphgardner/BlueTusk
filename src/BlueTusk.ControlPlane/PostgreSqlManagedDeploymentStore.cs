@@ -127,6 +127,14 @@ public sealed class PostgreSqlManagedDeploymentStore :
              ON {_schema}.managed_deployments (tenant_id, deployment_id)
              """,
             $"""
+             CREATE INDEX IF NOT EXISTS managed_deployments_ordinal_idx
+             ON {_schema}.managed_deployments (deployment_id COLLATE "C")
+             """,
+            $"""
+             CREATE INDEX IF NOT EXISTS managed_deployments_tenant_ordinal_idx
+             ON {_schema}.managed_deployments (tenant_id, deployment_id COLLATE "C")
+             """,
+            $"""
              CREATE TABLE IF NOT EXISTS {_schema}.managed_deployment_leases (
                  deployment_id text PRIMARY KEY,
                  owner text NULL,
@@ -201,6 +209,52 @@ public sealed class PostgreSqlManagedDeploymentStore :
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             yield return ReadDeployment(reader);
+        }
+    }
+
+    public async ValueTask<ManagedDeploymentPage> QueryAsync(
+        ManagedDeploymentQuery query, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        query.Validate();
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = SelectColumns + $" FROM {_schema}.managed_deployments WHERE TRUE";
+        if (query.AfterDeploymentId is not null)
+        {
+            command.CommandText += " AND deployment_id COLLATE \"C\" > @after COLLATE \"C\"";
+            AddParameter(command, "after", query.AfterDeploymentId);
+        }
+        if (query.DeploymentIdPrefix is not null)
+        {
+            command.CommandText += " AND deployment_id COLLATE \"C\" LIKE @prefix ESCAPE E'\\\\'";
+            AddParameter(command, "prefix", query.DeploymentIdPrefix.Replace("\\", "\\\\", StringComparison.Ordinal)
+                .Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal) + "%");
+        }
+        AddFilter("tenant_id", "tenant", query.TenantId);
+        AddFilter("provider", "provider", query.Provider);
+        AddFilter("region", "region", query.Region);
+        AddFilter("state", "state", query.State?.ToString());
+        if (query.WorkloadKind is { } kind)
+        {
+            command.CommandText += " AND EXISTS (SELECT 1 FROM jsonb_array_elements(desired_document->'workloads') AS workload" +
+                " WHERE (workload->>'kind')::integer = @kind)";
+            AddParameter(command, "kind", (int)kind);
+        }
+        command.CommandText += " ORDER BY deployment_id COLLATE \"C\" LIMIT @limit";
+        AddParameter(command, "limit", query.PageSize + 1);
+        var page = new List<ManagedDeployment>(query.PageSize + 1);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false)) page.Add(ReadDeployment(reader));
+        var hasMore = page.Count > query.PageSize;
+        if (hasMore) page.RemoveAt(page.Count - 1);
+        return new ManagedDeploymentPage(page.AsReadOnly(), hasMore ? page[^1].Spec.DeploymentId : null);
+
+        void AddFilter(string column, string parameter, string? value)
+        {
+            if (value is null) return;
+            command.CommandText += $" AND {column} = @{parameter}";
+            AddParameter(command, parameter, value);
         }
     }
 

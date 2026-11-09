@@ -95,6 +95,16 @@ import {
               ><mat-icon>code</mat-icon>View source on GitHub<mat-icon>open_in_new</mat-icon></a
             >
           </header>
+          @if (current.category === 'graph' || current.sourcePath.startsWith('docs/continuous-graph/')) {
+            <aside class="graph-release-note guide-graph-note" aria-label="Graph availability">
+              <strong>Graph compatibility</strong>
+              <p>
+                Portable Graph passed local checks on PostgreSQL 15–18 without SQL/PGQ.
+                These guides cover the portable candidate. The public <code>1.1.0-rc.1</code> predates it.
+              </p>
+              <a routerLink="/graph" fragment="graph-availability">Compare the two Graph paths</a>
+            </aside>
+          }
           <section class="guide-orientation" aria-label="How to use this guide">
             <div>
               <small>USE THIS GUIDE WHEN</small>

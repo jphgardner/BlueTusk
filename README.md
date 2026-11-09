@@ -9,7 +9,7 @@
 
 BlueTusk is a PostgreSQL-native .NET platform. It provides a direct ADO.NET
 provider, EF Core integration, replication, real-time delivery, extension
-packages, and PostgreSQL SQL/PGQ support without an Npgsql runtime dependency.
+packages, and graph queries without an Npgsql runtime dependency.
 
 ## Choose what you need
 
@@ -21,7 +21,7 @@ packages, and PostgreSQL SQL/PGQ support without an Npgsql runtime dependency.
 | Update other systems | [Sync](docs/sync/README.md) | Redis, NATS, OpenSearch, Kafka, webhooks, or object storage |
 | Push authorized live data | [Live](docs/live/README.md) | ASP.NET transports and browser clients |
 | Work with specialized PostgreSQL features | [Extensions](docs/extensions/README.md) | PostGIS, pgvector, TimescaleDB, and other focused packages |
-| Query connected data | [Graph](docs/graph/README.md) | SQL/PGQ and Continuous Graph |
+| Query connected data | [BlueTusk Graphs](docs/graph/README.md) | Portable EF queries, Continuous Graph, and optional native SQL/PGQ |
 
 The [documentation index](docs/README.md) organizes the complete guide set by
 task and audience.

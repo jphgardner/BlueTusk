@@ -1,7 +1,69 @@
 namespace BlueTusk.Live.Tests;
 
-public sealed class LiveResultDifferTests
+public sealed class LiveResultDifferTests(ITestOutputHelper output)
 {
+    [Theory]
+    [InlineData(10)]
+    [InlineData(1_000)]
+    [InlineData(100_000)]
+    [InlineData(1_000_000)]
+    public void Sparse_replacement_allocations_do_not_scale_with_the_complete_row_payload(int count)
+    {
+        var initial = LiveResultDiffer.Initial<Row, int>(
+            Enumerable.Range(0, count).Select(index => new Row(index, "original")).ToArray(),
+            static row => row.Id).Snapshot;
+        Row[] replacements = [new(count - 1, "changed")];
+        // Warm generic/JIT paths before measuring only the incremental operation.
+        _ = LiveResultDiffer.DiffAffected(initial, replacements, static row => row.Id);
+        Func<Row, int> keySelector = static row => row.Id;
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var changed = LiveResultDiffer.DiffAffected(initial, replacements, keySelector);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        output.WriteLine($"{count} rows, one replacement: {allocated} allocated bytes");
+        Assert.InRange(allocated, 1, 32_768);
+        Assert.Equal("original", initial.Rows[count - 1].Value);
+        Assert.Equal("changed", changed.Snapshot.Rows[count - 1].Value);
+        Assert.Single(changed.Events);
+    }
+
+    [Fact]
+    public void Persistent_rows_preserve_history_across_chunk_boundaries_and_authoritative_changes()
+    {
+        var rows = Enumerable.Range(0, 1_025).Select(index => new Row(index, "original")).ToArray();
+        var initial = LiveResultDiffer.Initial<Row, int>(rows, static row => row.Id).Snapshot;
+        int[] keys = [0, 255, 256, 511, 512, 1_024];
+        var changed = LiveResultDiffer.DiffAffected(initial,
+            keys.Select(key => new Row(key, "changed")).ToArray(), static row => row.Id);
+        var historical = changed.Snapshot.Rows.ToArray();
+        var again = LiveResultDiffer.DiffAffected(changed.Snapshot,
+            keys.Select(key => new Row(key, "again")).ToArray(), static row => row.Id,
+            options: new LiveDiffOptions { MaximumEventsPerRefresh = 1 });
+
+        Assert.Equal(rows, initial.Rows);
+        Assert.Equal(historical, changed.Snapshot.Rows);
+        Assert.Equal(1_025, Assert.Single(again.Events).Rows!.Count);
+        Assert.All(keys, key => Assert.Equal("again", again.Snapshot.Rows[key].Value));
+        var authoritative = LiveResultDiffer.Diff(again.Snapshot,
+            again.Snapshot.Rows.Reverse().Append(new Row(2_000, "new")).ToArray(), static row => row.Id);
+        Assert.Equal(2_000, authoritative.Snapshot.Keys[^1]);
+        Assert.Equal(1_024, authoritative.Snapshot.Keys[0]);
+        Assert.Equal(historical, changed.Snapshot.Rows);
+    }
+
+    [Fact]
+    public void Failed_affected_validation_does_not_mutate_shared_chunks_and_noop_reuses_snapshot()
+    {
+        var rows = new[] { new Row(1, "one"), new Row(2, "two") };
+        var initial = LiveResultDiffer.Initial<Row, int>(rows, static row => row.Id).Snapshot;
+        Assert.Throws<InvalidOperationException>(() => LiveResultDiffer.DiffAffected(initial,
+            [new Row(1, "changed"), new Row(1, "duplicate")], static row => row.Id));
+        Assert.Throws<InvalidOperationException>(() => LiveResultDiffer.DiffAffected(initial,
+            [new Row(1, "changed"), new Row(3, "unknown")], static row => row.Id));
+        Assert.Equal(rows, initial.Rows);
+        Assert.Same(initial, LiveResultDiffer.DiffAffected(initial, rows, static row => row.Id).Snapshot);
+    }
+
     [Fact]
     public void Diff_preserves_keys_and_emits_add_update_remove_and_reorder()
     {

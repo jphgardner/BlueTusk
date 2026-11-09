@@ -2,6 +2,9 @@
 
 This file tracks executable repository status. The product vision is broader; unchecked work is not implied by package names already present in the solution.
 
+The [release tracks](releases/release-tracks.md) describe current Core and
+portable Graph qualification. The V1 publication summary below is historical.
+
 The post-development V1 [hardening programme](hardening-programme.md) is
 implemented. The internal EF↔Data SPI, NativeAOT/trimming, multiplexing,
 coverage-guided parser fuzzing, ADO.NET compatibility, API budgets,
@@ -110,7 +113,7 @@ evidence. See the
 - [x] Phase 7 release gate: enable Continuous Graph only after its Live release dependency passes
 - [x] Phase 7: Continuous Graph 0.1.0-preview.1 implementation and packaging gate
 - [x] ContinuousGraph V1 slice: stable 1.0.0 metadata, API freeze, package/SBOM provenance, 24-hour recovery-endurance workflow, fail-closed verifier, and mutation tests
-- [ ] ContinuousGraph V1 release gate: archive one exact-candidate 24-hour PostgreSQL 19 GA run with at least 100,000 evaluations, 99.9% committed outcomes, lifecycle P95 at or below one second, required repair/restart/cancellation/disconnect evidence, and zero ordering/reconciliation errors
+- [ ] Portable Continuous Graph release gate: archive exact-candidate Windows and Linux performance evidence and the 24-hour recovery run. See [portable Graph status](releases/release-tracks.md#portable-graph-status).
 - [x] Control Plane implementation gate: versioned agent contract, PostgreSQL 15–19 upgrade acceptance, and inspected 0.1.0-preview.1 candidate packages
 - [ ] Control Plane publication gate: enable only after the Sync release dependency archives its successful 24-hour endurance report
 

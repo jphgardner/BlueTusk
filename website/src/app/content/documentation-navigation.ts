@@ -167,10 +167,10 @@ export const DOCUMENTATION_JOURNEYS: readonly DocumentationJourney[] = [
     id: 'graph-data',
     eyebrow: 'CONNECTED DATA',
     title: 'Query and maintain a graph',
-    description: 'Preview: model relationships with SQL/PGQ, then keep graph results current.',
+    description: 'Map existing PostgreSQL tables and keep authorized graph results current.',
     icon: 'hub',
     steps: [
-      { label: 'Start', title: 'SQL/PGQ graph queries', route: '/documentation/graph/sql-pgq' },
+      { label: 'Start', title: 'BlueTusk Graphs quickstart', route: '/documentation/graph/sql-pgq' },
       {
         label: 'Build',
         title: 'Continuous Graph',
@@ -267,8 +267,8 @@ const GUIDE_PRIMERS: Readonly<Record<string, DocumentationGuidePrimer>> = {
       'Install the server extension first and choose only the required client package.',
   },
   graph: {
-    useWhen: 'You need to model, query, or maintain connected data with PostgreSQL SQL/PGQ.',
-    beforeYouStart: 'Use a server that reports SQL/PGQ capability and begin with a bounded query.',
+    useWhen: 'You want to query relationships with EF Core or choose the native SQL/PGQ backend.',
+    beforeYouStart: 'Use a candidate with portable Graph on PostgreSQL 15–18. Begin with a bounded query.',
   },
   operations: {
     useWhen: 'You are preparing, deploying, observing, upgrading, or repairing a BlueTusk service.',

@@ -19,22 +19,6 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 StringComparison.Ordinal));
     }
 
-    private static ControlPlaneManagedDeploymentSnapshot? FindDeployment(
-        ControlPlaneFleetOverview overview,
-        string deploymentId)
-    {
-        // Prefer the value exactly as routed so an ID that itself contains an escape
-        // sequence keeps resolving, then fall back to the unescaped form.
-        return Find(deploymentId) ?? Find(Uri.UnescapeDataString(deploymentId));
-
-        ControlPlaneManagedDeploymentSnapshot? Find(string candidateId) =>
-            overview.Deployments.FirstOrDefault(
-                candidate => string.Equals(
-                    candidate.DeploymentId,
-                    candidateId,
-                    StringComparison.Ordinal));
-    }
-
     private static string RenderOverview(
         ControlPlaneOverview sources,
         ControlPlaneSyncOverview sync,
@@ -70,7 +54,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             .Append(Breadcrumbs(options, ("Overview", null)))
             .Append(PageHeading(
                 "Operational overview",
-                "Everything BlueTusk is running, in one place.",
+                "Check what is reporting, then go straight to resources that need attention.",
                 StatusBadge(
                     attention.Count > 0
                         ? $"{attention.Count} need attention"
@@ -78,19 +62,23 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                             ? "All systems healthy"
                             : $"{reportingProducts}/5 product families reporting",
                     overallTone)))
-            .Append("<div class=\"cards cards--wide\">")
-            .Append(MetricCard("Sources healthy", $"{healthySources}/{sources.Sources.Count}", "PostgreSQL capture"))
-            .Append(MetricCard("Pipelines healthy", $"{healthyPipelines}/{sync.Pipelines.Count}", "Destination delivery"))
-            .Append(MetricCard(
+            .Append(RenderInstanceAvailability(sources))
+            .Append("<div class=\"cards cards--wide overview-metrics\" aria-label=\"Operational metrics\">")
+            .Append(OverviewMetric(options, "Sources healthy", $"{healthySources}/{sources.Sources.Count}", "PostgreSQL capture", sources.Sources.Count, "sources"))
+            .Append(OverviewMetric(options, "Pipelines healthy", $"{healthyPipelines}/{sync.Pipelines.Count}", "Destination delivery", sync.Pipelines.Count, "pipelines"))
+            .Append(OverviewMetric(
+                options,
                 "Connected clients",
                 live.Subscriptions.Sum(static item => item.ConnectedClients)
                     .ToString("N0", CultureInfo.InvariantCulture),
-                $"{healthySubscriptions}/{live.Subscriptions.Count} subscriptions healthy"))
-            .Append(MetricCard("Graph queries", graphs.Queries.Count.ToString("N0", CultureInfo.InvariantCulture), "Continuously maintained"))
-            .Append(MetricCard("Deployments ready", $"{healthyDeployments}/{fleet.Deployments.Count}", "Managed fleet"))
+                $"{healthySubscriptions}/{live.Subscriptions.Count} subscriptions healthy",
+                live.Subscriptions.Count,
+                "live"))
+            .Append(OverviewMetric(options, "Graph queries", graphs.Queries.Count.ToString("N0", CultureInfo.InvariantCulture), "Continuously maintained", graphs.Queries.Count, "graphs"))
+            .Append(OverviewMetric(options, "Deployments ready", $"{healthyDeployments}/{fleet.Deployments.Count}", "Managed fleet", fleet.Deployments.Count, "deployments"))
             .Append("</div>")
-            .Append("<section class=\"panel attention\"><div class=\"section-heading\"><div><p class=\"eyebrow\">Live assessment</p><h2>Needs attention</h2></div>")
-            .Append(StatusBadge(attention.Count == 0 ? "Nothing to action" : $"{attention.Count} items", overallTone))
+            .Append("<div class=\"overview-workspace\"><section class=\"panel attention\"><div class=\"section-heading\"><div><p class=\"eyebrow\">TRIAGE</p><h2>Needs attention</h2></div>")
+            .Append(StatusBadge(attention.Count == 0 ? "No alerts reported" : $"{attention.Count} items", overallTone))
             .Append("</div>");
         if (attention.Count == 0)
         {
@@ -101,54 +89,67 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         else
         {
             body.Append("<div class=\"attention-list\">");
-            foreach (var item in attention)
+            var ranked = attention.OrderByDescending(static item => item.Tone == "critical").ToArray();
+            for (var index = 0; index < ranked.Length; index++)
             {
+                if (index == 5)
+                    body.Append("<details class=\"attention-more\"><summary>Show ").Append(ranked.Length - index)
+                        .Append(" more</summary><div class=\"attention-list\">");
+                var item = ranked[index];
                 body.Append("<a class=\"attention-item\" href=\"").Append(E(item.Href)).Append("\">")
                     .Append(StatusDot(item.Tone))
                     .Append("<span><strong>").Append(E(item.Title)).Append("</strong><small>")
-                    .Append(E(item.Detail)).Append("</small></span><span aria-hidden=\"true\">→</span></a>");
+                    .Append(E(item.Detail)).Append("</small></span>")
+                    .Append(StatusBadge(item.Tone == "critical" ? "Critical" : "Review", item.Tone))
+                    .Append("<span class=\"attention-arrow\" aria-hidden=\"true\">→</span></a>");
             }
 
+            if (ranked.Length > 5) body.Append("</div></details>");
             body.Append("</div>");
         }
 
-        body.Append("</section><section><div class=\"section-heading\"><div><p class=\"eyebrow\">Explore</p><h2>Products and infrastructure</h2></div></div><div class=\"product-grid\">")
+        body.Append("</section><section class=\"panel coverage-panel\"><div class=\"section-heading\"><div><p class=\"eyebrow\">OBSERVABILITY</p><h2>Product coverage</h2></div></div>")
+            .Append("<div class=\"coverage-summary\"><span><strong>").Append(reportingProducts)
+            .Append(" / 5</strong> product areas reporting</span><div class=\"coverage-meter\" aria-hidden=\"true\">");
+        for (var index = 0; index < 5; index++)
+            body.Append(index < reportingProducts ? "<i class=\"filled\"></i>" : "<i></i>");
+        body.Append("</div></div><div class=\"product-grid coverage-links\">")
             .Append(ProductCard(
                 options,
                 "Sources & Streams",
                 "Capture health, WAL lag, relay storage, snapshots, consumer groups and checkpoints.",
-                $"{sources.Sources.Count} sources",
-                healthySources == sources.Sources.Count ? "ok" : "warn",
+                sources.Sources.Count == 0 ? "No data" : $"{sources.Sources.Count} sources",
+                sources.Sources.Count == 0 ? "unknown" : healthySources == sources.Sources.Count ? "ok" : "warn",
                 "sources"))
             .Append(ProductCard(
                 options,
                 "Sync pipelines",
                 "Delivery throughput, destination lag, retries, failures and quarantined transactions.",
-                $"{sync.Pipelines.Count} pipelines",
-                healthyPipelines == sync.Pipelines.Count ? "ok" : "warn",
+                sync.Pipelines.Count == 0 ? "No data" : $"{sync.Pipelines.Count} pipelines",
+                sync.Pipelines.Count == 0 ? "unknown" : healthyPipelines == sync.Pipelines.Count ? "ok" : "warn",
                 "pipelines"))
             .Append(ProductCard(
                 options,
                 "Live subscriptions",
                 "Connected clients, shared-query fan-out, replay, invalidation lag and slow-client handling.",
-                $"{live.Subscriptions.Count} subscriptions",
-                healthySubscriptions == live.Subscriptions.Count ? "ok" : "warn",
+                live.Subscriptions.Count == 0 ? "No data" : $"{live.Subscriptions.Count} subscriptions",
+                live.Subscriptions.Count == 0 ? "unknown" : healthySubscriptions == live.Subscriptions.Count ? "ok" : "warn",
                 "live"))
             .Append(ProductCard(
                 options,
                 "Continuous Graph",
                 "Registered graph queries, table impact, limits and available incremental maintenance tiers.",
-                $"{graphs.Queries.Count} queries",
-                "ok",
+                graphs.Queries.Count == 0 ? "No data" : $"{graphs.Queries.Count} queries",
+                graphs.Queries.Count == 0 ? "unknown" : "ok",
                 "graphs"))
             .Append(ProductCard(
                 options,
                 "Managed deployments",
                 "Fleet placement, generation convergence, workloads, capacity and protection state.",
-                $"{fleet.Deployments.Count} deployments",
-                healthyDeployments == fleet.Deployments.Count ? "ok" : "warn",
+                fleet.Deployments.Count == 0 ? "No data" : $"{fleet.Deployments.Count} deployments",
+                fleet.Deployments.Count == 0 ? "unknown" : healthyDeployments == fleet.Deployments.Count ? "ok" : "warn",
                 "deployments"))
-            .Append("</div></section>");
+            .Append("</div></section></div>");
 
         return Layout("Operational overview", observedAt, body.ToString(), options);
     }
@@ -527,12 +528,19 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         BlueTuskDashboardOptions options)
     {
         var items = new List<AttentionItem>();
+        foreach (var instance in sources.Instances.Where(instance =>
+                     instance.Availability == ControlPlaneInstanceAvailability.Unavailable))
+        {
+            items.Add(new AttentionItem(instance.InstanceName, "Instance unavailable", "critical",
+                DashboardPath(options, "sources")));
+        }
         foreach (var source in sources.Sources.Where(source => !IsSourceHealthy(source)))
         {
             var critical = !source.Slot.SourceReachable || !source.Slot.Exists;
             items.Add(new AttentionItem(
                 source.InstanceName + " / " + source.SlotName,
-                source.Slot.DiagnosticCode ?? (source.Slot.Active ? "WAL lag requires review" : "Replication slot is not active"),
+                source.IsStale ? "Inventory is stale" : source.Slot.DiagnosticCode ??
+                    (source.Slot.Active ? "WAL lag requires review" : "Replication slot is not active"),
                 critical ? "critical" : "warn",
                 DashboardPath(options, "sources", source.SourceKey)));
         }
@@ -575,6 +583,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
     }
 
     private static bool IsSourceHealthy(ControlPlaneSourceSnapshot source) =>
+        !source.IsStale &&
         source.Slot.SourceReachable &&
         source.Slot.Exists &&
         source.Slot.Active &&
@@ -670,6 +679,10 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
 
     private static string MetricCard(string label, string value, string detail) =>
         $"<div class=\"card\"><span>{E(label)}</span><strong>{E(value)}</strong><small>{E(detail)}</small></div>";
+
+    private static string OverviewMetric(
+        BlueTuskDashboardOptions options, string label, string value, string detail, int observed, string route) =>
+        $"<a class=\"card metric-link\" href=\"{E(DashboardPath(options, route))}\"><span>{E(label)}</span><strong>{E(observed == 0 ? "—" : value)}</strong><small>{E(observed == 0 ? "No data reported" : detail)}</small></a>";
 
     private static string ProductCard(
         BlueTuskDashboardOptions options,

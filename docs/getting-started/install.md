@@ -47,7 +47,7 @@ Some features documented here are new in `1.1.0` and are not in `1.0.0` or
 | Sync | 1.1.0 | Core |
 | Live (NuGet and npm) | 1.1.0 | Core |
 | Control Plane | 1.1.0 | Core |
-| Graph (SQL/PGQ) and Continuous Graph | Not part of 1.1.0 | Preview. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that ships it. |
+| BlueTusk Graphs and Continuous Graph | Separate release track | Portable Graph is verified locally on PostgreSQL 15–18 without SQL/PGQ. The public 1.1.0-rc.1 packages predate it. See [Graph availability](../graph/README.md). |
 | Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio, Edge | `0.1.0-preview.1` | Preview. Not published; each family is released when its own checks pass. |
 
 ## Choose packages

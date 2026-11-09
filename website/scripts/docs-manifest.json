@@ -268,7 +268,7 @@
     "categoryLabel": "Real time",
     "slug": "continuous-graph",
     "source": "docs/continuous-graph/README.md",
-    "summary": "Keep a bounded SQL/PGQ result current with incremental updates and authoritative repair.",
+    "summary": "Keep a bounded graph result current with scoped PostgreSQL queries, durable replay, and full repair when needed.",
     "keywords": ["graph", "projection", "checkpoint"],
     "order": 130
   },
@@ -286,8 +286,8 @@
     "categoryLabel": "Graph",
     "slug": "sql-pgq",
     "source": "docs/graph/README.md",
-    "summary": "Define a PostgreSQL property graph, run a safe GRAPH_TABLE query, and inspect or map it from .NET.",
-    "keywords": ["sql/pgq", "property graph", "postgresql 19"],
+    "summary": "Run typed EF graph queries over existing PostgreSQL tables and opt in to native SQL/PGQ where supported.",
+    "keywords": ["bluetusk graphs", "portable graph", "ef core", "sql/pgq", "property graph"],
     "order": 10
   },
   {

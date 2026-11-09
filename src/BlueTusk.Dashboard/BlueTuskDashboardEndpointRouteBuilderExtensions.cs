@@ -26,740 +26,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             LogLevel.Error,
             new EventId(2, "ContinuousGraphExecutionFailed"),
             "BlueTusk Continuous Graph execution {ExecutionId} for {QueryFingerprint} failed.");
-    private const string DashboardScript = """
-        (() => {
-          const operationUrl = new URL('../api/v1/operations', document.currentScript.src);
-          const navToggle = document.querySelector('[data-nav-toggle]');
-          const navigation = document.querySelector('[data-navigation]');
-          navToggle?.addEventListener('click', () => {
-            const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-            navToggle.setAttribute('aria-expanded', String(!expanded));
-            navigation?.toggleAttribute('data-open', !expanded);
-          });
 
-          const currentPath = window.location.pathname.replace(/\/$/, '');
-          document.querySelectorAll('[data-navigation] a').forEach(link => {
-            const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
-            if (currentPath === linkPath || currentPath.startsWith(linkPath + '/')) {
-              link.setAttribute('aria-current', 'page');
-            }
-          });
-
-          document.querySelectorAll('[data-table-filter]').forEach(input => {
-            const panel = input.closest('[data-filter-panel]');
-            const rows = panel?.querySelectorAll('tbody tr') ?? [];
-            const state = panel?.querySelector('[data-state-filter]');
-            const count = panel?.querySelector('[data-filter-count]');
-            const apply = () => {
-              const query = input.value.trim().toLocaleLowerCase();
-              const selectedState = state?.value ?? '';
-              let visible = 0;
-              rows.forEach(row => {
-                const matchesQuery = !query || row.textContent.toLocaleLowerCase().includes(query);
-                const matchesState = !selectedState || row.dataset.state === selectedState;
-                const show = matchesQuery && matchesState;
-                row.hidden = !show;
-                if (show) visible++;
-              });
-              if (count) count.textContent = `${visible} of ${rows.length}`;
-            };
-            input.addEventListener('input', apply);
-            state?.addEventListener('change', apply);
-            apply();
-          });
-
-          document.querySelectorAll('[data-copy]').forEach(button =>
-            button.addEventListener('click', async () => {
-              const value = button.dataset.copy;
-              if (!value) return;
-              try {
-                await navigator.clipboard.writeText(value);
-                const original = button.textContent;
-                button.textContent = 'Copied';
-                window.setTimeout(() => { button.textContent = original; }, 1200);
-              } catch {
-                window.prompt('Copy this value:', value);
-              }
-            }));
-
-          document.querySelectorAll('[data-refresh]').forEach(button =>
-            button.addEventListener('click', () => window.location.reload()));
-
-          const graphPalette = [
-            '#48b9ff', '#4ade9a', '#f6c85f', '#b79cff', '#ff7f91',
-            '#4fe0d4', '#ffad66', '#8fc7ff', '#c6e56f', '#f49ddd'
-          ];
-          const graphNodeWidth = 210;
-          const graphNodeHeight = 52;
-          const graphStageGap = 105;
-          const graphNodeGap = 28;
-          const graphStageDefinitions = [
-            { label: 'Cluster', categories: ['kubernetes cluster'] },
-            { label: 'Namespaces', categories: ['namespace'] },
-            { label: 'Workloads', categories: ['deployment', 'stateful set', 'job'] },
-            { label: 'Controllers', categories: ['replica set'] },
-            { label: 'Runtime', categories: ['pod'] },
-            { label: 'Networking', categories: ['service', 'endpoint slice'] },
-            { label: 'Exposure', categories: ['ingress', 'certificate', 'external endpoint'] },
-            { label: 'Images', categories: ['container image'] }
-          ];
-          const graphKnownStageFor = category => {
-            const normalized = String(category ?? '').trim().toLocaleLowerCase();
-            const index = graphStageDefinitions.findIndex(stage => stage.categories.includes(normalized));
-            return index < 0 ? null : index;
-          };
-          const graphProperty = (element, name) =>
-            (element.properties ?? []).find(property =>
-              property.name.toLocaleLowerCase() === name.toLocaleLowerCase())?.value ?? '';
-          const graphNodeSortKey = node =>
-            `${graphProperty(node, 'namespace')}\u0000${node.category}\u0000${node.label}\u0000${node.id}`;
-          const resolveGraphStages = (nodes, edges) => {
-            const nodeIds = new Set(nodes.map(node => node.id));
-            const predecessors = new Map(nodes.map(node => [node.id, []]));
-            const successors = new Map(nodes.map(node => [node.id, []]));
-            edges.forEach(edge => {
-              if (!nodeIds.has(edge.sourceNodeId) || !nodeIds.has(edge.targetNodeId) ||
-                  edge.sourceNodeId === edge.targetNodeId) return;
-              predecessors.get(edge.targetNodeId).push(edge.sourceNodeId);
-              successors.get(edge.sourceNodeId).push(edge.targetNodeId);
-            });
-            const stages = new Map();
-            nodes.forEach(node => {
-              const known = graphKnownStageFor(node.category);
-              if (known !== null) stages.set(node.id, known);
-            });
-            const unresolved = new Set(nodes.filter(node => !stages.has(node.id)).map(node => node.id));
-            const hints = new Map();
-            const maximumStage = Math.max(
-              graphStageDefinitions.length - 1,
-              Math.min(11, Math.max(2, Math.ceil(Math.sqrt(nodes.length || 1)))));
-            while (unresolved.size > 0) {
-              const ordered = [...unresolved].sort();
-              const next = ordered.find(id =>
-                predecessors.get(id).every(predecessor => !unresolved.has(predecessor))) ?? ordered[0];
-              const predecessorStages = predecessors.get(next)
-                .map(predecessor => stages.get(predecessor))
-                .filter(stage => stage !== undefined);
-              const stage = Math.min(
-                maximumStage,
-                Math.max(
-                  hints.get(next) ?? 0,
-                  predecessorStages.length ? Math.max(...predecessorStages) + 1 : 0));
-              stages.set(next, stage);
-              unresolved.delete(next);
-              successors.get(next).forEach(successor => {
-                if (unresolved.has(successor)) {
-                  hints.set(successor, Math.max(hints.get(successor) ?? 0, stage + 1));
-                }
-              });
-            }
-            return stages;
-          };
-          const appendText = (parent, tag, text, className) => {
-            const element = document.createElement(tag);
-            if (className) element.className = className;
-            element.textContent = text;
-            parent.append(element);
-            return element;
-          };
-          const propertyText = properties =>
-            (properties ?? []).map(property =>
-              `${property.name}=${property.value ?? 'null'}`).join(' · ') || 'No properties';
-
-          document.querySelectorAll('[data-graph-runner]').forEach(runner => {
-            const form = runner.querySelector('[data-graph-form]');
-            const resultPanel = runner.querySelector('[data-graph-result]');
-            const status = runner.querySelector('[data-graph-status]');
-            const message = runner.querySelector('[data-graph-message]');
-            const canvas = runner.querySelector('[data-graph-canvas]');
-            const inspector = runner.querySelector('[data-graph-inspector]');
-            const search = runner.querySelector('[data-graph-search]');
-            const state = {
-              result: null,
-              nodes: [],
-              edges: [],
-              positions: new Map(),
-              colors: new Map(),
-              edgeColors: new Map(),
-              adjacency: new Map(),
-              selected: null,
-              query: '',
-              stages: [],
-              layoutBounds: null,
-              camera: { x: 0, y: 0, scale: 1 },
-              drag: null
-            };
-
-            const resizeCanvas = () => {
-              const rect = canvas.getBoundingClientRect();
-              const ratio = Math.min(window.devicePixelRatio || 1, 2);
-              const width = Math.max(320, Math.round(rect.width * ratio));
-              const height = Math.max(360, Math.round(rect.height * ratio));
-              if (canvas.width !== width || canvas.height !== height) {
-                canvas.width = width;
-                canvas.height = height;
-              }
-              draw();
-            };
-
-            const layout = () => {
-              state.positions.clear();
-              state.stages = [];
-              const groups = new Map();
-              const resolvedStages = resolveGraphStages(state.nodes, state.edges);
-              state.nodes.forEach(node => {
-                const stage = resolvedStages.get(node.id) ?? 0;
-                if (!groups.has(stage)) groups.set(stage, []);
-                groups.get(stage).push(node);
-              });
-              const stages = [...groups.keys()].sort((left, right) => left - right);
-              stages.forEach((stage, columnIndex) => {
-                const nodes = groups.get(stage).sort((left, right) =>
-                  graphNodeSortKey(left).localeCompare(graphNodeSortKey(right)));
-                const height = Math.max(
-                  graphNodeHeight,
-                  nodes.length * graphNodeHeight + Math.max(0, nodes.length - 1) * graphNodeGap);
-                const x = columnIndex * (graphNodeWidth + graphStageGap);
-                const categories = [...new Set(nodes.map(node => node.category))].sort();
-                const knownStage = graphStageDefinitions[stage];
-                const label = knownStage && categories.every(category =>
-                  knownStage.categories.includes(category.toLocaleLowerCase()))
-                  ? knownStage.label
-                  : categories.length <= 2
-                    ? categories.join(' / ')
-                    : `Stage ${columnIndex + 1}`;
-                state.stages.push({ stage, x, label, height });
-                nodes.forEach((node, index) => {
-                  state.positions.set(node.id, {
-                    x,
-                    y: index * (graphNodeHeight + graphNodeGap) - height / 2 + graphNodeHeight / 2
-                  });
-                });
-              });
-              const positioned = [...state.positions.values()];
-              state.layoutBounds = positioned.length === 0 ? null : {
-                minX: Math.min(...positioned.map(point => point.x - graphNodeWidth / 2)),
-                maxX: Math.max(...positioned.map(point => point.x + graphNodeWidth / 2)),
-                minY: Math.min(...positioned.map(point => point.y - graphNodeHeight / 2)) - 64,
-                maxY: Math.max(...positioned.map(point => point.y + graphNodeHeight / 2))
-              };
-            };
-
-            const fit = () => {
-              if (!state.layoutBounds) return;
-              const { minX, maxX, minY, maxY } = state.layoutBounds;
-              const padding = 64;
-              const width = Math.max(180, maxX - minX + padding * 2);
-              const height = Math.max(180, maxY - minY + padding * 2);
-              state.camera.scale = Math.min(1.25, canvas.width / width, canvas.height / height);
-              state.camera.x = canvas.width / 2 - ((minX + maxX) / 2) * state.camera.scale;
-              state.camera.y = canvas.height / 2 - ((minY + maxY) / 2) * state.camera.scale;
-              draw();
-            };
-
-            const matches = element => {
-              if (!state.query) return true;
-              return `${element.id} ${element.label} ${element.category} ${propertyText(element.properties)}`
-                .toLocaleLowerCase().includes(state.query);
-            };
-
-            const worldToScreen = point => ({
-              x: point.x * state.camera.scale + state.camera.x,
-              y: point.y * state.camera.scale + state.camera.y
-            });
-
-            const pointToSegmentDistance = (point, start, end) => {
-              const dx = end.x - start.x;
-              const dy = end.y - start.y;
-              const lengthSquared = dx * dx + dy * dy;
-              if (lengthSquared === 0) return Math.hypot(point.x - start.x, point.y - start.y);
-              const offset = Math.max(0, Math.min(1,
-                ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared));
-              return Math.hypot(
-                point.x - (start.x + offset * dx),
-                point.y - (start.y + offset * dy));
-            };
-
-            const bezierPoint = (geometry, progress) => {
-              const remainder = 1 - progress;
-              return {
-                x: remainder * remainder * remainder * geometry.start.x +
-                  3 * remainder * remainder * progress * geometry.controlOne.x +
-                  3 * remainder * progress * progress * geometry.controlTwo.x +
-                  progress * progress * progress * geometry.end.x,
-                y: remainder * remainder * remainder * geometry.start.y +
-                  3 * remainder * remainder * progress * geometry.controlOne.y +
-                  3 * remainder * progress * progress * geometry.controlTwo.y +
-                  progress * progress * progress * geometry.end.y
-              };
-            };
-
-            const pointToBezierDistance = (point, geometry) => {
-              let previous = geometry.start;
-              let distance = Number.POSITIVE_INFINITY;
-              for (let index = 1; index <= 24; index++) {
-                const current = bezierPoint(geometry, index / 24);
-                distance = Math.min(distance, pointToSegmentDistance(point, previous, current));
-                previous = current;
-              }
-              return distance;
-            };
-
-            const clipToNode = (from, toward, width, height) => {
-              const dx = toward.x - from.x;
-              const dy = toward.y - from.y;
-              const scale = 1 / Math.max(
-                Math.abs(dx) / Math.max(1, width / 2),
-                Math.abs(dy) / Math.max(1, height / 2),
-                1 / Math.max(1, Math.hypot(dx, dy)));
-              return { x: from.x + dx * scale, y: from.y + dy * scale };
-            };
-
-            const fitCanvasText = (context, value, maximumWidth) => {
-              if (context.measureText(value).width <= maximumWidth) return value;
-              let text = value;
-              while (text.length > 1 && context.measureText(`${text}…`).width > maximumWidth) {
-                text = text.slice(0, -1);
-              }
-              return `${text}…`;
-            };
-
-            const edgeGeometry = (source, target) => {
-              const nodeWidth = graphNodeWidth * state.camera.scale;
-              const nodeHeight = graphNodeHeight * state.camera.scale;
-              const start = clipToNode(source, target, nodeWidth, nodeHeight);
-              const end = clipToNode(target, source, nodeWidth, nodeHeight);
-              const dx = target.x - source.x;
-              const dy = target.y - source.y;
-              const direction = Math.sign(dx) || 1;
-              const curve = Math.max(28, Math.min(150, Math.abs(dx) * .42));
-              const controlOne = Math.abs(dx) < nodeWidth
-                ? { x: start.x + nodeWidth * .68, y: start.y + dy * .18 }
-                : { x: start.x + direction * curve, y: start.y };
-              const controlTwo = Math.abs(dx) < nodeWidth
-                ? { x: end.x + nodeWidth * .68, y: end.y - dy * .18 }
-                : { x: end.x - direction * curve, y: end.y };
-              return { start, controlOne, controlTwo, end };
-            };
-
-            const drawArrow = (context, source, target, color, strong, directed, label) => {
-              const geometry = edgeGeometry(source, target);
-              const { start, controlOne, controlTwo, end } = geometry;
-              context.strokeStyle = color;
-              context.globalAlpha = strong ? .96 : .5;
-              context.lineWidth = strong ? 2.6 : 1.35;
-              context.beginPath();
-              context.moveTo(start.x, start.y);
-              context.bezierCurveTo(
-                controlOne.x,
-                controlOne.y,
-                controlTwo.x,
-                controlTwo.y,
-                end.x,
-                end.y);
-              context.stroke();
-              if (directed) {
-                const arrowDx = end.x - controlTwo.x;
-                const arrowDy = end.y - controlTwo.y;
-                const arrowDistance = Math.hypot(arrowDx, arrowDy) || 1;
-                const ux = arrowDx / arrowDistance;
-                const uy = arrowDy / arrowDistance;
-                context.fillStyle = color;
-                context.beginPath();
-                context.moveTo(end.x, end.y);
-                context.lineTo(end.x - ux * 10 - uy * 4.5, end.y - uy * 10 + ux * 4.5);
-                context.lineTo(end.x - ux * 10 + uy * 4.5, end.y - uy * 10 - ux * 4.5);
-                context.closePath();
-                context.fill();
-              }
-              if (strong && label) {
-                const middle = bezierPoint(geometry, .5);
-                context.globalAlpha = 1;
-                context.font = '700 10px system-ui, sans-serif';
-                const labelWidth = context.measureText(label).width + 12;
-                context.fillStyle = '#07131f';
-                context.fillRect(middle.x - labelWidth / 2, middle.y - 9, labelWidth, 17);
-                context.fillStyle = '#d8ebf7';
-                context.textAlign = 'center';
-                context.fillText(label, middle.x, middle.y + 3);
-                context.textAlign = 'start';
-              }
-            };
-
-            const draw = () => {
-              const context = canvas.getContext('2d');
-              if (!context) return;
-              context.clearRect(0, 0, canvas.width, canvas.height);
-              context.fillStyle = '#07131f';
-              context.fillRect(0, 0, canvas.width, canvas.height);
-              if (state.layoutBounds) {
-                const top = worldToScreen({ x: 0, y: state.layoutBounds.minY });
-                const bottom = worldToScreen({ x: 0, y: state.layoutBounds.maxY });
-                state.stages.forEach((stage, index) => {
-                  const centre = worldToScreen({ x: stage.x, y: 0 });
-                  const width = (graphNodeWidth + 42) * state.camera.scale;
-                  context.globalAlpha = 1;
-                  context.fillStyle = index % 2 === 0 ? 'rgba(19,48,72,.24)' : 'rgba(10,33,52,.18)';
-                  context.fillRect(centre.x - width / 2, top.y, width, bottom.y - top.y);
-                  context.fillStyle = '#7f9bb1';
-                  context.font = '800 10px system-ui, sans-serif';
-                  context.textAlign = 'center';
-                  context.fillText(stage.label.toLocaleUpperCase(), centre.x, top.y + 19);
-                });
-                context.textAlign = 'start';
-              }
-              const selectedNodeId = state.selected?.kind === 'node'
-                ? state.selected.value.id
-                : null;
-              state.edges.forEach(edge => {
-                const sourcePosition = state.positions.get(edge.sourceNodeId);
-                const targetPosition = state.positions.get(edge.targetNodeId);
-                if (!sourcePosition || !targetPosition) return;
-                const source = worldToScreen(sourcePosition);
-                const target = worldToScreen(targetPosition);
-                const edgeMargin = 80;
-                if (source.x < -edgeMargin && target.x < -edgeMargin ||
-                    source.x > canvas.width + edgeMargin && target.x > canvas.width + edgeMargin ||
-                    source.y < -edgeMargin && target.y < -edgeMargin ||
-                    source.y > canvas.height + edgeMargin && target.y > canvas.height + edgeMargin) return;
-                const selected = state.selected?.kind === 'edge' && state.selected.value.id === edge.id;
-                const highlighted = matches(edge);
-                const incident = selectedNodeId === edge.sourceNodeId || selectedNodeId === edge.targetNodeId;
-                const strong = selected || incident || highlighted && !!state.query;
-                const color = selected
-                  ? '#ffffff'
-                  : state.edgeColors.get(edge.category) ?? '#70a7c8';
-                drawArrow(context, source, target, color, strong, edge.directed, edge.category);
-              });
-              state.nodes.forEach(node => {
-                const position = state.positions.get(node.id);
-                if (!position) return;
-                const point = worldToScreen(position);
-                const width = graphNodeWidth * state.camera.scale;
-                const height = graphNodeHeight * state.camera.scale;
-                if (point.x + width / 2 < -20 || point.x - width / 2 > canvas.width + 20 ||
-                    point.y + height / 2 < -20 || point.y - height / 2 > canvas.height + 20) return;
-                const selected = state.selected?.kind === 'node' && state.selected.value.id === node.id;
-                const highlighted = matches(node);
-                const connected = selectedNodeId && state.adjacency.get(selectedNodeId)?.has(node.id);
-                const radius = Math.min(10, Math.max(2, 9 * state.camera.scale));
-                context.globalAlpha = highlighted || !state.query || connected ? 1 : .18;
-                context.fillStyle = selected ? '#173e5a' : '#0d2335';
-                context.beginPath();
-                context.roundRect(point.x - width / 2, point.y - height / 2, width, height, radius);
-                context.fill();
-                context.strokeStyle = selected
-                  ? '#ffffff'
-                  : connected ? '#92d8ff' : '#31536b';
-                context.lineWidth = selected ? 2.8 : connected ? 2.2 : 1.2;
-                context.stroke();
-                context.fillStyle = state.colors.get(node.category) ?? graphPalette[0];
-                context.beginPath();
-                context.roundRect(
-                  point.x - width / 2,
-                  point.y - height / 2,
-                  Math.max(3, 7 * state.camera.scale),
-                  height,
-                  [radius, 0, 0, radius]);
-                context.fill();
-                if (width >= 68 || selected || highlighted && state.query) {
-                  context.globalAlpha = 1;
-                  context.fillStyle = '#eaf7ff';
-                  const fontSize = Math.min(13, Math.max(8, 12 * state.camera.scale));
-                  context.font = `700 ${fontSize}px system-ui, sans-serif`;
-                  const textWidth = Math.max(32, width - 24 * state.camera.scale);
-                  const label = fitCanvasText(context, node.label, textWidth);
-                  context.fillText(label, point.x - width / 2 + 15 * state.camera.scale, point.y + 1);
-                  if (height >= 28) {
-                    context.fillStyle = '#88a5ba';
-                    context.font = `600 ${Math.max(7, fontSize - 3)}px system-ui, sans-serif`;
-                    context.fillText(
-                      fitCanvasText(context, node.category, textWidth),
-                      point.x - width / 2 + 15 * state.camera.scale,
-                      point.y + Math.min(15, 15 * state.camera.scale));
-                  }
-                }
-              });
-              context.globalAlpha = 1;
-            };
-
-            const select = (kind, value) => {
-              state.selected = { kind, value };
-              inspector.replaceChildren();
-              appendText(inspector, 'p', kind === 'node' ? 'Node' : 'Edge', 'eyebrow');
-              appendText(inspector, 'h3', value.label);
-              appendText(inspector, 'p', `${value.category} · ${value.id}`, 'muted');
-              if (kind === 'edge') {
-                appendText(inspector, 'p', `${value.sourceNodeId} ${value.directed ? '→' : '—'} ${value.targetNodeId}`);
-              }
-              const list = document.createElement('dl');
-              list.className = 'graph-property-list';
-              (value.properties ?? []).forEach(property => {
-                appendText(list, 'dt', property.name);
-                appendText(list, 'dd', property.value ?? 'null');
-              });
-              if (!value.properties?.length) appendText(inspector, 'p', 'No properties', 'muted');
-              else inspector.append(list);
-              draw();
-            };
-
-            const createComposition = (target, composition) => {
-              target.replaceChildren();
-              composition.forEach((item, index) => {
-                const tag = appendText(target, 'span', `${item.category} · ${item.count}`);
-                tag.style.setProperty('--category-color', graphPalette[index % graphPalette.length]);
-              });
-            };
-
-            const createRows = (target, values, kind) => {
-              target.replaceChildren();
-              const fragment = document.createDocumentFragment();
-              values.forEach(value => {
-                const row = document.createElement('tr');
-                row.dataset.graphText = `${value.id} ${value.label} ${value.category} ${propertyText(value.properties)}`.toLocaleLowerCase();
-                const identity = document.createElement('td');
-                const button = appendText(identity, 'button', value.label, 'graph-element-button');
-                button.type = 'button';
-                button.addEventListener('click', () => select(kind, value));
-                appendText(identity, 'small', value.id);
-                row.append(identity);
-                if (kind === 'node') {
-                  appendText(row, 'td', value.category);
-                } else {
-                  appendText(row, 'td', `${value.sourceNodeId} ${value.directed ? '→' : '—'} ${value.targetNodeId}`);
-                }
-                appendText(row, 'td', propertyText(value.properties));
-                fragment.append(row);
-              });
-              target.append(fragment);
-            };
-
-            const applySearch = () => {
-              state.query = search.value.trim().toLocaleLowerCase();
-              runner.querySelectorAll('[data-graph-text]').forEach(row => {
-                row.hidden = !!state.query && !row.dataset.graphText.includes(state.query);
-              });
-              draw();
-            };
-
-            const render = result => {
-              state.result = result;
-              state.nodes = result.nodes ?? [];
-              state.edges = result.edges ?? [];
-              state.adjacency.clear();
-              state.nodes.forEach(node => state.adjacency.set(node.id, new Set()));
-              state.edges.forEach(edge => {
-                state.adjacency.get(edge.sourceNodeId)?.add(edge.targetNodeId);
-                state.adjacency.get(edge.targetNodeId)?.add(edge.sourceNodeId);
-              });
-              state.colors.clear();
-              (result.nodeComposition ?? []).forEach((item, index) =>
-                state.colors.set(item.category, graphPalette[index % graphPalette.length]));
-              state.edgeColors.clear();
-              (result.edgeComposition ?? []).forEach((item, index) =>
-                state.edgeColors.set(item.category, graphPalette[index % graphPalette.length]));
-              layout();
-              const durationParts = String(result.duration).split(':');
-              const durationMilliseconds = durationParts.length === 3
-                ? (Number(durationParts[0]) * 3600 + Number(durationParts[1]) * 60 + Number(durationParts[2])) * 1000
-                : Number(result.duration) / 10000;
-              const summary = runner.querySelector('[data-graph-summary]');
-              summary.replaceChildren();
-              [
-                ['Result rows', String(result.resultRowCount)],
-                ['Nodes', String(state.nodes.length)],
-                ['Edges', String(state.edges.length)],
-                ['Execution', `${durationMilliseconds.toFixed(2)} ms`]
-              ].forEach(([label, value]) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                appendText(card, 'span', label);
-                appendText(card, 'strong', value);
-                summary.append(card);
-              });
-              createComposition(runner.querySelector('[data-node-composition]'), result.nodeComposition ?? []);
-              createComposition(runner.querySelector('[data-edge-composition]'), result.edgeComposition ?? []);
-              const snapshot = runner.querySelector('[data-graph-snapshot]');
-              const observedValues = state.nodes
-                .map(node => graphProperty(node, 'observedAt'))
-                .filter(Boolean)
-                .map(value => new Date(value))
-                .filter(value => !Number.isNaN(value.valueOf()));
-              const storage = state.nodes.map(node => graphProperty(node, 'storage')).find(Boolean);
-              const provenanceValues = state.nodes
-                .map(node => graphProperty(node, 'provenance'))
-                .filter(Boolean);
-              const source = provenanceValues.some(value => value.includes('Live Kubernetes API'))
-                ? 'Live Kubernetes API'
-                : provenanceValues[0]?.split(';')[0];
-              if (snapshot) {
-                if (observedValues.length > 0) {
-                  const observedAt = new Date(Math.max(...observedValues.map(value => value.valueOf())));
-                  const ageSeconds = Math.max(0, Math.round((Date.now() - observedAt.valueOf()) / 1000));
-                  const age = ageSeconds < 60
-                    ? `${ageSeconds}s ago`
-                    : ageSeconds < 3600
-                      ? `${Math.round(ageSeconds / 60)}m ago`
-                      : `${Math.round(ageSeconds / 3600)}h ago`;
-                  const observedLabel = observedAt.toLocaleString(undefined, { timeZoneName: 'short' });
-                  snapshot.textContent = `${source ?? 'Live snapshot'} · ${age} · ${observedLabel}${storage ? ` · ${storage}` : ''}`;
-                  snapshot.dataset.tone = ageSeconds <= 120 ? 'fresh' : 'stale';
-                } else {
-                  snapshot.textContent = storage
-                    ? `Authoritative graph result · ${storage}`
-                    : 'Authoritative graph result';
-                  snapshot.dataset.tone = 'unknown';
-                }
-              }
-              createRows(runner.querySelector('[data-node-list]'), state.nodes, 'node');
-              createRows(runner.querySelector('[data-edge-list]'), state.edges, 'edge');
-              runner.querySelector('[data-node-count]').textContent = `(${state.nodes.length})`;
-              runner.querySelector('[data-edge-count]').textContent = `(${state.edges.length})`;
-              resultPanel.hidden = false;
-              requestAnimationFrame(() => { resizeCanvas(); fit(); });
-            };
-
-            form.addEventListener('submit', async event => {
-              event.preventDefault();
-              const runButton = runner.querySelector('[data-graph-run]');
-              const parameters = {};
-              runner.querySelectorAll('[data-graph-parameter]').forEach(input => {
-                parameters[input.name] = input.value;
-              });
-              runButton.disabled = true;
-              status.textContent = 'Running';
-              message.textContent = 'Executing the registered authoritative query…';
-              try {
-                const response = await fetch(runner.dataset.runUrl, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ parameters })
-                });
-                const payload = await response.json();
-                if (!response.ok) throw new Error(payload.title || 'Graph execution was rejected.');
-                render(payload.data);
-                status.textContent = 'Complete';
-                message.textContent = `Complete result loaded: ${payload.data.nodes.length} nodes and ${payload.data.edges.length} edges.`;
-              } catch (error) {
-                status.textContent = 'Failed';
-                message.textContent = error instanceof Error ? error.message : 'Graph execution failed.';
-              } finally {
-                runButton.disabled = false;
-              }
-            });
-
-            search?.addEventListener('input', applySearch);
-            runner.querySelector('[data-graph-fit]')?.addEventListener('click', fit);
-            runner.querySelector('[data-graph-reset]')?.addEventListener('click', () => {
-              state.query = '';
-              search.value = '';
-              state.selected = null;
-              applySearch();
-              fit();
-            });
-            canvas.addEventListener('wheel', event => {
-              event.preventDefault();
-              const rect = canvas.getBoundingClientRect();
-              const ratioX = canvas.width / rect.width;
-              const ratioY = canvas.height / rect.height;
-              const pointer = { x: (event.clientX - rect.left) * ratioX, y: (event.clientY - rect.top) * ratioY };
-              const world = {
-                x: (pointer.x - state.camera.x) / state.camera.scale,
-                y: (pointer.y - state.camera.y) / state.camera.scale
-              };
-              const factor = Math.exp(-event.deltaY * .001);
-              state.camera.scale = Math.min(4, Math.max(.08, state.camera.scale * factor));
-              state.camera.x = pointer.x - world.x * state.camera.scale;
-              state.camera.y = pointer.y - world.y * state.camera.scale;
-              draw();
-            }, { passive: false });
-            canvas.addEventListener('pointerdown', event => {
-              canvas.setPointerCapture(event.pointerId);
-              state.drag = { x: event.clientX, y: event.clientY, moved: false };
-            });
-            canvas.addEventListener('pointermove', event => {
-              if (!state.drag) return;
-              const dx = event.clientX - state.drag.x;
-              const dy = event.clientY - state.drag.y;
-              if (Math.abs(dx) + Math.abs(dy) > 2) state.drag.moved = true;
-              const rect = canvas.getBoundingClientRect();
-              state.camera.x += dx * canvas.width / rect.width;
-              state.camera.y += dy * canvas.height / rect.height;
-              state.drag.x = event.clientX;
-              state.drag.y = event.clientY;
-              draw();
-            });
-            canvas.addEventListener('pointerup', event => {
-              const drag = state.drag;
-              state.drag = null;
-              if (!drag?.moved) {
-                const rect = canvas.getBoundingClientRect();
-                const x = (event.clientX - rect.left) * canvas.width / rect.width;
-                const y = (event.clientY - rect.top) * canvas.height / rect.height;
-                const nodeWidth = graphNodeWidth * state.camera.scale;
-                const nodeHeight = graphNodeHeight * state.camera.scale;
-                const closestNode = state.nodes
-                  .map(node => ({ node, point: worldToScreen(state.positions.get(node.id)) }))
-                  .filter(item =>
-                    Math.abs(item.point.x - x) <= Math.max(10, nodeWidth / 2) &&
-                    Math.abs(item.point.y - y) <= Math.max(8, nodeHeight / 2))
-                  .map(item => ({
-                    ...item,
-                    distance: Math.hypot(item.point.x - x, item.point.y - y)
-                  }))
-                  .sort((left, right) => left.distance - right.distance)[0];
-                if (closestNode) {
-                  select('node', closestNode.node);
-                  return;
-                }
-                const pointer = { x, y };
-                const closestEdge = state.edges
-                  .map(edge => ({
-                    edge,
-                    source: state.positions.get(edge.sourceNodeId),
-                    target: state.positions.get(edge.targetNodeId)
-                  }))
-                  .filter(item => item.source && item.target)
-                  .map(item => ({
-                    edge: item.edge,
-                    distance: pointToBezierDistance(pointer, edgeGeometry(
-                      worldToScreen(item.source),
-                      worldToScreen(item.target)))
-                  }))
-                  .sort((left, right) => left.distance - right.distance)[0];
-                if (closestEdge?.distance <= 10) select('edge', closestEdge.edge);
-              }
-            });
-            new ResizeObserver(resizeCanvas).observe(canvas);
-          });
-
-          document.querySelectorAll('button[data-operation-kind]').forEach(button =>
-            button.addEventListener('click', async () => {
-              const expected = button.dataset.operationName + ':' + button.dataset.operationTarget;
-              const confirmation = window.prompt('Type exactly to confirm:\n' + expected);
-              if (confirmation === null) return;
-              const reason = window.prompt('Reason for this operation:');
-              if (!reason || !reason.trim()) return;
-              const operationId = crypto.randomUUID();
-              const response = await fetch(operationUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-BlueTusk-Operation-Id': operationId
-                },
-                body: JSON.stringify({
-                  operationId,
-                  kind: Number(button.dataset.operationKind),
-                  target: button.dataset.operationTarget,
-                  confirmation,
-                  reason
-                })
-              });
-              if (response.ok) window.location.reload();
-              else window.alert('Operation rejected. Reference ' + operationId);
-            }));
-        })();
-        """;
 
     public static IEndpointRouteBuilder MapBlueTuskDashboard(
         this IEndpointRouteBuilder endpoints,
@@ -821,6 +88,14 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 Json(Versioned(
                     await queries.GetFleetOverviewAsync(cancellationToken)
                         .ConfigureAwait(false))));
+        group.MapGet(
+            ControlPlaneApiContract.VersionedRoutePrefix + "/fleet/deployments",
+            (HttpContext context, IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
+                ReadFleetPageAsync(context, queries, options, html: false, cancellationToken));
+        group.MapGet(
+            ControlPlaneApiContract.VersionedRoutePrefix + "/fleet/deployments/{deploymentId}",
+            (string deploymentId, HttpContext context, IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
+                ReadDeploymentAsync(deploymentId, context, queries, options, html: false, cancellationToken));
         group.MapPost(
                 "/api/graphs/{queryFingerprint}/run",
                 (string queryFingerprint,
@@ -856,6 +131,9 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         group.MapGet(
             "/assets/dashboard.js",
             () => Results.Text(DashboardScript, "application/javascript; charset=utf-8"));
+        group.MapGet(
+            "/assets/bluetusk-mark.png",
+            () => Results.Stream(OpenAsset("bluetusk-mark.png"), "image/png"));
         group.MapPost(
                 "/api/operations",
                 (HttpContext context,
@@ -1061,33 +339,14 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             async (HttpContext context,
                     IControlPlaneFleetQueryService queries,
                     CancellationToken cancellationToken) =>
-                Html(RenderFleet(
-                    await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false),
-                    options,
-                    CanMutate(context.User, options),
-                    context.User.IsInRole(options.AdministratorRole))));
-        // Deployment IDs may contain '/', for example Kubernetes "namespace/name" IDs. A
-        // catch-all parameter accepts the raw form, and FindDeployment accepts the escaped
-        // form that the dashboard's own links produce ("namespace%2Fname"), which the server
-        // deliberately leaves undecoded in the request path.
+                await ReadFleetPageAsync(context, queries, options, html: true, cancellationToken).ConfigureAwait(false));
         group.MapGet(
             "/deployments/{**deploymentId}",
             async (string deploymentId,
                     HttpContext context,
                     IControlPlaneFleetQueryService queries,
                     CancellationToken cancellationToken) =>
-            {
-                var overview = await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false);
-                var deployment = FindDeployment(overview, deploymentId);
-                return deployment is null
-                    ? Results.NotFound()
-                    : Html(RenderDeployment(
-                        overview.ObservedAt,
-                        deployment,
-                        options,
-                        CanMutate(context.User, options),
-                        context.User.IsInRole(options.AdministratorRole)));
-            });
+                await ReadDeploymentAsync(deploymentId, context, queries, options, html: true, cancellationToken).ConfigureAwait(false));
         return endpoints;
     }
 
@@ -1345,24 +604,27 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         BlueTuskDashboardOptions options)
     {
         var healthy = overview.Sources.Count(IsSourceHealthy);
+        var refreshFailed = overview.Instances.Any(instance =>
+            instance.Availability != ControlPlaneInstanceAvailability.Current);
         var body = new StringBuilder()
             .Append(Breadcrumbs(options, ("Sources", null)))
             .Append(PageHeading(
                 "Sources & Streams",
                 "PostgreSQL capture, relay durability and consumer progress.",
                 StatusBadge(
-                    overview.Sources.Count == 0
+                    refreshFailed ? "Instance refresh needs attention" : overview.Sources.Count == 0
                         ? "Not connected"
                         : healthy == overview.Sources.Count
                             ? "All sources healthy"
                             : $"{overview.Sources.Count - healthy} need attention",
-                    overview.Sources.Count > 0 && healthy == overview.Sources.Count ? "ok" : "warn")))
+                    !refreshFailed && overview.Sources.Count > 0 && healthy == overview.Sources.Count ? "ok" : "warn")))
             .Append("<div class=\"cards\">")
             .Append(MetricCard("Sources", overview.Sources.Count.ToString(CultureInfo.InvariantCulture), "Configured capture sources"))
             .Append(MetricCard("Active slots", overview.Sources.Count(source => source.Slot.Active).ToString(CultureInfo.InvariantCulture), "Currently streaming"))
             .Append(MetricCard("WAL lag", Bytes(overview.Sources.Sum(source => source.Slot.WalLagBytes)), "Total retained WAL"))
             .Append(MetricCard("Relay storage", Bytes(overview.Sources.Sum(source => source.Relay.StorageBytes)), "Durable transaction history"))
-            .Append("</div>");
+            .Append("</div>")
+            .Append(RenderInstanceAvailability(overview));
         if (overview.Sources.Count == 0)
         {
             body.Append(EmptyInventory(
@@ -1379,7 +641,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         foreach (var source in overview.Sources)
         {
             var isHealthy = IsSourceHealthy(source);
-            var status = source.Slot.SourceReachable
+            var status = source.IsStale ? "Stale" : source.Slot.SourceReachable
                 ? source.Slot.Exists ? source.Slot.Active ? "Active" : "Inactive" : "Missing"
                 : "Unreachable";
             var href = DashboardPath(options, "sources", source.SourceKey);
@@ -1407,7 +669,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         BlueTuskDashboardOptions options)
     {
         var healthy = IsSourceHealthy(source);
-        var status = !source.Slot.SourceReachable
+        var status = source.IsStale ? "Stale" : !source.Slot.SourceReachable
             ? "Unreachable"
             : !source.Slot.Exists ? "Slot missing" : !source.Slot.Active ? "Slot inactive" : "Streaming";
         var body = new StringBuilder()
@@ -1419,6 +681,10 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 source.InstanceName,
                 $"{source.DatabaseName} through {source.SlotName}",
                 StatusBadge(status, healthy ? "ok" : source.Slot.SourceReachable ? "warn" : "critical")))
+            .Append(source.ObservedAt is null ? string.Empty : DetailsPanel(
+                "Inventory observation",
+                ("Observed at", Date(source.ObservedAt)),
+                ("Availability", source.IsStale ? "Stale; showing last successful observation" : "Current")))
             .Append("<div class=\"cards\">")
             .Append(MetricCard("WAL lag", Bytes(source.Slot.WalLagBytes), "Retained by PostgreSQL"))
             .Append(MetricCard("Relay storage", Bytes(source.Relay.StorageBytes), $"{source.Relay.TransactionCount:N0} transactions"))
@@ -1749,78 +1015,6 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         return Layout("Continuous Graph queries", overview.ObservedAt, body.ToString(), options);
     }
 
-    private static string RenderFleet(
-        ControlPlaneFleetOverview overview,
-        BlueTuskDashboardOptions options,
-        bool canMutate,
-        bool canAdminister)
-    {
-        var healthy = overview.Deployments.Count(IsDeploymentHealthy);
-        var body = new StringBuilder()
-            .Append(Breadcrumbs(options, ("Managed deployments", null)))
-            .Append(PageHeading(
-                "Managed deployments",
-                "Fleet state, generation convergence, placement and requested capacity.",
-                StatusBadge(
-                    overview.Deployments.Count == 0
-                        ? "Not connected"
-                        : healthy == overview.Deployments.Count
-                            ? "Fleet ready"
-                            : $"{overview.Deployments.Count - healthy} need attention",
-                    overview.Deployments.Count > 0 && healthy == overview.Deployments.Count ? "ok" : "warn")))
-            .Append("<div class=\"cards\">")
-            .Append(MetricCard("Deployments", overview.Deployments.Count.ToString(CultureInfo.InvariantCulture), "Managed environments"))
-            .Append(MetricCard("Ready", healthy.ToString(CultureInfo.InvariantCulture), "Converged generations"))
-            .Append(MetricCard("Replicas", overview.Deployments.Sum(static deployment => deployment.Replicas).ToString("N0", CultureInfo.InvariantCulture), "Requested workload replicas"))
-            .Append(MetricCard("Requested CPU", overview.Deployments.Sum(static deployment => deployment.CpuMillicores).ToString("N0", CultureInfo.InvariantCulture) + "m", "Across the fleet"))
-            .Append(MetricCard("Requested memory", Bytes(overview.Deployments.Sum(static deployment => deployment.MemoryBytes)), "Across the fleet"))
-            .Append("</div>");
-        if (overview.Deployments.Count == 0)
-        {
-            body.Append(EmptyInventory(
-                "No managed deployments are connected",
-                "Register a durable managed-deployment store to report convergence, capacity, placement, and protection state."));
-            return Layout("Managed deployments", overview.ObservedAt, body.ToString(), options);
-        }
-
-        body.Append("<section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Fleet inventory</p><h2>All deployments</h2></div><span class=\"muted\" data-filter-count></span></div>")
-            .Append("<div class=\"table-tools\"><label><span>Search deployments</span><input type=\"search\" placeholder=\"Deployment, tenant, region or workload\" data-table-filter></label>")
-            .Append("<label><span>Health</span><select data-state-filter><option value=\"\">All states</option><option value=\"healthy\">Healthy</option><option value=\"attention\">Needs attention</option></select></label></div>")
-            .Append("<div class=\"table-wrap\"><table><thead><tr><th>Deployment</th><th>Tenant</th><th>Placement</th>")
-            .Append("<th>State</th><th>Generation</th><th>Workloads</th><th>Replicas</th>")
-            .Append("<th>Storage</th><th>Protection</th><th>Diagnostic</th><th>Controls</th><th><span class=\"sr-only\">Open</span></th></tr></thead><tbody>");
-        foreach (var deployment in overview.Deployments)
-        {
-            var isHealthy = IsDeploymentHealthy(deployment);
-            var (status, tone) = DeploymentStatus(deployment);
-            var href = DashboardPath(options, "deployments", deployment.DeploymentId);
-            body.Append("<tr data-state=\"").Append(isHealthy ? "healthy" : "attention")
-                .Append("\"><td><a class=\"primary-link\" href=\"").Append(E(href)).Append("\">")
-                .Append(E(deployment.DeploymentId)).Append("</a></td><td>")
-                .Append(E(deployment.TenantId)).Append("</td><td>")
-                .Append(E(deployment.Provider)).Append(" / ").Append(E(deployment.Region))
-                .Append("</td><td>").Append(StatusBadge(status, tone)).Append("</td><td>")
-                .Append(deployment.ObservedGeneration.ToString(CultureInfo.InvariantCulture))
-                .Append(" / ")
-                .Append(deployment.DesiredGeneration.ToString(CultureInfo.InvariantCulture))
-                .Append("</td><td>")
-                .Append(E(string.Join(", ", deployment.WorkloadKinds)))
-                .Append("</td><td>")
-                .Append(deployment.Replicas.ToString("N0", CultureInfo.InvariantCulture))
-                .Append("</td><td>").Append(Bytes(deployment.StorageBytes)).Append("</td><td>")
-                .Append(deployment.DeleteProtection ? "delete protected" : "unprotected")
-                .Append(deployment.Paused ? " / paused" : string.Empty)
-                .Append("</td><td>").Append(E(deployment.DiagnosticCode ?? "—")).Append("</td><td>")
-                .Append(canMutate
-                    ? DeploymentControls(deployment, canAdminister)
-                    : "—")
-                .Append("</td><td><a class=\"row-action\" href=\"").Append(E(href)).Append("\">View →</a></td></tr>");
-        }
-
-        body.Append("</tbody></table></div></section>");
-        return Layout("Managed deployments", overview.ObservedAt, body.ToString(), options);
-    }
-
     private static string RenderGroupTable(
         ControlPlaneSourceSnapshot source,
         BlueTuskDashboardOptions options)
@@ -1913,32 +1107,38 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <meta name="color-scheme" content="dark">
+        <meta name="theme-color" content="#15161a">
         <title>{{{E(title)}}} · BlueTusk</title>
+        <link rel="icon" href="{{{E(DashboardPath(options, "assets", "bluetusk-mark.png"))}}}" type="image/png">
         <style>
-        :root{color-scheme:dark;font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--bg:#07101d;--surface:#0c1828;--surface-2:#101f32;--surface-3:#142840;--border:#233a53;--border-soft:#192d43;--text:#f1f7fb;--muted:#90a7bb;--blue:#48b9ff;--blue-strong:#169eea;--cyan:#5ce1d1;--ok:#4ade9a;--warn:#f6c85f;--critical:#ff6f7d;--shadow:0 18px 48px rgba(0,0,0,.24)}
-        *{box-sizing:border-box}html{background:var(--bg);scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 82% -10%,rgba(32,151,220,.15),transparent 28rem),var(--bg);color:var(--text);min-height:100vh}button,input,select{font:inherit}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}code{font:500 .86em ui-monospace,SFMono-Regular,Consolas,monospace;color:#bfe8ff;overflow-wrap:anywhere}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(2rem,4vw,3rem);line-height:1.08;letter-spacing:-.04em;margin-bottom:.75rem}h2{font-size:1.28rem;letter-spacing:-.02em;margin-bottom:.35rem}small{display:block;color:var(--muted)}
-        .skip-link{position:fixed;left:1rem;top:-5rem;z-index:100;padding:.65rem 1rem;background:var(--blue);color:#00111d;border-radius:.5rem}.skip-link:focus{top:1rem}.app-shell{min-height:100vh}.topbar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;border-bottom:1px solid var(--border-soft);background:rgba(7,16,29,.88);backdrop-filter:blur(18px);position:sticky;top:0;z-index:30}.brand{display:inline-flex;align-items:center;gap:.72rem;color:var(--text);font-weight:750;font-size:1.12rem;letter-spacing:-.02em}.brand:hover{text-decoration:none}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,var(--blue),var(--cyan));color:#05121d;box-shadow:0 8px 25px rgba(45,183,244,.28);font-weight:900}.brand small{display:inline;color:var(--muted);font-weight:500;margin-left:.22rem}.nav-toggle{display:none}.app-body{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:calc(100vh - 72px)}.sidebar{border-right:1px solid var(--border-soft);background:rgba(9,20,34,.76);padding:1.35rem 1rem;position:sticky;top:72px;height:calc(100vh - 72px);overflow:auto}.nav-section{margin-bottom:1.3rem}.nav-label{display:block;padding:0 .7rem .45rem;color:#647f97;text-transform:uppercase;letter-spacing:.12em;font-size:.68rem;font-weight:750}.side-nav{display:grid;gap:.18rem}.side-nav a{display:flex;align-items:center;gap:.62rem;color:#a9bed0;padding:.58rem .7rem;border-radius:.55rem;font-weight:550}.side-nav a::before{content:"";width:7px;height:7px;border:1px solid #59748b;border-radius:50%}.side-nav a:hover{background:var(--surface-2);color:var(--text);text-decoration:none}.side-nav a[aria-current=page]{background:linear-gradient(90deg,rgba(41,169,237,.18),rgba(41,169,237,.06));color:#eaf8ff}.side-nav a[aria-current=page]::before{border-color:var(--blue);background:var(--blue);box-shadow:0 0 0 4px rgba(72,185,255,.1)}.security-note{margin-top:2rem;padding:.8rem;border:1px solid var(--border);border-radius:.7rem;background:rgba(15,31,50,.7);color:var(--muted);font-size:.78rem}.security-note strong{display:block;color:var(--text);margin-bottom:.2rem}.provenance-notice{display:grid;grid-template-columns:auto 1fr;gap:.75rem;align-items:start;margin:0 0 1.35rem;padding:.85rem 1rem;border:1px solid rgba(72,185,255,.28);border-radius:.7rem;background:rgba(27,105,151,.12);color:#b9d6e8}.provenance-notice::before{content:"LIVE";padding:.16rem .38rem;border-radius:.32rem;background:rgba(72,185,255,.18);color:#82d0ff;font-size:.62rem;font-weight:850;letter-spacing:.08em}.provenance-notice strong{display:block;color:var(--text);margin-bottom:.15rem}.provenance-notice span{display:block;font-size:.8rem}
-        main{width:100%;max-width:1500px;margin:0 auto;padding:2rem clamp(1.1rem,3vw,3.2rem) 3rem;min-width:0}.breadcrumbs{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.82rem;margin-bottom:1.55rem;overflow:auto;white-space:nowrap}.breadcrumbs a{color:var(--muted)}.page-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;margin-bottom:1.8rem}.page-heading>div:first-child{max-width:760px}.page-heading p:not(.eyebrow){color:var(--muted);font-size:1.02rem;margin-bottom:0}.page-actions{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;justify-content:flex-end}.eyebrow{color:var(--cyan);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;font-weight:800;margin-bottom:.45rem}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:.8rem;margin-bottom:1.4rem}.cards--wide{grid-template-columns:repeat(auto-fit,minmax(195px,1fr))}.card{min-height:124px;background:linear-gradient(145deg,rgba(16,34,55,.96),rgba(11,25,42,.96));border:1px solid var(--border);border-radius:.8rem;padding:1rem;box-shadow:0 10px 28px rgba(0,0,0,.12)}.card>span{display:block;color:var(--muted);font-size:.78rem;font-weight:650}.card strong{display:block;font-size:1.62rem;letter-spacing:-.04em;margin:.32rem 0 .15rem;overflow-wrap:anywhere}.card small{font-size:.75rem}.panel{background:linear-gradient(155deg,rgba(13,29,47,.98),rgba(9,22,38,.98));border:1px solid var(--border);border-radius:.85rem;padding:1.15rem;margin:0 0 1.2rem;box-shadow:var(--shadow)}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.9rem}.section-heading h2{margin:0}.muted{color:var(--muted)}.status-badge{display:inline-flex;align-items:center;gap:.42rem;width:max-content;max-width:100%;padding:.28rem .58rem;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:#c5d5e2;font-size:.75rem;font-weight:700;white-space:nowrap}.status-dot,.product-icon{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 3px rgba(144,167,187,.1)}[data-tone=ok]{--tone:var(--ok)}[data-tone=warn]{--tone:var(--warn)}[data-tone=critical]{--tone:var(--critical)}.status-dot[data-tone],.product-icon[data-tone]{background:var(--tone);box-shadow:0 0 0 3px color-mix(in srgb,var(--tone) 16%,transparent)}.status-badge[data-tone=ok]{border-color:rgba(74,222,154,.25);color:#9af1c6;background:rgba(74,222,154,.08)}.status-badge[data-tone=warn]{border-color:rgba(246,200,95,.26);color:#ffe09a;background:rgba(246,200,95,.08)}.status-badge[data-tone=critical]{border-color:rgba(255,111,125,.3);color:#ffabb3;background:rgba(255,111,125,.08)}
-        .product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.8rem}.product-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.85rem;padding:1rem;border:1px solid var(--border);border-radius:.8rem;background:var(--surface);color:var(--text)}.product-card:hover{border-color:#366c91;background:var(--surface-2);text-decoration:none}.product-card .product-icon{width:10px;height:10px}.product-card strong,.related-link strong{display:block;margin-bottom:.2rem}.product-card small,.related-link small{font-size:.78rem}.product-count{color:var(--blue);font-size:.8rem;white-space:nowrap}.attention-list{display:grid;gap:.45rem}.attention-item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.8rem;padding:.72rem;border-radius:.6rem;color:var(--text);background:rgba(14,32,52,.7)}.attention-item:hover{background:var(--surface-3);text-decoration:none}.attention-item small{font-size:.78rem}.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:1.6rem;color:var(--muted)}.empty-state strong{color:var(--text);margin-bottom:.3rem}.table-panel{padding-bottom:.35rem}.table-tools{display:flex;align-items:end;gap:.8rem;flex-wrap:wrap;margin-bottom:.85rem}.table-tools label{display:grid;gap:.3rem;color:var(--muted);font-size:.72rem;font-weight:650}.table-tools label:first-child{flex:1 1 280px}.table-tools input,.table-tools select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:.52rem;background:#081624;color:var(--text);padding:.48rem .65rem;outline:none}.table-tools input:focus,.table-tools select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(72,185,255,.12)}.table-wrap{overflow:auto;margin:0 -1.15rem}.table-wrap table{min-width:760px}table{width:100%;border-collapse:collapse}th,td{padding:.75rem .82rem;text-align:left;border-bottom:1px solid var(--border-soft);vertical-align:middle}th{color:#7892a8;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:800;background:rgba(8,20,34,.7);white-space:nowrap}td{font-size:.84rem;color:#c7d6e3}tbody tr:hover{background:rgba(31,73,102,.12)}tbody tr:last-child td{border-bottom:0}td small{margin-top:.18rem;font-size:.7rem}.primary-link{color:#e7f7ff;font-weight:720}.row-action{white-space:nowrap;font-size:.78rem;font-weight:700}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:0}.detail-grid>div{padding:.75rem;border-bottom:1px solid var(--border-soft);min-width:0}.detail-grid>div:nth-last-child(-n+2){border-bottom:0}.detail-grid dt{color:var(--muted);font-size:.72rem;margin-bottom:.18rem}.detail-grid dd{margin:0;color:#dce8f1;overflow-wrap:anywhere}.tag-list{display:flex;flex-wrap:wrap;gap:.5rem}.tag-list code{padding:.35rem .55rem;border:1px solid var(--border);border-radius:.45rem;background:#081624}.copy-value{display:inline-flex;align-items:center;gap:.45rem;max-width:100%}.copy-button{padding:.18rem .42rem;font-size:.67rem}.related-link{display:flex;align-items:center;justify-content:space-between;color:var(--text)}.related-link:hover{text-decoration:none;border-color:#366c91}.steps{display:grid;gap:.7rem;margin:1rem 0 0;padding:0;list-style:none;counter-reset:steps}.steps li{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;color:var(--muted);counter-increment:steps}.steps li::before{content:counter(steps);display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:rgba(72,185,255,.12);color:var(--blue);font-weight:800}.steps strong,.steps span{display:block}.steps strong{color:var(--text)}.button-row{display:flex;flex-wrap:wrap;gap:.45rem}.read-only{border-color:rgba(72,185,255,.22)}.danger-zone{border-color:rgba(246,200,95,.25)}
-        button{appearance:none;border:1px solid #365773;border-radius:.5rem;background:var(--surface-3);color:var(--text);padding:.45rem .7rem;cursor:pointer;font-weight:650}button:hover{border-color:var(--blue);background:#193853}button.secondary{background:transparent}button:disabled{cursor:wait;opacity:.6}.graph-query-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.8rem;margin-top:1rem;padding:1rem;border:1px solid var(--border-soft);border-radius:.7rem;background:rgba(7,20,33,.65)}.graph-query-form label,.graph-toolbar label{display:grid;gap:.35rem;color:var(--muted);font-size:.75rem;font-weight:700}.graph-query-form input,.graph-toolbar input{min-height:42px;border:1px solid var(--border);border-radius:.52rem;background:#06131f;color:var(--text);padding:.5rem .65rem;outline:none}.graph-query-form input:focus,.graph-toolbar input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(72,185,255,.12)}.graph-query-form>.button-row{grid-column:1/-1;align-items:center}.server-bound{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;color:var(--muted);font-size:.78rem}.server-bound strong{color:var(--text)}.graph-result{margin-top:1.2rem}.graph-snapshot{display:flex;align-items:center;gap:.45rem;margin-bottom:.8rem;padding:.6rem .75rem;border:1px solid var(--border);border-radius:.6rem;background:rgba(8,22,36,.72);color:#a9bed0;font-size:.76rem;font-weight:650}.graph-snapshot::before{content:"";width:9px;height:9px;border-radius:50%;background:#7f9bb1;box-shadow:0 0 0 4px rgba(127,155,177,.1)}.graph-snapshot[data-tone=fresh]::before{background:#4ade9a;box-shadow:0 0 0 4px rgba(74,222,154,.11)}.graph-snapshot[data-tone=stale]{border-color:rgba(246,200,95,.32);color:#f6d98b}.graph-snapshot[data-tone=stale]::before{background:#f6c85f;box-shadow:0 0 0 4px rgba(246,200,95,.12)}.graph-summary{margin-bottom:.8rem}.graph-summary .card{min-height:92px}.graph-summary .card strong{font-size:1.3rem}.graph-composition{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem;margin:.8rem 0}.graph-composition section{padding:.85rem;border:1px solid var(--border-soft);border-radius:.65rem;background:rgba(8,22,36,.68)}.graph-composition h3{font-size:.85rem;margin-bottom:.6rem}.graph-composition .tag-list span{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .55rem;border:1px solid var(--border);border-radius:999px;color:#d9e7f0;font-size:.76rem}.graph-composition .tag-list span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--category-color)}.graph-toolbar{display:flex;align-items:end;justify-content:space-between;gap:.8rem;flex-wrap:wrap;margin:1rem 0 .65rem}.graph-toolbar label{flex:1 1 300px}.graph-workspace{display:grid;grid-template-columns:minmax(0,3fr) minmax(245px,1fr);gap:.8rem;min-height:580px}.graph-canvas-shell{position:relative;min-width:0;border:1px solid var(--border);border-radius:.75rem;overflow:hidden;background:#07131f}.graph-canvas-shell canvas{display:block;width:100%;height:580px;touch-action:none;cursor:grab}.graph-canvas-shell canvas:active{cursor:grabbing}.graph-canvas-help{position:absolute;left:.7rem;bottom:.7rem;padding:.35rem .5rem;border-radius:.4rem;background:rgba(3,12,20,.82);color:#88a1b5;font-size:.69rem;pointer-events:none}.graph-inspector{padding:1rem;border:1px solid var(--border);border-radius:.75rem;background:rgba(8,22,36,.8);overflow:auto}.graph-inspector h3{overflow-wrap:anywhere}.graph-property-list{display:grid;grid-template-columns:minmax(80px,.7fr) minmax(0,1.3fr);margin-top:1rem}.graph-property-list dt,.graph-property-list dd{padding:.48rem;border-bottom:1px solid var(--border-soft);overflow-wrap:anywhere}.graph-property-list dt{color:var(--muted);font-size:.72rem}.graph-property-list dd{margin:0;color:var(--text);font-size:.78rem}.graph-element-lists{display:grid;gap:.7rem;margin-top:.8rem}.graph-element-lists details{border:1px solid var(--border-soft);border-radius:.65rem;background:rgba(8,22,36,.55);overflow:hidden}.graph-element-lists summary{padding:.8rem 1rem;cursor:pointer}.graph-element-lists .table-wrap{margin:0}.graph-element-lists table{min-width:720px}.graph-element-button{border:0;background:transparent;padding:0;color:#e7f7ff;text-align:left}.graph-element-button:hover{border:0;background:transparent;color:var(--blue);text-decoration:underline}.footer{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:#637e94;font-size:.75rem;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border-soft)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}
-        @media(max-width:980px){.topbar{height:64px;padding:0 1rem}.brand small{display:none}.nav-toggle{display:inline-flex}.app-body{display:block;min-height:calc(100vh - 64px)}.sidebar{display:none;position:sticky;top:64px;width:100%;height:auto;max-height:calc(100vh - 64px);z-index:25;border-right:0;border-bottom:1px solid var(--border);padding:.8rem 1rem;background:#081421}.sidebar[data-open]{display:block}.side-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.security-note{display:none}main{padding-top:1.35rem}}
-        @media(max-width:850px){.graph-workspace{grid-template-columns:1fr;min-height:0}.graph-canvas-shell canvas{height:460px}.graph-inspector{max-height:340px}.graph-composition{grid-template-columns:1fr}}
-        @media(max-width:680px){h1{font-size:2rem}.page-heading{display:block}.page-actions{justify-content:flex-start;margin-top:1rem}.cards,.cards--wide,.product-grid{grid-template-columns:1fr}.card{min-height:0}.product-card{grid-template-columns:auto 1fr}.product-count{grid-column:2}.section-heading{align-items:flex-start}.table-tools{display:grid}.detail-grid{grid-template-columns:1fr}.detail-grid>div:nth-last-child(2){border-bottom:1px solid var(--border-soft)}.side-nav{grid-template-columns:1fr}.topbar{position:sticky}.panel{padding:1rem}.table-wrap{margin:0 -1rem}.graph-query-form{grid-template-columns:1fr;padding:.8rem}.graph-canvas-shell canvas{height:390px}.graph-canvas-help{display:none}.footer{display:block}.footer span{display:block;margin-bottom:.25rem}}
-        @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+        {{{DashboardStyle}}}
         </style>
         </head>
         <body>
         <a class="skip-link" href="#main-content">Skip to dashboard content</a>
         <div class="app-shell">
           <header class="topbar">
-            <a class="brand" href="{{{E(DashboardPath(options, "overview"))}}}"><span class="brand-mark" aria-hidden="true">B</span><span>BlueTusk <small>{{{E(options.BrandLabel)}}}</small></span></a>
+            <a class="brand" href="{{{E(DashboardPath(options, "overview"))}}}"><img class="brand-mark" src="{{{E(DashboardPath(options, "assets", "bluetusk-mark.png"))}}}" width="38" height="38" alt=""><span>BlueTusk<small>{{{E(options.BrandLabel)}}}</small></span></a>
+            <div class="topbar-context"><span>OPERATIONS</span><time datetime="{{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}">Observed {{{E(observedAt.ToString("HH:mm:ss 'UTC'", CultureInfo.InvariantCulture))}}}</time></div>
             <button class="nav-toggle secondary" type="button" data-nav-toggle aria-expanded="false" aria-controls="dashboard-navigation">Menu</button>
           </header>
           <div class="app-body">
             <aside class="sidebar" id="dashboard-navigation" data-navigation>
-              <div class="nav-section"><span class="nav-label">Workspace</span><nav class="side-nav" aria-label="Dashboard"><a href="{{{E(DashboardPath(options, "overview"))}}}">Overview</a></nav></div>
-              <div class="nav-section"><span class="nav-label">Data flow</span><nav class="side-nav" aria-label="Data flow"><a href="{{{E(DashboardPath(options, "sources"))}}}">Sources & Streams</a><a href="{{{E(DashboardPath(options, "pipelines"))}}}">Sync pipelines</a><a href="{{{E(DashboardPath(options, "live"))}}}">Live subscriptions</a><a href="{{{E(DashboardPath(options, "graphs"))}}}">Continuous Graph</a></nav></div>
-              <div class="nav-section"><span class="nav-label">Operations</span><nav class="side-nav" aria-label="Operations"><a href="{{{E(DashboardPath(options, "snapshots"))}}}">Snapshots</a><a href="{{{E(DashboardPath(options, "consumer-groups"))}}}">Consumer groups</a><a href="{{{E(DashboardPath(options, "checkpoints"))}}}">Checkpoints</a><a href="{{{E(DashboardPath(options, "deployments"))}}}">Deployments</a></nav></div>
+              <div class="nav-section"><span class="nav-label">Workspace</span><nav class="side-nav" aria-label="Dashboard">
+                {{{DashboardNavLink(options, "overview", "Overview", "OV")}}}
+                {{{DashboardNavLink(options, "deployments", "Deployments", "DP")}}}
+              </nav></div>
+              <div class="nav-section"><span class="nav-label">Data flow</span><nav class="side-nav" aria-label="Data flow">
+                {{{DashboardNavLink(options, "sources", "Sources & Streams", "ST")}}}
+                {{{DashboardNavLink(options, "pipelines", "Sync pipelines", "SY")}}}
+                {{{DashboardNavLink(options, "live", "Live subscriptions", "LV")}}}
+                {{{DashboardNavLink(options, "graphs", "Continuous Graph", "CG")}}}
+              </nav></div>
+              <div class="nav-section"><span class="nav-label">Recovery</span><nav class="side-nav" aria-label="Recovery">
+                {{{DashboardNavLink(options, "snapshots", "Snapshots", "SN")}}}
+                {{{DashboardNavLink(options, "consumer-groups", "Consumer groups", "GR")}}}
+                {{{DashboardNavLink(options, "checkpoints", "Checkpoints", "CP")}}}
+              </nav></div>
               <div class="security-note"><strong>Role-secured view</strong>Inventory is redacted by the control plane. Operations are shown only to authorised roles.</div>
             </aside>
             <main id="main-content">
@@ -1952,6 +1152,9 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         </body>
         </html>
         """;
+
+    private static string DashboardNavLink(BlueTuskDashboardOptions options, string route, string label, string mark) =>
+        $"<a href=\"{E(DashboardPath(options, route))}\"><span class=\"nav-mark\" aria-hidden=\"true\">{E(mark)}</span>{E(label)}</a>";
 
     private static string DataProvenanceNotice(BlueTuskDashboardOptions options) =>
         string.IsNullOrWhiteSpace(options.DataProvenanceNotice)

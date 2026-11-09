@@ -4,6 +4,8 @@ WORKDIR /source
 COPY Directory.Build.props Directory.Build.targets Directory.Packages.props README.md ./
 COPY eng/versions/ eng/versions/
 COPY src/ src/
+COPY website/public/bluetusk-mark.png website/public/
+COPY website/src/brand.css website/src/
 COPY samples/BlueTusk.Samples.Dashboard/ samples/BlueTusk.Samples.Dashboard/
 RUN dotnet restore samples/BlueTusk.Samples.Dashboard/BlueTusk.Samples.Dashboard.csproj \
     --locked-mode
