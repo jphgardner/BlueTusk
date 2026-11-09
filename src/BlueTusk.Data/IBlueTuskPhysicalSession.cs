@@ -9,6 +9,8 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
 {
     bool IsOpen { get; }
 
+    bool IsReusable => IsOpen;
+
     BlueTuskHostEndpoint Endpoint { get; }
 
     bool? IsPrimary { get; }
@@ -488,6 +490,8 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
     }
 
     public bool IsOpen => _session.IsOpen;
+
+    public bool IsReusable => _session.IsReusable;
 
     public BlueTuskHostEndpoint Endpoint => _endpoint;
 
