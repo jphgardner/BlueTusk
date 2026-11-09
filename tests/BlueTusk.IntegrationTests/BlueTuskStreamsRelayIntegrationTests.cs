@@ -11,6 +11,9 @@ namespace BlueTusk.IntegrationTests;
 
 public sealed class BlueTuskStreamsRelayIntegrationTests
 {
+    private static readonly TimeSpan ConsumerLeaseDuration = TimeSpan.FromSeconds(6);
+    private static readonly TimeSpan ConsumerLeaseRenewalInterval = TimeSpan.FromSeconds(1);
+
     private static readonly DateTimeOffset Timestamp =
         new(2026, 8, 3, 12, 0, 0, TimeSpan.Zero);
 
@@ -60,7 +63,11 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
                 await Assert.ThrowsAsync<ChangeRelayLeaseUnavailableException>(
                     () => competingEnumerator.MoveNextAsync().AsTask());
 
-                await Task.Delay(TimeSpan.FromMilliseconds(750));
+                await Task.Delay(ConsumerLeaseDuration + ConsumerLeaseRenewalInterval);
+                var afterOriginalExpiry = CreateRelayStream(relay, source, "sync-orders", "worker-b");
+                await using var afterOriginalExpiryEnumerator = afterOriginalExpiry.ReadTransactionsAsync().GetAsyncEnumerator();
+                await Assert.ThrowsAsync<ChangeRelayLeaseUnavailableException>(
+                    () => afterOriginalExpiryEnumerator.MoveNextAsync().AsTask());
             }
 
             var retryStream = CreateRelayStream(relay, source, "sync-orders", "worker-b");
@@ -603,8 +610,8 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
                 ConsumerGroup = consumerGroup,
                 OwnerId = ownerId,
                 EmptyReadDelay = TimeSpan.FromMilliseconds(10),
-                LeaseDuration = TimeSpan.FromMilliseconds(500),
-                LeaseRenewalInterval = TimeSpan.FromMilliseconds(100),
+                LeaseDuration = ConsumerLeaseDuration,
+                LeaseRenewalInterval = ConsumerLeaseRenewalInterval,
                 MaxTransactionsPerRead = 2,
                 MaxBytesPerRead = 1024 * 1024,
             });
