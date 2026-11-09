@@ -137,9 +137,19 @@ dotnet build $project -c Release --no-restore "-p:BlueTuskOrdersPackageVersion=$
 
 Check the resulting `obj/project.assets.json` for the expected BlueTusk package
 IDs and versions. Launch `BlueTusk.Projections.Orders.Live.dll` from the isolated
-output with the same sample settings above. To exercise the installed build
-with the repository's integration test, build the test harness separately and
-set `BLUETUSK_ORDERS_SAMPLE_DLL` to the absolute path of that sample DLL. Run the
-`OrdersLiveSampleTests` filter with `--no-build` and the test fixture connection
-string. The harness launches the specified DLL for each process and provisions
-fresh database resources on each test run.
+output with the same sample settings above. To exercise the installed build,
+build `tests/BlueTusk.Projections.Tests` separately in Release mode. Set
+`BLUETUSK_TEST_CONNECTION_STRING` to a local logical-replication test database
+and run the following command with a new results directory.
+
+```powershell
+pwsh ./samples/BlueTusk.Projections.Orders.Live/verify-warm-runs.ps1 `
+  -SampleDll '<isolated output>/BlueTusk.Projections.Orders.Live.dll' `
+  -TestDll './tests/BlueTusk.Projections.Tests/bin/Release/net10.0/BlueTusk.Projections.Tests.dll' `
+  -PackageVersion $version -ResultsDirectory '<new results directory>'
+```
+
+The runner checks the application's package versions and runs the built
+integration test three times with fresh PostgreSQL resources on each run.
+The timing starts after restore and build and includes process startup,
+test setup, and cleanup. Each run keeps its own log and TRX result.
