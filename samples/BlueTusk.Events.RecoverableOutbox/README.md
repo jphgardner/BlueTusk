@@ -22,6 +22,15 @@ Query `SELECT count(*) FROM outbox_recipe.order_effects` to verify that one
 effect remains. Publish another event with a new GUID and run `consume`
 again to verify forward progress from the saved checkpoint.
 
+To exercise the restart contract automatically, build the recipe once and run
+the verifier against a fresh disposable database. It launches a separate
+process for each operation, verifies that interruption leaves the checkpoint
+at zero, and checks that replay advances it without repeating the effect.
+
+```powershell
+pwsh ./samples/BlueTusk.Events.RecoverableOutbox/verify-restart.ps1 -RecipeDll '<path to the built recipe DLL>'
+```
+
 The publisher commits the order row and event together. The Events delivery
 processor commits the durable inbox identity with its database effect, then
 lets the Streams observer persist the checkpoint and send feedback to

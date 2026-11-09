@@ -297,14 +297,18 @@ public sealed class EventStreamsDeliveryTests
                 "event", "1", "2026-09-27 12:00:00+00", "\\x7b7d"))), observer);
     }
 
-    private sealed class FailingAcknowledgmentObserver(EventDatabase fixture) : IChangeDeliveryObserver
+    private sealed class FailingAcknowledgmentObserver(EventDatabase? fixture = null) : IChangeDeliveryObserver
     {
         private bool _first = true;
 
         public async ValueTask AcknowledgeAsync(ChangeTransaction transaction, CancellationToken cancellationToken = default)
         {
             // A separate connection can see the effects before source acknowledgment begins.
-            Assert.Equal(2, await fixture.EffectCountAsync());
+            if (fixture is not null)
+            {
+                Assert.Equal(2, await fixture.EffectCountAsync());
+            }
+
             if (_first)
             {
                 _first = false;

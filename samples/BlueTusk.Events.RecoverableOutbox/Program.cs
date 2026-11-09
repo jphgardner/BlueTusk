@@ -47,8 +47,18 @@ internal static class Program
             case ["consume"]:
             case ["consume", "--fail-before-checkpoint"]:
                 return await ConsumeAsync(dataSource, events, state, args.Length == 2, token);
+            case ["checkpoint"]:
+                await using (var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(
+                    dataSource.CreateDedicatedSessionOptions(), token))
+                {
+                    var source = await IdentifySourceAsync(replication, token);
+                    var checkpoint = await state.ReadAsync(ChangeStreamStateKey.Create(source, Consumer), token);
+                    Console.WriteLine(checkpoint?.AcknowledgedCommitPosition.Value ?? 0);
+                }
+
+                return 0;
             default:
-                Console.Error.WriteLine("Use init, publish <stable event GUID>, or consume [--fail-before-checkpoint].");
+                Console.Error.WriteLine("Use init, publish <stable event GUID>, consume [--fail-before-checkpoint], or checkpoint.");
                 return 2;
         }
     }
@@ -99,9 +109,8 @@ internal static class Program
     {
         await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(
             dataSource.CreateDedicatedSessionOptions(), token);
-        var system = await replication.IdentifySystemAsync(token);
-        var database = system.DatabaseName ?? throw new InvalidOperationException("Logical replication requires a database.");
-        var source = new ChangeSourceIdentity(system.SystemIdentifier, database, Slot, Publication);
+        var source = await IdentifySourceAsync(replication, token);
+        var database = source.DatabaseName;
         await using var checkpointing = await CheckpointingChangeDeliveryObserver.AcquireAsync(
             state, ChangeStreamStateKey.Create(source, Consumer), Guid.NewGuid().ToString("N"),
             TimeSpan.FromMinutes(1), ChangeStreamCheckpoint.CreateInitial(source, database, "pgoutput", "outbox-recipe-v1"),
@@ -111,7 +120,7 @@ internal static class Program
         {
             start = checkpoint.AcknowledgedCommitPosition;
             _ = await replication.ValidateResumeCheckpointAsync(
-                new BlueTuskLogicalReplicationCheckpoint(system.SystemIdentifier, database, Slot, "pgoutput", start), token);
+                new BlueTuskLogicalReplicationCheckpoint(source.SystemIdentifier, database, Slot, "pgoutput", start), token);
         }
 
         var observer = new RecipeObserver(checkpointing);
@@ -152,6 +161,14 @@ internal static class Program
         }
 
         throw new InvalidOperationException("The replication stream ended before an outbox event was delivered.");
+    }
+
+    private static async Task<ChangeSourceIdentity> IdentifySourceAsync(
+        BlueTuskLogicalReplicationConnection replication, CancellationToken token)
+    {
+        var system = await replication.IdentifySystemAsync(token);
+        var database = system.DatabaseName ?? throw new InvalidOperationException("Logical replication requires a database.");
+        return new ChangeSourceIdentity(system.SystemIdentifier, database, Slot, Publication);
     }
 
     private static async ValueTask InsertAsync(
