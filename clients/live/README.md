@@ -18,6 +18,13 @@ Call `stop()` when the owning view is destroyed. The default `createQuery`
 path never sends SQL or expression trees; `query` is the name of a trusted
 server registration.
 
+Reconnect backoff also covers successful HTTP responses whose streams close
+prematurely. A stream must remain open for `healthyStreamDurationMs` (30 seconds
+by default) before a later failure resets the retry count. Replay expiry gets
+one immediate fresh-snapshot attempt; repeated expiry/reset responses then use
+the same exponential, jittered delay, capped at `maximumRetryDelayMs`.
+Stopping a query aborts both streaming reads and pending delays.
+
 ## Bounded updates
 
 The client reduces up to 64 already available SSE frames before creating one
