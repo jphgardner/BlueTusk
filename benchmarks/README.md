@@ -55,9 +55,16 @@ measures trusted CDC, scoped repair, and full requery for the same edge update.
 ```powershell
 docker compose -f eng/compose/postgres.yml up -d --wait postgres18
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
-$env:BLUETUSK_GRAPH_PLAN_DIRECTORY = Join-Path $PWD 'artifacts/portable-graph/plans'
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium --inProcess --filter '*ContinuousGraphBenchmarks*' --artifacts artifacts/portable-graph/benchmarks
-./eng/verify-portable-graph-benchmarks.ps1 -CapturePath artifacts/portable-graph
+$capture = Join-Path $PWD 'artifacts/portable-graph'
+$commit = (git rev-parse HEAD).Trim()
+$os = if ($IsWindows) { 'windows' } else { 'linux' }
+$image = (Get-Content eng/release-tracks.json -Raw | ConvertFrom-Json).graph.portablePostgreSqlImage
+New-Item -ItemType Directory -Path $capture | Out-Null
+@{ sourceCommit = $commit; os = $os; architecture = 'x64'; containerImageDigests = @($image) } |
+    ConvertTo-Json | Set-Content (Join-Path $capture 'environment.json')
+$env:BLUETUSK_GRAPH_PLAN_DIRECTORY = Join-Path $capture 'plans'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium --inProcess --filter '*ContinuousGraphBenchmarks*' --artifacts (Join-Path $capture 'benchmarks')
+./eng/verify-portable-graph-benchmarks.ps1 -CapturePath $capture -ExpectedCommit $commit -ExpectedOs $os
 ```
 
 The verifier checks the existing Graph latency and allocation budgets, the

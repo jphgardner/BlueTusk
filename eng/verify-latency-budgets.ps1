@@ -1,6 +1,7 @@
 param(
     [string]$BudgetFile = (Join-Path $PSScriptRoot "..\benchmarks\latency-budgets.json"),
-    [string]$BaselinePath = (Join-Path $PSScriptRoot "..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\results")
+    [string]$BaselinePath = (Join-Path $PSScriptRoot "..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\results"),
+    [string]$ReportPath
 )
 
 $ErrorActionPreference = "Stop"
@@ -30,11 +31,13 @@ if (-not [double]::IsFinite($maximumMeanRegressionPercent) -or
 }
 
 $actual = [System.Collections.Generic.List[object]]::new()
-$reports = @(
+$reports = if ($ReportPath) {
+    Get-Item -LiteralPath $ReportPath
+} else {
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json"
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-full.json"
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*-hardening.json"
-)
+}
 $reports | ForEach-Object {
     $report = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json
     foreach ($benchmark in @($report.Benchmarks)) {

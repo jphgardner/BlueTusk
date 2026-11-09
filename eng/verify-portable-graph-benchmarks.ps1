@@ -17,8 +17,8 @@ if ($environment.sourceCommit -cne $ExpectedCommit -or
     throw 'The portable Graph measurements must identify the exact candidate, platform, and pinned fixture.'
 }
 $results = Join-Path $CapturePath 'benchmarks/results'
-$report = Get-Content -LiteralPath (
-    Join-Path $results 'BlueTusk.Benchmarks.ContinuousGraphBenchmarks-report-full.json') -Raw | ConvertFrom-Json
+$reportPath = Join-Path $results 'BlueTusk.Benchmarks.ContinuousGraphBenchmarks-report-full.json'
+$report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
 $contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw |
     ConvertFrom-Json
 $resources = Get-Content -LiteralPath (Join-Path $CapturePath 'plans/benchmark-process-resources.json') -Raw |
@@ -122,13 +122,17 @@ foreach ($kind in @('latency', 'allocation'))
         $_.benchmark.StartsWith('BlueTusk.Benchmarks.ContinuousGraphBenchmarks.', [StringComparison]::Ordinal)
     })
     if ($budget.budgets.Count -ne 3) { throw "Expected three existing Graph $kind budgets." }
+    foreach ($entry in $budget.budgets)
+    {
+        $null = Get-Measurement $entry.benchmark.Split('.')[-1] $entry.parameters
+    }
     $graphBudget = New-TemporaryFile
     try
     {
         $budget | ConvertTo-Json -Depth 32 | Set-Content -LiteralPath $graphBudget.FullName -Encoding utf8NoBOM
         try
         {
-            & (Join-Path $PSScriptRoot "verify-$kind-budgets.ps1") -BudgetFile $graphBudget.FullName -BaselinePath $results
+            & (Join-Path $PSScriptRoot "verify-$kind-budgets.ps1") -BudgetFile $graphBudget.FullName -ReportPath $reportPath
         }
         catch
         {

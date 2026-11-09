@@ -1,6 +1,7 @@
 param(
     [string]$BudgetFile = (Join-Path $PSScriptRoot "..\benchmarks\allocation-budgets.json"),
-    [string]$BaselinePath = (Join-Path $PSScriptRoot "..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\results")
+    [string]$BaselinePath = (Join-Path $PSScriptRoot "..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\results"),
+    [string]$ReportPath
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,11 +13,13 @@ if ([int]$configuration.schemaVersion -ne 2) {
 }
 
 $actual = [System.Collections.Generic.List[object]]::new()
-$reportFiles = @(
+$reportFiles = if ($ReportPath) {
+    Get-Item -LiteralPath $ReportPath
+} else {
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json"
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*MultiplexingComparisonBenchmarks-report-full.json"
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*-hardening.json"
-)
+}
 $reportFiles | ForEach-Object {
     $report = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json
     foreach ($benchmark in $report.Benchmarks) {
