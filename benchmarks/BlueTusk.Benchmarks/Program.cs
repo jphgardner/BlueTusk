@@ -4,6 +4,12 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using BlueTusk.Benchmarks;
 
+if (args is ["--graph-scoped-read-capture", var graphCaptureDirectory])
+{
+    await ContinuousGraphBenchmarks.CaptureScopedReadAsync(graphCaptureDirectory);
+    return;
+}
+
 if (args is ["--ef-batch-capture", var efOptionsPath, var efRowCount, var efBatchSize])
 {
     await EfBatchCapture.RunAsync(efOptionsPath, int.Parse(efRowCount, System.Globalization.CultureInfo.InvariantCulture),

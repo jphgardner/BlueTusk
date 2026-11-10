@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BlueTusk.ContinuousGraph;
@@ -16,7 +17,7 @@ namespace BlueTusk.Benchmarks;
 [JsonExporterAttribute.Brief]
 [JsonExporterAttribute.Full]
 [Orderer(SummaryOrderPolicy.Declared)]
-public class ContinuousGraphBenchmarks : IAsyncDisposable
+public partial class ContinuousGraphBenchmarks : IAsyncDisposable
 {
     private const string GraphName = "bluetusk_benchmark_continuous_graph";
     private const string PeopleTable = "bluetusk_benchmark_continuous_people";
@@ -43,7 +44,9 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
     public int TopN { get; set; }
 
     [GlobalSetup]
-    public async Task Setup()
+    public Task Setup() => SetupAsync(null);
+
+    private async Task SetupAsync(ScopedReadObserver? observer)
     {
         _dataSource = BlueTuskDataSource.Create(GetConnectionString());
         _administration = await _dataSource.OpenConnectionAsync();
@@ -70,7 +73,12 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
             ANALYZE {PeopleTable};
             ANALYZE {FriendshipsTable};
             """);
-        _contextFactory = new GraphContextFactory(_dataSource);
+        if (observer is not null)
+        {
+            await InstallCapturePolicyAsync();
+        }
+
+        _contextFactory = new GraphContextFactory(_dataSource, observer);
         _definition = CreateDefinition();
         _plan = await ContinuousGraphQueryCompiler.CompileAsync(
             _contextFactory,
@@ -244,6 +252,10 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
                 if (_administration.State is System.Data.ConnectionState.Open)
                 {
                     await DropGraphObjectsAsync();
+                    if (_capturePolicyInstalled)
+                    {
+                        await ExecuteAsync($"DROP ROLE {CaptureRole}");
+                    }
                 }
             }
             finally
@@ -443,13 +455,49 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
             : connectionString;
     }
 
-    private sealed class GraphContextFactory(BlueTuskDataSource dataSource) :
-        IDbContextFactory<GraphContext>
+    private sealed class GraphContextFactory : IDbContextFactory<GraphContext>
     {
-        private readonly DbContextOptions<GraphContext> _options =
-            new DbContextOptionsBuilder<GraphContext>().UseBlueTusk(dataSource).Options;
+        private readonly DbContextOptions<GraphContext> _options;
+        private readonly ScopedReadObserver? _observer;
+
+        public GraphContextFactory(BlueTuskDataSource dataSource, ScopedReadObserver? observer)
+        {
+            _observer = observer;
+            var options = new DbContextOptionsBuilder<GraphContext>().UseBlueTusk(dataSource);
+            if (observer is not null)
+            {
+                options.AddInterceptors(observer);
+            }
+
+            _options = options.Options;
+        }
 
         public GraphContext CreateDbContext() => new(_options);
+
+        public Task<GraphContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
+            _observer is null
+                ? Task.FromResult(CreateDbContext())
+                : CreateAuthorizedContextAsync(_observer, cancellationToken);
+
+        private async Task<GraphContext> CreateAuthorizedContextAsync(
+            ScopedReadObserver observer, CancellationToken cancellationToken)
+        {
+            var context = CreateDbContext();
+            try
+            {
+                observer.ContextCreated = Stopwatch.GetTimestamp();
+                await context.Database.OpenConnectionAsync(cancellationToken);
+                observer.ConnectionOpened = Stopwatch.GetTimestamp();
+                await AuthorizeCaptureAsync((BlueTuskConnection)context.Database.GetDbConnection(), cancellationToken);
+                observer.Authorized = Stopwatch.GetTimestamp();
+                return context;
+            }
+            catch
+            {
+                await context.DisposeAsync();
+                throw;
+            }
+        }
     }
 
     private sealed class GraphContext(DbContextOptions<GraphContext> options) :
