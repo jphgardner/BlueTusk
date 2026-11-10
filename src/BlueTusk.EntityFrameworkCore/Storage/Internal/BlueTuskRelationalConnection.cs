@@ -70,6 +70,13 @@ internal sealed class BlueTuskRelationalConnection : RelationalConnection
         return connection;
     }
 
+    internal static BlueTuskCommand CreateBufferedScopedReadCommand(BlueTuskConnection connection)
+    {
+        var command = (BlueTuskCommand)connection.CreateCommand();
+        command.BufferResults = true;
+        return command;
+    }
+
     private static void ConfigureQueryConnection(IProviderConnection providerConnection)
     {
         providerConnection.AllowPendingPoolResetOnOpen();

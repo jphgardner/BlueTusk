@@ -118,7 +118,14 @@ internal sealed class ContinuousGraphPreparedScope<TResult, TKey>(
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var dataSource = await scope.ResolveDataSourceAsync(execution, cancellationToken).ConfigureAwait(false)
+        if (scope.AcquireAuthorizedLeaseAsync is { } acquire)
+        {
+            await using var lease = await acquire(execution, cancellationToken).ConfigureAwait(false)
+                ?? throw new ContinuousGraphIncrementalException("The subscriber authorization returned no scoped connection lease.");
+            return await ReadAsync(lease.Connection, key, cancellationToken, bufferResults: true).ConfigureAwait(false);
+        }
+
+        var dataSource = await scope.ResolveDataSourceAsync!(execution, cancellationToken).ConfigureAwait(false)
             ?? throw new ContinuousGraphIncrementalException("The subscriber authorization returned no scoped data source.");
 #pragma warning disable EF1001 // Reuse the BlueTusk provider's deferred-reset query connection.
         await using var connection = BlueTuskRelationalConnection.CreateScopedReadConnection(dataSource);
@@ -129,12 +136,23 @@ internal sealed class ContinuousGraphPreparedScope<TResult, TKey>(
             await authorize(connection, execution, cancellationToken).ConfigureAwait(false);
         }
 
-        if (connection.State != ConnectionState.Open)
+        return await ReadAsync(connection, key, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<IReadOnlyList<TResult>> ReadAsync(
+        BlueTuskConnection connection, TKey key, CancellationToken cancellationToken, bool bufferResults = false)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (connection is not { State: ConnectionState.Open })
         {
             throw new ContinuousGraphIncrementalException("Subscriber authorization must leave the scoped connection open.");
         }
 
-        await using var command = connection.CreateCommand();
+#pragma warning disable EF1001 // Select buffering for the two-row probe without modifying the leased connection.
+        await using var command = bufferResults
+            ? BlueTuskRelationalConnection.CreateBufferedScopedReadCommand(connection)
+            : connection.CreateCommand();
+#pragma warning restore EF1001
         command.CommandText = sql;
         if (timeout is { } commandTimeout)
         {

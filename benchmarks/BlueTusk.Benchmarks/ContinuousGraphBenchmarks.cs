@@ -33,11 +33,14 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
     private LiveQuerySession<GraphPath, int> _session = null!;
     private ContinuousGraphIncrementalSession<GraphPath, int> _scoped = null!;
     private ContinuousGraphIncrementalSession<GraphPath, int>? _connectionScoped;
+    private ContinuousGraphIncrementalSession<GraphPath, int>? _leaseScoped;
+    private BlueTuskConnection? _authorizedConnection;
     private ContinuousGraphIncrementalSession<GraphPath, int> _trusted = null!;
     private ChangeTransactionDelivery _update = null!;
     private BlueTuskCommand _prepared = null!;
     private int _disposed;
     private int _scopeSelections;
+    private int _leaseSelections;
 
     [Params(1_000, 100_000, 1_000_000)]
     public int EdgeCount { get; set; }
@@ -133,6 +136,38 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
                             : null),
                 });
             await InitializeAsync(_connectionScoped);
+            var leasedConnectionString = new BlueTuskConnectionStringBuilder(GetConnectionString())
+            {
+                MaxAutoPrepare = 8,
+            }.ConnectionString;
+            _authorizedConnection = new BlueTuskConnection(leasedConnectionString);
+            await _authorizedConnection.OpenAsync();
+            if (restrictedRole)
+            {
+                await AuthorizeCaptureAsync(_authorizedConnection, CancellationToken.None);
+            }
+
+            // The capture evaluates serially. This connection serves only this subscriber.
+            IContinuousGraphScopedConnectionLease lease = new BenchmarkConnectionLease(_authorizedConnection);
+            _leaseScoped = _plan.CreateIncrementalSession(_arguments, _securityScope,
+                new ContinuousGraphIncrementalOptions<GraphPath, int>
+                {
+                    ResultOrdering = incrementalOptions.ResultOrdering,
+                    KeyOrdering = incrementalOptions.KeyOrdering,
+                    MaximumRepairInterval = incrementalOptions.MaximumRepairInterval,
+                    ScopedConnection = new ContinuousGraphScopedConnection((execution, token) =>
+                    {
+                        token.ThrowIfCancellationRequested();
+                        if (execution.SecurityScope != _securityScope)
+                        {
+                            throw new InvalidOperationException("Unexpected benchmark subscriber.");
+                        }
+
+                        _leaseSelections++;
+                        return ValueTask.FromResult(lease);
+                    }),
+                });
+            await InitializeAsync(_leaseScoped);
         }
 
         await InitializeAsync(_scoped);
@@ -145,15 +180,18 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
             throw new InvalidOperationException("Portable Graph benchmark did not exercise both delta tiers.");
         }
 
-        if (_connectionScoped is not null)
+        if (_connectionScoped is not null && _leaseScoped is not null)
         {
             await using var expected = await _scoped.PrepareTransactionAsync(_update.Transaction);
-            await using var actual = await _connectionScoped.PrepareTransactionAsync(_update.Transaction);
-            if (_scopeSelections != 1 || actual.Evaluation.MaintenanceTier != ContinuousGraphMaintenanceTier.AuthoritativeDelta ||
-                !GraphPathComparer.Instance.Equals(expected.Evaluation.Batch?.Events.Single().Row,
-                    actual.Evaluation.Batch?.Events.Single().Row))
+            foreach (var session in new[] { _connectionScoped, _leaseScoped })
             {
-                throw new InvalidOperationException("The opt-in read did not match the scoped EF update.");
+                await using var actual = await session.PrepareTransactionAsync(_update.Transaction);
+                if (actual.Evaluation.MaintenanceTier != ContinuousGraphMaintenanceTier.AuthoritativeDelta ||
+                    !GraphPathComparer.Instance.Equals(expected.Evaluation.Batch?.Events.Single().Row,
+                        actual.Evaluation.Batch?.Events.Single().Row))
+                {
+                    throw new InvalidOperationException("The opt-in read did not match the scoped EF update.");
+                }
             }
         }
 
@@ -280,6 +318,16 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
         if (_connectionScoped is not null)
         {
             await _connectionScoped.DisposeAsync();
+        }
+
+        if (_leaseScoped is not null)
+        {
+            await _leaseScoped.DisposeAsync();
+        }
+
+        if (_authorizedConnection is not null)
+        {
+            await _authorizedConnection.DisposeAsync();
         }
 
         if (_trusted is not null)
@@ -500,6 +548,13 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
             ? throw new InvalidOperationException(
                 $"{ProviderComparisonBenchmarks.ConnectionStringEnvironmentVariable} must be configured.")
             : connectionString;
+    }
+
+    private sealed class BenchmarkConnectionLease(BlueTuskConnection connection) : IContinuousGraphScopedConnectionLease
+    {
+        public BlueTuskConnection Connection => connection;
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private sealed class GraphContextFactory : IDbContextFactory<GraphContext>

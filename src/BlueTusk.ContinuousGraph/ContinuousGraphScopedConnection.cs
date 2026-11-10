@@ -11,7 +11,7 @@ namespace BlueTusk.ContinuousGraph;
 /// for the subscription. Resolve the same database and enforce the same subscriber access
 /// as the EF registration on every invocation, including policy changes and revocation.
 /// If authorization uses a PostgreSQL role or session settings, apply them to the supplied
-/// connection in <see cref="AuthorizeAsync"/> before returning. BlueTusk owns the lease.
+/// connection in <see cref="AuthorizeAsync"/> or acquire an already authorized lease.
 /// </remarks>
 public sealed class ContinuousGraphScopedConnection
 {
@@ -24,9 +24,31 @@ public sealed class ContinuousGraphScopedConnection
         AuthorizeAsync = authorizeAsync;
     }
 
+    /// <summary>Uses an application-owned lease that is authorized anew on every read.</summary>
+    public ContinuousGraphScopedConnection(
+        Func<LiveQueryExecutionContext, CancellationToken, ValueTask<IContinuousGraphScopedConnectionLease>> acquireAuthorizedLeaseAsync)
+    {
+        ArgumentNullException.ThrowIfNull(acquireAuthorizedLeaseAsync);
+        AcquireAuthorizedLeaseAsync = acquireAuthorizedLeaseAsync;
+    }
+
     /// <summary>Resolves the subscriber-authorized data source for the registered database on each read.</summary>
-    public Func<LiveQueryExecutionContext, CancellationToken, ValueTask<BlueTuskDataSource>> ResolveDataSourceAsync { get; }
+    public Func<LiveQueryExecutionContext, CancellationToken, ValueTask<BlueTuskDataSource>>? ResolveDataSourceAsync { get; }
 
     /// <summary>Applies any additional subscriber authorization on the open connection before the query runs.</summary>
     public Func<BlueTuskConnection, LiveQueryExecutionContext, CancellationToken, ValueTask>? AuthorizeAsync { get; }
+
+    internal Func<LiveQueryExecutionContext, CancellationToken, ValueTask<IContinuousGraphScopedConnectionLease>>?
+        AcquireAuthorizedLeaseAsync { get; }
+}
+
+/// <summary>An exclusive lease for a subscriber-authorized graph read.</summary>
+/// <remarks>
+/// Supply an already open connection to the registered database, with the subscriber's role
+/// and session settings in place and no active transaction. Keep it exclusive until disposal.
+/// The application owns authorization, isolation, and return or disposal of the connection.
+/// </remarks>
+public interface IContinuousGraphScopedConnectionLease : IAsyncDisposable
+{
+    BlueTuskConnection Connection { get; }
 }

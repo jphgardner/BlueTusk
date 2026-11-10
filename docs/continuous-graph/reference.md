@@ -205,6 +205,18 @@ returns it to the provider pool after the query. PostgreSQL evaluates its
 permissions and RLS on that connection. If the application's query shape or
 bound filters change with policy, start a new subscription for that scope.
 
+For applications that already manage authorized connections, pass an
+`IContinuousGraphScopedConnectionLease` factory to
+`ContinuousGraphScopedConnection`. BlueTusk calls the factory for every
+eligible read, including when PostgreSQL has prepared the statement. Enforce
+current subscriber access and return an open connection to the registered
+database with the subscriber's role and tenant settings applied. The
+connection must be exclusive for the lease and outside any active transaction.
+BlueTusk disposes the lease after the read, and the application is responsible
+for returning or closing the connection. The two-row probe can reuse the
+provider's bounded statement cache when the leased connection has
+`Max Auto Prepare` enabled.
+
 The optimization applies to simple ordered portable graph projections with
 supported scalar keys and materialization. Composed queries, custom EF
 interceptors, transactions, and unsupported mappings use the scoped EF path.

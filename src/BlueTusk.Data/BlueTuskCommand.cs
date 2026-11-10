@@ -284,6 +284,8 @@ public sealed class BlueTuskCommand : DbCommand
 
     internal bool WillStreamReader(CommandBehavior behavior) => ShouldUseStreamingReader(ValidateCommandBehavior(behavior));
 
+    internal bool BufferResults { get; set; }
+
     private bool ShouldUseStreamingReader(CommandBehavior behavior)
     {
         if (behavior.HasFlag(CommandBehavior.SequentialAccess))
@@ -291,7 +293,7 @@ public sealed class BlueTuskCommand : DbCommand
             return true;
         }
 
-        if (_connection is { BufferDataReaders: true } ||
+        if (BufferResults || _connection is { BufferDataReaders: true } ||
             ExecutionMode == BlueTuskCommandExecutionMode.Simple ||
             string.IsNullOrWhiteSpace(CommandText) ||
             !BlueTuskCommandTextRewriter.CanUseExtendedProtocol(CommandText))
