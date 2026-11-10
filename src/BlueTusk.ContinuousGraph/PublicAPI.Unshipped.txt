@@ -187,3 +187,9 @@ override BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.GetHashCode() 
 override BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.ToString() -> string!
 static BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.operator !=(BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract? left, BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract? right) -> bool
 static BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.operator ==(BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract? left, BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract? right) -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.ScopedConnection.get -> BlueTusk.ContinuousGraph.ContinuousGraphScopedConnection?
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.ScopedConnection.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphScopedConnection
+BlueTusk.ContinuousGraph.ContinuousGraphScopedConnection.AuthorizeAsync.get -> System.Func<BlueTusk.Data.BlueTuskConnection!, BlueTusk.Live.LiveQueryExecutionContext!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>?
+BlueTusk.ContinuousGraph.ContinuousGraphScopedConnection.ContinuousGraphScopedConnection(System.Func<BlueTusk.Live.LiveQueryExecutionContext!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<BlueTusk.Data.BlueTuskDataSource!>>! resolveDataSourceAsync, System.Func<BlueTusk.Data.BlueTuskConnection!, BlueTusk.Live.LiveQueryExecutionContext!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>? authorizeAsync = null) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphScopedConnection.ResolveDataSourceAsync.get -> System.Func<BlueTusk.Live.LiveQueryExecutionContext!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<BlueTusk.Data.BlueTuskDataSource!>>!

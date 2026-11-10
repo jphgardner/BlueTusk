@@ -32,10 +32,12 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
     private AdvancingInvalidationLog _invalidations = null!;
     private LiveQuerySession<GraphPath, int> _session = null!;
     private ContinuousGraphIncrementalSession<GraphPath, int> _scoped = null!;
+    private ContinuousGraphIncrementalSession<GraphPath, int>? _connectionScoped;
     private ContinuousGraphIncrementalSession<GraphPath, int> _trusted = null!;
     private ChangeTransactionDelivery _update = null!;
     private BlueTuskCommand _prepared = null!;
     private int _disposed;
+    private int _scopeSelections;
 
     [Params(1_000, 100_000, 1_000_000)]
     public int EdgeCount { get; set; }
@@ -46,7 +48,7 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
     [GlobalSetup]
     public Task Setup() => SetupAsync(null);
 
-    private async Task SetupAsync(ScopedReadObserver? observer)
+    private async Task SetupAsync(ScopedReadObserver? observer, bool restrictedRole = false, bool compareScopedConnection = false)
     {
         _dataSource = BlueTuskDataSource.Create(GetConnectionString());
         _administration = await _dataSource.OpenConnectionAsync();
@@ -73,12 +75,13 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
             ANALYZE {PeopleTable};
             ANALYZE {FriendshipsTable};
             """);
-        if (observer is not null)
+        restrictedRole |= observer is not null;
+        if (restrictedRole)
         {
             await InstallCapturePolicyAsync();
         }
 
-        _contextFactory = new GraphContextFactory(_dataSource, observer);
+        _contextFactory = new GraphContextFactory(_dataSource, observer, restrictedRole);
         _definition = CreateDefinition();
         _plan = await ContinuousGraphQueryCompiler.CompileAsync(
             _contextFactory,
@@ -105,6 +108,33 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
         var updatedEdgeId = EdgeCount + 2;
         _trusted = _plan.CreateAutomaticIncrementalSession(_arguments, _securityScope, incrementalOptions,
             resultLimit: null, trustedProjector: new BenchmarkProjector(_plan.Fingerprint, _securityScope));
+        if (compareScopedConnection)
+        {
+            _connectionScoped = _plan.CreateIncrementalSession(_arguments, _securityScope,
+                new ContinuousGraphIncrementalOptions<GraphPath, int>
+                {
+                    ResultOrdering = incrementalOptions.ResultOrdering,
+                    KeyOrdering = incrementalOptions.KeyOrdering,
+                    MaximumRepairInterval = incrementalOptions.MaximumRepairInterval,
+                    ScopedConnection = new ContinuousGraphScopedConnection(
+                        (execution, token) =>
+                        {
+                            token.ThrowIfCancellationRequested();
+                            if (execution.SecurityScope != _securityScope)
+                            {
+                                throw new InvalidOperationException("Unexpected benchmark subscriber.");
+                            }
+
+                            _scopeSelections++;
+                            return ValueTask.FromResult(_dataSource);
+                        },
+                        restrictedRole
+                            ? (connection, _, token) => new ValueTask(AuthorizeCaptureAsync(connection, token))
+                            : null),
+                });
+            await InitializeAsync(_connectionScoped);
+        }
+
         await InitializeAsync(_scoped);
         await InitializeAsync(_trusted);
         await ExecuteAsync($"UPDATE {FriendshipsTable} SET id = {updatedEdgeId} WHERE id = 1");
@@ -113,6 +143,18 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
             await TrustedUpdateAsync() != ContinuousGraphMaintenanceTier.TrustedCdcDelta)
         {
             throw new InvalidOperationException("Portable Graph benchmark did not exercise both delta tiers.");
+        }
+
+        if (_connectionScoped is not null)
+        {
+            await using var expected = await _scoped.PrepareTransactionAsync(_update.Transaction);
+            await using var actual = await _connectionScoped.PrepareTransactionAsync(_update.Transaction);
+            if (_scopeSelections != 1 || actual.Evaluation.MaintenanceTier != ContinuousGraphMaintenanceTier.AuthoritativeDelta ||
+                !GraphPathComparer.Instance.Equals(expected.Evaluation.Batch?.Events.Single().Row,
+                    actual.Evaluation.Batch?.Events.Single().Row))
+            {
+                throw new InvalidOperationException("The opt-in read did not match the scoped EF update.");
+            }
         }
 
         _prepared = new BlueTuskCommand(
@@ -233,6 +275,11 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
         if (_scoped is not null)
         {
             await _scoped.DisposeAsync();
+        }
+
+        if (_connectionScoped is not null)
+        {
+            await _connectionScoped.DisposeAsync();
         }
 
         if (_trusted is not null)
@@ -460,9 +507,12 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
         private readonly DbContextOptions<GraphContext> _options;
         private readonly ScopedReadObserver? _observer;
 
-        public GraphContextFactory(BlueTuskDataSource dataSource, ScopedReadObserver? observer)
+        private readonly bool _restrictedRole;
+
+        public GraphContextFactory(BlueTuskDataSource dataSource, ScopedReadObserver? observer, bool restrictedRole)
         {
             _observer = observer;
+            _restrictedRole = restrictedRole;
             var options = new DbContextOptionsBuilder<GraphContext>().UseBlueTusk(dataSource);
             if (observer is not null)
             {
@@ -475,21 +525,27 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
         public GraphContext CreateDbContext() => new(_options);
 
         public Task<GraphContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
-            _observer is null
-                ? Task.FromResult(CreateDbContext())
-                : CreateAuthorizedContextAsync(_observer, cancellationToken);
+            _restrictedRole ? CreateAuthorizedContextAsync(cancellationToken) : Task.FromResult(CreateDbContext());
 
-        private async Task<GraphContext> CreateAuthorizedContextAsync(
-            ScopedReadObserver observer, CancellationToken cancellationToken)
+        private async Task<GraphContext> CreateAuthorizedContextAsync(CancellationToken cancellationToken)
         {
             var context = CreateDbContext();
             try
             {
-                observer.ContextCreated = Stopwatch.GetTimestamp();
+                if (_observer is not null)
+                {
+                    _observer.ContextCreated = Stopwatch.GetTimestamp();
+                }
                 await context.Database.OpenConnectionAsync(cancellationToken);
-                observer.ConnectionOpened = Stopwatch.GetTimestamp();
+                if (_observer is not null)
+                {
+                    _observer.ConnectionOpened = Stopwatch.GetTimestamp();
+                }
                 await AuthorizeCaptureAsync((BlueTuskConnection)context.Database.GetDbConnection(), cancellationToken);
-                observer.Authorized = Stopwatch.GetTimestamp();
+                if (_observer is not null)
+                {
+                    _observer.Authorized = Stopwatch.GetTimestamp();
+                }
                 return context;
             }
             catch

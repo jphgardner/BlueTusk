@@ -86,6 +86,15 @@ The capture retains per-operation timings, allocations, provider counters,
 and execution plans. Run it on each client against the same fixture. The
 BenchmarkDotNet matrix supplies the release measurements.
 
+To compare the opt-in `ContinuousGraphIncrementalOptions.ScopedConnection`
+with the standard scoped read and full repair, run the following matched
+capture. Each arm uses the same mutation and subscription. The capture
+includes the regular fixture and a PostgreSQL role with row-level security.
+
+```powershell
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --graph-scoped-connection-capture artifacts/graph-scoped-connection
+```
+
 `EntityFrameworkCoreBenchmarks` uses one long-lived `BlueTuskDataSource` and a
 1,000-row table to measure fresh parameterized EF query compilation plus first
 execution, no-tracking materialization of 100 entities, inserts, and

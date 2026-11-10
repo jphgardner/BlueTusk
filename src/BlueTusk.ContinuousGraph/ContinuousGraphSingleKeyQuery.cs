@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +62,28 @@ internal sealed class ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>(
 
     public IAsyncEnumerable<TResult>? TryExecute(TContext context, IQueryable<TResult> query, TKey key)
     {
+        if (!TryMatch(context, query, out _, out var arguments))
+        {
+            return null;
+        }
+
+        // Both values come from this execution. The caller owns the context
+        // and supplies cancellation to the enumerator as it reads the rows.
+        return execute(context, arguments, key);
+    }
+
+    public ContinuousGraphPreparedScope<TResult, TKey>? TryBindScope(
+        TContext context, IQueryable<TResult> query, string keyProperty) =>
+        TryMatch(context, query, out var root, out var arguments)
+            ? ContinuousGraphPreparedScope<TResult, TKey>.TryCreate(context, root, arguments, keyProperty)
+            : null;
+
+    private bool TryMatch(TContext context, IQueryable<TResult> query,
+        [NotNullWhen(true)] out BlueTuskGraphQueryRootExpression? matched,
+        [NotNullWhen(true)] out object[]? values)
+    {
+        matched = null;
+        values = null;
         if (FindRoot(query.Expression) is not { Values: ConstantExpression { Value: object[] arguments } } root ||
             !ReferenceEquals(query.Provider, root.QueryProvider) ||
             !template.HasSameSqlShape(root) ||
@@ -69,12 +92,12 @@ internal sealed class ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>(
             !ReferenceEquals(registrationOptions, context.GetService<IDbContextOptions>()) ||
             HasExpressionInterceptor(context))
         {
-            return null;
+            return false;
         }
 
-        // Both values come from this execution. The caller owns the context
-        // and supplies cancellation to the enumerator as it reads the rows.
-        return execute(context, arguments, key);
+        matched = root;
+        values = arguments;
+        return true;
     }
 
     // A query expression interceptor may depend on the caller's original

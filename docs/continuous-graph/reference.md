@@ -188,6 +188,28 @@ permissions, RLS, tenant settings, and the registered query remain the
 authority. The engine never constructs client-visible authoritative rows from
 untrusted tuple bytes.
 
+### Opting in to connection-scoped reads
+
+Set `ContinuousGraphIncrementalOptions.ScopedConnection` when the registered
+query shape and its bound filter values stay fixed for the subscription.
+BlueTusk binds the typed query for that subscription and reuses it for eligible
+single-key updates. Each update resolves the subscriber's authorized
+`BlueTuskDataSource` and takes a fresh connection lease. The resolver must
+choose the same database and enforce the same subscriber scope as the EF
+registration. Check current access in the resolver or the optional
+`AuthorizeAsync` callback, including revocation and policy version changes.
+
+Use the callback to apply any required PostgreSQL role or tenant settings on
+the supplied connection before the read. BlueTusk owns the connection and
+returns it to the provider pool after the query. PostgreSQL evaluates its
+permissions and RLS on that connection. If the application's query shape or
+bound filters change with policy, start a new subscription for that scope.
+
+The optimization applies to simple ordered portable graph projections with
+supported scalar keys and materialization. Composed queries, custom EF
+interceptors, transactions, and unsupported mappings use the scoped EF path.
+Initial snapshots and authoritative repairs use the registered EF query.
+
 ### Opting in to direct CDC projection
 
 Tier one is intentionally explicit. Implement

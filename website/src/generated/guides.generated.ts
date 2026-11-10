@@ -6372,6 +6372,11 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
+        "id": "opting-in-to-connection-scoped-reads",
+        "text": "Opting in to connection-scoped reads",
+        "level": 3
+      },
+      {
         "id": "opting-in-to-direct-cdc-projection",
         "text": "Opting in to direct CDC projection",
         "level": 3
@@ -6397,8 +6402,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2100,
-    "readMinutes": 10,
+    "wordCount": 2284,
+    "readMinutes": 11,
     "searchText": "BlueTusk Continuous Graph `BlueTusk.ContinuousGraph` provides the maintained graph runtime. Trusted server code registers bounded typed graph queries; the compiler validates the query against EF property-graph metadata and then delegates gap-free invalidation, authoritative requery, and keyed result diffs to BlueTusk Live. It never reads replication or pgoutput messages. Registration Configure the property graph in the EF model first, then register the specific element-table aliases used by the query: The alias declaration is deliberately explicit. The compiler resolves each alias through the configured `BlueTuskPropertyGraphDefinition` and records only the corresponding relational tables as Live invalidation dependencies. A change to an unrelated graph element therefore does not rerun this query. Unknown and duplicate aliases fail during registration. The V1 query envelope permits outer `Where`, `Select`, deterministic `OrderBy`/`ThenBy`, one bounded `Take`, and `AsNoTracking`. Ordering must include the direct result key. The ordinary typed graph builder remains responsible for safe graph-pattern and projection translation, and EF must produce the resolved backend SQL at registration. Unsupported query operators, translation failures, unbounded results, and unstable ordering fail before clients can subscribe. Expanded graph patterns in 1.2 Both backends support the typed patterns needed by larger relationship models: `Undirected` matches either edge direction. `Outgoing` and `Incoming` remain directional. `LabelsAnyOf` matches any of the named labels. Every selected label must exist on the resolved element table, and projected properties must be identical across those labels. `OutgoingPath`, `IncomingPath`, and `UndirectedPath` accept a bounded range of one to eight hops. BlueTusk compiles the range into fixed-hop query branches joined with `UNION ALL`. At most 64 branches are allowed. A multi-hop edge variable cannot be projected because one match can contain seve"
   },
   {

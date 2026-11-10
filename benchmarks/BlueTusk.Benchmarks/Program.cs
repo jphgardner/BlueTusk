@@ -4,6 +4,12 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using BlueTusk.Benchmarks;
 
+if (args is ["--graph-scoped-connection-capture", var scopedConnectionDirectory])
+{
+    await ContinuousGraphBenchmarks.CaptureScopedConnectionAsync(scopedConnectionDirectory);
+    return;
+}
+
 if (args is ["--graph-scoped-read-capture", var graphCaptureDirectory])
 {
     await ContinuousGraphBenchmarks.CaptureScopedReadAsync(graphCaptureDirectory);

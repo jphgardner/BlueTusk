@@ -96,8 +96,11 @@ public sealed class ContinuousGraphQueryIntegrationTests
         }
     }
 
-    [Fact]
-    public async Task Portable_graph_preserves_RLS_during_scoped_delta_and_repair_on_a_reused_connection()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Portable_graph_preserves_RLS_during_scoped_delta_and_repair_on_a_reused_connection(
+        bool useScopedConnection)
     {
         var token = TestContext.Current.CancellationToken;
         var connectionString = GetConnectionString();
@@ -116,6 +119,7 @@ public sealed class ContinuousGraphQueryIntegrationTests
                 UPDATE {PeopleTable} SET reader = '{BetaRole}' WHERE id = 3;
                 INSERT INTO {PeopleTable} VALUES (4, 'Beta source', '{BetaRole}');
                 UPDATE {FriendshipsTable} SET reader = '{BetaRole}', from_id = 4 WHERE id = 11;
+                INSERT INTO {FriendshipsTable} VALUES (30, 1, 2, '{BetaRole}');
                 ALTER TABLE {PeopleTable} ENABLE ROW LEVEL SECURITY;
                 ALTER TABLE {FriendshipsTable} ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY graph_reader ON {PeopleTable} USING (reader = current_user);
@@ -137,12 +141,32 @@ public sealed class ContinuousGraphQueryIntegrationTests
             var alphaScope = new LiveSecurityScope("alpha", "rls-v1");
             var betaScope = new LiveSecurityScope("beta", "rls-v1");
             var betaArguments = beta.Bind(new Dictionary<string, object?> { ["sourceId"] = 4 });
+            var authorizations = 0;
+            var revoked = false;
 
             await using var session = alpha.CreateIncrementalSession(alphaArguments, alphaScope,
                 new ContinuousGraphIncrementalOptions<FriendResult, int>
                 {
                     ResultOrdering = Comparer<FriendResult>.Create(static (left, right) => left.TargetId.CompareTo(right.TargetId)),
                     KeyOrdering = Comparer<int>.Default,
+                    ScopedConnection = useScopedConnection
+                        ? new ContinuousGraphScopedConnection(
+                            (execution, cancellationToken) =>
+                            {
+                                cancellationToken.ThrowIfCancellationRequested();
+                                Assert.Equal(alphaScope, execution.SecurityScope);
+                                authorizations++;
+                                return ValueTask.FromResult(dataSource);
+                            },
+                            async (connection, _, cancellationToken) =>
+                            {
+                                await ExecuteAsync(connection, $"SET ROLE {AlphaRole};", cancellationToken);
+                                if (revoked)
+                                {
+                                    throw new UnauthorizedAccessException("Subscriber revoked");
+                                }
+                            })
+                        : null,
                 });
             await using (var initial = await session.PrepareInitialAsync(cancellationToken: token))
             {
@@ -161,6 +185,18 @@ public sealed class ContinuousGraphQueryIntegrationTests
             var table = new ChangeTable(1, "public", FriendshipsTable, 'f',
                 [new ChangeColumn(0, "to_id", 23, -1, IsKey: false)]);
             var endpoint = new ChangeRow(table, [ChangeColumnValue.FromValue("2"u8.ToArray(), ChangeValueEncoding.Text)]);
+            if (useScopedConnection)
+            {
+                revoked = true;
+                await using var denied = ChangeDeliveryTestFactory.CreateCommitted(source, 1, position,
+                    [new UpdateChange(new ChangeId(source, position, 1, 0), endpoint, endpoint, new ChangedColumnSet(false, []))]);
+                await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+                {
+                    await using var unexpected = await session.PrepareTransactionAsync(denied.Transaction, token);
+                });
+                revoked = false;
+            }
+
             await using (var delivery = ChangeDeliveryTestFactory.CreateCommitted(source, 1, position,
                 [new UpdateChange(new ChangeId(source, position, 1, 0), endpoint, endpoint, new ChangedColumnSet(false, []))]))
             await using (var scoped = await session.PrepareTransactionAsync(delivery.Transaction, token))
@@ -169,6 +205,7 @@ public sealed class ContinuousGraphQueryIntegrationTests
                 Assert.Equal(12, Assert.Single(scoped.Evaluation.Batch!.Snapshot.Rows).RelationshipId);
                 await scoped.CommitAsync(token);
             }
+            Assert.Equal(useScopedConnection ? 2 : 0, authorizations);
 
             await ExecuteAsync(admin, $"UPDATE {PeopleTable} SET reader = '{BetaRole}' WHERE id = 2;", token);
             var repairPosition = new BlueTuskLogSequenceNumber(2);

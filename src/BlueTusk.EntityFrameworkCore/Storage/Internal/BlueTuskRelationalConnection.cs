@@ -1,4 +1,5 @@
 using System.Data.Common;
+using BlueTusk.Data;
 using BlueTusk.Data.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
@@ -58,11 +59,21 @@ internal sealed class BlueTuskRelationalConnection : RelationalConnection
     {
         var connection = _dataSource?.CreateConnection()
             ?? _providerServices.CreateConnection(ConnectionString ?? string.Empty);
-        var providerConnection = _providerServices.GetConnection(connection);
+        ConfigureQueryConnection(_providerServices.GetConnection(connection));
+        return connection;
+    }
+
+    internal static BlueTuskConnection CreateScopedReadConnection(BlueTuskDataSource dataSource)
+    {
+        var connection = dataSource.CreateConnection();
+        ConfigureQueryConnection(connection);
+        return connection;
+    }
+
+    private static void ConfigureQueryConnection(IProviderConnection providerConnection)
+    {
         providerConnection.AllowPendingPoolResetOnOpen();
         providerConnection.PreferExtendedProtocol();
         providerConnection.PreferBinaryResults();
-
-        return connection;
     }
 }

@@ -189,6 +189,11 @@ public sealed class ContinuousGraphIncrementalOptions<TResult, TKey>
 
     public TimeProvider TimeProvider { get; init; } = TimeProvider.System;
 
+    /// <summary>
+    /// Opts into a connection-scoped read for eligible typed graph queries with fixed subscription bindings.
+    /// </summary>
+    public ContinuousGraphScopedConnection? ScopedConnection { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(ResultOrdering);
@@ -691,6 +696,24 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var snapshot = _snapshot!;
+        var comparer = new ResultComparer(
+            _plan.LivePlan.KeySelector,
+            _options.ResultOrdering,
+            _options.KeyOrdering);
+        if (result.AffectedKeys is [var singleKey] && result.Rows is [var replacement] &&
+            snapshot.KeyIndexes.TryGetValue(singleKey, out var index) &&
+            _plan.LivePlan.KeyComparer.Equals(singleKey, _plan.LivePlan.KeySelector(replacement)) &&
+            _options.ResultOrdering.Compare(replacement, snapshot.Rows[index]) <= 0 &&
+            (index == 0 || comparer.Compare(snapshot.Rows[index - 1], replacement) <= 0) &&
+            (index + 1 == snapshot.Rows.Count || comparer.Compare(replacement, snapshot.Rows[index + 1]) <= 0))
+        {
+            var stable = LiveResultDiffer.DiffAffected(
+                snapshot, result.Rows, _plan.LivePlan.KeySelector,
+                _plan.LivePlan.RowComparer, _options.DiffOptions, _nextSequence);
+            return CreateExactDelivery(transaction, result, stable, affectedKeyCount: 1);
+        }
+
         var affected = result.AffectedKeys
             .Distinct(_plan.LivePlan.KeyComparer)
             .ToArray();
@@ -711,7 +734,6 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
         }
 
         var affectedSet = affected.ToHashSet(_plan.LivePlan.KeyComparer);
-        var snapshot = _snapshot!;
 
         var authoritative = new Dictionary<TKey, TResult>(
             _plan.LivePlan.KeyComparer);
@@ -760,13 +782,18 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             }
         }
 
-        var comparer = new ResultComparer(
-            _plan.LivePlan.KeySelector,
-            _options.ResultOrdering,
-            _options.KeyOrdering);
         var batch = TryDiffInPlace(authoritative, comparer, out var inPlace)
             ? inPlace
             : DiffMergedAffected(authoritative, affectedSet, comparer);
+        return CreateExactDelivery(transaction, result, batch, affected.Length);
+    }
+
+    private ContinuousGraphEvaluationDelivery<TResult, TKey> CreateExactDelivery(
+        ChangeTransaction transaction,
+        ContinuousGraphIncrementalResult<TResult, TKey> result,
+        LiveDiffBatch<TResult, TKey> batch,
+        int affectedKeyCount)
+    {
         var nextSequence = batch.Events.Count == 0
             ? _nextSequence
             : checked(batch.LastSequence + 1);
@@ -781,7 +808,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             result.Detail,
             IsRepair: false,
             IsFallback: false,
-            AffectedKeyCount: affected.Length,
+            AffectedKeyCount: affectedKeyCount,
             QueryCount: result.MaintenanceTier is
                 ContinuousGraphMaintenanceTier.AuthoritativeDelta ? 1 : 0));
     }

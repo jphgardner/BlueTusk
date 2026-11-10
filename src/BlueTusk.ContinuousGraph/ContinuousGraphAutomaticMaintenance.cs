@@ -23,6 +23,10 @@ internal sealed class ContinuousGraphTieredEvaluator<TResult, TKey>(
     where TResult : class
     where TKey : notnull
 {
+    private readonly Dictionary<(string Schema, string Table), ContinuousGraphAutomaticTableImpact[]> _tableImpacts =
+        tableImpacts.GroupBy(static impact => (impact.Schema, impact.Table))
+            .ToDictionary(static group => group.Key, static group => group.ToArray());
+
     public async ValueTask<ContinuousGraphIncrementalResult<TResult, TKey>> EvaluateAsync(
         ChangeTransaction transaction,
         LiveQueryExecutionContext context,
@@ -85,20 +89,15 @@ internal sealed class ContinuousGraphTieredEvaluator<TResult, TKey>(
                 continue;
             }
 
-            var rows = change switch
+            var (first, second) = change switch
             {
-                InsertChange insert => new[] { insert.NewRow },
-                UpdateChange update => new[] { update.OldRow, update.NewRow },
-                DeleteChange delete => new[] { delete.OldRow },
-                _ => [],
+                InsertChange insert => (insert.NewRow, (ChangeRow?)null),
+                UpdateChange update => (update.OldRow, update.NewRow),
+                DeleteChange delete => (delete.OldRow, (ChangeRow?)null),
+                _ => ((ChangeRow?)null, (ChangeRow?)null),
             };
-            if (rows.Length == 0)
-            {
-                continue;
-            }
-
-            var impacts = FindImpacts(rows[0].Table);
-            if (impacts.Length == 0)
+            if (first is null ||
+                !_tableImpacts.TryGetValue((first.Table.Schema, first.Table.Name), out var impacts))
             {
                 continue;
             }
@@ -110,8 +109,14 @@ internal sealed class ContinuousGraphTieredEvaluator<TResult, TKey>(
                     .RequiresRepair("unscopable-relevant-element");
             }
 
-            foreach (var row in rows)
+            for (var index = 0; index < 2; index++)
             {
+                var row = index == 0 ? first : second;
+                if (row is null)
+                {
+                    break;
+                }
+
                 foreach (var impact in impacts)
                 {
                     if (!TryAddKeys(row, impact.ResultKeyColumns, affected))
@@ -152,13 +157,7 @@ internal sealed class ContinuousGraphTieredEvaluator<TResult, TKey>(
             "compiler-generated-key-scope");
     }
 
-    private bool IsRelevant(ChangeTable table) => FindImpacts(table).Length > 0;
-
-    private ContinuousGraphAutomaticTableImpact[] FindImpacts(
-        ChangeTable table) =>
-        tableImpacts.Where(impact =>
-            string.Equals(impact.Schema, table.Schema, StringComparison.Ordinal) &&
-            string.Equals(impact.Table, table.Name, StringComparison.Ordinal)).ToArray();
+    private bool IsRelevant(ChangeTable table) => _tableImpacts.ContainsKey((table.Schema, table.Name));
 
     private static bool TryAddKeys(
         ChangeRow row,

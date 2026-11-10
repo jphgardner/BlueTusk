@@ -553,39 +553,68 @@ public static class ContinuousGraphQueryCompiler
                 ? ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>.TryCreate(
                     context, query, definition.KeySelector)
                 : null;
+            async ValueTask<IReadOnlyList<TResult>> ExecuteEfScopeAsync(
+                TContext scopedContext, IQueryable<TResult> scopedQuery, IReadOnlyCollection<TKey> keys,
+                CancellationToken token)
+            {
+                if (keys.Count == 1 &&
+                    singleKeyQuery?.TryExecute(scopedContext, scopedQuery, keys.First()) is { } probe)
+                {
+                    var rows = new List<TResult>(2);
+                    await foreach (var row in probe.WithCancellation(token).ConfigureAwait(false))
+                    {
+                        rows.Add(row);
+                    }
+
+                    return rows;
+                }
+
+                return await ContinuousGraphKeyScope.Apply(scopedQuery, definition.KeySelector, keys)
+                    .AsNoTracking().ToListAsync(token).ConfigureAwait(false);
+            }
+
             automaticEvaluatorFactory = (projector, options) =>
-                new ContinuousGraphTieredEvaluator<TResult, TKey>(
+            {
+                ContinuousGraphPreparedScope<TResult, TKey>? boundScope = null;
+                var scopeUnsupported = false;
+                return new ContinuousGraphTieredEvaluator<TResult, TKey>(
                     fingerprint,
                     automaticImpacts,
                     async (keys, execution, token) =>
                     {
+                        if (keys.Count == 1 && !scopeUnsupported && singleKeyQuery is not null &&
+                            options.ScopedConnection is { } scope && System.Transactions.Transaction.Current is null)
+                        {
+                            if (boundScope is null)
+                            {
+                                await using var bindingContext =
+                                    await contextFactory.CreateDbContextAsync(token).ConfigureAwait(false);
+                                var bindingQuery = CreateExecutionQuery(bindingContext, execution.Arguments);
+                                boundScope = singleKeyQuery.TryBindScope(bindingContext, bindingQuery, keyProperty);
+                                if (boundScope is null)
+                                {
+                                    scopeUnsupported = true;
+                                    return await ExecuteEfScopeAsync(bindingContext, bindingQuery, keys, token)
+                                        .ConfigureAwait(false);
+                                }
+                            }
+
+                            // The binding context has released its lease, including when
+                            // both authorizers share a pool with only one connection.
+                            return await boundScope.ExecuteAsync(scope, execution, keys.First(), token)
+                                .ConfigureAwait(false);
+                        }
+
                         await using var scopedContext =
                             await contextFactory.CreateDbContextAsync(token)
                                 .ConfigureAwait(false);
                         var scopedQuery = CreateExecutionQuery(scopedContext, execution.Arguments);
-                        if (keys.Count == 1 &&
-                            singleKeyQuery?.TryExecute(scopedContext, scopedQuery, keys.First()) is { } probe)
-                        {
-                            var rows = new List<TResult>(2);
-                            await foreach (var row in probe.WithCancellation(token).ConfigureAwait(false))
-                            {
-                                rows.Add(row);
-                            }
-
-                            return rows;
-                        }
-
-                        return await ContinuousGraphKeyScope.Apply(
-                                scopedQuery,
-                                definition.KeySelector,
-                                keys)
-                            .AsNoTracking()
-                            .ToListAsync(token)
-                            .ConfigureAwait(false);
+                        return await ExecuteEfScopeAsync(scopedContext, scopedQuery, keys, token).ConfigureAwait(false);
                     },
                     options.MaximumAffectedKeys,
                     livePlan.KeyComparer,
                     projector);
+            };
         }
 
         return new ContinuousGraphQueryPlan<TResult, TKey>(
