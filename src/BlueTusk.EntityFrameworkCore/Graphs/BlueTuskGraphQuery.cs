@@ -344,7 +344,7 @@ public sealed class BlueTuskGraphMatch
             Array.TrueForAll(translation.Parameters, static value => value is not System.Data.Common.DbParameter))
         {
             query = query.Provider.CreateQuery<TResult>(new BlueTuskGraphQueryRootExpression(
-                root.QueryProvider!, root.EntityType, root.Sql, translation.Parameters));
+                root.QueryProvider!, root.EntityType, root.Sql, translation.Parameters, translation.OrderedBranches));
         }
 #pragma warning restore EF1001
         BlueTuskGraphQueryCapture.Record(_context, query.Expression, translation.ImpactPlan);

@@ -631,6 +631,11 @@ public static class ContinuousGraphQueryCompiler
 
     private static bool MatchesImpact(BlueTuskGraphQueryImpactPlan expected, BlueTuskGraphQueryImpactPlan actual)
     {
+        if (ReferenceEquals(expected, actual))
+        {
+            return true;
+        }
+
         if (expected.Backend != actual.Backend || expected.GraphName != actual.GraphName ||
             expected.GraphSchema != actual.GraphSchema || expected.Elements.Count != actual.Elements.Count ||
             !expected.Projections.SequenceEqual(actual.Projections))

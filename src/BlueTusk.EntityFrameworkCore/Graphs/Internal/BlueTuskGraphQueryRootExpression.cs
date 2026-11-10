@@ -11,47 +11,58 @@ internal sealed class BlueTuskGraphQueryRootExpression : EntityQueryRootExpressi
 {
     private readonly Type[] _types;
 
-    public BlueTuskGraphQueryRootExpression(IAsyncQueryProvider provider, IEntityType entityType, string sql, object[] values)
+    public BlueTuskGraphQueryRootExpression(
+        IAsyncQueryProvider provider, IEntityType entityType, string sql, object[] values,
+        BlueTuskGraphOrderedBranches? orderedBranches)
         : base(provider, entityType)
     {
         Sql = sql;
         Values = Constant(values);
         _types = Array.ConvertAll(values, static value => value.GetType());
+        OrderedBranches = orderedBranches;
     }
 
-    private BlueTuskGraphQueryRootExpression(IEntityType entityType, string sql, Expression values, Type[] types)
+    private BlueTuskGraphQueryRootExpression(
+        IEntityType entityType, string sql, Expression values, Type[] types,
+        BlueTuskGraphOrderedBranches? orderedBranches)
         : base(entityType)
     {
         Sql = sql;
         Values = values;
         _types = types;
+        OrderedBranches = orderedBranches;
     }
 
     public string Sql { get; }
 
     public Expression Values { get; }
 
-    public BlueTuskGraphSqlArguments CreateSqlArguments() => new(Values, _types);
+    private BlueTuskGraphOrderedBranches? OrderedBranches { get; }
+
+    public BlueTuskGraphSqlArguments CreateSqlArguments() => new(Values, _types, OrderedBranches);
 
     public BlueTuskGraphQueryRootExpression WithArgumentParameter(ParameterExpression parameter) =>
-        new(EntityType, Sql, parameter, _types);
+        new(EntityType, Sql, parameter, _types, OrderedBranches);
 
     public bool HasSameSqlShape(BlueTuskGraphQueryRootExpression other) =>
         ReferenceEquals(EntityType, other.EntityType) &&
         string.Equals(Sql, other.Sql, StringComparison.Ordinal) &&
         _types.AsSpan().SequenceEqual(other._types);
 
-    public override Expression DetachQueryProvider() => new BlueTuskGraphQueryRootExpression(EntityType, Sql, Values, _types);
+    public override Expression DetachQueryProvider() =>
+        new BlueTuskGraphQueryRootExpression(EntityType, Sql, Values, _types, OrderedBranches);
 
     public override EntityQueryRootExpression UpdateEntityType(IEntityType entityType)
         => entityType.ClrType == EntityType.ClrType && entityType.Name == EntityType.Name
-            ? new BlueTuskGraphQueryRootExpression(entityType, Sql, Values, _types)
+            ? new BlueTuskGraphQueryRootExpression(entityType, Sql, Values, _types, OrderedBranches)
             : throw new InvalidOperationException("Cannot change a typed graph query's entity type.");
 
     protected override Expression VisitChildren(ExpressionVisitor visitor)
     {
         var values = visitor.Visit(Values);
-        return ReferenceEquals(values, Values) ? this : new BlueTuskGraphQueryRootExpression(EntityType, Sql, values, _types);
+        return ReferenceEquals(values, Values)
+            ? this
+            : new BlueTuskGraphQueryRootExpression(EntityType, Sql, values, _types, OrderedBranches);
     }
 
     public override bool Equals(object? obj) =>
@@ -59,6 +70,7 @@ internal sealed class BlueTuskGraphQueryRootExpression : EntityQueryRootExpressi
         obj is BlueTuskGraphQueryRootExpression other
         && base.Equals(other)
         && Sql == other.Sql
+        && OrderedBranches?.OutputColumn == other.OrderedBranches?.OutputColumn
         && _types.AsSpan().SequenceEqual(other._types)
         && ExpressionEqualityComparer.Instance.Equals(Values, other.Values);
 
@@ -67,6 +79,7 @@ internal sealed class BlueTuskGraphQueryRootExpression : EntityQueryRootExpressi
         var hash = new HashCode();
         hash.Add(base.GetHashCode());
         hash.Add(Sql, StringComparer.Ordinal);
+        hash.Add(OrderedBranches?.OutputColumn, StringComparer.Ordinal);
         hash.Add(Values, ExpressionEqualityComparer.Instance);
         foreach (var type in _types)
         {
@@ -85,11 +98,14 @@ internal sealed class BlueTuskGraphQueryRootExpression : EntityQueryRootExpressi
     }
 }
 
-internal sealed class BlueTuskGraphSqlArguments(Expression values, Type[] types) : Expression, IPrintableExpression
+internal sealed class BlueTuskGraphSqlArguments(
+    Expression values, Type[] types, BlueTuskGraphOrderedBranches? orderedBranches) : Expression, IPrintableExpression
 {
     public Expression Values { get; } = values;
 
     public ReadOnlySpan<Type> Types => types;
+
+    public BlueTuskGraphOrderedBranches? OrderedBranches { get; } = orderedBranches;
 
     public override ExpressionType NodeType => ExpressionType.Extension;
 
@@ -98,8 +114,15 @@ internal sealed class BlueTuskGraphSqlArguments(Expression values, Type[] types)
     protected override Expression VisitChildren(ExpressionVisitor visitor)
     {
         var visited = visitor.Visit(Values);
-        return ReferenceEquals(visited, Values) ? this : new BlueTuskGraphSqlArguments(visited, types);
+        return ReferenceEquals(visited, Values) ? this : new BlueTuskGraphSqlArguments(visited, types, OrderedBranches);
     }
 
     public void Print(ExpressionPrinter expressionPrinter) => expressionPrinter.Visit(Values);
+}
+
+internal sealed class BlueTuskGraphOrderedBranches(string outputColumn, string[] branches)
+{
+    public string OutputColumn { get; } = outputColumn;
+
+    public ReadOnlySpan<string> Branches => branches;
 }

@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Linq.Expressions;
+using System.Text;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.Internal;
@@ -35,6 +37,32 @@ internal sealed class BlueTuskGraphRelationalParameterProcessor(RelationalParame
 
     protected override Expression VisitExtension(Expression expression)
     {
+        if (expression is SelectExpression
+            {
+                Tables: [FromSqlExpression
+                {
+                    Arguments: BlueTuskGraphSqlArguments { OrderedBranches: { } branches },
+                } table],
+                IsDistinct: false,
+                Predicate: null,
+                GroupBy.Count: 0,
+                Having: null,
+                Offset: null,
+                Limit: not null,
+                Orderings: [var ordering],
+                Projection: [{ Expression: ColumnExpression projection }],
+            } select &&
+            ordering.Expression is ColumnExpression orderColumn &&
+            orderColumn.TableAlias == table.Alias && orderColumn.Name == branches.OutputColumn &&
+            projection.TableAlias == table.Alias && projection.Name == branches.OutputColumn &&
+            !select.GetAnnotations().Any() && !table.GetAnnotations().Any())
+        {
+            // Use the final parameter names after EF's parameter expansion.
+            // The outer LIMIT still registers and binds this same parameter.
+            var visitedSelect = (SelectExpression)base.VisitExtension(select);
+            return ApplyGraphBranchLimit(visitedSelect, branches, ordering.IsAscending);
+        }
+
         if (expression is not FromSqlExpression { Arguments: BlueTuskGraphSqlArguments arguments } fromSql)
         {
             return base.VisitExtension(expression);
@@ -68,6 +96,46 @@ internal sealed class BlueTuskGraphRelationalParameterProcessor(RelationalParame
 
         return _graphTables[fromSql] = fromSql.Update(
             Expression.Constant(new CompositeRelationalParameter(parameter.Name, parameters)));
+    }
+
+    private SelectExpression ApplyGraphBranchLimit(
+        SelectExpression select, BlueTuskGraphOrderedBranches branches, bool ascending)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        var limit = select.Limit switch
+        {
+            SqlConstantExpression { Value: int and > 0 } constant =>
+                ((int)constant.Value).ToString(CultureInfo.InvariantCulture),
+            SqlParameterExpression { Type: var type } parameter when type == typeof(int) =>
+                helper.GenerateParameterNamePlaceholder(parameter.Name),
+            _ => null,
+        };
+        if (limit is null)
+        {
+            return select;
+        }
+
+        var column = helper.DelimitIdentifier(branches.OutputColumn)
+            .Replace("{", "{{", StringComparison.Ordinal)
+            .Replace("}", "}}", StringComparison.Ordinal);
+        var sql = new StringBuilder("SELECT ").Append(column).Append(" FROM (");
+        var branchSql = branches.Branches;
+        for (var index = 0; index < branchSql.Length; index++)
+        {
+            if (index > 0)
+            {
+                sql.Append(" UNION ALL ");
+            }
+
+            sql.Append('(').Append(branchSql[index]).Append(" ORDER BY ").Append(column)
+                .Append(ascending ? " ASC LIMIT " : " DESC LIMIT ").Append(limit).Append(')');
+        }
+
+        sql.Append(") AS \"__bluetusk_bounded_paths\"");
+        var table = (FromSqlExpression)select.Tables[0];
+        var boundedTable = new FromSqlExpression(table.Alias, table.Table, sql.ToString(), table.Arguments, annotations: null);
+        return select.Update([boundedTable], select.Predicate, select.GroupBy, select.Having,
+            select.Projection, select.Orderings, select.Offset, select.Limit);
     }
 }
 #pragma warning restore EF1001

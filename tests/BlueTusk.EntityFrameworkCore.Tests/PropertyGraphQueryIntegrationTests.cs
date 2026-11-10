@@ -171,6 +171,11 @@ public sealed class PropertyGraphQueryIntegrationTests
                 .OrderBy(result => result.TargetId)
                 .ToListAsync();
             Assert.Equal([3, 3], bounded.Select(static result => result.TargetId));
+
+            if (!native)
+            {
+                await AssertOrderedBranchLimitsAsync(context, connection);
+            }
         }
         finally
         {
@@ -179,6 +184,52 @@ public sealed class PropertyGraphQueryIntegrationTests
                 await ExecuteAsync(connection, "DROP PROPERTY GRAPH IF EXISTS bluetusk_ef_graph");
             }
         }
+    }
+
+    private static async Task AssertOrderedBranchLimitsAsync(GraphContext context, BlueTuskConnection connection)
+    {
+        // Parallel edges, a self-loop, and a cycle make multiple walks sort
+        // to the same terminal value across the one- and two-hop branches.
+        await ExecuteAsync(connection,
+            "INSERT INTO bluetusk_ef_graph_friendships VALUES (13, 1, 2), (14, 2, 1), (15, 2, 2)");
+        const string referenceSql = """
+            SELECT to_id AS "TargetId" FROM pg_temp.bluetusk_ef_graph_friendships WHERE from_id = 1
+            UNION ALL
+            SELECT second.to_id AS "TargetId"
+            FROM pg_temp.bluetusk_ef_graph_friendships AS first
+            JOIN pg_temp.bluetusk_ef_graph_friendships AS second ON first.to_id = second.from_id
+            WHERE first.from_id = 1
+            """;
+        var expected = context.Database.SqlQueryRaw<TerminalResult>(referenceSql);
+        var actual = context.PropertyGraph("bluetusk_ef_graph")
+            .Match(pattern => pattern
+                .Vertex<Person>("source", person => person.Id == 1)
+                .LabelsAnyOf("person")
+                .OutgoingPath<Friendship>("path", 1, 2)
+                .LabelsAnyOf("knows")
+                .Vertex<Person>("target")
+                .LabelsAnyOf("person"))
+            .Select<TerminalResult>(projection => projection
+                .Property<Person, int>("target", person => person.Id, result => result.TargetId));
+
+        foreach (var count in new[] { 1, 3, 8 })
+        {
+            var first = actual.OrderBy(result => result.TargetId).Take(count);
+            await using var command = first.CreateDbCommand();
+            Assert.Equal(2, command.CommandText.Split("ORDER BY \"TargetId\" ASC LIMIT ", StringSplitOptions.None).Length - 1);
+            Assert.Equal(await expected.OrderBy(result => result.TargetId).Take(count)
+                .Select(result => result.TargetId).ToListAsync(),
+                (await first.ToListAsync()).Select(result => result.TargetId));
+            Assert.Equal(await expected.OrderByDescending(result => result.TargetId).Take(count)
+                .Select(result => result.TargetId).ToListAsync(),
+                (await actual.OrderByDescending(result => result.TargetId).Take(count).ToListAsync())
+                .Select(result => result.TargetId));
+        }
+
+        var filtered = actual.Where(result => result.TargetId > 2).OrderBy(result => result.TargetId).Take(1);
+        await using var filteredCommand = filtered.CreateDbCommand();
+        Assert.DoesNotContain("ORDER BY \"TargetId\" ASC LIMIT ", filteredCommand.CommandText, StringComparison.Ordinal);
+        Assert.Equal(3, Assert.Single(await filtered.ToListAsync()).TargetId);
     }
 
     private static IQueryable<FriendResult> CreateGraphQuery(GraphContext context, int sourceId) =>
@@ -314,5 +365,10 @@ public sealed class PropertyGraphQueryIntegrationTests
         public int TargetId { get; set; }
 
         public string TargetName { get; set; } = string.Empty;
+    }
+
+    private sealed class TerminalResult
+    {
+        public int TargetId { get; set; }
     }
 }

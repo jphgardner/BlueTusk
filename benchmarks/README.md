@@ -72,6 +72,20 @@ delta-to-requery ratios, and selective endpoint index usage as the fixture
 grows. Use the dedicated Windows and Linux workflow for exact-candidate
 capture. Historical SQL/PGQ results belong to the separate native fixture.
 
+For an affected-key diagnostic, use the same dedicated database with a
+fixture owner that can create a temporary benchmark role. The capture
+alternates scoped EF updates, the exact SQL on a fresh pooled connection,
+the same SQL prepared on an already-authorized lease, and a buffered pooled
+read. All four use the same restricted role and verify the same result.
+
+```powershell
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --graph-scoped-read-capture artifacts/graph-scoped-read
+```
+
+The capture retains per-operation timings, allocations, provider counters,
+and execution plans. Run it on each client against the same fixture. The
+BenchmarkDotNet matrix supplies the release measurements.
+
 `EntityFrameworkCoreBenchmarks` uses one long-lived `BlueTuskDataSource` and a
 1,000-row table to measure fresh parameterized EF query compilation plus first
 execution, no-tracking materialization of 100 entities, inserts, and

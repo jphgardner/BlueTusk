@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
+using BlueTusk.EntityFrameworkCore.Storage.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -33,11 +34,39 @@ internal static partial class BlueTuskGraphSqlTranslator
         }
 
         var helper = context.GetService<ISqlGenerationHelper>();
-        var resolved = pattern.Select(step => ResolveStep(context.Model, graph, step)).ToArray();
+        var model = context.Model;
+        if (backend == BlueTuskPropertyGraphBackend.Relational &&
+            helper is BlueTuskSqlGenerationHelper &&
+            TryBindTranslationKey(graph, pattern, projections, resultType, out var key, out var value))
+        {
+            var cache = PortableTranslations.GetValue(model, static _ => new());
+            if (cache.TryGet(key, out var template))
+            {
+                return new GraphTranslation(template.Sql, [value], template.ImpactPlan);
+            }
+
+            var translated = Translate(model, graph, pattern, projections, resultType, helper);
+            cache.Add(key, translated);
+            return translated;
+        }
+
+        return Translate(model, graph, pattern, projections, resultType, helper);
+    }
+
+    private static GraphTranslation Translate(
+        IModel model,
+        BlueTuskPropertyGraphDefinition graph,
+        IReadOnlyList<object> pattern,
+        IReadOnlyList<BlueTuskGraphProjection> projections,
+        Type resultType,
+        ISqlGenerationHelper helper)
+    {
+        var backend = graph.Backend;
+        var resolved = pattern.Select(step => ResolveStep(model, graph, step)).ToArray();
         ValidatePath(resolved, projections);
         var expandedPatterns = ExpandPatterns(resolved);
         var variables = resolved.ToDictionary(step => step.Variable, StringComparer.Ordinal);
-        var resultEntityType = context.Model.FindEntityType(resultType);
+        var resultEntityType = model.FindEntityType(resultType);
         ValidateEntityProjection(resultEntityType, projections);
         var columns = new List<GraphColumn>();
         var impactProjections = new BlueTuskGraphQueryImpactProjection[projections.Count];
@@ -89,7 +118,16 @@ internal static partial class BlueTuskGraphSqlTranslator
         }
 
         var sql = new StringBuilder();
-        var defaultSchema = context.Model.GetDefaultSchema() ?? "public";
+        var defaultSchema = model.GetDefaultSchema() ?? "public";
+        // With a single terminal key projection, equal sort keys produce
+        // identical result rows. Keeping the first N rows of each branch
+        // therefore preserves the first N rows and their multiplicities.
+        var orderableBranches = portableAliases is not null &&
+            expandedPatterns.Count > 1 && resultEntityType is null &&
+            columns is [var output] && output.Variable == resolved[^1].Variable &&
+            resolved[^1].Element.KeyColumns is [var terminalKey] && output.ColumnName == terminalKey
+            ? new string[expandedPatterns.Count]
+            : null;
         void AppendBranch(IReadOnlyList<ResolvedStep> steps)
         {
             if (portableAliases is not null)
@@ -121,7 +159,12 @@ internal static partial class BlueTuskGraphSqlTranslator
                     sql.Append(" UNION ALL ");
                 }
 
+                var start = sql.Length;
                 AppendBranch(expandedPatterns[index]);
+                if (orderableBranches is not null)
+                {
+                    orderableBranches[index] = sql.ToString(start, sql.Length - start);
+                }
             }
 
             sql.Append(") AS ")
@@ -175,7 +218,8 @@ internal static partial class BlueTuskGraphSqlTranslator
             backend,
             Array.AsReadOnly(impactElements),
             Array.AsReadOnly(impactProjections));
-        return new GraphTranslation(sql.ToString(), parameters.ToArray(), impactPlan);
+        return new GraphTranslation(sql.ToString(), parameters.ToArray(), impactPlan,
+            orderableBranches is null ? null : new BlueTuskGraphOrderedBranches(columns[0].OutputName, orderableBranches));
     }
 
     private static ResolvedStep ResolveStep(
@@ -729,7 +773,8 @@ internal static partial class BlueTuskGraphSqlTranslator
     internal sealed record GraphTranslation(
         string Sql,
         object[] Parameters,
-        BlueTuskGraphQueryImpactPlan ImpactPlan);
+        BlueTuskGraphQueryImpactPlan ImpactPlan,
+        BlueTuskGraphOrderedBranches? OrderedBranches = null);
 
     private abstract record ResolvedStep(
         string Variable,
