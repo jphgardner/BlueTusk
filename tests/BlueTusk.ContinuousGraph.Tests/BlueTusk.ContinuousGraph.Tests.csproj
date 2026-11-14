@@ -21,6 +21,10 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(BlueTuskGraphEngineTests)' != 'true'">
+    <Compile Remove="GraphEngineIntegrationTests.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\BlueTusk.ContinuousGraph.ControlPlane\BlueTusk.ContinuousGraph.ControlPlane.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.ContinuousGraph\BlueTusk.ContinuousGraph.csproj" />

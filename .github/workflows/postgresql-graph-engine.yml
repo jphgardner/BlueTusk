@@ -7,6 +7,7 @@ on:
       - 'extensions/bluetusk_graph/**'
       - 'src/BlueTusk.EntityFrameworkCore/Graphs/**'
       - 'src/BlueTusk.ContinuousGraph/**'
+      - 'tests/BlueTusk.ContinuousGraph.Tests/BlueTusk.ContinuousGraph.Tests.csproj'
       - 'tests/BlueTusk.ContinuousGraph.Tests/GraphEngineIntegrationTests.cs'
       - '.github/workflows/postgresql-graph-engine.yml'
 
@@ -63,7 +64,8 @@ jobs:
           port=$(docker port "$container" 5432/tcp | cut -d: -f2)
           export BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING="Host=127.0.0.1;Port=$port;Database=graph_engine;Username=postgres;SSL Mode=Disable;Channel Binding=Disable"
           dotnet test tests/BlueTusk.ContinuousGraph.Tests -c Release -f net10.0 \
-            -p:BlueTuskRuntimeTargetFrameworks=net10.0 --filter FullyQualifiedName~GraphEngineIntegrationTests \
+            -p:BlueTuskRuntimeTargetFrameworks=net10.0 -p:BlueTuskGraphEngineTests=true \
+            --filter FullyQualifiedName~GraphEngineIntegrationTests \
             --logger 'trx;LogFileName=engine.trx' --results-directory artifacts/graph-engine
           python3 - <<'PY'
           import xml.etree.ElementTree as ET

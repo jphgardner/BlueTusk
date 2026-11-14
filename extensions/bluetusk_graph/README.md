@@ -132,3 +132,9 @@ its checksum, source commit, and PostgreSQL image digest. The SQL suite installs
 graph, then upgrades it to 1.1. For undefined-behavior instrumentation,
 build with `--build-arg GRAPH_UBSAN=1` and start the container with
 `-e LD_PRELOAD=/usr/local/lib/libubsan.so.1`.
+
+For local EF/Live verification, set `BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING`
+to a disposable database on the extension image. Run the Continuous Graph test
+project with `-p:BlueTuskGraphEngineTests=true` and filter for
+`GraphEngineIntegrationTests`. The portable suite uses its own database
+fixture.

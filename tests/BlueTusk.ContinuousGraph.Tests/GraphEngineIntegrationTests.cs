@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.Live;
@@ -12,11 +11,12 @@ namespace BlueTusk.ContinuousGraph.Tests;
 
 public sealed class GraphEngineIntegrationTests
 {
-    [GraphEngineFact]
+    [Fact]
     public async Task Typed_traversals_and_live_repairs_use_the_same_authorized_topology()
     {
         var token = TestContext.Current.CancellationToken;
-        var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING")!;
+        var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING")
+            ?? throw new InvalidOperationException("The native Graph test requires BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING.");
         await using var connection = new BlueTuskConnection(connectionString);
         await connection.OpenAsync(token);
         await ExecuteAsync("""
@@ -201,20 +201,6 @@ public sealed class GraphEngineIntegrationTests
         {
             await using var command = new BlueTuskCommand(sql, connection);
             await command.ExecuteNonQueryAsync(token);
-        }
-    }
-
-    private sealed class GraphEngineFactAttribute : FactAttribute
-    {
-#if NET8_0_OR_GREATER
-        public GraphEngineFactAttribute([CallerFilePath] string? sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
-            : base(sourceFilePath, sourceLineNumber)
-#else
-        public GraphEngineFactAttribute()
-#endif
-        {
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING")))
-                Skip = "BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING is not configured.";
         }
     }
 
