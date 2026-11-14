@@ -181,7 +181,7 @@ public sealed partial class DocumentStore
             throw new InvalidOperationException("Stored content does not match its digest.");
         }
 
-        return new DocumentContent(bytes, reader.GetInt64(1), Convert.ToHexStringLower(digest));
+        return new DocumentContent(bytes, reader.GetInt64(1), BlueTuskRuntime.ToHexStringLower(digest));
     }
 
     /// <summary>
@@ -324,12 +324,12 @@ public sealed partial class DocumentStore
 
     private static void ValidateContentKey<T>(string tenant, DocumentCollectionDefinition<T> collection, string id, long? expectedRevision = null)
     {
-        ArgumentNullException.ThrowIfNull(collection);
+        BlueTuskGuard.NotNull(collection);
         DocumentValidation.Key(tenant, nameof(tenant), 256);
         DocumentValidation.Key(id, nameof(id), 512);
         if (expectedRevision is not null)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedRevision.Value);
+            BlueTuskGuard.NotNegativeOrZero(expectedRevision.Value);
         }
     }
 }

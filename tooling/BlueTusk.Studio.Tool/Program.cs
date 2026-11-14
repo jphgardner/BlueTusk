@@ -107,7 +107,7 @@ internal static class StudioCli
         {
             throw new ArgumentException("Invalid command options.");
         }
-        if (command == "events" && (alias is not { Length: > 0 and <= 128 } || alias.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not ('_' or '-' or '.'))))
+        if (command == "events" && (alias is not { Length: > 0 and <= 128 } || alias.Any(character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character is not ('_' or '-' or '.'))))
         {
             throw new ArgumentException("Invalid stream alias.");
         }

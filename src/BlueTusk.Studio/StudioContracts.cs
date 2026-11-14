@@ -16,24 +16,24 @@ public sealed record StudioOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(Path);
-        ArgumentException.ThrowIfNullOrWhiteSpace(ReadPolicy);
-        ArgumentException.ThrowIfNullOrWhiteSpace(QueryPolicy);
+        BlueTuskGuard.NotNullOrWhiteSpace(Path);
+        BlueTuskGuard.NotNullOrWhiteSpace(ReadPolicy);
+        BlueTuskGuard.NotNullOrWhiteSpace(QueryPolicy);
         if (!Path.StartsWith('/') || Path.EndsWith('/') || Path.Any(character =>
-            !char.IsAsciiLetterOrDigit(character) && character is not ('/' or '-' or '_')))
+            !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character is not ('/' or '-' or '_')))
         {
             throw new ArgumentException("Studio requires a normalized absolute route prefix.", nameof(Path));
         }
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumConcurrentQueries, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumConcurrentQueries, 64);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumRows, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumRows, 5000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumRequestBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumRequestBytes, 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumReplyBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumReplyBytes, 16 * 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(QueryTimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(QueryTimeoutSeconds, 30);
+        BlueTuskGuard.NotLessThan(MaximumConcurrentQueries, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumConcurrentQueries, 64);
+        BlueTuskGuard.NotLessThan(MaximumRows, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumRows, 5000);
+        BlueTuskGuard.NotLessThan(MaximumRequestBytes, 1024);
+        BlueTuskGuard.NotGreaterThan(MaximumRequestBytes, 1024 * 1024);
+        BlueTuskGuard.NotLessThan(MaximumReplyBytes, 1024);
+        BlueTuskGuard.NotGreaterThan(MaximumReplyBytes, 16 * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(QueryTimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(QueryTimeoutSeconds, 30);
     }
 }
 

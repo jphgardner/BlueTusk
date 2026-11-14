@@ -1,21 +1,27 @@
+#if BLUETUSK_EF10_OR_GREATER
 using System.Collections;
 using System.Linq.Expressions;
 using System.Reflection;
+#endif
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+#if BLUETUSK_EF10_OR_GREATER
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+#endif
 
 namespace Microsoft.EntityFrameworkCore;
 
 /// <summary>Store-value operations that complete EF Core's entity-entry API.</summary>
 public static class BlueTuskEntityEntryExtensions
 {
+#if BLUETUSK_EF10_OR_GREATER
     private static readonly MethodInfo PropertyMethod = typeof(EF).GetMethod(nameof(EF.Property))!;
 
     private static readonly MethodInfo SetMethod = typeof(DbContext).GetMethod(nameof(DbContext.Set), Type.EmptyTypes)!;
 
     private static readonly MethodInfo SharedTypeSetMethod = typeof(DbContext).GetMethod(nameof(DbContext.Set), [typeof(string)])!;
+#endif
 
     /// <summary>
     /// Queries the database for the values of the tracked entity as they currently exist in the database,
@@ -31,7 +37,8 @@ public static class BlueTuskEntityEntryExtensions
     /// <returns>The store values, or <see langword="null" /> if the entity does not exist in the database.</returns>
     public static PropertyValues? GetCompleteDatabaseValues(this EntityEntry entry)
     {
-        ArgumentNullException.ThrowIfNull(entry);
+        BlueTuskGuard.NotNull(entry);
+#if BLUETUSK_EF10_OR_GREATER
         var collections = GetComplexCollections(entry.Metadata);
         if (collections.Count == 0)
         {
@@ -40,6 +47,9 @@ public static class BlueTuskEntityEntryExtensions
 
         var query = CreateQuery(entry, collections);
         return query is null ? null : CreateValues(entry, collections, query.FirstOrDefault());
+#else
+        return entry.GetDatabaseValues();
+#endif
     }
 
     /// <summary>
@@ -59,7 +69,8 @@ public static class BlueTuskEntityEntryExtensions
         this EntityEntry entry,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(entry);
+        BlueTuskGuard.NotNull(entry);
+#if BLUETUSK_EF10_OR_GREATER
         var collections = GetComplexCollections(entry.Metadata);
         if (collections.Count == 0)
         {
@@ -70,8 +81,12 @@ public static class BlueTuskEntityEntryExtensions
         return query is null
             ? null
             : CreateValues(entry, collections, await query.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false));
+#else
+        return await entry.GetDatabaseValuesAsync(cancellationToken).ConfigureAwait(false);
+#endif
     }
 
+#if BLUETUSK_EF10_OR_GREATER
     private static List<IComplexProperty> GetComplexCollections(IEntityType entityType)
         => entityType.GetFlattenedComplexProperties().Where(property => property.IsCollection).ToList();
 
@@ -213,4 +228,5 @@ public static class BlueTuskEntityEntryExtensions
     {
         public readonly object[] Values = values;
     }
+#endif
 }

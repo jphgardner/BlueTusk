@@ -11,22 +11,22 @@ public sealed record JobStoreOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(Schema);
-        if (Schema.Length > 63 || !(char.IsAsciiLetter(Schema[0]) || Schema[0] == '_') ||
-            Schema.Any(character => !char.IsAsciiLetterOrDigit(character) && character != '_'))
+        BlueTuskGuard.NotNullOrWhiteSpace(Schema);
+        if (Schema.Length > 63 || !(BlueTuskRuntime.IsAsciiLetter(Schema[0]) || Schema[0] == '_') ||
+            Schema.Any(character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character != '_'))
         {
             throw new ArgumentException("Schema must be an ASCII PostgreSQL identifier of at most 63 characters.", nameof(Schema));
         }
 
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumPayloadBytes, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumPayloadBytes, 67_108_864);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumClaimBatch, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumClaimBatch, 256);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumClaimPayloadBytes, MaximumPayloadBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumClaimPayloadBytes, 1_073_741_824);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumHistoryEntries, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumHistoryEntries, 256);
-        ArgumentOutOfRangeException.ThrowIfLessThan(CommandTimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(CommandTimeoutSeconds, 300);
+        BlueTuskGuard.NotLessThan(MaximumPayloadBytes, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumPayloadBytes, 67_108_864);
+        BlueTuskGuard.NotLessThan(MaximumClaimBatch, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumClaimBatch, 256);
+        BlueTuskGuard.NotLessThan(MaximumClaimPayloadBytes, MaximumPayloadBytes);
+        BlueTuskGuard.NotGreaterThan(MaximumClaimPayloadBytes, 1_073_741_824);
+        BlueTuskGuard.NotLessThan(MaximumHistoryEntries, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumHistoryEntries, 256);
+        BlueTuskGuard.NotLessThan(CommandTimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(CommandTimeoutSeconds, 300);
     }
 }

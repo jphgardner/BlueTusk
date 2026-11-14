@@ -56,9 +56,9 @@ public sealed partial class PostgreSqlEventStore
     public async ValueTask<EventRetentionAssessment> AssessLocalRetentionAsync(EventStreamKey stream,
         long throughSequence, long expectedRetainedThrough, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(throughSequence);
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRetainedThrough);
+        BlueTuskGuard.NotNull(stream);
+        BlueTuskGuard.NotNegativeOrZero(throughSequence);
+        BlueTuskGuard.NotNegative(expectedRetainedThrough);
 
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.RepeatableRead,

@@ -31,7 +31,7 @@ public sealed class EventLocalRetentionCertification
     public EventLocalRetentionCertification(EventStreamKey stream, string operatorId, string changeReference,
         bool confirmedNoExternalReaders)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        BlueTuskGuard.NotNull(stream);
         EventValidation.Key(operatorId, nameof(operatorId));
         EventValidation.Key(changeReference, nameof(changeReference));
         if (!confirmedNoExternalReaders)
@@ -69,7 +69,7 @@ public sealed partial class PostgreSqlEventStore
     public async ValueTask<EventRetentionStatus> ReadRetentionStatusAsync(EventStreamKey stream,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        BlueTuskGuard.NotNull(stream);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, null, $"""
             SELECT last_sequence,archived_through,retained_through,local_retention_enabled
@@ -89,8 +89,8 @@ public sealed partial class PostgreSqlEventStore
     public async ValueTask<EventArchiveProgress> ArchiveNextAsync(EventStreamKey stream, IEventArchiveStore archive,
         int maximumEvents = 256, int maximumPayloadBytes = 8_388_608, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
-        ArgumentNullException.ThrowIfNull(archive);
+        BlueTuskGuard.NotNull(stream);
+        BlueTuskGuard.NotNull(archive);
         ValidateRead(stream, 0, maximumEvents, maximumPayloadBytes);
         var status = await ReadRetentionStatusAsync(stream, cancellationToken).ConfigureAwait(false);
         if (status.ArchivedThrough == status.StreamHead)
@@ -180,10 +180,10 @@ public sealed partial class PostgreSqlEventStore
         long expectedRetainedThrough, EventLocalRetentionCertification certification,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(throughSequence);
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRetainedThrough);
-        ArgumentNullException.ThrowIfNull(certification);
+        BlueTuskGuard.NotNull(stream);
+        BlueTuskGuard.NotNegativeOrZero(throughSequence);
+        BlueTuskGuard.NotNegative(expectedRetainedThrough);
+        BlueTuskGuard.NotNull(certification);
         if (!_options.EnableLocalOnlyRetention || certification.Stream != stream)
         {
             throw new InvalidOperationException("Local retention requires enabled options and certification for the exact stream.");
@@ -226,14 +226,14 @@ public sealed partial class PostgreSqlEventStore
     public async ValueTask<EventPruneProgress> PruneRetainedAsync(EventStreamKey stream, int maximumEvents = 1024,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        BlueTuskGuard.NotNull(stream);
         if (!_options.EnableLocalOnlyRetention)
         {
             throw new InvalidOperationException("Local retention is disabled in this event store's options.");
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumEvents);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumEvents, 65_536);
+        BlueTuskGuard.NotNegativeOrZero(maximumEvents);
+        BlueTuskGuard.NotGreaterThan(maximumEvents, 65_536);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var status = await LockRetentionStatusAsync(connection, transaction, stream, cancellationToken).ConfigureAwait(false);

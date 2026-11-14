@@ -9,8 +9,8 @@ public sealed partial class OpenSearchStore
     /// <summary>Ranks a bounded candidate snapshot using one PIT, then releases that server resource. The caller retains the bounded session.</summary>
     public async ValueTask<OpenSearchSearchSession> SearchAsync(SearchScope scope, SearchRequest request, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(request);
         if (!Enum.IsDefined(request.Mode) || request.CandidateLimit <= 0 || request.CandidateLimit > Options.Limits.MaxCandidateCount ||
             request.PageSize <= 0 || request.PageSize > Options.Limits.MaxPageSize || request.Text is null || Encoding.UTF8.GetByteCount(request.Text) > 16_384 ||
             request.Text.Contains('\0', StringComparison.Ordinal) || !double.IsFinite(request.FullTextWeight) || !double.IsFinite(request.VectorWeight) ||
@@ -68,8 +68,8 @@ public sealed partial class OpenSearchStore
     public async ValueTask<OpenSearchPage> ReadPageAsync(SearchScope scope, OpenSearchSearchSession session, int pageSize = 20, int afterRank = 0,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(session);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(session);
         if (session.Owner != _owner || session.Scope != ScopeKey(scope) || !session.DatabaseDeadline && session.ExpiresAt <= DateTimeOffset.UtcNow) { throw new SearchCursorExpiredException(); }
         if (pageSize <= 0 || pageSize > Options.Limits.MaxPageSize || afterRank < 0 || afterRank > session.CandidateCount) { throw new ArgumentOutOfRangeException(nameof(pageSize)); }
         await EnterAsync(cancellationToken).ConfigureAwait(false);

@@ -10,8 +10,8 @@ public sealed partial class PostgreSqlSearchStore
     /// <summary>Materializes a bounded rank snapshot. Each page rechecks current source versions and permissions.</summary>
     public async ValueTask<SearchPage> SearchAsync(SearchScope scope, SearchRequest request, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(request);
         ValidateRequest(request);
         var vector = request.Vector;
         if (request.Mode is not SearchMode.FullText)
@@ -155,9 +155,9 @@ public sealed partial class PostgreSqlSearchStore
 
     public async ValueTask<SearchPage> ContinueSearchAsync(SearchScope scope, SearchCursor cursor, int pageSize = 20, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(cursor);
-        ArgumentOutOfRangeException.ThrowIfNegative(cursor.AfterRank);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(cursor);
+        BlueTuskGuard.NotNegative(cursor.AfterRank);
         if (pageSize < 1 || pageSize > Options.MaxPageSize)
         {
             throw new ArgumentOutOfRangeException(nameof(pageSize));
@@ -339,7 +339,7 @@ public sealed partial class PostgreSqlSearchStore
     private async ValueTask ApplyRankingAsync(DbConnection connection, DbTransaction transaction, Guid queryId, List<SearchHit> candidates,
         IReadOnlyList<SearchRankingScore> scores, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(scores);
+        BlueTuskGuard.NotNull(scores);
         if (scores.Count > candidates.Count)
         {
             throw new InvalidOperationException("The ranking extension returned more results than the bounded candidate set.");
@@ -541,7 +541,7 @@ public sealed partial class PostgreSqlSearchStore
             throw new ArgumentOutOfRangeException(nameof(request));
         }
 
-        ArgumentNullException.ThrowIfNull(request.Text);
+        BlueTuskGuard.NotNull(request.Text);
         if (request.Text.Contains('\0', StringComparison.Ordinal) || System.Text.Encoding.UTF8.GetByteCount(request.Text) > 16_384 ||
             request.Mode is not SearchMode.Vector && string.IsNullOrWhiteSpace(request.Text) ||
             request.PageSize < 1 || request.PageSize > Options.MaxPageSize ||

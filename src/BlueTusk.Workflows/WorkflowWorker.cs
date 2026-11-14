@@ -24,7 +24,7 @@ public sealed class WorkflowActivityRegistry
         Func<WorkflowActivityContext, CancellationToken, ValueTask<ReadOnlyMemory<byte>>> handler)
     {
         WorkflowOptions.Name(activity, nameof(activity));
-        ArgumentNullException.ThrowIfNull(handler);
+        BlueTuskGuard.NotNull(handler);
         WorkflowOptions.Range(_activities.Count + 1, 1, 127, nameof(activity));
         _activities.Add(activity, new(handler, null));
         return this;
@@ -34,7 +34,7 @@ public sealed class WorkflowActivityRegistry
     public WorkflowActivityRegistry RegisterTransactional(string activity, TransactionalWorkflowActivity handler)
     {
         WorkflowOptions.Name(activity, nameof(activity));
-        ArgumentNullException.ThrowIfNull(handler);
+        BlueTuskGuard.NotNull(handler);
         WorkflowOptions.Range(_activities.Count + 1, 1, 127, nameof(activity));
         _activities.Add(activity, new(null, handler));
         return this;
@@ -44,9 +44,9 @@ public sealed class WorkflowActivityRegistry
         JsonTypeInfo<TInput> inputType, JsonTypeInfo<TResult> resultType,
         Func<TInput, WorkflowActivityContext, CancellationToken, ValueTask<TResult>> handler)
     {
-        ArgumentNullException.ThrowIfNull(inputType);
-        ArgumentNullException.ThrowIfNull(resultType);
-        ArgumentNullException.ThrowIfNull(handler);
+        BlueTuskGuard.NotNull(inputType);
+        BlueTuskGuard.NotNull(resultType);
+        BlueTuskGuard.NotNull(handler);
         return Register(activity, async (context, cancellationToken) =>
         {
             TInput? input;
@@ -102,11 +102,11 @@ public sealed class WorkflowWorker
     public WorkflowWorker(PostgreSqlWorkflowStore store, JobScope scope, string owner,
         WorkflowActivityRegistry activities, WorkflowWorkerOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(activities);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(activities);
         _options = options ?? new WorkflowWorkerOptions();
-        ArgumentNullException.ThrowIfNull(_options.Jobs);
+        BlueTuskGuard.NotNull(_options.Jobs);
         WorkflowOptions.Range(_options.RecoveryBatchSize, 1, store.MaximumBatchSize, nameof(options));
         if (_options.RecoveryInterval < TimeSpan.FromMilliseconds(1) || _options.RecoveryInterval > TimeSpan.FromMinutes(5))
         {
@@ -185,7 +185,7 @@ public sealed class WorkflowWorker
         }
         finally
         {
-            WorkflowTelemetry.ActivityDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            WorkflowTelemetry.ActivityDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
         }
     }
 

@@ -38,7 +38,7 @@ public sealed class SchemaConcurrentIndexPlan
             Add(build.Relation.Schema); Add(build.Relation.Name); Add(build.IndexName);
             Add(build.ExpectedDefinition); Add(build.CreateSql);
         }
-        Fingerprint = Convert.ToHexStringLower(hash.GetHashAndReset());
+        Fingerprint = BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
         ActionContent = "BlueTusk.Schema.ConcurrentIndexBuild:1:" + Fingerprint;
     }
 
@@ -50,7 +50,7 @@ public sealed class SchemaConcurrentIndexPlan
 
     public static SchemaConcurrentIndexPlan Create(SchemaCatalogSnapshot before, SchemaCatalogSnapshot after)
     {
-        ArgumentNullException.ThrowIfNull(before); ArgumentNullException.ThrowIfNull(after);
+        BlueTuskGuard.NotNull(before); BlueTuskGuard.NotNull(after);
         var beforeIndex = Index(before.Relations); var afterIndex = Index(after.Relations);
         foreach (var pair in beforeIndex)
         {

@@ -56,15 +56,15 @@ public static class PostgreSqlProjectionLineage
     public static async ValueTask<ProjectionSourceLineage> CaptureAsync(BlueTuskDataSource dataSource,
         ChangeSourceIdentity source, IReadOnlyList<string> publicationNames, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(publicationNames);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(publicationNames);
         if (publicationNames.Count != 1)
         {
             throw new ArgumentException("Different-slot rebuild evidence currently requires exactly one immutable publication.", nameof(publicationNames));
         }
         var publication = publicationNames[0];
-        ArgumentException.ThrowIfNullOrWhiteSpace(publication);
+        BlueTuskGuard.NotNullOrWhiteSpace(publication);
         if (publication.Contains('\0') || Encoding.UTF8.GetByteCount(publication) > 63) { throw new ArgumentException("Invalid PostgreSQL publication identifier.", nameof(publicationNames)); }
         BlueTuskReplicationSystemIdentity system;
         await using (var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(dataSource.CreateDedicatedSessionOptions(), cancellationToken).ConfigureAwait(false))
@@ -159,12 +159,12 @@ public static class PostgreSqlProjectionLineage
             }
         }
         if (tables.Count == 0) { throw new InvalidOperationException("A rebuild publication cannot be empty."); }
-        var publicationFingerprint = Convert.ToHexStringLower(publicationHash.GetHashAndReset());
+        var publicationFingerprint = BlueTuskRuntime.ToHexStringLower(publicationHash.GetHashAndReset());
         using var lineageHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         Append(lineageHash, "BlueTusk.ProjectionLineage.v1"); Append(lineageHash, system.SystemIdentifier); Append(lineageHash, system.DatabaseName!);
         Append(lineageHash, databaseOid.ToString(System.Globalization.CultureInfo.InvariantCulture));
         Append(lineageHash, system.Timeline.ToString(System.Globalization.CultureInfo.InvariantCulture)); Append(lineageHash, publicationFingerprint);
-        var fingerprint = Convert.ToHexStringLower(lineageHash.GetHashAndReset());
+        var fingerprint = BlueTuskRuntime.ToHexStringLower(lineageHash.GetHashAndReset());
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return new ProjectionSourceLineage(source, system.Timeline, databaseOid, publication,
             publicationOid, publicationFingerprint, fingerprint, tables.AsReadOnly());
@@ -216,6 +216,6 @@ internal static class ProjectionLineageTables
             writer.WriteNumberValue(column.TypeModifier); writer.WriteBooleanValue(column.IsKey); writer.WriteEndArray();
         }
         writer.WriteEndArray(); writer.Flush();
-        return Convert.ToHexStringLower(SHA256.HashData(buffer.WrittenSpan));
+        return BlueTuskRuntime.ToHexStringLower(SHA256.HashData(buffer.WrittenSpan));
     }
 }

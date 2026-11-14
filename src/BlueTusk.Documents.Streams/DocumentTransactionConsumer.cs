@@ -12,15 +12,15 @@ public sealed class DocumentTransactionConsumer<T>
 
     public DocumentTransactionConsumer(DocumentChangeMapper<T> mapper, Func<DocumentStreamTransaction<T>, CancellationToken, ValueTask> apply)
     {
-        ArgumentNullException.ThrowIfNull(mapper);
-        ArgumentNullException.ThrowIfNull(apply);
+        BlueTuskGuard.NotNull(mapper);
+        BlueTuskGuard.NotNull(apply);
         _mapper = mapper;
         _apply = apply;
     }
 
     public async ValueTask ConsumeAsync(ChangeTransactionDelivery delivery, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(delivery);
+        BlueTuskGuard.NotNull(delivery);
         try
         {
             var transaction = await _mapper.MapTransactionAsync(delivery.Transaction, cancellationToken).ConfigureAwait(false);
@@ -45,8 +45,8 @@ public static class DocumentStreamDeployment
     /// <summary>Deployment operation that takes a PostgreSQL table lock and increases old-image WAL volume.</summary>
     public static async ValueTask EnableFullReplicaIdentityAsync(DbDataSource dataSource, string schema = "bluetusk_documents", CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
         if (schema.Contains('\0', StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(schema) > 63)
         {
             throw new ArgumentException("Schema must fit PostgreSQL's identifier byte limit and cannot contain NUL.", nameof(schema));

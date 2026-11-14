@@ -22,7 +22,7 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
 
     public PostgreSqlSearchStore(DbDataSource source, SearchStoreOptions? options = null, IPostgreSqlSearchVectorAdapter? vectors = null, ISearchEmbeddingProvider? embeddings = null, SearchDataSourceOwnership ownership = SearchDataSourceOwnership.Borrowed, ISearchRankingExtension? ranking = null)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         if (!Enum.IsDefined(ownership))
         {
             throw new ArgumentOutOfRangeException(nameof(ownership));
@@ -235,7 +235,7 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
 
     public async ValueTask<SearchIngestionResult> UpsertAsync(SearchDocument document, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(document);
+        BlueTuskGuard.NotNull(document);
         ThrowIfDisposed();
         ValidateDocument(document);
         if (!await _ingestionSlots.WaitAsync(0, cancellationToken).ConfigureAwait(false))
@@ -286,7 +286,11 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
                         sql.Append(',');
                     }
 
+#if NET6_0_OR_GREATER
                     sql.Append(CultureInfo.InvariantCulture, $"(@tenant,@index,@id,@ordinal{i},@version,@content{i},setweight(to_tsvector('pg_catalog.simple'::regconfig,@title),'A') || setweight(to_tsvector('pg_catalog.simple'::regconfig,@content{i}),'D')");
+#else
+                    sql.Append(FormattableString.Invariant($"(@tenant,@index,@id,@ordinal{i},@version,@content{i},setweight(to_tsvector('pg_catalog.simple'::regconfig,@title),'A') || setweight(to_tsvector('pg_catalog.simple'::regconfig,@content{i}),'D')"));
+#endif
                     Parameter(command, $"ordinal{i}", chunk[i].Ordinal, DbType.Int32);
                     Parameter(command, $"content{i}", chunk[i].Content);
                     if (_vectors is not null)
@@ -316,7 +320,7 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
     {
         var scope = new SearchScope(tenant, index);
         SearchValidation.Key(id, nameof(id), 512);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(version);
+        BlueTuskGuard.NotNegativeOrZero(version);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var fence = await FenceAsync(connection, transaction, scope, id, version, SearchValidation.Hash("deleted"), deleted: true, null, cancellationToken).ConfigureAwait(false);
@@ -331,8 +335,8 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
 
     public async ValueTask<int> PruneExpiredQueriesAsync(int maxQueries = 100, CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(maxQueries, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maxQueries, 10_000);
+        BlueTuskGuard.NotLessThan(maxQueries, 1);
+        BlueTuskGuard.NotGreaterThan(maxQueries, 10_000);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await LockSnapshotBudgetAsync(connection, transaction, cancellationToken, TimeSpan.FromSeconds(3)).ConfigureAwait(false);
@@ -502,7 +506,7 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
     private static string Fingerprint(SearchDocument document) => SearchValidation.Hash(
         document.Title + "\0" + document.Content + "\0" + document.MetadataJson + "\0" + document.Scope.PrincipalsJson + "\0" + document.IsPublic);
 
-    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+    private void ThrowIfDisposed() => BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
 
     private async ValueTask<DbConnection> OpenAsync(CancellationToken cancellationToken)
     {

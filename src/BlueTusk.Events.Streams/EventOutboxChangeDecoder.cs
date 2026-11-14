@@ -23,22 +23,22 @@ public sealed class EventOutboxChangeDecoder
 
     public EventOutboxChangeDecoder(string schema = "bluetusk_events", int maximumEventBytes = 1_048_576)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        if (schema.Length > 63 || schema.Any(static character => !char.IsAsciiLetterOrDigit(character) && character != '_') ||
-            !char.IsAsciiLetter(schema[0]) && schema[0] != '_')
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        if (schema.Length > 63 || schema.Any(static character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character != '_') ||
+            !BlueTuskRuntime.IsAsciiLetter(schema[0]) && schema[0] != '_')
         {
             throw new ArgumentException("The outbox schema must be a 1 to 63 character ASCII PostgreSQL identifier.", nameof(schema));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumEventBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumEventBytes, 16_777_216);
+        BlueTuskGuard.NotNegativeOrZero(maximumEventBytes);
+        BlueTuskGuard.NotGreaterThan(maximumEventBytes, 16_777_216);
         _schema = schema;
         _maximumEventBytes = maximumEventBytes;
     }
 
     public bool TryDecode(Change change, [NotNullWhen(true)] out StoredEvent? value)
     {
-        ArgumentNullException.ThrowIfNull(change);
+        BlueTuskGuard.NotNull(change);
         value = null;
         var row = change switch
         {
@@ -61,7 +61,7 @@ public sealed class EventOutboxChangeDecoder
 
     public bool TryDecodeRow(ChangeRow row, [NotNullWhen(true)] out StoredEvent? value)
     {
-        ArgumentNullException.ThrowIfNull(row);
+        BlueTuskGuard.NotNull(row);
         value = null;
         if (!Matches(row.Table))
         {

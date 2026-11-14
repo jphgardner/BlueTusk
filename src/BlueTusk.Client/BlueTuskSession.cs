@@ -6468,7 +6468,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private void ValidateQuery(string sql)
     {
         BlueTuskGuard.NotDisposed(_disposed, this);
-        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
+        BlueTuskGuard.NotNullOrWhiteSpace(sql);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
@@ -6477,7 +6477,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private static void ValidatePreparedStatementName(string statementName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(statementName);
+        BlueTuskGuard.NotNullOrWhiteSpace(statementName);
         if (statementName.Contains('\0'))
         {
             throw new ArgumentException(

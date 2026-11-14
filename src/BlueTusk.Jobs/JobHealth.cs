@@ -11,9 +11,9 @@ public sealed partial class PostgreSqlJobStore
     /// <summary>Bounded queue inspection; counts explicitly report saturation instead of scanning unbounded backlog.</summary>
     public async ValueTask<JobQueueHealth> InspectAsync(JobScope scope, int maximumObserved = 10000, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumObserved, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumObserved, 100000);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotLessThan(maximumObserved, 1);
+        BlueTuskGuard.NotGreaterThan(maximumObserved, 100000);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = CreateCommand(connection, transaction: null, $"""
             WITH db_now AS MATERIALIZED (SELECT clock_timestamp() AS now)

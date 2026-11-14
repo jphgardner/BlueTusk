@@ -18,16 +18,16 @@ public sealed class PostgreSqlSchemaDeploymentCoordinator
     private readonly string _deployments;
     private readonly string _attempts;
     private readonly int _timeout;
-    private static readonly string LayoutFingerprint = Convert.ToHexStringLower(SHA256.HashData(
+    private static readonly string LayoutFingerprint = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(
         Encoding.UTF8.GetBytes("BlueTusk.Schema.PostgreSqlDeploymentJournal:1;settings;deployments;step_attempts;primary-key;foreign-key;completed-index")));
 
     public PostgreSqlSchemaDeploymentCoordinator(BlueTuskDataSource dataSource, string schema = "bluetusk_schema",
         int commandTimeoutSeconds = 30)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         Name(schema, nameof(schema));
-        ArgumentOutOfRangeException.ThrowIfLessThan(commandTimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(commandTimeoutSeconds, 300);
+        BlueTuskGuard.NotLessThan(commandTimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(commandTimeoutSeconds, 300);
         _source = dataSource; _schemaName = schema; _schema = '"' + schema + '"';
         if (Encoding.UTF8.GetByteCount(schema) > 63)
         { throw new ArgumentException("PostgreSQL schema names are bounded to 63 bytes.", nameof(schema)); }
@@ -272,7 +272,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinator
         string? observedFingerprint, CancellationToken cancellationToken)
     {
         var action = ValidateStep(lease, definition, stepId, SchemaDeploymentActionKind.External);
-        ArgumentOutOfRangeException.ThrowIfLessThan(attempt, 1);
+        BlueTuskGuard.NotLessThan(attempt, 1);
         Hash(evidenceSha256, nameof(evidenceSha256));
         var step = definition.Plan.StepIndex[stepId];
         var required = outcome == SchemaDeploymentAttemptState.Completed ? step.Phase switch
@@ -553,7 +553,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinator
         SchemaDeploymentDefinition definition, string stepId, SchemaDeploymentActionKind kind)
     {
         ValidateLease(lease, definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(stepId);
+        BlueTuskGuard.NotNullOrWhiteSpace(stepId);
         if (!definition.ActionIndex.TryGetValue(stepId, out var action) || action.Kind != kind)
         { throw new ArgumentException("Unknown step or incorrect action kind.", nameof(stepId)); }
         return action;
@@ -561,12 +561,12 @@ public sealed class PostgreSqlSchemaDeploymentCoordinator
 
     private static void ValidateLease(SchemaDeploymentLease lease, SchemaDeploymentDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(lease); Validate(lease.DeploymentId, definition);
-        Name(lease.Owner, nameof(lease)); ArgumentOutOfRangeException.ThrowIfLessThan(lease.FencingToken, 1);
+        BlueTuskGuard.NotNull(lease); Validate(lease.DeploymentId, definition);
+        Name(lease.Owner, nameof(lease)); BlueTuskGuard.NotLessThan(lease.FencingToken, 1);
     }
 
     private static void Validate(string deploymentId, SchemaDeploymentDefinition definition)
-    { Name(deploymentId, nameof(deploymentId)); ArgumentNullException.ThrowIfNull(definition); }
+    { Name(deploymentId, nameof(deploymentId)); BlueTuskGuard.NotNull(definition); }
 
     private static void Duration(TimeSpan duration)
     {
@@ -577,7 +577,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinator
 
     private static void Name(string value, string parameter)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (Encoding.UTF8.GetByteCount(value) > 128 || value[0] is not (>= 'a' and <= 'z' or >= 'A' and <= 'Z') ||
             value.Any(character => character is not (>= 'a' and <= 'z' or >= 'A' and <= 'Z' or >= '0' and <= '9' or '_' or '-')))
         { throw new ArgumentException("Deployment names must be bounded ASCII identifiers.", parameter); }
@@ -585,7 +585,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinator
 
     private static void Hash(string value, string parameter)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (value.Length != 64 || value.Any(character => character is not (>= '0' and <= '9' or >= 'a' and <= 'f')))
         { throw new ArgumentException("Expected a lowercase SHA-256 hex digest.", parameter); }
     }

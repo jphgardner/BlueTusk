@@ -1,6 +1,5 @@
 using System.Text.Json;
 using BlueTusk.Data;
-using Xunit.Sdk;
 
 namespace BlueTusk.Schema.Tool.Tests;
 
@@ -58,11 +57,10 @@ public sealed class SchemaCliTests
         Assert.DoesNotContain("secret", error.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Live_capture_and_strict_drift_check_use_a_consistent_read_only_snapshot()
     {
-        var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING") is { Length: > 0 } value
-            ? value : throw SkipException.ForSkip("A disposable PostgreSQL fixture is required.");
+        var connectionString = Environment.GetEnvironmentVariable(PostgreSqlFactAttribute.ConnectionStringVariable)!;
         await using var dataSource = BlueTuskDataSource.Create(connectionString);
         using var files = new ScratchFiles();
         using var output = new StringWriter();

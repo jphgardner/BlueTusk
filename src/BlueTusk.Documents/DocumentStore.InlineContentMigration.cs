@@ -16,7 +16,7 @@ public sealed partial class DocumentStore
         int pageSize = 100, string? afterId = null, CancellationToken cancellationToken = default)
     {
         ValidateContentKey(tenant, targetCollection, afterId ?? "_");
-        ArgumentNullException.ThrowIfNull(migration);
+        BlueTuskGuard.NotNull(migration);
         if (migration.ToVersion != targetCollection.SchemaVersion)
         {
             throw new ArgumentException("The migration target version must match the target collection.", nameof(migration));
@@ -81,7 +81,7 @@ public sealed partial class DocumentStore
             using var json = JsonDocument.Parse(raw);
             var extracted = migration.Transform(json.RootElement)
                 ?? throw new InvalidOperationException("The inline-content transform returned no result.");
-            ArgumentNullException.ThrowIfNull(extracted.Value);
+            BlueTuskGuard.NotNull(extracted.Value);
             if (extracted.Content.Length > Options.MaxDocumentBytes)
             {
                 throw new ArgumentException("Extracted content exceeds the configured document byte budget.", nameof(migration));

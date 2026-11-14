@@ -15,4 +15,37 @@
   </PropertyGroup>
 
   <Import Project="..\..\eng\EntityFrameworkCore.props" />
+
+  <!-- These implementations use the complex collection snapshot and shaper contracts introduced by EF10. -->
+  <ItemGroup Condition="'$(TargetFramework)' != '' and $(BlueTuskEfCoreMajor) &lt; 10">
+    <Compile Remove="ChangeTracking\Internal\BlueTuskChangeDetector.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskEmptyShadowValuesFactoryFactory.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskOriginalValuesFactoryFactory.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskRelationshipSnapshotFactoryFactory.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskShadowValuesFactoryFactory.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskSidecarValuesFactoryFactory.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskSnapshotFactoryFactory.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskSnapshotFactoryFactoryGeneric.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskStoreGeneratedValuesFactoryFactory.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskTemporaryValuesFactoryFactory.cs" />
+    <Compile Remove="ChangeTracking\Internal\BlueTuskValueTypeElementIdentity.cs" />
+    <Compile Remove="Infrastructure\Internal\BlueTuskModelRuntimeInitializer.cs" />
+    <Compile Remove="Metadata\Internal\BlueTuskValueTypeCollectionAccessors.cs" />
+    <Compile Remove="Query\Internal\BlueTuskComplexShadowValues.cs" />
+    <Compile Remove="Query\Internal\BlueTuskShapedQueryCompilingExpressionVisitor.cs" />
+    <Compile Remove="Query\Internal\BlueTuskShapedQueryCompilingExpressionVisitorFactory.cs" />
+    <Compile Remove="Query\Internal\BlueTuskStructuralTypeMaterializerInjector.cs" />
+    <Compile Remove="Query\Internal\BlueTuskStructuralTypeMaterializerSource.cs" />
+    <Compile Remove="Query\Internal\BlueTuskValueTypeJsonMaterializer.cs" />
+    <Compile Remove="Query\Internal\BlueTuskValueTypeJsonProjectionExpression.cs" />
+    <Compile Remove="Query\Internal\ShaperProcessorAccess.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != '' and $(BlueTuskEfCoreMajor) &lt; 8">
+    <Compile Remove="Metadata\Internal\BlueTuskConstructorBindingFactory.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != '' and $(BlueTuskEfCoreMajor) &lt; 9">
+    <Compile Remove="Query\Internal\BlueTuskTypeMappingPostprocessor.cs" />
+  </ItemGroup>
 </Project>

@@ -7,11 +7,11 @@ public static class SearchChunker
 {
     public static IReadOnlyList<SearchTextChunk> Chunk(string content, int maxCharacters = 2048, int overlapCharacters = 128, int maxChunks = 2048)
     {
-        ArgumentNullException.ThrowIfNull(content);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maxCharacters, 2);
-        ArgumentOutOfRangeException.ThrowIfNegative(overlapCharacters);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(overlapCharacters, maxCharacters);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxChunks);
+        BlueTuskGuard.NotNull(content);
+        BlueTuskGuard.NotLessThan(maxCharacters, 2);
+        BlueTuskGuard.NotNegative(overlapCharacters);
+        BlueTuskGuard.NotGreaterThanOrEqual(overlapCharacters, maxCharacters);
+        BlueTuskGuard.NotNegativeOrZero(maxChunks);
         var result = new List<SearchTextChunk>();
         var start = 0;
         do

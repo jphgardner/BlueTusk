@@ -3,6 +3,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using BlueTusk.Data;
 using BlueTusk.Schema;
+#if !NET7_0_OR_GREATER
+using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
+#endif
 
 return await SchemaCli.RunAsync(args, Console.Out, Console.Error);
 

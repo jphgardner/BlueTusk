@@ -17,7 +17,7 @@ public sealed partial class PostgreSqlProjectionStore
 
     public PostgreSqlProjectionStore(DbDataSource dataSource, PostgreSqlProjectionsOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         _options = options ?? new PostgreSqlProjectionsOptions();
         _options.Validate();
         _dataSource = dataSource;
@@ -200,7 +200,7 @@ public sealed partial class PostgreSqlProjectionStore
 
     public async ValueTask RegisterAsync(ProjectionIdentity identity, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
+        BlueTuskGuard.NotNull(identity);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await ExecuteAsync(connection, transaction, $"""
@@ -216,7 +216,7 @@ public sealed partial class PostgreSqlProjectionStore
 
     public async ValueTask<ProjectionState> ReadStateAsync(ProjectionIdentity identity, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
+        BlueTuskGuard.NotNull(identity);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         return (await ReadStateAsync(connection, null, identity, false, cancellationToken).ConfigureAwait(false)).State;
     }
@@ -224,8 +224,8 @@ public sealed partial class PostgreSqlProjectionStore
     /// <summary>Binds actual catalogue/timeline lineage before any snapshot or CDC work. Rebinding an existing history fails closed.</summary>
     public async ValueTask RegisterWithLineageAsync(ProjectionIdentity identity, ProjectionSourceLineage lineage, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentNullException.ThrowIfNull(lineage);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNull(lineage);
         if (identity.Source != lineage.Source) { throw new ArgumentException("Lineage evidence belongs to a different Streams source.", nameof(lineage)); }
         await RegisterAsync(identity, cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -252,7 +252,7 @@ public sealed partial class PostgreSqlProjectionStore
     public async ValueTask<ProjectionLease?> AcquireAsync(ProjectionIdentity identity, string ownerId, TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
+        BlueTuskGuard.NotNull(identity);
         ProjectionValidation.Key(ownerId, nameof(ownerId));
         ValidateDuration(duration);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -315,7 +315,7 @@ public sealed partial class PostgreSqlProjectionStore
         ChangeTransactionDelivery? protectedDelivery = null)
     {
         ValidateDefinition(lease, definition);
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         if (transaction.Source != lease.Identity.Source || transaction.Outcome != ChangeTransactionOutcome.Committed ||
             transaction.IsTwoPhase || transaction.IsSynthetic || transaction.CommitEndPosition == BlueTuskLogSequenceNumber.Zero)
         {
@@ -405,10 +405,10 @@ public sealed partial class PostgreSqlProjectionStore
         int expectedActiveVersion, ProjectionCutoverEvidence freshCandidateEvidence, CancellationToken cancellationToken = default)
     {
         ValidateLease(lease);
-        ArgumentNullException.ThrowIfNull(freshCandidateEvidence);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedActiveVersion);
+        BlueTuskGuard.NotNull(freshCandidateEvidence);
+        BlueTuskGuard.NotNegativeOrZero(expectedActiveVersion);
         if (lease.Identity.Source != freshCandidateEvidence.Lineage.Source) { throw new ArgumentException("Fresh lineage belongs to a different candidate source.", nameof(freshCandidateEvidence)); }
-        if (System.Diagnostics.Stopwatch.GetElapsedTime(freshCandidateEvidence.Lineage.CaptureTimestamp) > TimeSpan.FromMinutes(1))
+        if (BlueTuskRuntime.GetElapsedTime(freshCandidateEvidence.Lineage.CaptureTimestamp) > TimeSpan.FromMinutes(1))
         {
             throw new InvalidOperationException("Different-slot promotion requires source lineage evidence captured within the last minute. Recapture the actual source catalogue/timeline.");
         }
@@ -687,16 +687,16 @@ public sealed partial class PostgreSqlProjectionStore
 
     private static void ValidateLease(ProjectionLease lease)
     {
-        ArgumentNullException.ThrowIfNull(lease);
-        ArgumentNullException.ThrowIfNull(lease.Identity);
+        BlueTuskGuard.NotNull(lease);
+        BlueTuskGuard.NotNull(lease.Identity);
         ProjectionValidation.Key(lease.OwnerId, nameof(lease));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(lease.FencingToken);
+        BlueTuskGuard.NotNegativeOrZero(lease.FencingToken);
     }
 
     private static void ValidateDefinition(ProjectionLease lease, IProjectionDefinition definition)
     {
         ValidateLease(lease);
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         if (definition.Identity != lease.Identity)
         {
             throw new ArgumentException("The handler's definition does not match the leased projection version.", nameof(definition));

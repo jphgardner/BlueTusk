@@ -185,7 +185,8 @@ foreach ($package in $packages)
         throw "Invalid compatibility project path '$($package.project)'."
     }
     $expectedKind = if ($package.project.StartsWith('templates/', [StringComparison]::Ordinal)) { 'template' }
-        elseif ($package.project -ceq 'src/BlueTusk.SourceGeneration/BlueTusk.SourceGeneration.csproj') { 'analyzer' }
+        elseif ($package.project -cin @('src/BlueTusk.SourceGeneration/BlueTusk.SourceGeneration.csproj',
+            'src/BlueTusk.Sql.SourceGeneration/BlueTusk.Sql.SourceGeneration.csproj')) { 'analyzer' }
         else { 'runtime' }
     if ($package.kind -cne $expectedKind)
     {

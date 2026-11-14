@@ -10,12 +10,12 @@ public static class WorkflowHealthServiceCollectionExtensions
     public static IServiceCollection AddWorkflowsReadiness(this IServiceCollection services, string name,
         JobScope scope, Func<IServiceProvider, PostgreSqlWorkflowStore> storeFactory, WorkflowHealthCheckOptions options)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(name.Length, 64);
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(storeFactory);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(services);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotGreaterThan(name.Length, 64);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(storeFactory);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         int count = 0;
         foreach (var descriptor in services)
@@ -29,7 +29,7 @@ public static class WorkflowHealthServiceCollectionExtensions
                 }
             }
         }
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(count, 128);
+        BlueTuskGuard.NotGreaterThanOrEqual(count, 128);
         services.AddSingleton(new Registration(name));
         services.AddKeyedSingleton<WorkflowScopeHealthCheck>(name, (provider, _) => new WorkflowScopeHealthCheck(storeFactory(provider), scope, options));
         services.AddHealthChecks().Add(new HealthCheckRegistration(name, provider => provider.GetRequiredKeyedService<WorkflowScopeHealthCheck>(name),

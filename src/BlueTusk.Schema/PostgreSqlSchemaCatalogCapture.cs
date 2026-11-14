@@ -28,14 +28,14 @@ public sealed class PostgreSqlSchemaCatalogCapture
 
     public PostgreSqlSchemaCatalogCapture(DbDataSource dataSource, SchemaCatalogCaptureOptions options)
     {
-        ArgumentNullException.ThrowIfNull(dataSource); ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(options.Relations); ArgumentNullException.ThrowIfNull(options.Limits);
+        BlueTuskGuard.NotNull(dataSource); BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNull(options.Relations); BlueTuskGuard.NotNull(options.Limits);
         options.Limits.Validate();
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.Limits.MaximumMetadataBytes, 1024);
-        ArgumentNullException.ThrowIfNull(options.Relations.Schemas);
+        BlueTuskGuard.NotLessThan(options.Limits.MaximumMetadataBytes, 1024);
+        BlueTuskGuard.NotNull(options.Relations.Schemas);
         var schemaBudget = new SchemaModelBudget(SchemaSnapshotLimits.Default);
         _schemas = SchemaModelBudget.Materialize(options.Relations.Schemas, 64,
-            value => schemaBudget.Text(value, required: true, identifier: true)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
+            value => schemaBudget.Text(value, required: true, identifier: true)).Distinct(StringComparer.Ordinal).OrderBy(static value => value, StringComparer.Ordinal).ToArray();
         var relationOptions = options.Relations with
         {
             Schemas = _schemas,

@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>Edge</BlueTuskProductFamily>
-    <IsAotCompatible>true</IsAotCompatible>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
     <Description>Durable scoped offline cache and mutation synchronization contracts.</Description>
     <PackageTags>offline;sync;edge;conflicts;idempotency</PackageTags>
   </PropertyGroup>
@@ -12,4 +13,7 @@
     <InternalsVisibleTo Include="BlueTusk.Edge.Tests" />
   </ItemGroup>
   <Import Project="..\..\eng\versions\Edge.props" />
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
+  </ItemGroup>
 </Project>

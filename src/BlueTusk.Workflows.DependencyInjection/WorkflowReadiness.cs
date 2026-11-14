@@ -21,12 +21,12 @@ public sealed record WorkflowHealthCheckOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumObserved, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumObserved, 100000);
+        BlueTuskGuard.NotLessThan(MaximumObserved, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumObserved, 100000);
         foreach (int value in new[] { MaximumRunning, MaximumCompensating, MaximumPendingJobs, MaximumExpiredLeases })
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(value);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(value, MaximumObserved);
+            BlueTuskGuard.NotNegative(value);
+            BlueTuskGuard.NotGreaterThan(value, MaximumObserved);
         }
         if (MaximumActiveAge is { } age && (age < TimeSpan.FromMilliseconds(1) || age > TimeSpan.FromDays(365)))
         {

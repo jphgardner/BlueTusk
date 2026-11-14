@@ -105,6 +105,11 @@ Assert-EvidenceRejected -Name missing-pgvector-fixture -ExpectedMessage 'pinned 
     $fixture.results[0].postgreSqlVersion = $contract.postgreSqlFixture.version
     $fixture.results[0].postgreSqlIdentity = 'sha256:' + $contract.postgreSqlFixture.windowsArchive.sha256
 }
+Assert-EvidenceRejected -Name unregistered-extension-fixture -ExpectedMessage 'must bind to a fixture' -Mutate {
+    param($fixture)
+    $fixture.results[0].postgreSqlExtensionVersion = $contract.postgreSqlExtensionFixtures[0].extensionVersion
+    $fixture.results[0].postgreSqlExtensionIdentity = 'sha256:' + $contract.postgreSqlExtensionFixtures[0].windowsExtensionArchive.sha256
+}
 Assert-EvidenceRejected -Name wrong-tfm -ExpectedMessage 'compiled runtime framework' -Mutate {
     param($fixture)
     '{"runtimeOptions":{"tfm":"net11.0"}}' | Set-Content -LiteralPath (Join-Path $root 'proof/wrong-runtime.json') -Encoding utf8

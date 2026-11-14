@@ -19,7 +19,7 @@ public sealed class ProjectionLiveSubscription<T> : ILiveSharedSubscription
         JsonTypeInfo<LiveResultEvent<ProjectionLiveRow<T>, string>> eventTypeInfo,
         LiveQuerySessionOptions? sessionOptions = null, LiveSharedSubscriptionOptions? subscriptionOptions = null)
     {
-        ArgumentNullException.ThrowIfNull(query);
+        BlueTuskGuard.NotNull(query);
         _query = query;
         _shared = LiveSharedSubscriptions.CreateWithJsonMetadata(query.CreateSession(sessionOptions), replayStore, eventTypeInfo, subscriptionOptions);
         _publisher = replayStore as ProjectionLivePublisher;
@@ -31,7 +31,7 @@ public sealed class ProjectionLiveSubscription<T> : ILiveSharedSubscription
 
     public async ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -48,7 +48,7 @@ public sealed class ProjectionLiveSubscription<T> : ILiveSharedSubscription
 
     public async ValueTask<int> RefreshAsync(CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try { return await RefreshCoreAsync(cancellationToken).ConfigureAwait(false); }
         catch (ProjectionLivePublisherFencedException) { await LoseOwnershipAsync().ConfigureAwait(false); throw; }
@@ -57,7 +57,7 @@ public sealed class ProjectionLiveSubscription<T> : ILiveSharedSubscription
 
     public async ValueTask<LiveSubscriptionConnectResult> ConnectAsync(long afterSequence, CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -71,7 +71,7 @@ public sealed class ProjectionLiveSubscription<T> : ILiveSharedSubscription
     public async ValueTask<LiveSubscriptionConnectResult> ConnectWithTokenAsync(string resumeToken, LiveResumeTokenProtector tokenProtector,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {

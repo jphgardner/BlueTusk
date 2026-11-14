@@ -22,34 +22,34 @@ public sealed partial class OpenSearchStore : IAsyncDisposable
     public OpenSearchStore(HttpClient httpClient, OpenSearchStoreOptions options, ISearchEmbeddingProvider? embeddings = null,
         SearchHttpClientOwnership ownership = SearchHttpClientOwnership.Borrowed)
     {
-        ArgumentNullException.ThrowIfNull(httpClient);
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(options.Endpoint);
-        ArgumentNullException.ThrowIfNull(options.Limits);
+        BlueTuskGuard.NotNull(httpClient);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNull(options.Endpoint);
+        BlueTuskGuard.NotNull(options.Limits);
         if (!options.Endpoint.IsAbsoluteUri || options.Endpoint.Scheme is not ("https" or "http") ||
             options.Endpoint.UserInfo.Length != 0 || options.Endpoint.Query.Length != 0 || options.Endpoint.Fragment.Length != 0)
         {
             throw new ArgumentException("A trusted absolute HTTP(S) endpoint without embedded credentials/query/fragment is required.", nameof(options));
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.IndexName);
-        if (options.IndexName.Length > 200 || options.IndexName.Any(static character => !char.IsAsciiLetterLower(character) && !char.IsAsciiDigit(character) && character is not '_' and not '-') ||
+        BlueTuskGuard.NotNullOrWhiteSpace(options.IndexName);
+        if (options.IndexName.Length > 200 || options.IndexName.Any(static character => character is not (>= 'a' and <= 'z') && !BlueTuskRuntime.IsAsciiDigit(character) && character is not '_' and not '-') ||
             options.IndexName[0] is '_' or '-') { throw new ArgumentException("Index name must be a bounded lowercase ASCII OpenSearch identifier.", nameof(options)); }
         if (!Enum.IsDefined(ownership)) { throw new ArgumentOutOfRangeException(nameof(ownership)); }
-        ArgumentOutOfRangeException.ThrowIfNegative(options.VectorDimensions);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.VectorDimensions, 4096);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.PrimaryShards, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.PrimaryShards, 128);
-        ArgumentOutOfRangeException.ThrowIfNegative(options.Replicas);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.Replicas, 10);
+        BlueTuskGuard.NotNegative(options.VectorDimensions);
+        BlueTuskGuard.NotGreaterThan(options.VectorDimensions, 4096);
+        BlueTuskGuard.NotLessThan(options.PrimaryShards, 1);
+        BlueTuskGuard.NotGreaterThan(options.PrimaryShards, 128);
+        BlueTuskGuard.NotNegative(options.Replicas);
+        BlueTuskGuard.NotGreaterThan(options.Replicas, 10);
         if ((options.VectorDimensions > 0) != (embeddings is not null)) { throw new ArgumentException("Vector dimensions and an embedding provider must be configured together.", nameof(embeddings)); }
-        if (embeddings is not null) { ArgumentException.ThrowIfNullOrWhiteSpace(embeddings.ModelIdentity); }
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaxConcurrentOperations, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaxConcurrentOperations, 256);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaxRequestBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaxRequestBytes, 256 * 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaxResponseBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaxResponseBytes, 256 * 1024 * 1024);
+        if (embeddings is not null) { BlueTuskGuard.NotNullOrWhiteSpace(embeddings.ModelIdentity); }
+        BlueTuskGuard.NotLessThan(options.MaxConcurrentOperations, 1);
+        BlueTuskGuard.NotGreaterThan(options.MaxConcurrentOperations, 256);
+        BlueTuskGuard.NotLessThan(options.MaxRequestBytes, 1024);
+        BlueTuskGuard.NotGreaterThan(options.MaxRequestBytes, 256 * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(options.MaxResponseBytes, 1024);
+        BlueTuskGuard.NotGreaterThan(options.MaxResponseBytes, 256 * 1024 * 1024);
         if (options.RequestTimeout <= TimeSpan.Zero || options.RequestTimeout > TimeSpan.FromMinutes(5)) { throw new ArgumentOutOfRangeException(nameof(options)); }
         ValidateLimits(options.Limits);
         Options = options;
@@ -120,7 +120,7 @@ public sealed partial class OpenSearchStore : IAsyncDisposable
 
     public async ValueTask<SearchIngestionResult> UpsertAsync(SearchDocument document, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(document);
+        BlueTuskGuard.NotNull(document);
         await EnterAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -245,7 +245,7 @@ public sealed partial class OpenSearchStore : IAsyncDisposable
 
     private async ValueTask EnterAsync(CancellationToken cancellationToken, bool requireInitialized = true)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         if (!await _operations.WaitAsync(0, cancellationToken).ConfigureAwait(false)) { throw new SearchBackpressureException(); }
         if (Volatile.Read(ref _disposed) != 0) { _operations.Release(); throw new ObjectDisposedException(nameof(OpenSearchStore)); }
         if (requireInitialized && Volatile.Read(ref _initialized) == 0) { _operations.Release(); throw new InvalidOperationException("Initialize and validate the OpenSearch index before using this store."); }

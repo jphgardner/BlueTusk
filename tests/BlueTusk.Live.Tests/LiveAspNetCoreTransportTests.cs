@@ -100,12 +100,15 @@ public sealed class LiveAspNetCoreTransportTests
             request, Principal(), resolverA, protector, cancellationToken: cancellationToken);
         var resumeToken = Assert.IsType<string>(Assert.Single(original.Replay).ResumeToken);
 
-        var builder = WebApplication.CreateSlimBuilder();
-        builder.Services.AddSingleton<ILiveTransportSubscriptionResolver>(resolverB);
-        builder.Services.AddBlueTuskLiveAspNetCore(protector);
-        await using var application = builder.Build();
-        application.MapBlueTuskLiveServerSentEvents();
-        var endpoint = Assert.Single(((IEndpointRouteBuilder)application).DataSources.SelectMany(static item => item.Endpoints));
+        var services = new ServiceCollection();
+        services.AddRouting();
+        services.AddLogging();
+        services.AddSingleton<ILiveTransportSubscriptionResolver>(resolverB);
+        services.AddBlueTuskLiveAspNetCore(protector);
+        await using var provider = services.BuildServiceProvider();
+        var routes = new TestEndpointRouteBuilder(provider);
+        routes.MapBlueTuskLiveServerSentEvents();
+        var endpoint = Assert.Single(routes.DataSources.SelectMany(static item => item.Endpoints));
         var handle = Assert.IsType<RequestDelegate>(endpoint.RequestDelegate);
 
         Assert.Equal(StatusCodes.Status409Conflict, await SendAsync(resumeToken, Principal()));
@@ -128,7 +131,7 @@ public sealed class LiveAspNetCoreTransportTests
         {
             var payload = JsonSerializer.SerializeToUtf8Bytes(request with { ResumeToken = token });
             await using var body = new MemoryStream(payload);
-            var context = new DefaultHttpContext { RequestServices = application.Services, User = principal };
+            var context = new DefaultHttpContext { RequestServices = provider, User = principal };
             context.Request.Method = HttpMethods.Post;
             context.Request.ContentType = "application/json";
             context.Request.ContentLength = payload.Length;
@@ -213,6 +216,15 @@ public sealed class LiveAspNetCoreTransportTests
 
     private static ClaimsPrincipal Principal() =>
         new(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "user-a")], "test"));
+
+    private sealed class TestEndpointRouteBuilder(IServiceProvider provider) : IEndpointRouteBuilder
+    {
+        public IServiceProvider ServiceProvider { get; } = provider;
+
+        public ICollection<EndpointDataSource> DataSources { get; } = new List<EndpointDataSource>();
+
+        public IApplicationBuilder CreateApplicationBuilder() => new ApplicationBuilder(ServiceProvider);
+    }
 
     private static LiveResumeTokenProtector Protector() =>
         new([new LiveResumeTokenKey("primary", new byte[32], isPrimary: true)]);

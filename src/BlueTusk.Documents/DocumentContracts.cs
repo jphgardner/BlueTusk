@@ -25,13 +25,13 @@ public sealed record DocumentStoreOptions
     internal void Validate()
     {
         _ = DocumentValidation.Identifier(Schema);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxDocumentBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxSessionOperations);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxSessionBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPageSize);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPageBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(CommandsPerBatch);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(CommandTimeoutSeconds);
+        BlueTuskGuard.NotNegativeOrZero(MaxDocumentBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxSessionOperations);
+        BlueTuskGuard.NotNegativeOrZero(MaxSessionBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxPageSize);
+        BlueTuskGuard.NotNegativeOrZero(MaxPageBytes);
+        BlueTuskGuard.NotNegativeOrZero(CommandsPerBatch);
+        BlueTuskGuard.NotNegativeOrZero(CommandTimeoutSeconds);
         if (MaxDocumentBytes > MaxSessionBytes || MaxDocumentBytes > MaxPageBytes)
         {
             throw new ArgumentException("Document bytes must fit within the session and page byte budgets.");
@@ -49,8 +49,8 @@ public sealed class DocumentCollectionDefinition<T>
     public DocumentCollectionDefinition(string name, JsonTypeInfo<T> jsonTypeInfo, int schemaVersion = 1)
     {
         DocumentValidation.Key(name, nameof(name), 256);
-        ArgumentNullException.ThrowIfNull(jsonTypeInfo);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(schemaVersion);
+        BlueTuskGuard.NotNull(jsonTypeInfo);
+        BlueTuskGuard.NotNegativeOrZero(schemaVersion);
         Name = name;
         JsonTypeInfo = jsonTypeInfo;
         SchemaVersion = schemaVersion;
@@ -71,9 +71,9 @@ public sealed class DocumentMigration<T>
 {
     public DocumentMigration(int fromVersion, int toVersion, Func<JsonElement, T> transform)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(fromVersion);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(toVersion, fromVersion);
-        ArgumentNullException.ThrowIfNull(transform);
+        BlueTuskGuard.NotNegativeOrZero(fromVersion);
+        BlueTuskGuard.NotLessThanOrEqual(toVersion, fromVersion);
+        BlueTuskGuard.NotNull(transform);
         FromVersion = fromVersion;
         ToVersion = toVersion;
         Transform = transform;
@@ -89,7 +89,7 @@ public sealed class DocumentInlineContentResult<T>
 {
     public DocumentInlineContentResult(T value, ReadOnlyMemory<byte> content)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         Value = value;
         Content = content;
     }
@@ -103,9 +103,9 @@ public sealed class DocumentInlineContentMigration<T>
 {
     public DocumentInlineContentMigration(int fromVersion, int toVersion, Func<JsonElement, DocumentInlineContentResult<T>> transform)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(fromVersion);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(toVersion, fromVersion);
-        ArgumentNullException.ThrowIfNull(transform);
+        BlueTuskGuard.NotNegativeOrZero(fromVersion);
+        BlueTuskGuard.NotLessThanOrEqual(toVersion, fromVersion);
+        BlueTuskGuard.NotNull(transform);
         FromVersion = fromVersion;
         ToVersion = toVersion;
         Transform = transform;
@@ -183,7 +183,7 @@ public sealed class DocumentPatch
 
     private static string[] ValidatePath(IReadOnlyList<string> path)
     {
-        ArgumentNullException.ThrowIfNull(path);
+        BlueTuskGuard.NotNull(path);
         if (path.Count is 0 or > 32)
         {
             throw new ArgumentException("A patch path requires between 1 and 32 segments.", nameof(path));
@@ -192,7 +192,7 @@ public sealed class DocumentPatch
         var copy = new string[path.Count];
         for (var i = 0; i < path.Count; i++)
         {
-            ArgumentNullException.ThrowIfNull(path[i]);
+            BlueTuskGuard.NotNull(path[i]);
             if (path[i].Contains('\0', StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(path[i]) > 512)
             {
                 throw new ArgumentException("Patch path segments cannot contain NUL and must fit within 512 UTF-8 bytes.", nameof(path));
@@ -252,7 +252,7 @@ internal static class DocumentValidation
 {
     internal static void Key(string value, string parameterName, int maxBytes)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         if (value.Contains('\0', StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(value) > maxBytes)
         {
             throw new ArgumentException($"Value must fit within {maxBytes} UTF-8 bytes and cannot contain NUL.", parameterName);

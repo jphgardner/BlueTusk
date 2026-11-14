@@ -54,7 +54,12 @@ internal sealed class BlueTuskValueTypeJsonProjectionExpression : Expression
             return this;
         }
 
+#if BLUETUSK_EF11_OR_GREATER
+        var jsonReaderData = ShaperProcessorAccess.GenerateJsonReader(
+            visitor, jsonProjectionInfo.JsonColumnIndex, _complexType, jsonProjectionInfo.JsonColumn);
+#else
         var jsonReaderData = ShaperProcessorAccess.GenerateJsonReader(visitor, jsonProjectionInfo.JsonColumnIndex, _complexType);
+#endif
         var materialize = _collectionProperty is null
             ? Call(
                 BlueTuskValueTypeJsonMaterializer.MaterializeComplexValueMethod,

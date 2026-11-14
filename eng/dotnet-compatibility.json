@@ -257,6 +257,87 @@
       ]
     },
     {
+      "project": "src/BlueTusk.Documents.AspNetCore/BlueTusk.Documents.AspNetCore.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Documents.Live/BlueTusk.Documents.Live.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Documents.Streams/BlueTusk.Documents.Streams.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Documents/BlueTusk.Documents.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Edge.AspNetCore/BlueTusk.Edge.AspNetCore.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Edge.Http/BlueTusk.Edge.Http.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Edge.Server/BlueTusk.Edge.Server.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Edge.Sqlite/BlueTusk.Edge.Sqlite.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Edge/BlueTusk.Edge.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
       "project": "src/BlueTusk.EntityFrameworkCore.Design/BlueTusk.EntityFrameworkCore.Design.csproj",
       "kind": "runtime",
       "status": "pending",
@@ -278,6 +359,33 @@
       ]
     },
     {
+      "project": "src/BlueTusk.Events.EntityFrameworkCore/BlueTusk.Events.EntityFrameworkCore.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Events.Streams/BlueTusk.Events.Streams.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Events/BlueTusk.Events.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
       "project": "src/BlueTusk.Extensions.Abstractions/BlueTusk.Extensions.Abstractions.csproj",
       "kind": "runtime",
       "status": "covered",
@@ -290,6 +398,24 @@
     },
     {
       "project": "src/BlueTusk.Extensions.Testing/BlueTusk.Extensions.Testing.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Jobs.DependencyInjection/BlueTusk.Jobs.DependencyInjection.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Jobs/BlueTusk.Jobs.csproj",
       "kind": "runtime",
       "status": "pending",
       "minimumFramework": "net5.0",
@@ -381,6 +507,24 @@
       "testProjects": []
     },
     {
+      "project": "src/BlueTusk.Projections.Live/BlueTusk.Projections.Live.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Projections/BlueTusk.Projections.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
       "project": "src/BlueTusk.Protocol/BlueTusk.Protocol.csproj",
       "kind": "runtime",
       "status": "covered",
@@ -412,6 +556,60 @@
       ]
     },
     {
+      "project": "src/BlueTusk.Schema/BlueTusk.Schema.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Search.AspNetCore/BlueTusk.Search.AspNetCore.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Search.Jobs/BlueTusk.Search.Jobs.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Search.OpenSearch/BlueTusk.Search.OpenSearch.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Search.PgVector/BlueTusk.Search.PgVector.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Search/BlueTusk.Search.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
       "project": "src/BlueTusk.Security/BlueTusk.Security.csproj",
       "kind": "runtime",
       "status": "covered",
@@ -425,6 +623,24 @@
       "kind": "analyzer",
       "status": "not-applicable",
       "minimumFramework": null,
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Sql.SourceGeneration/BlueTusk.Sql.SourceGeneration.csproj",
+      "kind": "analyzer",
+      "status": "not-applicable",
+      "minimumFramework": null,
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Sql/BlueTusk.Sql.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
       "testProjects": []
@@ -505,6 +721,33 @@
     },
     {
       "project": "src/BlueTusk.Streams/BlueTusk.Streams.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Studio.ControlPlane/BlueTusk.Studio.ControlPlane.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Studio.Events/BlueTusk.Studio.Events.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Studio/BlueTusk.Studio.csproj",
       "kind": "runtime",
       "status": "pending",
       "minimumFramework": "net5.0",
@@ -636,6 +879,24 @@
       ]
     },
     {
+      "project": "src/BlueTusk.Workflows.DependencyInjection/BlueTusk.Workflows.DependencyInjection.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "src/BlueTusk.Workflows/BlueTusk.Workflows.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
       "project": "templates/BlueTusk.Extension/BlueTusk.Templates.csproj",
       "kind": "template",
       "status": "not-applicable",
@@ -654,9 +915,36 @@
       "testProjects": []
     },
     {
+      "project": "tooling/BlueTusk.Schema.Tool/BlueTusk.Schema.Tool.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "tooling/BlueTusk.Sql.Tool/BlueTusk.Sql.Tool.csproj",
+      "kind": "runtime",
+      "status": "pending",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
       "project": "tooling/BlueTusk.Streams.Tool/BlueTusk.Streams.Tool.csproj",
       "kind": "runtime",
       "status": "covered",
+      "minimumFramework": "net5.0",
+      "constraint": null,
+      "constraintSource": null,
+      "testProjects": []
+    },
+    {
+      "project": "tooling/BlueTusk.Studio.Tool/BlueTusk.Studio.Tool.csproj",
+      "kind": "runtime",
+      "status": "pending",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,

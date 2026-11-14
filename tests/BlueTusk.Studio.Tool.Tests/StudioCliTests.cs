@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace BlueTusk.Studio.Tool.Tests;
@@ -17,16 +18,12 @@ public sealed class StudioCliTests
         try
         {
             Environment.SetEnvironmentVariable("BLUETUSK_STUDIO_TOKEN", "test-only-secret-token");
-            var builder = WebApplication.CreateBuilder();
-            builder.Logging.ClearProviders();
-            builder.WebHost.UseUrls("http://127.0.0.1:0");
-            await using var app = builder.Build();
             var denied = false;
             var mode = 0;
             var path = string.Empty;
-            app.Run(async context =>
+            async Task RespondAsync(HttpContext context)
             {
-                Assert.Equal("Bearer test-only-secret-token", context.Request.Headers.Authorization.ToString());
+                Assert.Equal("Bearer test-only-secret-token", context.Request.Headers["Authorization"].ToString());
                 path = context.Request.Path + context.Request.QueryString;
                 if (denied) { context.Response.StatusCode = 403; return; }
                 if (mode == 1) { context.Response.Redirect("http://127.0.0.1:1/private-secret-token"); return; }
@@ -38,7 +35,14 @@ public sealed class StudioCliTests
                     _ => "{\"events\":[{\"id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"sequence\":\"9223372036854775807\",\"type\":\"<script>unsafe</script>\",\"version\":1,\"occurredAt\":\"2026-09-27T00:00:00Z\",\"payloadBytes\":2}],\"next\":\"9223372036854775807\"}",
                 };
                 await context.Response.WriteAsync(body, context.RequestAborted);
-            });
+            }
+
+            using var app = new HostBuilder()
+                .ConfigureLogging(logging => logging.ClearProviders())
+                .ConfigureWebHost(web => web.UseKestrel()
+                    .UseUrls("http://127.0.0.1:0")
+                    .Configure(pipeline => pipeline.Run(RespondAsync)))
+                .Build();
             await app.StartAsync(TestContext.Current.CancellationToken);
             var endpoint = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single() + "/bluetusk/studio/";
             using var output = new StringWriter();

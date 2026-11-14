@@ -7,6 +7,9 @@ using BlueTusk.Sql;
 using BlueTusk.Sql.SourceGeneration;
 using BlueTusk.TypeSystem;
 using static BlueTusk.Sql.SourceGeneration.SqlContractModel;
+#if !NET7_0_OR_GREATER
+using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
+#endif
 
 return await SqlCli.RunAsync(args, Console.Out, Console.Error);
 

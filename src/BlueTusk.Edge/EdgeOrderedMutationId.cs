@@ -8,7 +8,12 @@ public static class EdgeOrderedMutationId
 {
     public const long MaxSequence = (1L << 60) - 1;
 
-    public static string NewStreamId() => Convert.ToHexString(RandomNumberGenerator.GetBytes(8))[1..].ToLowerInvariant();
+    public static string NewStreamId()
+    {
+        Span<byte> bytes = stackalloc byte[8];
+        RandomNumberGenerator.Fill(bytes);
+        return BlueTuskRuntime.ToHexStringLower(bytes)[1..];
+    }
 
     public static Guid Create(string streamId, long sequence)
     {

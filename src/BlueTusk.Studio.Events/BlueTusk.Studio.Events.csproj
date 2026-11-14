@@ -1,13 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>Studio</BlueTuskProductFamily>
     <Description>Authorized bounded domain-event trace metadata for BlueTusk Studio.</Description>
   </PropertyGroup>
   <Import Project="..\..\eng\versions\Studio.props" />
+  <Import Project="..\..\eng\StudioLegacyApi.targets" />
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\BlueTusk.Studio\BlueTusk.Studio.csproj" />
     <ProjectReference Include="..\BlueTusk.Events\BlueTusk.Events.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
   </ItemGroup>
 </Project>

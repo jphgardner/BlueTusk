@@ -33,7 +33,7 @@ public sealed partial class PostgreSqlEventStore
     public async ValueTask<EventReplayStatus> ReadReplayStatusAsync(string consumerId, EventStreamKey stream, CancellationToken cancellationToken = default)
     {
         EventValidation.Key(consumerId, nameof(consumerId));
-        ArgumentNullException.ThrowIfNull(stream);
+        BlueTuskGuard.NotNull(stream);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, null, $"""
             WITH observed AS MATERIALIZED(SELECT clock_timestamp() AS observed_at)

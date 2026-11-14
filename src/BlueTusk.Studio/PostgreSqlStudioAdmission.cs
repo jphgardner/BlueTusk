@@ -26,18 +26,18 @@ public sealed class PostgreSqlStudioAdmission : IStudioDistributedAdmission
     public PostgreSqlStudioAdmission(DbDataSource dataSource, string admissionNamespace, int maximumConcurrentOperations,
         int maximumConcurrentPerScope, int commandTimeoutSeconds = 10)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         if (admissionNamespace is not { Length: > 0 and <= 128 } ||
-            admissionNamespace.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not ('-' or '_' or '.')))
+            admissionNamespace.Any(character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character is not ('-' or '_' or '.')))
         {
             throw new ArgumentException("Admission namespace requires a stable non-sensitive identifier.", nameof(admissionNamespace));
         }
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumConcurrentOperations, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumConcurrentOperations, 64);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumConcurrentPerScope, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumConcurrentPerScope, maximumConcurrentOperations);
-        ArgumentOutOfRangeException.ThrowIfLessThan(commandTimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(commandTimeoutSeconds, 30);
+        BlueTuskGuard.NotLessThan(maximumConcurrentOperations, 1);
+        BlueTuskGuard.NotGreaterThan(maximumConcurrentOperations, 64);
+        BlueTuskGuard.NotLessThan(maximumConcurrentPerScope, 1);
+        BlueTuskGuard.NotGreaterThan(maximumConcurrentPerScope, maximumConcurrentOperations);
+        BlueTuskGuard.NotLessThan(commandTimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(commandTimeoutSeconds, 30);
         _dataSource = dataSource;
         _namespace = admissionNamespace;
         _globalLimit = maximumConcurrentOperations;
@@ -48,7 +48,7 @@ public sealed class PostgreSqlStudioAdmission : IStudioDistributedAdmission
     public async ValueTask<IAsyncDisposable?> TryAcquireAsync(string scopeId, CancellationToken cancellationToken = default)
     {
         if (scopeId is not { Length: > 0 and <= 128 } || scopeId == "legacy-unknown" ||
-            scopeId.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not (':' or '.' or '-' or '_')))
+            scopeId.Any(character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character is not (':' or '.' or '-' or '_')))
         {
             throw new ArgumentException("Studio admission requires a stable audit scope identity.", nameof(scopeId));
         }
@@ -96,7 +96,11 @@ public sealed class PostgreSqlStudioAdmission : IStudioDistributedAdmission
 
     private static async ValueTask<bool> TrySlotAsync(DbCommand command, long baseKey, int limit, CancellationToken cancellationToken)
     {
+#if NET6_0_OR_GREATER
         var first = Random.Shared.Next(limit);
+#else
+        var first = RandomNumberGenerator.GetInt32(limit);
+#endif
         for (var offset = 0; offset < limit; offset++)
         {
             command.Parameters[0].Value = baseKey + (first + offset) % limit;

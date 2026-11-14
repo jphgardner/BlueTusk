@@ -5,7 +5,7 @@ public static class PostgreSqlStatementGuard
 {
     public static string AdmitReadQuery(string sql)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
+        BlueTuskGuard.NotNullOrWhiteSpace(sql);
         if (sql.Length > 1024 * 1024 || sql.Contains('\0', StringComparison.Ordinal))
         {
             throw InvalidQuery();
@@ -75,7 +75,7 @@ public static class PostgreSqlStatementGuard
             {
                 var delimiterEnd = index + 1;
                 if (delimiterEnd < sql.Length && sql[delimiterEnd] != '$' &&
-                    !(char.IsAsciiLetter(sql[delimiterEnd]) || sql[delimiterEnd] == '_'))
+                    !(BlueTuskRuntime.IsAsciiLetter(sql[delimiterEnd]) || sql[delimiterEnd] == '_'))
                 {
                     index++;
                     continue;
@@ -92,7 +92,7 @@ public static class PostgreSqlStatementGuard
             }
             if (firstToken is null)
             {
-                if (!char.IsAsciiLetter(character)) { throw InvalidQuery(); }
+                if (!BlueTuskRuntime.IsAsciiLetter(character)) { throw InvalidQuery(); }
                 var start = index;
                 while (index < sql.Length && IdentifierCharacter(sql[index])) { index++; }
                 firstToken = sql[start..index];
@@ -110,6 +110,6 @@ public static class PostgreSqlStatementGuard
         return separator < 0 ? sql : sql.Remove(separator, 1);
     }
 
-    private static bool IdentifierCharacter(char character) => char.IsAsciiLetterOrDigit(character) || character is '_' or '$';
+    private static bool IdentifierCharacter(char character) => BlueTuskRuntime.IsAsciiLetterOrDigit(character) || character is '_' or '$';
     private static ArgumentException InvalidQuery() => new("One complete PostgreSQL read query is required.", "sql");
 }

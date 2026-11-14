@@ -17,9 +17,9 @@ public sealed class WorkflowScopeHealthCheck : IHealthCheck
 
     public WorkflowScopeHealthCheck(PostgreSqlWorkflowStore store, JobScope scope, WorkflowHealthCheckOptions options)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _store = store;
         _scope = scope;
@@ -68,13 +68,13 @@ public sealed class WorkflowScopeHealthCheck : IHealthCheck
             result = new(HealthStatus.Unhealthy, "workflows.health.store_unavailable", null, null);
         }
         finally { Volatile.Write(ref _probing, 0); }
-        WorkflowHealthTelemetry.Record(result, Stopwatch.GetElapsedTime(started));
+        WorkflowHealthTelemetry.Record(result, BlueTuskRuntime.GetElapsedTime(started));
         return result;
     }
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         var result = await ReadAsync(cancellationToken).ConfigureAwait(false);
         var data = new Dictionary<string, object>(8, StringComparer.Ordinal);
         if (result.Scope is { } scope)

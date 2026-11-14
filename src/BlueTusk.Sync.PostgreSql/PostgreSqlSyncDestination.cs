@@ -61,7 +61,7 @@ public sealed class PostgreSqlSyncDestination :
     // and applies idempotently, so a retried attempt never duplicates work.
     bool ISyncRetryClassifier.IsTransient(SyncRetryContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         return PostgreSqlSyncRetryClassification.IsTransient(context.Exception);
     }
 

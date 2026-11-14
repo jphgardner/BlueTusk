@@ -22,15 +22,23 @@ public sealed record EdgeEndpointOptions
 
 public static class EdgeEndpointExtensions
 {
+#if NET7_0_OR_GREATER
     public static RouteGroupBuilder MapBlueTuskEdge(this IEndpointRouteBuilder endpoints, PostgreSqlEdgeServerStore store,
+#else
+    public static IEndpointConventionBuilder MapBlueTuskEdge(this IEndpointRouteBuilder endpoints, PostgreSqlEdgeServerStore store,
+#endif
         Func<HttpContext, EdgeScope, CancellationToken, ValueTask<bool>> authorizeScope, EdgeEndpointOptions options)
     {
-        ArgumentNullException.ThrowIfNull(endpoints); ArgumentNullException.ThrowIfNull(store); ArgumentNullException.ThrowIfNull(authorizeScope); ArgumentNullException.ThrowIfNull(options);
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.AuthorizationPolicy);
+        BlueTuskGuard.NotNull(endpoints); BlueTuskGuard.NotNull(store); BlueTuskGuard.NotNull(authorizeScope); BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNullOrWhiteSpace(options.AuthorizationPolicy);
         if (!options.Prefix.StartsWith('/') || options.Prefix.Contains('{', StringComparison.Ordinal) || options.Prefix.Contains('?', StringComparison.Ordinal) ||
             options.MaxRequestBytes < (store.Options.MaxRecordBytes + 2L) / 3 * 4 + 4096 || options.MaxResponseBytes < (store.Options.MaxBatchBytes + 2L) / 3 * 4 + store.Options.MaxBatchRecords * 4096L || options.MaxRequestBytes > 256 * 1024 * 1024 || options.MaxResponseBytes > 256 * 1024 * 1024)
         { throw new ArgumentException("Endpoint prefix/limits are incompatible with the server store.", nameof(options)); }
+#if NET7_0_OR_GREATER
         var group = endpoints.MapGroup(options.Prefix).RequireAuthorization(options.AuthorizationPolicy);
+#else
+        var group = new LegacyEdgeRoutes(endpoints, options.Prefix, options.AuthorizationPolicy);
+#endif
         group.MapPost("/snapshots", (HttpContext context) => HandleAsync(context, store, authorizeScope, options, async scope =>
             EdgeWireCodec.SerializeSnapshot(await store.BeginSnapshotAsync(scope, context.RequestAborted).ConfigureAwait(false))));
         group.MapGet("/snapshots/{snapshotId:guid}", (HttpContext context) => HandleAsync(context, store, authorizeScope, options, async scope =>
@@ -73,6 +81,30 @@ public static class EdgeEndpointExtensions
         }));
         return group;
     }
+
+#if !NET7_0_OR_GREATER
+    private sealed class LegacyEdgeRoutes(IEndpointRouteBuilder endpoints, string prefix, string policy) : IEndpointConventionBuilder
+    {
+        private readonly List<IEndpointConventionBuilder> _routes = [];
+
+        public void MapGet(string pattern, RequestDelegate request) => Map(pattern, HttpMethods.Get, request);
+
+        public void MapPost(string pattern, RequestDelegate request) => Map(pattern, HttpMethods.Post, request);
+
+        public void MapDelete(string pattern, RequestDelegate request) => Map(pattern, HttpMethods.Delete, request);
+
+        public void Add(Action<EndpointBuilder> convention)
+        {
+            foreach (var route in _routes)
+            {
+                route.Add(convention);
+            }
+        }
+
+        private void Map(string pattern, string method, RequestDelegate request) =>
+            _routes.Add(endpoints.MapMethods(prefix.TrimEnd('/') + pattern, [method], request).RequireAuthorization(policy));
+    }
+#endif
 
     private static async Task HandleAsync(HttpContext context, PostgreSqlEdgeServerStore store,
         Func<HttpContext, EdgeScope, CancellationToken, ValueTask<bool>> authorize, EdgeEndpointOptions options, Func<EdgeScope, ValueTask<byte[]?>> action)

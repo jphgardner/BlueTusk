@@ -7,7 +7,7 @@ public sealed partial class SqliteEdgeStore
 {
     public async ValueTask BeginSnapshotAsync(EdgeScope scope, EdgeSnapshot snapshot, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
+        BlueTuskGuard.NotNull(snapshot);
         if (snapshot.Id == Guid.Empty || snapshot.Position < 0)
         {
             throw new ArgumentException("Snapshots require a stable identity and nonnegative position.", nameof(snapshot));
@@ -99,7 +99,7 @@ public sealed partial class SqliteEdgeStore
 
     public async ValueTask ApplyChangesAsync(EdgeScope scope, EdgeChangeBatch batch, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         ValidateRecords(batch.Records);
         if (batch.FromPosition < 0 || batch.ToPosition <= batch.FromPosition)
         {

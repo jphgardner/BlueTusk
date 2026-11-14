@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework><BlueTuskProductFamily>Edge</BlueTuskProductFamily>
-    <IsAotCompatible>true</IsAotCompatible>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
+    <BlueTuskProductFamily>Edge</BlueTuskProductFamily>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
     <Description>Authorization-policy protected Edge snapshot, resume feed and atomic mutation endpoints.</Description>
     <PackageTags>offline;aspnetcore;sync;authorization</PackageTags>
   </PropertyGroup>
@@ -10,5 +12,21 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\BlueTusk.Edge.Server\BlueTusk.Edge.Server.csproj" />
     <ProjectReference Include="..\BlueTusk.Edge.Http\BlueTusk.Edge.Http.csproj" />
+  </ItemGroup>
+  <Target Name="GenerateLegacyEdgeAspNetCoreApiBaseline" BeforeTargets="CoreCompile"
+          Condition="'$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'net6.0'">
+    <MakeDir Directories="$(IntermediateOutputPath)CompatibilityApi" />
+    <WriteLinesToFile
+      File="$(IntermediateOutputPath)CompatibilityApi/PublicAPI.Unshipped.txt"
+      Lines="$([MSBuild]::Escape($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/PublicAPI.Unshipped.txt').Replace('-&gt; Microsoft.AspNetCore.Routing.RouteGroupBuilder!', '-&gt; Microsoft.AspNetCore.Builder.IEndpointConventionBuilder!'))))"
+      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <AdditionalFiles Remove="PublicAPI.Unshipped.txt" />
+      <AdditionalFiles Include="$(IntermediateOutputPath)CompatibilityApi/PublicAPI.Unshipped.txt" />
+    </ItemGroup>
+  </Target>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
   </ItemGroup>
 </Project>

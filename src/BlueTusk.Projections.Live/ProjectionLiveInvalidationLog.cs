@@ -11,9 +11,9 @@ public sealed class ProjectionLiveInvalidationLog : ILiveInvalidationLog
 
     public ProjectionLiveInvalidationLog(PostgreSqlProjectionStore store, string projectionName, string databaseIdentity)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentException.ThrowIfNullOrWhiteSpace(projectionName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNullOrWhiteSpace(projectionName);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
         _store = store;
         _projectionName = projectionName;
         _databaseIdentity = databaseIdentity;
@@ -29,7 +29,7 @@ public sealed class ProjectionLiveInvalidationLog : ILiveInvalidationLog
         LiveInvalidationCursor afterExclusive, LiveInvalidationCursor throughInclusive, CancellationToken cancellationToken = default)
     {
         Validate(databaseIdentity);
-        ArgumentNullException.ThrowIfNull(dependencies);
+        BlueTuskGuard.NotNull(dependencies);
         cancellationToken.ThrowIfCancellationRequested();
         if (dependencies.Count != 1 || dependencies.First() != Dependency(_projectionName))
         {

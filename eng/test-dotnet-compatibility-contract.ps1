@@ -68,6 +68,14 @@ Assert-Rejected -Name mutable-postgresql-image -ExpectedMessage 'immutable Linux
     param($fixture)
     $fixture.postgreSqlFixture.linuxImage = 'postgres:18-alpine'
 }
+Assert-Rejected -Name mutable-postgresql-extension-image -ExpectedMessage 'pinned PostgreSQL extension' -Mutate {
+    param($fixture)
+    $fixture.postgreSqlExtensionFixtures[0].linuxImage = 'timescale/timescaledb:2.32.0-pg18'
+}
+Assert-Rejected -Name duplicate-postgresql-fixture-binding -ExpectedMessage 'bind to one fixture' -Mutate {
+    param($fixture)
+    $fixture.postgreSqlExtensionFixtures[0].testProjects = @($fixture.postgreSqlFixture.testProjects[0])
+}
 Assert-Rejected -Name wrong-minio-platform-archive -ExpectedMessage 'verified distributions' -Mutate {
     param($fixture)
     $fixture.minioFixture.linuxBinary.url = $fixture.minioFixture.windowsBinary.url

@@ -37,9 +37,9 @@ public sealed class PostgreSqlSchemaCapture
 
     internal PostgreSqlSchemaCapture(DbDataSource dataSource, SchemaCaptureOptions options, SchemaSnapshotLimits? modelLimits)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(options.Schemas);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNull(options.Schemas);
         if (options.Schemas.Count is < 1 or > 64)
         {
             throw new ArgumentException("Select between one and 64 valid schema names.", nameof(options));
@@ -53,22 +53,22 @@ public sealed class PostgreSqlSchemaCapture
             selectedSchemas.Add(schema);
         }
         if (selectedSchemas.Count == 0) { throw new ArgumentException("At least one schema name is required.", nameof(options)); }
-        _schemas = selectedSchemas.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
+        _schemas = selectedSchemas.Distinct(StringComparer.Ordinal).OrderBy(static value => value, StringComparer.Ordinal).ToArray();
 
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumRelations, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaximumRelations, 1_000_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumColumns, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaximumColumns, 2_000_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumConstraints, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaximumConstraints, 1_000_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumIndexes, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaximumIndexes, 1_000_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumPolicies, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaximumPolicies, 1_000_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumMetadataBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaximumMetadataBytes, 1024L * 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.CommandTimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.CommandTimeoutSeconds, 300);
+        BlueTuskGuard.NotLessThan(options.MaximumRelations, 1);
+        BlueTuskGuard.NotGreaterThan(options.MaximumRelations, 1_000_000);
+        BlueTuskGuard.NotLessThan(options.MaximumColumns, 1);
+        BlueTuskGuard.NotGreaterThan(options.MaximumColumns, 2_000_000);
+        BlueTuskGuard.NotLessThan(options.MaximumConstraints, 1);
+        BlueTuskGuard.NotGreaterThan(options.MaximumConstraints, 1_000_000);
+        BlueTuskGuard.NotLessThan(options.MaximumIndexes, 1);
+        BlueTuskGuard.NotGreaterThan(options.MaximumIndexes, 1_000_000);
+        BlueTuskGuard.NotLessThan(options.MaximumPolicies, 1);
+        BlueTuskGuard.NotGreaterThan(options.MaximumPolicies, 1_000_000);
+        BlueTuskGuard.NotLessThan(options.MaximumMetadataBytes, 1024);
+        BlueTuskGuard.NotGreaterThan(options.MaximumMetadataBytes, 1024L * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(options.CommandTimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(options.CommandTimeoutSeconds, 300);
         _options = options;
         _modelLimits = modelLimits ?? new()
         {
@@ -106,8 +106,8 @@ public sealed class PostgreSqlSchemaCapture
     public async ValueTask<SchemaSnapshot> CaptureInTransactionAsync(DbConnection connection, DbTransaction transaction,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(connection);
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(connection);
+        BlueTuskGuard.NotNull(transaction);
         if (connection.State != ConnectionState.Open || !ReferenceEquals(transaction.Connection, connection) ||
             transaction.IsolationLevel is not (IsolationLevel.RepeatableRead or IsolationLevel.Serializable))
         { throw new ArgumentException("A caller-owned consistent transaction is required.", nameof(transaction)); }

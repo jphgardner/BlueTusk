@@ -43,7 +43,7 @@ public sealed class PostgreSqlEventDeliveryProcessor
         ChangeSourceIdentity source, EventStreamsDeliveryOptions? options,
         EventPublishedRetentionTargetOptions protectedRetention)
     {
-        ArgumentNullException.ThrowIfNull(protectedRetention);
+        BlueTuskGuard.NotNull(protectedRetention);
         return new PostgreSqlEventDeliveryProcessor(targetDataSource, inbox, decoder, consumerId,
             source, options, protectedRetention);
     }
@@ -52,22 +52,22 @@ public sealed class PostgreSqlEventDeliveryProcessor
         EventOutboxChangeDecoder decoder, string consumerId, ChangeSourceIdentity source,
         EventStreamsDeliveryOptions? options, EventPublishedRetentionTargetOptions? protectedRetention)
     {
-        ArgumentNullException.ThrowIfNull(targetDataSource);
-        ArgumentNullException.ThrowIfNull(inbox);
-        ArgumentNullException.ThrowIfNull(decoder);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrWhiteSpace(consumerId);
+        BlueTuskGuard.NotNull(targetDataSource);
+        BlueTuskGuard.NotNull(inbox);
+        BlueTuskGuard.NotNull(decoder);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNullOrWhiteSpace(consumerId);
         if (consumerId.Length > 200 || consumerId.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("Consumer identity must contain 1 to 200 characters and no NUL characters.", nameof(consumerId));
         }
 
         _options = options ?? new EventStreamsDeliveryOptions();
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.MaximumSourceChanges);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.MaximumEvents);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.MaximumEvents, 65_536);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.MaximumPayloadBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.MaximumPayloadBytes, 67_108_864);
+        BlueTuskGuard.NotNegativeOrZero(_options.MaximumSourceChanges);
+        BlueTuskGuard.NotNegativeOrZero(_options.MaximumEvents);
+        BlueTuskGuard.NotGreaterThan(_options.MaximumEvents, 65_536);
+        BlueTuskGuard.NotNegativeOrZero(_options.MaximumPayloadBytes);
+        BlueTuskGuard.NotGreaterThan(_options.MaximumPayloadBytes, 67_108_864);
         _targetDataSource = targetDataSource;
         _inbox = inbox;
         _decoder = decoder;
@@ -88,8 +88,8 @@ public sealed class PostgreSqlEventDeliveryProcessor
     public async ValueTask<EventStreamsDeliveryResult> ProcessAsync(ChangeTransactionDelivery delivery,
         EventTransactionHandler handler, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(delivery);
-        ArgumentNullException.ThrowIfNull(handler);
+        BlueTuskGuard.NotNull(delivery);
+        BlueTuskGuard.NotNull(handler);
         var transaction = delivery.Transaction;
         if (delivery.State != ChangeDeliveryState.Active || transaction.Source != _source ||
             transaction.Outcome != ChangeTransactionOutcome.Committed || transaction.IsSynthetic || transaction.IsTwoPhase)

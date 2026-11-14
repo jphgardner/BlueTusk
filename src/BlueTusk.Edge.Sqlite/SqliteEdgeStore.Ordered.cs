@@ -91,7 +91,7 @@ public sealed partial class SqliteEdgeStore : IEdgeOrderedReceiptBatchLocalStore
 
     public async ValueTask MarkOrderedReceiptConfirmedAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(mutation);
+        BlueTuskGuard.NotNull(mutation);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         using var transaction = connection.BeginTransaction(deferred: false);
         _ = await CheckScopeAsync(connection, transaction, mutation.Scope, cancellationToken).ConfigureAwait(false);
@@ -102,13 +102,13 @@ public sealed partial class SqliteEdgeStore : IEdgeOrderedReceiptBatchLocalStore
     public async ValueTask MarkOrderedReceiptsConfirmedAsync(EdgeScope scope, IReadOnlyList<EdgeMutation> mutations,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(mutations);
         if (mutations.Count is < 1 or > 1000) { throw new ArgumentOutOfRangeException(nameof(mutations)); }
         var identities = new HashSet<Guid>();
         foreach (var mutation in mutations)
         {
-            ArgumentNullException.ThrowIfNull(mutation);
+            BlueTuskGuard.NotNull(mutation);
             if (mutation.Scope != scope || !identities.Add(mutation.Id)) { throw new EdgeMutationIdentityException(); }
         }
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);

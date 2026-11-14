@@ -59,7 +59,11 @@ internal sealed class SchemaModelBudget(SchemaSnapshotLimits limits)
 
     public static List<T> Materialize<T>(IEnumerable<T> source, int maximum, Action<T> validate) where T : class
     {
+#if NET6_0_OR_GREATER
         if (source.TryGetNonEnumeratedCount(out var count) && count > maximum) { throw new SchemaCaptureLimitException(); }
+#else
+        if (source is ICollection<T> collection && collection.Count > maximum) { throw new SchemaCaptureLimitException(); }
+#endif
         var values = new List<T>();
         foreach (var item in source)
         {

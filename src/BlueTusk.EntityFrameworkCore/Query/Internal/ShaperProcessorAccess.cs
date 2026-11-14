@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Query;
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
-// The members of EF Core 10's relational shaper processor that BlueTusk's value-type JSON materialization uses: the
+// The members of EF Core's relational shaper processor that BlueTusk's value-type JSON materialization uses: the
 // processor of the shaped query being compiled, its projection index lookup, and its JSON column reader generation.
 internal static class ShaperProcessorAccess
 {
@@ -18,7 +18,12 @@ internal static class ShaperProcessorAccess
         ?? throw Missing("GetProjectionIndex");
 
     private static readonly MethodInfo GenerateJsonReaderMethod = CurrentField.FieldType
-            .GetMethod("GenerateJsonReader", BindingFlags.Instance | BindingFlags.NonPublic, [typeof(int), typeof(ITypeBase)])
+            .GetMethod("GenerateJsonReader", BindingFlags.Instance | BindingFlags.NonPublic,
+#if BLUETUSK_EF11_OR_GREATER
+                [typeof(int), typeof(ITypeBase), typeof(IColumnBase)])
+#else
+                [typeof(int), typeof(ITypeBase)])
+#endif
         ?? throw Missing("GenerateJsonReader");
 
     public static bool IsProcessor(ExpressionVisitor visitor)
@@ -30,8 +35,14 @@ internal static class ShaperProcessorAccess
     public static object GetProjectionIndex(object processor, ProjectionBindingExpression projectionBinding)
         => GetProjectionIndexMethod.Invoke(processor, [projectionBinding])!;
 
+#if BLUETUSK_EF11_OR_GREATER
+    public static ParameterExpression GenerateJsonReader(
+        object processor, int jsonColumnIndex, ITypeBase structuralType, IColumnBase? jsonColumn = null)
+        => (ParameterExpression)GenerateJsonReaderMethod.Invoke(processor, [jsonColumnIndex, structuralType, jsonColumn])!;
+#else
     public static ParameterExpression GenerateJsonReader(object processor, int jsonColumnIndex, ITypeBase structuralType)
         => (ParameterExpression)GenerateJsonReaderMethod.Invoke(processor, [jsonColumnIndex, structuralType])!;
+#endif
 
     private static InvalidOperationException Missing(string member)
         => new($"The EF Core shaper processor member '{member}' that BlueTusk extends was not found.");

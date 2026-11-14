@@ -1308,7 +1308,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
 
     private static string GetProductVersion(Assembly assembly)
     {
-        ArgumentNullException.ThrowIfNull(assembly);
+        BlueTuskGuard.NotNull(assembly);
         var informational = assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion;

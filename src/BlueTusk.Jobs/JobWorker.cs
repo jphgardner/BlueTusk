@@ -37,7 +37,7 @@ public sealed class JobHandlerRegistry
 
     public JobHandlerRegistry Register<T>(string jobType, JsonTypeInfo<T> typeInfo, IJobHandler<T> handler)
     {
-        ArgumentNullException.ThrowIfNull(handler);
+        BlueTuskGuard.NotNull(handler);
         return Register(jobType, typeInfo, handler.ExecuteAsync);
     }
 
@@ -45,8 +45,8 @@ public sealed class JobHandlerRegistry
         string jobType, JsonTypeInfo<T> typeInfo, Func<T, JobExecutionContext, CancellationToken, ValueTask> handler)
     {
         JobValidation.Name(jobType, nameof(jobType));
-        ArgumentNullException.ThrowIfNull(typeInfo);
-        ArgumentNullException.ThrowIfNull(handler);
+        BlueTuskGuard.NotNull(typeInfo);
+        BlueTuskGuard.NotNull(handler);
         if (_handlers.Count >= 128)
         {
             throw new InvalidOperationException("A worker registry supports at most 128 job types.");
@@ -86,10 +86,15 @@ public sealed record JobRetryPolicy
     public TimeSpan GetDelay(int attempt)
     {
         Validate();
-        ArgumentOutOfRangeException.ThrowIfLessThan(attempt, 1);
+        BlueTuskGuard.NotLessThan(attempt, 1);
         double ticks = Math.Min(MaximumDelay.Ticks, InitialDelay.Ticks * Math.Pow(2, Math.Min(attempt - 1, 62)));
         // One-sided jitter avoids exceeding the configured ceiling.
-        ticks *= 1 - Random.Shared.NextDouble() * JitterFraction;
+#if NET6_0_OR_GREATER
+        var random = Random.Shared.NextDouble();
+#else
+        var random = System.Security.Cryptography.RandomNumberGenerator.GetInt32(int.MaxValue) / (double)int.MaxValue;
+#endif
+        ticks *= 1 - random * JitterFraction;
         return TimeSpan.FromTicks((long)ticks);
     }
 
@@ -119,12 +124,12 @@ public sealed record JobWorkerOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(Concurrency, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(Concurrency, 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(ClaimBatchSize, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(ClaimBatchSize, 256);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumInFlightPayloadBytes, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumInFlightPayloadBytes, 1_073_741_824);
+        BlueTuskGuard.NotLessThan(Concurrency, 1);
+        BlueTuskGuard.NotGreaterThan(Concurrency, 1024);
+        BlueTuskGuard.NotLessThan(ClaimBatchSize, 1);
+        BlueTuskGuard.NotGreaterThan(ClaimBatchSize, 256);
+        BlueTuskGuard.NotLessThan(MaximumInFlightPayloadBytes, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumInFlightPayloadBytes, 1_073_741_824);
         JobValidation.Duration(LeaseDuration, nameof(LeaseDuration), TimeSpan.FromDays(1));
         JobValidation.Duration(HeartbeatInterval, nameof(HeartbeatInterval), TimeSpan.FromHours(8));
         JobValidation.Duration(PollInterval, nameof(PollInterval), TimeSpan.FromMinutes(1));
@@ -135,7 +140,7 @@ public sealed record JobWorkerOptions
             throw new ArgumentException("Heartbeat interval must be at most one third of the lease duration.");
         }
 
-        ArgumentNullException.ThrowIfNull(RetryPolicy);
+        BlueTuskGuard.NotNull(RetryPolicy);
         RetryPolicy.Validate();
     }
 }
@@ -153,9 +158,9 @@ public sealed class JobWorker
 
     public JobWorker(PostgreSqlJobStore store, JobScope scope, string owner, JobHandlerRegistry handlers, JobWorkerOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(handlers);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(handlers);
         JobValidation.Name(owner, nameof(owner));
         _options = options ?? new JobWorkerOptions();
         _options.Validate();
@@ -211,7 +216,7 @@ public sealed class JobWorker
                 try
                 {
                     if (_options.DispatchRecurringSchedules &&
-                        (lastSchedulePoll == 0 || Stopwatch.GetElapsedTime(lastSchedulePoll) >= _options.SchedulePollInterval))
+                        (lastSchedulePoll == 0 || BlueTuskRuntime.GetElapsedTime(lastSchedulePoll) >= _options.SchedulePollInterval))
                     {
                         _ = await _store.DispatchSchedulesAsync(_scope, _options.ClaimBatchSize, cancellationToken).ConfigureAwait(false);
                         lastSchedulePoll = Stopwatch.GetTimestamp();
@@ -291,7 +296,7 @@ public sealed class JobWorker
         {
             await heartbeatStop.CancelAsync().ConfigureAwait(false);
             await heartbeat.ConfigureAwait(false);
-            JobTelemetry.HandlerDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            JobTelemetry.HandlerDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
         }
 
         if (execution.IsCancellationRequested)
@@ -322,7 +327,11 @@ public sealed class JobWorker
 
     private async Task HeartbeatAsync(JobLease lease, CancellationTokenSource execution, CancellationToken cancellationToken)
     {
+#if NET5_0
+        using var timer = new JobHeartbeatTimer(_options.HeartbeatInterval);
+#else
         using var timer = new PeriodicTimer(_options.HeartbeatInterval);
+#endif
         try
         {
             while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))

@@ -13,7 +13,7 @@ public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore, IEdge
 
     public SqliteEdgeStore(SqliteEdgeOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         Options = options;
         var path = Path.GetFullPath(options.DatabasePath);
@@ -112,7 +112,7 @@ public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore, IEdge
 
     public async ValueTask ActivateScopeAsync(EdgeScope scope, EdgeEpochChangePolicy policy = EdgeEpochChangePolicy.RejectIfPending, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         if (!Enum.IsDefined(policy))
         {
             throw new ArgumentOutOfRangeException(nameof(policy));
@@ -294,7 +294,7 @@ public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore, IEdge
 
     private static void ScopeParameters(SqliteCommand command, EdgeScope scope, bool includeEpoch = true)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         command.Parameters.AddWithValue("tenant", scope.Tenant);
         command.Parameters.AddWithValue("scope", scope.Id);
         if (includeEpoch)
@@ -318,7 +318,7 @@ public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore, IEdge
 
     private void ValidateRecords(IReadOnlyList<EdgeRecord> records)
     {
-        ArgumentNullException.ThrowIfNull(records);
+        BlueTuskGuard.NotNull(records);
         if (records.Count > Options.MaxBatchRecords)
         {
             throw new EdgeCapacityException("Edge batch exceeds the record count budget.");
@@ -328,7 +328,7 @@ public sealed partial class SqliteEdgeStore : IEdgeOrderedBatchLocalStore, IEdge
         long bytes = 0;
         foreach (var record in records)
         {
-            ArgumentNullException.ThrowIfNull(record);
+            BlueTuskGuard.NotNull(record);
             if (record.Payload.Length > Options.MaxRecordBytes || !ids.Add(record.Id))
             {
                 throw new EdgeCapacityException("Edge batch has an oversized payload or duplicate document key.");

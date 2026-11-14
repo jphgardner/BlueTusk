@@ -18,8 +18,8 @@ public static class StudioControlPlaneEndpoints
     public static IServiceCollection AddBlueTuskStudioControlPlane<TResolver>(this IServiceCollection services,
         StudioControlPlaneOptions options) where TResolver : class, IStudioControlPlaneScopeResolver
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(services);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         services.AddSingleton(options);
         services.AddSingleton<StudioControlPlaneAdmission>();
@@ -27,11 +27,16 @@ public static class StudioControlPlaneEndpoints
         return services;
     }
 
+#if NET7_0_OR_GREATER
     public static RouteGroupBuilder MapBlueTuskStudioControlPlane(this IEndpointRouteBuilder endpoints)
+#else
+    public static IEndpointConventionBuilder MapBlueTuskStudioControlPlane(this IEndpointRouteBuilder endpoints)
+#endif
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        BlueTuskGuard.NotNull(endpoints);
         var studio = endpoints.ServiceProvider.GetRequiredService<StudioOptions>();
         var options = endpoints.ServiceProvider.GetRequiredService<StudioControlPlaneOptions>();
+#if NET7_0_OR_GREATER
         var group = endpoints.MapGroup(studio.Path + "/operations").RequireAuthorization(studio.ReadPolicy);
         group.AddEndpointFilter(async (context, next) =>
         {
@@ -39,8 +44,17 @@ public static class StudioControlPlaneEndpoints
             context.HttpContext.Response.Headers.XContentTypeOptions = "nosniff";
             return await next(context).ConfigureAwait(false);
         });
-        group.MapGet("/live", InspectAsync);
-        group.MapPost("/replay", ReplayAsync).RequireAuthorization(options.ReplayPolicy);
+#else
+        var group = new LegacyStudioRoutes(endpoints, studio.Path + "/operations", studio.ReadPolicy);
+#endif
+        group.MapGet("/live", (HttpContext context) => InspectAsync(context,
+            context.RequestServices.GetRequiredService<IStudioControlPlaneScopeResolver>(), options,
+            context.RequestServices.GetRequiredService<StudioControlPlaneAdmission>()));
+        group.MapPost("/replay", (HttpContext context) => ReplayAsync(context,
+            context.RequestServices.GetRequiredService<IAntiforgery>(),
+            context.RequestServices.GetRequiredService<IStudioControlPlaneScopeResolver>(),
+            context.RequestServices.GetRequiredService<IStudioAuditSink>(), options, studio,
+            context.RequestServices.GetRequiredService<StudioControlPlaneAdmission>())).RequireAuthorization(options.ReplayPolicy);
         return group;
     }
 
@@ -114,7 +128,7 @@ public static class StudioControlPlaneEndpoints
                 if (permitted.Count > count) { writer.WriteString("next", permitted[count - 1].SubscriptionFingerprint); }
                 else { writer.WriteNull("next"); }
                 writer.WriteStartArray("replayTargets");
-                foreach (var alias in scope.ReplayTargets.Keys.Order(StringComparer.Ordinal))
+                foreach (var alias in scope.ReplayTargets.Keys.OrderBy(static value => value, StringComparer.Ordinal))
                 {
                     writer.WriteStringValue(alias);
                     Check(writer, options.MaximumReplyBytes);
@@ -149,7 +163,7 @@ public static class StudioControlPlaneEndpoints
             deadline.CancelAfter(TimeSpan.FromSeconds(options.TimeoutSeconds));
             var bytes = await ReadAsync(context.Request, Math.Min(studio.MaximumRequestBytes, 16 * 1024), deadline.Token).ConfigureAwait(false);
             var request = JsonSerializer.Deserialize(bytes, StudioControlPlaneJsonContext.Default.StudioReplayRequest) ?? throw new JsonException();
-            if (request.OperationId.Version != 7 || !Alias(request.Target) || string.IsNullOrWhiteSpace(request.Reason) ||
+            if (!StudioOperationId.IsVersion7(request.OperationId) || !Alias(request.Target) || string.IsNullOrWhiteSpace(request.Reason) ||
                 request.Reason.Length > 2048 || request.Confirmation != "ReplayQuarantine:" + request.Target)
             {
                 throw new ArgumentException("Invalid replay request.");
@@ -157,8 +171,8 @@ public static class StudioControlPlaneEndpoints
             var scope = await resolver.ResolveAsync(context.User, deadline.Token).ConfigureAwait(false);
             ValidateScope(scope, options);
             if (!scope.ReplayTargets.TryGetValue(request.Target, out var target)) { context.Response.StatusCode = StatusCodes.Status403Forbidden; return; }
-            var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("ReplayQuarantine:" + request.Target)));
-            var scopeId = "replay:" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(target)));
+            var fingerprint = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("ReplayQuarantine:" + request.Target)));
+            var scopeId = "replay:" + BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(target)));
             await audit.RecordAsync(new(request.OperationId, scope.Actor.ActorId, fingerprint, "replay-attempt", 0) { ScopeId = scopeId }, deadline.Token).ConfigureAwait(false);
             try
             {
@@ -182,12 +196,12 @@ public static class StudioControlPlaneEndpoints
 
     private static void ValidateScope(StudioControlPlaneScope scope, StudioControlPlaneOptions options)
     {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(scope.LiveQueries);
-        ArgumentNullException.ThrowIfNull(scope.Operations);
-        ArgumentNullException.ThrowIfNull(scope.Actor);
-        ArgumentNullException.ThrowIfNull(scope.SubscriptionFingerprints);
-        ArgumentNullException.ThrowIfNull(scope.ReplayTargets);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(scope.LiveQueries);
+        BlueTuskGuard.NotNull(scope.Operations);
+        BlueTuskGuard.NotNull(scope.Actor);
+        BlueTuskGuard.NotNull(scope.SubscriptionFingerprints);
+        BlueTuskGuard.NotNull(scope.ReplayTargets);
         if (scope.SubscriptionFingerprints.Count > options.MaximumAuthorizedSubscriptions || scope.ReplayTargets.Count > 1000)
         {
             throw new StudioReplyLimitException();
@@ -202,7 +216,7 @@ public static class StudioControlPlaneEndpoints
         }
     }
 
-    private static bool Alias(string? value) => value is { Length: > 0 and <= 128 } && value.All(character => char.IsAsciiLetterOrDigit(character) || character is '_' or '-' or '.');
+    private static bool Alias(string? value) => value is { Length: > 0 and <= 128 } && value.All(character => BlueTuskRuntime.IsAsciiLetterOrDigit(character) || character is '_' or '-' or '.');
     private static bool Fingerprint(string value) => value.Length == 64 && value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
     private static void Integer(Utf8JsonWriter writer, string name, long value) => writer.WriteString(name, value.ToString(CultureInfo.InvariantCulture));
     private static void Check(Utf8JsonWriter writer, int maximum)

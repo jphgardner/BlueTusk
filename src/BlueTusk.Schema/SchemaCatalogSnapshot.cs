@@ -18,7 +18,7 @@ public sealed record SchemaCatalogLimits
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(Relations);
+        BlueTuskGuard.NotNull(Relations);
         Relations.Validate();
         if (MaximumEntries is < 1 or > 1_000_000 || MaximumEnumLabels is < 1 or > 2_000_000 ||
             MaximumDomainConstraints is < 1 or > 1_000_000 || MaximumMetadataBytes is < 1 or > 1024 * 1024 * 1024)
@@ -95,7 +95,7 @@ public sealed class SchemaCatalogSnapshot
         IEnumerable<SchemaPublicationMemberContract>? publications = null, IEnumerable<SchemaExtensionContract>? extensions = null,
         SchemaCatalogLimits? limits = null)
     {
-        ArgumentNullException.ThrowIfNull(relations);
+        BlueTuskGuard.NotNull(relations);
         limits ??= SchemaCatalogLimits.Default;
         limits.Validate();
         // Revalidate independently constructed relation models against this envelope's admission contract.
@@ -227,7 +227,7 @@ public sealed class SchemaCatalogSnapshot
         }
         Number(Extensions.Count);
         foreach (var value in Extensions) { Text(value.Name); Text(value.Schema); Text(value.Version); Number(value.IsRelocatable ? 1 : 0); }
-        return Convert.ToHexStringLower(hash.GetHashAndReset());
+        return BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 }
 

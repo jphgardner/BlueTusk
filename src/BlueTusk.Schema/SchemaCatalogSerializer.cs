@@ -7,9 +7,9 @@ public static class SchemaCatalogSerializer
 {
     public static byte[] Serialize(SchemaCatalogSnapshot snapshot, int maximumDocumentBytes = SchemaSnapshotSerializer.MaximumDocumentBytes)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumDocumentBytes, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumDocumentBytes, SchemaSnapshotSerializer.MaximumDocumentBytes);
+        BlueTuskGuard.NotNull(snapshot);
+        BlueTuskGuard.NotLessThan(maximumDocumentBytes, 1);
+        BlueTuskGuard.NotGreaterThan(maximumDocumentBytes, SchemaSnapshotSerializer.MaximumDocumentBytes);
         var relations = new SchemaSnapshotEnvelope(SchemaSnapshot.CurrentFormatVersion, snapshot.Relations.Fingerprint,
             snapshot.Relations.Relations.Select(value => new SchemaRelationDocument(value.Identity.Schema, value.Identity.Name,
                 value.Kind, value.RowSecurity, value.ForceRowSecurity, value.ReplicaIdentity, value.Columns.ToArray(),

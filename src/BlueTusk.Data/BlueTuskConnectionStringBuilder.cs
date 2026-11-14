@@ -1,4 +1,6 @@
+#if NET8_0_OR_GREATER
 using System.Collections.Frozen;
+#endif
 using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
@@ -21,7 +23,11 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
     internal const string RejectUnknownKeywordsSwitch =
         "BlueTusk.Data.RejectUnknownConnectionStringKeywords";
 
+#if NET8_0_OR_GREATER
     private static readonly FrozenSet<string> KnownKeywords = new[]
+#else
+    private static readonly HashSet<string> KnownKeywords = new(StringComparer.OrdinalIgnoreCase)
+#endif
     {
         "Host",
         "Port",
@@ -46,7 +52,11 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         "Connection Lifetime",
         "Max Auto Prepare",
         "Auto Prepare Min Usages",
+#if NET8_0_OR_GREATER
     }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+#else
+    };
+#endif
 
     public BlueTuskConnectionStringBuilder()
     {

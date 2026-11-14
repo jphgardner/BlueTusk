@@ -2,21 +2,17 @@
 
 Published BlueTusk `1.0.0` and `1.1.0-rc.1` packages target .NET 10. Work in
 this checkout is expanding runtime compatibility to every .NET major from
-.NET 5 through .NET 11. This is ongoing migration work; successful foundation
-tests do not establish full product support or qualify a release.
+.NET 5 through .NET 11. The compatibility inventory records migration status
+for each package.
 
 The executable inventory is
 [`eng/dotnet-compatibility.json`](../../eng/dotnet-compatibility.json).
 Every product-family package appears in it. Runtime packages remain `pending`
-until their declared targets have executable tests. Analyzers and templates
-are identified separately because they do not execute as application runtime
-libraries. New product-family packages cannot silently escape the inventory.
+until their declared targets have executable tests. The inventory records
+analyzers and templates as build-time packages.
 
-The Streams, Sync, and Live Aspire packages target .NET 8–11 because
-[Aspire.Hosting 13.6.5](https://www.nuget.org/packages/Aspire.Hosting/13.6.5)
-requires .NET 8 or later. The provider and corresponding non-Aspire packages
-target the full runtime range. The inventory records each upstream minimum
-and its source.
+The Streams, Sync, and Live Aspire packages target .NET 8–11. Their hosting
+dependency requires .NET 8 or later. [Aspire.Hosting 13.6.5](https://www.nuget.org/packages/Aspire.Hosting/13.6.5)
 
 The EF Core provider and its add-ons use the EF Core major selected for each
 application target.
@@ -44,7 +40,7 @@ The concrete BlueTusk types support the same provider operations on each target.
 The repository builds with the SDK pinned in `global.json` (currently
 11.0.100). This build-time requirement is separate from the application's
 runtime version. The C# compiler and private PolySharp build dependency supply
-language support; runtime-specific code paths preserve functionality where
+language support. Runtime-specific code paths preserve functionality where
 framework APIs differ. Libraries may use a dependency's compatible .NET
 Standard assets on an older runtime. The compatibility suite verifies BlueTusk
 behavior on the requested runtime. Microsoft tracks upstream servicing
@@ -53,10 +49,9 @@ separately in its [.NET support policy](https://dotnet.microsoft.com/en-us/platf
 ## Run the compatibility matrix
 
 PowerShell 7 and the platform's normal .NET native prerequisites are required.
-The installer creates an isolated SDK/runtime installation under `artifacts`;
-it does not replace the system installation. Versions come from the checked-in
-contract, and each downloaded archive must match the SHA512 in Microsoft's
-official release metadata before extraction.
+The installer creates an isolated SDK/runtime installation under `artifacts`.
+Versions come from the checked-in contract, and each downloaded archive must
+match the SHA512 in Microsoft's official release metadata before extraction.
 
 ```powershell
 ./eng/install-dotnet-compatibility.ps1
@@ -85,7 +80,9 @@ database. The runner starts it automatically from the digest-pinned Linux
 image or the SHA256-verified Windows binaries. It generates a per-run SCRAM
 password, binds the server to loopback, and stops it after testing. The legacy
 Linux test container shares the PostgreSQL container's network namespace. CI
-evidence records the server version and distribution identity.
+evidence records the server version and distribution identity. Suites that
+require an extension use the server and extension versions pinned for that
+suite in the contract.
 
 PgVector tests use pgvector 0.8.6. Windows builds the extension from the
 verified upstream source using Visual C++ and the PostgreSQL archive headers.
@@ -102,16 +99,15 @@ results. For a registered command-line tool it installs the packed tool for
 the selected target and runs its help command. It keeps build logs, test
 assemblies and runtime configurations, TRX results, package and payload
 hashes, source fingerprints, and a JSON report under
-`artifacts/dotnet-compatibility/runs`. A report records
-remaining package coverage explicitly. It is local validation evidence, not a
-claim of independently approved immutable release provenance.
+`artifacts/dotnet-compatibility/runs`. A report also records pending package
+coverage.
 
 The dedicated
 [`dotnet-compatibility` workflow](../../.github/workflows/dotnet-compatibility.yml)
 executes each registered suite on Windows and Linux for every contracted .NET
 major. Its summary displays both covered and pending package counts. As
 migration work completes, add a package's tests and change its status to
-`covered`; the verifier checks project targeting and an explicit unconditional
+`covered`. The verifier checks project targeting and an explicit unconditional
 project-reference chain from each registered test suite. Shared provider tests
 can therefore also cover the core libraries they execute through the provider.
 
@@ -123,9 +119,8 @@ Before declaring complete runtime support, the following must pass:
 ```
 
 The full gate accepts documented upstream minimums, and fails if any runtime
-package remains pending. Passing it is additional compatibility evidence; the
-existing package, PostgreSQL, security, performance, endurance, and independent
-release-approval gates remain applicable.
+package remains pending. Release qualification also requires the package,
+PostgreSQL, security, performance, endurance, and release-approval gates.
 
 An individual run never declares full runtime qualification. Collect the
 reports for every Windows/Linux/framework/test-project pair from the same
@@ -140,15 +135,6 @@ fingerprints, stale contracts, wrong compiled frameworks, modified payloads,
 zero tests, failures, and skipped tests. The CI workflow runs this aggregate
 check after its matrix jobs. `-Historical` permits inspection of older source
 snapshots, and can never establish complete support for the current checkout.
-
-Verify the actual NuGet artifacts from the candidate feed as part of release qualification.
-
-```powershell
-./eng/verify-dotnet-compatibility-packages.ps1 -PackageDirectory $feedPath -RequireComplete
-```
-
-This verifies the expected framework assets and the embedded target framework
-and identity of each assembly.
 
 Run asset verification against the candidate NuGet feed after packing. The
 verifier checks the framework folders and nuspec dependency groups for

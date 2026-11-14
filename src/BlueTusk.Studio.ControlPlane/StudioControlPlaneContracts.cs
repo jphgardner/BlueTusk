@@ -27,17 +27,17 @@ public sealed record StudioControlPlaneOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(ReplayPolicy);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumSubscriptions, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumSubscriptions, 1000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumAuthorizedSubscriptions, MaximumSubscriptions);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumAuthorizedSubscriptions, 100_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumConcurrentOperations, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumConcurrentOperations, 64);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumReplyBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumReplyBytes, 16 * 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(TimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(TimeoutSeconds, 30);
+        BlueTuskGuard.NotNullOrWhiteSpace(ReplayPolicy);
+        BlueTuskGuard.NotLessThan(MaximumSubscriptions, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumSubscriptions, 1000);
+        BlueTuskGuard.NotLessThan(MaximumAuthorizedSubscriptions, MaximumSubscriptions);
+        BlueTuskGuard.NotGreaterThan(MaximumAuthorizedSubscriptions, 100_000);
+        BlueTuskGuard.NotLessThan(MaximumConcurrentOperations, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumConcurrentOperations, 64);
+        BlueTuskGuard.NotLessThan(MaximumReplyBytes, 1024);
+        BlueTuskGuard.NotGreaterThan(MaximumReplyBytes, 16 * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(TimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(TimeoutSeconds, 30);
     }
 }
 

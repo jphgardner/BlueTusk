@@ -5,7 +5,7 @@ public sealed partial class PostgreSqlJobStore
     /// <summary>Creates a fixed-interval schedule. Existing identities are never silently reconfigured.</summary>
     public async ValueTask<bool> CreateScheduleAsync(RecurringJobSchedule schedule, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(schedule);
+        BlueTuskGuard.NotNull(schedule);
         JobValidation.Name(schedule.Name, nameof(schedule.Name), 100);
         ValidateRequest(schedule.Job);
         JobValidation.Duration(schedule.Interval, nameof(schedule.Interval), TimeSpan.FromDays(365));
@@ -40,7 +40,7 @@ public sealed partial class PostgreSqlJobStore
     /// <summary>Advances schedules and inserts occurrences in one statement. Dispatchers may race safely.</summary>
     public async ValueTask<int> DispatchSchedulesAsync(JobScope scope, int maximumCount, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         ValidateBatch(maximumCount);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = CreateCommand(connection, transaction: null, $"""
@@ -71,7 +71,7 @@ public sealed partial class PostgreSqlJobStore
     /// <summary>Stops future occurrences; previously enqueued jobs retain their normal lifecycle.</summary>
     public async ValueTask<bool> DeleteScheduleAsync(JobScope scope, string name, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         JobValidation.Name(name, nameof(name), 100);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = CreateCommand(connection, transaction: null,

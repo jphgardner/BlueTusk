@@ -20,7 +20,7 @@ public sealed partial class PostgreSqlEventStore
 
     public PostgreSqlEventStore(DbDataSource dataSource, PostgreSqlEventsOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         _options = options ?? new PostgreSqlEventsOptions();
         _options.Validate();
         _dataSource = dataSource;
@@ -365,15 +365,15 @@ public sealed partial class PostgreSqlEventStore
         CancellationToken cancellationToken = default)
     {
         EventValidation.Transaction(connection, transaction);
-        ArgumentNullException.ThrowIfNull(stream);
-        ArgumentNullException.ThrowIfNull(events);
-        ArgumentOutOfRangeException.ThrowIfZero(events.Count);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(events.Count, _options.MaximumAppendEvents);
+        BlueTuskGuard.NotNull(stream);
+        BlueTuskGuard.NotNull(events);
+        BlueTuskGuard.NotZero(events.Count);
+        BlueTuskGuard.NotGreaterThan(events.Count, _options.MaximumAppendEvents);
         long byteCount = 0;
         var identities = new HashSet<Guid>();
         foreach (var value in events)
         {
-            ArgumentNullException.ThrowIfNull(value);
+            BlueTuskGuard.NotNull(value);
             byteCount += value.Payload.Length;
             if (value.Payload.Length > _options.MaximumEventBytes || byteCount > _options.MaximumAppendBytes)
             {
@@ -502,12 +502,12 @@ public sealed partial class PostgreSqlEventStore
     {
         EventValidation.Transaction(connection, transaction);
         EventValidation.Key(consumerId, nameof(consumerId));
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(handler);
-        ArgumentNullException.ThrowIfNull(value.Stream);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value.Sequence);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(handler);
+        BlueTuskGuard.NotNull(value.Stream);
+        BlueTuskGuard.NotNegativeOrZero(value.Sequence);
         EventValidation.Key(value.EventType, nameof(value));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value.Version);
+        BlueTuskGuard.NotNegativeOrZero(value.Version);
         if (value.EventId == Guid.Empty || value.Payload.IsEmpty || value.Payload.Length > _options.MaximumEventBytes)
         {
             throw new ArgumentException("Inbox events require a stable nonempty identity and a payload within the configured event bound.", nameof(value));
@@ -554,7 +554,7 @@ public sealed partial class PostgreSqlEventStore
         string ownerId, TimeSpan duration, CancellationToken cancellationToken = default)
     {
         EventValidation.Key(consumerId, nameof(consumerId));
-        ArgumentNullException.ThrowIfNull(stream);
+        BlueTuskGuard.NotNull(stream);
         EventValidation.Key(ownerId, nameof(ownerId));
         ValidateDuration(duration);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -635,7 +635,7 @@ public sealed partial class PostgreSqlEventStore
         int maximumEvents = 256, int maximumPayloadBytes = 8_388_608, CancellationToken cancellationToken = default)
     {
         ValidateLease(lease);
-        ArgumentNullException.ThrowIfNull(handler);
+        BlueTuskGuard.NotNull(handler);
         ValidateRead(lease.Stream, 0, maximumEvents, maximumPayloadBytes);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken)
@@ -704,7 +704,7 @@ public sealed partial class PostgreSqlEventStore
         CancellationToken cancellationToken = default)
     {
         EventValidation.Key(consumerId, nameof(consumerId));
-        ArgumentNullException.ThrowIfNull(stream);
+        BlueTuskGuard.NotNull(stream);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, null, $"""
             SELECT checkpoint FROM {_schema}.replay WHERE consumer_id = @consumer AND tenant_id = @tenant AND stream_id = @stream
@@ -758,22 +758,22 @@ public sealed partial class PostgreSqlEventStore
 
     private void ValidateRead(EventStreamKey stream, long afterSequence, int maximumEvents, int maximumPayloadBytes)
     {
-        ArgumentNullException.ThrowIfNull(stream);
-        ArgumentOutOfRangeException.ThrowIfNegative(afterSequence);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumEvents);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumEvents, _options.MaximumAppendEvents);
+        BlueTuskGuard.NotNull(stream);
+        BlueTuskGuard.NotNegative(afterSequence);
+        BlueTuskGuard.NotNegativeOrZero(maximumEvents);
+        BlueTuskGuard.NotGreaterThan(maximumEvents, _options.MaximumAppendEvents);
         // A byte budget smaller than an allowed individual event can permanently stall the cursor.
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumPayloadBytes, _options.MaximumEventBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumPayloadBytes, _options.MaximumAppendBytes);
+        BlueTuskGuard.NotLessThan(maximumPayloadBytes, _options.MaximumEventBytes);
+        BlueTuskGuard.NotGreaterThan(maximumPayloadBytes, _options.MaximumAppendBytes);
     }
 
     private static void ValidateLease(EventReplayLease lease)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         EventValidation.Key(lease.ConsumerId, nameof(lease));
         EventValidation.Key(lease.OwnerId, nameof(lease));
-        ArgumentNullException.ThrowIfNull(lease.Stream);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(lease.FencingToken);
+        BlueTuskGuard.NotNull(lease.Stream);
+        BlueTuskGuard.NotNegativeOrZero(lease.FencingToken);
     }
 
     private static void ValidateDuration(TimeSpan duration)

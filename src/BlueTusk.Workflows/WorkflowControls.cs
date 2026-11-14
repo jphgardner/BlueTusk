@@ -13,7 +13,7 @@ public sealed partial class PostgreSqlWorkflowStore
         ValidateKey(key);
         WorkflowOptions.Name(name, nameof(name), 100);
         WorkflowOptions.Name(identity, nameof(identity));
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(payload.Length, _options.MaximumSignalBytes);
+        BlueTuskGuard.NotGreaterThan(payload.Length, _options.MaximumSignalBytes);
         await using var connection = await _source.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var snapshot = await SnapshotAsync(connection, transaction, key, locked: true, cancellationToken).ConfigureAwait(false);
@@ -139,7 +139,7 @@ public sealed partial class PostgreSqlWorkflowStore
     {
         ValidateKey(key);
         WorkflowOptions.Range(targetVersion, 1, int.MaxValue, nameof(targetVersion));
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
+        BlueTuskGuard.NotNegative(expectedRevision);
         await using var connection = await _source.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var snapshot = await SnapshotAsync(connection, transaction, key, locked: true, cancellationToken).ConfigureAwait(false);
@@ -201,7 +201,7 @@ public sealed partial class PostgreSqlWorkflowStore
     public async ValueTask<WorkflowRecoveryResult> ReconcileAsync(JobScope scope, int maximumCount,
         WorkflowRecoveryCursor? after = null, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         Batch(maximumCount);
         if (after is not null)
         {

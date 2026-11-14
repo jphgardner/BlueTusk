@@ -16,7 +16,7 @@ internal sealed class BoundedHealthProbe(string prefix, TimeSpan timeout, int ma
     }
     internal async Task<HealthCheckResult> CheckAsync(HealthCheckContext context, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(context); cancellationToken.ThrowIfCancellationRequested();
+        BlueTuskGuard.NotNull(context); cancellationToken.ThrowIfCancellationRequested();
         var started = Stopwatch.GetTimestamp();
         if (Interlocked.Increment(ref _active) > maximum)
         { Interlocked.Decrement(ref _active); return Observe(HealthCheckResult.Degraded(prefix + "_health_probe_saturated"), started); }
@@ -49,6 +49,6 @@ internal sealed class BoundedHealthProbe(string prefix, TimeSpan timeout, int ma
     private void Record(string status, long started)
     {
         var tag = new KeyValuePair<string, object?>("status", status);
-        results.Add(1, tag); duration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds, tag);
+        results.Add(1, tag); duration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds, tag);
     }
 }

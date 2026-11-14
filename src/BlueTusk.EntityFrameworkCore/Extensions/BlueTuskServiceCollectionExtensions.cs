@@ -1,16 +1,16 @@
 using System.ComponentModel;
 using BlueTusk.Data.Internal;
-#if BLUETUSK_EF10
+#if BLUETUSK_EF10_OR_GREATER
 using BlueTusk.EntityFrameworkCore.ChangeTracking.Internal;
 #endif
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
-#if BLUETUSK_EF10
+#if BLUETUSK_EF8_OR_GREATER
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 #endif
 using BlueTusk.EntityFrameworkCore.Migrations.Internal;
 using BlueTusk.EntityFrameworkCore.Query.Internal;
 using BlueTusk.EntityFrameworkCore.Storage.Internal;
-#if BLUETUSK_EF10
+#if BLUETUSK_EF10_OR_GREATER
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 #endif
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -46,9 +46,13 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<ISqlGenerationHelper, BlueTuskSqlGenerationHelper>()
             .TryAdd<IRelationalAnnotationProvider, BlueTuskAnnotationProvider>()
             .TryAdd<IModelValidator, BlueTuskModelValidator>()
-#if BLUETUSK_EF10
+#if BLUETUSK_EF10_OR_GREATER
             .TryAdd<IModelRuntimeInitializer, BlueTuskModelRuntimeInitializer>()
+#endif
+#if BLUETUSK_EF8_OR_GREATER
             .TryAdd<IConstructorBindingFactory, BlueTuskConstructorBindingFactory>()
+#endif
+#if BLUETUSK_EF10_OR_GREATER
             .TryAdd<IChangeDetector, BlueTuskChangeDetector>()
 #endif
             .TryAdd<IModelCustomizer, BlueTuskModelCustomizer>()
@@ -58,9 +62,7 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IMigrationsModelDiffer, BlueTuskMigrationsModelDiffer>()
             .TryAdd<IMigrationsSqlGenerator, BlueTuskMigrationsSqlGenerator>()
             .TryAdd<IHistoryRepository, BlueTuskHistoryRepository>()
-#if BLUETUSK_EF10_OR_GREATER
             .TryAdd<IMigrator, BlueTuskMigrator>()
-#endif
 #if BLUETUSK_EF7_OR_GREATER
             .TryAdd<IAggregateMethodCallTranslatorProvider, BlueTuskAggregateMethodCallTranslatorProvider>()
 #endif
@@ -70,11 +72,11 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IRelationalSqlTranslatingExpressionVisitorFactory, BlueTuskSqlTranslatingExpressionVisitorFactory>()
             .TryAdd<IQueryCompilationContextFactory, BlueTuskQueryCompilationContextFactory>()
             .TryAdd<IQueryTranslationPreprocessorFactory, BlueTuskQueryTranslationPreprocessorFactory>()
-#if BLUETUSK_EF10
+#if BLUETUSK_EF9_OR_GREATER
             .TryAdd<IQueryTranslationPostprocessorFactory, BlueTuskQueryTranslationPostprocessorFactory>()
 #endif
             .TryAdd<IQuerySqlGeneratorFactory, BlueTuskQuerySqlGeneratorFactory>()
-#if BLUETUSK_EF10
+#if BLUETUSK_EF10_OR_GREATER
             .TryAdd<IShapedQueryCompilingExpressionVisitorFactory, BlueTuskShapedQueryCompilingExpressionVisitorFactory>()
             .TryAdd<IStructuralTypeMaterializerSource, BlueTuskStructuralTypeMaterializerSource>()
 #endif

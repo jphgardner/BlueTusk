@@ -23,23 +23,23 @@ public sealed record SqliteEdgeOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(DatabasePath);
-        ArgumentNullException.ThrowIfNull(TimeProvider);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRecordBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxCacheRecords);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxCacheBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxStagedRecords);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxStagedBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPendingMutations);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPendingBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxReceiptRecords);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxScopes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxBatchRecords);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxBatchBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPageSize);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPageBytes);
-        ArgumentOutOfRangeException.ThrowIfLessThan(BusyTimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(BusyTimeoutSeconds, 60);
+        BlueTuskGuard.NotNullOrWhiteSpace(DatabasePath);
+        BlueTuskGuard.NotNull(TimeProvider);
+        BlueTuskGuard.NotNegativeOrZero(MaxRecordBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxCacheRecords);
+        BlueTuskGuard.NotNegativeOrZero(MaxCacheBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxStagedRecords);
+        BlueTuskGuard.NotNegativeOrZero(MaxStagedBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxPendingMutations);
+        BlueTuskGuard.NotNegativeOrZero(MaxPendingBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxReceiptRecords);
+        BlueTuskGuard.NotNegativeOrZero(MaxScopes);
+        BlueTuskGuard.NotNegativeOrZero(MaxBatchRecords);
+        BlueTuskGuard.NotNegativeOrZero(MaxBatchBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxPageSize);
+        BlueTuskGuard.NotNegativeOrZero(MaxPageBytes);
+        BlueTuskGuard.NotLessThan(BusyTimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(BusyTimeoutSeconds, 60);
         if (MaxRecordBytes > MaxCacheBytes || MaxRecordBytes > MaxStagedBytes || MaxRecordBytes > MaxPendingBytes || MaxRecordBytes > MaxBatchBytes ||
             MaxRecordBytes > MaxPageBytes || MaxBatchRecords > 10_000 || MaxPageSize > 10_000)
         {

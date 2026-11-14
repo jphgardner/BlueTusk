@@ -1,14 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
+    <BlueTuskLegacyDataSourcePublicApi>true</BlueTuskLegacyDataSourcePublicApi>
     <BlueTuskProductFamily>Schema</BlueTuskProductFamily>
     <Description>Consistent PostgreSQL catalogue snapshots, canonical schema contracts, and consumer compatibility analysis.</Description>
-    <IsAotCompatible>true</IsAotCompatible>
-    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+    <IsTrimmable Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">true</IsTrimmable>
   </PropertyGroup>
   <Import Project="..\..\eng\versions\Schema.props" />
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Client\BlueTusk.Client.csproj" />
     <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource" Alias="DbDataSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))" />
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
   </ItemGroup>
 </Project>

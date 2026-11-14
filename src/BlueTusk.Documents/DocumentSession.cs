@@ -39,7 +39,7 @@ public sealed class DocumentSession : IDisposable
 
     public void Replace<T>(DocumentCollectionDefinition<T> collection, string id, T value, long expectedRevision)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedRevision);
+        BlueTuskGuard.NotNegativeOrZero(expectedRevision);
         Stage(Serialize(collection, id, value, expectedRevision));
     }
 
@@ -53,7 +53,7 @@ public sealed class DocumentSession : IDisposable
     public void Patch<T>(DocumentCollectionDefinition<T> collection, string id, long expectedRevision, IReadOnlyList<DocumentPatch> operations)
     {
         Validate(collection, id, expectedRevision);
-        ArgumentNullException.ThrowIfNull(operations);
+        BlueTuskGuard.NotNull(operations);
         if (operations.Count is 0 or > 128)
         {
             throw new ArgumentException("A patch requires between 1 and 128 operations.", nameof(operations));
@@ -63,7 +63,7 @@ public sealed class DocumentSession : IDisposable
         long bytes = 0;
         foreach (var patch in patches)
         {
-            ArgumentNullException.ThrowIfNull(patch);
+            BlueTuskGuard.NotNull(patch);
             bytes = checked(bytes + Encoding.UTF8.GetByteCount(patch.PathJson) + (patch.JsonValue is null ? 0 : Encoding.UTF8.GetByteCount(patch.JsonValue)));
         }
 
@@ -312,8 +312,8 @@ public sealed class DocumentSession : IDisposable
 
     private Mutation Serialize<T>(DocumentCollectionDefinition<T> collection, string id, T value, long? expectedRevision)
     {
-        ArgumentNullException.ThrowIfNull(collection);
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(collection);
+        BlueTuskGuard.NotNull(value);
         DocumentValidation.Key(id, nameof(id), 512);
         using var stream = new BoundedSerializationStream(_store.Options.MaxDocumentBytes);
         JsonSerializer.Serialize(stream, value, collection.JsonTypeInfo);
@@ -351,7 +351,7 @@ public sealed class DocumentSession : IDisposable
 
     private void AssertMutable()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         _store.ThrowIfDisposed();
         if (_saving)
         {
@@ -361,9 +361,9 @@ public sealed class DocumentSession : IDisposable
 
     private static void Validate<T>(DocumentCollectionDefinition<T> collection, string id, long expectedRevision)
     {
-        ArgumentNullException.ThrowIfNull(collection);
+        BlueTuskGuard.NotNull(collection);
         DocumentValidation.Key(id, nameof(id), 512);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedRevision);
+        BlueTuskGuard.NotNegativeOrZero(expectedRevision);
     }
 
     private static DocumentWriteResult Result(Mutation mutation, long revision) =>

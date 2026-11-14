@@ -236,7 +236,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         LiveSharedSubscriptionOptions? options)
         : this(session, replayStore, options)
     {
-        ArgumentNullException.ThrowIfNull(eventTypeInfo);
+        BlueTuskGuard.NotNull(eventTypeInfo);
         _eventTypeInfo = eventTypeInfo;
     }
 

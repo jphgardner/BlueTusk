@@ -15,7 +15,7 @@ public sealed partial class PostgreSqlProjectionStore
     /// <summary>Recovers the durably bound reset epoch after process loss. The start timestamp has PostgreSQL microsecond precision.</summary>
     public async ValueTask<SnapshotStart?> ReadSnapshotResetAsync(ProjectionIdentity identity, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
+        BlueTuskGuard.NotNull(identity);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var locked = await ReadStateAsync(connection, null, identity, false, cancellationToken).ConfigureAwait(false);
         return locked.State.Phase == ProjectionBuildPhase.Resetting
@@ -38,10 +38,10 @@ public sealed partial class PostgreSqlProjectionStore
         CancellationToken cancellationToken = default)
     {
         ValidateLease(lease);
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         ValidateEpoch(lease.Identity, start.Epoch);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(start.TableCount);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(start.TableCount, 4096);
+        BlueTuskGuard.NotNegativeOrZero(start.TableCount);
+        BlueTuskGuard.NotGreaterThan(start.TableCount, 4096);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await LockHeadAsync(connection, transaction, lease.Identity.Name, cancellationToken).ConfigureAwait(false);
@@ -86,10 +86,10 @@ public sealed partial class PostgreSqlProjectionStore
         int maximumRows = 1024, CancellationToken cancellationToken = default)
     {
         ValidateLease(lease);
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         ValidateEpoch(lease.Identity, start.Epoch);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumRows);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumRows, _options.MaximumResetBatchRows);
+        BlueTuskGuard.NotNegativeOrZero(maximumRows);
+        BlueTuskGuard.NotGreaterThan(maximumRows, _options.MaximumResetBatchRows);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await LockHeadAsync(connection, transaction, lease.Identity.Name, cancellationToken).ConfigureAwait(false);
@@ -127,7 +127,7 @@ public sealed partial class PostgreSqlProjectionStore
         ChangeSnapshotBatch batch, CancellationToken cancellationToken = default)
     {
         ValidateDefinition(lease, definition);
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         ValidateEpoch(lease.Identity, batch.Epoch);
         if (batch.Rows.Count > _options.MaximumSnapshotBatchRows)
         {
@@ -283,9 +283,9 @@ public sealed partial class PostgreSqlProjectionStore
         CancellationToken cancellationToken = default)
     {
         ValidateLease(lease);
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         ValidateEpoch(lease.Identity, complete.Epoch);
-        ArgumentOutOfRangeException.ThrowIfNegative(complete.RowCount);
+        BlueTuskGuard.NotNegative(complete.RowCount);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var locked = await ReadStateAsync(connection, transaction, lease.Identity, true, cancellationToken).ConfigureAwait(false);

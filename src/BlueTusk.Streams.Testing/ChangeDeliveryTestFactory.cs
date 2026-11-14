@@ -25,7 +25,7 @@ public static class ChangeDeliveryTestFactory
         IChangeDeliveryObserver? observer = null,
         DateTimeOffset? commitTimestamp = null)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(replicationTimeline);
+        BlueTuskGuard.NotZero(replicationTimeline);
         return CreateCommittedCore(source, transactionId, commitEndPosition, replicationTimeline, null, null,
             changes, observer, commitTimestamp);
     }
@@ -42,9 +42,9 @@ public static class ChangeDeliveryTestFactory
         IChangeDeliveryObserver? observer = null,
         DateTimeOffset? commitTimestamp = null)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(replicationTimeline);
-        ArgumentOutOfRangeException.ThrowIfZero(replicationDatabaseOid);
-        ArgumentOutOfRangeException.ThrowIfZero(replicationPublicationOid);
+        BlueTuskGuard.NotZero(replicationTimeline);
+        BlueTuskGuard.NotZero(replicationDatabaseOid);
+        BlueTuskGuard.NotZero(replicationPublicationOid);
         return CreateCommittedCore(source, transactionId, commitEndPosition, replicationTimeline,
             replicationDatabaseOid, replicationPublicationOid, changes, observer, commitTimestamp);
     }

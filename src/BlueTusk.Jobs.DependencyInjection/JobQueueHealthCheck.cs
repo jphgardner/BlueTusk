@@ -16,9 +16,9 @@ public sealed class JobQueueHealthCheck : IHealthCheck
 
     public JobQueueHealthCheck(PostgreSqlJobStore store, JobScope scope, JobHealthCheckOptions options)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _store = store;
         _scope = scope;
@@ -64,13 +64,13 @@ public sealed class JobQueueHealthCheck : IHealthCheck
             result = new(HealthStatus.Unhealthy, "jobs.health.store_unavailable", null);
         }
         finally { Volatile.Write(ref _probing, 0); }
-        JobHealthTelemetry.Record(result, Stopwatch.GetElapsedTime(started));
+        JobHealthTelemetry.Record(result, BlueTuskRuntime.GetElapsedTime(started));
         return result;
     }
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         var result = await ReadAsync(cancellationToken).ConfigureAwait(false);
         var data = new Dictionary<string, object>(6, StringComparer.Ordinal);
         if (result.Queue is { } queue)

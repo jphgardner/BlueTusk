@@ -19,7 +19,7 @@ public sealed class StudioQueryService : IDisposable
 
     public StudioQueryService(StudioOptions options, IStudioDistributedAdmission? distributedAdmission)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _capacity = new(options.MaximumConcurrentQueries);
@@ -29,7 +29,7 @@ public sealed class StudioQueryService : IDisposable
     public async ValueTask<StudioQueryResult> ExecuteAsync(StudioDatabaseScope scope, StudioQueryRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         using var admission = TryAcquire(cancellationToken) ?? throw new StudioCapacityException();
         await using var distributed = await TryAcquireDistributedAsync(scope.AuditScopeId, cancellationToken).ConfigureAwait(false)
             ?? throw new StudioCapacityException();
@@ -48,19 +48,19 @@ public sealed class StudioQueryService : IDisposable
     internal async ValueTask<StudioQueryResult> ExecuteAdmittedAsync(StudioQueryAdmission admission, StudioDatabaseScope scope,
         StudioQueryRequest request, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(admission);
+        BlueTuskGuard.NotNull(admission);
         if (!admission.IsOwnedBy(this)) { throw new ArgumentException("The Studio query admission is invalid.", nameof(admission)); }
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(scope.DataSource);
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.Sql);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(scope.DataSource);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNullOrWhiteSpace(request.Sql);
         if (Encoding.UTF8.GetByteCount(request.Sql) > _options.MaximumRequestBytes)
         {
             throw new ArgumentException("The Studio request exceeds its configured SQL byte bound.", nameof(request));
         }
         var maximumRows = request.MaximumRows ?? _options.MaximumRows;
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumRows, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumRows, _options.MaximumRows);
+        BlueTuskGuard.NotLessThan(maximumRows, 1);
+        BlueTuskGuard.NotGreaterThan(maximumRows, _options.MaximumRows);
         var sql = PostgreSqlStatementGuard.AdmitReadQuery(request.Sql);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(_options.QueryTimeoutSeconds));
@@ -93,7 +93,7 @@ public sealed class StudioQueryService : IDisposable
 
     public async ValueTask<ReadOnlyMemory<byte>> CaptureSchemaAsync(StudioDatabaseScope scope, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         using var admission = TryAcquire(cancellationToken) ?? throw new StudioCapacityException();
         await using var distributed = await TryAcquireDistributedAsync(scope.AuditScopeId, cancellationToken).ConfigureAwait(false)
             ?? throw new StudioCapacityException();
@@ -103,9 +103,9 @@ public sealed class StudioQueryService : IDisposable
     internal async ValueTask<ReadOnlyMemory<byte>> CaptureSchemaAdmittedAsync(StudioQueryAdmission admission, StudioDatabaseScope scope,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(admission);
+        BlueTuskGuard.NotNull(admission);
         if (!admission.IsOwnedBy(this)) { throw new ArgumentException("The Studio schema admission is invalid.", nameof(admission)); }
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         try
         {
             using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

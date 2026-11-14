@@ -13,14 +13,14 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
 
     public PostgreSqlStudioAuditSink(DbDataSource dataSource, string schema = "bluetusk_studio", int commandTimeoutSeconds = 10)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        if (schema.Length > 63 || (!char.IsAsciiLetter(schema[0]) && schema[0] != '_') || schema.Any(character => !char.IsAsciiLetterOrDigit(character) && character != '_'))
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        if (schema.Length > 63 || (!BlueTuskRuntime.IsAsciiLetter(schema[0]) && schema[0] != '_') || schema.Any(character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character != '_'))
         {
             throw new ArgumentException("Audit schema requires one unquoted PostgreSQL identifier.", nameof(schema));
         }
-        ArgumentOutOfRangeException.ThrowIfLessThan(commandTimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(commandTimeoutSeconds, 30);
+        BlueTuskGuard.NotLessThan(commandTimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(commandTimeoutSeconds, 30);
         _dataSource = dataSource;
         _schema = '"' + schema + '"';
         _timeout = commandTimeoutSeconds;
@@ -162,14 +162,14 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
     /// <summary>A retry with the same operation/outcome must contain identical immutable audit fields.</summary>
     public async ValueTask RecordAsync(StudioAuditRecord record, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        BlueTuskGuard.NotNull(record);
         if (record.OperationId == Guid.Empty || string.IsNullOrWhiteSpace(record.ActorId) || record.ActorId.Length > 512 ||
             record.ActorId.Contains('\0', StringComparison.Ordinal) || record.QueryFingerprint is not { Length: 64 } ||
             record.QueryFingerprint.Any(character => character is not (>= 'a' and <= 'f') and not (>= '0' and <= '9')) ||
             record.ScopeId is not { Length: > 0 and <= 128 } || record.ScopeId == "legacy-unknown" ||
-            record.ScopeId.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not (':' or '.' or '-' or '_')) ||
+            record.ScopeId.Any(character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character is not (':' or '.' or '-' or '_')) ||
             string.IsNullOrWhiteSpace(record.Outcome) || record.Outcome.Length > 64 ||
-            record.Outcome.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not ('-' or '_')) || record.ReturnedRows < 0)
+            record.Outcome.Any(character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character is not ('-' or '_')) || record.ReturnedRows < 0)
         {
             throw new ArgumentException("Invalid immutable Studio audit record.", nameof(record));
         }
@@ -318,8 +318,8 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
     /// <summary>Delete at most maximumRows confirmed archived records; repeat until zero is returned.</summary>
     public async ValueTask<int> PruneArchivedAsync(int maximumRows = 1000, CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumRows, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumRows, 10_000);
+        BlueTuskGuard.NotLessThan(maximumRows, 1);
+        BlueTuskGuard.NotGreaterThan(maximumRows, 10_000);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using (var worker = connection.CreateCommand())

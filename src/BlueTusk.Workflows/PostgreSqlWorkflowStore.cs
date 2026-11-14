@@ -20,7 +20,7 @@ public sealed partial class PostgreSqlWorkflowStore
 
     public PostgreSqlWorkflowStore(BlueTuskDataSource source, WorkflowOptions? options = null, JobStoreOptions? jobOptions = null)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         _options = options ?? new WorkflowOptions();
         _options.Validate();
         _schema = "\"" + _options.Schema + "\"";
@@ -123,7 +123,7 @@ public sealed partial class PostgreSqlWorkflowStore
     /// <summary>Versions are immutable; an identity reused with different node contracts is rejected.</summary>
     public async ValueTask RegisterDefinitionAsync(JobScope scope, WorkflowDefinition definition, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         var canonical = WorkflowDefinitionValidation.Canonicalize(definition, _options);
         await using var connection = await _source.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, transaction: null, $"""
@@ -159,7 +159,7 @@ public sealed partial class PostgreSqlWorkflowStore
     public async ValueTask<WorkflowKey> StartAsync(WorkflowStartRequest request, BlueTuskTransaction transaction, CancellationToken cancellationToken)
     {
         ValidateStart(request);
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         var connection = transaction.Connection ?? throw new InvalidOperationException("A live transaction is required.");
         var definition = await DefinitionAsync(connection, transaction, request.Scope, request.Definition, request.Version, cancellationToken).ConfigureAwait(false);
         var key = new WorkflowKey(request.Scope, Guid.NewGuid());
@@ -255,7 +255,7 @@ public sealed partial class PostgreSqlWorkflowStore
     public async ValueTask<IReadOnlyList<WorkflowHistoryEntry>> ReadHistoryAsync(WorkflowKey key, long afterSequence, int maximumCount, CancellationToken cancellationToken = default)
     {
         ValidateKey(key);
-        ArgumentOutOfRangeException.ThrowIfNegative(afterSequence);
+        BlueTuskGuard.NotNegative(afterSequence);
         Batch(maximumCount);
         await using var connection = await _source.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, transaction: null, $"""
@@ -279,7 +279,7 @@ public sealed partial class PostgreSqlWorkflowStore
 
     public async ValueTask<int> PruneAsync(JobScope scope, TimeSpan retention, int maximumCount, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         Batch(maximumCount);
         if (retention < TimeSpan.Zero || retention > TimeSpan.FromDays(36500))
         {
@@ -302,8 +302,8 @@ public sealed partial class PostgreSqlWorkflowStore
 
     private void ValidateStart(WorkflowStartRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Scope);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNull(request.Scope);
         WorkflowOptions.Name(request.Definition, nameof(request.Definition));
         WorkflowOptions.Range(request.Version, 1, int.MaxValue, nameof(request.Version));
         if (request.DeduplicationKey is not null)
@@ -311,13 +311,13 @@ public sealed partial class PostgreSqlWorkflowStore
             WorkflowOptions.Name(request.DeduplicationKey, nameof(request.DeduplicationKey));
         }
 
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(request.Input.Length, _options.MaximumInputBytes);
+        BlueTuskGuard.NotGreaterThan(request.Input.Length, _options.MaximumInputBytes);
     }
 
     private static void ValidateKey(WorkflowKey key)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(key.Scope);
+        BlueTuskGuard.NotNull(key);
+        BlueTuskGuard.NotNull(key.Scope);
     }
 
     private void Batch(int count) => WorkflowOptions.Range(count, 1, _options.MaximumBatchSize, nameof(count));

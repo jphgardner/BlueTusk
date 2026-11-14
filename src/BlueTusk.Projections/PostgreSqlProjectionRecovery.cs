@@ -36,7 +36,7 @@ public sealed partial class PostgreSqlProjectionStore
     {
         ProjectionValidation.Key(projectionName, nameof(projectionName));
         ProjectionValidation.Key(reason, nameof(reason));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedActiveVersion);
+        BlueTuskGuard.NotNegativeOrZero(expectedActiveVersion);
         if (maintenanceId == Guid.Empty) { throw new ArgumentException("A stable nonempty maintenance identifier is required.", nameof(maintenanceId)); }
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
@@ -75,9 +75,9 @@ public sealed partial class PostgreSqlProjectionStore
     public async ValueTask<ProjectionRecoveryTicket> BeginRecoveryAsync(ProjectionIdentity candidate, int expectedActiveVersion,
         ProjectionCutoverEvidence freshCandidateEvidence, Guid recoveryId, string reason, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(candidate);
+        BlueTuskGuard.NotNull(candidate);
         ValidateRecoveryEvidence(candidate, freshCandidateEvidence);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedActiveVersion);
+        BlueTuskGuard.NotNegativeOrZero(expectedActiveVersion);
         if (expectedActiveVersion == candidate.Version || recoveryId == Guid.Empty) { throw new ArgumentException("Recovery needs a new candidate version and a stable nonempty recovery identifier."); }
         ProjectionValidation.Key(reason, nameof(reason));
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -189,8 +189,8 @@ public sealed partial class PostgreSqlProjectionStore
 
     private static void ValidateRecoveryEvidence(ProjectionIdentity candidate, ProjectionCutoverEvidence evidence)
     {
-        ArgumentNullException.ThrowIfNull(evidence);
-        if (candidate.Source != evidence.Lineage.Source || System.Diagnostics.Stopwatch.GetElapsedTime(evidence.Lineage.CaptureTimestamp) > TimeSpan.FromMinutes(1))
+        BlueTuskGuard.NotNull(evidence);
+        if (candidate.Source != evidence.Lineage.Source || BlueTuskRuntime.GetElapsedTime(evidence.Lineage.CaptureTimestamp) > TimeSpan.FromMinutes(1))
         { throw new InvalidOperationException("Recovery requires fresh actual source evidence for the exact candidate Streams identity."); }
     }
 }

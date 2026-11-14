@@ -19,7 +19,7 @@ public sealed record WorkflowOptions
     internal void Validate()
     {
         Name(Schema, nameof(Schema), 63);
-        if (!(char.IsAsciiLetter(Schema[0]) || Schema[0] == '_') || Schema.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_'))
+        if (!(BlueTuskRuntime.IsAsciiLetter(Schema[0]) || Schema[0] == '_') || Schema.Any(c => !BlueTuskRuntime.IsAsciiLetterOrDigit(c) && c != '_'))
         {
             throw new ArgumentException("Workflow schema must be an ASCII PostgreSQL identifier.", nameof(Schema));
         }
@@ -40,7 +40,7 @@ public sealed record WorkflowOptions
 
     internal static void Name(string value, string parameter, int maximum = 200)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameter);
         if (value.Length > maximum || value.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("Workflow identity exceeds its bound or contains a null character.", parameter);

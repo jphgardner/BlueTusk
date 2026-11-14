@@ -225,7 +225,7 @@ public sealed partial class PostgreSqlWorkflowStore
     private async ValueTask CompleteNodeAsync(BlueTuskConnection connection, BlueTuskTransaction transaction,
         WorkflowKey key, string node, ReadOnlyMemory<byte> result, string @event, CancellationToken cancellationToken)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(result.Length, _options.MaximumResultBytes);
+        BlueTuskGuard.NotGreaterThan(result.Length, _options.MaximumResultBytes);
         long sequence = await AppendAsync(connection, transaction, key, @event, node, code: null, cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, transaction, $"""
             UPDATE {_schema}.nodes SET status = 3, result = @result, completion_sequence = @sequence

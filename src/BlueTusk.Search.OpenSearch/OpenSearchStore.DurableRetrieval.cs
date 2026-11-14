@@ -8,7 +8,7 @@ public sealed partial class OpenSearchStore
     public async ValueTask<SearchPage> SearchDurableAsync(SearchScope scope, SearchRequest request, PostgreSqlOpenSearchCursorStore cursors,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(cursors);
+        BlueTuskGuard.NotNull(cursors);
         var generation = _indexGeneration;
         var session = await SearchAsync(scope, request, cancellationToken).ConfigureAwait(false);
         var target = await DurableTargetAsync(cancellationToken).ConfigureAwait(false);
@@ -21,7 +21,7 @@ public sealed partial class OpenSearchStore
     public async ValueTask<SearchPage> ContinueDurableSearchAsync(SearchScope scope, SearchCursor cursor, PostgreSqlOpenSearchCursorStore cursors,
         int pageSize = 20, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope); ArgumentNullException.ThrowIfNull(cursor); ArgumentNullException.ThrowIfNull(cursors);
+        BlueTuskGuard.NotNull(scope); BlueTuskGuard.NotNull(cursor); BlueTuskGuard.NotNull(cursors);
         var target = await DurableTargetAsync(cancellationToken).ConfigureAwait(false);
         var persisted = await cursors.LoadAsync(target, scope, ScopeKey(scope), cursor, cancellationToken).ConfigureAwait(false);
         var session = new OpenSearchSearchSession(_owner, ScopeKey(scope), persisted.Hits, persisted.Expires, databaseDeadline: true);

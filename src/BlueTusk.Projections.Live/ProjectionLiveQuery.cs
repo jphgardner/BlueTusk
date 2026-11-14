@@ -32,16 +32,16 @@ public sealed class ProjectionLiveQuery<T>
         LiveSecurityScope securityScope, string name, string databaseIdentity, string queryVersion,
         JsonTypeInfo<T> documentTypeInfo, ProjectionLiveQueryOptions? options = null, Func<T, bool>? predicate = null)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentException.ThrowIfNullOrWhiteSpace(projectionName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
-        ArgumentNullException.ThrowIfNull(securityScope);
-        ArgumentNullException.ThrowIfNull(documentTypeInfo);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNullOrWhiteSpace(projectionName);
+        BlueTuskGuard.NotNullOrWhiteSpace(tenantId);
+        BlueTuskGuard.NotNull(securityScope);
+        BlueTuskGuard.NotNull(documentTypeInfo);
         _options = options ?? new ProjectionLiveQueryOptions();
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.MaximumDocuments);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.MaximumDocuments, 65_536);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.MaximumPayloadBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.MaximumPayloadBytes, 67_108_864);
+        BlueTuskGuard.NotNegativeOrZero(_options.MaximumDocuments);
+        BlueTuskGuard.NotGreaterThan(_options.MaximumDocuments, 65_536);
+        BlueTuskGuard.NotNegativeOrZero(_options.MaximumPayloadBytes);
+        BlueTuskGuard.NotGreaterThan(_options.MaximumPayloadBytes, 67_108_864);
         _store = store;
         _projectionName = projectionName;
         _tenantId = tenantId;

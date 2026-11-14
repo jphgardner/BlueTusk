@@ -72,9 +72,9 @@ public sealed partial class PostgreSqlEventStore
         int maximumTargets = 64, CancellationToken cancellationToken = default)
     {
         if (retentionEpoch == Guid.Empty) { throw new ArgumentException("A retention epoch is required.", nameof(retentionEpoch)); }
-        ArgumentNullException.ThrowIfNull(targets);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumTargets);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumTargets, 64);
+        BlueTuskGuard.NotNull(targets);
+        BlueTuskGuard.NotNegativeOrZero(maximumTargets);
+        BlueTuskGuard.NotGreaterThan(maximumTargets, 64);
         if (targets.Count is 0 || targets.Count > maximumTargets)
         {
             throw new InvalidOperationException("The configured remote target set is empty or exceeds its bound.");
@@ -392,10 +392,10 @@ public sealed partial class PostgreSqlEventStore
 
     private static void ValidateRemoteTarget(EventPublishedRetentionRemoteTarget target)
     {
-        ArgumentNullException.ThrowIfNull(target);
+        BlueTuskGuard.NotNull(target);
         EventValidation.Key(target.ConsumerGroup, nameof(target.ConsumerGroup));
-        ArgumentException.ThrowIfNullOrWhiteSpace(target.EndpointKey);
-        ArgumentNullException.ThrowIfNull(target.DataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(target.EndpointKey);
+        BlueTuskGuard.NotNull(target.DataSource);
         if (target.TargetIncarnation == Guid.Empty || target.EndpointKey.Length > 200 ||
             string.IsNullOrWhiteSpace(target.Schema) || Encoding.UTF8.GetByteCount(target.Schema) > 63 ||
             target.Schema.Contains('\0') || string.IsNullOrWhiteSpace(target.TransportSchema) ||

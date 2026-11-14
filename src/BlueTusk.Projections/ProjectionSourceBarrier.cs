@@ -18,7 +18,7 @@ public static class ProjectionSourceBarrier
     private static async ValueTask<BlueTuskLogSequenceNumber> EmitCoreAsync(DbDataSource sourceDataSource, ProjectionSourceLineage? expected,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(sourceDataSource);
+        BlueTuskGuard.NotNull(sourceDataSource);
         await using var connection = await sourceDataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         if (expected is not null)

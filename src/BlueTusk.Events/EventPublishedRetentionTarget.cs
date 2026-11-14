@@ -18,9 +18,9 @@ public sealed partial class PostgreSqlEventStore
     public async ValueTask RegisterPublishedRetentionTargetAsync(EventPublishedConsumerRegistration registration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(registration);
-        ArgumentNullException.ThrowIfNull(registration.Stream);
-        ArgumentNullException.ThrowIfNull(registration.Source);
+        BlueTuskGuard.NotNull(registration);
+        BlueTuskGuard.NotNull(registration.Stream);
+        BlueTuskGuard.NotNull(registration.Source);
         EventValidation.Key(registration.ConsumerGroup, nameof(registration));
         ValidatePublishedSource(registration.Source);
         if (registration.TargetIncarnation == Guid.Empty || registration.MembershipRevision <= 0 ||
