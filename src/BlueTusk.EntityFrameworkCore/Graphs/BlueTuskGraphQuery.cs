@@ -357,7 +357,7 @@ public sealed class BlueTuskGraphMatch
 }
 
 /// <summary>A typed EF query root for one property graph.</summary>
-public sealed class BlueTuskGraphQueryRoot
+public sealed partial class BlueTuskGraphQueryRoot
 {
     private readonly DbContext _context;
     private readonly BlueTuskPropertyGraphDefinition _graph;

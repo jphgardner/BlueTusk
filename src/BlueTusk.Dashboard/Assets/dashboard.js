@@ -611,19 +611,27 @@
       requestAnimationFrame(() => { resizeCanvas(); fit(); });
     };
 
+    const cancelButton = runner.querySelector('[data-graph-cancel]');
+    let activeRequest = null;
+    cancelButton?.addEventListener('click', () => activeRequest?.abort());
     form.addEventListener('submit', async event => {
       event.preventDefault();
+      if (activeRequest) return;
+      const request = new AbortController();
+      activeRequest = request;
       const runButton = runner.querySelector('[data-graph-run]');
       const parameters = {};
       runner.querySelectorAll('[data-graph-parameter]').forEach(input => {
         parameters[input.name] = input.value;
       });
       runButton.disabled = true;
+      if (cancelButton) cancelButton.disabled = false;
       status.textContent = 'Running';
       message.textContent = 'Executing the registered authoritative query…';
       try {
         const response = await fetch(runner.dataset.runUrl, {
           method: 'POST',
+          signal: request.signal,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ parameters })
         });
@@ -633,10 +641,17 @@
         status.textContent = 'Complete';
         message.textContent = `Complete result loaded: ${payload.data.nodes.length} nodes and ${payload.data.edges.length} edges.`;
       } catch (error) {
-        status.textContent = 'Failed';
-        message.textContent = error instanceof Error ? error.message : 'Graph execution failed.';
+        if (request.signal.aborted) {
+          status.textContent = 'Cancelled';
+          message.textContent = 'Graph execution cancelled.';
+        } else {
+          status.textContent = 'Failed';
+          message.textContent = error instanceof Error ? error.message : 'Graph execution failed.';
+        }
       } finally {
+        activeRequest = null;
         runButton.disabled = false;
+        if (cancelButton) cancelButton.disabled = true;
       }
     });
 

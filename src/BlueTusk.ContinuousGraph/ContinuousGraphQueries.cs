@@ -380,7 +380,7 @@ public sealed class ContinuousGraphQueryPlan<TResult, TKey>
 }
 
 /// <summary>Compiles registered typed SQL/PGQ queries into bounded authoritative Live plans.</summary>
-public static class ContinuousGraphQueryCompiler
+public static partial class ContinuousGraphQueryCompiler
 {
     public static async ValueTask<ContinuousGraphQueryPlan<TResult, TKey>>
         CompileAsync<TContext, TResult, TKey>(

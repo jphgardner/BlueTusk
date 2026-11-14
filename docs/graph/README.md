@@ -45,3 +45,6 @@ permissions and row-level security. [PostgreSQL Beta 4 announcement](https://www
 
 See the [graph reference](reference.md) for typed mapping and migration guidance
 and the [release tracks](../releases/release-tracks.md) for qualification status.
+
+For bounded neighborhood, reachability, and shortest-path queries, see the
+[BlueTusk PostgreSQL graph engine](../../extensions/bluetusk_graph/README.md).

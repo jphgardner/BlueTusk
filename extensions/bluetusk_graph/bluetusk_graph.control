@@ -1,0 +1,6 @@
+comment = 'BlueTusk graph traversal over PostgreSQL relations'
+default_version = '1.1'
+module_pathname = '$libdir/bluetusk_graph'
+schema = 'bluetusk_graph'
+relocatable = false
+superuser = true
