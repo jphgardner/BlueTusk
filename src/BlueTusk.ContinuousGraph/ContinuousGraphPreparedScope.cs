@@ -35,16 +35,25 @@ internal sealed class ContinuousGraphPreparedScope<TResult, TKey>(
     {
         // Mapped entities and custom EF execution need the ordinary query pipeline.
         var interceptors = context.GetService<IInterceptors>();
+#if BLUETUSK_EF7_OR_GREATER
         var coreOptions = context.GetService<IDbContextOptions>().FindExtension<CoreOptionsExtension>();
+        var constructorBinding = root.EntityType.ConstructorBinding;
+#else
+#pragma warning disable EF1001 // EF Core 5 stores its materializer binding in the model annotation.
+        var constructorBinding = root.EntityType.FindAnnotation(CoreAnnotationNames.ConstructorBinding)?.Value;
+#pragma warning restore EF1001
+#endif
         if (interceptors.Aggregate<IDbCommandInterceptor>() is not null ||
             interceptors.Aggregate<IDbConnectionInterceptor>() is not null ||
+#if BLUETUSK_EF7_OR_GREATER
             coreOptions?.SingletonInterceptors?.Any(static interceptor => interceptor is IMaterializationInterceptor) == true ||
             context.GetService<IEnumerable<ISingletonInterceptor>>().Any(static interceptor => interceptor is IMaterializationInterceptor) ||
+#endif
             context.Database.CurrentTransaction is not null ||
             context.GetService<IRelationalConnection>() is ITransactionEnlistmentManager { EnlistedTransaction: not null } ||
             context.Database.CreateExecutionStrategy().RetriesOnFailure ||
             context.Model.FindEntityType(typeof(TResult)) is not null ||
-            root.EntityType.ConstructorBinding is not ConstructorBinding { ParameterBindings.Count: 0 } constructor ||
+            constructorBinding is not ConstructorBinding { ParameterBindings.Count: 0 } constructor ||
             root.EntityType.FindProperty(keyProperty) is not { IsNullable: false } key ||
             key.ClrType != typeof(TKey) ||
             BlueTuskGraphQueryCapture.Find(context, root) is not { } impact ||
@@ -68,7 +77,7 @@ internal sealed class ContinuousGraphPreparedScope<TResult, TKey>(
             var property = properties[index];
             var type = Nullable.GetUnderlyingType(property.ClrType) ?? property.ClrType;
 #pragma warning disable EF1001 // Use the same member EF uses when materializing the registered DTO.
-            if (!property.TryGetMemberInfo(forMaterialization: true, forSet: true, out var member, out _) ||
+            if (!property.TryGetMemberInfo(true, true, out var member, out _) ||
 #pragma warning restore EF1001
                 member is FieldInfo { IsInitOnly: true } ||
                 property.GetTypeMapping().Converter is not null ||

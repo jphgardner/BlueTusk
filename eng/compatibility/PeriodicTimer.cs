@@ -1,10 +1,10 @@
 #if NET5_0
 using System.Threading.Channels;
 
-namespace BlueTusk.Jobs;
+namespace BlueTusk.Compatibility;
 
 // Coalesce ticks while the current heartbeat is in flight, as PeriodicTimer does.
-internal sealed class JobHeartbeatTimer : IDisposable
+internal sealed class PeriodicTimer : IDisposable
 {
     private readonly Channel<bool> _ticks = Channel.CreateBounded<bool>(new BoundedChannelOptions(1)
     {
@@ -13,7 +13,7 @@ internal sealed class JobHeartbeatTimer : IDisposable
     });
     private readonly Timer _timer;
 
-    public JobHeartbeatTimer(TimeSpan interval)
+    public PeriodicTimer(TimeSpan interval)
     {
         _timer = new Timer(static state => ((ChannelWriter<bool>)state!).TryWrite(true),
             _ticks.Writer, interval, interval);

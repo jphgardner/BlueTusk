@@ -767,7 +767,7 @@ public static partial class ContinuousGraphQueryCompiler
                 written += elementBytes;
             }
 
-            Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
+            Span<byte> hash = stackalloc byte[256 / 8];
             SHA256.HashData(bytes.AsSpan(0, written), hash);
             return BlueTuskRuntime.ToHexStringLower(hash);
         }

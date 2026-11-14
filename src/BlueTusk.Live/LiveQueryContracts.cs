@@ -194,6 +194,17 @@ public sealed class LiveQueryArguments
 
     private static byte[] SerializeScalar(object value, Type type)
     {
+#if !NET8_0_OR_GREATER
+        // The older .NET Standard JSON asset has no DateOnly or TimeOnly converters.
+        if (value is DateOnly date)
+        {
+            return JsonSerializer.SerializeToUtf8Bytes(date.ToString("O", CultureInfo.InvariantCulture), LiveScalarJson.Default.String);
+        }
+        if (value is TimeOnly time)
+        {
+            return JsonSerializer.SerializeToUtf8Bytes(time.ToString("O", CultureInfo.InvariantCulture), LiveScalarJson.Default.String);
+        }
+#endif
         if (RuntimeFeature.IsDynamicCodeSupported)
         {
             // Preserve the existing JIT canonical argument format for issued subscription identities.

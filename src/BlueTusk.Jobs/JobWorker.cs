@@ -327,11 +327,7 @@ public sealed class JobWorker
 
     private async Task HeartbeatAsync(JobLease lease, CancellationTokenSource execution, CancellationToken cancellationToken)
     {
-#if NET5_0
-        using var timer = new JobHeartbeatTimer(_options.HeartbeatInterval);
-#else
         using var timer = new PeriodicTimer(_options.HeartbeatInterval);
-#endif
         try
         {
             while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))

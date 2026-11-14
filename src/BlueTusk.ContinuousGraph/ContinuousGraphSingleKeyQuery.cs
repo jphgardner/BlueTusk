@@ -97,22 +97,25 @@ internal sealed class ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>(
         return execute(context, arguments, key);
     }
 
+    // EF Core 5 may rebuild its model when a data source first loads PostgreSQL
+    // types. A prepared scope reads metadata from the current context. Compiled
+    // EF queries still require the same model and projection metadata instances.
     public ContinuousGraphPreparedScope<TResult, TKey>? TryBindScope(
         TContext context, IQueryable<TResult> query, string keyProperty) =>
-        TryMatch(context, query, out var root, out var arguments)
+        TryMatch(context, query, out var root, out var arguments, requireSameModel: false)
             ? ContinuousGraphPreparedScope<TResult, TKey>.TryCreate(context, root, arguments, keyProperty)
             : null;
 
     private bool TryMatch(TContext context, IQueryable<TResult> query,
         [NotNullWhen(true)] out BlueTuskGraphQueryRootExpression? matched,
-        [NotNullWhen(true)] out object[]? values)
+        [NotNullWhen(true)] out object[]? values, bool requireSameModel = true)
     {
         matched = null;
         values = null;
         if (FindRoot(query.Expression) is not { Values: ConstantExpression { Value: object[] arguments } } root ||
             !ReferenceEquals(query.Provider, root.QueryProvider) ||
-            !template.HasSameSqlShape(root) ||
-            !ReferenceEquals(model, context.Model) ||
+            !template.HasSameSqlShape(root, requireSameModel) ||
+            (requireSameModel && !ReferenceEquals(model, context.Model)) ||
             !options.TryGetTarget(out var registrationOptions) ||
             !ReferenceEquals(registrationOptions, context.GetService<IDbContextOptions>()) ||
             HasExpressionInterceptor(context))
@@ -129,7 +132,11 @@ internal sealed class ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>(
     // ordering or limit. Connection and command interceptors still run on
     // the normal EF pipeline used by the compiled query.
     private static bool HasExpressionInterceptor(TContext context) =>
+#if BLUETUSK_EF7_OR_GREATER
         context.GetService<IInterceptors>().Aggregate<IQueryExpressionInterceptor>() is not null;
+#else
+        false;
+#endif
 
     private static BlueTuskGraphQueryRootExpression? FindRoot(Expression query)
     {

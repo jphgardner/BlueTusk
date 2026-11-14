@@ -217,7 +217,7 @@ public abstract class BlueTuskCodec<T> :
             return new T[lengths[0]];
         }
 
-        if (lengths.Length == 2 && !lowerBounds.ContainsAnyExcept(0))
+        if (lengths.Length == 2 && lowerBounds[0] == 0 && lowerBounds[1] == 0)
         {
             return new T[lengths[0], lengths[1]];
         }
