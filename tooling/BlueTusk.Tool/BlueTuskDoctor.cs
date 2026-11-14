@@ -235,12 +235,8 @@ internal static partial class BlueTuskDoctor
     // major * 10000 + minor * 100 + patch before it (90624 is 9.6.24).
     private static string FormatVersion(int versionNumber) =>
         versionNumber >= 100000
-            ? string.Create(
-                CultureInfo.InvariantCulture,
-                $"{versionNumber / 10000}.{versionNumber % 10000}")
-            : string.Create(
-                CultureInfo.InvariantCulture,
-                $"{versionNumber / 10000}.{versionNumber / 100 % 100}.{versionNumber % 100}");
+            ? FormattableString.Invariant($"{versionNumber / 10000}.{versionNumber % 10000}")
+            : FormattableString.Invariant($"{versionNumber / 10000}.{versionNumber / 100 % 100}.{versionNumber % 100}");
 
     private enum DoctorCheckStatus
     {

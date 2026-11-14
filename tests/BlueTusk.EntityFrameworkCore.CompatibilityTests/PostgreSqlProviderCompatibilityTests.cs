@@ -33,8 +33,8 @@ public sealed class PostgreSqlProviderCompatibilityTests
         Assert.Equal(1, await context.SaveChangesAsync());
         Assert.Single(await context.Rows.AsNoTracking().ToListAsync());
 
-        await context.Database.ExecuteSqlInterpolatedAsync(
-            $"""UPDATE compatibility_live_rows SET "Label" = 'changed elsewhere' WHERE "Id" = {first.Id}""");
+        await context.Database.ExecuteSqlRawAsync(
+            """UPDATE compatibility_live_rows SET "Label" = 'changed elsewhere' WHERE "Id" = {0}""", first.Id);
         first.Label = "conflicting write";
         await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => context.SaveChangesAsync());
     }
