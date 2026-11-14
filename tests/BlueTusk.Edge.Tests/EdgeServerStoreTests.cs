@@ -273,13 +273,23 @@ public sealed class EdgeServerStoreTests
     {
         var scope = new EdgeScope("tenant", "orders", 1);
         await fixture.Store.ActivateScopeAsync(scope);
-        await Parallel.ForEachAsync(Enumerable.Range(0, 128), new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (i, token) =>
+        const int writerCount = 4;
+        const int mutationCount = 128;
+        await Task.WhenAll(Enumerable.Range(0, writerCount).Select(WritePartitionAsync));
+
+        async Task WritePartitionAsync(int writer)
         {
-            var mutation = Upsert(scope, i.ToString("D3", System.Globalization.CultureInfo.InvariantCulture), 0, System.Text.Encoding.UTF8.GetBytes("{\"data\":\"" + new string('x', 1024) + "\"}"));
-            var result = await fixture.Store.ApplyMutationAsync(mutation, token);
-            var replay = await fixture.Store.ApplyMutationAsync(mutation, token);
-            Assert.Equal(result.ServerRecord!.Revision, replay.ServerRecord!.Revision);
-        });
+            var token = TestContext.Current.CancellationToken;
+            for (var i = writer; i < mutationCount; i += writerCount)
+            {
+                var mutation = Upsert(scope, i.ToString("D3", System.Globalization.CultureInfo.InvariantCulture), 0,
+                    System.Text.Encoding.UTF8.GetBytes("{\"data\":\"" + new string('x', 1024) + "\"}"));
+                var result = await fixture.Store.ApplyMutationAsync(mutation, token);
+                var replay = await fixture.Store.ApplyMutationAsync(mutation, token);
+                Assert.Equal(result.ServerRecord!.Revision, replay.ServerRecord!.Revision);
+            }
+        }
+
         var seen = new HashSet<string>(StringComparer.Ordinal);
         long position = 0;
         while (await fixture.Store.ReadChangesAsync(scope, position, 17) is { } batch)
