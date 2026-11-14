@@ -11,6 +11,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+# A starting PostgreSQL fixture may refuse connections until pg_isready succeeds.
+$PSNativeCommandUseErrorActionPreference = $false
 if ($Duration -le [TimeSpan]::Zero) { throw 'Duration must be positive.' }
 $root = Split-Path $PSScriptRoot -Parent
 $run = [Guid]::NewGuid().ToString('N')
