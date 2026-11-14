@@ -6,6 +6,12 @@ on:
     paths:
       - 'extensions/bluetusk_graph/**'
       - 'src/BlueTusk.EntityFrameworkCore/Graphs/**'
+      - 'eng/compatibility/**'
+      - 'eng/dotnet-compatibility.json'
+      - 'eng/install-dotnet-compatibility.ps1'
+      - 'eng/EntityFrameworkCore.props'
+      - 'Directory.*.props'
+      - 'global.json'
       - 'src/BlueTusk.ContinuousGraph/**'
       - 'tests/BlueTusk.ContinuousGraph.Tests/BlueTusk.ContinuousGraph.Tests.csproj'
       - 'tests/BlueTusk.ContinuousGraph.Tests/GraphEngineIntegrationTests.cs'
@@ -15,34 +21,51 @@ permissions:
   contents: read
 
 jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Select the PostgreSQL and .NET runtime pairs
+        id: matrix
+        shell: bash
+        run: |
+          matrix=$(jq -c '[.frameworks[] | {major: 18, framework: .}] +
+            [range(15;18) | {major: ., framework: "net10.0"}]' eng/dotnet-compatibility.json)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
   graph-engine:
-    runs-on: ubuntu-latest
+    needs: plan
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - major: 15
-            image: postgres:15-alpine@sha256:f7d23353e1b15400d22ebe31189f4d314b87a4c129cc400c8c2d8d4ca127bf81
-          - major: 16
-            image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
-          - major: 17
-            image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
-          - major: 18
-            image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      GRAPH_MAJOR: ${{ matrix.major }}
+      GRAPH_FRAMEWORK: ${{ matrix.framework }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
-        with:
-          global-json-file: global.json
-          dotnet-version: '10.0.x'
+      - name: Install the pinned SDK and client runtime
+        shell: pwsh
+        run: ./eng/install-dotnet-compatibility.ps1 -Framework $env:GRAPH_FRAMEWORK -SkipAspNetRuntime
       - name: Build PGXS extension for the pinned server
-        env:
-          GRAPH_BASE_IMAGE: ${{ matrix.image }}
-        run: docker build --build-arg "POSTGRES_IMAGE=$GRAPH_BASE_IMAGE" -t bluetusk-graph-engine extensions/bluetusk_graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$GRAPH_MAJOR" in
+            15) digest=f7d23353e1b15400d22ebe31189f4d314b87a4c129cc400c8c2d8d4ca127bf81 ;;
+            16) digest=721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea ;;
+            17) digest=b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24 ;;
+            18) digest=77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873 ;;
+            *) exit 1 ;;
+          esac
+          image="postgres:$GRAPH_MAJOR-alpine@sha256:$digest"
+          docker build --build-arg "POSTGRES_IMAGE=$image" -t bluetusk-graph-engine extensions/bluetusk_graph
+          echo "GRAPH_BASE_IMAGE=$image" >> "$GITHUB_ENV"
       - name: Validate SQL, EF and Live
-        env:
-          GRAPH_MAJOR: ${{ matrix.major }}
         shell: bash
         run: |
           set -euo pipefail
@@ -55,25 +78,57 @@ jobs:
             fi
             sleep 1
           done
-          docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d graph_engine \
-            < extensions/bluetusk_graph/sql/traversal.sql
-          docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d graph_engine \
-            < extensions/bluetusk_graph/sql/oracle.sql
-          docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d graph_engine \
-            < extensions/bluetusk_graph/sql/fraud-rank-refill.sql
-          port=$(docker port "$container" 5432/tcp | cut -d: -f2)
-          export BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING="Host=127.0.0.1;Port=$port;Database=graph_engine;Username=postgres;SSL Mode=Disable;Channel Binding=Disable"
-          dotnet test tests/BlueTusk.ContinuousGraph.Tests -c Release -f net10.0 \
-            -p:BlueTuskRuntimeTargetFrameworks=net10.0 -p:BlueTuskGraphEngineTests=true \
-            --filter FullyQualifiedName~GraphEngineIntegrationTests \
-            --logger 'trx;LogFileName=engine.trx' --results-directory artifacts/graph-engine
+          docker exec "$container" pg_isready -h 127.0.0.1 -U postgres -d graph_engine
+          if [ "$GRAPH_FRAMEWORK" = net10.0 ]; then
+            for test in traversal oracle fraud-rank-refill; do
+              docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d graph_engine \
+                < "extensions/bluetusk_graph/sql/$test.sql"
+            done
+          fi
+
+          contract=eng/dotnet-compatibility.json
+          export DOTNET_ROOT="$PWD/artifacts/dotnet"
+          export DOTNET_HOST_PATH="$DOTNET_ROOT/dotnet"
+          export DOTNET_ROLL_FORWARD=LatestPatch
+          export DOTNET_ROLL_FORWARD_TO_PRERELEASE=0
+          export BLUETUSK_GRAPH_ENGINE_TEST_RUNTIME
+          BLUETUSK_GRAPH_ENGINE_TEST_RUNTIME=$(jq -r --arg tfm "$GRAPH_FRAMEWORK" '.runtimeVersions[$tfm]' "$contract")
+
+          suite=BlueTusk.ContinuousGraph.Tests
+          project="tests/$suite/$suite.csproj"
+          results=artifacts/graph-engine
+          mkdir -p "$results"
+          build_flags=(-c Release -f "$GRAPH_FRAMEWORK" --artifacts-path "$PWD/artifacts/graph-engine-build"
+            "-p:BlueTuskRuntimeTargetFrameworks=$GRAPH_FRAMEWORK" -p:BlueTuskGraphEngineTests=true -p:CheckEolTargetFramework=false)
+          filter='FullyQualifiedName~GraphEngineIntegrationTests'
+          legacy_image=$(jq -r --arg tfm "$GRAPH_FRAMEWORK" '.legacyLinuxContainers[$tfm].image // empty' "$contract")
+          if [ -n "$legacy_image" ]; then
+            "$DOTNET_HOST_PATH" build "$project" "${build_flags[@]}"
+            legacy_sdk=$(jq -r --arg tfm "$GRAPH_FRAMEWORK" '.legacyLinuxContainers[$tfm].sdkVersion' "$contract")
+            output="artifacts/graph-engine-build/bin/$suite/release_$GRAPH_FRAMEWORK"
+            stage=artifacts/graph-engine-client
+            mkdir -p "$stage"
+            cp -a "$output/." "$stage/"
+            printf '%s\n' '{"runtimeOptions":{"additionalProbingPaths":[]}}' > "$stage/$suite.runtimeconfig.dev.json"
+            export BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING="Host=127.0.0.1;Port=5432;Database=graph_engine;Username=postgres;SSL Mode=Disable;Channel Binding=Disable"
+            docker run --rm --network "container:$container" --mount "type=bind,source=$PWD,target=/repo" \
+              --env DOTNET_ROLL_FORWARD --env DOTNET_ROLL_FORWARD_TO_PRERELEASE \
+              --env BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING --env BLUETUSK_GRAPH_ENGINE_TEST_RUNTIME \
+              "$legacy_image" dotnet "/usr/share/dotnet/sdk/$legacy_sdk/vstest.console.dll" "/repo/$stage/$suite.dll" \
+              "/TestCaseFilter:$filter" '/Logger:trx;LogFileName=engine.trx' "/ResultsDirectory:/repo/$results"
+          else
+            port=$(docker port "$container" 5432/tcp | cut -d: -f2)
+            export BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING="Host=127.0.0.1;Port=$port;Database=graph_engine;Username=postgres;SSL Mode=Disable;Channel Binding=Disable"
+            "$DOTNET_HOST_PATH" test "$project" "${build_flags[@]}" --filter "$filter" \
+              --logger 'trx;LogFileName=engine.trx' --results-directory "$results"
+          fi
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
           counters = ET.parse("artifacts/graph-engine/engine.trx").find(".//{*}Counters")
-          assert counters is not None and counters.get("total") == counters.get("passed") == "1"
+          assert counters is not None and counters.get("total") == counters.get("executed") == counters.get("passed") == "1"
           PY
 
-          if [ "$GRAPH_MAJOR" = 18 ]; then
+          if [ "$GRAPH_MAJOR" = 18 ] && [ "$GRAPH_FRAMEWORK" = net10.0 ]; then
             docker exec -u postgres "$container" pg_dump -Fc -d graph_engine -f /tmp/graph-engine.dump
             docker exec -u postgres "$container" createdb graph_engine_restore
             docker exec -u postgres "$container" pg_restore --exit-on-error \
@@ -96,9 +151,7 @@ jobs:
             docker exec -u postgres "$container" pg_ctl -D /tmp/graph-engine-standby -m fast -w stop
           fi
       - name: Package the tested native extension
-        env:
-          GRAPH_MAJOR: ${{ matrix.major }}
-          GRAPH_BASE_IMAGE: ${{ matrix.image }}
+        if: matrix.framework == 'net10.0'
         shell: bash
         run: |
           set -euo pipefail
@@ -117,6 +170,6 @@ jobs:
       - name: Retain the native extension and test results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: bluetusk-graph-pg${{ matrix.major }}-linux-amd64-${{ github.sha }}
+          name: bluetusk-graph-pg${{ matrix.major }}-${{ matrix.framework }}-linux-amd64-${{ github.sha }}
           path: artifacts/graph-engine
           if-no-files-found: error

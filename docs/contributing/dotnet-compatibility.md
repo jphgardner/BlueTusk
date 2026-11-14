@@ -51,6 +51,13 @@ Standard assets on an older runtime. The compatibility suite verifies BlueTusk
 behavior on the requested runtime. Microsoft tracks upstream servicing
 separately in its [.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core).
 
+The optional PostgreSQL-native Graph engine uses a separate server extension.
+Its CI workflow verifies EF and Continuous Graph on .NET 5–11 with PostgreSQL
+18, and checks PostgreSQL 15–18 with .NET 10. Install the server binary for
+your PostgreSQL distribution, or build it with that server's PGXS toolchain.
+See [engine installation and verification](../../extensions/bluetusk_graph/README.md).
+
+
 ## Run the compatibility matrix
 
 PowerShell 7 and the platform's normal .NET native prerequisites are required.

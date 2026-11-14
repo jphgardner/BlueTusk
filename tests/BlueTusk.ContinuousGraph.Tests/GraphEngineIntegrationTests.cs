@@ -15,6 +15,11 @@ public sealed class GraphEngineIntegrationTests
     public async Task Typed_traversals_and_live_repairs_use_the_same_authorized_topology()
     {
         var token = TestContext.Current.CancellationToken;
+        if (Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_ENGINE_TEST_RUNTIME") is { } expectedRuntime)
+        {
+            Assert.Equal(expectedRuntime, Environment.Version.ToString());
+        }
+
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING")
             ?? throw new InvalidOperationException("The native Graph test requires BLUETUSK_GRAPH_ENGINE_TEST_CONNECTION_STRING.");
         await using var connection = new BlueTuskConnection(connectionString);

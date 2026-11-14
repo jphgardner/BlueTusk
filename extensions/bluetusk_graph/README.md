@@ -126,10 +126,15 @@ frontier engine with recursive SQL and a selective indexed query. Add
 prototypes. Run each script on an empty disposable database with
 `psql -X -v ON_ERROR_STOP=1`.
 
-The engine CI builds separate binaries for PostgreSQL 15–18, checks SQL
-and EF/Live integration, and retains each native Linux x86‑64 archive with
-its checksum, source commit, and PostgreSQL image digest. The SQL suite installs version 1.0, registers a
-graph, then upgrades it to 1.1. For undefined-behavior instrumentation,
+The engine CI builds a separate archive for each pinned PostgreSQL 15–18
+Alpine image on Linux x86-64. Each archive includes its checksum, source
+commit, and base image digest. Build from source with your server's
+`pg_config` for other PostgreSQL distributions.
+
+The workflow tests SQL and .NET 10 integration on every supported PostgreSQL
+major and tests the EF and Continuous Graph client on each .NET runtime from
+5 through 11 against PostgreSQL 18. The SQL suite installs version 1.0,
+registers a graph, then upgrades it to 1.1. For undefined-behavior instrumentation,
 build with `--build-arg GRAPH_UBSAN=1` and start the container with
 `-e LD_PRELOAD=/usr/local/lib/libubsan.so.1`.
 
