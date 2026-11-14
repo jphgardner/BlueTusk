@@ -61,12 +61,16 @@ public static class StudioEndpoints
             : Results.Redirect(options.Path + "/"));
         group.MapGet("/assets/studio.js", () => Results.Content(Asset("studio.js"), "text/javascript", Encoding.UTF8));
         group.MapGet("/assets/studio.css", () => Results.Content(Asset("studio.css"), "text/css", Encoding.UTF8));
-        group.MapGet("/session", (HttpContext context) =>
+        group.MapGet("/session", async (HttpContext context) =>
         {
             var antiforgery = context.RequestServices.GetRequiredService<IAntiforgery>();
             var tokens = antiforgery.GetAndStoreTokens(context);
-            return Results.Json(new StudioSession(tokens.HeaderName ?? throw new InvalidOperationException("Studio needs an antiforgery request header."),
-                tokens.RequestToken ?? throw new InvalidOperationException("Studio could not create an antiforgery token.")), StudioJsonContext.Default.StudioSession);
+            var session = new StudioSession(
+                tokens.HeaderName ?? throw new InvalidOperationException("Studio needs an antiforgery request header."),
+                tokens.RequestToken ?? throw new InvalidOperationException("Studio could not create an antiforgery token."));
+            context.Response.ContentType = "application/json; charset=utf-8";
+            await JsonSerializer.SerializeAsync(context.Response.Body, session, StudioJsonContext.Default.StudioSession,
+                context.RequestAborted).ConfigureAwait(false);
         });
         group.MapGet("/schema", async (HttpContext context) =>
         {

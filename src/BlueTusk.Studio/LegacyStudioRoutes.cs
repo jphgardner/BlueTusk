@@ -1,7 +1,5 @@
 #if !NET7_0_OR_GREATER
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -73,12 +71,6 @@ internal static class LegacyStudioResults
     {
         context.Response.Redirect(address);
         return Task.CompletedTask;
-    };
-
-    public static LegacyStudioResult Json<T>(T value, JsonTypeInfo<T> typeInfo) => context =>
-    {
-        context.Response.ContentType = "application/json; charset=utf-8";
-        return JsonSerializer.SerializeAsync(context.Response.Body, value, typeInfo, context.RequestAborted);
     };
 
     public static LegacyStudioResult StatusCode(int status) => context =>
