@@ -16,7 +16,7 @@ using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Documents.Tests;
 
-public sealed partial class DocumentIntegrationTests(DocumentWalDatabaseFixture walDatabase) : IClassFixture<DocumentWalDatabaseFixture>
+public sealed class DocumentIntegrationTests(DocumentWalDatabaseFixture walDatabase) : IClassFixture<DocumentWalDatabaseFixture>
 {
     private static readonly ChangeSourceIdentity Source = new("system", "documents", "slot", "publication");
     private static readonly DocumentCollectionDefinition<IntegrationDocument> Collection = new("orders", IntegrationJsonContext.Default.IntegrationDocument);
@@ -283,7 +283,7 @@ public sealed partial class DocumentIntegrationTests(DocumentWalDatabaseFixture 
                 // table was later altered, PostgreSQL finds the newer row but not its columns. If
                 // PostgreSQL ever decodes this slot, the upstream fix has shipped: revisit
                 // docs/streams/README.md.
-                Assert.Matches(PoisonedSlotError(), failure.Message);
+                Assert.Matches(PoisonedSlotErrorPattern, failure.Message);
             }
 
             var stream = new PgOutputChangeStream(isolatedReplication.StartReplicationAsync(isolatedSlot, isolatedPublication, cancellationToken: token).DecodePgOutputAsync(),
@@ -334,8 +334,7 @@ public sealed partial class DocumentIntegrationTests(DocumentWalDatabaseFixture 
         new(table, [Text(tenant), Text(collection), Text(id), Text(revision.ToString(System.Globalization.CultureInfo.InvariantCulture)), Text("1"), Text(json)]);
     private static ChangeColumnValue Text(string value) => ChangeColumnValue.FromValue(Encoding.UTF8.GetBytes(value), ChangeValueEncoding.Text);
 
-    [System.Text.RegularExpressions.GeneratedRegex("^(could not map file(node|number) \"[^\"]+\" to relation OID|pg_attribute catalog is missing [0-9]+ attribute\\(s\\) for relation OID [0-9]+)$")]
-    private static partial System.Text.RegularExpressions.Regex PoisonedSlotError();
+    private const string PoisonedSlotErrorPattern = "^(could not map file(node|number) \"[^\"]+\" to relation OID|pg_attribute catalog is missing [0-9]+ attribute\\(s\\) for relation OID [0-9]+)$";
 
     private static Task ExecuteAsync(BlueTuskDataSource source, string sql, CancellationToken cancellationToken) =>
         DocumentWalDatabaseFixture.ExecuteAsync(source, sql, cancellationToken);

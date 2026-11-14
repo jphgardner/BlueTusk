@@ -25,7 +25,7 @@ public sealed class EventOutboxChangeDecoderTests
         var table = Table("bluetusk_events");
         var binary = new ChangeRow(table, new[]
         {
-            "tenant"u8.ToArray(), "orders"u8.ToArray(), sequence, identity.ToByteArray(bigEndian: true),
+            "tenant"u8.ToArray(), "orders"u8.ToArray(), sequence, Convert.FromHexString(identity.ToString("N")),
             "order.placed"u8.ToArray(), version, occurred, payload
         }.Select(static value => ChangeColumnValue.FromValue(value, ChangeValueEncoding.Binary)));
         var decoder = new EventOutboxChangeDecoder();
