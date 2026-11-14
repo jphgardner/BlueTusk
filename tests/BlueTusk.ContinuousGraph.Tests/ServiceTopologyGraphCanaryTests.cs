@@ -2,7 +2,6 @@ using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
-using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.Live;
@@ -159,7 +158,7 @@ public sealed class ServiceTopologyGraphCanaryTests
                         try
                         {
                             await using var denied = NewDelivery();
-                            var error = await Assert.ThrowsAsync<BlueTuskServerException>(
+                            var error = await Assert.ThrowsAsync<BlueTuskException>(
                                 () => consumer.ConsumeTransactionAsync(denied, token).AsTask());
                             Assert.Equal("42501", error.SqlState);
                             Assert.Equal(ChangeDeliveryState.Nacked, denied.State);
@@ -255,10 +254,15 @@ public sealed class ServiceTopologyGraphCanaryTests
 
     private sealed class Fixture : IAsyncDisposable
     {
+        private readonly BlueTuskDataSource _dataSource;
+        private readonly DbContextOptions<TopologyDbContext> _dbOptions;
+
         private Fixture(string connectionString)
         {
             ConnectionString = connectionString;
-            Database = NewContext(connectionString);
+            _dataSource = BlueTuskDataSource.Create(connectionString);
+            _dbOptions = new DbContextOptionsBuilder<TopologyDbContext>().UseBlueTusk(_dataSource).Options;
+            Database = NewContext();
             Service = new TopologyService(new EfTopologyRepository(Database));
         }
 
@@ -310,7 +314,7 @@ public sealed class ServiceTopologyGraphCanaryTests
         public async ValueTask<TopologyDbContext> OpenAuthorizedAsync(
             LiveSecurityScope scope, IsolationLevel isolation, CancellationToken token)
         {
-            var context = NewContext(ConnectionString);
+            var context = NewContext();
             try
             {
                 await context.Database.BeginTransactionAsync(isolation, token);
@@ -339,9 +343,12 @@ public sealed class ServiceTopologyGraphCanaryTests
                 : Database.Database.ExecuteSqlInterpolatedAsync(
                     $"""DELETE FROM topology.dependencies WHERE "Id" = {id}""", token);
 
-        public ValueTask DisposeAsync() => Database.DisposeAsync();
+        public async ValueTask DisposeAsync()
+        {
+            await Database.DisposeAsync();
+            await _dataSource.DisposeAsync();
+        }
 
-        private static TopologyDbContext NewContext(string connectionString) =>
-            new(new DbContextOptionsBuilder<TopologyDbContext>().UseBlueTusk(connectionString).Options);
+        private TopologyDbContext NewContext() => new(_dbOptions);
     }
 }
