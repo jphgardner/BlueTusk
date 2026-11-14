@@ -16,6 +16,8 @@ param(
 
     [string] $PostgreSqlImage,
 
+    [string] $TestAssemblyPath,
+
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
 
@@ -116,6 +118,17 @@ $resultsDirectory = Join-Path $reportDirectory 'test-results'
 [IO.Directory]::CreateDirectory($resultsDirectory) | Out-Null
 
 $project = 'tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj'
+$testAssemblySha256 = $null
+if (![string]::IsNullOrWhiteSpace($TestAssemblyPath))
+{
+    $TestAssemblyPath = (Resolve-Path -LiteralPath $TestAssemblyPath).Path
+    $binaryVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($TestAssemblyPath).ProductVersion
+    if (!$binaryVersion.EndsWith("+$sourceCommit", [StringComparison]::Ordinal))
+    {
+        throw 'The prebuilt endurance assembly does not identify the exact candidate commit.'
+    }
+    $testAssemblySha256 = (Get-FileHash -LiteralPath $TestAssemblyPath).Hash.ToLowerInvariant()
+}
 $testClass = 'BlueTusk.StressTests.ContinuousGraphEnduranceTests'
 $phaseTests = [ordered]@{
     'restart-seed' = (
@@ -167,11 +180,18 @@ try
                 'BLUETUSK_GRAPH_ENDURANCE_PHASE',
                 $phase)
             $filter = "FullyQualifiedName=$($phaseTests[$phase])"
-            & dotnet test $project `
-                --configuration $Configuration `
-                --filter $filter `
-                --logger "trx;LogFileName=continuous-graph-$phase.trx" `
-                --results-directory $resultsDirectory
+            if ($testAssemblySha256)
+            {
+                & dotnet vstest $TestAssemblyPath "/TestCaseFilter:$filter" "/Logger:trx;LogFileName=continuous-graph-$phase.trx" "/ResultsDirectory:$resultsDirectory"
+            }
+            else
+            {
+                & dotnet test $project `
+                    --configuration $Configuration `
+                    --filter $filter `
+                    --logger "trx;LogFileName=continuous-graph-$phase.trx" `
+                    --results-directory $resultsDirectory
+            }
             $phaseExitCodes[$phase] = $LASTEXITCODE
             $testExitCode = $LASTEXITCODE
             if ($testExitCode -ne 0)
@@ -240,6 +260,7 @@ finally
         candidateArtifacts = $candidateArtifacts
         postgresqlImage = $PostgreSqlImage
         project = $project
+        testAssemblySha256 = $testAssemblySha256
         phaseTests = $phaseTests
         phaseExitCodes = $phaseExitCodes
         configuration = $Configuration
