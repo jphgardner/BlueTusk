@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeTests>true</BlueTuskRuntimeTests>
+    <UseAppHost Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</UseAppHost>
     <BlueTuskProductFamily>Documents</BlueTuskProductFamily>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -9,7 +11,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\..\src\BlueTusk.Documents.AspNetCore\BlueTusk.Documents.AspNetCore.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.v3" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="xunit" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\src\BlueTusk.Documents\BlueTusk.Documents.csproj" />
@@ -18,5 +21,11 @@
     <ProjectReference Include="..\..\src\BlueTusk.Documents.Live\BlueTusk.Documents.Live.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.DependencyInjection\BlueTusk.Live.DependencyInjection.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="BlueTusk.Tests.Shared" />
+    <Compile Include="..\Shared\RequiredEnvironmentFactAttribute.cs" Link="RequiredEnvironmentFactAttribute.cs" />
+    <Compile Include="..\Shared\PortableHttpTestHost.cs" Link="PortableHttpTestHost.cs" />
+    <Using Include="BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource" Alias="DbDataSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))" />
   </ItemGroup>
 </Project>

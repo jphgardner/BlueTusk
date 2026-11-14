@@ -8,7 +8,7 @@ namespace BlueTusk.Documents.Tests;
 
 public sealed class DocumentHealthTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Indexed_scope_probe_runs_under_payload_denied_read_only_role_and_separates_tenants() => WithStoreAsync(async (database, store) =>
     {
         await database.ExecuteAsync($"INSERT INTO {database.Schema}.documents(tenant,collection,id,revision,schema_version,body) VALUES('tenant','orders','1',1,1,'{{\"private\":true}}')");
@@ -26,7 +26,7 @@ public sealed class DocumentHealthTests
         });
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Metadata_lock_deadline_nonqueued_admission_cancellation_and_recovery_are_bounded() => WithStoreAsync(async (database, store) =>
     {
         var check = new DocumentStoreHealthCheck(store, "tenant", "orders", new DocumentStoreHealthCheckOptions { Timeout = TimeSpan.FromMilliseconds(150) });
@@ -47,7 +47,7 @@ public sealed class DocumentHealthTests
         await AssertRecoveredAsync(check);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Missing_metadata_format_byte_contract_and_disposal_use_redacted_failures_and_fixed_metrics() => WithStoreAsync(async (database, store) =>
     {
         using var metrics = new StatusMetrics(DocumentStoreHealthCheck.MeterName);
@@ -64,7 +64,7 @@ public sealed class DocumentHealthTests
         await store.DisposeAsync(); AssertRedacted(await check.CheckHealthAsync(new HealthCheckContext())); metrics.AssertOnlyFixedStatus();
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Late_uncooperative_connection_open_keeps_probe_admission_reserved_then_recovers() => WithStoreAsync(async (database, store) =>
     {
         await using var source = new LateOpenSource(database.Source);
@@ -72,7 +72,7 @@ public sealed class DocumentHealthTests
         await source.AssertBoundedAsync(new DocumentStoreHealthCheck(delayedStore, "tenant", "orders", new DocumentStoreHealthCheckOptions { Timeout = TimeSpan.FromMilliseconds(100) }), "documents");
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Actual_operator_role_endpoint_ignores_client_scope_and_recovers_after_format_drift() => WithStoreAsync(async (database, store) =>
     {
         await using var host = await OperatorHealthHost.StartAsync(builder => builder.AddBlueTuskDocuments("document-ready", store, "tenant", "orders"));

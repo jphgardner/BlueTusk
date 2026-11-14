@@ -7,7 +7,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class ProjectionBoundedWorkloadTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task SnapshotAndRetainedWalBacklogRecoverPromoteAndPruneWithoutGapOrCrossTenantEffects()
     {
         await using var db = await ProjectionDatabase.CreateAsync();

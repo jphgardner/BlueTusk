@@ -1,5 +1,4 @@
 using BlueTusk.Data;
-using Xunit.Sdk;
 
 namespace BlueTusk.Jobs.Tests;
 
@@ -22,7 +21,7 @@ internal sealed class JobDatabase : IAsyncDisposable
         string? connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured; live PostgreSQL Jobs tests require a disposable database.");
+            throw new InvalidOperationException("BLUETUSK_TEST_CONNECTION_STRING is not configured; live PostgreSQL Jobs tests require a disposable database.");
         }
 
         var source = BlueTuskDataSource.Create(connectionString);

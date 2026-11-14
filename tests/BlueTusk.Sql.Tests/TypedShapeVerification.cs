@@ -1,6 +1,9 @@
 using System.Data.Common;
 using System.Text.Json;
 using BlueTusk.TypeSystem;
+#if !NET7_0_OR_GREATER
+using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
+#endif
 
 namespace BlueTusk.Sql.Verification;
 

@@ -2,7 +2,7 @@ namespace BlueTusk.Workflows.Tests;
 
 public sealed class WorkflowReplayTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task HistoryReplayMatchesQueuedRunningAndCompletedStateAndDetectsDrift()
     {
         await using var database = await WorkflowDatabase.CreateAsync();

@@ -17,6 +17,7 @@ function Start-DotNetCompatibilityPostgreSql
     $database = 'bluetusk_compatibility'
     $versionParts = $Contract.version.Split('.')
     $expectedVersionNumber = ([int]$versionParts[0] * 10000) + [int]$versionParts[1]
+    $serverSettingsSql = "SELECT current_setting('server_version_num'), current_setting('wal_level')"
     $fixture = @{
         container = $null
         control = $null
@@ -35,7 +36,7 @@ function Start-DotNetCompatibilityPostgreSql
             {
                 $env:POSTGRES_PASSWORD = $password
                 & docker run --detach --rm --name $fixture.container --publish '127.0.0.1::5432' `
-                    --env POSTGRES_PASSWORD --env "POSTGRES_DB=$database" $image | Out-Null
+                    --env POSTGRES_PASSWORD --env "POSTGRES_DB=$database" $image postgres -c wal_level=logical | Out-Null
                 if ($LASTEXITCODE -ne 0) { throw 'Could not start the PostgreSQL compatibility container.' }
             }
             finally { $env:POSTGRES_PASSWORD = $previousPassword }
@@ -44,7 +45,7 @@ function Start-DotNetCompatibilityPostgreSql
             if ($LASTEXITCODE -ne 0 -or $mapping -cnotmatch '^127\.0\.0\.1:(\d+)$')
             { throw 'PostgreSQL compatibility container has no loopback port.' }
             $port = [int]$Matches[1]
-            $version = $null
+            $serverSettings = $null
             for ($attempt = 0; $attempt -lt 45; $attempt++)
             {
                 # The official image starts a temporary Unix socket server for
@@ -52,7 +53,7 @@ function Start-DotNetCompatibilityPostgreSql
                 & docker exec $fixture.container pg_isready -q -h 127.0.0.1 -U postgres -d $database
                 if ($LASTEXITCODE -eq 0)
                 {
-                    $version = (& docker exec $fixture.container psql -X -U postgres -d $database -Atc 'SHOW server_version_num')
+                    $serverSettings = (& docker exec $fixture.container psql -X -U postgres -d $database -Atc $serverSettingsSql)
                     if ($LASTEXITCODE -eq 0) { break }
                 }
                 Start-Sleep -Seconds 1
@@ -110,7 +111,7 @@ function Start-DotNetCompatibilityPostgreSql
             try { $port = $socket.LocalEndpoint.Port }
             finally { $socket.Stop() }
             $serverLog = Join-Path $WorkDirectory 'server.log'
-            $startArguments = "start -w -t 45 -D `"$($fixture.dataDirectory)`" -l `"$serverLog`" -o `"-h 127.0.0.1 -p $port`""
+            $startArguments = "start -w -t 45 -D `"$($fixture.dataDirectory)`" -l `"$serverLog`" -o `"-h 127.0.0.1 -p $port -c wal_level=logical`""
             $startup = Start-Process -FilePath $fixture.control -ArgumentList $startArguments -WindowStyle Hidden -PassThru `
                 -RedirectStandardOutput (Join-Path $WorkDirectory 'startup.log') `
                 -RedirectStandardError (Join-Path $WorkDirectory 'startup-error.log')
@@ -124,14 +125,14 @@ function Start-DotNetCompatibilityPostgreSql
                 $env:PGPASSWORD = $password
                 & (Join-Path $bin 'createdb.exe') -h 127.0.0.1 -p $port -U postgres $database | Out-Null
                 if ($LASTEXITCODE -ne 0) { throw 'Could not create the PostgreSQL compatibility database.' }
-                $version = (& (Join-Path $bin 'psql.exe') -h 127.0.0.1 -p $port -U postgres -d $database -X -Atc 'SHOW server_version_num')
-                if ($LASTEXITCODE -ne 0) { throw 'Could not verify the PostgreSQL compatibility server version.' }
+                $serverSettings = (& (Join-Path $bin 'psql.exe') -h 127.0.0.1 -p $port -U postgres -d $database -X -Atc $serverSettingsSql)
+                if ($LASTEXITCODE -ne 0) { throw 'Could not verify the PostgreSQL compatibility server settings.' }
             }
             finally { $env:PGPASSWORD = $previousPassword }
             $fixture.identity = 'sha256:' + $Contract.windowsArchive.sha256
         }
-        if (([string]$version).Trim() -cne [string]$expectedVersionNumber)
-        { throw "PostgreSQL compatibility requires server $($Contract.version)." }
+        if (([string]$serverSettings).Trim() -cne "$expectedVersionNumber|logical")
+        { throw "PostgreSQL compatibility requires server $($Contract.version) with wal_level=logical." }
         if ($WithPgVector -or $Extension)
         {
             $extensionName = if ($WithPgVector) { 'vector' } else { $Extension }

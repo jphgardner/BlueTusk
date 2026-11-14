@@ -36,7 +36,7 @@ public sealed class EdgeHttpIntegrationTests
         await Task.CompletedTask;
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Actual_HTTP_authentication_scope_checks_and_mutation_identity_are_enforced() => WithFixtureAsync(async fixture =>
     {
         await using var host = await Host.StartAsync(fixture.Store);
@@ -63,7 +63,7 @@ public sealed class EdgeHttpIntegrationTests
         Assert.Null(await remote.ReadChangesAsync(fixture.Scope, snapshot.Position, 512));
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Actual_HTTP_commit_disconnect_server_restart_and_Sqlite_reopen_recover_one_business_effect() => WithFixtureAsync(async fixture =>
     {
         await using (var setup = fixture.Source.CreateCommand($"CREATE TABLE \"{fixture.Store.Options.Schema}\".business_effects(id text PRIMARY KEY,counter integer NOT NULL)"))
@@ -113,7 +113,7 @@ public sealed class EdgeHttpIntegrationTests
         finally { DeleteOwnedDirectory(directory); }
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Replay_expired_full_Sqlite_cache_refreshes_without_losing_a_queued_write() => WithFixtureAsync(async fixture =>
     {
         var first = await fixture.Store.ApplyMutationAsync(new EdgeMutation(fixture.Scope, Guid.NewGuid(), "1", 0, EdgeMutationKind.Upsert, "{\"value\":\"old\"}"u8.ToArray()));
@@ -154,7 +154,7 @@ public sealed class EdgeHttpIntegrationTests
         finally { DeleteOwnedDirectory(directory); }
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Actual_HTTP_conflict_preserves_offline_payload_then_explicit_resolution_and_delete_sync() => WithFixtureAsync(async fixture =>
     {
         _ = await fixture.Store.ApplyMutationAsync(new EdgeMutation(fixture.Scope, Guid.NewGuid(), "1", 0, EdgeMutationKind.Upsert, "{\"count\":1}"u8.ToArray()));
@@ -190,7 +190,7 @@ public sealed class EdgeHttpIntegrationTests
         finally { DeleteOwnedDirectory(directory); }
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task HTTP_confirmation_releases_outcome_without_reapplying_a_late_retry() => WithFixtureAsync(async fixture =>
     {
         var mutation = new EdgeMutation(fixture.Scope, Guid.NewGuid(), "confirmed", 0, EdgeMutationKind.Upsert, "{\"value\":1}"u8.ToArray());
@@ -207,7 +207,7 @@ public sealed class EdgeHttpIntegrationTests
         Assert.Equal(0, (await fixture.Store.ReadHealthAsync(fixture.Scope)).ReceiptBytes);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task HTTP_ordered_horizon_reclaims_a_confirmed_receipt_without_reapplying_it() => WithFixtureAsync(async fixture =>
     {
         var stream = EdgeOrderedMutationId.NewStreamId();

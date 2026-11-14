@@ -90,7 +90,7 @@ try
     foreach ($project in $projects | Sort-Object FullName -Unique)
     {
         $resultName = $project.BaseName + '.trx'
-        & dotnet test $project.FullName -c $Configuration -nr:false --verbosity quiet --logger "trx;LogFileName=$resultName" --results-directory $resultDirectory
+        & dotnet test $project.FullName --framework net10.0 -c $Configuration -nr:false --verbosity quiet --logger "trx;LogFileName=$resultName" --results-directory $resultDirectory
         if ($LASTEXITCODE -ne 0) { throw "Ecosystem test project '$($project.BaseName)' failed." }
         $resultPath = Join-Path $resultDirectory $resultName
         if (-not (Test-Path -LiteralPath $resultPath)) { throw "Test evidence is missing for '$($project.BaseName)'." }

@@ -205,7 +205,7 @@ internal static class ProjectionSql
             return null;
         }
 
-        var batch = blueTuskConnection.CreateBatch();
+        DbBatch batch = blueTuskConnection.CreateBatch();
 #else
         if (!connection.CanCreateBatch)
         {

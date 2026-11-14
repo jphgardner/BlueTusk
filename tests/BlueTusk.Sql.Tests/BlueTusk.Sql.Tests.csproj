@@ -1,13 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeTests>true</BlueTuskRuntimeTests>
+    <UseAppHost Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</UseAppHost>
     <BlueTuskProductFamily>Sql</BlueTuskProductFamily>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <Import Project="..\..\eng\versions\Sql.props" />
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.v3" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="xunit" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\src\BlueTusk.Sql\BlueTusk.Sql.csproj" />

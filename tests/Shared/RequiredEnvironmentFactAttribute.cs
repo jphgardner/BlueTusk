@@ -18,3 +18,19 @@ internal sealed class RequiredEnvironmentFactAttribute : FactAttribute
         }
     }
 }
+
+internal sealed class RequiredEnvironmentTheoryAttribute : TheoryAttribute
+{
+#if NET8_0_OR_GREATER
+    public RequiredEnvironmentTheoryAttribute(string variable, [CallerFilePath] string? sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
+        : base(sourceFilePath, sourceLineNumber)
+#else
+    public RequiredEnvironmentTheoryAttribute(string variable)
+#endif
+    {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(variable)))
+        {
+            Skip = $"{variable} is not configured.";
+        }
+    }
+}

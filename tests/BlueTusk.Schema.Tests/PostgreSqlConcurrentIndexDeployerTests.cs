@@ -27,7 +27,7 @@ public sealed class PostgreSqlConcurrentIndexDeployerTests
             Catalog(new("items_value_idx", "CREATE INDEX IF NOT EXISTS items_value_idx ON app.items (value)", true))));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Concurrent_build_allows_a_live_writer_and_reconciles_a_valid_index_idempotently()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -74,7 +74,7 @@ public sealed class PostgreSqlConcurrentIndexDeployerTests
             "expand", againPending, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Invalid_unique_index_blocks_replay_until_explicit_cleanup_then_recovers()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -104,7 +104,7 @@ public sealed class PostgreSqlConcurrentIndexDeployerTests
             (await coordinator.ReadStepAsync(lease.DeploymentId, definition, "expand"))!.State);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Same_name_with_an_unreviewed_definition_fails_closed_without_journal_completion()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -120,7 +120,7 @@ public sealed class PostgreSqlConcurrentIndexDeployerTests
             (await coordinator.ReadStepAsync(lease.DeploymentId, definition, "expand"))!.State);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Index_build_and_journal_require_the_same_data_source_instance()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -132,7 +132,7 @@ public sealed class PostgreSqlConcurrentIndexDeployerTests
         Assert.Throws<ArgumentException>(() => new PostgreSqlConcurrentIndexDeployer(otherSource, coordinator));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Terminated_concurrent_build_requires_catalog_reconciliation_before_resuming_pending_attempt()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -237,7 +237,7 @@ public sealed class PostgreSqlConcurrentIndexDeployerTests
     }
 
     private static string Digest(string text) =>
-        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+        BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
     private sealed class Fixture : IAsyncDisposable
     {

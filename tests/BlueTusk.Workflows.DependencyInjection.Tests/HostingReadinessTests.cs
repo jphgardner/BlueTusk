@@ -13,7 +13,7 @@ namespace BlueTusk.Workflows.DependencyInjection.Tests;
 
 public sealed class HostingReadinessTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ScopedSaturationAndGeneratedJsonAreRedactedAndMetricsHaveFixedCardinality()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -70,7 +70,7 @@ public sealed class HostingReadinessTests
 
     private static readonly string[] AllowedMetricTags = ["status=healthy", "status=degraded", "status=unhealthy"];
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ReadOnlyHealthRoleWithTenantPolicyCannotSeeOtherTenantOrWriteAndDeniedProbeHasNoException()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -119,7 +119,7 @@ public sealed class HostingReadinessTests
         Assert.Null(deniedJobs.Exception);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task LockedDatabaseProbeHasFiniteDeadlineRejectsOverlappingWorkAndRecoversAfterRollback()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -144,7 +144,7 @@ public sealed class HostingReadinessTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => check.ReadAsync(canceled.Token).AsTask());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task TypedDiFactoriesAreBoundedReusableAndDoNotInitializeDatabaseOrOwnItsSource()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -177,7 +177,7 @@ public sealed class HostingReadinessTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new WorkflowScopeHealthCheck(database.Store, database.Scope, new WorkflowHealthCheckOptions { MaximumObserved = 100001 }));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task SignalWaitAgeIsExplicitPolicyAndWorkflowProbeDeadlineAndCallerCancellationReleaseGate()
     {
         await using var database = await WorkflowDatabase.CreateAsync();

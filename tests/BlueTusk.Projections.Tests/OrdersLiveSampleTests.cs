@@ -9,7 +9,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class OrdersLiveSampleTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task DeployedSampleBootstrapsRealWalSseReconnectProcessRestartAndControlledDdlRecoveryFromColocatedCheckpoint()
     {
         await using var db = await ProjectionDatabase.CreateAsync();

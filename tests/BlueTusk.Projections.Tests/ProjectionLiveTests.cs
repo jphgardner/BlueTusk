@@ -10,7 +10,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class ProjectionLiveTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task PublishedPageBoundsBytesAndCountAndRejectsStaleContinuation()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -33,7 +33,7 @@ public sealed class ProjectionLiveTests
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await db.Store.ReadActivePageAsync("orders", "first", 1, after: page.ContinueAfter));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task AuthoritativeJoinLiveUpdatesDeletesFiltersAndResumesPersistedReplayWithoutGap()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -76,7 +76,7 @@ public sealed class ProjectionLiveTests
         Assert.Equal(LiveSubscriptionConnectStatus.InvalidResumeToken, (await other.ConnectWithTokenAsync(token, protector)).Status);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task UnpublishedRebuildDoesNotInvalidateButCutoverPersistsResetIncludingEmptyFilteredResult()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -100,7 +100,7 @@ public sealed class ProjectionLiveTests
         await connect.Connection.DisposeAsync();
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task CutoverBetweenPreliminaryVersionReadAndPageQueryNeverPersistsNewVersionRowDiff()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -129,7 +129,7 @@ public sealed class ProjectionLiveTests
         await connect.Connection.DisposeAsync();
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task SharedQueryCannotAdvanceAnotherSubscriptionsVersionDuringRefresh()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -180,7 +180,7 @@ public sealed class ProjectionLiveTests
         await resumed.Connection.DisposeAsync();
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task FailedWritesAndDuplicateReplayDoNotAdvancePublicationAndQueryEnforcesSecurityScope()
     {
         await using var db = await ProjectionDatabase.CreateAsync();

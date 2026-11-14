@@ -22,7 +22,7 @@ namespace BlueTusk.Edge.Tests;
 
 public sealed class EdgeHealthTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Scope_health_observes_committed_counters_replays_tombstones_pruning_and_epoch_isolation() => WithFixtureAsync(async fixture =>
     {
         var other = new EdgeScope("other", "orders", 1);
@@ -51,7 +51,7 @@ public sealed class EdgeHealthTests
         Assert.Equal(0, (await fixture.Store.ReadHealthAsync(next)).ReceiptBytes);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Capacity_health_uses_bounded_snapshot_observation_and_never_prunes_expired_state() => WithFixtureAsync(async fixture =>
     {
         await using var bounded = new PostgreSqlEdgeServerStore(fixture.Source, fixture.Store.Options with { MaxRecordsPerScope = 1, MaxSnapshotsPerScope = 1 });
@@ -67,7 +67,7 @@ public sealed class EdgeHealthTests
         Assert.Equal(3L, await fixture.ScalarAsync($"SELECT count(*) FROM {fixture.Schema}.snapshots"));
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Host_health_deadline_saturation_and_cancellation_recover_after_a_real_database_lock() => WithFixtureAsync(async fixture =>
     {
         var check = new EdgeServerHealthCheck(fixture.Store, fixture.Scope, new EdgeServerHealthCheckOptions { Timeout = TimeSpan.FromMilliseconds(150) });
@@ -103,7 +103,7 @@ public sealed class EdgeHealthTests
         await second.RollbackAsync();
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Missing_scope_format_drift_and_disposal_emit_sanitized_health_and_status_only_metrics() => WithFixtureAsync(async fixture =>
     {
         var tags = new ConcurrentBag<KeyValuePair<string, object?>>();
@@ -128,7 +128,7 @@ public sealed class EdgeHealthTests
         Assert.All(tags, static tag => { Assert.Equal("status", tag.Key); Assert.Contains(tag.Value, new object[] { "healthy", "degraded", "unhealthy", "cancelled" }); });
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Timed_out_uncooperative_connection_open_keeps_admission_reserved_until_late_completion() => WithFixtureAsync(async fixture =>
     {
         await using var delayed = new DelayedSource(fixture.Source);
@@ -150,7 +150,7 @@ public sealed class EdgeHealthTests
         Assert.True(delayed.Opens >= 2);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Real_authorized_ASP_health_endpoint_reports_readiness_capacity_drift_and_recovery() => WithFixtureAsync(async fixture =>
     {
         await using var bounded = new PostgreSqlEdgeServerStore(fixture.Source, fixture.Store.Options with { MaxRecordsPerScope = 1 });

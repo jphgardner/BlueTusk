@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 
 [assembly: InternalsVisibleTo("BlueTusk.Studio.ControlPlane")]
 [assembly: InternalsVisibleTo("BlueTusk.Studio.Events")]
+[assembly: InternalsVisibleTo("BlueTusk.Studio.Tests")]
 
 namespace BlueTusk.Studio;
 
@@ -19,14 +20,17 @@ internal static class StudioOperationId
 #endif
     }
 
-    public static Guid CreateVersion7()
+    public static Guid CreateVersion7() => CreateVersion7(DateTimeOffset.UtcNow);
+
+    public static Guid CreateVersion7(DateTimeOffset timestamp)
     {
 #if NET9_0_OR_GREATER
-        return Guid.CreateVersion7();
+        return Guid.CreateVersion7(timestamp);
 #else
+        var milliseconds = timestamp.ToUnixTimeMilliseconds();
+        BlueTuskGuard.NotNegative(milliseconds, nameof(timestamp));
         Span<byte> bytes = stackalloc byte[16];
         RandomNumberGenerator.Fill(bytes);
-        var milliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         for (var index = 5; index >= 0; index--)
         {
             bytes[index] = (byte)milliseconds;

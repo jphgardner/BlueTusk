@@ -4,7 +4,7 @@ namespace BlueTusk.Workflows.Tests;
 
 public sealed class WorkflowWorkerBoundaryTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task OlderWorkerLeavesUnsupportedActivityVersionForNewWorker()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -40,7 +40,7 @@ public sealed class WorkflowWorkerBoundaryTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ActiveCancellationStopsHandlerAndRecoveryClosesWorkflow()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -77,7 +77,7 @@ public sealed class WorkflowWorkerBoundaryTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task PermanentCompensationFailureRemainsVisible()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -105,7 +105,7 @@ public sealed class WorkflowWorkerBoundaryTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task NodeResultPagesHonorAggregateByteBudgetAndKeyset()
     {
         await using var database = await WorkflowDatabase.CreateAsync(new WorkflowOptions

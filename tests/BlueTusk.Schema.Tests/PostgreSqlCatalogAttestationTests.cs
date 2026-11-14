@@ -12,7 +12,7 @@ public sealed class SchemaCatalogMutationTestGroup;
 [Collection("Schema catalogue mutation")]
 public sealed class PostgreSqlCatalogAttestationTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task Unchanged_catalogue_attests_and_preserves_borrowed_transaction_settings_and_ownership()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -31,7 +31,7 @@ public sealed class PostgreSqlCatalogAttestationTests
         await transaction.RollbackAsync(TestContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Current_function_cache_and_publication_expansion_cannot_be_claimed_as_held_snapshot_metadata()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -55,7 +55,7 @@ public sealed class PostgreSqlCatalogAttestationTests
         await Assert.ThrowsAsync<SchemaCatalogAttestationMismatchException>(() => attestation.VerifyAsync().AsTask());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Function_change_then_revert_still_changes_tuple_version()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -69,7 +69,7 @@ public sealed class PostgreSqlCatalogAttestationTests
         await Assert.ThrowsAsync<SchemaCatalogAttestationMismatchException>(() => attestation.VerifyAsync().AsTask());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Shared_role_rename_then_revert_is_attested_by_xmin_instead_of_matching_names()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -90,7 +90,7 @@ public sealed class PostgreSqlCatalogAttestationTests
         await Assert.ThrowsAsync<SchemaCatalogAttestationMismatchException>(() => attestation.VerifyAsync().AsTask());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Ordinary_login_requires_only_oid_xmin_grant_and_cannot_read_credential_columns()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -125,7 +125,7 @@ public sealed class PostgreSqlCatalogAttestationTests
         }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Metadata_and_pool_wait_are_bounded_and_cancellation_does_not_own_the_caller()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -148,7 +148,7 @@ public sealed class PostgreSqlCatalogAttestationTests
         Assert.Equal(ConnectionState.Open, connection.State);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Verification_routed_to_another_database_fails_closed()
     {
         await using var fixture = await Fixture.CreateAsync();

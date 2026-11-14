@@ -28,7 +28,7 @@ public sealed class WorkflowValidationTests
         }).AsTask());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task DefinitionVersionsAreCanonicalAndImmutable()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -56,7 +56,7 @@ public sealed class WorkflowValidationTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => database.Store.StartAsync(database.Request()).AsTask());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ActivityFanInIsRejectedBeforeMaterializingOversizeDependencyPayloads()
     {
         await using var database = await WorkflowDatabase.CreateAsync(new WorkflowOptions
@@ -91,7 +91,7 @@ public sealed class WorkflowValidationTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task LifetimeHistoryLimitFailsExplicitlyInsteadOfGrowingWithoutBound()
     {
         await using var database = await WorkflowDatabase.CreateAsync(new WorkflowOptions { MaximumNodes = 1, MaximumHistoryEntries = 12 });

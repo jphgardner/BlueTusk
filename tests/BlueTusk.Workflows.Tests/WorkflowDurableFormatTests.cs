@@ -4,7 +4,7 @@ public sealed class WorkflowDurableFormatTests
 {
     private static readonly string[] ExpectedDefinitionMigrationCodes = ["v2", "v1"];
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task QuiescentDefinitionUpgradeAndRollbackPreserveCompletedContractsAndStartIdentity()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -59,7 +59,7 @@ public sealed class WorkflowDurableFormatTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task SameFormatOperationalTuningAndRollbackResumeSignalsTimersWithoutRepeatingCompletedActivity()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -122,7 +122,7 @@ public sealed class WorkflowDurableFormatTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task UnsupportedFormatOrDurableFingerprintRejectsInitializationWithoutChangingInstancesAndDispatch()
     {
         await using var database = await WorkflowDatabase.CreateAsync();

@@ -5,7 +5,7 @@ namespace BlueTusk.Workflows.Tests;
 
 public sealed class WorkflowTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ParallelActivitiesJoinBufferedSignalAndDurableTimerComplete()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -68,7 +68,7 @@ public sealed class WorkflowTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task RetryKeepsStableExternalIdentityAndCompletesOnlyOnce()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -103,7 +103,7 @@ public sealed class WorkflowTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task PermanentFailureCompensatesInReverseCompletionOrder()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -154,7 +154,7 @@ public sealed class WorkflowTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task RestartResumesSignalWaitWithoutReexecutingCommittedActivity()
     {
         await using var database = await WorkflowDatabase.CreateAsync();

@@ -12,7 +12,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class ProjectionsSustainedWorkloadTests(ITestOutputHelper output)
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task RealWalTransactionalEventsOwnedLiveAndLeaseRecoveryMaintainExactStateDuringTimedWorkload()
     {
         var seconds = int.Parse(Environment.GetEnvironmentVariable("BLUETUSK_WORKLOAD_SECONDS") ?? "3", CultureInfo.InvariantCulture);
@@ -139,16 +139,16 @@ public sealed class ProjectionsSustainedWorkloadTests(ITestOutputHelper output)
                 }
                 Assert.Fail("Bounded retained source deliveries did not cover this committed business transaction.");
             }
-            while (Stopwatch.GetElapsedTime(started).TotalSeconds < seconds && count < 10_000)
+            while (BlueTuskRuntime.GetElapsedTime(started).TotalSeconds < seconds && count < 10_000)
             {
                 var iteration = Stopwatch.GetTimestamp(); count++;
                 var value = new EventWrite(Guid.NewGuid(), "steady.order", 1, DateTimeOffset.UtcNow, Encoding.UTF8.GetBytes(count.ToString(CultureInfo.InvariantCulture)));
                 var stage = Stopwatch.GetTimestamp();
                 var xid = await CommitBusinessAsync(count, value, false);
-                producerDurations.Add(Stopwatch.GetElapsedTime(stage).TotalMilliseconds);
+                producerDurations.Add(BlueTuskRuntime.GetElapsedTime(stage).TotalMilliseconds);
                 stage = Stopwatch.GetTimestamp();
                 await CoverBusinessAsync(xid, count % 61 == 0);
-                projectionDurations.Add(Stopwatch.GetElapsedTime(stage).TotalMilliseconds);
+                projectionDurations.Add(BlueTuskRuntime.GetElapsedTime(stage).TotalMilliseconds);
                 if (count % 37 == 0)
                 {
                     var duplicateXid = await CommitBusinessAsync(count, value, true); duplicateAppendCount++;
@@ -161,17 +161,17 @@ public sealed class ProjectionsSustainedWorkloadTests(ITestOutputHelper output)
                 }
                 stage = Stopwatch.GetTimestamp();
                 Assert.Equal(1, (await events.ReplayAsync(replayLease, HandleAsync, 16, 512, token)).HandledCount);
-                eventDurations.Add(Stopwatch.GetElapsedTime(stage).TotalMilliseconds);
+                eventDurations.Add(BlueTuskRuntime.GetElapsedTime(stage).TotalMilliseconds);
                 if (count % 32 == 0)
                 {
                     Assert.Equal(1, await live.RefreshAsync(token));
                     Assert.True(await client.MoveNextAsync()); liveMessages++;
                 }
-                durations.Add(Stopwatch.GetElapsedTime(iteration).TotalMilliseconds);
+                durations.Add(BlueTuskRuntime.GetElapsedTime(iteration).TotalMilliseconds);
                 process.Refresh(); maximumWorkingSet = Math.Max(maximumWorkingSet, process.WorkingSet64);
             }
             if (count % 32 != 0) { Assert.Equal(1, await live.RefreshAsync(token)); Assert.True(await client.MoveNextAsync()); liveMessages++; }
-            var elapsed = Stopwatch.GetElapsedTime(started);
+            var elapsed = BlueTuskRuntime.GetElapsedTime(started);
             Assert.True(count > 0);
             Assert.Equal(count, await events.ReadCheckpointAsync("steady", stream, token));
             Assert.Equal(0, (await events.ReplayAsync(replayLease, HandleAsync, 16, 512, token)).HandledCount);

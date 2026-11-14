@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeTests>true</BlueTuskRuntimeTests>
+    <UseAppHost Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</UseAppHost>
     <BlueTuskProductFamily>Edge</BlueTuskProductFamily>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -14,10 +16,17 @@
     <ProjectReference Include="..\..\src\BlueTusk.Edge.Server\BlueTusk.Edge.Server.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.v3" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="xunit" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\src\BlueTusk.Edge\BlueTusk.Edge.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Edge.Sqlite\BlueTusk.Edge.Sqlite.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="BlueTusk.Tests.Shared" />
+    <Compile Include="..\Shared\RequiredEnvironmentFactAttribute.cs" Link="RequiredEnvironmentFactAttribute.cs" />
+    <Compile Include="..\Shared\PortableHttpTestHost.cs" Link="PortableHttpTestHost.cs" />
+    <Using Include="BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource" Alias="DbDataSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))" />
   </ItemGroup>
 </Project>

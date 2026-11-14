@@ -6,7 +6,7 @@ namespace BlueTusk.Sql.Tests;
 
 public sealed class SqlCatalogueBindingTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task Qualified_enum_and_domain_bindings_round_trip_and_reject_same_named_other_schema()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING") is { Length: > 0 } value

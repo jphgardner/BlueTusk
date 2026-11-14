@@ -2,7 +2,7 @@ namespace BlueTusk.Events.Tests;
 
 public sealed class EventReplayStatusTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task MissingStreamAndConsumerRemainDistinctAndObservationNeverCreatesReplayOrReadsPayloadTables()
     {
         await using var db = await EventDatabase.CreateAsync();
@@ -38,7 +38,7 @@ public sealed class EventReplayStatusTests
         Assert.Equal(1, isolated.StreamHead); Assert.Equal(0, isolated.Checkpoint); Assert.Equal(1, isolated.RemainingEvents);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task UncommittedBusinessAppendAndReplayEffectsNeverAppearInCommittedHealthSnapshot()
     {
         await using var db = await EventDatabase.CreateAsync();
@@ -69,7 +69,7 @@ public sealed class EventReplayStatusTests
         Assert.Equal(2, await db.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task DatabaseClockExpiryReplacementAndReleaseRemainVisibleWithoutLosingFenceOrCheckpoint()
     {
         using var listener = new System.Diagnostics.Metrics.MeterListener
@@ -102,7 +102,7 @@ public sealed class EventReplayStatusTests
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await db.Store.ReadReplayStatusAsync("consumer", null!));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task CorruptMetadataCannotReportHealthyLagOrFetchOversizedOwnerIdentity()
     {
         await using var db = await EventDatabase.CreateAsync();

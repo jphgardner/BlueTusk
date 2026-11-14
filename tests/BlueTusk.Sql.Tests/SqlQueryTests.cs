@@ -5,13 +5,13 @@ namespace BlueTusk.Sql.Tests;
 
 public sealed class SqlQueryTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task Generated_builtin_type_shapes_preserve_finite_nonfinite_temporal_and_nullable_array_values()
     {
         await using var source = BlueTuskDataSource.Create(ConnectionString());
         await BlueTusk.Sql.Verification.TypedShapeVerification.RunAsync(source, TestContext.Current.CancellationToken);
     }
-    [Fact]
+    [PostgreSqlFact]
     public async Task Generated_arrays_and_arbitrary_precision_numeric_preserve_shape_null_elements_and_values()
     {
         await using var source = BlueTuskDataSource.Create(ConnectionString());
@@ -40,7 +40,7 @@ public sealed class SqlQueryTests
         });
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Generated_query_binds_nullable_values_and_streams_typed_rows()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -58,7 +58,7 @@ public sealed class SqlQueryTests
         Assert.Equal(System.Data.ConnectionState.Open, connection.State);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Result_overflow_fails_and_connection_remains_usable()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -75,7 +75,7 @@ public sealed class SqlQueryTests
         Assert.Equal(42, await healthy.ExecuteScalarAsync(TestContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Parameterless_large_result_stops_at_one_overflow_row_on_the_server()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -105,7 +105,7 @@ public sealed class SqlQueryTests
         Assert.Equal(3L, Assert.IsType<long>(await probe.ExecuteScalarAsync(TestContext.Current.CancellationToken)));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Bounded_wrapper_preserves_cte_order_limit_offset_parameters_and_terminal_comments()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -125,7 +125,7 @@ public sealed class SqlQueryTests
         Assert.Collection(returned, value => Assert.Equal(3, value), value => Assert.Equal(2, value));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Bounded_wrapper_preserves_for_update_in_a_callers_transaction()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -150,7 +150,7 @@ public sealed class SqlQueryTests
         await transaction.RollbackAsync(TestContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Authoritative_validation_rejects_column_name_and_type_drift_without_reading_rows()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -162,7 +162,7 @@ public sealed class SqlQueryTests
         await Assert.ThrowsAsync<SqlContractMismatchException>(() => typeMismatch.ValidateAsync(dataSource, 0, TestContext.Current.CancellationToken).AsTask());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Required_nulls_fail_before_materialization_and_early_disposal_releases_reader()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -183,7 +183,7 @@ public sealed class SqlQueryTests
         Assert.Equal(42, await healthy.ExecuteScalarAsync(TestContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Uses_callers_transaction_and_does_not_commit_or_dispose_it()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -208,7 +208,7 @@ public sealed class SqlQueryTests
         Assert.NotEqual(Query(10, "int4").Fingerprint, Query(10, "int8").Fingerprint);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Cancellation_is_observed_without_disposing_callers_connection()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());

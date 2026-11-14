@@ -80,7 +80,8 @@ database. The runner starts it automatically from the digest-pinned Linux
 image or the SHA256-verified Windows binaries. It generates a per-run SCRAM
 password, binds the server to loopback, and stops it after testing. The legacy
 Linux test container shares the PostgreSQL container's network namespace. CI
-evidence records the server version and distribution identity. Suites that
+evidence records the server version and distribution identity. Logical WAL
+is enabled for tests that exercise replication. Suites that
 require an extension use the server and extension versions pinned for that
 suite in the contract.
 

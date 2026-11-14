@@ -7,7 +7,7 @@ namespace BlueTusk.Schema.Tests;
 
 public sealed class PostgreSqlSchemaDeploymentCoordinatorTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task Transactional_sql_and_journal_are_atomic_bound_and_idempotent_after_reopen()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -48,7 +48,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinatorTests
         Assert.True(successor.FencingToken > lease.FencingToken);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task External_pending_attempt_requires_explicit_reconciliation_and_old_fence_cannot_finish()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -79,7 +79,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinatorTests
         Assert.Equal(retry.Attempt, completed.Attempt);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Prepared_sql_rejects_multiple_statements_and_rollback_keeps_step_unfinished()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -98,7 +98,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinatorTests
             "SELECT count(*)::integer FROM pg_catalog.pg_attribute WHERE attrelid = 'app.items'::regclass AND attname IN ('first', 'second') AND NOT attisdropped"));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Multiple_consumer_prerequisites_require_every_completed_journal_record()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -137,7 +137,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinatorTests
             (await coordinator.ExecuteTransactionalSqlStepAsync(lease, definition, "expand")).State);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Ddl_finishing_after_database_clock_lease_expiry_rolls_back_with_its_journal()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -170,7 +170,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinatorTests
         Assert.True(replacement.FencingToken > lease.FencingToken);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Reopen_rejects_unknown_format_and_changed_journal_column_shape()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -246,7 +246,7 @@ public sealed class PostgreSqlSchemaDeploymentCoordinatorTests
     }
 
     private static string Digest(string text) =>
-        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+        BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
     private static async Task<int> ScalarAsync(BlueTuskDataSource source, string sql)
     {

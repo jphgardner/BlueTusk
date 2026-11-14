@@ -4,7 +4,7 @@ namespace BlueTusk.Studio.Tests;
 
 public sealed class StudioAuditSinkTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Known_v1_audits_upgrade_with_explicit_unattributed_history()
     {
         await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
@@ -35,9 +35,9 @@ public sealed class StudioAuditSinkTests
             {
                 Assert.Equal("legacy-unknown", await historical.ExecuteScalarAsync(TestContext.Current.CancellationToken));
             }
-            await sink.RecordAsync(new(Guid.CreateVersion7(), "current-actor", new string('b', 64), "attempt", 0)
+            await sink.RecordAsync(new(StudioOperationId.CreateVersion7(), "current-actor", new string('b', 64), "attempt", 0)
             { ScopeId = "tenant-a-database" }, TestContext.Current.CancellationToken);
-            await Assert.ThrowsAsync<ArgumentException>(() => sink.RecordAsync(new(Guid.CreateVersion7(), "current-actor", new string('b', 64), "attempt", 0),
+            await Assert.ThrowsAsync<ArgumentException>(() => sink.RecordAsync(new(StudioOperationId.CreateVersion7(), "current-actor", new string('b', 64), "attempt", 0),
                 TestContext.Current.CancellationToken).AsTask());
             Assert.Equal(0, await sink.PruneArchivedAsync(1, TestContext.Current.CancellationToken));
             await sink.ConfirmLegacyArchiveAsync("verified-legacy-export", TestContext.Current.CancellationToken);
@@ -54,7 +54,7 @@ public sealed class StudioAuditSinkTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Sealed_horizon_rejects_late_retries_and_prunes_only_confirmed_archive_in_batches()
     {
         await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
@@ -64,9 +64,9 @@ public sealed class StudioAuditSinkTests
             var sink = new PostgreSqlStudioAuditSink(dataSource, schema);
             await sink.InitializeAsync(TestContext.Current.CancellationToken);
             var oldTime = DateTimeOffset.UtcNow.AddMinutes(-2);
-            var old = new StudioAuditRecord(Guid.CreateVersion7(oldTime), "principal-a", new string('a', 64), "attempt", 0)
+            var old = new StudioAuditRecord(StudioOperationId.CreateVersion7(oldTime), "principal-a", new string('a', 64), "attempt", 0)
             { ScopeId = "tenant-a-database" };
-            var newer = old with { OperationId = Guid.CreateVersion7(), Outcome = "completed", ReturnedRows = 1 };
+            var newer = old with { OperationId = StudioOperationId.CreateVersion7(), Outcome = "completed", ReturnedRows = 1 };
             await sink.RecordAsync(old, TestContext.Current.CancellationToken);
             await sink.RecordAsync(newer, TestContext.Current.CancellationToken);
             await Assert.ThrowsAsync<ArgumentException>(() => sink.RecordAsync(old with { OperationId = Guid.NewGuid() }, TestContext.Current.CancellationToken).AsTask());
@@ -115,7 +115,7 @@ public sealed class StudioAuditSinkTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Concurrent_pruners_wait_for_locked_rows_before_reporting_completion()
     {
         await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
@@ -125,7 +125,7 @@ public sealed class StudioAuditSinkTests
             var sink = new PostgreSqlStudioAuditSink(dataSource, schema);
             await sink.InitializeAsync(TestContext.Current.CancellationToken);
             var oldTime = DateTimeOffset.UtcNow.AddMinutes(-2);
-            var record = new StudioAuditRecord(Guid.CreateVersion7(oldTime), "principal-a", new string('a', 64), "attempt", 0)
+            var record = new StudioAuditRecord(StudioOperationId.CreateVersion7(oldTime), "principal-a", new string('a', 64), "attempt", 0)
             { ScopeId = "tenant-a-database" };
             await sink.RecordAsync(record, TestContext.Current.CancellationToken);
             var horizon = DateTimeOffset.UtcNow.AddMinutes(-1);
@@ -174,7 +174,7 @@ public sealed class StudioAuditSinkTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Durable_attempts_survive_reopen_retries_are_exact_and_future_versions_are_rejected()
     {
         await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
@@ -183,7 +183,7 @@ public sealed class StudioAuditSinkTests
         {
             var sink = new PostgreSqlStudioAuditSink(dataSource, schema);
             await sink.InitializeAsync(TestContext.Current.CancellationToken);
-            var record = new StudioAuditRecord(Guid.CreateVersion7(), "principal-a", new string('a', 64), "attempt", 0) { ScopeId = "tenant-a-database" };
+            var record = new StudioAuditRecord(StudioOperationId.CreateVersion7(), "principal-a", new string('a', 64), "attempt", 0) { ScopeId = "tenant-a-database" };
             await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => sink.RecordAsync(record, TestContext.Current.CancellationToken).AsTask()));
             async Task<string> TupleIdentityAsync()
             {
@@ -210,7 +210,7 @@ public sealed class StudioAuditSinkTests
                 _ = await future.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
             }
             await Assert.ThrowsAsync<InvalidOperationException>(() => recovered.InitializeAsync(TestContext.Current.CancellationToken).AsTask());
-            await Assert.ThrowsAsync<InvalidOperationException>(() => recovered.RecordAsync(record with { OperationId = Guid.CreateVersion7() }, TestContext.Current.CancellationToken).AsTask());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => recovered.RecordAsync(record with { OperationId = StudioOperationId.CreateVersion7() }, TestContext.Current.CancellationToken).AsTask());
         }
         finally
         {

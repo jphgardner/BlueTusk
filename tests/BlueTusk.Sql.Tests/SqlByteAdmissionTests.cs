@@ -7,7 +7,7 @@ namespace BlueTusk.Sql.Tests;
 
 public sealed class SqlByteAdmissionTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task Oversized_fields_are_rejected_before_typed_materialization()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -25,7 +25,7 @@ public sealed class SqlByteAdmissionTests
         Assert.Equal(42, await healthy.ExecuteScalarAsync(TestContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Total_encoded_bytes_are_bounded_across_rows()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -40,7 +40,7 @@ public sealed class SqlByteAdmissionTests
         Assert.Equal(1, rows);
     }
 
-    [Theory]
+    [PostgreSqlTheory]
     [InlineData(CommandBehavior.Default)]
     [InlineData(CommandBehavior.SequentialAccess)]
     public async Task Provider_field_lengths_preserve_null_and_encoded_bytes_without_consuming_the_value(CommandBehavior behavior)

@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using BlueTusk.Data;
+using BlueTusk.Tests.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -49,7 +50,7 @@ internal sealed record HealthDatabase(BlueTuskDataSource Source, string Connecti
         try { await test(); }
         finally { await transaction.RollbackAsync(); }
     }
-    private sealed class ReaderSource(BlueTuskDataSource source, string quotedRole) : DbDataSource
+    private sealed class ReaderSource(BlueTuskDataSource source, string quotedRole) : PortableFixtureDataSource
     {
         public override string ConnectionString => source.ConnectionString;
         protected override DbConnection CreateDbConnection() => source.CreateConnection();
@@ -62,18 +63,21 @@ internal sealed record HealthDatabase(BlueTuskDataSource Source, string Connecti
     }
 }
 
-internal sealed class OperatorHealthHost(WebApplication application) : IAsyncDisposable
+internal sealed class OperatorHealthHost(PortableHttpTestHost application) : IAsyncDisposable
 {
-    internal Uri Endpoint => new(application.Urls.Single());
+    internal Uri Endpoint => application.Address;
     internal static async Task<OperatorHealthHost> StartAsync(Action<IHealthChecksBuilder> register)
     {
-        var builder = WebApplication.CreateSlimBuilder(); builder.Logging.ClearProviders(); builder.WebHost.UseKestrel().UseUrls("http://127.0.0.1:0");
-        builder.Services.AddAuthentication("operator-test").AddScheme<AuthenticationSchemeOptions, OperatorAuthentication>("operator-test", _ => { });
-        builder.Services.AddAuthorization(options => options.AddPolicy("operators", policy => policy.RequireAuthenticatedUser().RequireRole("operator")));
-        register(builder.Services.AddHealthChecks());
-        var app = builder.Build(); app.UseAuthentication(); app.UseAuthorization();
-        app.MapHealthChecks("/ops/ready", new HealthCheckOptions { ResultStatusCodes = { [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable } }).RequireAuthorization("operators");
-        await app.StartAsync(); return new(app);
+        var app = await PortableHttpTestHost.StartAsync(services =>
+        {
+            services.AddAuthentication("operator-test").AddScheme<AuthenticationSchemeOptions, OperatorAuthentication>("operator-test", _ => { });
+            services.AddAuthorization(options => options.AddPolicy("operators", policy => policy.RequireAuthenticatedUser().RequireRole("operator")));
+            register(services.AddHealthChecks());
+        }, endpoints => endpoints.MapHealthChecks("/ops/ready", new HealthCheckOptions
+        {
+            ResultStatusCodes = { [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable },
+        }).RequireAuthorization("operators"));
+        return new(app);
     }
     internal async Task AssertRolesAsync()
     {
@@ -90,13 +94,13 @@ internal sealed class OperatorHealthHost(WebApplication application) : IAsyncDis
         using var http = new HttpClient { BaseAddress = Endpoint }; http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "operator-test");
         using var response = await http.GetAsync("/ops/ready"); Assert.Equal(status, response.StatusCode); Assert.Equal(text, await response.Content.ReadAsStringAsync());
     }
-    public async ValueTask DisposeAsync() { await application.StopAsync(); await application.DisposeAsync(); }
+    public ValueTask DisposeAsync() => application.DisposeAsync();
     private sealed class OperatorAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
-        : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+        : PortableAuthenticationHandler(options, logger, encoder)
     {
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            var role = Request.Headers.Authorization.ToString() switch { "Bearer operator-test" => "operator", "Bearer reader-test" => "reader", _ => null };
+            var role = Request.Headers["Authorization"].ToString() switch { "Bearer operator-test" => "operator", "Bearer reader-test" => "reader", _ => null };
             return Task.FromResult(role is null ? AuthenticateResult.NoResult() : AuthenticateResult.Success(new AuthenticationTicket(
                 new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], Scheme.Name)), Scheme.Name)));
         }
@@ -119,7 +123,7 @@ internal sealed class StatusMetrics : IDisposable
     public void Dispose() => _listener.Dispose();
 }
 
-internal sealed class LateOpenSource(BlueTuskDataSource source) : DbDataSource
+internal sealed class LateOpenSource(BlueTuskDataSource source) : PortableFixtureDataSource
 {
     private int _opens;
     private readonly TaskCompletionSource _started = new(TaskCreationOptions.RunContinuationsAsynchronously);

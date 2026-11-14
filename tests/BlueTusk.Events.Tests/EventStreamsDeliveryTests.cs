@@ -9,7 +9,7 @@ namespace BlueTusk.Events.Tests;
 
 public sealed class EventStreamsDeliveryTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task TransactionalHandlerFailureRollsBackAllInboxEffectsAndLeavesDeliveryActive()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -34,7 +34,7 @@ public sealed class EventStreamsDeliveryTests
         Assert.Equal(2, await fixture.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task AcknowledgmentFailureAfterTargetCommitRedeliversWithoutRepeatingBusinessEffects()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -53,7 +53,7 @@ public sealed class EventStreamsDeliveryTests
         Assert.Equal(2, await fixture.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task TargetCommitFailureLeavesSourceUnacknowledgedAndEffectsRolledBack()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -83,7 +83,7 @@ public sealed class EventStreamsDeliveryTests
         Assert.Equal(2, await fixture.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task EventTransactionBoundFailsBeforeAnyTargetEffectsOrAcknowledgment()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -97,7 +97,7 @@ public sealed class EventStreamsDeliveryTests
         Assert.Equal(0, await fixture.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task OrderedRetentionAckCommitsWithTargetCheckpointAndRejectsConflictingRedelivery()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -168,7 +168,7 @@ public sealed class EventStreamsDeliveryTests
         Assert.Equal((1L, 1L), await RetentionCountsAsync(fixture));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task RetentionMarkerWithUnrelatedRawChangeCannotAdvanceTargetCheckpointOrAck()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -189,7 +189,7 @@ public sealed class EventStreamsDeliveryTests
         Assert.Equal((0L, 0L), await RetentionCountsAsync(fixture));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task RetentionMarkerFromDifferentReplicationTimelineCannotAdvanceTargetCheckpointOrAck()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -210,7 +210,7 @@ public sealed class EventStreamsDeliveryTests
         Assert.Equal((0L, 0L), await RetentionCountsAsync(fixture));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task RetentionMarkerWithDifferentWalSenderOidsCannotAdvanceTargetCheckpointOrAck()
     {
         await using var fixture = await EventDatabase.CreateAsync();

@@ -15,7 +15,7 @@ $taskRunId = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-fffffff') + '-' + [Gui
 Push-Location -LiteralPath $taskRepository
 try {
     if (!$NoBuild) {
-        & dotnet build $taskProject -c Release -nr:false --nologo
+        & dotnet build $taskProject -c Release -f net10.0 -nr:false --nologo
         if ($LASTEXITCODE -ne 0) { throw 'Hosting compatibility build failed.' }
     }
     foreach ($taskVersion in $Versions) {
@@ -36,7 +36,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Owned fixture metadata failed.' }
         $taskResults = 'artifacts/jobs-hosting-matrix/' + $taskRunId + '/pg' + $taskVersion
         Write-Output "Running scoped host readiness and owned credential rotation on PostgreSQL $taskVersion"
-        & dotnet test $taskProject -c Release --no-build -nr:false --nologo --logger 'trx;LogFileName=Hosting.trx' --results-directory $taskResults
+        & dotnet test $taskProject -c Release -f net10.0 --no-build -nr:false --nologo --logger 'trx;LogFileName=Hosting.trx' --results-directory $taskResults
         if ($LASTEXITCODE -ne 0) { throw 'Hosting version test failed.' }
         $taskTrxPath = Join-Path $taskResults 'Hosting.trx'
         [xml] $taskTrx = Get-Content -LiteralPath $taskTrxPath -Raw

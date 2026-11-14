@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using BlueTusk.Data;
 using BlueTusk.Jobs;
-using Xunit.Sdk;
 
 namespace BlueTusk.Workflows.Tests;
 
@@ -39,7 +38,7 @@ internal sealed class WorkflowDatabase : IAsyncDisposable
         string? connection = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connection))
         {
-            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is required for disposable PostgreSQL workflow tests.");
+            throw new InvalidOperationException("BLUETUSK_TEST_CONNECTION_STRING is required for disposable PostgreSQL workflow tests.");
         }
 
         string suffix = Guid.NewGuid().ToString("N");

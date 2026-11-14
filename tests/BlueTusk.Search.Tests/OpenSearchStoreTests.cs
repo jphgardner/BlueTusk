@@ -118,7 +118,7 @@ public sealed class OpenSearchStoreTests
         var vector = await fixture.Store.SearchAsync(scope, new SearchRequest { Mode = SearchMode.Vector, Vector = new float[] { 1, 0, 0 } });
         var vectorPage = await fixture.Store.ReadPageAsync(scope, vector);
         Assert.Equal("cat", vectorPage.Hits[0].DocumentId);
-        Assert.Equal(["cat", "dog"], vectorPage.Hits.Select(static hit => hit.DocumentId).Order(StringComparer.Ordinal));
+        Assert.Equal(["cat", "dog"], vectorPage.Hits.Select(static hit => hit.DocumentId).OrderBy(static value => value, StringComparer.Ordinal));
         var hybrid = await fixture.Store.SearchAsync(scope, new SearchRequest { Mode = SearchMode.Hybrid, Text = "cat", Vector = new float[] { 1, 0, 0 } });
         Assert.Equal("integration", (await fixture.Store.ReadPageAsync(scope, hybrid)).Hits[0].Metadata.GetProperty("origin").GetString());
         await Assert.ThrowsAsync<SearchCursorExpiredException>(async () => await fixture.Store.ReadPageAsync(new SearchScope("other", "knowledge", ["reader"]), hybrid));

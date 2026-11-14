@@ -56,8 +56,8 @@ try
 </configuration>
 "@ | Set-Content -LiteralPath $config -Encoding utf8NoBOM
     $env:NUGET_PACKAGES = $toolCache
-    Invoke-Checked @('tool', 'install', 'BlueTusk.Schema.Tool', '--tool-path', $schemaTools, '--version', $schemaVersion, '--configfile', $config, '--no-cache')
-    Invoke-Checked @('tool', 'install', 'BlueTusk.Sql.Tool', '--tool-path', $sqlTools, '--version', $sqlVersion, '--configfile', $config, '--no-cache')
+    Invoke-Checked @('tool', 'install', 'BlueTusk.Schema.Tool', '--framework', 'net10.0', '--tool-path', $schemaTools, '--version', $schemaVersion, '--configfile', $config, '--no-cache')
+    Invoke-Checked @('tool', 'install', 'BlueTusk.Sql.Tool', '--framework', 'net10.0', '--tool-path', $sqlTools, '--version', $sqlVersion, '--configfile', $config, '--no-cache')
     $extension = if ($IsWindows) { '.exe' } else { '' }
     $schemaCommand = Join-Path $schemaTools ('bluetusk-schema' + $extension)
     $sqlCommand = Join-Path $sqlTools ('bluetusk-sql' + $extension)

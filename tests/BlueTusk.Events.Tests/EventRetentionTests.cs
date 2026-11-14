@@ -7,7 +7,7 @@ namespace BlueTusk.Events.Tests;
 
 public sealed class EventRetentionTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task LocalRetentionRequiresBothExplicitOptionsAndStreamBoundCertification()
     {
         await using var db = await EventDatabase.CreateAsync();
@@ -32,7 +32,7 @@ public sealed class EventRetentionTests
         Assert.Equal(EventRetentionBlocker.LocalRetentionDisabled, assessment.Blockers);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task AssessmentShowsArchiveReplayAndFloorBlockersWithoutAdvancingState()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -59,7 +59,7 @@ public sealed class EventRetentionTests
         Assert.Equal(0, (await db.Store.ReadRetentionStatusAsync(stream)).RetainedThrough);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task AssessmentFailsClosedOnUnsupportedEventsSchemaVersion()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -76,7 +76,7 @@ public sealed class EventRetentionTests
             await db.Store.AssessLocalRetentionAsync(stream, 1, 0));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task VersionFiveMigrationInstallsImmutableEndpointBindings()
     {
         await using var db = await EventDatabase.CreateAsync();
@@ -98,7 +98,7 @@ public sealed class EventRetentionTests
         Assert.True(reader.GetBoolean(1));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task IdentityFenceDriftBlocksAssessmentAndBothRetentionMutations()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -127,7 +127,7 @@ public sealed class EventRetentionTests
         }
     }
 
-    [Theory]
+    [RequiredEnvironmentTheory("BLUETUSK_TEST_CONNECTION_STRING")]
     [InlineData("explicit")]
     [InlineData("schema")]
     [InlineData("all")]
@@ -159,7 +159,7 @@ public sealed class EventRetentionTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ExplicitPublicationCommitWinsLockBeforePruneAndPruneRefusesDelete()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -194,7 +194,7 @@ public sealed class EventRetentionTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ArchivedLocalPrefixCanBePrunedWithoutLosingIdentityRetriesOrOtherTenant()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -251,7 +251,7 @@ public sealed class EventRetentionTests
         Assert.Equal(0, (await db.Store.ReplayAsync(lease, db.HandleAsync)).HandledCount);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task LaggingReplayBlocksFloorUntilItsCheckpointCommits()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -268,7 +268,7 @@ public sealed class EventRetentionTests
             Certificate(stream))).RetainedThrough);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task FailedArchiveReadbackLeavesNoProofAndCanRetry()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -283,7 +283,7 @@ public sealed class EventRetentionTests
         Assert.Equal(1, (await db.Store.ArchiveNextAsync(stream, archive)).ArchivedThrough);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task PublishedOutboxRefusesFloorAndPruning()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -308,7 +308,7 @@ public sealed class EventRetentionTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task PublishedIntentRequiresCompletePublicationCoverageAndNeverEnablesDeletion()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });
@@ -422,7 +422,7 @@ public sealed class EventRetentionTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task DeploymentMigrationArchivesLegacyIdentityInBoundedBatchBeforePruning()
     {
         await using var db = await EventDatabase.CreateAsync(new() { EnableLocalOnlyRetention = true });

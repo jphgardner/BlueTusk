@@ -7,7 +7,7 @@ namespace BlueTusk.Edge.Tests;
 
 public sealed class EdgeServerStoreTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Application_table_callback_failure_rolls_back_all_state_and_receipt_replay_never_repeats_business_effects() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1); await fixture.Store.ActivateScopeAsync(scope);
@@ -41,7 +41,7 @@ public sealed class EdgeServerStoreTests
         Assert.Equal(1, (await reopened.ReadChangesAsync(scope, 0))!.ToPosition);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Mutation_receipt_business_effect_and_feed_are_atomic_and_persist_across_store_reopen() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "selected-orders", 1);
@@ -59,7 +59,7 @@ public sealed class EdgeServerStoreTests
         Assert.Equal(1, batch.ToPosition);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Confirmed_receipt_releases_payload_but_permanently_rejects_late_retry() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
@@ -84,7 +84,7 @@ public sealed class EdgeServerStoreTests
         Assert.Equal(2, (await bounded.ReadChangesAsync(scope, 0))!.ToPosition);
     }, new EdgeServerOptions { MaxRecordBytes = 40 });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Ordered_confirmed_prefix_reclaims_receipts_and_persistently_fences_late_retries() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
@@ -132,7 +132,7 @@ public sealed class EdgeServerStoreTests
         return (stream, sequence);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Version_two_receipts_upgrade_to_unconfirmed_version_four() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
@@ -147,7 +147,7 @@ public sealed class EdgeServerStoreTests
         await Assert.ThrowsAsync<EdgeServerReceiptFinalizedException>(async () => await fixture.Store.ApplyMutationAsync(mutation));
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Competing_CAS_has_one_applied_result_and_conflicts_preserve_authoritative_revision() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
@@ -160,7 +160,7 @@ public sealed class EdgeServerStoreTests
         Assert.Equal(2, (await fixture.Store.ReadChangesAsync(scope, 0))!.Records.Count);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Consistent_snapshot_copies_one_feed_boundary_and_later_changes_have_no_gap() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "selected", 1);
@@ -177,7 +177,7 @@ public sealed class EdgeServerStoreTests
         await Assert.ThrowsAsync<EdgeServerSnapshotExpiredException>(async () => await fixture.Store.ReadSnapshotPageAsync(scope, snapshot.Id));
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Inbox_insert_failure_rolls_back_record_feed_checkpoint_and_admission_counters() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
@@ -196,7 +196,7 @@ public sealed class EdgeServerStoreTests
         Assert.Equal(1, (await fixture.Store.ReadChangesAsync(scope, 0))!.ToPosition);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Tenant_scope_epoch_tombstones_and_explicit_retention_floor_are_fenced() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
@@ -218,7 +218,7 @@ public sealed class EdgeServerStoreTests
         Assert.Null(await fixture.Store.GetAsync(new EdgeScope("tenant", "orders", 2), "1"));
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Bounded_bytes_rows_snapshots_and_receipts_reject_complete_transitions() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
@@ -243,7 +243,7 @@ public sealed class EdgeServerStoreTests
         Assert.Equal(1, first.ToPosition);
     }, new EdgeServerOptions { MaxRecordBytes = 40 });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Receipt_payload_bytes_are_bounded_and_replay_survives_admission_refusal() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
@@ -268,7 +268,7 @@ public sealed class EdgeServerStoreTests
         Assert.Equal(1, (await bounded.ReadHealthAsync(scope)).ReceiptCount);
     }, new EdgeServerOptions { MaxRecordBytes = 40 });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Bounded_four_writer_workload_has_contiguous_feed_and_idempotent_receipts() => WithFixtureAsync(async fixture =>
     {
         var scope = new EdgeScope("tenant", "orders", 1);
