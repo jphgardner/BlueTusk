@@ -77,7 +77,7 @@ public sealed class EdgeHttpIntegrationTests
             _ = await command.ExecuteNonQueryAsync(cancellationToken);
         }
         var clock = new ManualClock();
-        var directory = Directory.CreateTempSubdirectory("bluetusk-edge-http-").FullName;
+        var directory = CreateTempDirectory();
         try
         {
             var options = new SqliteEdgeOptions { DatabasePath = Path.Combine(directory, "edge.db"), TimeProvider = clock };
@@ -121,7 +121,7 @@ public sealed class EdgeHttpIntegrationTests
         await using var host = await Host.StartAsync(fixture.Store);
         using var client = Client();
         using var remote = new HttpEdgeRemoteTransport(client, host.Endpoint);
-        var directory = Directory.CreateTempSubdirectory("bluetusk-edge-http-").FullName;
+        var directory = CreateTempDirectory();
         try
         {
             var local = new SqliteEdgeStore(new SqliteEdgeOptions
@@ -161,7 +161,7 @@ public sealed class EdgeHttpIntegrationTests
         await using var host = await Host.StartAsync(fixture.Store);
         using var client = Client();
         using var remote = new HttpEdgeRemoteTransport(client, host.Endpoint);
-        var directory = Directory.CreateTempSubdirectory("bluetusk-edge-http-").FullName;
+        var directory = CreateTempDirectory();
         try
         {
             var local = new SqliteEdgeStore(new SqliteEdgeOptions { DatabasePath = Path.Combine(directory, "edge.db") });
@@ -255,6 +255,9 @@ public sealed class EdgeHttpIntegrationTests
         if (!resolved.StartsWith(Path.GetFullPath(Path.GetTempPath()), StringComparison.OrdinalIgnoreCase) || !Path.GetFileName(resolved).StartsWith("bluetusk-edge-http-", StringComparison.Ordinal)) { throw new InvalidOperationException("Refusing cleanup outside owned test directory."); }
         Directory.Delete(resolved, true);
     }
+    private static string CreateTempDirectory() =>
+        Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"bluetusk-edge-http-{Guid.NewGuid():N}")).FullName;
+
     private sealed record Fixture(BlueTuskDataSource Source, PostgreSqlEdgeServerStore Store, EdgeScope Scope);
     private sealed class ManualClock : TimeProvider
     {
@@ -262,45 +265,41 @@ public sealed class EdgeHttpIntegrationTests
         public override DateTimeOffset GetUtcNow() => _now;
         internal void Advance(TimeSpan by) => _now += by;
     }
-    private sealed class Host(WebApplication application, Uri endpoint) : IAsyncDisposable
+    private sealed class Host(PortableHttpTestHost application, Uri endpoint) : IAsyncDisposable
     {
         internal Uri Endpoint { get; } = endpoint;
         internal bool DropNextMutationResponse { get; set; }
         internal static async Task<Host> StartAsync(PostgreSqlEdgeServerStore store, Uri? restartEndpoint = null,
             Func<DbConnection, DbTransaction, EdgeMutation, EdgeRecord, CancellationToken, ValueTask>? writeBusiness = null)
         {
-            var builder = WebApplication.CreateSlimBuilder();
-            builder.Logging.ClearProviders();
-            var baseUrl = restartEndpoint is null ? "http://127.0.0.1:0" : restartEndpoint.GetLeftPart(UriPartial.Authority);
-            builder.WebHost.UseKestrel().UseUrls(baseUrl);
-            builder.Services.AddAuthentication("edge-test").AddScheme<AuthenticationSchemeOptions, TestAuthentication>("edge-test", _ => { });
-            builder.Services.AddAuthorization(options => options.AddPolicy("edge", policy => policy.AddAuthenticationSchemes("edge-test").RequireAuthenticatedUser()));
-            var application = builder.Build();
-            application.UseAuthentication(); application.UseAuthorization();
             Host? host = null;
-            application.Use(async (context, next) =>
+            var application = await PortableHttpTestHost.StartAsync(services =>
             {
-                if (host?.DropNextMutationResponse is true && context.Request.Path == "/edge/mutations")
+                services.AddAuthentication("edge-test").AddScheme<AuthenticationSchemeOptions, TestAuthentication>("edge-test", _ => { });
+                services.AddAuthorization(options => options.AddPolicy("edge", policy => policy.AddAuthenticationSchemes("edge-test").RequireAuthenticatedUser()));
+            }, endpoints => endpoints.MapBlueTuskEdge(store, static (context, scope, _) => ValueTask.FromResult(
+                context.User.FindFirstValue("tenant") == scope.Tenant && scope.Id == "orders" && scope.Epoch == 1),
+                new EdgeEndpointOptions { AuthorizationPolicy = "edge", WriteBusinessAsync = writeBusiness }),
+                port: restartEndpoint?.Port ?? 0, configureMiddleware: app => app.Use(async (context, next) =>
                 {
-                    host.DropNextMutationResponse = false;
-                    context.Response.OnStarting(() => { context.Abort(); return Task.CompletedTask; });
-                }
-                await next(context);
-            });
-            application.MapBlueTuskEdge(store, static (context, scope, _) => ValueTask.FromResult(
-                context.User.FindFirstValue("tenant") == scope.Tenant && scope.Id == "orders" && scope.Epoch == 1), new EdgeEndpointOptions { AuthorizationPolicy = "edge", WriteBusinessAsync = writeBusiness });
-            await application.StartAsync();
-            host = new Host(application, new Uri(application.Urls.Single().TrimEnd('/') + "/edge"));
+                    if (host?.DropNextMutationResponse is true && context.Request.Path == "/edge/mutations")
+                    {
+                        host.DropNextMutationResponse = false;
+                        context.Response.OnStarting(() => { context.Abort(); return Task.CompletedTask; });
+                    }
+                    await next();
+                }));
+            host = new Host(application, new Uri(application.Address, "/edge"));
             return host;
         }
-        public async ValueTask DisposeAsync() { await application.StopAsync(); await application.DisposeAsync(); }
+        public ValueTask DisposeAsync() => application.DisposeAsync();
     }
     private sealed class TestAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
-        : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+        : PortableAuthenticationHandler(options, logger, encoder)
     {
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            if (Request.Headers.Authorization != "Bearer tenant-reader") { return Task.FromResult(AuthenticateResult.NoResult()); }
+            if (Request.Headers["Authorization"] != "Bearer tenant-reader") { return Task.FromResult(AuthenticateResult.NoResult()); }
             return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(new ClaimsIdentity([new Claim("tenant", "tenant")], Scheme.Name)), Scheme.Name)));
         }
     }

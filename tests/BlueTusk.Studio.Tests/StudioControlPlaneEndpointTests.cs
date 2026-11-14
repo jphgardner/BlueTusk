@@ -138,7 +138,7 @@ public sealed class StudioControlPlaneEndpointTests
         public ValueTask RecordAsync(StudioAuditRecord record, CancellationToken cancellationToken = default) => state.RecordAsync(record, cancellationToken);
     }
     private sealed class Authentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
-        : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+        : PortableAuthenticationHandler(options, logger, encoder)
     {
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
@@ -149,33 +149,31 @@ public sealed class StudioControlPlaneEndpointTests
             return Task.FromResult(AuthenticateResult.Success(new(new ClaimsPrincipal(new ClaimsIdentity(claims, "fixture")), "fixture")));
         }
     }
-    private sealed class Host(WebApplication app, HttpClient client, State state) : IAsyncDisposable
+    private sealed class Host(PortableHttpTestHost app, HttpClient client, State state) : IAsyncDisposable
     {
         internal HttpClient Client { get; } = client;
         internal State State { get; } = state;
         internal static async Task<Host> StartAsync(StudioControlPlaneOptions? options = null)
         {
-            var builder = WebApplication.CreateBuilder();
-            builder.Logging.ClearProviders();
-            builder.WebHost.UseUrls("http://127.0.0.1:0");
             var state = new State();
-            builder.Services.AddSingleton(state);
-            builder.Services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, Authentication>("fixture", _ => { });
-            builder.Services.AddAuthorization(policies =>
+            var app = await PortableHttpTestHost.StartAsync(services =>
             {
-                policies.AddPolicy("read", policy => policy.RequireAuthenticatedUser());
-                policies.AddPolicy("replay", policy => policy.RequireClaim("operator", "true"));
-            });
-            builder.Services.AddBlueTuskStudio<DatabaseResolver, StudioAudit>(new() { ReadPolicy = "read", QueryPolicy = "replay" });
-            builder.Services.AddBlueTuskStudioControlPlane<Resolver>(options ?? new() { ReplayPolicy = "replay", MaximumSubscriptions = 1 });
-            var app = builder.Build();
-            app.UseAuthentication();
-            app.UseAuthorization();
-            app.MapBlueTuskStudio();
-            app.MapBlueTuskStudioControlPlane();
-            await app.StartAsync(TestContext.Current.CancellationToken);
-            var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
-            return new(app, new(new HttpClientHandler { CookieContainer = new CookieContainer() }) { BaseAddress = new(address + "/bluetusk/studio/") }, state);
+                services.AddSingleton(state);
+                services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, Authentication>("fixture", _ => { });
+                services.AddAuthorization(policies =>
+                {
+                    policies.AddPolicy("read", policy => policy.RequireAuthenticatedUser());
+                    policies.AddPolicy("replay", policy => policy.RequireClaim("operator", "true"));
+                });
+                services.AddBlueTuskStudio<DatabaseResolver, StudioAudit>(new() { ReadPolicy = "read", QueryPolicy = "replay" });
+                services.AddBlueTuskStudioControlPlane<Resolver>(options ?? new() { ReplayPolicy = "replay", MaximumSubscriptions = 1 });
+            }, endpoints =>
+            {
+                endpoints.MapBlueTuskStudio();
+                endpoints.MapBlueTuskStudioControlPlane();
+            }, TestContext.Current.CancellationToken);
+            return new(app, new(new HttpClientHandler { CookieContainer = new CookieContainer() })
+                { BaseAddress = new(app.Address, "/bluetusk/studio/") }, state);
         }
         internal void User(string user) { Client.DefaultRequestHeaders.Remove("X-User"); Client.DefaultRequestHeaders.Add("X-User", user); }
         internal async Task TokenAsync()

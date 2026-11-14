@@ -32,10 +32,18 @@ public sealed class BrowserCheckpointFileTests
                 start.ArgumentList.Add(path);
                 process.StartInfo = start;
                 Assert.True(process.Start());
+#if NET8_0_OR_GREATER
                 errors = process.StandardError.ReadToEndAsync(timeout.Token);
+#else
+                errors = process.StandardError.ReadToEndAsync().WaitAsync(timeout.Token);
+#endif
                 while (!File.Exists(path + ".pending") && !process.HasExited)
                 { await Task.Delay(1, timeout.Token); }
+#if NET8_0_OR_GREATER
                 Assert.Equal("1234567890123456789", await previous.ReadToEndAsync(timeout.Token));
+#else
+                Assert.Equal("1234567890123456789", await previous.ReadToEndAsync().WaitAsync(timeout.Token));
+#endif
             }
             await process.WaitForExitAsync(timeout.Token);
             Assert.True(process.ExitCode == 0, await errors);

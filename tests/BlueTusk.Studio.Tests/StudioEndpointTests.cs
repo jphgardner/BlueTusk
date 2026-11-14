@@ -38,24 +38,18 @@ public sealed class StudioEndpointTests
                     [new EventWrite(Guid.NewGuid(), "other", 1, DateTimeOffset.UtcNow, "{}"u8)], TestContext.Current.CancellationToken);
                 await transaction.CommitAsync(TestContext.Current.CancellationToken);
             }
-            var builder = WebApplication.CreateBuilder();
-            builder.Logging.ClearProviders();
-            builder.WebHost.UseUrls("http://127.0.0.1:0");
-            builder.Services.AddSingleton(dataSource);
-            builder.Services.AddSingleton(store);
             var audit = new FixtureAudit();
-            builder.Services.AddSingleton(audit);
-            builder.Services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
-            builder.Services.AddAuthorization(options => options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser()));
-            builder.Services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
-            builder.Services.AddBlueTuskStudioEvents<FixtureEventScope>(new() { MaximumEvents = 2 });
-            await using var app = builder.Build();
-            app.UseAuthentication();
-            app.UseAuthorization();
-            app.MapBlueTuskStudioEvents();
-            await app.StartAsync(TestContext.Current.CancellationToken);
-            var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
-            using var client = new HttpClient { BaseAddress = new(address + "/bluetusk/studio/events/") };
+            await using var app = await PortableHttpTestHost.StartAsync(services =>
+            {
+                services.AddSingleton(dataSource);
+                services.AddSingleton(store);
+                services.AddSingleton(audit);
+                services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
+                services.AddAuthorization(options => options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser()));
+                services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
+                services.AddBlueTuskStudioEvents<FixtureEventScope>(new() { MaximumEvents = 2 });
+            }, endpoints => endpoints.MapBlueTuskStudioEvents(), TestContext.Current.CancellationToken);
+            using var client = new HttpClient { BaseAddress = new(app.Address, "/bluetusk/studio/events/") };
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("streams", TestContext.Current.CancellationToken)).StatusCode);
             client.DefaultRequestHeaders.Add("X-Fixture-User", "reader");
             using var streams = JsonDocument.Parse(await client.GetStringAsync("streams", TestContext.Current.CancellationToken));
@@ -90,27 +84,21 @@ public sealed class StudioEndpointTests
     public async Task Authorization_antiforgery_assets_and_audit_are_enforced_over_HTTP()
     {
         await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
-        var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
-        builder.WebHost.UseUrls("http://127.0.0.1:0");
-        builder.Services.AddSingleton(dataSource);
         var audit = new FixtureAudit();
-        builder.Services.AddSingleton(audit);
-        builder.Services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
-        builder.Services.AddAuthorization(options =>
+        await using var app = await PortableHttpTestHost.StartAsync(services =>
         {
-            options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser());
-            options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
-        });
-        builder.Services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
-        await using var app = builder.Build();
-        app.UseAuthentication();
-        app.UseAuthorization();
-        app.MapBlueTuskStudio();
-        await app.StartAsync(TestContext.Current.CancellationToken);
-        var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+            services.AddSingleton(dataSource);
+            services.AddSingleton(audit);
+            services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser());
+                options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
+            });
+            services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
+        }, endpoints => endpoints.MapBlueTuskStudio(), TestContext.Current.CancellationToken);
         using var handler = new HttpClientHandler { CookieContainer = new CookieContainer(), AllowAutoRedirect = false };
-        using var client = new HttpClient(handler) { BaseAddress = new Uri(address + "/bluetusk/studio/") };
+        using var client = new HttpClient(handler) { BaseAddress = new Uri(app.Address, "/bluetusk/studio/") };
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("", TestContext.Current.CancellationToken)).StatusCode);
         client.DefaultRequestHeaders.Add("X-Fixture-User", "reader");
         Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("query", new { Sql = "SELECT 1" }, TestContext.Current.CancellationToken)).StatusCode);
@@ -144,7 +132,6 @@ public sealed class StudioEndpointTests
         var invalid = await client.PostAsJsonAsync("query", new { Sql = "SELECT 1; COMMIT; DELETE FROM forbidden", OperationId = StudioOperationId.CreateVersion7() }, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
         Assert.DoesNotContain("forbidden", await invalid.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
-        await app.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
@@ -152,30 +139,24 @@ public sealed class StudioEndpointTests
     {
         await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
         var audit = new BlockingAudit();
-        var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
-        builder.WebHost.UseUrls("http://127.0.0.1:0");
-        builder.Services.AddSingleton(dataSource);
-        builder.Services.AddSingleton(audit);
-        builder.Services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
-        builder.Services.AddAuthorization(options =>
+        await using var app = await PortableHttpTestHost.StartAsync(services =>
         {
-            options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser());
-            options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
-        });
-        builder.Services.AddBlueTuskStudio<FixtureScope, BlockingAuditAdapter>(StudioQueryServiceTests.Options() with
-        {
-            MaximumConcurrentQueries = 1,
-            QueryTimeoutSeconds = 30,
-        });
-        await using var app = builder.Build();
-        app.UseAuthentication();
-        app.UseAuthorization();
-        app.MapBlueTuskStudio();
-        await app.StartAsync(TestContext.Current.CancellationToken);
-        var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+            services.AddSingleton(dataSource);
+            services.AddSingleton(audit);
+            services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser());
+                options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
+            });
+            services.AddBlueTuskStudio<FixtureScope, BlockingAuditAdapter>(StudioQueryServiceTests.Options() with
+            {
+                MaximumConcurrentQueries = 1,
+                QueryTimeoutSeconds = 30,
+            });
+        }, endpoints => endpoints.MapBlueTuskStudio(), TestContext.Current.CancellationToken);
         using var handler = new HttpClientHandler { CookieContainer = new CookieContainer(), AllowAutoRedirect = false };
-        using var client = new HttpClient(handler) { BaseAddress = new Uri(address + "/bluetusk/studio/") };
+        using var client = new HttpClient(handler) { BaseAddress = new Uri(app.Address, "/bluetusk/studio/") };
         client.DefaultRequestHeaders.Add("X-Fixture-User", "operator");
         using var session = JsonDocument.Parse(await client.GetStringAsync("session", TestContext.Current.CancellationToken));
         client.DefaultRequestHeaders.Add(session.RootElement.GetProperty("header").GetString()!, session.RootElement.GetProperty("token").GetString());
@@ -190,7 +171,6 @@ public sealed class StudioEndpointTests
         }
         finally { audit.Release.TrySetResult(); }
         Assert.Equal(HttpStatusCode.OK, (await first).StatusCode);
-        await app.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [RequiredEnvironmentTheory("BLUETUSK_TEST_CONNECTION_STRING")]
@@ -200,27 +180,21 @@ public sealed class StudioEndpointTests
     {
         await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
         var audit = new FixtureAudit();
-        var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
-        builder.WebHost.UseUrls("http://127.0.0.1:0");
-        builder.Services.AddSingleton(dataSource);
-        builder.Services.AddSingleton(audit);
-        builder.Services.AddSingleton<IStudioDistributedAdmission>(new FixtureDistributedAdmission(unavailable));
-        builder.Services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
-        builder.Services.AddAuthorization(options =>
+        await using var app = await PortableHttpTestHost.StartAsync(services =>
         {
-            options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser());
-            options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
-        });
-        builder.Services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
-        await using var app = builder.Build();
-        app.UseAuthentication();
-        app.UseAuthorization();
-        app.MapBlueTuskStudio();
-        await app.StartAsync(TestContext.Current.CancellationToken);
-        var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+            services.AddSingleton(dataSource);
+            services.AddSingleton(audit);
+            services.AddSingleton<IStudioDistributedAdmission>(new FixtureDistributedAdmission(unavailable));
+            services.AddAuthentication("fixture").AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>("fixture", _ => { });
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser());
+                options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
+            });
+            services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
+        }, endpoints => endpoints.MapBlueTuskStudio(), TestContext.Current.CancellationToken);
         using var handler = new HttpClientHandler { CookieContainer = new CookieContainer() };
-        using var client = new HttpClient(handler) { BaseAddress = new Uri(address + "/bluetusk/studio/") };
+        using var client = new HttpClient(handler) { BaseAddress = new Uri(app.Address, "/bluetusk/studio/") };
         client.DefaultRequestHeaders.Add("X-Fixture-User", "operator");
         using var session = JsonDocument.Parse(await client.GetStringAsync("session", TestContext.Current.CancellationToken));
         client.DefaultRequestHeaders.Add(session.RootElement.GetProperty("header").GetString()!, session.RootElement.GetProperty("token").GetString());
@@ -228,7 +202,6 @@ public sealed class StudioEndpointTests
             TestContext.Current.CancellationToken)).StatusCode);
         Assert.Equal(expected, (await client.GetAsync("schema", TestContext.Current.CancellationToken)).StatusCode);
         Assert.Empty(audit.Records);
-        await app.StopAsync(TestContext.Current.CancellationToken);
     }
 
     private sealed class FixtureScope(BlueTuskDataSource dataSource) : IStudioScopeResolver
@@ -286,7 +259,7 @@ public sealed class StudioEndpointTests
     }
 
     private sealed class FixtureAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
-        : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+        : PortableAuthenticationHandler(options, logger, encoder)
     {
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {

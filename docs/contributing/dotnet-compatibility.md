@@ -30,6 +30,11 @@ Use the corresponding EF Core major for application and design-time package
 references. See Microsoft's [EF Core release table](https://learn.microsoft.com/en-us/ef/core/what-is-new/)
 for framework requirements and servicing dates.
 
+Entity mappings with EF Core's `ComplexProperty` API require EF Core 8.
+Mapping complex types to JSON requires EF Core 10. See
+[EF Core 8 complex types](https://learn.microsoft.com/en-us/ef/core/what-is-new/ef-core-8.0/whatsnew#value-objects-using-complex-types)
+and [EF Core 10 JSON mapping](https://learn.microsoft.com/en-us/ef/core/what-is-new/ef-core-10.0/whatsnew#json).
+
 Use `BlueTuskDataSource`, `BlueTuskBatch`, and `BlueTuskBatchCommand` in
 application code shared across all seven runtimes. On .NET 5 and 6 the data
 source extends `BlueTuskLegacyDataSource` because `DbDataSource` was

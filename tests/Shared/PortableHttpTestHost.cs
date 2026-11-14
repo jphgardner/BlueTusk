@@ -12,9 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-#if !NET7_0_OR_GREATER
-using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
-#endif
 #if NET5_0
 using DbBatch = BlueTusk.Data.Compatibility.BlueTuskLegacyBatch;
 #endif
@@ -89,7 +86,11 @@ internal abstract class PortableAuthenticationHandler : AuthenticationHandler<Au
     }
 }
 
-internal abstract class PortableFixtureDataSource : DbDataSource
+#if NET7_0_OR_GREATER
+internal abstract class PortableFixtureDataSource : System.Data.Common.DbDataSource
+#else
+internal abstract class PortableFixtureDataSource : BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource
+#endif
 {
 #if !NET7_0_OR_GREATER
     protected override DbConnection OpenDbConnection() => throw new NotSupportedException("Use the asynchronous test fixture.");
