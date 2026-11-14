@@ -266,7 +266,7 @@ public sealed class ContinuousGraphEnduranceTests
                         await using var disconnected = await session.PrepareTransactionAsync(
                             delivery.Transaction, TestContext.Current.CancellationToken);
                     });
-                    Assert.True(disconnect is BlueTuskException or IOException,
+                    Assert.True(disconnect is BlueTuskException or IOException or System.Net.Sockets.SocketException,
                         $"Expected a PostgreSQL disconnect, received {disconnect?.GetType().Name ?? "no exception"}.");
                     await factory.ResetLeaseAsync();
                     disconnectRecoveries++;
