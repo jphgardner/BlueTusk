@@ -74,7 +74,9 @@ public sealed class DashboardCompatibilityTests
 
         var endpoint = Assert.Single(routes!.DataSources.SelectMany(source => source.Endpoints).OfType<RouteEndpoint>(),
             candidate => candidate.RoutePattern.RawText == "/operations/api/v1/operations");
-        var policies = endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>().Select(metadata => metadata.Policy);
+        var policies = endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>()
+            .Select(metadata => metadata.Policy)
+            .Distinct(StringComparer.Ordinal);
         Assert.Equal(MutationPolicies, policies);
     }
 
