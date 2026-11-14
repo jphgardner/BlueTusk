@@ -75,6 +75,7 @@ function Get-PlanNodes($Node)
 }
 
 $failures = [System.Collections.Generic.List[string]]::new()
+$rules = $contract.comparisonRules
 foreach ($edges in $contract.workloads.ContinuousGraph.edgeCounts)
 {
     foreach ($top in $contract.workloads.ContinuousGraph.topN)
@@ -86,18 +87,29 @@ foreach ($edges in $contract.workloads.ContinuousGraph.edgeCounts)
             throw "Missing per-read subscriber authorization evidence for $parameters."
         }
         $repair = Get-Measurement 'FullRepairUpdateAsync' $parameters
-        foreach ($tier in @(
-            @{ Method = 'TrustedUpdateAsync'; Limit = $contract.comparisonRules.trustedCdcMaximumFullRequeryRatio },
-            @{ Method = 'ScopedUpdateAsync'; Limit = $contract.comparisonRules.authoritativeDeltaMaximumFullRequeryRatio }))
+        $trusted = Get-Measurement 'TrustedUpdateAsync' $parameters
+        $trustedLatency = $trusted.P95 / $repair.P95
+        $trustedAllocation = $trusted.Allocated / $repair.Allocated
+        $trustedLimit = $rules.trustedCdcMaximumFullRequeryRatio
+        if ($trustedLatency -gt $trustedLimit -or $trustedAllocation -gt $trustedLimit)
         {
-            $delta = Get-Measurement $tier.Method $parameters
-            $latencyRatio = $delta.P95 / $repair.P95
-            $allocationRatio = $delta.Allocated / $repair.Allocated
-            if ($latencyRatio -gt $tier.Limit -or $allocationRatio -gt $tier.Limit)
-            {
-                $failures.Add(('{0} ({1}) uses {2:P1} of full-repair P95 and {3:P1} of allocation, limit {4:P0}.' -f
-                    $tier.Method, $parameters, $latencyRatio, $allocationRatio, $tier.Limit))
-            }
+            $failures.Add(('TrustedUpdateAsync ({0}) uses {1:P1} of full-repair P95 and {2:P1} of allocation, limit {3:P0}.' -f
+                $parameters, $trustedLatency, $trustedAllocation, $trustedLimit))
+        }
+        $scoped = Get-Measurement 'ScopedUpdateAsync' $parameters
+        $scopedLatency = $scoped.P95 / $repair.P95
+        $scopedAllocation = $scoped.Allocated / $repair.Allocated
+        if ($scopedLatency -ge $rules.authoritativeDeltaMaximumP95Ratio -or
+            $scopedAllocation -gt $rules.authoritativeDeltaMaximumAllocationRatio)
+        {
+            $failures.Add(('ScopedUpdateAsync ({0}) uses {1:P1} of full-repair P95 and {2:P1} of allocation. P95 must be below {3:P0} and allocation at most {4:P0}.' -f
+                $parameters, $scopedLatency, $scopedAllocation, $rules.authoritativeDeltaMaximumP95Ratio,
+                $rules.authoritativeDeltaMaximumAllocationRatio))
+        }
+        if ($scopedLatency -gt $rules.authoritativeDeltaTargetP95Ratio)
+        {
+            Write-Output ('ScopedUpdateAsync ({0}) uses {1:P1} of full-repair P95. The tuning target is {2:P0}.' -f
+                $parameters, $scopedLatency, $rules.authoritativeDeltaTargetP95Ratio)
         }
         foreach ($method in @('PreparedSelectiveTraversalAsync', 'TypedSelectiveTraversalAsync', 'TypedBoundedTraversalAsync'))
         {

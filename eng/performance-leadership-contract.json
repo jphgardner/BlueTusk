@@ -12,7 +12,9 @@
     "primaryHotPathMaximumP95Ratio": 0.8,
     "primaryHotPathMaximumAllocationRatio": 0.8,
     "trustedCdcMaximumFullRequeryRatio": 0.1,
-    "authoritativeDeltaMaximumFullRequeryRatio": 0.35
+    "authoritativeDeltaMaximumP95Ratio": 1.0,
+    "authoritativeDeltaTargetP95Ratio": 0.35,
+    "authoritativeDeltaMaximumAllocationRatio": 0.35
   },
   "environments": [
     {

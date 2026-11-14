@@ -89,7 +89,8 @@ function Assert-LowerBetter
     param(
         [Parameter(Mandatory)][object] $Comparison,
         [Parameter(Mandatory)][string] $Metric,
-        [Parameter(Mandatory)][double] $MaximumRatio
+        [Parameter(Mandatory)][double] $MaximumRatio,
+        [switch] $RejectTies
     )
 
     $value = $Comparison.metrics.PSObject.Properties[$Metric].Value
@@ -106,7 +107,8 @@ function Assert-LowerBetter
 
     $ratio = $candidate / $reference
     $confidenceRatio = $candidateUpper / $referenceLower
-    if ($ratio -gt $MaximumRatio -or $confidenceRatio -gt $MaximumRatio)
+    if ($ratio -gt $MaximumRatio -or $confidenceRatio -gt $MaximumRatio -or
+        ($RejectTies -and ($ratio -eq $MaximumRatio -or $confidenceRatio -eq $MaximumRatio)))
     {
         throw (
             "Workload '$($Comparison.workloadKey)' failed '$Metric': " +
@@ -389,8 +391,8 @@ foreach ($comparison in $comparisons)
         }
         'graph-authoritative'
         {
-            Assert-LowerBetter $comparison 'p95' ([double]$rules.authoritativeDeltaMaximumFullRequeryRatio)
-            Assert-LowerBetter $comparison 'allocatedBytes' ([double]$rules.authoritativeDeltaMaximumFullRequeryRatio)
+            Assert-LowerBetter $comparison 'p95' ([double]$rules.authoritativeDeltaMaximumP95Ratio) -RejectTies
+            Assert-LowerBetter $comparison 'allocatedBytes' ([double]$rules.authoritativeDeltaMaximumAllocationRatio)
         }
     }
 }

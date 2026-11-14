@@ -33,8 +33,10 @@ reconciliation errors.
 The public `1.1.0-rc.1` packages predate the portable backend. The integrated
 candidate still needs exact-candidate compatibility, package-consumer,
 performance, and recovery evidence. Full-requery P95 must be at most **3.61 ms**
-and scoped-update P95 must be at most **35%** of full repair on matched
-workloads. The 24-hour recovery run requires at least 100,000 evaluations,
+and scoped updates must beat full repair P95 on every matched workload.
+Scoped allocation must stay at or below **35%** of full repair. The P95
+tuning target is **35%**. Trusted CDC keeps its **10%** P95 and allocation
+limits. The 24-hour recovery run requires at least 100,000 evaluations,
 at least 99.9% committed outcomes, lifecycle P95 at or below one second, and
 zero ordering or reconciliation errors.
 

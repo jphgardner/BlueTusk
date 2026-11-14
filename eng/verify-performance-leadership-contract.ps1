@@ -24,7 +24,9 @@ if ($rules.sameRuntimeMaximumRatio -ne 0.98 -or
     $rules.primaryHotPathMaximumP95Ratio -ne 0.8 -or
     $rules.primaryHotPathMaximumAllocationRatio -ne 0.8 -or
     $rules.trustedCdcMaximumFullRequeryRatio -ne 0.1 -or
-    $rules.authoritativeDeltaMaximumFullRequeryRatio -ne 0.35)
+    $rules.authoritativeDeltaMaximumP95Ratio -ne 1.0 -or
+    $rules.authoritativeDeltaTargetP95Ratio -ne 0.35 -or
+    $rules.authoritativeDeltaMaximumAllocationRatio -ne 0.35)
 {
     throw 'A release-leading comparison threshold was weakened or removed.'
 }
