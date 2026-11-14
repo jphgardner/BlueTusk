@@ -221,6 +221,18 @@ The optimization applies to simple ordered portable graph projections with
 supported scalar keys and materialization. Composed queries, custom EF
 interceptors, transactions, and unsupported mappings use the scoped EF path.
 Initial snapshots and authoritative repairs use the registered EF query.
+Eligible ordered queries reuse a compiled EF read while the model, options,
+ordering, and limit match registration. Every full read invokes the registered
+context and query factories and binds the current values. A changed ordering
+or limit uses the current query through the ordinary EF pipeline.
+
+The release performance matrix uses a dedicated restricted PostgreSQL login
+and verifies RLS on both mapped tables. Scoped reads acquire an exclusive
+authorized lease on every update. Full reads use the same subscriber login
+through EF. The recovery gate alternates scoped updates and full repair,
+compares each snapshot with a fresh authorized query, checks revocation,
+reconnects terminated read leases, and persists replay before acknowledging
+the source transaction. Progress checkpoints accompany the final report.
 
 ### Opting in to direct CDC projection
 

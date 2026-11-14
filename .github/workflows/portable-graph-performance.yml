@@ -55,19 +55,7 @@ jobs:
           CAPTURE_OS: ${{ matrix.os }}
         run: |
           $capture = Join-Path $PWD "artifacts/portable-graph-performance/$env:CAPTURE_OS"
-          New-Item -ItemType Directory -Path $capture -Force | Out-Null
-          @{
-            sourceCommit = (git rev-parse HEAD).Trim()
-            os = $env:CAPTURE_OS
-            architecture = 'x64'
-            containerImageDigests = @($env:BLUETUSK_PORTABLE_GRAPH_IMAGE)
-          } | ConvertTo-Json | Set-Content (Join-Path $capture 'environment.json')
-          $env:BLUETUSK_GRAPH_PLAN_DIRECTORY = Join-Path $capture 'plans'
-          dotnet restore benchmarks/BlueTusk.Benchmarks --locked-mode
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-restore -- --job medium --inProcess --filter '*ContinuousGraphBenchmarks*' --artifacts (Join-Path $capture 'benchmarks')
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          ./eng/verify-portable-graph-benchmarks.ps1 -CapturePath $capture -ExpectedCommit (git rev-parse HEAD).Trim() -ExpectedOs $env:CAPTURE_OS
+          ./eng/run-portable-graph-performance.ps1 -OutputDirectory $capture -Platform $env:CAPTURE_OS -ServerEnvironment 'Pinned PostgreSQL container on the benchmark runner'
       - name: Retain the reports and execution plans
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -125,7 +125,8 @@ public partial class ContinuousGraphBenchmarks
     private async Task VerifyCaptureRoleAsync(BlueTuskConnection connection)
     {
         await using var command = new BlueTuskCommand(
-            $"SELECT current_user = '{CaptureRole}' AND NOT EXISTS " +
+            $"SELECT current_user = '{CaptureRole}' AND row_security_active('{PeopleTable}'::regclass) " +
+            $"AND row_security_active('{FriendshipsTable}'::regclass) AND NOT EXISTS " +
             $"(SELECT FROM {PeopleTable} WHERE id = {EdgeCount + 2}) AND NOT EXISTS " +
             $"(SELECT FROM {FriendshipsTable} WHERE to_id = {EdgeCount + 2})", connection);
         if (await command.ExecuteScalarAsync() is not true)

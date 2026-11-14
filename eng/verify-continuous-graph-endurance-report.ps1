@@ -220,6 +220,9 @@ else
     }
     foreach ($counter in @(
             'authoritativeRepairs',
+            'authoritativeDeltas',
+            'scopedAuthorizations',
+            'authorizationRevocations',
             'processRestartRecoveries',
             'cancellationRecoveries',
             'disconnectRecoveries',
@@ -233,6 +236,11 @@ else
     if ($report.harness.cancellationCleanupVerified -ne $true)
     {
         $failures.Add('Cancellation cleanup and subsequent query recovery were not verified.')
+    }
+    if ($report.harness.rowLevelSecurityVerified -ne $true -or
+        [long]$report.harness.scopedAuthorizations -lt [long]$report.harness.authoritativeDeltas)
+    {
+        $failures.Add('Scoped reads did not verify subscriber authorization and PostgreSQL RLS.')
     }
     if ([long]$report.harness.replaySequenceErrors -ne 0 -or
         [long]$report.harness.incorrectlyOrderedResults -ne 0 -or

@@ -20,6 +20,7 @@ public sealed class ContinuousGraphEnduranceTests
     private const string FriendshipsTable = "bluetusk_graph_endurance_friendships";
     private const string GraphName = "bluetusk_graph_endurance";
     private const string ReplaySchema = "bluetusk_graph_endurance_live";
+    private const string ReaderRole = "bluetusk_graph_endurance_reader";
     private static readonly ChangeSourceIdentity Source = new(
         "continuous-graph-endurance",
         "bluetusk_tests",
@@ -42,19 +43,18 @@ public sealed class ContinuousGraphEnduranceTests
         await using var replayDataSource = BlueTuskDataSource.Create(connectionString);
         var replay = CreateReplayStore(replayDataSource);
         await replay.InitializeAsync(TestContext.Current.CancellationToken);
-        var factory = new GraphContextFactory(connectionString);
+        await using var factory = new GraphContextFactory(connectionString);
         var plan = await ContinuousGraphQueryCompiler.CompileAsync(
             factory,
             CreateDefinition(),
             cancellationToken: TestContext.Current.CancellationToken);
         var arguments = CreateArguments(plan);
         var securityScope = CreateSecurityScope();
-        var evaluator = new RepairEvaluator();
         await using var session = CreateIncrementalSession(
             plan,
             arguments,
             securityScope,
-            evaluator);
+            factory);
 
         await CommitInitialAsync(
             session,
@@ -84,19 +84,18 @@ public sealed class ContinuousGraphEnduranceTests
         await using var replayDataSource = BlueTuskDataSource.Create(connectionString);
         var replay = CreateReplayStore(replayDataSource);
         await replay.InitializeAsync(TestContext.Current.CancellationToken);
-        var factory = new GraphContextFactory(connectionString);
+        await using var factory = new GraphContextFactory(connectionString);
         var plan = await ContinuousGraphQueryCompiler.CompileAsync(
             factory,
             CreateDefinition(),
             cancellationToken: TestContext.Current.CancellationToken);
         var arguments = CreateArguments(plan);
         var securityScope = CreateSecurityScope();
-        var evaluator = new RepairEvaluator();
         await using var session = CreateIncrementalSession(
             plan,
             arguments,
             securityScope,
-            evaluator);
+            factory);
         var stored = await replay.ReadAsync(
             session.Identity,
             0,
@@ -142,6 +141,8 @@ public sealed class ContinuousGraphEnduranceTests
         long evaluations = 0;
         long committed = 0;
         long authoritativeRepairs = 0;
+        long authoritativeDeltas = 0;
+        long authorizationRevocations = 0;
         long processRestartRecoveries = 0;
         long cancellationRecoveries = 0;
         long disconnectRecoveries = 0;
@@ -151,7 +152,7 @@ public sealed class ContinuousGraphEnduranceTests
         long unreconciledResults = 0;
         try
         {
-            var factory = new GraphContextFactory(connectionString);
+            await using var factory = new GraphContextFactory(connectionString);
             var plan = await ContinuousGraphQueryCompiler.CompileAsync(
                 factory,
                 CreateDefinition(),
@@ -162,12 +163,11 @@ public sealed class ContinuousGraphEnduranceTests
                 connectionString);
             var replay = CreateReplayStore(replayDataSource);
             await replay.InitializeAsync(TestContext.Current.CancellationToken);
-            var evaluator = new RepairEvaluator();
             await using var session = CreateIncrementalSession(
                 plan,
                 arguments,
                 securityScope,
-                evaluator);
+                factory);
             var replayAfterProcessRestart = await replay.ReadAsync(
                 session.Identity,
                 0,
@@ -206,23 +206,71 @@ public sealed class ContinuousGraphEnduranceTests
                 TestContext.Current.CancellationToken);
             disconnectRecoveries++;
 
+            var expectedName = "Grace";
+            var nextCheckpoint = TimeSpan.FromMinutes(1);
             while (stopwatch.Elapsed < settings.Duration ||
                    evaluations < settings.MinimumEvaluations)
             {
                 TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
                 var transactionNumber = checked((uint)(evaluations + 1));
-                var expectedName = (transactionNumber & 1) == 0
-                    ? "Hopper"
-                    : "Hamilton";
+                var scopedMutation = (transactionNumber & 1) != 0;
                 var lifecycle = Stopwatch.StartNew();
-                await ExecuteAsync(
-                    administration,
-                    $"UPDATE {PeopleTable} SET name = '{expectedName}' WHERE id = 2",
-                    TestContext.Current.CancellationToken);
+                var position = new BlueTuskLogSequenceNumber(transactionNumber);
+                Change change;
+                if (scopedMutation)
+                {
+                    var edgeId = (transactionNumber & 2) == 0 ? 12 : 10;
+                    await ExecuteAsync(administration,
+                        $"UPDATE {FriendshipsTable} SET id = {edgeId} WHERE to_id = 2",
+                        TestContext.Current.CancellationToken);
+                    var table = new ChangeTable(1, "public", FriendshipsTable, 'f',
+                        [new ChangeColumn(0, "to_id", 23, -1, IsKey: false)]);
+                    var row = new ChangeRow(table,
+                        [ChangeColumnValue.FromValue("2"u8.ToArray(), ChangeValueEncoding.Text)]);
+                    change = new UpdateChange(new ChangeId(Source, position, transactionNumber, 0),
+                        row, row, new ChangedColumnSet(false, []));
+                }
+                else
+                {
+                    expectedName = (transactionNumber & 2) == 0 ? "Hopper" : "Hamilton";
+                    await ExecuteAsync(administration,
+                        $"UPDATE {PeopleTable} SET name = '{expectedName}' WHERE id = 2",
+                        TestContext.Current.CancellationToken);
+                    var table = new ChangeTable(2, "public", PeopleTable, 'f',
+                        [new ChangeColumn(0, "id", 23, -1, IsKey: true)]);
+                    var row = new ChangeRow(table,
+                        [ChangeColumnValue.FromValue("2"u8.ToArray(), ChangeValueEncoding.Text)]);
+                    change = new UpdateChange(new ChangeId(Source, position, transactionNumber, 0),
+                        row, row, new ChangedColumnSet(false, []));
+                }
                 await using var delivery = ChangeDeliveryTestFactory.CreateCommitted(
                     Source,
                     transactionNumber,
-                    new BlueTuskLogSequenceNumber(transactionNumber));
+                    position, [change]);
+                if (scopedMutation && (transactionNumber == 3 || transactionNumber % 1000 == 1))
+                {
+                    factory.Revoked = true;
+                    await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+                    {
+                        await using var denied = await session.PrepareTransactionAsync(
+                            delivery.Transaction, TestContext.Current.CancellationToken);
+                    });
+                    factory.Revoked = false;
+                    authorizationRevocations++;
+                }
+                if (scopedMutation && (transactionNumber == 5 || transactionNumber % 10000 == 1 && transactionNumber > 1))
+                {
+                    await factory.TerminateLeaseAsync(administration, TestContext.Current.CancellationToken);
+                    var disconnect = await Record.ExceptionAsync(async () =>
+                    {
+                        await using var disconnected = await session.PrepareTransactionAsync(
+                            delivery.Transaction, TestContext.Current.CancellationToken);
+                    });
+                    Assert.True(disconnect is BlueTuskException or IOException,
+                        $"Expected a PostgreSQL disconnect, received {disconnect?.GetType().Name ?? "no exception"}.");
+                    await factory.ResetLeaseAsync();
+                    disconnectRecoveries++;
+                }
                 await using var evaluation =
                     await session.PrepareTransactionAsync(
                         delivery.Transaction,
@@ -233,6 +281,10 @@ public sealed class ContinuousGraphEnduranceTests
                 {
                     authoritativeRepairs++;
                 }
+                if (evaluation.Evaluation.MaintenanceTier is ContinuousGraphMaintenanceTier.AuthoritativeDelta)
+                {
+                    authoritativeDeltas++;
+                }
 
                 var batch = evaluation.Evaluation.Batch;
                 if (batch is null)
@@ -242,6 +294,12 @@ public sealed class ContinuousGraphEnduranceTests
                 }
                 else
                 {
+                    var fresh = await plan.LivePlan.ExecuteAsync(
+                        new LiveQueryExecutionContext(arguments, securityScope), TestContext.Current.CancellationToken);
+                    if (!batch.Snapshot.Rows.SequenceEqual(fresh, new FriendResultComparer()))
+                    {
+                        unreconciledResults++;
+                    }
                     if (!IsStrictlyOrdered(batch.Snapshot.Rows))
                     {
                         incorrectlyOrderedResults++;
@@ -273,6 +331,13 @@ public sealed class ContinuousGraphEnduranceTests
                 committed++;
                 lifecycle.Stop();
                 durations.Add(lifecycle.Elapsed.TotalMilliseconds);
+                if (stopwatch.Elapsed >= nextCheckpoint)
+                {
+                    await WriteProgressAsync(settings.ReportPath, stopwatch.Elapsed,
+                        evaluations, committed, authoritativeDeltas, authoritativeRepairs,
+                        factory.Authorizations, authorizationRevocations);
+                    nextCheckpoint = stopwatch.Elapsed + TimeSpan.FromMinutes(1);
+                }
 
                 if (settings.Interval > TimeSpan.Zero)
                 {
@@ -287,7 +352,11 @@ public sealed class ContinuousGraphEnduranceTests
             Assert.Equal(0, unreconciledResults);
             Assert.True(evaluations >= settings.MinimumEvaluations);
             Assert.Equal(evaluations, committed);
-            Assert.Equal(evaluations, authoritativeRepairs);
+            Assert.Equal(evaluations, authoritativeRepairs + authoritativeDeltas);
+            Assert.True(authoritativeDeltas > 0);
+            Assert.True(authoritativeRepairs > 0);
+            Assert.True(authorizationRevocations > 0);
+            Assert.True(factory.Authorizations >= authoritativeDeltas);
             Assert.True(processRestartRecoveries > 0);
             Assert.True(cancellationRecoveries > 0);
             Assert.True(disconnectRecoveries > 0);
@@ -312,6 +381,10 @@ public sealed class ContinuousGraphEnduranceTests
                     Evaluations: evaluations,
                     CommittedEvaluations: committed,
                     AuthoritativeRepairs: authoritativeRepairs,
+                    AuthoritativeDeltas: authoritativeDeltas,
+                    ScopedAuthorizations: factory.Authorizations,
+                    AuthorizationRevocations: authorizationRevocations,
+                    RowLevelSecurityVerified: factory.RowLevelSecurityVerified,
                     ProcessRestartRecoveries: processRestartRecoveries,
                     CancellationRecoveries: cancellationRecoveries,
                     CancellationCleanupVerified: cancellationRecoveries > 0,
@@ -335,11 +408,10 @@ public sealed class ContinuousGraphEnduranceTests
             ContinuousGraphQueryPlan<FriendResult, int> plan,
             LiveQueryArguments arguments,
             LiveSecurityScope securityScope,
-            RepairEvaluator evaluator) =>
+            GraphContextFactory factory) =>
         plan.CreateIncrementalSession(
             arguments,
             securityScope,
-            evaluator,
             new ContinuousGraphIncrementalOptions<FriendResult, int>
             {
                 ResultOrdering = Comparer<FriendResult>.Create(
@@ -348,6 +420,7 @@ public sealed class ContinuousGraphEnduranceTests
                 KeyOrdering = Comparer<int>.Default,
                 RepairAfterTransactions = int.MaxValue,
                 MaximumRepairInterval = TimeSpan.FromDays(7),
+                ScopedConnection = new ContinuousGraphScopedConnection(factory.AcquireAsync),
             });
 
     private static async Task CommitInitialAsync(
@@ -581,6 +654,14 @@ public sealed class ContinuousGraphEnduranceTests
                 (10, 1, 2), (11, 1, 3);
             CREATE INDEX ON {FriendshipsTable} (from_id);
             CREATE INDEX ON {FriendshipsTable} (to_id);
+            CREATE ROLE {ReaderRole} NOLOGIN;
+            INSERT INTO {PeopleTable} VALUES (4, 'Hidden tenant');
+            INSERT INTO {FriendshipsTable} VALUES (40, 1, 4);
+            ALTER TABLE {PeopleTable} ENABLE ROW LEVEL SECURITY;
+            ALTER TABLE {FriendshipsTable} ENABLE ROW LEVEL SECURITY;
+            CREATE POLICY graph_reader ON {PeopleTable} TO {ReaderRole} USING (id <= 3);
+            CREATE POLICY graph_reader ON {FriendshipsTable} TO {ReaderRole} USING (to_id <= 3);
+            GRANT SELECT ON {PeopleTable}, {FriendshipsTable} TO {ReaderRole};
             """,
             TestContext.Current.CancellationToken);
     }
@@ -597,6 +678,7 @@ public sealed class ContinuousGraphEnduranceTests
             $"""
             DROP TABLE IF EXISTS {FriendshipsTable};
             DROP TABLE IF EXISTS {PeopleTable};
+            DROP ROLE IF EXISTS {ReaderRole};
             """,
             TestContext.Current.CancellationToken);
     }
@@ -728,32 +810,132 @@ public sealed class ContinuousGraphEnduranceTests
             "Could not locate the BlueTusk repository root.");
     }
 
-    private sealed class RepairEvaluator :
-        IContinuousGraphIncrementalEvaluator<FriendResult, int>
+    private static async Task WriteProgressAsync(
+        string? reportPath, TimeSpan elapsed, long evaluations, long committed,
+        long deltas, long repairs, long authorizations, long revocations)
     {
-        public ValueTask<ContinuousGraphIncrementalResult<FriendResult, int>>
-            EvaluateAsync(
-                ChangeTransaction transaction,
-                LiveQueryExecutionContext context,
-                CancellationToken cancellationToken = default)
+        if (string.IsNullOrWhiteSpace(reportPath))
+        {
+            return;
+        }
+        var progressPath = reportPath + ".progress.json";
+        await File.WriteAllTextAsync(progressPath + ".tmp", JsonSerializer.Serialize(new
+        {
+            updatedAt = DateTimeOffset.UtcNow,
+            elapsed, evaluations, committed,
+            authoritativeDeltas = deltas,
+            authoritativeRepairs = repairs,
+            scopedAuthorizations = authorizations,
+            authorizationRevocations = revocations,
+        }), TestContext.Current.CancellationToken);
+        File.Move(progressPath + ".tmp", progressPath, overwrite: true);
+    }
+
+    private sealed class GraphContextFactory : IDbContextFactory<GraphContext>, IAsyncDisposable
+    {
+        private readonly string _connectionString;
+        private readonly DbContextOptions<GraphContext> _options;
+        private ScopedLease? _lease;
+
+        public bool Revoked { get; set; }
+        public long Authorizations { get; private set; }
+        public bool RowLevelSecurityVerified { get; private set; }
+
+        public GraphContextFactory(string connectionString)
+        {
+            _connectionString = new BlueTuskConnectionStringBuilder(connectionString)
+            {
+                MaxAutoPrepare = 8,
+            }.ConnectionString;
+            _options = new DbContextOptionsBuilder<GraphContext>()
+                .UseBlueTusk(_connectionString)
+                .Options;
+        }
+
+        public GraphContext CreateDbContext() =>
+            throw new NotSupportedException("This fixture requires asynchronous subscriber authorization.");
+
+        public async Task<GraphContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return ValueTask.FromResult(
-                ContinuousGraphIncrementalResult<FriendResult, int>.RequiresRepair(
-                    "endurance-authoritative-reconciliation"));
+            var context = new GraphContext(_options);
+            try
+            {
+                await context.Database.OpenConnectionAsync(cancellationToken);
+                await ExecuteAsync((BlueTuskConnection)context.Database.GetDbConnection(),
+                    $"SET ROLE {ReaderRole}", cancellationToken);
+                return context;
+            }
+            catch
+            {
+                await context.DisposeAsync();
+                throw;
+            }
+        }
+
+        public async ValueTask<IContinuousGraphScopedConnectionLease> AcquireAsync(
+            LiveQueryExecutionContext execution, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Assert.Equal(CreateSecurityScope(), execution.SecurityScope);
+            Authorizations++;
+            if (Revoked)
+            {
+                throw new UnauthorizedAccessException("Endurance subscriber access was revoked.");
+            }
+            if (_lease is null)
+            {
+                var connection = new BlueTuskConnection(_connectionString);
+                try
+                {
+                    await connection.OpenAsync(cancellationToken);
+                    await ExecuteAsync(connection, $"SET ROLE {ReaderRole}", cancellationToken);
+                    await using var probe = new BlueTuskCommand(
+                        $"SELECT current_user = '{ReaderRole}' AND row_security_active('{PeopleTable}'::regclass) " +
+                        $"AND row_security_active('{FriendshipsTable}'::regclass) AND NOT EXISTS " +
+                        $"(SELECT FROM {PeopleTable} WHERE id = 4)", connection);
+                    Assert.True(await probe.ExecuteScalarAsync(cancellationToken) is true);
+                    RowLevelSecurityVerified = true;
+                    _lease = new ScopedLease(connection);
+                }
+                catch
+                {
+                    await connection.DisposeAsync();
+                    throw;
+                }
+            }
+            return _lease;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await ResetLeaseAsync();
+        }
+
+        public async Task TerminateLeaseAsync(BlueTuskConnection administration, CancellationToken cancellationToken)
+        {
+            Assert.NotNull(_lease);
+            await using var pidCommand = new BlueTuskCommand("SELECT pg_backend_pid()", _lease.Connection);
+            var pid = Convert.ToInt32(await pidCommand.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
+            await using var terminate = new BlueTuskCommand($"SELECT pg_terminate_backend({pid})", administration);
+            Assert.True(await terminate.ExecuteScalarAsync(cancellationToken) is true);
+        }
+
+        public async ValueTask ResetLeaseAsync()
+        {
+            if (_lease is not null)
+            {
+                await _lease.Connection.DisposeAsync();
+                _lease = null;
+            }
         }
     }
 
-    private sealed class GraphContextFactory(string connectionString) :
-        IDbContextFactory<GraphContext>
+    private sealed class ScopedLease(BlueTuskConnection connection) : IContinuousGraphScopedConnectionLease
     {
-        public GraphContext CreateDbContext()
-        {
-            var options = new DbContextOptionsBuilder<GraphContext>()
-                .UseBlueTusk(connectionString)
-                .Options;
-            return new GraphContext(options);
-        }
+        // The serialized subscription owns the connection until its factory is disposed.
+        public BlueTuskConnection Connection => connection;
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private sealed class GraphContext(DbContextOptions<GraphContext> options) :
@@ -862,6 +1044,10 @@ public sealed class ContinuousGraphEnduranceTests
         long Evaluations,
         long CommittedEvaluations,
         long AuthoritativeRepairs,
+        long AuthoritativeDeltas,
+        long ScopedAuthorizations,
+        long AuthorizationRevocations,
+        bool RowLevelSecurityVerified,
         long ProcessRestartRecoveries,
         long CancellationRecoveries,
         bool CancellationCleanupVerified,

@@ -113,7 +113,11 @@ try
             actualDuration = '1.00:00:01'
             evaluations = 100000
             committedEvaluations = 99900
-            authoritativeRepairs = 100000
+            authoritativeRepairs = 50000
+            authoritativeDeltas = 50000
+            scopedAuthorizations = 50001
+            authorizationRevocations = 1
+            rowLevelSecurityVerified = $true
             processRestartRecoveries = 1
             cancellationRecoveries = 1
             cancellationCleanupVerified = $true
@@ -142,6 +146,11 @@ try
     Assert-Rejected { param($value) $value.harness.committedEvaluations = 99899 }
     Assert-Rejected { param($value) $value.harness.lifecycleP95Milliseconds = 1000.01 }
     Assert-Rejected { param($value) $value.harness.authoritativeRepairs = 0 }
+    Assert-Rejected { param($value) $value.harness.authoritativeDeltas = 0 }
+    Assert-Rejected { param($value) $value.harness.scopedAuthorizations = 0 }
+    Assert-Rejected { param($value) $value.harness.scopedAuthorizations = 49999 }
+    Assert-Rejected { param($value) $value.harness.authorizationRevocations = 0 }
+    Assert-Rejected { param($value) $value.harness.rowLevelSecurityVerified = $false }
     Assert-Rejected { param($value) $value.harness.processRestartRecoveries = 0 }
     Assert-Rejected { param($value) $value.phaseExitCodes.'restart-resume' = 1 }
     Assert-Rejected { param($value) $value.harness.cancellationRecoveries = 0 }
@@ -153,9 +162,9 @@ try
     Assert-Rejected { param($value) $value.harness.unreconciledResults = 1 }
     Assert-Rejected { param($value) $value.candidateArtifacts[0].sha256 = 'd' * 64 }
 
-    if ($rejections -ne 17)
+    if ($rejections -ne 22)
     {
-        throw "Expected 17 verifier rejections; observed $rejections."
+        throw "Expected 22 verifier rejections; observed $rejections."
     }
     Write-Host (
         'ContinuousGraph endurance verifier self-test passed ' +

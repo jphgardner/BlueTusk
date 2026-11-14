@@ -309,6 +309,42 @@ public sealed class ContinuousGraphQueryIntegrationTests
     }
 
     [Fact]
+    public async Task Full_reads_honor_current_order_limit_and_parameters_after_compilation()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var connectionString = GetConnectionString();
+        await using var admin = new BlueTuskConnection(connectionString);
+        await admin.OpenAsync(token);
+        await ResetSchemaAsync(admin, native: false);
+        try
+        {
+            await CreateSchemaAsync(admin, native: false);
+            var reverse = false;
+            var limit = 20;
+            var factory = new GraphContextFactory(connectionString, BlueTuskPropertyGraphBackend.Relational);
+            var plan = await ContinuousGraphQueryCompiler.CompileAsync(factory,
+                CreateDefinition(() => reverse, () => limit), cancellationToken: token);
+            var scope = new LiveSecurityScope("full-read", "v1");
+            var arguments = plan.Bind(new Dictionary<string, object?> { ["sourceId"] = 1 });
+            var execution = new LiveQueryExecutionContext(arguments, scope);
+            Assert.Equal([2, 3], (await plan.LivePlan.ExecuteAsync(execution, token)).Select(row => row.TargetId));
+            reverse = true;
+            Assert.Equal([3, 2], (await plan.LivePlan.ExecuteAsync(execution, token)).Select(row => row.TargetId));
+            limit = 1;
+            Assert.Equal(3, Assert.Single(await plan.LivePlan.ExecuteAsync(execution, token)).TargetId);
+            reverse = false;
+            limit = 20;
+            var empty = plan.Bind(new Dictionary<string, object?> { ["sourceId"] = 3 });
+            Assert.Empty(await plan.LivePlan.ExecuteAsync(new LiveQueryExecutionContext(empty, scope), token));
+            Assert.Equal([2, 3], (await plan.LivePlan.ExecuteAsync(execution, token)).Select(row => row.TargetId));
+        }
+        finally
+        {
+            await ResetSchemaAsync(admin, native: false);
+        }
+    }
+
+    [Fact]
     public async Task Single_key_delta_rebinds_graph_arguments_and_detects_parallel_edges()
     {
         var token = TestContext.Current.CancellationToken;
@@ -420,7 +456,7 @@ public sealed class ContinuousGraphQueryIntegrationTests
     }
 
     private static ContinuousGraphQueryDefinition<GraphContext, FriendResult, int>
-        CreateDefinition() =>
+        CreateDefinition(Func<bool>? reverse = null, Func<int>? limit = null) =>
         new(
             "continuous-friends",
             "continuous-graph-integration",
@@ -434,7 +470,7 @@ public sealed class ContinuousGraphQueryIntegrationTests
             (context, arguments) =>
             {
                 var sourceId = arguments.Get<int>("sourceId");
-                return context.PropertyGraph(GraphName)
+                var projected = context.PropertyGraph(GraphName)
                     .Match(pattern => pattern
                         .Vertex<Person>("source", person => person.Id == sourceId)
                         .Outgoing<Friendship>("relationship")
@@ -447,9 +483,11 @@ public sealed class ContinuousGraphQueryIntegrationTests
                         .Property<Person, int>(
                             "target", person => person.Id, result => result.TargetId)
                         .Property<Person, string>(
-                            "target", person => person.Name, result => result.TargetName))
-                    .OrderBy(result => result.TargetId)
-                    .Take(20);
+                            "target", person => person.Name, result => result.TargetName));
+                return (reverse?.Invoke() == true
+                        ? projected.OrderByDescending(result => result.TargetId)
+                        : projected.OrderBy(result => result.TargetId))
+                    .Take(limit?.Invoke() ?? 20);
             },
             result => result.TargetId,
             new FriendResultComparer());

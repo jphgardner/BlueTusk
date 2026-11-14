@@ -490,6 +490,10 @@ public static class ContinuousGraphQueryCompiler
 
             return executionQuery;
         }
+        var singleKeyQuery = capturedImpact.Backend == BlueTuskPropertyGraphBackend.Relational
+            ? ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>.TryCreate(
+                context, query, definition.KeySelector)
+            : null;
         var capabilities =
             LiveQueryCapabilities.TenantFilter |
             LiveQueryCapabilities.DeterministicOrdering |
@@ -517,6 +521,15 @@ public static class ContinuousGraphQueryCompiler
                 await using var executionContext =
                     await contextFactory.CreateDbContextAsync(token).ConfigureAwait(false);
                 var executionQuery = CreateExecutionQuery(executionContext, execution.Arguments);
+                if (singleKeyQuery?.TryExecuteFull(executionContext, executionQuery) is { } compiled)
+                {
+                    var rows = new List<TResult>(definition.MaximumResultCount);
+                    await foreach (var row in compiled.WithCancellation(token).ConfigureAwait(false))
+                    {
+                        rows.Add(row);
+                    }
+                    return rows;
+                }
                 return await executionQuery.AsNoTracking().ToListAsync(token).ConfigureAwait(false);
             },
             definition.KeySelector.Compile(),
@@ -549,10 +562,6 @@ public static class ContinuousGraphQueryCompiler
             maintenanceCapabilities |=
                 ContinuousGraphMaintenanceCapabilities.AuthoritativeDelta |
                 ContinuousGraphMaintenanceCapabilities.TrustedCdcProjection;
-            var singleKeyQuery = capturedImpact.Backend == BlueTuskPropertyGraphBackend.Relational
-                ? ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>.TryCreate(
-                    context, query, definition.KeySelector)
-                : null;
             async ValueTask<IReadOnlyList<TResult>> ExecuteEfScopeAsync(
                 TContext scopedContext, IQueryable<TResult> scopedQuery, IReadOnlyCollection<TKey> keys,
                 CancellationToken token)

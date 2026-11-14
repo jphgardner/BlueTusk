@@ -19,6 +19,15 @@ if ($environment.sourceCommit -cne $ExpectedCommit -or
 $results = Join-Path $CapturePath 'benchmarks/results'
 $reportPath = Join-Path $results 'BlueTusk.Benchmarks.ContinuousGraphBenchmarks-report-full.json'
 $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+if (@($report.Benchmarks).Count -ne 81) {
+    throw 'Portable Graph qualification requires all 81 benchmark cases.'
+}
+$profile = Get-Content -LiteralPath (Join-Path $CapturePath 'plans/authorization.json') -Raw | ConvertFrom-Json
+if ($profile.rowLevelSecurityVerified -ne $true -or
+    $profile.authorizedLease -ne $true -or $profile.postgreSqlVersion -cnotmatch '^18\.6(?:\s|$)') {
+    throw 'Portable Graph qualification requires the authorized lease and active RLS on PostgreSQL 18.6.'
+}
+$log = Get-Content -LiteralPath (Join-Path $CapturePath 'matrix.log') -Raw
 $contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw |
     ConvertFrom-Json
 $resources = Get-Content -LiteralPath (Join-Path $CapturePath 'plans/benchmark-process-resources.json') -Raw |
@@ -71,6 +80,11 @@ foreach ($edges in $contract.workloads.ContinuousGraph.edgeCounts)
     foreach ($top in $contract.workloads.ContinuousGraph.topN)
     {
         $parameters = "EdgeCount=$edges&TopN=$top"
+        $checks = [regex]::Matches($log,
+            "Authorized lease verified: edges=$edges; top=$top; authorizations=(\d+)")
+        if ($checks.Count -lt 2 -or @($checks | Where-Object { [long]$_.Groups[1].Value -lt 20 }).Count) {
+            throw "Missing per-read subscriber authorization evidence for $parameters."
+        }
         $repair = Get-Measurement 'FullRepairUpdateAsync' $parameters
         foreach ($tier in @(
             @{ Method = 'TrustedUpdateAsync'; Limit = $contract.comparisonRules.trustedCdcMaximumFullRequeryRatio },

@@ -41,6 +41,9 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
     private int _disposed;
     private int _scopeSelections;
     private int _leaseSelections;
+    private bool _benchmarkLease;
+    private BlueTuskDataSource? _subscriberDataSource;
+    private string? _subscriberConnectionString;
 
     [Params(1_000, 100_000, 1_000_000)]
     public int EdgeCount { get; set; }
@@ -49,9 +52,37 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
     public int TopN { get; set; }
 
     [GlobalSetup]
-    public Task Setup() => SetupAsync(null);
+    public async Task Setup()
+    {
+        await SetupAsync(null, restrictedRole: true, compareScopedConnection: true, subscriberLogin: true);
+        _benchmarkLease = true;
+        await VerifyCaptureRoleAsync(_authorizedConnection!);
+        if (Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_PLAN_DIRECTORY") is { Length: > 0 } directory)
+        {
+            await using var version = new BlueTuskCommand("SHOW server_version", _authorizedConnection!);
+            await File.WriteAllTextAsync(Path.Combine(directory, "authorization.json"),
+                System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    postgreSqlVersion = (string)(await version.ExecuteScalarAsync())!,
+                    rowLevelSecurityVerified = true,
+                    authorizedLease = true,
+                    subscriberLogin = true,
+                }));
+        }
+        if (await PreparedSelectiveTraversalAsync() != await TypedSelectiveTraversalAsync())
+        {
+            throw new InvalidOperationException("Prepared and typed selective traversals returned different counts.");
+        }
+        var selected = _leaseSelections;
+        if (await ScopedUpdateAsync() != ContinuousGraphMaintenanceTier.AuthoritativeDelta ||
+            _leaseSelections != selected + 1)
+        {
+            throw new InvalidOperationException("The benchmark did not authorize its scoped lease.");
+        }
+    }
 
-    private async Task SetupAsync(ScopedReadObserver? observer, bool restrictedRole = false, bool compareScopedConnection = false)
+    private async Task SetupAsync(ScopedReadObserver? observer, bool restrictedRole = false,
+        bool compareScopedConnection = false, bool subscriberLogin = false)
     {
         _dataSource = BlueTuskDataSource.Create(GetConnectionString());
         _administration = await _dataSource.OpenConnectionAsync();
@@ -84,7 +115,20 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
             await InstallCapturePolicyAsync();
         }
 
-        _contextFactory = new GraphContextFactory(_dataSource, observer, restrictedRole);
+        if (subscriberLogin)
+        {
+            var password = Guid.NewGuid().ToString("N");
+            await ExecuteAsync($"ALTER ROLE {CaptureRole} LOGIN PASSWORD '{password}'");
+            _subscriberConnectionString = new BlueTuskConnectionStringBuilder(GetConnectionString())
+            {
+                Username = CaptureRole,
+                Password = password,
+                MaxAutoPrepare = 8,
+            }.ConnectionString;
+            _subscriberDataSource = BlueTuskDataSource.Create(_subscriberConnectionString);
+        }
+        _contextFactory = new GraphContextFactory(_subscriberDataSource ?? _dataSource,
+            observer, restrictedRole && !subscriberLogin);
         _definition = CreateDefinition();
         _plan = await ContinuousGraphQueryCompiler.CompileAsync(
             _contextFactory,
@@ -136,13 +180,14 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
                             : null),
                 });
             await InitializeAsync(_connectionScoped);
-            var leasedConnectionString = new BlueTuskConnectionStringBuilder(GetConnectionString())
+            var leasedConnectionString = new BlueTuskConnectionStringBuilder(_subscriberConnectionString ?? GetConnectionString())
             {
                 MaxAutoPrepare = 8,
             }.ConnectionString;
-            _authorizedConnection = new BlueTuskConnection(leasedConnectionString);
+            _authorizedConnection = _subscriberDataSource?.CreateConnection()
+                ?? new BlueTuskConnection(leasedConnectionString);
             await _authorizedConnection.OpenAsync();
-            if (restrictedRole)
+            if (restrictedRole && !subscriberLogin)
             {
                 await AuthorizeCaptureAsync(_authorizedConnection, CancellationToken.None);
             }
@@ -204,7 +249,7 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
             WHERE anchor.id = @source
             ORDER BY v.id
             LIMIT @top
-            """, _administration);
+            """, restrictedRole && _authorizedConnection is not null ? _authorizedConnection : _administration);
         _prepared.Parameters.Add(new BlueTuskParameter<int>(EdgeCount + 1) { ParameterName = "source" });
         _prepared.Parameters.Add(new BlueTuskParameter<int>(TopN) { ParameterName = "top" });
         await _prepared.PrepareAsync();
@@ -216,7 +261,27 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
     }
 
     [GlobalCleanup]
-    public async Task Cleanup() => await DisposeAsync();
+    public async Task Cleanup()
+    {
+        try
+        {
+            if (_benchmarkLease && _leaseSelections > 2)
+            {
+                await using var prepared = new BlueTuskCommand(
+                    "SELECT count(*) FROM pg_prepared_statements WHERE statement LIKE 'SELECT g.%LIMIT 2'",
+                    _authorizedConnection!);
+                if (await prepared.ExecuteScalarAsync() is not 1L)
+                {
+                    throw new InvalidOperationException("The authorized graph probe was not prepared.");
+                }
+                Console.WriteLine($"Authorized lease verified: edges={EdgeCount}; top={TopN}; authorizations={_leaseSelections}");
+            }
+        }
+        finally
+        {
+            await DisposeAsync();
+        }
+    }
 
     [Benchmark]
     public async Task<string> CompileGraphRegistrationAsync()
@@ -247,7 +312,7 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
 
     [Benchmark]
     public async Task<ContinuousGraphMaintenanceTier> ScopedUpdateAsync() =>
-        await EvaluateUpdateAsync(_scoped);
+        await EvaluateUpdateAsync(_benchmarkLease ? _leaseScoped! : _scoped);
 
     [Benchmark]
     public async Task<ContinuousGraphMaintenanceTier> TrustedUpdateAsync() =>
@@ -281,7 +346,7 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
     [Benchmark]
     public async Task<int> TypedSelectiveTraversalAsync()
     {
-        await using var context = _contextFactory.CreateDbContext();
+        await using var context = await _contextFactory.CreateDbContextAsync();
         return (await Traversal(context, EdgeCount + 1, BlueTuskGraphEdgeDirection.Incoming)
             .ToListAsync()).Count;
     }
@@ -289,7 +354,7 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
     [Benchmark]
     public async Task<int> TypedBoundedTraversalAsync()
     {
-        await using var context = _contextFactory.CreateDbContext();
+        await using var context = await _contextFactory.CreateDbContextAsync();
         return (await BoundedTraversal(context, 1).ToListAsync()).Count;
     }
 
@@ -338,6 +403,11 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
         if (_prepared is not null)
         {
             await _prepared.DisposeAsync();
+        }
+
+        if (_subscriberDataSource is not null)
+        {
+            await _subscriberDataSource.DisposeAsync();
         }
 
         if (_administration is not null)
@@ -427,7 +497,7 @@ public partial class ContinuousGraphBenchmarks : IAsyncDisposable
     private async Task CapturePlansAsync(string directory)
     {
         Directory.CreateDirectory(directory);
-        await using var context = _contextFactory.CreateDbContext();
+        await using var context = await _contextFactory.CreateDbContextAsync();
         await context.Database.OpenConnectionAsync();
         foreach (var (label, source, direction, bounded) in new[]
         {

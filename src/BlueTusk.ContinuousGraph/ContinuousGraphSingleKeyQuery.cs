@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace BlueTusk.ContinuousGraph;
 
@@ -14,7 +15,9 @@ internal sealed class ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>(
     IModel model,
     WeakReference<IDbContextOptions> options,
     BlueTuskGraphQueryRootExpression template,
-    Func<TContext, object[], TKey, IAsyncEnumerable<TResult>> execute)
+    Expression fullExpression,
+    Func<TContext, object[], TKey, IAsyncEnumerable<TResult>> execute,
+    Func<TContext, object[], IAsyncEnumerable<TResult>> executeFull)
     where TContext : DbContext
     where TResult : class
     where TKey : notnull
@@ -53,11 +56,33 @@ internal sealed class ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>(
         var lambda = Expression.Lambda<Func<TContext, object[], TKey, IQueryable<TResult>>>(
             untracked, contextParameter, graphArguments, affectedKey);
 
+        var fullExpression = new RootReplacement(root, template).Visit(query.Expression)!;
+        var fullUntracked = Expression.Call(
+            typeof(EntityFrameworkQueryableExtensions), nameof(EntityFrameworkQueryableExtensions.AsNoTracking),
+            [typeof(TResult)], fullExpression);
         return new(
             context.Model,
             new WeakReference<IDbContextOptions>(context.GetService<IDbContextOptions>()),
             template,
-            EF.CompileAsyncQuery<TContext, object[], TKey, TResult>(lambda));
+            fullExpression,
+            EF.CompileAsyncQuery<TContext, object[], TKey, TResult>(lambda),
+            EF.CompileAsyncQuery<TContext, object[], TResult>(
+                Expression.Lambda<Func<TContext, object[], IQueryable<TResult>>>(
+                    fullUntracked,
+                    contextParameter, graphArguments)));
+    }
+
+    public IAsyncEnumerable<TResult>? TryExecuteFull(TContext context, IQueryable<TResult> query) =>
+        TryMatch(context, query, out var root, out var arguments) &&
+        ExpressionEqualityComparer.Instance.Equals(
+            fullExpression, new RootReplacement(root, template).Visit(query.Expression))
+            ? executeFull(context, arguments)
+            : null;
+
+    private sealed class RootReplacement(Expression original, Expression replacement) : ExpressionVisitor
+    {
+        public override Expression? Visit(Expression? node) =>
+            ReferenceEquals(node, original) ? replacement : base.Visit(node);
     }
 
     public IAsyncEnumerable<TResult>? TryExecute(TContext context, IQueryable<TResult> query, TKey key)

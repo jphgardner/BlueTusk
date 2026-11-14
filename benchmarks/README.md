@@ -86,6 +86,15 @@ The capture retains per-operation timings, allocations, provider counters,
 and execution plans. Run it on each client against the same fixture. The
 BenchmarkDotNet matrix supplies the release measurements.
 
+The 81-case matrix uses an exclusive authorized lease for scoped updates and
+a restricted PostgreSQL login for EF reads. Both paths enforce the fixture's
+RLS policies. Cleanup verifies prepared-statement reuse and counts subscriber
+authorization calls. Use `eng/run-portable-graph-performance.ps1` with a clean
+candidate checkout, a dedicated pinned fixture, and a new capture directory.
+Record the database location so Windows and native Linux results can be
+compared on the same server. The verifier checks all 81 cases, authorization,
+traversal plans, absolute budgets, and maintenance ratios.
+
 To compare the opt-in `ContinuousGraphIncrementalOptions.ScopedConnection`
 with the standard scoped read and full repair, run the following matched
 capture. Each arm uses the same mutation and subscription. The capture

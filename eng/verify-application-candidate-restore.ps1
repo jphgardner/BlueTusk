@@ -2,7 +2,8 @@
 param(
     [string] $PackageCache = 'artifacts/application-nuget-cache',
     [string] $CandidateFeed = 'artifacts/prerelease/feed',
-    [string] $ExpectedCommit
+    [string] $ExpectedCommit,
+    [string] $ExpectedVersion
 )
 
 Set-StrictMode -Version Latest
@@ -40,9 +41,12 @@ if (-not (Test-Path -LiteralPath $cacheRoot -PathType Container) -or
     throw 'The isolated application package cache and candidate feed must both exist.'
 }
 
-$expectedVersion = [string](
-    Get-Content -LiteralPath (Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
-        ConvertFrom-Json).version
+if ([string]::IsNullOrWhiteSpace($ExpectedVersion))
+{
+    $ExpectedVersion = [string](
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
+            ConvertFrom-Json).version
+}
 $assetFiles = @(Get-ChildItem -LiteralPath (
         Join-Path $repositoryRoot 'applications') -Filter 'project.assets.json' -File -Recurse)
 if ($assetFiles.Count -ne 20)
