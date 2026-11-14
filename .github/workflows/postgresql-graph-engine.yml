@@ -157,11 +157,12 @@ jobs:
           set -euo pipefail
           output=artifacts/graph-engine
           package="bluetusk_graph-pg$GRAPH_MAJOR-linux-amd64.tar.gz"
-          docker run --rm --entrypoint tar bluetusk-graph-engine -C /usr/local -czf - \
-            lib/postgresql/bluetusk_graph.so \
-            share/postgresql/extension/bluetusk_graph.control \
-            share/postgresql/extension/bluetusk_graph--1.0.sql \
-            share/postgresql/extension/bluetusk_graph--1.0--1.1.sql > "$output/$package"
+          docker run --rm --entrypoint sh bluetusk-graph-engine -ec '
+            cd /usr/local
+            tar -czf - lib/postgresql/bluetusk_graph.so \
+              share/postgresql/extension/bluetusk_graph.control \
+              share/postgresql/extension/bluetusk_graph--*.sql
+          ' > "$output/$package"
           (
             cd "$output"
             sha256sum "$package" > "$package.sha256"
