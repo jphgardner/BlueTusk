@@ -229,6 +229,9 @@ try
     $graphEvidence = $validJson | ConvertFrom-Json -AsHashtable
     $graphEvidence.scope = 'ContinuousGraphPreview'
     $graphEvidence.comparisons = $graphComparisons
+    $scoped = $graphEvidence.comparisons | Where-Object mode -eq 'graph-authoritative' | Select-Object -First 1
+    $scoped.metrics.p95.candidate = 60.0
+    $scoped.metrics.p95.candidateCiUpper = 65.0
     $graphPath = Join-Path $temporaryRoot 'graph-preview.json'
     $graphJson = $graphEvidence | ConvertTo-Json -Depth 12
     $graphJson | Set-Content -LiteralPath $graphPath -Encoding utf8
@@ -252,6 +255,17 @@ try
         $changed.comparisons[0].metrics.p95.candidate = 20.0
         $changed.comparisons[0].metrics.p95.candidateCiUpper = 21.0
     } "failed 'p95'" -Scope ContinuousGraphPreview
+    Test-RejectedEvidence 'graph-scoped-latency-tie' {
+        param($changed)
+        $scoped = $changed.comparisons | Where-Object mode -eq 'graph-authoritative' | Select-Object -First 1
+        $scoped.metrics.p95.candidateCiUpper = $scoped.metrics.p95.referenceCiLower
+    } "failed 'p95'" -Scope ContinuousGraphPreview
+    Test-RejectedEvidence 'graph-scoped-allocation-regression' {
+        param($changed)
+        $scoped = $changed.comparisons | Where-Object mode -eq 'graph-authoritative' | Select-Object -First 1
+        $scoped.metrics.allocatedBytes.candidate = 36.0
+        $scoped.metrics.allocatedBytes.candidateCiUpper = 36.0
+    } "failed 'allocatedBytes'" -Scope ContinuousGraphPreview
     Test-RejectedEvidence 'bad-ratio' {
         param($changed)
         $changed.comparisons[0].metrics.mean.candidate = 100.0
