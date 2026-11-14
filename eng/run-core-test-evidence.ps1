@@ -120,7 +120,7 @@ try
         { throw "Rebuild '$($project.name)' from the exact committed candidate before capturing evidence." }
         $assemblyHash = (Get-FileHash -LiteralPath $assembly -Algorithm SHA256).Hash
         Copy-Item -LiteralPath $assembly -Destination (Join-Path $directory "$($project.name).dll")
-        $arguments = @('test', (Join-Path $repositoryRoot $project.path), '--configuration', 'Release', '--no-build',
+        $arguments = @('test', (Join-Path $repositoryRoot $project.path), '--framework', 'net10.0', '--configuration', 'Release', '--no-build',
             '--no-restore', '--nologo', '--verbosity', 'quiet')
         if ($project.filter.Length -gt 0) { $arguments += @('--filter', $project.filter) }
         & dotnet @arguments --list-tests *> (Join-Path $directory 'discovery.log')

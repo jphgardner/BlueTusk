@@ -49,7 +49,7 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
     internal async ValueTask<BlueTuskLogicalPublicationBinding> ReadPublicationBindingAsync(
         string publicationName, string? slotName, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(publicationName);
+        BlueTuskGuard.NotNullOrWhiteSpace(publicationName);
         var slotPredicate = slotName is null
             ? "false"
             : $"r.slot_name = {BlueTuskSql.QuoteLiteral(slotName)}";
