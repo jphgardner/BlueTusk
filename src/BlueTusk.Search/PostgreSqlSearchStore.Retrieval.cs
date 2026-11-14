@@ -375,7 +375,11 @@ public sealed partial class PostgreSqlSearchStore
                     sql.Append(',');
                 }
 
+#if NET6_0_OR_GREATER
                 sql.Append(System.Globalization.CultureInfo.InvariantCulture, $"(@query,@rank{i},@id{i},@ordinal{i},@version{i},@score{i})");
+#else
+                sql.Append(FormattableString.Invariant($"(@query,@rank{i},@id{i},@ordinal{i},@version{i},@score{i})"));
+#endif
                 var hit = byKey[(chunk[i].DocumentId, chunk[i].ChunkOrdinal)];
                 Parameter(command, $"rank{i}", ++rank, DbType.Int32);
                 Parameter(command, $"id{i}", hit.DocumentId);

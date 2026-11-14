@@ -20,8 +20,8 @@ public sealed class PgVectorSearchAdapter : IPostgreSqlSearchVectorAdapter
 
     public string ExtensionSchema { get; }
     public int Dimensions { get; }
-    public string StorageContract => string.Create(CultureInfo.InvariantCulture, $"pgvector:cosine:{ExtensionSchema}:{Dimensions}:v1");
-    public string ColumnTypeSql => string.Create(CultureInfo.InvariantCulture, $"{_quotedExtensionSchema}.vector({Dimensions})");
+    public string StorageContract => BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"pgvector:cosine:{ExtensionSchema}:{Dimensions}:v1");
+    public string ColumnTypeSql => BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{_quotedExtensionSchema}.vector({Dimensions})");
 
     public string ParameterSql(string trustedParameterSql) => $"CAST({trustedParameterSql} AS {_quotedExtensionSchema}.vector)";
 
@@ -98,7 +98,7 @@ public sealed class PgVectorSearchAdapter : IPostgreSqlSearchVectorAdapter
         await ValidateInstallationAsync(connection, transaction, cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = string.Create(CultureInfo.InvariantCulture, $"CREATE INDEX IF NOT EXISTS {name} ON {schema}.chunks USING hnsw (embedding {_quotedExtensionSchema}.vector_cosine_ops) WITH (m={connectionsPerLayer},ef_construction={constructionCandidates})");
+        command.CommandText = BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"CREATE INDEX IF NOT EXISTS {name} ON {schema}.chunks USING hnsw (embedding {_quotedExtensionSchema}.vector_cosine_ops) WITH (m={connectionsPerLayer},ef_construction={constructionCandidates})");
         _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }

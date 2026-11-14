@@ -161,7 +161,7 @@ public sealed class EventOutboxChangeDecoder
         var column = Column(row, name);
         if (column.Encoding == ChangeValueEncoding.Binary)
         {
-            return column.Data.Length == 16 ? new Guid(column.Data.Span, bigEndian: true) :
+            return column.Data.Length == 16 ? BlueTuskRuntime.ReadGuidBigEndian(column.Data.Span) :
                 throw new EventOutboxDecodingException(name);
         }
 

@@ -48,7 +48,7 @@ public sealed partial class PostgreSqlSearchStore : IAsyncDisposable
         _schema = SearchValidation.Identifier(Options.Schema);
         _ingestionSlots = new SemaphoreSlim(Options.MaxConcurrentIngestions, Options.MaxConcurrentIngestions);
         _rankingSlots = new SemaphoreSlim(Options.MaxConcurrentRankings, Options.MaxConcurrentRankings);
-        _contract = string.Create(CultureInfo.InvariantCulture, $"v1:chunk={Options.MaxChunkCharacters}:overlap={Options.ChunkOverlapCharacters}:vector={vectors?.StorageContract ?? "none"}:model={embeddings?.ModelIdentity ?? "none"}");
+        _contract = BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"v1:chunk={Options.MaxChunkCharacters}:overlap={Options.ChunkOverlapCharacters}:vector={vectors?.StorageContract ?? "none"}:model={embeddings?.ModelIdentity ?? "none"}");
     }
 
     public SearchStoreOptions Options { get; }

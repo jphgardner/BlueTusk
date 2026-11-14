@@ -3,6 +3,10 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using BlueTusk.Data;
+#if NET5_0
+using DbBatch = BlueTusk.Data.Compatibility.BlueTuskLegacyBatch;
+#endif
 
 namespace BlueTusk.Documents;
 
@@ -110,7 +114,11 @@ public sealed class DocumentSession : IDisposable
             var results = new List<DocumentWriteResult>(mutations.Length);
             foreach (var chunk in mutations.Chunk(_store.Options.CommandsPerBatch))
             {
+#if NET5_0
+                if (connection is BlueTuskConnection)
+#else
                 if (connection.CanCreateBatch)
+#endif
                 {
                     await ExecuteBatchAsync(connection, transaction, chunk, results, cancellationToken).ConfigureAwait(false);
                 }
@@ -158,7 +166,11 @@ public sealed class DocumentSession : IDisposable
 
     private async ValueTask ExecuteBatchAsync(DbConnection connection, DbTransaction transaction, Mutation[] chunk, List<DocumentWriteResult> results, CancellationToken cancellationToken)
     {
+#if NET5_0
+        await using DbBatch batch = ((BlueTuskConnection)connection).CreateBatch();
+#else
         await using var batch = connection.CreateBatch();
+#endif
         batch.Transaction = transaction;
         batch.Timeout = _store.Options.CommandTimeoutSeconds;
         using var parameterFactory = connection.CreateCommand();
@@ -169,7 +181,13 @@ public sealed class DocumentSession : IDisposable
             command.CommandText = prepared.Sql;
             foreach (var input in prepared.Parameters)
             {
+#if NET5_0 || NET8_0_OR_GREATER
                 var parameter = command.CanCreateParameter ? command.CreateParameter() : parameterFactory.CreateParameter();
+#else
+                var parameter = command is BlueTuskBatchCommand blueTuskCommand
+                    ? blueTuskCommand.CreateParameter()
+                    : parameterFactory.CreateParameter();
+#endif
                 parameter.ParameterName = input.Name;
                 parameter.DbType = input.Type;
                 parameter.Value = input.Value;

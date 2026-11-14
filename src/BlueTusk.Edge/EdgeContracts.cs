@@ -83,7 +83,7 @@ public sealed class EdgeMutation
         Kind = kind;
         Payload = payload.ToArray();
         Fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-            string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{scope.Tenant}\0{scope.Id}\0{scope.Epoch}\0{documentId}\0{expectedRevision}\0{kind}\0{Convert.ToBase64String(payload.Span)}"))));
+            BlueTuskRuntime.Format(System.Globalization.CultureInfo.InvariantCulture, $"{scope.Tenant}\0{scope.Id}\0{scope.Epoch}\0{documentId}\0{expectedRevision}\0{kind}\0{Convert.ToBase64String(payload.Span)}"))));
     }
 
     public EdgeScope Scope { get; }

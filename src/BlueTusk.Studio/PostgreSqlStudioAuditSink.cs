@@ -243,7 +243,8 @@ public sealed class PostgreSqlStudioAuditSink : IStudioAuditSink
 
     private static bool TryOperationTime(Guid operationId, out long milliseconds)
     {
-        var bytes = operationId.ToByteArray(bigEndian: true);
+        Span<byte> bytes = stackalloc byte[16];
+        _ = BlueTuskRuntime.TryWriteGuidBigEndian(operationId, bytes, out _);
         if ((bytes[6] >> 4) != 7 || (bytes[8] >> 6) != 2)
         {
             milliseconds = 0;

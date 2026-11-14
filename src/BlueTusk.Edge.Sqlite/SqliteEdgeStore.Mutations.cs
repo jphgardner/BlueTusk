@@ -472,5 +472,5 @@ public sealed partial class SqliteEdgeStore
     }
 
     private static string OutcomeFingerprint(EdgeMutationOutcome outcome) => Convert.ToHexString(SHA256.HashData(
-        Encoding.UTF8.GetBytes(string.Create(CultureInfo.InvariantCulture, $"{outcome.Kind}:{outcome.ServerRecord?.Revision}:{(outcome.ServerRecord is null ? "missing" : RecordFingerprint(outcome.ServerRecord))}"))));
+        Encoding.UTF8.GetBytes(BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{outcome.Kind}:{outcome.ServerRecord?.Revision}:{(outcome.ServerRecord is null ? "missing" : RecordFingerprint(outcome.ServerRecord))}"))));
 }

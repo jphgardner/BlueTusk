@@ -57,7 +57,7 @@ public sealed partial class OpenSearchStore : IAsyncDisposable
         _embeddings = embeddings;
         _ownership = ownership;
         _operations = new(options.MaxConcurrentOperations, options.MaxConcurrentOperations);
-        _contract = Hash(string.Create(CultureInfo.InvariantCulture,
+        _contract = Hash(BlueTuskRuntime.Format(CultureInfo.InvariantCulture,
             $"v1:{options.VectorDimensions}:{embeddings?.ModelIdentity}:{options.Limits.MaxChunkCharacters}:{options.Limits.ChunkOverlapCharacters}:{options.Limits.MaxChunksPerDocument}:lucene-hnsw-cosine:standard"));
     }
 
@@ -181,7 +181,7 @@ public sealed partial class OpenSearchStore : IAsyncDisposable
         {
             var replay = Compare(existing, id, version, fingerprint, chunkCount);
             if (replay is not null) { return replay; }
-            var condition = existing is null ? "op_type=create" : string.Create(CultureInfo.InvariantCulture, $"if_seq_no={existing.Sequence}&if_primary_term={existing.PrimaryTerm}");
+            var condition = existing is null ? "op_type=create" : BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"if_seq_no={existing.Sequence}&if_primary_term={existing.PrimaryTerm}");
             var response = await RequestAsync(HttpMethod.Put, Options.IndexName + "/_doc/" + DocumentKey(scope, id) + "?refresh=wait_for&" + condition, source, cancellationToken).ConfigureAwait(false);
             using (response.Body)
             {
