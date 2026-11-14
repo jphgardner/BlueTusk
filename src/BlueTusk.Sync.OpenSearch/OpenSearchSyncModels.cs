@@ -21,7 +21,7 @@ public sealed class OpenSearchRebuildVerification
     /// <summary>Initializes a verified collection set.</summary>
     public OpenSearchRebuildVerification(IEnumerable<OpenSearchCollectionCount> collections)
     {
-        ArgumentNullException.ThrowIfNull(collections);
+        BlueTuskGuard.NotNull(collections);
         _collections = Array.AsReadOnly(collections.ToArray());
     }
 

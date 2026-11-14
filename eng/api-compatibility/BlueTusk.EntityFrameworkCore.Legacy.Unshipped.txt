@@ -1,0 +1,5 @@
+#nullable enable
+BlueTusk.EntityFrameworkCore.BlueTuskUpdateSettersBuilder<TSource>
+BlueTusk.EntityFrameworkCore.BlueTuskUpdateSettersBuilder<TSource>.BlueTuskUpdateSettersBuilder() -> void
+BlueTusk.EntityFrameworkCore.BlueTuskUpdateSettersBuilder<TSource>.SetProperty<TProperty>(System.Linq.Expressions.Expression<System.Func<TSource, TProperty>!>! propertySelector, System.Linq.Expressions.Expression<System.Func<TSource, TProperty>!>! valueSelector) -> BlueTusk.EntityFrameworkCore.BlueTuskUpdateSettersBuilder<TSource>!
+BlueTusk.EntityFrameworkCore.BlueTuskUpdateSettersBuilder<TSource>.SetProperty<TProperty>(System.Linq.Expressions.Expression<System.Func<TSource, TProperty>!>! propertySelector, TProperty value) -> BlueTusk.EntityFrameworkCore.BlueTuskUpdateSettersBuilder<TSource>!

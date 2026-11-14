@@ -15,7 +15,7 @@ public sealed class BlueTuskProtocolCaptureTests
             new BlueTuskProtocolCaptureRecord(
                 BlueTuskCaptureDirection.Frontend,
                 BlueTuskCaptureRecordAttributes.None,
-                TimeSpan.FromMicroseconds(123),
+                TimeSpan.FromTicks(1230),
                 new byte[] { (byte)'Q' }));
 
         Assert.Equal(

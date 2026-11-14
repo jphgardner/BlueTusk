@@ -16,7 +16,7 @@ internal sealed class BlueTuskDesignTimeServicesBridge : IDesignTimeServices
 
     public void ConfigureDesignTimeServices(IServiceCollection serviceCollection)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection);
+        BlueTuskGuard.NotNull(serviceCollection);
 
         var designAssembly = Assembly.Load(new AssemblyName(DesignAssemblyName));
         var designServicesType = designAssembly.GetType(

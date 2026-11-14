@@ -5,7 +5,7 @@ public sealed class BlueTuskPgTrgmPlugin : IBlueTuskPlugin
 {
     public BlueTuskPgTrgmPlugin(string schema = "public")
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
         Schema = schema;
     }
 
@@ -13,7 +13,7 @@ public sealed class BlueTuskPgTrgmPlugin : IBlueTuskPlugin
 
     public void Configure(IBlueTuskPluginContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         context.Features.Register(
             BlueTuskPgTrgmFeature.RegistryName,
             new BlueTuskPgTrgmFeature(Schema));

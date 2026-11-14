@@ -14,7 +14,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
 
     public S3SyncDestination(S3SyncOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _store = options.ObjectStoreFactory?.Invoke(options) ?? new AwsS3SyncObjectStore(options);
@@ -31,7 +31,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
         SyncProvisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         var configuration = await _store.LoadConfigurationAsync(cancellationToken)
             .ConfigureAwait(false);
         if (configuration is not null &&
@@ -77,7 +77,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
         SnapshotReset reset,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         var pipeline = RequirePipeline(pipelineId, reset.Epoch.Source);
         var epoch = reset.Epoch.Value.ToString("N");
         await CommitOrderedAsync(
@@ -97,7 +97,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         var pipeline = RequirePipeline(pipelineId, start.Epoch.Source, transform);
         var epoch = start.Epoch.Value.ToString("N");
         await CommitOrderedAsync(
@@ -115,7 +115,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
         SyncSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var pipeline = RequirePipeline(
             batch.PipelineId,
             batch.SourceBatch.Epoch.Source,
@@ -158,7 +158,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         var pipeline = RequirePipeline(pipelineId, complete.Epoch.Source, transform);
         var epoch = complete.Epoch.Value.ToString("N");
         await CommitOrderedAsync(
@@ -176,7 +176,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
         SyncTransactionBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var pipeline = RequirePipeline(batch.PipelineId, batch.Transaction.Source);
         if (!string.Equals(
                 batch.Transform.Fingerprint,
@@ -201,9 +201,9 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
         string operationId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         var pipeline = RequirePipeline(batch.PipelineId, batch.Transaction.Source, batch.Transform);
         var duplicate = await CommitTransactionAsync(pipeline, batch, cancellationToken)
             .ConfigureAwait(false);
@@ -278,7 +278,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
             var dataKey = parquet is null ? null : $"{root}/data/{relativeKey}.parquet";
             var dataHash = parquet is null
                 ? null
-                : Convert.ToHexStringLower(SHA256.HashData(parquet));
+                : BlueTuskRuntime.ToHexStringLower(SHA256.HashData(parquet));
             var manifest = JsonSerializer.SerializeToUtf8Bytes(new
             {
                 formatVersion = 1,
@@ -312,7 +312,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
         ChangeSourceIdentity source,
         SyncTransformVersion? transform = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
         var pipeline = Volatile.Read(ref _pipeline) ??
             throw new InvalidOperationException(
                 "The S3 destination must be provisioned before it can receive data.");
@@ -337,7 +337,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
     }
 
     private static string SafePath(string value) =>
-        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+        BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
     private static string DeliveryId(string kind, params string[] components)
     {
@@ -348,7 +348,7 @@ public sealed class S3SyncDestination : ISyncDestination, ISyncQuarantineReplayD
             Append(hash, component);
         }
 
-        return "bt1-" + Convert.ToHexStringLower(hash.GetHashAndReset());
+        return "bt1-" + BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private static void Append(IncrementalHash hash, string value)

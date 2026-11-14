@@ -7,7 +7,7 @@ internal static class BlueTuskSqlDiagnosticParser
 
     internal static BlueTuskSqlDiagnosticInfo Parse(string sql)
     {
-        ArgumentNullException.ThrowIfNull(sql);
+        BlueTuskGuard.NotNull(sql);
         var tags = new List<string>();
         var index = 0;
         while (index < sql.Length)

@@ -153,7 +153,7 @@ public sealed class BlueTuskPostGisEntityFrameworkCoreTests
         Assert.Equal("DROP EXTENSION IF EXISTS \"postgis\" CASCADE", operations[1].Sql);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Plugin_round_trips_rich_spatial_values_and_executes_compiled_queries_live()
     {
         var connectionString = GetConnectionString();

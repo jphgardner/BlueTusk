@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>Live</BlueTuskProductFamily>
     <Description>Deterministic stores, fixtures, and conformance helpers for BlueTusk Live.</Description>
     <PackageTags>postgresql;live-query;testing;conformance;realtime</PackageTags>
@@ -10,5 +11,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Live\BlueTusk.Live.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
   </ItemGroup>
 </Project>

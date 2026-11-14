@@ -8,7 +8,7 @@ using BlueTusk.Identity.Azure;
 using BlueTusk.Identity.GoogleCloud;
 using Google.Apis.Auth.OAuth2;
 
-namespace BlueTusk.Identity.Tests;
+namespace BlueTusk.Identity.CompatibilityTests;
 
 public sealed class CloudIdentityAdapterTests
 {

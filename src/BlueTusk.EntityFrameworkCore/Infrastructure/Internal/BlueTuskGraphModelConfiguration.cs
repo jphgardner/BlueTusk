@@ -25,6 +25,15 @@ internal sealed class BlueTuskModelCustomizer(ModelCustomizerDependencies depend
 
 internal sealed class BlueTuskModelCacheKeyFactory : IModelCacheKeyFactory
 {
+#if BLUETUSK_EF6_OR_GREATER
     public object Create(DbContext context, bool designTime) =>
         (context.GetType(), designTime, BlueTuskOptionsExtension.GetGraphBackend(context.GetService<IDbContextOptions>()));
+#else
+    public object Create(DbContext context)
+    {
+        var options = context.GetService<IDbContextOptions>();
+        return (context.GetType(), BlueTuskOptionsExtension.GetGraphBackend(options),
+            options.FindExtension<BlueTuskOptionsExtension>()?.DataSource?.TypeRegistry);
+    }
+#endif
 }

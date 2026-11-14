@@ -25,10 +25,10 @@ public sealed class KubernetesManagedDeploymentOperator
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _controller = controller ?? throw new ArgumentNullException(nameof(controller));
         _client = client ?? throw new ArgumentNullException(nameof(client));
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumConcurrency, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumConcurrency, 64);
-        ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(pageSize, 500);
+        BlueTuskGuard.NotLessThan(maximumConcurrency, 1);
+        BlueTuskGuard.NotGreaterThan(maximumConcurrency, 64);
+        BlueTuskGuard.NotLessThan(pageSize, 1);
+        BlueTuskGuard.NotGreaterThan(pageSize, 500);
         _maximumConcurrency = maximumConcurrency;
         _pageSize = pageSize;
         _timeProvider = timeProvider ?? TimeProvider.System;
@@ -54,6 +54,7 @@ public sealed class KubernetesManagedDeploymentOperator
         while (continuation is not null);
 
         var results = new KubernetesManagedDeploymentReconcileResult[resources.Count];
+#if NET6_0_OR_GREATER
         await Parallel.ForEachAsync(
             Enumerable.Range(0, resources.Count),
             new ParallelOptions
@@ -65,6 +66,38 @@ public sealed class KubernetesManagedDeploymentOperator
             {
                 results[index] = await ReconcileIsolatedAsync(resources[index], token).ConfigureAwait(false);
             }).ConfigureAwait(false);
+#else
+        cancellationToken.ThrowIfCancellationRequested();
+        using var workerLifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var nextIndex = -1;
+        var workers = Enumerable.Range(0, Math.Min(_maximumConcurrency, resources.Count))
+            .Select(_ => ReconcileWorkerAsync()).ToArray();
+        await Task.WhenAll(workers).ConfigureAwait(false);
+
+        async Task ReconcileWorkerAsync()
+        {
+            try
+            {
+                while (true)
+                {
+                    workerLifetime.Token.ThrowIfCancellationRequested();
+                    var index = Interlocked.Increment(ref nextIndex);
+                    if (index >= resources.Count)
+                    {
+                        return;
+                    }
+
+                    results[index] = await ReconcileAsync(resources[index], workerLifetime.Token)
+                        .ConfigureAwait(false);
+                }
+            }
+            catch
+            {
+                workerLifetime.Cancel();
+                throw;
+            }
+        }
+#endif
         return Array.AsReadOnly(results);
     }
 
@@ -109,7 +142,7 @@ public sealed class KubernetesManagedDeploymentOperator
         KubernetesManagedDeploymentResource resource,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(resource);
+        BlueTuskGuard.NotNull(resource);
         ValidateResource(resource);
         var current = resource;
         try
@@ -251,7 +284,7 @@ public sealed class KubernetesManagedDeploymentOperator
         ValidateToken(resource.Name, 253, nameof(resource.Name));
         ValidateToken(resource.Uid, 128, nameof(resource.Uid));
         ValidateToken(resource.ResourceVersion, 128, nameof(resource.ResourceVersion));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(resource.Generation);
+        BlueTuskGuard.NotNegativeOrZero(resource.Generation);
         if (resource.Finalizers.Count > 32 ||
             resource.Finalizers.Any(static value => string.IsNullOrWhiteSpace(value) || value.Length > 253))
         {
@@ -261,7 +294,7 @@ public sealed class KubernetesManagedDeploymentOperator
 
     private static void ValidateToken(string value, int maximumLength, string parameter)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameter);
         if (value.Length > maximumLength || value.Any(char.IsControl))
         {
             throw new ArgumentException("Kubernetes resource identity is invalid.", parameter);

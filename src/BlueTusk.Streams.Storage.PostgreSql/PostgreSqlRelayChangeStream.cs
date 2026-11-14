@@ -33,18 +33,18 @@ public sealed record PostgreSqlRelayChangeStreamOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(ConsumerGroup);
-        ArgumentException.ThrowIfNullOrWhiteSpace(OwnerId);
+        BlueTuskGuard.NotNullOrWhiteSpace(ConsumerGroup);
+        BlueTuskGuard.NotNullOrWhiteSpace(OwnerId);
         if (!Enum.IsDefined(NewGroupStart))
         {
             throw new ArgumentOutOfRangeException(nameof(NewGroupStart));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxTransactionsPerRead);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxBytesPerRead);
-        ArgumentOutOfRangeException.ThrowIfLessThan(EmptyReadDelay, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(LeaseDuration, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(LeaseRenewalInterval, TimeSpan.Zero);
+        BlueTuskGuard.NotNegativeOrZero(MaxTransactionsPerRead);
+        BlueTuskGuard.NotNegativeOrZero(MaxBytesPerRead);
+        BlueTuskGuard.NotLessThan(EmptyReadDelay, TimeSpan.Zero);
+        BlueTuskGuard.NotLessThanOrEqual(LeaseDuration, TimeSpan.Zero);
+        BlueTuskGuard.NotLessThanOrEqual(LeaseRenewalInterval, TimeSpan.Zero);
         if (LeaseRenewalInterval >= LeaseDuration)
         {
             throw new ArgumentException(
@@ -73,7 +73,7 @@ public sealed class PostgreSqlRelayChangeStream : IChangeStream
     {
         _relay = relay ?? throw new ArgumentNullException(nameof(relay));
         _source = source ?? throw new ArgumentNullException(nameof(source));
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
     }
@@ -234,9 +234,9 @@ public sealed class PostgreSqlRelayConsumerGroupSession : IAsyncDisposable
         PostgreSqlRelayChangeStreamOptions options,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(relay);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(relay);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         await relay.InitializeAsync(cancellationToken).ConfigureAwait(false);
         var group = await relay.CreateConsumerGroupAsync(
@@ -263,7 +263,7 @@ public sealed class PostgreSqlRelayConsumerGroupSession : IAsyncDisposable
     /// <summary>Creates the single transaction stream owned by this leased session.</summary>
     public IChangeStream CreateChangeStream()
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         if (Interlocked.Exchange(ref _streamCreated, 1) != 0)
         {
             throw new InvalidOperationException(

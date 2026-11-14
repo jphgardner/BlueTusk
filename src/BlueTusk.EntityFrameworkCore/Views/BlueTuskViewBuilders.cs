@@ -37,7 +37,7 @@ public sealed class BlueTuskViewBuilder
     /// <summary>Adds explicit output-column names in ordinal order.</summary>
     public BlueTuskViewBuilder HasColumns(params string[] names)
     {
-        ArgumentNullException.ThrowIfNull(names);
+        BlueTuskGuard.NotNull(names);
         _columns.AddRange(names);
         return this;
     }
@@ -125,7 +125,7 @@ public sealed class BlueTuskMaterializedViewBuilder
     /// <summary>Adds explicit output-column names in ordinal order.</summary>
     public BlueTuskMaterializedViewBuilder HasColumns(params string[] names)
     {
-        ArgumentNullException.ThrowIfNull(names);
+        BlueTuskGuard.NotNull(names);
         _columns.AddRange(names);
         return this;
     }

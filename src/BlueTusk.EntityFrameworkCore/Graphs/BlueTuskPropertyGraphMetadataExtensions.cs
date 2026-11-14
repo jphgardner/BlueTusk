@@ -9,7 +9,7 @@ public static class BlueTuskPropertyGraphMetadataExtensions
     public static IReadOnlyList<BlueTuskPropertyGraphDefinition> GetPropertyGraphs(
         this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskPropertyGraphMetadata.Get(model);
     }
 }

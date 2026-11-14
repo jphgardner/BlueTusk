@@ -62,13 +62,14 @@ stable-versus-RC guidance, use the
 
 Prerequisites:
 
-- .NET SDK 10.0.111 or a compatible later feature band
+- .NET SDK 11.0.100 as pinned in `global.json`
+- .NET 10 runtime for the standard test suite
 - Docker for PostgreSQL integration tests
 
 ```powershell
 dotnet restore BlueTusk.slnx
 dotnet build BlueTusk.slnx --no-restore
-dotnet test BlueTusk.slnx --no-build
+dotnet test BlueTusk.slnx --no-build --framework net10.0
 ```
 
 Integration tests are opt-in:
@@ -80,7 +81,9 @@ dotnet test tests/BlueTusk.IntegrationTests
 ```
 
 Extension-specific databases and test commands are documented in
-[Testing](docs/contributing/testing.md). The
+[Testing](docs/contributing/testing.md). See the
+[.NET compatibility matrix](docs/contributing/dotnet-compatibility.md) for
+running tests on .NET 5 through .NET 11. The
 [repository layout](docs/contributing/repository-layout.md) explains solution
 groups, project-registration rules, and generated output.
 

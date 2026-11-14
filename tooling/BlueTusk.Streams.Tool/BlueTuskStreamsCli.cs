@@ -1,4 +1,7 @@
 using System.Data.Common;
+#if !NET7_0_OR_GREATER
+using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
+#endif
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -19,7 +22,7 @@ public static class BlueTuskStreamsCli
         TextWriter? output = null,
         TextWriter? error = null)
     {
-        ArgumentNullException.ThrowIfNull(arguments);
+        BlueTuskGuard.NotNull(arguments);
         output ??= Console.Out;
         error ??= Console.Error;
 
@@ -543,7 +546,7 @@ public static class BlueTuskStreamsCli
     {
         var canonical = string.Join('\n', publications.Select(static value => "P:" + value)
             .Concat(tables.Select(static value => $"T:{value.Schema}.{value.Table}")));
-        return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
+        return BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
 
     private static string Sanitize(string message, params string?[] secrets)

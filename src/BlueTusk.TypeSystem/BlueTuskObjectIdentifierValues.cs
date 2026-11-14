@@ -18,7 +18,7 @@ public readonly record struct BlueTuskObjectIdentifier
 
     public BlueTuskObjectIdentifier(string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         _oid = 0;
         Name = name;
     }
@@ -38,8 +38,28 @@ public interface IBlueTuskObjectIdentifierValue<TSelf>
 {
     BlueTuskObjectIdentifier Identifier { get; }
 
+#if NET7_0_OR_GREATER
     static abstract TSelf FromIdentifier(BlueTuskObjectIdentifier identifier);
+#else
+    TSelf FromIdentifier(BlueTuskObjectIdentifier identifier) => LegacyObjectIdentifierFactory<TSelf>.Create(identifier);
+#endif
 }
+
+#if !NET7_0_OR_GREATER
+internal static class LegacyObjectIdentifierFactory<T> where T : struct, IBlueTuskObjectIdentifierValue<T>
+{
+    public static readonly Func<BlueTuskObjectIdentifier, T> Create = BuildFactory();
+
+    private static Func<BlueTuskObjectIdentifier, T> BuildFactory()
+    {
+        var method = typeof(T).GetMethod("FromIdentifier",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+            binder: null, [typeof(BlueTuskObjectIdentifier)], modifiers: null)
+            ?? throw new InvalidOperationException($"The object-identifier type {typeof(T).FullName} must provide a public static FromIdentifier factory.");
+        return method.CreateDelegate<Func<BlueTuskObjectIdentifier, T>>();
+    }
+}
+#endif
 
 /// <summary>A PostgreSQL function identifier (<c>regproc</c>).</summary>
 public readonly record struct BlueTuskRegProc(BlueTuskObjectIdentifier Identifier) :

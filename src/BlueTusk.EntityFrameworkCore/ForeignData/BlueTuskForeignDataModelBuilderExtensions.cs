@@ -14,9 +14,9 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         string name,
         Action<BlueTuskForeignDataWrapperBuilder> configure)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskForeignDataWrapperBuilder(name);
         configure(builder);
         var definition = builder.Build();
@@ -34,9 +34,9 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         string foreignDataWrapper,
         Action<BlueTuskForeignServerBuilder>? configure = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(foreignDataWrapper);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(foreignDataWrapper);
         var builder = new BlueTuskForeignServerBuilder(name, foreignDataWrapper);
         configure?.Invoke(builder);
         var definition = builder.Build();
@@ -63,8 +63,8 @@ public static class BlueTuskForeignDataModelBuilderExtensions
 
     public static ModelBuilder HasNoForeignDataWrapper(this ModelBuilder modelBuilder, string name)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var current = BlueTuskForeignDataMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, current with
         {
@@ -74,8 +74,8 @@ public static class BlueTuskForeignDataModelBuilderExtensions
 
     public static ModelBuilder HasNoForeignServer(this ModelBuilder modelBuilder, string name)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var current = BlueTuskForeignDataMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, current with
         {
@@ -88,8 +88,8 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         string serverName,
         string? userName)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serverName);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(serverName);
         var current = BlueTuskForeignDataMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, current with
         {
@@ -101,7 +101,7 @@ public static class BlueTuskForeignDataModelBuilderExtensions
 
     public static BlueTuskForeignDataDefinitionSet GetForeignData(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskForeignDataMetadata.Get(model);
     }
 
@@ -110,8 +110,8 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         string serverName,
         Action<BlueTuskForeignTableBuilder>? configure = null)
     {
-        ArgumentNullException.ThrowIfNull(entityTypeBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serverName);
+        BlueTuskGuard.NotNull(entityTypeBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(serverName);
         var builder = new BlueTuskForeignTableBuilder(serverName);
         configure?.Invoke(builder);
         var definition = builder.Build();
@@ -134,14 +134,14 @@ public static class BlueTuskForeignDataModelBuilderExtensions
 
     public static EntityTypeBuilder HasNoForeignTable(this EntityTypeBuilder entityTypeBuilder)
     {
-        ArgumentNullException.ThrowIfNull(entityTypeBuilder);
+        BlueTuskGuard.NotNull(entityTypeBuilder);
         entityTypeBuilder.Metadata.RemoveAnnotation(BlueTuskForeignDataMetadata.ForeignTableAnnotationName);
         return entityTypeBuilder;
     }
 
     public static BlueTuskForeignTableDefinition? GetForeignTable(this IReadOnlyEntityType entityType)
     {
-        ArgumentNullException.ThrowIfNull(entityType);
+        BlueTuskGuard.NotNull(entityType);
         return BlueTuskForeignDataMetadata.GetForeignTable(entityType);
     }
 
@@ -150,7 +150,7 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskForeignDataMetadata.Deserialize(serializedDefinitions));
     }
 
@@ -159,7 +159,7 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         this EntityTypeBuilder entityTypeBuilder,
         string serializedDefinition)
     {
-        ArgumentNullException.ThrowIfNull(entityTypeBuilder);
+        BlueTuskGuard.NotNull(entityTypeBuilder);
         var definition = BlueTuskForeignDataMetadata.DeserializeForeignTable(serializedDefinition);
         entityTypeBuilder.Metadata.SetAnnotation(
             BlueTuskForeignDataMetadata.ForeignTableAnnotationName,
@@ -173,11 +173,11 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         string? userName,
         Action<BlueTuskUserMappingBuilder>? configure)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serverName);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(serverName);
         if (userName is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(userName);
+            BlueTuskGuard.NotNullOrWhiteSpace(userName);
         }
 
         var builder = new BlueTuskUserMappingBuilder(serverName, userName);

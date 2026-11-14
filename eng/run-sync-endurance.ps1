@@ -253,6 +253,7 @@ try
         $projectPath = Join-Path $fullWorktreePath $project
         & dotnet build $projectPath `
             --configuration $Configuration `
+            --framework net10.0 `
             --no-restore `
             --verbosity quiet
         if ($LASTEXITCODE -ne 0)
@@ -288,6 +289,7 @@ try
             $projectPath = Join-Path $fullWorktreePath $project
             & dotnet test $projectPath `
                 --configuration $Configuration `
+                --framework net10.0 `
                 --no-build `
                 --no-restore `
                 --verbosity quiet

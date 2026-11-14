@@ -1,10 +1,17 @@
 using Microsoft.EntityFrameworkCore.Query;
+#if !BLUETUSK_EF7_OR_GREATER
+using Microsoft.EntityFrameworkCore.Storage;
+#endif
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
 internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitorFactory(
     QueryableMethodTranslatingExpressionVisitorDependencies dependencies,
-    RelationalQueryableMethodTranslatingExpressionVisitorDependencies relationalDependencies)
+    RelationalQueryableMethodTranslatingExpressionVisitorDependencies relationalDependencies
+#if !BLUETUSK_EF7_OR_GREATER
+    , IRelationalTypeMappingSource typeMappingSource
+#endif
+)
     : IQueryableMethodTranslatingExpressionVisitorFactory
 {
     public QueryableMethodTranslatingExpressionVisitor Create(
@@ -12,5 +19,9 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitorFactory
         => new BlueTuskQueryableMethodTranslatingExpressionVisitor(
             dependencies,
             relationalDependencies,
-            (RelationalQueryCompilationContext)queryCompilationContext);
+            (RelationalQueryCompilationContext)queryCompilationContext
+#if !BLUETUSK_EF7_OR_GREATER
+            , typeMappingSource
+#endif
+        );
 }

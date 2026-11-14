@@ -6,9 +6,19 @@ using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
-internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedFunctionExpression
+internal sealed class BlueTuskSetReturningFunctionTableExpression :
+#if BLUETUSK_EF8_OR_GREATER
+    TableValuedFunctionExpression
+#else
+    TableExpressionBase
+#endif
+#if BLUETUSK_EF6_OR_GREATER && !BLUETUSK_EF9_OR_GREATER
+    , IClonableTableExpressionBase
+#endif
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public BlueTuskSetReturningFunctionTableExpression(
         string alias,
@@ -53,7 +63,20 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
         IReadOnlyList<string?> columnStoreTypes,
         bool withOrdinality,
         IReadOnlyDictionary<string, IAnnotation>? annotations)
-        : base(alias, name, schema: null, builtIn: true, arguments, annotations)
+#if BLUETUSK_EF8_OR_GREATER
+        : base(alias, name, schema: null, builtIn: true, arguments,
+#if BLUETUSK_EF9_OR_GREATER
+            annotations)
+#else
+            annotations?.Values)
+#endif
+#else
+        : base(alias
+#if BLUETUSK_EF6_OR_GREATER
+            , annotations?.Values
+#endif
+        )
+#endif
     {
         if (columnNames.Count != columnStoreTypes.Count)
         {
@@ -63,13 +86,36 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
         ColumnNames = columnNames;
         ColumnStoreTypes = columnStoreTypes;
         WithOrdinality = withOrdinality;
+#if !BLUETUSK_EF8_OR_GREATER
+        Name = name;
+#endif
+#if BLUETUSK_EF11_OR_GREATER || !BLUETUSK_EF8_OR_GREATER
+        Arguments = arguments;
+#endif
     }
+
+#if !BLUETUSK_EF8_OR_GREATER
+    public new string Alias => base.Alias!;
+
+    public string Name { get; }
+
+    public IReadOnlyList<SqlExpression> Arguments { get; }
+#elif BLUETUSK_EF11_OR_GREATER
+    public new IReadOnlyList<SqlExpression> Arguments { get; }
+#endif
 
     public IReadOnlyList<string> ColumnNames { get; }
 
     public IReadOnlyList<string?> ColumnStoreTypes { get; }
 
     public bool WithOrdinality { get; }
+
+#if !BLUETUSK_EF6_OR_GREATER
+    private static IReadOnlyDictionary<string, IAnnotation>? Annotations => null;
+#elif !BLUETUSK_EF9_OR_GREATER
+    private IReadOnlyDictionary<string, IAnnotation> Annotations =>
+        GetAnnotations().ToDictionary(annotation => annotation.Name, StringComparer.Ordinal);
+#endif
 
     protected override Expression VisitChildren(ExpressionVisitor visitor)
     {
@@ -93,7 +139,16 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
         return visitedArguments is null ? this : Update(visitedArguments);
     }
 
+#if BLUETUSK_EF11_OR_GREATER
+    public override BlueTuskSetReturningFunctionTableExpression Update(IReadOnlyList<Expression> arguments) =>
+        Update(arguments as IReadOnlyList<SqlExpression> ?? arguments.Cast<SqlExpression>().ToArray());
+
+    private BlueTuskSetReturningFunctionTableExpression Update(
+#elif BLUETUSK_EF8_OR_GREATER
     public override BlueTuskSetReturningFunctionTableExpression Update(
+#else
+    public BlueTuskSetReturningFunctionTableExpression Update(
+#endif
         IReadOnlyList<SqlExpression> arguments)
         => arguments.Count == Arguments.Count
             && arguments.Zip(Arguments, (left, right) => left == right).All(equal => equal)
@@ -107,6 +162,7 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
                     WithOrdinality,
                     Annotations);
 
+#if BLUETUSK_EF9_OR_GREATER
     public override TableExpressionBase Clone(
         string? alias,
         ExpressionVisitor cloningExpressionVisitor)
@@ -142,6 +198,17 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
             WithOrdinality,
             Annotations);
 
+#elif BLUETUSK_EF6_OR_GREATER
+    public TableExpressionBase Clone() => new BlueTuskSetReturningFunctionTableExpression(
+        Alias, Name, Arguments, ColumnNames, ColumnStoreTypes, WithOrdinality, Annotations);
+
+    protected override TableExpressionBase CreateWithAnnotations(IEnumerable<IAnnotation> annotations) =>
+        new BlueTuskSetReturningFunctionTableExpression(
+            Alias, Name, Arguments, ColumnNames, ColumnStoreTypes, WithOrdinality,
+            annotations.ToDictionary(annotation => annotation.Name, StringComparer.Ordinal));
+#endif
+
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
         => New(
             _quotingConstructor ??= typeof(BlueTuskSetReturningFunctionTableExpression).GetConstructor(
@@ -161,6 +228,7 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
                 typeof(string),
                 ColumnStoreTypes.Select(storeType => Constant(storeType, typeof(string)))),
             Constant(WithOrdinality));
+#endif
 
     protected override void Print(ExpressionPrinter expressionPrinter)
     {

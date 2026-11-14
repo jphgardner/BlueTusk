@@ -134,6 +134,11 @@ public static class BlueTuskMergeExtensions
             plan.ParameterValues,
             readerColumns: null,
             context,
+#if BLUETUSK_EF6_OR_GREATER
             context.GetService<IRelationalCommandDiagnosticsLogger>(),
-            CommandSource.ExecuteSqlRaw);
+            CommandSource.ExecuteSqlRaw
+#else
+            context.GetService<IDiagnosticsLogger<DbLoggerCategory.Database.Command>>()
+#endif
+        );
 }

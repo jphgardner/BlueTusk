@@ -11,7 +11,7 @@ internal static class BlueTuskRoutineMetadata
 
     public static BlueTuskRoutineDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? BlueTuskRoutineDefinitionSet.Empty : Deserialize(json);
     }
@@ -30,7 +30,7 @@ internal static class BlueTuskRoutineMetadata
 
     public static BlueTuskRoutineDefinitionSet Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskRoutineDefinitionSet>(json, SerializerOptions)
             ?? throw new ArgumentException("The routine definition set is empty.", nameof(json));
         Validate(definitions);
@@ -39,7 +39,7 @@ internal static class BlueTuskRoutineMetadata
 
     public static BlueTuskRoutineDefinition DeserializeDefinition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskRoutineDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The routine definition is empty.", nameof(json));
         Validate(definition);
@@ -48,8 +48,8 @@ internal static class BlueTuskRoutineMetadata
 
     public static void Validate(BlueTuskRoutineDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.Routines);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.Routines);
         var keys = new HashSet<(string? Schema, string Name, string InputArgumentTypesSql)>();
         foreach (var definition in definitions.Routines)
         {
@@ -68,19 +68,19 @@ internal static class BlueTuskRoutineMetadata
 
     public static void Validate(BlueTuskRoutineDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
         if (definition.Schema is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.Schema);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.Schema);
         }
 
-        ArgumentNullException.ThrowIfNull(definition.InputArgumentTypesSql);
-        ArgumentNullException.ThrowIfNull(definition.IdentityArgumentsSql);
-        ArgumentNullException.ThrowIfNull(definition.ArgumentsSql);
+        BlueTuskGuard.NotNull(definition.InputArgumentTypesSql);
+        BlueTuskGuard.NotNull(definition.IdentityArgumentsSql);
+        BlueTuskGuard.NotNull(definition.ArgumentsSql);
         if (definition.Kind == BlueTuskRoutineKind.Function)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.ResultSql);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.ResultSql);
         }
         else if (definition.ResultSql is not null)
         {
@@ -92,7 +92,7 @@ internal static class BlueTuskRoutineMetadata
             throw new ArgumentException("A PostgreSQL procedure cannot be a window function.", nameof(definition));
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.CreateOrReplaceSql);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.CreateOrReplaceSql);
         var expectedPrefix = definition.Kind == BlueTuskRoutineKind.Function
             ? "CREATE OR REPLACE FUNCTION "
             : "CREATE OR REPLACE PROCEDURE ";

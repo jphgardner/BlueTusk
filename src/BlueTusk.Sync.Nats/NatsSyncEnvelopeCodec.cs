@@ -17,7 +17,7 @@ internal static class NatsSyncEnvelopeCodec
 
     internal static byte[] EncodeTransaction(SyncTransactionBatch batch)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var contentLength = checked(
             GetHeaderLength(batch.PipelineId, batch.Transform, batch.Transaction.Source) +
             sizeof(uint) + sizeof(ulong) + sizeof(long) + sizeof(byte) +
@@ -66,7 +66,7 @@ internal static class NatsSyncEnvelopeCodec
         SyncTransformVersion transform,
         SnapshotReset reset)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         var contentLength = checked(
             GetHeaderLength(pipelineId, transform, reset.Epoch.Source) +
             GetSnapshotIdentityLength() + sizeof(byte) +
@@ -89,7 +89,7 @@ internal static class NatsSyncEnvelopeCodec
         SyncTransformVersion transform,
         SnapshotStart start)
     {
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         var contentLength = checked(
             GetHeaderLength(pipelineId, transform, start.Epoch.Source) +
             GetSnapshotIdentityLength() + sizeof(int));
@@ -106,7 +106,7 @@ internal static class NatsSyncEnvelopeCodec
 
     internal static byte[] EncodeSnapshotBatch(SyncSnapshotBatch batch)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var sourceBatch = batch.SourceBatch;
         var tableIdentity = sourceBatch.Table.Schema + "." + sourceBatch.Table.Name;
         var contentLength = checked(
@@ -156,7 +156,7 @@ internal static class NatsSyncEnvelopeCodec
         SyncTransformVersion transform,
         SnapshotComplete complete)
     {
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         var contentLength = checked(
             GetHeaderLength(pipelineId, transform, complete.Epoch.Source) +
             GetSnapshotIdentityLength() + sizeof(long) + sizeof(int));
@@ -513,7 +513,7 @@ internal static class NatsSyncEnvelopeCodec
     private static void WriteGuid(IBufferWriter<byte> writer, Guid value)
     {
         var destination = writer.GetSpan(16);
-        if (!value.TryWriteBytes(destination, bigEndian: true, out var bytesWritten) || bytesWritten != 16)
+        if (!BlueTuskRuntime.TryWriteGuidBigEndian(value, destination, out var bytesWritten) || bytesWritten != 16)
         {
             throw new NatsSyncEnvelopeException("Unable to encode a snapshot identifier.");
         }
@@ -575,7 +575,7 @@ internal static class NatsSyncEnvelopeCodec
 
         internal FixedBufferWriter(int length)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(length);
+            BlueTuskGuard.NotNegative(length);
             _buffer = new byte[length];
         }
 
@@ -583,7 +583,7 @@ internal static class NatsSyncEnvelopeCodec
 
         public void Advance(int count)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(count);
+            BlueTuskGuard.NotNegative(count);
             if (count > _buffer.Length - _written)
             {
                 throw new InvalidOperationException("The NATS envelope exceeded its computed length.");
@@ -617,7 +617,7 @@ internal static class NatsSyncEnvelopeCodec
 
         private void ValidateSizeHint(int sizeHint)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(sizeHint);
+            BlueTuskGuard.NotNegative(sizeHint);
             if (sizeHint > _buffer.Length - _written)
             {
                 throw new InvalidOperationException("The NATS envelope exceeded its computed length.");
@@ -659,7 +659,7 @@ internal static class NatsSyncEnvelopeCodec
 
         internal ulong ReadUInt64() => BinaryPrimitives.ReadUInt64LittleEndian(ReadBytes(sizeof(ulong)));
 
-        internal Guid ReadGuid() => new(ReadBytes(16), bigEndian: true);
+        internal Guid ReadGuid() => BlueTuskRuntime.ReadGuidBigEndian(ReadBytes(16));
 
         internal Guid? ReadNullableGuid() => ReadBoolean() ? ReadGuid() : null;
 

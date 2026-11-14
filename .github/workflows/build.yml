@@ -108,6 +108,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
 
       - name: Verify solution layout
         shell: pwsh
@@ -203,7 +204,7 @@ jobs:
       - name: Test
         # The original provider/core matrix has only the fixtures provisioned by this job.
         # New ecosystem families run their fixture-specific matrix in ecosystem-build.yml.
-        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
+        run: dotnet test BlueTusk.Core.slnx --framework net10.0 --configuration Release --no-build --logger trx --results-directory artifacts/test-results
 
       - name: Test individual-request performance capture machinery
         run: dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --provider-request-self-test
@@ -224,6 +225,10 @@ jobs:
 
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
+
+      - name: Verify packaged .NET runtime assets
+        shell: pwsh
+        run: ./eng/verify-dotnet-compatibility-packages.ps1 -PackageDirectory artifacts/packages -RequireComplete
 
       - name: Capture exact Core unit regression evidence
         if: github.event_name == 'workflow_dispatch'
@@ -462,6 +467,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
@@ -476,7 +482,7 @@ jobs:
           echo 'BLUETUSK_TEST_TABLESPACE_LOCATION=/srv/postgresql/bluetusk_archive_space' >> "$GITHUB_ENV"
 
       - name: Run live provider matrix
-        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+        run: dotnet test BlueTusk.Core.slnx --framework net10.0 --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
 
       - name: Capture exact Core stable compatibility evidence
         if: github.event_name == 'workflow_dispatch'
@@ -613,6 +619,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
@@ -633,6 +640,7 @@ jobs:
           BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
         run: >-
           dotnet test tests/BlueTusk.Sync.Redis.Tests/BlueTusk.Sync.Redis.Tests.csproj
+          --framework net10.0
           --configuration Release
           --no-restore
           --logger trx
@@ -647,6 +655,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
@@ -666,6 +675,7 @@ jobs:
           BLUETUSK_NATS_URL: nats://localhost:4222
         run: >-
           dotnet test tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj
+          --framework net10.0
           --configuration Release
           --no-restore
           --logger trx
@@ -688,6 +698,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
@@ -713,6 +724,7 @@ jobs:
           BLUETUSK_OPENSEARCH_URL: http://127.0.0.1:9200
         run: >-
           dotnet test tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj
+          --framework net10.0
           --configuration Release
           --no-restore
           --logger trx
@@ -763,6 +775,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
@@ -776,6 +789,7 @@ jobs:
           BLUETUSK_PGDURABLE_LIVE_TESTS: ${{ matrix.name == 'pg_durable' }}
         run: >-
           dotnet test ${{ matrix.ado_project }}
+          --framework net10.0
           --configuration Release
           --no-restore
           --logger trx
@@ -787,6 +801,7 @@ jobs:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=${{ matrix.database }};SSL Mode=Disable;Channel Binding=Disable
         run: >-
           dotnet test ${{ matrix.ef_project }}
+          --framework net10.0
           --configuration Release
           --no-restore
           --logger trx
@@ -864,6 +879,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
@@ -949,6 +965,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
@@ -968,6 +985,7 @@ jobs:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5899;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
         run: >-
           dotnet test BlueTusk.Core.slnx
+          --framework net10.0
           --configuration Release
           --no-restore
           --maxcpucount:1

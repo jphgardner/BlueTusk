@@ -143,7 +143,7 @@ public sealed partial class BlueTuskArrayCodec :
                 length,
                 type);
             elementCount = checked(elementCount * length);
-            if (elementCount > Array.MaxLength)
+            if (elementCount > BlueTuskRuntime.MaxArrayLength)
             {
                 throw new InvalidOperationException($"The {type.QualifiedName} array exceeds the CLR array limit.");
             }
@@ -402,9 +402,9 @@ public sealed partial class BlueTuskArrayCodec :
                 _elementCodec.Write(ref writer, value, BlueTuskDataFormat.Text, _elementType);
                 return StrictUtf8.GetString(bytes, 0, writer.WrittenCount);
             }
-            catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
+            catch (BlueTuskWriteBufferTooSmallException) when (length < BlueTuskRuntime.MaxArrayLength)
             {
-                length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+                length = length > BlueTuskRuntime.MaxArrayLength / 2 ? BlueTuskRuntime.MaxArrayLength : length * 2;
             }
         }
     }
@@ -717,7 +717,7 @@ internal sealed class BlueTuskArrayCodec<T> :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (format == BlueTuskDataFormat.Text)
         {
             _fallback.Write(ref writer, value, format, type);

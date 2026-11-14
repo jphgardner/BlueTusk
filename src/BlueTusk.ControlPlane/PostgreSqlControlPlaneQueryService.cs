@@ -20,14 +20,14 @@ public sealed class PostgreSqlControlPlaneQueryOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumParallelInstances);
-        ArgumentOutOfRangeException.ThrowIfLessThan(
+        BlueTuskGuard.NotNegativeOrZero(MaximumParallelInstances);
+        BlueTuskGuard.NotLessThan(
             SnapshotCacheDuration,
             TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(InstanceTimeout, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(InstanceTimeout.TotalMilliseconds, uint.MaxValue - 1d);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(RefreshBudget, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(RefreshBudget.TotalMilliseconds, uint.MaxValue - 1d);
+        BlueTuskGuard.NotLessThanOrEqual(InstanceTimeout, TimeSpan.Zero);
+        BlueTuskGuard.NotGreaterThan(InstanceTimeout.TotalMilliseconds, uint.MaxValue - 1d);
+        BlueTuskGuard.NotLessThanOrEqual(RefreshBudget, TimeSpan.Zero);
+        BlueTuskGuard.NotGreaterThan(RefreshBudget.TotalMilliseconds, uint.MaxValue - 1d);
     }
 }
 
@@ -62,8 +62,8 @@ public sealed class PostgreSqlControlPlaneQueryService : IControlPlaneQueryServi
         Func<ControlPlanePostgreSqlSource, CancellationToken,
             ValueTask<IReadOnlyList<ControlPlaneSourceSnapshot>>>? readInstance = null)
     {
-        ArgumentNullException.ThrowIfNull(instances);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(instances);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _instances = instances.ToArray();
         if (_instances.Length == 0)
@@ -129,7 +129,11 @@ public sealed class PostgreSqlControlPlaneQueryService : IControlPlaneQueryServi
     {
         try
         {
+#if NET8_0_OR_GREATER
             using var budget = new CancellationTokenSource(_options.RefreshBudget, _timeProvider);
+#else
+            using var budget = _timeProvider.CreateCancellationTokenSource(_options.RefreshBudget);
+#endif
             var results = await Task.WhenAll(_instances.Select(instance =>
                 ObserveInstanceAsync(instance, budget.Token))).ConfigureAwait(false);
             var overview = new ControlPlaneOverview(

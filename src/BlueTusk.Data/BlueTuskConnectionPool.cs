@@ -71,7 +71,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         Func<IBlueTuskPhysicalSession>? synchronousSessionFactory = null,
         BlueTuskClientConfiguration? clientConfiguration = null)
     {
-        ArgumentNullException.ThrowIfNull(settings);
+        BlueTuskGuard.NotNull(settings);
         settings.Validate();
 
         _minimumSize = settings.MinimumPoolSize;
@@ -230,7 +230,9 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         return await RentAsync(allowPendingReset, cancellationToken).ConfigureAwait(false);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskPooledSession> RentAsyncSlow(
         long started,
         bool hasSlot,
@@ -557,7 +559,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
     internal override void Return(BlueTuskPooledSession session)
     {
-        ArgumentNullException.ThrowIfNull(session);
+        BlueTuskGuard.NotNull(session);
         Interlocked.Decrement(ref _busy);
         var now = _timeProvider.GetUtcNow();
         var discard = Volatile.Read(ref _disposed) != 0 ||
@@ -744,7 +746,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         if (started != 0)
         {
             BlueTuskDiagnostics.PoolCheckoutDuration.Record(
-                Stopwatch.GetElapsedTime(started).TotalSeconds);
+                BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
         }
     }
 
@@ -763,7 +765,9 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskPoolSlot> ReadAvailableAsync(
         TimeSpan timeout,
         CancellationToken cancellationToken)
@@ -787,7 +791,11 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 // exhausted pool; checkouts with free capacity never reach here.
                 timeoutSource = timeout == Timeout.InfiniteTimeSpan
                     ? null
+#if NET8_0_OR_GREATER
                     : new CancellationTokenSource(timeout, _timeProvider);
+#else
+                    : _timeProvider.CreateCancellationTokenSource(timeout);
+#endif
                 // Register before the waiter can be handed off and recycled.
                 // Already-cancelled registration can complete inline here, but
                 // its ValueTask has not yet been exposed to any consumer.
@@ -1265,12 +1273,12 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             "or 'Timeout' in the connection string.");
 
     private void ThrowDisposedInsteadOfCancellation(CancellationToken callerToken)
-        => ObjectDisposedException.ThrowIf(
+        => BlueTuskGuard.NotDisposed(
             _shutdown.IsCancellationRequested && !callerToken.IsCancellationRequested,
             this);
 
     private void ThrowIfDisposed() =>
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
 
     private sealed class PoolWaiter : IValueTaskSource<BlueTuskPoolSlot>
     {

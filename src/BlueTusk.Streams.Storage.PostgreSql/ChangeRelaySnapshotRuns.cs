@@ -46,7 +46,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         string compatibilityFingerprint,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateCompatibilityFingerprint(compatibilityFingerprint);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -75,7 +75,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         string compatibilityFingerprint,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateCompatibilityFingerprint(compatibilityFingerprint);
         if (!string.Equals(
                 snapshot.Source.Fingerprint,
@@ -185,8 +185,8 @@ public sealed partial class PostgreSqlDurableChangeRelay
         ChangeRelaySnapshotRunState newState,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(lease);
-        ArgumentNullException.ThrowIfNull(run);
+        BlueTuskGuard.NotNull(lease);
+        BlueTuskGuard.NotNull(run);
         EnsureRunOwnedByLease(run, lease);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -426,14 +426,14 @@ public sealed partial class PostgreSqlDurableChangeRelay
 
     private static SnapshotRunProgress DecodeSnapshotRunProgress(byte[] protectedProgress)
     {
-        if (protectedProgress.Length <= SHA256.HashSizeInBytes ||
+        if (protectedProgress.Length <= 32 ||
             protectedProgress.Length > SnapshotRunMaximumProgressBytes)
         {
             throw new ChangeRelaySnapshotRunException(
                 "The relay snapshot-run progress payload length is invalid.");
         }
 
-        var payload = protectedProgress.AsSpan(0, protectedProgress.Length - SHA256.HashSizeInBytes);
+        var payload = protectedProgress.AsSpan(0, protectedProgress.Length - 32);
         var expected = protectedProgress.AsSpan(payload.Length);
         var actual = SHA256.HashData(payload);
         if (!CryptographicOperations.FixedTimeEquals(expected, actual))
@@ -511,7 +511,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
 
     private static void ValidateCompatibilityFingerprint(string fingerprint)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(fingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(fingerprint);
         if (fingerprint.Length != 64 || !fingerprint.All(Uri.IsHexDigit))
         {
             throw new ArgumentException(
@@ -524,7 +524,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         string consumerGroup,
         ChangeRelaySnapshotRunState state)
     {
-        var groupHash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(consumerGroup)));
+        var groupHash = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(consumerGroup)));
         return $"{SnapshotRunStatePrefix}:{state.ToString().ToLowerInvariant()}:{groupHash}";
     }
 

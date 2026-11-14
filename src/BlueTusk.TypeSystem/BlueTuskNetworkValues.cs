@@ -8,7 +8,7 @@ public readonly record struct BlueTuskNetworkAddress
 {
     public BlueTuskNetworkAddress(IPAddress address, int prefixLength, bool isCidr = false)
     {
-        ArgumentNullException.ThrowIfNull(address);
+        BlueTuskGuard.NotNull(address);
         var maximumPrefix = address.AddressFamily switch
         {
             AddressFamily.InterNetwork => 32,
@@ -38,7 +38,7 @@ public readonly record struct BlueTuskNetworkAddress
 
     public static BlueTuskNetworkAddress Parse(string value, bool isCidr = false)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         var separator = text.LastIndexOf('/');
         var addressText = separator < 0 ? text : text[..separator];
@@ -54,7 +54,7 @@ public readonly record struct BlueTuskNetworkAddress
         var maximumPrefix = Address.AddressFamily == AddressFamily.InterNetwork ? 32 : 128;
         return !IsCidr && PrefixLength == maximumPrefix
             ? Address.ToString()
-            : string.Create(CultureInfo.InvariantCulture, $"{Address}/{PrefixLength}");
+            : BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{Address}/{PrefixLength}");
     }
 
     internal static bool HasZeroHostBits(IPAddress address, int prefixLength)
@@ -85,7 +85,7 @@ public readonly record struct BlueTuskMacAddress
 
     public BlueTuskMacAddress(ulong value)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(value, MaximumValue);
+        BlueTuskGuard.NotGreaterThan(value, MaximumValue);
         Value = value;
     }
 
@@ -97,7 +97,7 @@ public readonly record struct BlueTuskMacAddress
 
     internal static ulong ParseBytes(string value, int expectedBytes)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         Span<char> hexadecimal = stackalloc char[16];
         var count = 0;
         foreach (var character in value.AsSpan().Trim())
@@ -107,7 +107,7 @@ public readonly record struct BlueTuskMacAddress
                 continue;
             }
 
-            if (!char.IsAsciiHexDigit(character) || count == hexadecimal.Length)
+            if (!BlueTuskRuntime.IsAsciiHexDigit(character) || count == hexadecimal.Length)
             {
                 throw new FormatException("The PostgreSQL MAC address contains invalid hexadecimal data.");
             }
@@ -148,7 +148,7 @@ public readonly record struct BlueTuskMacAddress8(ulong Value)
 {
     public static BlueTuskMacAddress8 Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var digits = 0;
         foreach (var character in value.AsSpan().Trim())
         {

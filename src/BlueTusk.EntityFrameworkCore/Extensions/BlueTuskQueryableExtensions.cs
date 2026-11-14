@@ -13,8 +13,8 @@ public static class BlueTuskQueryableExtensions
         this IQueryable<TSource> source,
         Expression<Func<TSource, TKey>> keySelector)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(keySelector);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(keySelector);
         return source.Provider.CreateQuery<TSource>(
             Expression.Call(
                 null,
@@ -97,7 +97,7 @@ public static class BlueTuskQueryableExtensions
         Expression<Func<TEntity, TUpdate>> updateProperties)
         where TEntity : class
     {
-        ArgumentNullException.ThrowIfNull(updateProperties);
+        BlueTuskGuard.NotNull(updateProperties);
         return CreateInsertOnConflictQuery(target, values, conflictTarget, updateProperties);
     }
 
@@ -108,9 +108,9 @@ public static class BlueTuskQueryableExtensions
         LambdaExpression? updateProperties)
         where TEntity : class
     {
-        ArgumentNullException.ThrowIfNull(target);
-        ArgumentNullException.ThrowIfNull(values);
-        ArgumentNullException.ThrowIfNull(conflictTarget);
+        BlueTuskGuard.NotNull(target);
+        BlueTuskGuard.NotNull(values);
+        BlueTuskGuard.NotNull(conflictTarget);
         if (values.Body is not MemberInitExpression { Bindings.Count: > 0 } initializer
             || initializer.NewExpression.Type != typeof(TEntity))
         {
@@ -179,7 +179,7 @@ public static class BlueTuskQueryableExtensions
                 Method.DeclaringType: not null,
                 Method.Name: nameof(ValueTuple.Create),
             } tuple when tuple.Method.DeclaringType == typeof(ValueTuple) => tuple.Arguments,
-            _ => [selector.Body],
+            _ => Array.AsReadOnly(new[] { selector.Body }),
         };
         var names = new string[expressions.Count];
         var distinctNames = new HashSet<string>(StringComparer.Ordinal);
@@ -228,7 +228,7 @@ public static class BlueTuskQueryableExtensions
     public static IQueryable<TSource> DeleteReturning<TSource>(this IQueryable<TSource> source)
         where TSource : class
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         var noTrackingSource = source.AsNoTracking();
         return noTrackingSource.Provider.CreateQuery<TSource>(
             Expression.Call(
@@ -242,12 +242,20 @@ public static class BlueTuskQueryableExtensions
     /// <summary>Updates matching rows and returns their mapped values through PostgreSQL <c>RETURNING</c>.</summary>
     public static IQueryable<TSource> UpdateReturning<TSource>(
         this IQueryable<TSource> source,
+#if BLUETUSK_EF10_OR_GREATER
         Action<UpdateSettersBuilder<TSource>> setPropertyCalls)
+#else
+        Action<BlueTusk.EntityFrameworkCore.BlueTuskUpdateSettersBuilder<TSource>> setPropertyCalls)
+#endif
         where TSource : class
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(setPropertyCalls);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(setPropertyCalls);
+#if BLUETUSK_EF10_OR_GREATER
         var setterBuilder = new UpdateSettersBuilder<TSource>();
+#else
+        var setterBuilder = new BlueTusk.EntityFrameworkCore.BlueTuskUpdateSettersBuilder<TSource>();
+#endif
         setPropertyCalls(setterBuilder);
 #pragma warning disable EF1001 // The provider uses EF's canonical ExecuteUpdate setter expression shape.
         var setters = setterBuilder.BuildSettersExpression();
@@ -274,9 +282,9 @@ public static class BlueTuskQueryableExtensions
         Expression<Func<TSource, TProperty>> valueSelector)
         where TSource : class
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(propertySelector);
-        ArgumentNullException.ThrowIfNull(valueSelector);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(propertySelector);
+        BlueTuskGuard.NotNull(valueSelector);
         var noTrackingSource = source.AsNoTracking();
         return noTrackingSource.Provider.CreateQuery<TSource>(
             Expression.Call(
@@ -303,9 +311,9 @@ public static class BlueTuskQueryableExtensions
             BlueTuskRecursiveUnionBehavior.Distinct)
         where TKey : struct
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(hierarchyKeySelector);
-        ArgumentNullException.ThrowIfNull(roots);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(hierarchyKeySelector);
+        BlueTuskGuard.NotNull(roots);
         if (!Enum.IsDefined(unionBehavior))
         {
             throw new ArgumentOutOfRangeException(nameof(unionBehavior), unionBehavior, null);
@@ -353,7 +361,7 @@ public static class BlueTuskQueryableExtensions
         double percentage,
         double? repeatable)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         if (double.IsNaN(percentage) || percentage is < 0 or > 100)
         {
             throw new ArgumentOutOfRangeException(
@@ -385,7 +393,7 @@ public static class BlueTuskQueryableExtensions
         string methodName,
         BlueTuskRowLockingBehavior behavior)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         if (!Enum.IsDefined(behavior))
         {
             throw new ArgumentOutOfRangeException(nameof(behavior), behavior, null);
@@ -406,8 +414,8 @@ public static class BlueTuskQueryableExtensions
         string methodName,
         string name)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (name.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("A PostgreSQL CTE name cannot contain a null character.", nameof(name));

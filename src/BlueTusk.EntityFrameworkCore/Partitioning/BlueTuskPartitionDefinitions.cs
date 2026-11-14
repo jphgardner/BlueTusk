@@ -48,7 +48,7 @@ public sealed record BlueTuskPartitionKeyDefinition(
         string? collation = null,
         string? operatorClass = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(column);
+        BlueTuskGuard.NotNullOrWhiteSpace(column);
         return new BlueTuskPartitionKeyDefinition(column, true, collation, operatorClass);
     }
 
@@ -60,7 +60,7 @@ public sealed record BlueTuskPartitionKeyDefinition(
         string? collation = null,
         string? operatorClass = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
+        BlueTuskGuard.NotNullOrWhiteSpace(sql);
         return new BlueTuskPartitionKeyDefinition(sql, false, collation, operatorClass);
     }
 }
@@ -70,7 +70,7 @@ public readonly record struct BlueTuskPartitionValue
 {
     private BlueTuskPartitionValue(string sql)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
+        BlueTuskGuard.NotNullOrWhiteSpace(sql);
         Sql = sql;
     }
 
@@ -89,7 +89,7 @@ public readonly record struct BlueTuskPartitionValue
     /// <summary>Creates a quoted PostgreSQL string literal.</summary>
     public static BlueTuskPartitionValue Literal(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return new BlueTuskPartitionValue($"'{value.Replace("'", "''", StringComparison.Ordinal)}'");
     }
 
@@ -166,8 +166,8 @@ public sealed record BlueTuskPartitionBound
         IReadOnlyList<BlueTuskPartitionValue> from,
         IReadOnlyList<BlueTuskPartitionValue> to)
     {
-        ArgumentNullException.ThrowIfNull(from);
-        ArgumentNullException.ThrowIfNull(to);
+        BlueTuskGuard.NotNull(from);
+        BlueTuskGuard.NotNull(to);
         ValidateValues(from, nameof(from));
         ValidateValues(to, nameof(to));
         return new BlueTuskPartitionBound
@@ -181,7 +181,7 @@ public sealed record BlueTuskPartitionBound
     /// <summary>Creates a single-key list bound.</summary>
     public static BlueTuskPartitionBound List(params BlueTuskPartitionValue[] values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         ValidateValues(values, nameof(values));
         return new BlueTuskPartitionBound
         {
@@ -223,7 +223,7 @@ public sealed record BlueTuskPartitionBound
     /// </summary>
     public static BlueTuskPartitionBound FromSql(string sql)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
+        BlueTuskGuard.NotNullOrWhiteSpace(sql);
         return new BlueTuskPartitionBound { Kind = BlueTuskPartitionBoundKind.Sql, Sql = sql };
     }
 

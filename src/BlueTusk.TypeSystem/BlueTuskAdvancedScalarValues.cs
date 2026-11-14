@@ -35,7 +35,7 @@ public readonly record struct BlueTuskTimeWithTimeZone
 
     public static BlueTuskTimeWithTimeZone Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         var offsetIndex = -1;
         for (var index = 1; index < text.Length; index++)
@@ -82,24 +82,24 @@ public readonly record struct BlueTuskTimeWithTimeZone
             (hours * 3_600_000_000L) +
             (minutes * 60_000_000L) +
             decimal.ToInt64(seconds * 1_000_000m));
-        return TimeSpan.FromTicks(checked(sign * microseconds * TimeSpan.TicksPerMicrosecond));
+        return TimeSpan.FromTicks(checked(sign * microseconds * BlueTuskRuntime.TicksPerMicrosecond));
     }
 
     internal static string FormatClock(TimeSpan value)
     {
-        var microseconds = value.Ticks / TimeSpan.TicksPerMicrosecond;
+        var microseconds = value.Ticks / BlueTuskRuntime.TicksPerMicrosecond;
         var negative = microseconds < 0;
         var magnitude = Math.Abs(microseconds);
         var hours = magnitude / 3_600_000_000L;
         var minutes = (magnitude / 60_000_000L) % 60;
         var seconds = (magnitude / 1_000_000L) % 60;
         var fraction = magnitude % 1_000_000L;
-        var result = string.Create(
+        var result = BlueTuskRuntime.Format(
             CultureInfo.InvariantCulture,
             $"{(negative ? "-" : string.Empty)}{hours:00}:{minutes:00}:{seconds:00}");
         return fraction == 0
             ? result
-            : string.Create(CultureInfo.InvariantCulture, $"{result}.{fraction:000000}").TrimEnd('0');
+            : BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{result}.{fraction:000000}").TrimEnd('0');
     }
 
     private static TimeSpan ParseOffset(ReadOnlySpan<char> value)
@@ -130,8 +130,8 @@ public readonly record struct BlueTuskTimeWithTimeZone
         var minutes = (totalSeconds / 60) % 60;
         var seconds = totalSeconds % 60;
         return seconds == 0
-            ? string.Create(CultureInfo.InvariantCulture, $"{(value < TimeSpan.Zero ? '-' : '+')}{hours:00}:{minutes:00}")
-            : string.Create(
+            ? BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{(value < TimeSpan.Zero ? '-' : '+')}{hours:00}:{minutes:00}")
+            : BlueTuskRuntime.Format(
                 CultureInfo.InvariantCulture,
                 $"{(value < TimeSpan.Zero ? '-' : '+')}{hours:00}:{minutes:00}:{seconds:00}");
     }
@@ -183,7 +183,7 @@ public readonly record struct BlueTuskInterval
 
     public static BlueTuskInterval Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.Trim();
         if (string.Equals(text, "infinity", StringComparison.OrdinalIgnoreCase))
         {
@@ -322,7 +322,7 @@ public readonly record struct BlueTuskInterval
             if (tokens[index].Contains(':', StringComparison.Ordinal))
             {
                 microseconds = checked(microseconds +
-                    (BlueTuskTimeWithTimeZone.ParseClock(tokens[index]).Ticks / TimeSpan.TicksPerMicrosecond));
+                    (BlueTuskTimeWithTimeZone.ParseClock(tokens[index]).Ticks / BlueTuskRuntime.TicksPerMicrosecond));
                 continue;
             }
 
@@ -381,7 +381,7 @@ public readonly record struct BlueTuskInterval
             if (token.Contains(':', StringComparison.Ordinal))
             {
                 microseconds = checked(microseconds +
-                    (BlueTuskTimeWithTimeZone.ParseClock(token).Ticks / TimeSpan.TicksPerMicrosecond));
+                    (BlueTuskTimeWithTimeZone.ParseClock(token).Ticks / BlueTuskRuntime.TicksPerMicrosecond));
                 continue;
             }
 
@@ -390,8 +390,8 @@ public readonly record struct BlueTuskInterval
             {
                 var sign = token[0] == '-' ? -1 : 1;
                 var start = token[0] is '+' or '-' ? 1 : 0;
-                var years = int.Parse(token.AsSpan(start, separator - start), CultureInfo.InvariantCulture);
-                var remainingMonths = int.Parse(token.AsSpan(separator + 1), CultureInfo.InvariantCulture);
+                var years = int.Parse(token.AsSpan(start, separator - start), NumberStyles.Integer, CultureInfo.InvariantCulture);
+                var remainingMonths = int.Parse(token.AsSpan(separator + 1), NumberStyles.Integer, CultureInfo.InvariantCulture);
                 months = checked(months + (sign * checked((years * 12) + remainingMonths)));
             }
             else
@@ -423,7 +423,7 @@ public readonly record struct BlueTuskInterval
         }
 
         var prefix = microseconds is > -1_000_000 and < 0 ? "-0" : whole.ToString(CultureInfo.InvariantCulture);
-        return string.Create(CultureInfo.InvariantCulture, $"{prefix}.{fraction:000000}").TrimEnd('0');
+        return BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{prefix}.{fraction:000000}").TrimEnd('0');
     }
 }
 
@@ -433,7 +433,7 @@ public readonly record struct BlueTuskBitString
 
     public BlueTuskBitString(string bits)
     {
-        ArgumentNullException.ThrowIfNull(bits);
+        BlueTuskGuard.NotNull(bits);
         foreach (var bit in bits)
         {
             if (bit is not ('0' or '1'))
@@ -460,7 +460,7 @@ public readonly record struct BlueTuskLogSequenceNumber(ulong Value) :
 
     public static BlueTuskLogSequenceNumber Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var separator = value.IndexOf('/');
         if (separator <= 0 || separator == value.Length - 1 ||
             !uint.TryParse(value.AsSpan(0, separator), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var high) ||
@@ -529,7 +529,7 @@ public readonly record struct BlueTuskLogSequenceNumber(ulong Value) :
         ulong byteCount) =>
         new(checked(position.Value + byteCount));
 
-    public override string ToString() => string.Create(
+    public override string ToString() => BlueTuskRuntime.Format(
         CultureInfo.InvariantCulture,
         $"{Value >> 32:X}/{Value & uint.MaxValue:X}");
 
@@ -557,7 +557,7 @@ public readonly record struct BlueTuskTupleId(uint BlockNumber, ushort OffsetNum
 {
     public static BlueTuskTupleId Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         var separator = text.IndexOf(',');
         if (text.Length < 5 || text[0] != '(' || text[^1] != ')' || separator <= 1 ||
@@ -570,7 +570,7 @@ public readonly record struct BlueTuskTupleId(uint BlockNumber, ushort OffsetNum
         return new BlueTuskTupleId(block, offset);
     }
 
-    public override string ToString() => string.Create(
+    public override string ToString() => BlueTuskRuntime.Format(
         CultureInfo.InvariantCulture,
         $"({BlockNumber},{OffsetNumber})");
 }

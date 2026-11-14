@@ -247,7 +247,7 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
         string command,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         return Session.ExecuteSimpleQueryAsync(command, cancellationToken);
     }
 
@@ -255,7 +255,7 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
         string sql,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await using var session = await BlueTuskSession.OpenAsync(
             _catalogOptions,
             cancellationToken).ConfigureAwait(false);
@@ -267,7 +267,7 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
         string command,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         if (Interlocked.Exchange(ref _streaming, 1) != 0)
         {
             throw new InvalidOperationException(

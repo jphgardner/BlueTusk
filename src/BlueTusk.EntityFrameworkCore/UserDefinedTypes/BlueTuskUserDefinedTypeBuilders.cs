@@ -27,7 +27,7 @@ public sealed class BlueTuskDomainBuilder
     /// <summary>Sets an optional schema-qualified collation.</summary>
     public BlueTuskDomainBuilder UseCollation(string collation)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(collation);
+        BlueTuskGuard.NotNullOrWhiteSpace(collation);
         Collation = collation;
         return this;
     }
@@ -35,7 +35,7 @@ public sealed class BlueTuskDomainBuilder
     /// <summary>Sets a trusted SQL default expression stored in the application model.</summary>
     public BlueTuskDomainBuilder HasDefaultSql(string defaultSql)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(defaultSql);
+        BlueTuskGuard.NotNullOrWhiteSpace(defaultSql);
         DefaultSql = defaultSql;
         return this;
     }
@@ -53,8 +53,8 @@ public sealed class BlueTuskDomainBuilder
         string checkSql,
         bool isValidated = true)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(checkSql);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(checkSql);
         _constraints.Add(new BlueTuskDomainConstraintDefinition(name, checkSql, isValidated));
         return this;
     }
@@ -84,11 +84,11 @@ public sealed class BlueTuskCompositeTypeBuilder
         string storeType,
         string? collation = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(storeType);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(storeType);
         if (collation is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(collation);
+            BlueTuskGuard.NotNullOrWhiteSpace(collation);
         }
 
         _attributes.Add(new BlueTuskCompositeAttributeDefinition(name, storeType, collation));

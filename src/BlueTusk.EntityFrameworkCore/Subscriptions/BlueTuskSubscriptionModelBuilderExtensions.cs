@@ -12,9 +12,9 @@ public static class BlueTuskSubscriptionModelBuilderExtensions
         string name,
         Action<BlueTuskSubscriptionBuilder> configure)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskSubscriptionBuilder(name);
         configure(builder);
         return HasSubscription(modelBuilder, builder.Build());
@@ -24,7 +24,7 @@ public static class BlueTuskSubscriptionModelBuilderExtensions
         this ModelBuilder modelBuilder,
         BlueTuskSubscriptionDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         BlueTuskSubscriptionMetadata.ValidateForModel(definition);
         definition = BlueTuskSubscriptionMetadata.Normalize(definition);
         var definitions = BlueTuskSubscriptionMetadata.Get(modelBuilder.Model);
@@ -37,8 +37,8 @@ public static class BlueTuskSubscriptionModelBuilderExtensions
 
     public static ModelBuilder HasNoSubscription(this ModelBuilder modelBuilder, string name)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var definitions = BlueTuskSubscriptionMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, new BlueTuskSubscriptionDefinitionSet(
             definitions.Subscriptions
@@ -48,7 +48,7 @@ public static class BlueTuskSubscriptionModelBuilderExtensions
 
     public static BlueTuskSubscriptionDefinitionSet GetSubscriptions(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskSubscriptionMetadata.Get(model);
     }
 
@@ -57,7 +57,7 @@ public static class BlueTuskSubscriptionModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskSubscriptionMetadata.Deserialize(serializedDefinitions));
     }
 

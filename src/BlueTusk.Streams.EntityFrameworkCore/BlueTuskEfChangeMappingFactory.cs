@@ -20,7 +20,7 @@ public sealed class EfChangeMappingValidationException : Exception
 
     private static string CreateMessage(IReadOnlyList<EfChangeMappingDiagnostic> diagnostics)
     {
-        ArgumentNullException.ThrowIfNull(diagnostics);
+        BlueTuskGuard.NotNull(diagnostics);
         return diagnostics.Count == 0
             ? "The EF change mapping is invalid."
             : "The EF change mapping is invalid: " +
@@ -36,8 +36,8 @@ public static class BlueTuskEfChangeMappingFactory
         ChangeMappingPolicy? policy = null)
         where TEntity : class, new()
     {
-        ArgumentNullException.ThrowIfNull(model);
-        ArgumentNullException.ThrowIfNull(relation);
+        BlueTuskGuard.NotNull(model);
+        BlueTuskGuard.NotNull(relation);
         var diagnostics = new List<EfChangeMappingDiagnostic>();
         var entityType = model.FindEntityType(typeof(TEntity));
         if (entityType is null)

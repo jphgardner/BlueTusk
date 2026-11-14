@@ -3,7 +3,9 @@ using System.Text;
 using BlueTusk.Data;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;
+#if BLUETUSK_EF8_OR_GREATER
 using Microsoft.EntityFrameworkCore.Storage.Json;
+#endif
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
@@ -12,6 +14,9 @@ internal sealed class BlueTuskArrayTypeMapping : RelationalTypeMapping
 {
     private readonly uint? _postgreSqlTypeOid;
     private readonly string? _postgreSqlTypeName;
+#if !BLUETUSK_EF8_OR_GREATER
+    internal RelationalTypeMapping ElementTypeMapping { get; }
+#endif
 
     public BlueTuskArrayTypeMapping(
         string storeType,
@@ -20,8 +25,11 @@ internal sealed class BlueTuskArrayTypeMapping : RelationalTypeMapping
         RelationalTypeMapping elementTypeMapping)
         : base(CreateParameters(storeType, arrayType, elementTypeMapping))
     {
-        ArgumentOutOfRangeException.ThrowIfZero(postgreSqlTypeOid);
+        BlueTuskGuard.NotZero(postgreSqlTypeOid);
         _postgreSqlTypeOid = postgreSqlTypeOid;
+#if !BLUETUSK_EF8_OR_GREATER
+        ElementTypeMapping = elementTypeMapping;
+#endif
     }
 
     public BlueTuskArrayTypeMapping(
@@ -31,22 +39,36 @@ internal sealed class BlueTuskArrayTypeMapping : RelationalTypeMapping
         RelationalTypeMapping elementTypeMapping)
         : base(CreateParameters(storeType, arrayType, elementTypeMapping))
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(postgreSqlTypeName);
+        BlueTuskGuard.NotNullOrWhiteSpace(postgreSqlTypeName);
         _postgreSqlTypeName = postgreSqlTypeName;
+#if !BLUETUSK_EF8_OR_GREATER
+        ElementTypeMapping = elementTypeMapping;
+#endif
     }
 
     private BlueTuskArrayTypeMapping(
         RelationalTypeMappingParameters parameters,
         uint? postgreSqlTypeOid,
-        string? postgreSqlTypeName)
+        string? postgreSqlTypeName
+#if !BLUETUSK_EF8_OR_GREATER
+        , RelationalTypeMapping elementTypeMapping
+#endif
+    )
         : base(parameters)
     {
         _postgreSqlTypeOid = postgreSqlTypeOid;
         _postgreSqlTypeName = postgreSqlTypeName;
+#if !BLUETUSK_EF8_OR_GREATER
+        ElementTypeMapping = elementTypeMapping;
+#endif
     }
 
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters) =>
-        new BlueTuskArrayTypeMapping(parameters, _postgreSqlTypeOid, _postgreSqlTypeName);
+        new BlueTuskArrayTypeMapping(parameters, _postgreSqlTypeOid, _postgreSqlTypeName
+#if !BLUETUSK_EF8_OR_GREATER
+            , ElementTypeMapping
+#endif
+        );
 
     protected override void ConfigureParameter(DbParameter parameter)
     {
@@ -134,14 +156,19 @@ internal sealed class BlueTuskArrayTypeMapping : RelationalTypeMapping
                 collectionType,
                 converter: converter,
                 comparer: comparer,
-                keyComparer: comparer,
+                keyComparer: comparer
+#if BLUETUSK_EF8_OR_GREATER
+                ,
                 elementMapping: elementTypeMapping,
-                jsonValueReaderWriter: CreateJsonValueReaderWriter(collectionType, elementType, elementTypeMapping)),
+                jsonValueReaderWriter: CreateJsonValueReaderWriter(collectionType, elementType, elementTypeMapping)
+#endif
+            ),
             storeType,
             StoreTypePostfix.None,
             System.Data.DbType.Object);
     }
 
+#if BLUETUSK_EF8_OR_GREATER
     private static JsonValueReaderWriter? CreateJsonValueReaderWriter(
         Type collectionType,
         Type elementType,
@@ -160,6 +187,7 @@ internal sealed class BlueTuskArrayTypeMapping : RelationalTypeMapping
             : collectionType.IsAssignableFrom(listType)
                 ? listType
                 : collectionType;
+#if BLUETUSK_EF9_OR_GREATER
         var nullableElementType = Nullable.GetUnderlyingType(elementType);
         var readerWriterType = nullableElementType is not null
             ? typeof(JsonCollectionOfNullableStructsReaderWriter<,>)
@@ -169,8 +197,15 @@ internal sealed class BlueTuskArrayTypeMapping : RelationalTypeMapping
                     .MakeGenericType(concreteCollectionType, elementType)
                 : typeof(JsonCollectionOfReferencesReaderWriter<,>)
                     .MakeGenericType(concreteCollectionType, elementType);
+#else
+        var nullableElementType = Nullable.GetUnderlyingType(elementType);
+        var readerWriterType = nullableElementType is null
+            ? typeof(JsonCollectionReaderWriter<,,>).MakeGenericType(collectionType, concreteCollectionType, elementType)
+            : typeof(JsonNullableStructCollectionReaderWriter<,,>).MakeGenericType(collectionType, concreteCollectionType, nullableElementType);
+#endif
         return (JsonValueReaderWriter)Activator.CreateInstance(readerWriterType, elementReaderWriter)!;
     }
+#endif
 
     internal static bool ArraysEqual(Array? left, Array? right)
     {

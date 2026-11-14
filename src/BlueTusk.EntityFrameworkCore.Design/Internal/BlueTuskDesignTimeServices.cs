@@ -10,10 +10,11 @@ public sealed class BlueTuskDesignTimeServices : IDesignTimeServices
 {
     public void ConfigureDesignTimeServices(IServiceCollection serviceCollection)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection);
+        BlueTuskGuard.NotNull(serviceCollection);
 
         serviceCollection.AddEntityFrameworkBlueTusk();
 
+#if BLUETUSK_EF6_OR_GREATER
         var builder = new EntityFrameworkRelationalDesignServicesBuilder(serviceCollection);
         builder
             .TryAdd<IDatabaseModelFactory, BlueTuskDatabaseModelFactory>()
@@ -25,5 +26,12 @@ public sealed class BlueTuskDesignTimeServices : IDesignTimeServices
                 ServiceDescriptor.Singleton<
                     ICSharpMigrationOperationGenerator,
                     BlueTuskCSharpMigrationOperationGenerator>()));
+#else
+        serviceCollection
+            .AddSingleton<IDatabaseModelFactory, BlueTuskDatabaseModelFactory>()
+            .AddSingleton<IProviderConfigurationCodeGenerator, BlueTuskProviderCodeGenerator>()
+            .AddSingleton<IAnnotationCodeGenerator, BlueTuskAnnotationCodeGenerator>()
+            .AddSingleton<ICSharpMigrationOperationGenerator, BlueTuskCSharpMigrationOperationGenerator>();
+#endif
     }
 }

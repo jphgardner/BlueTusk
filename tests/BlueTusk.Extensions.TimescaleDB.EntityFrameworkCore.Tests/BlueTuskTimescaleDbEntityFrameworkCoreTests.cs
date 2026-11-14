@@ -133,7 +133,7 @@ public sealed class BlueTuskTimescaleDbEntityFrameworkCoreTests
             EF.Functions.TimescaleHistogram([1d], 0, 2, 2));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Plugin_executes_buckets_hyperfunctions_compiled_queries_and_policies_live()
     {
         var connectionString = GetConnectionString();

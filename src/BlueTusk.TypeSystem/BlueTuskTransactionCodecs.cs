@@ -174,7 +174,7 @@ public sealed class BlueTuskTransactionSnapshotCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteInt32BigEndian(value.InProgressTransactionIds.Count);

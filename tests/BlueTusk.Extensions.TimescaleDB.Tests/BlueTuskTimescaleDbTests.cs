@@ -61,7 +61,7 @@ public sealed class BlueTuskTimescaleDbTests
             await dataSource.RefreshContinuousAggregateAsync("public.hourly", instant, instant));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task TimescaleDB_plugin_executes_hypertable_and_retention_lifecycle_live()
     {
         var connectionString = GetConnectionString();

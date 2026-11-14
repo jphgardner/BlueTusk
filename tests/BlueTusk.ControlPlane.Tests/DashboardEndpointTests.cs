@@ -1,5 +1,6 @@
 using System.Net;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -9,9 +10,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -19,23 +23,24 @@ namespace BlueTusk.ControlPlane.Tests;
 
 public sealed class DashboardEndpointTests
 {
+    private const string BrowserModuleVariable = "BLUETUSK_DASHBOARD_BROWSER_MODULE";
+    private const string MissingBrowserModule = "BLUETUSK_DASHBOARD_BROWSER_MODULE must identify an installed playwright-core module for browser qualification.";
     private static readonly JsonSerializerOptions WebJson =
         new(JsonSerializerDefaults.Web);
 
-    [Fact]
+    [DashboardBrowserFact]
     public async Task Deployment_inventory_real_browser_checks_mobile_keyboard_and_no_script_navigation()
     {
-        var browserModule = Environment.GetEnvironmentVariable("BLUETUSK_DASHBOARD_BROWSER_MODULE");
+        var browserModule = Environment.GetEnvironmentVariable(BrowserModuleVariable);
         if (string.IsNullOrWhiteSpace(browserModule))
-            throw Xunit.Sdk.SkipException.ForSkip("BLUETUSK_DASHBOARD_BROWSER_MODULE must identify an installed playwright-core module for browser qualification.");
+            throw new InvalidOperationException(MissingBrowserModule);
         var repository = new DirectoryInfo(AppContext.BaseDirectory);
         while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "BlueTusk.slnx"))) repository = repository.Parent;
         Assert.NotNull(repository);
         var output = Path.Combine(repository.FullName, "artifacts", "erp-recovery", "dashboard-browser-" + Guid.NewGuid().ToString("N"));
         var store = new FleetInventoryTestStore();
         for (var index = 0; index < 10_000; index++) await store.PutAsync(FleetInventoryTestStore.Spec(index), 0);
-        await using var application = InventoryApplication(new ManagedDeploymentFleetQueryService(store));
-        await application.StartAsync(TestContext.Current.CancellationToken);
+        await using var application = await StartInventoryApplicationAsync(new ManagedDeploymentFleetQueryService(store));
         var start = new System.Diagnostics.ProcessStartInfo("node")
         {
             UseShellExecute = false,
@@ -44,11 +49,16 @@ public sealed class DashboardEndpointTests
             RedirectStandardError = true,
         };
         foreach (var argument in new[] { Path.Combine(repository.FullName, "eng", "test-dashboard-inventory-browser.mjs"),
-                     "--base-url", application.Urls.Single(), "--module", browserModule, "--output", output })
+                     "--base-url", application.Address.GetLeftPart(UriPartial.Authority), "--module", browserModule, "--output", output })
             start.ArgumentList.Add(argument);
         using var browser = System.Diagnostics.Process.Start(start)!;
+#if NET8_0_OR_GREATER
         var stdout = browser.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
         var stderr = browser.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+#else
+        var stdout = browser.StandardOutput.ReadToEndAsync();
+        var stderr = browser.StandardError.ReadToEndAsync();
+#endif
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(60));
         try
@@ -67,9 +77,8 @@ public sealed class DashboardEndpointTests
     {
         var store = new FleetInventoryTestStore();
         for (var index = 0; index < 10_000; index++) await store.PutAsync(FleetInventoryTestStore.Spec(index), 0);
-        await using var application = InventoryApplication(new ManagedDeploymentFleetQueryService(store));
-        await application.StartAsync(TestContext.Current.CancellationToken);
-        using var client = new HttpClient { BaseAddress = new Uri(application.Urls.Single()) };
+        await using var application = await StartInventoryApplicationAsync(new ManagedDeploymentFleetQueryService(store));
+        using var client = new HttpClient { BaseAddress = application.Address };
         string[] protectedRoutes = ["/operations/deployments", "/operations/deployments/deployment-000001",
             "/operations/api/v1/fleet/deployments", "/operations/api/v1/fleet/deployments/deployment-000001"];
         foreach (var path in protectedRoutes)
@@ -129,9 +138,8 @@ public sealed class DashboardEndpointTests
     public async Task Legacy_fleet_services_fail_explicitly_instead_of_silently_loading_the_complete_inventory()
     {
         var legacy = new LegacyFleetService();
-        await using var application = InventoryApplication(legacy);
-        await application.StartAsync(TestContext.Current.CancellationToken);
-        using var client = new HttpClient { BaseAddress = new Uri(application.Urls.Single()) };
+        await using var application = await StartInventoryApplicationAsync(legacy);
+        using var client = new HttpClient { BaseAddress = application.Address };
         client.DefaultRequestHeaders.Add("X-Test-Role", "reader");
         foreach (var route in new[] { "/operations/deployments", "/operations/deployments/example",
                      "/operations/api/v1/fleet/deployments", "/operations/api/v1/fleet/deployments/example" })
@@ -142,27 +150,99 @@ public sealed class DashboardEndpointTests
         Assert.Equal(0, legacy.OverviewReads);
     }
 
-    private static WebApplication InventoryApplication(IControlPlaneFleetQueryService fleet)
+    private static Task<DashboardTestHost> StartInventoryApplicationAsync(IControlPlaneFleetQueryService fleet) =>
+        DashboardTestHost.StartAsync(services =>
+        {
+            services.AddAuthentication("InventoryTests")
+                .AddScheme<AuthenticationSchemeOptions, InventoryTestAuthentication>("InventoryTests", _ => { });
+            services.AddAuthorization(options => options.AddPolicy("inventory-read", policy => policy.RequireRole("reader")));
+            services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
+            services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
+            services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
+            services.AddSingleton<IControlPlaneContinuousGraphQueryService>(new FakeContinuousGraphQueryService());
+            services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(new FakeContinuousGraphExecutionService());
+            services.AddSingleton(fleet);
+            services.AddSingleton(new ControlPlaneOperationExecutor(new RoleControlPlaneAuthorizer(),
+                new RecordingAuditStore(), new RecordingOperationHandler()));
+        }, options =>
+        {
+            options.RoutePrefix = "/operations";
+            options.ReadAuthorizationPolicy = "inventory-read";
+        });
+
+    private sealed class DashboardTestHost(IHost host, Uri address, RouteEndpoint[] endpoints) : IAsyncDisposable
     {
-        var builder = WebApplication.CreateSlimBuilder();
-        builder.WebHost.UseSetting("urls", "http://127.0.0.1:0");
-        builder.Logging.ClearProviders();
-        builder.Services.AddAuthentication("InventoryTests")
-            .AddScheme<AuthenticationSchemeOptions, InventoryTestAuthentication>("InventoryTests", _ => { });
-        builder.Services.AddAuthorization(options => options.AddPolicy("inventory-read", policy => policy.RequireRole("reader")));
-        builder.Services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
-        builder.Services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
-        builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
-        builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(new FakeContinuousGraphQueryService());
-        builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(new FakeContinuousGraphExecutionService());
-        builder.Services.AddSingleton(fleet);
-        builder.Services.AddSingleton(new ControlPlaneOperationExecutor(new RoleControlPlaneAuthorizer(),
-            new RecordingAuditStore(), new RecordingOperationHandler()));
-        var application = builder.Build();
-        application.UseAuthentication();
-        application.UseAuthorization();
-        application.MapBlueTuskDashboard(options => { options.RoutePrefix = "/operations"; options.ReadAuthorizationPolicy = "inventory-read"; });
-        return application;
+        public Uri Address { get; } = address;
+        public IServiceProvider Services => host.Services;
+        public RouteEndpoint[] Endpoints { get; } = endpoints;
+
+        public static async Task<DashboardTestHost> StartAsync(
+            Action<IServiceCollection> configureServices,
+            Action<BlueTuskDashboardOptions> configureDashboard)
+        {
+            IEndpointRouteBuilder? endpointBuilder = null;
+            var host = Host.CreateDefaultBuilder()
+                .ConfigureLogging(logging => logging.ClearProviders())
+                .ConfigureWebHostDefaults(webHost => webHost
+                    .ConfigureKestrel(options => options.Listen(IPAddress.Loopback, 0))
+                    .ConfigureServices(services =>
+                    {
+                        services.AddRouting();
+                        services.AddAuthentication();
+                        services.AddAuthorization();
+                        configureServices(services);
+                    })
+                    .Configure(app =>
+                    {
+                        app.UseRouting();
+                        app.UseAuthentication();
+                        app.UseAuthorization();
+                        app.UseEndpoints(endpoints =>
+                        {
+                            endpoints.MapBlueTuskDashboard(configureDashboard);
+                            endpointBuilder = endpoints;
+                        });
+                    }))
+                .Build();
+            try
+            {
+                await host.StartAsync(TestContext.Current.CancellationToken);
+                var addresses = host.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>() ??
+                    throw new InvalidOperationException("Kestrel did not report a bound address.");
+                var endpoints = endpointBuilder?.DataSources.SelectMany(static source => source.Endpoints)
+                    .OfType<RouteEndpoint>().ToArray() ?? throw new InvalidOperationException("Dashboard routes were not configured.");
+                return new DashboardTestHost(host, new Uri(addresses.Addresses.Single()), endpoints);
+            }
+            catch
+            {
+                host.Dispose();
+                throw;
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            using (host)
+            {
+                await host.StopAsync();
+            }
+        }
+    }
+
+    private sealed class DashboardBrowserFactAttribute : FactAttribute
+    {
+#if NET8_0_OR_GREATER
+        public DashboardBrowserFactAttribute([CallerFilePath] string? sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
+            : base(sourceFilePath, sourceLineNumber)
+#else
+        public DashboardBrowserFactAttribute()
+#endif
+        {
+            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(BrowserModuleVariable)))
+            {
+                Skip = MissingBrowserModule;
+            }
+        }
     }
 
     private sealed class LegacyFleetService : IControlPlaneFleetQueryService
@@ -175,9 +255,16 @@ public sealed class DashboardEndpointTests
         }
     }
 
-    private sealed class InventoryTestAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options,
-        ILoggerFactory logger, UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    private sealed class InventoryTestAuthentication : AuthenticationHandler<AuthenticationSchemeOptions>
     {
+#if NET8_0_OR_GREATER
+        public InventoryTestAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
+            : base(options, logger, encoder) { }
+#else
+        public InventoryTestAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock)
+            : base(options, logger, encoder, clock) { }
+#endif
+
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             if (!Request.Headers.TryGetValue("X-Test-Role", out var role)) return Task.FromResult(AuthenticateResult.NoResult());
@@ -190,27 +277,19 @@ public sealed class DashboardEndpointTests
     [Fact]
     public async Task Dashboard_maps_authorized_pages_and_HTML_encodes_inventory_values()
     {
-        var builder = WebApplication.CreateSlimBuilder();
         var audit = new RecordingAuditStore();
         var handler = new RecordingOperationHandler();
         var queries = new FakeQueryService();
-        builder.Services.AddAuthorization();
-        builder.Services.AddSingleton<IControlPlaneQueryService>(queries);
-        builder.Services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
-        builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
-        builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
-            new FakeContinuousGraphQueryService());
-        builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(
-            new FakeContinuousGraphExecutionService());
-        builder.Services.AddSingleton<IControlPlaneFleetQueryService>(
-            new FakeFleetQueryService());
-        builder.Services.AddSingleton(
-            new ControlPlaneOperationExecutor(
-                new RoleControlPlaneAuthorizer(),
-                audit,
-                handler));
-        await using var application = builder.Build();
-        application.MapBlueTuskDashboard(options =>
+        await using var application = await DashboardTestHost.StartAsync(services =>
+        {
+            services.AddSingleton<IControlPlaneQueryService>(queries);
+            services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
+            services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
+            services.AddSingleton<IControlPlaneContinuousGraphQueryService>(new FakeContinuousGraphQueryService());
+            services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(new FakeContinuousGraphExecutionService());
+            services.AddSingleton<IControlPlaneFleetQueryService>(new FakeFleetQueryService());
+            services.AddSingleton(new ControlPlaneOperationExecutor(new RoleControlPlaneAuthorizer(), audit, handler));
+        }, options =>
         {
             options.RoutePrefix = "/operations";
             options.ReadAuthorizationPolicy = "ops-read";
@@ -220,10 +299,7 @@ public sealed class DashboardEndpointTests
             options.DataProvenanceNotice = "Live source <script>alert('no')</script>";
         });
 
-        var endpoints = ((IEndpointRouteBuilder)application).DataSources
-            .SelectMany(source => source.Endpoints)
-            .OfType<RouteEndpoint>()
-            .ToArray();
+        var endpoints = application.Endpoints;
         Assert.Equal(37, endpoints.Length);
         Assert.All(
             endpoints,
@@ -611,32 +687,25 @@ public sealed class DashboardEndpointTests
     public async Task Deployment_detail_resolves_ids_containing_a_slash_through_real_routing()
     {
         const string KubernetesId = "orders-prod/orders-api";
-        var builder = WebApplication.CreateSlimBuilder();
-        builder.WebHost.UseUrls("http://127.0.0.1:0");
-        builder.Services.AddAuthorization(options =>
-            options.AddPolicy("ops-read", policy => policy.RequireAssertion(static _ => true)));
-        builder.Services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
-        builder.Services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
-        builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
-        builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
-            new FakeContinuousGraphQueryService());
-        builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(
-            new FakeContinuousGraphExecutionService());
-        builder.Services.AddSingleton<IControlPlaneFleetQueryService>(
-            new FakeFleetQueryService("<deployment>", "plain-deployment", KubernetesId));
-        builder.Services.AddSingleton(
-            new ControlPlaneOperationExecutor(
-                new RoleControlPlaneAuthorizer(),
-                new RecordingAuditStore(),
-                new RecordingOperationHandler()));
-        await using var application = builder.Build();
-        application.MapBlueTuskDashboard(options =>
+        await using var application = await DashboardTestHost.StartAsync(services =>
+        {
+            services.AddAuthorization(options =>
+                options.AddPolicy("ops-read", policy => policy.RequireAssertion(static _ => true)));
+            services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
+            services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
+            services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
+            services.AddSingleton<IControlPlaneContinuousGraphQueryService>(new FakeContinuousGraphQueryService());
+            services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(new FakeContinuousGraphExecutionService());
+            services.AddSingleton<IControlPlaneFleetQueryService>(
+                new FakeFleetQueryService("<deployment>", "plain-deployment", KubernetesId));
+            services.AddSingleton(new ControlPlaneOperationExecutor(
+                new RoleControlPlaneAuthorizer(), new RecordingAuditStore(), new RecordingOperationHandler()));
+        }, options =>
         {
             options.RoutePrefix = "/operations";
             options.ReadAuthorizationPolicy = "ops-read";
         });
-        await application.StartAsync(TestContext.Current.CancellationToken);
-        using var client = new HttpClient { BaseAddress = new Uri(application.Urls.First()) };
+        using var client = new HttpClient { BaseAddress = application.Address };
 
         async Task<(System.Net.HttpStatusCode Status, string Body)> GetAsync(string path)
         {
@@ -683,7 +752,6 @@ public sealed class DashboardEndpointTests
             System.Net.HttpStatusCode.NotFound,
             (await GetAsync("/operations/deployments/orders-prod/orders-api/extra")).Status);
 
-        await application.StopAsync(TestContext.Current.CancellationToken);
     }
 
     private sealed class FakeQueryService : IControlPlaneQueryService

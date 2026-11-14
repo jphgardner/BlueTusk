@@ -10,7 +10,7 @@ internal static class BlueTuskArrayTextParser
         char delimiter,
         int maximumDimensions)
     {
-        ArgumentNullException.ThrowIfNull(text);
+        BlueTuskGuard.NotNull(text);
         var parser = new Parser(text, delimiter, maximumDimensions);
         return parser.Parse();
     }
@@ -214,7 +214,7 @@ internal static class BlueTuskArrayTextParser
                 _offset++;
             }
 
-            while (_offset < _text.Length && char.IsAsciiDigit(_text[_offset]))
+            while (_offset < _text.Length && BlueTuskRuntime.IsAsciiDigit(_text[_offset]))
             {
                 _offset++;
             }

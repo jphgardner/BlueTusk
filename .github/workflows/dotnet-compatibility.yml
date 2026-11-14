@@ -1,0 +1,104 @@
+name: dotnet-compatibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      require_complete:
+        description: Require executable coverage for every runtime package before accepting full .NET support
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Verify runtime inventory and coverage claims
+    runs-on: ubuntu-24.04
+    outputs:
+      frameworks: ${{ steps.plan.outputs.frameworks }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Verify compatibility contract and rejection cases
+        id: plan
+        shell: pwsh
+        env:
+          REQUIRE_COMPLETE: ${{ inputs.require_complete || false }}
+        run: |
+          $complete = [bool]::Parse($env:REQUIRE_COMPLETE)
+          $inventory = ./eng/verify-dotnet-compatibility.ps1 -RequireComplete:$complete -PassThru
+          ./eng/test-dotnet-compatibility-contract.ps1
+          ./eng/test-dotnet-compatibility-evidence.ps1
+          ./eng/test-dotnet-compatibility-packages.ps1
+          $frameworks = ConvertTo-Json -InputObject @($inventory.frameworks) -Compress
+          "frameworks=$frameworks" >> $env:GITHUB_OUTPUT
+          "Covered runtime packages: $($inventory.coveredRuntimePackages). Pending: $($inventory.pendingRuntimePackages.Count). Full support: $($inventory.fullRuntimeCoverage)." >> $env:GITHUB_STEP_SUMMARY
+
+  runtime:
+    name: ${{ matrix.framework }} on ${{ matrix.os }}
+    needs: contract
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-24.04]
+        framework: ${{ fromJSON(needs.contract.outputs.frameworks) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install pinned SDK and runtime from verified official archives
+        shell: pwsh
+        env:
+          TEST_FRAMEWORK: ${{ matrix.framework }}
+        run: ./eng/install-dotnet-compatibility.ps1 -Framework $env:TEST_FRAMEWORK
+      - name: Verify legacy public API generation
+        if: matrix.framework == 'net5.0'
+        shell: pwsh
+        run: |
+          $dotnet = Join-Path $PWD $(if ($IsWindows) { 'artifacts/dotnet/dotnet.exe' } else { 'artifacts/dotnet/dotnet' })
+          ./eng/test-legacy-public-api.ps1 -DotNetPath $dotnet
+      - name: Build and execute the registered compatibility suites
+        shell: pwsh
+        env:
+          TEST_FRAMEWORK: ${{ matrix.framework }}
+        run: |
+          $dotnet = Join-Path $PWD $(if ($IsWindows) { 'artifacts/dotnet/dotnet.exe' } else { 'artifacts/dotnet/dotnet' })
+          ./eng/run-dotnet-compatibility.ps1 -Framework $env:TEST_FRAMEWORK -DotNetPath $dotnet -UseLegacyLinuxContainers:$IsLinux
+      - name: Retain exact runtime test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dotnet-compatibility-${{ matrix.os }}-${{ matrix.framework }}-${{ github.sha }}
+          path: |
+            artifacts/dotnet-compatibility/runs
+            !artifacts/dotnet-compatibility/runs/*/build/**
+            !artifacts/dotnet-compatibility/runs/*/*/*/test-output/**
+            artifacts/dotnet/bluetusk-installation.json
+          if-no-files-found: error
+          retention-days: 30
+
+  evidence:
+    name: Verify every Windows/Linux runtime pair
+    needs: [contract, runtime]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: dotnet-compatibility-*-${{ github.sha }}
+          path: artifacts/downloaded-dotnet-evidence
+      - name: Verify exact runtime, source, and test evidence bindings
+        shell: pwsh
+        env:
+          REQUIRE_COMPLETE: ${{ inputs.require_complete || false }}
+        run: |
+          $reports = @(Get-ChildItem artifacts/downloaded-dotnet-evidence -Filter report.json -Recurse -File |
+            Where-Object { $_.Directory.Parent.Name -ceq 'runs' -and $_.Directory.Name -cmatch '^[0-9a-f]{32}$' } |
+            ForEach-Object FullName)
+          if ($reports.Count -eq 0) { throw 'The runtime matrix produced no compatibility evidence.' }
+          $complete = [bool]::Parse($env:REQUIRE_COMPLETE)
+          $evidence = ./eng/verify-dotnet-compatibility-evidence.ps1 -ReportPath $reports -RequireMatrixComplete -RequireComplete:$complete -PassThru
+          "Verified $($evidence.verifiedPairs)/$($evidence.requiredPairs) runtime/test pairs and $($evidence.passedTests) passed tests. Full support: $($evidence.fullRuntimeCoverage)." >> $env:GITHUB_STEP_SUMMARY

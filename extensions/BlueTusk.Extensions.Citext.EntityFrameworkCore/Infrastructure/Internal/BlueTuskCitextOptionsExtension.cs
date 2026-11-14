@@ -32,12 +32,18 @@ internal sealed class BlueTuskCitextOptionsExtension(string schema) : IDbContext
 
         public override string LogFragment => $"using citext in {extension.Schema} ";
 
+#if BLUETUSK_EF6_OR_GREATER
         public override int GetServiceProviderHashCode() =>
+#else
+        public override long GetServiceProviderHashCode() =>
+#endif
             StringComparer.Ordinal.GetHashCode(extension.Schema);
 
+#if BLUETUSK_EF6_OR_GREATER
         public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other) =>
             other is ExtensionInfo otherInfo &&
             string.Equals(extension.Schema, otherInfo.Extension.Schema, StringComparison.Ordinal);
+#endif
 
         public override void PopulateDebugInfo(IDictionary<string, string> debugInfo) =>
             debugInfo["BlueTusk:Citext"] = extension.Schema;

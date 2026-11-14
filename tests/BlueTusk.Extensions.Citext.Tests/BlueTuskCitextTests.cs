@@ -50,7 +50,7 @@ public sealed class BlueTuskCitextTests
         Assert.Single(dataSource.Features.Names);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Citext_plugin_executes_binary_text_array_and_case_insensitive_live_paths()
     {
         var connectionString = GetConnectionString();

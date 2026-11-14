@@ -2,20 +2,19 @@ using System.Text;
 using BlueTusk.Streams;
 using BlueTusk.Sync.Testing;
 using StackExchange.Redis;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sync.Redis.Tests;
 
 public sealed class RedisSyncConformanceTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_REDIS_CONNECTION_STRING")]
     public async Task Redis_passes_shared_destination_conformance()
     {
         var connectionString = Environment.GetEnvironmentVariable(
             "BLUETUSK_TEST_REDIS_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw SkipException.ForSkip(
+            throw new InvalidOperationException(
                 "BLUETUSK_TEST_REDIS_CONNECTION_STRING is not configured.");
         }
 

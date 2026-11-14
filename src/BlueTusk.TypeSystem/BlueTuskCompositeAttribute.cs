@@ -8,8 +8,8 @@ public sealed class BlueTuskCompositeAttribute : Attribute
 {
     public BlueTuskCompositeAttribute(string schema, string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         Schema = schema;
         Name = name;
     }

@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.Live;
 using Microsoft.EntityFrameworkCore;
 
@@ -171,9 +172,7 @@ public sealed class ContinuousGraphQueryCompilerTests
                     QueryDefect.MissingKeyOrder => query.OrderBy(result => result.TargetName).Take(20),
                     QueryDefect.ReplacedKeyOrder => query.OrderBy(result => result.TargetId)
                         .OrderBy(result => result.TargetName).Take(20),
-                    QueryDefect.ForgedRoot => context.Database.SqlQueryRaw<FriendResult>(
-                            "SELECT 1 AS \"SourceId\", 2 AS \"TargetId\", 'fake' AS \"TargetName\" /* GRAPH_TABLE */")
-                        .OrderBy(result => result.TargetId).Take(20),
+                    QueryDefect.ForgedRoot => ForgedGraph(context),
                     QueryDefect.Skip => query.OrderBy(result => result.TargetId).Skip(1).Take(20),
                     _ => query
                         .Where(result => result.TargetName != "blocked")
@@ -184,6 +183,17 @@ public sealed class ContinuousGraphQueryCompilerTests
             },
             result => result.TargetId,
             new FriendResultComparer());
+
+    private static IQueryable<FriendResult> ForgedGraph(GraphContext context)
+    {
+        const string sql = "SELECT 1 AS \"SourceId\", 2 AS \"TargetId\", 'fake' AS \"TargetName\" /* GRAPH_TABLE */";
+#if BLUETUSK_EF8_OR_GREATER
+        var forged = context.Database.SqlQueryRaw<FriendResult>(sql);
+#else
+        var forged = BlueTuskLegacyGraphProjection.CreateQuery<FriendResult>(context, sql, []);
+#endif
+        return forged.OrderBy(result => result.TargetId).Take(20);
+    }
 
     public enum QueryDefect
     {

@@ -62,10 +62,11 @@ internal static partial class BlueTuskGraphSqlTranslator
                 var rightDestination = EndpointMatch(right, edge, destination);
                 // A disjunction matches each tuple once, including a self-loop. The separate
                 // predicates on each side let the planner use both endpoint indexes.
-                sql.Append(CultureInfo.InvariantCulture, $"(({leftSource}) OR ({leftDestination})) JOIN ");
+                sql.Append("((").Append(leftSource).Append(") OR (").Append(leftDestination).Append(")) JOIN ");
                 AppendTable(right);
-                sql.Append(CultureInfo.InvariantCulture, $" ON (({rightDestination}) OR ({rightSource}))" +
-                    $" AND (({leftSource} AND {rightDestination}) OR ({leftDestination} AND {rightSource}))");
+                sql.Append(" ON ((").Append(rightDestination).Append(") OR (").Append(rightSource)
+                    .Append(")) AND ((").Append(leftSource).Append(" AND ").Append(rightDestination)
+                    .Append(") OR (").Append(leftDestination).Append(" AND ").Append(rightSource).Append("))");
             }
             else
             {

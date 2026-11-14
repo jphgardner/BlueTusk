@@ -12,6 +12,9 @@ internal sealed class BlueTuskRelationalConnection : RelationalConnection
     private readonly IProviderServices _providerServices;
     private readonly IProviderDataSource? _dataSource;
     private readonly bool _requiresSqlPgq;
+#if !BLUETUSK_EF8_OR_GREATER
+    private readonly DbConnection? _legacyOwnedConnection;
+#endif
 
     public BlueTuskRelationalConnection(
         RelationalConnectionDependencies dependencies,
@@ -20,11 +23,44 @@ internal sealed class BlueTuskRelationalConnection : RelationalConnection
     {
         _providerServices = providerServices;
         _dataSource = dependencies.ContextOptions.FindExtension<BlueTuskOptionsExtension>()?.DataSource;
+#if !BLUETUSK_EF8_OR_GREATER
+        var extension = dependencies.ContextOptions.FindExtension<BlueTuskOptionsExtension>();
+        _legacyOwnedConnection = extension?.LegacyContextOwnsConnection == true ? extension.Connection : null;
+#endif
         _requiresSqlPgq = BlueTuskOptionsExtension.GetGraphBackend(dependencies.ContextOptions)
             == BlueTuskPropertyGraphBackend.NativeSqlPgq;
     }
 
     internal IProviderDataSource? DataSource => _dataSource;
+
+#if !BLUETUSK_EF8_OR_GREATER
+    public override void Dispose()
+    {
+        try
+        {
+            base.Dispose();
+        }
+        finally
+        {
+            _legacyOwnedConnection?.Dispose();
+        }
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await base.DisposeAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            if (_legacyOwnedConnection is not null)
+            {
+                await _legacyOwnedConnection.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+    }
+#endif
 
     public override bool Open(bool errorsExpected = false)
     {

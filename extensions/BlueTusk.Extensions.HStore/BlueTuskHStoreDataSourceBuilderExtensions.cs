@@ -9,7 +9,7 @@ public static class BlueTuskHStoreDataSourceBuilderExtensions
         this BlueTuskDataSourceBuilder builder,
         string schema = "public")
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         return builder.UsePlugin(new BlueTuskHStorePlugin(schema));
     }
 }

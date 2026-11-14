@@ -16,7 +16,7 @@ public abstract class BlueTuskNetworkAddressCodec : BlueTuskCodec<BlueTuskNetwor
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskNetworkAddress.Parse(reader.ReadRemainingUtf8(), _isCidr);
@@ -57,7 +57,7 @@ public abstract class BlueTuskNetworkAddressCodec : BlueTuskCodec<BlueTuskNetwor
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (value.IsCidr != _isCidr)
         {
             throw new InvalidOperationException(
@@ -125,7 +125,7 @@ public sealed class BlueTuskMacAddressCodec : BlueTuskCodec<BlueTuskMacAddress>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());
@@ -170,7 +170,7 @@ public sealed class BlueTuskMacAddress8Codec : BlueTuskCodec<BlueTuskMacAddress8
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskMacAddress8.Parse(reader.ReadRemainingUtf8());
@@ -200,7 +200,7 @@ public sealed class BlueTuskMacAddress8Codec : BlueTuskCodec<BlueTuskMacAddress8
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());

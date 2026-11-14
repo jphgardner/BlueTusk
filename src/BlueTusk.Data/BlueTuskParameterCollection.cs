@@ -36,7 +36,7 @@ public sealed class BlueTuskParameterCollection :
 
     public BlueTuskParameter Add(BlueTuskParameter parameter)
     {
-        ArgumentNullException.ThrowIfNull(parameter);
+        BlueTuskGuard.NotNull(parameter);
         AddCore(parameter);
         _version++;
         return parameter;
@@ -52,7 +52,7 @@ public sealed class BlueTuskParameterCollection :
 
     public override void AddRange(Array values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         foreach (var value in values)
         {
             Add(value!);
@@ -79,8 +79,8 @@ public sealed class BlueTuskParameterCollection :
 
     public override void CopyTo(Array array, int index)
     {
-        ArgumentNullException.ThrowIfNull(array);
-        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        BlueTuskGuard.NotNull(array);
+        BlueTuskGuard.NotNegative(index);
         if (array.Rank != 1 || index > array.Length - Count)
         {
             throw new ArgumentException("The destination array does not have enough one-dimensional space.", nameof(array));
@@ -146,7 +146,7 @@ public sealed class BlueTuskParameterCollection :
 
     public override void Insert(int index, object value)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan((uint)index, (uint)Count);
+        BlueTuskGuard.NotGreaterThan((uint)index, (uint)Count);
         var parameter = RequireParameter(value);
         AddCore(parameter);
         for (var moveIndex = _count - 1; moveIndex > index; moveIndex--)
@@ -242,7 +242,7 @@ public sealed class BlueTuskParameterCollection :
 
     private BlueTuskParameter GetAt(int index)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)index, (uint)Count);
+        BlueTuskGuard.NotGreaterThanOrEqual((uint)index, (uint)Count);
         return index switch
         {
             0 => _first!,

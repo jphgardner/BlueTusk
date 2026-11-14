@@ -205,9 +205,9 @@ internal static class ContinuousGraphKeyScope
         IReadOnlyCollection<TKey> affectedKeys)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(query);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentNullException.ThrowIfNull(affectedKeys);
+        BlueTuskGuard.NotNull(query);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNull(affectedKeys);
         if (affectedKeys.Count == 0)
         {
             throw new ArgumentException(

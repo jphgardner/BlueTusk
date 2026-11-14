@@ -11,7 +11,11 @@ internal sealed class BlueTuskSetReturningFunctionQueryRootExpression(
     string? resultStoreType,
     bool isNullable,
     bool withOrdinality)
+#if BLUETUSK_EF7_OR_GREATER
     : QueryRootExpression(elementType)
+#else
+    : BlueTuskLegacyQueryRootExpression(elementType)
+#endif
 {
     public string Name { get; } = name;
 

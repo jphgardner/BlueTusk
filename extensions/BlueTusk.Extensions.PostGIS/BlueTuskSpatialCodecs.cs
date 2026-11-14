@@ -12,7 +12,7 @@ public sealed class BlueTuskGeometryCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return format switch
         {
             BlueTuskDataFormat.Binary => ReadBinary(ref reader, type),
@@ -27,8 +27,8 @@ public sealed class BlueTuskGeometryCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteBytes(value.GetWellKnownBinary());
@@ -47,7 +47,7 @@ public sealed class BlueTuskGeometryCodec :
         object value,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return value is BlueTuskGeometry geometry && geometry.HasWellKnownBinary
             ? BlueTuskDataFormat.Binary
             : BlueTuskDataFormat.Text;
@@ -80,7 +80,7 @@ public sealed class BlueTuskGeographyCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return format switch
         {
             BlueTuskDataFormat.Binary => ReadBinary(ref reader, type),
@@ -95,8 +95,8 @@ public sealed class BlueTuskGeographyCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteBytes(value.GetWellKnownBinary());
@@ -115,7 +115,7 @@ public sealed class BlueTuskGeographyCodec :
         object value,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return value is BlueTuskGeography geography && geography.HasWellKnownBinary
             ? BlueTuskDataFormat.Binary
             : BlueTuskDataFormat.Text;

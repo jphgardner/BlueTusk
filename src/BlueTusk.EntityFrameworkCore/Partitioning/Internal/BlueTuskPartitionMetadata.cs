@@ -14,38 +14,38 @@ internal static class BlueTuskPartitionMetadata
 
     public static BlueTuskPartitioningDefinition? Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? null : Deserialize(json);
     }
 
     public static string Serialize(BlueTuskPartitioningDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         return JsonSerializer.Serialize(definition, SerializerOptions);
     }
 
     public static string Serialize(BlueTuskPartitionDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         return JsonSerializer.Serialize(definition, SerializerOptions);
     }
 
     public static string Serialize(BlueTuskPartitionBound bound)
     {
-        ArgumentNullException.ThrowIfNull(bound);
+        BlueTuskGuard.NotNull(bound);
         return JsonSerializer.Serialize(bound, SerializerOptions);
     }
 
     public static string Serialize(BlueTuskPartitionedTableDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         return JsonSerializer.Serialize(definition, SerializerOptions);
     }
 
     public static string Serialize(IEnumerable<BlueTuskPartitionedTableDefinition> definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
+        BlueTuskGuard.NotNull(definitions);
         return JsonSerializer.Serialize(
             definitions.OrderBy(definition => definition.Schema, StringComparer.Ordinal)
                 .ThenBy(definition => definition.Name, StringComparer.Ordinal),
@@ -54,21 +54,21 @@ internal static class BlueTuskPartitionMetadata
 
     public static BlueTuskPartitioningDefinition Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return JsonSerializer.Deserialize<BlueTuskPartitioningDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The partitioning definition is empty.", nameof(json));
     }
 
     public static BlueTuskPartitionDefinition DeserializePartition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return JsonSerializer.Deserialize<BlueTuskPartitionDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The partition definition is empty.", nameof(json));
     }
 
     public static BlueTuskPartitionBound DeserializeBound(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return JsonSerializer.Deserialize<BlueTuskPartitionBound>(json, SerializerOptions)
             ?? throw new ArgumentException("The partition bound is empty.", nameof(json));
     }
@@ -116,10 +116,10 @@ internal static class BlueTuskPartitionMetadata
 
     public static BlueTuskPartitioningDefinition? GetTableDefinition(ITable table)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        BlueTuskGuard.NotNull(table);
         foreach (var mapping in table.EntityTypeMappings)
         {
-            if (mapping.TypeBase is not IReadOnlyEntityType entityType || Get(entityType) is not { } definition)
+            if (mapping.GetBlueTuskEntityType() is not IReadOnlyEntityType entityType || Get(entityType) is not { } definition)
             {
                 continue;
             }

@@ -115,8 +115,8 @@ public sealed class ContinuousGraphIncrementalResult<TResult, TKey>
         IEnumerable<TResult> rows,
         string? detail = null)
     {
-        ArgumentNullException.ThrowIfNull(affectedKeys);
-        ArgumentNullException.ThrowIfNull(rows);
+        BlueTuskGuard.NotNull(affectedKeys);
+        BlueTuskGuard.NotNull(rows);
         return new(
             ContinuousGraphIncrementalDisposition.Exact,
             affectedKeys,
@@ -127,7 +127,7 @@ public sealed class ContinuousGraphIncrementalResult<TResult, TKey>
     public static ContinuousGraphIncrementalResult<TResult, TKey> RequiresRepair(
         string detail)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        BlueTuskGuard.NotNullOrWhiteSpace(detail);
         return new(
             ContinuousGraphIncrementalDisposition.RequiresRepair,
             [],
@@ -196,15 +196,15 @@ public sealed class ContinuousGraphIncrementalOptions<TResult, TKey>
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(ResultOrdering);
-        ArgumentNullException.ThrowIfNull(KeyOrdering);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumAffectedKeys);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(RepairAfterTransactions);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(
+        BlueTuskGuard.NotNull(ResultOrdering);
+        BlueTuskGuard.NotNull(KeyOrdering);
+        BlueTuskGuard.NotNegativeOrZero(MaximumAffectedKeys);
+        BlueTuskGuard.NotNegativeOrZero(RepairAfterTransactions);
+        BlueTuskGuard.NotLessThanOrEqual(
             MaximumRepairInterval,
             TimeSpan.Zero);
-        ArgumentNullException.ThrowIfNull(DiffOptions);
-        ArgumentNullException.ThrowIfNull(TimeProvider);
+        BlueTuskGuard.NotNull(DiffOptions);
+        BlueTuskGuard.NotNull(TimeProvider);
     }
 }
 
@@ -431,11 +431,11 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
         ContinuousGraphIncrementalOptions<TResult, TKey> options,
         int? resultLimit)
     {
-        ArgumentNullException.ThrowIfNull(plan);
-        ArgumentNullException.ThrowIfNull(arguments);
-        ArgumentNullException.ThrowIfNull(securityScope);
-        ArgumentNullException.ThrowIfNull(evaluator);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(plan);
+        BlueTuskGuard.NotNull(arguments);
+        BlueTuskGuard.NotNull(securityScope);
+        BlueTuskGuard.NotNull(evaluator);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _resultLimit = resultLimit ?? plan.LivePlan.MaximumResultCount;
         if (_resultLimit <= 0 ||
@@ -488,7 +488,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             long nextSequence = 1,
             CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(nextSequence);
+        BlueTuskGuard.NotNegativeOrZero(nextSequence);
         ThrowIfDisposed();
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -534,7 +534,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             ChangeTransaction transaction,
             CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         ThrowIfDisposed();
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -656,7 +656,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             string detail,
             CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        BlueTuskGuard.NotNullOrWhiteSpace(detail);
         ThrowIfDisposed();
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -739,7 +739,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             _plan.LivePlan.KeyComparer);
         foreach (var row in result.Rows)
         {
-            ArgumentNullException.ThrowIfNull(row);
+            BlueTuskGuard.NotNull(row);
             var key = _plan.LivePlan.KeySelector(row);
             if (!affectedSet.Contains(key))
             {
@@ -1090,7 +1090,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
     }
 
     private void ThrowIfDisposed() =>
-        ObjectDisposedException.ThrowIf(
+        BlueTuskGuard.NotDisposed(
             Volatile.Read(ref _disposed) != 0,
             this);
 
@@ -1158,8 +1158,8 @@ public sealed class ContinuousGraphIncrementalConsumer<TResult, TKey> :
         ContinuousGraphIncrementalSession<TResult, TKey> session,
         ILiveReplayStore replayStore)
     {
-        ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(replayStore);
+        BlueTuskGuard.NotNull(session);
+        BlueTuskGuard.NotNull(replayStore);
         _session = session;
         _replayStore = replayStore;
     }
@@ -1210,7 +1210,7 @@ public sealed class ContinuousGraphIncrementalConsumer<TResult, TKey> :
         SnapshotReset reset,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
         Volatile.Write(ref _snapshotActive, 1);
@@ -1221,7 +1221,7 @@ public sealed class ContinuousGraphIncrementalConsumer<TResult, TKey> :
         SnapshotStart start,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
         Volatile.Write(ref _snapshotActive, 1);
@@ -1232,7 +1232,7 @@ public sealed class ContinuousGraphIncrementalConsumer<TResult, TKey> :
         ChangeSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
         if (Volatile.Read(ref _snapshotActive) == 0)
@@ -1248,7 +1248,7 @@ public sealed class ContinuousGraphIncrementalConsumer<TResult, TKey> :
         SnapshotComplete complete,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         ThrowIfDisposed();
         if (Interlocked.Exchange(ref _snapshotActive, 0) == 0)
         {
@@ -1275,7 +1275,7 @@ public sealed class ContinuousGraphIncrementalConsumer<TResult, TKey> :
         ChangeTransactionDelivery delivery,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(delivery);
+        BlueTuskGuard.NotNull(delivery);
         try
         {
             await InitializeAsync(cancellationToken).ConfigureAwait(false);
@@ -1347,7 +1347,7 @@ public sealed class ContinuousGraphIncrementalConsumer<TResult, TKey> :
     }
 
     private void ThrowIfDisposed() =>
-        ObjectDisposedException.ThrowIf(
+        BlueTuskGuard.NotDisposed(
             Volatile.Read(ref _disposed) != 0,
             this);
 }

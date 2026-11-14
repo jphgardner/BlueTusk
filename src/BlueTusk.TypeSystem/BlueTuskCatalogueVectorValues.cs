@@ -11,7 +11,7 @@ public sealed class BlueTuskInt16Vector :
 
     public BlueTuskInt16Vector(IEnumerable<short> values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         _values = values.ToArray();
     }
 
@@ -51,7 +51,7 @@ public sealed class BlueTuskObjectIdentifierVector :
 
     public BlueTuskObjectIdentifierVector(IEnumerable<uint> values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         _values = values.ToArray();
     }
 

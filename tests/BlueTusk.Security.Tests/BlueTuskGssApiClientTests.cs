@@ -1,4 +1,7 @@
 using System.Net.Security;
+#if !NET7_0_OR_GREATER
+using NegotiateAuthenticationStatusCode = BlueTusk.Security.LegacyNegotiateStatus;
+#endif
 
 namespace BlueTusk.Security.Tests;
 

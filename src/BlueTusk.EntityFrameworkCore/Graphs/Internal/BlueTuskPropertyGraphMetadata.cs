@@ -18,7 +18,7 @@ internal static class BlueTuskPropertyGraphMetadata
 
     public static IReadOnlyList<BlueTuskPropertyGraphDefinition> Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         if (string.IsNullOrEmpty(json))
         {
@@ -31,7 +31,7 @@ internal static class BlueTuskPropertyGraphMetadata
 
     public static string Serialize(IEnumerable<BlueTuskPropertyGraphDefinition> graphs)
     {
-        ArgumentNullException.ThrowIfNull(graphs);
+        BlueTuskGuard.NotNull(graphs);
         return JsonSerializer.Serialize(
             graphs
                 .OrderBy(graph => graph.Schema, StringComparer.Ordinal)
@@ -42,20 +42,20 @@ internal static class BlueTuskPropertyGraphMetadata
 
     public static string Serialize(BlueTuskPropertyGraphDefinition graph)
     {
-        ArgumentNullException.ThrowIfNull(graph);
+        BlueTuskGuard.NotNull(graph);
         return JsonSerializer.Serialize(graph, SerializerOptions);
     }
 
     public static BlueTuskPropertyGraphDefinition Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return JsonSerializer.Deserialize<BlueTuskPropertyGraphDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The property-graph definition is empty.", nameof(json));
     }
 
     public static IReadOnlyList<BlueTuskPropertyGraphDefinition> DeserializeMany(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return JsonSerializer.Deserialize<BlueTuskPropertyGraphDefinition[]>(json, SerializerOptions)
             ?? throw new ArgumentException("The property-graph definitions are empty.", nameof(json));
     }

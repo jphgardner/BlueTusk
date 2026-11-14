@@ -49,7 +49,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         BlueTuskEndpoint endpoint,
         BlueTuskTransportOptions options)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         _transport.Connect(endpoint, options);
         StateMachine.TransitionTo(BlueTuskConnectionState.TransportConnected);
     }
@@ -59,7 +59,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         BlueTuskTransportOptions options,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         await _transport.ConnectAsync(endpoint, options, cancellationToken).ConfigureAwait(false);
         StateMachine.TransitionTo(BlueTuskConnectionState.TransportConnected);
     }
@@ -124,7 +124,9 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         return ReadMessageSlowAsync(destination, cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskBackendMessage> ReadMessageSlowAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
@@ -476,7 +478,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         try
         {
             EnsureActivePayload();
-            ArgumentOutOfRangeException.ThrowIfNegative(length);
+            BlueTuskGuard.NotNegative(length);
             if (length > _activePayloadRemaining)
             {
                 throw new ArgumentOutOfRangeException(
@@ -636,7 +638,9 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         return ValueTask.FromResult(complete(state, read));
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> AwaitMessagePayloadAsync(ValueTask<int> pendingRead)
     {
         try
@@ -651,7 +655,9 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> AwaitPayloadReadAndCompleteAsync<TState>(
         ValueTask<int> pendingRead,
         TState state,
@@ -662,7 +668,9 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         return complete(state, read);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> AwaitPayloadReadAndFillAndCompleteAsync<TState>(
         ValueTask<int> pendingRead,
         Memory<byte> destination,
@@ -685,7 +693,9 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> FillPayloadReadAndCompleteAsync<TState>(
         Memory<byte> remainingDestination,
         int totalRead,
@@ -707,7 +717,9 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         return complete(state, totalRead);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> AwaitPayloadReadAheadAndCompleteAsync<TState>(
         ValueTask<int> pendingRead,
         Memory<byte> destination,
@@ -732,12 +744,14 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken) =>
         WriteCoreAsync(state, writeMessage, cancellationToken);
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     internal async ValueTask WritePreEncodedAsync(
         ReadOnlyMemory<byte> messages,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (messages.IsEmpty)
         {
             throw new ArgumentException("At least one encoded message is required.", nameof(messages));
@@ -761,14 +775,16 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken) =>
         WriteCoreAsync(writeMessage, clearBuffer: true, cancellationToken);
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask WriteCoreAsync(
         Action<IBufferWriter<byte>> writeMessage,
         bool clearBuffer,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(writeMessage);
+        BlueTuskGuard.NotDisposed(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessage);
 
         var output = BeginWrite();
         try
@@ -783,14 +799,16 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask WriteCoreAsync<TState>(
         TState state,
         Action<IBufferWriter<byte>, TState> writeMessage,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(writeMessage);
+        BlueTuskGuard.NotDisposed(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessage);
 
         var output = BeginWrite();
         try
@@ -815,7 +833,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     internal void WritePreEncoded(ReadOnlySpan<byte> messages)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (messages.IsEmpty)
         {
             throw new ArgumentException("At least one encoded message is required.", nameof(messages));
@@ -839,8 +857,8 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     private void WriteCore(Action<IBufferWriter<byte>> writeMessage, bool clearBuffer)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(writeMessage);
+        BlueTuskGuard.NotDisposed(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessage);
 
         var output = BeginWrite();
         try
@@ -859,8 +877,8 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         TState state,
         Action<IBufferWriter<byte>, TState> writeMessage)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(writeMessage);
+        BlueTuskGuard.NotDisposed(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessage);
 
         var output = BeginWrite();
         try
@@ -1051,11 +1069,15 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             : AwaitPayloadBytesAsync(pendingRead);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private static async ValueTask<int> AwaitPayloadBytesAsync(ValueTask<int> pendingRead) =>
         ValidatePayloadRead(await pendingRead.ConfigureAwait(false));
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> AwaitPayloadReadAheadAsync(
         ValueTask<int> pendingRead,
         Memory<byte> destination) =>
@@ -1177,7 +1199,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     private void BeginRead()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         _ = Interlocked.Increment(ref _activeReads);
         if (_disposed)
         {

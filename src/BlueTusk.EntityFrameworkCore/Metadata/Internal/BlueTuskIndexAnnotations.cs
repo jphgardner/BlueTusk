@@ -14,6 +14,7 @@ internal static class BlueTuskIndexAnnotations
     public const string IsConcurrent = Prefix + "Concurrent";
     public const string NullsDistinct = Prefix + "NullsDistinct";
     public const string Expressions = Prefix + "Expressions";
+    public const string Descending = Prefix + ":Descending";
 
     public static string SerializeStorageParameters(IReadOnlyDictionary<string, string> parameters) =>
         JsonSerializer.Serialize(

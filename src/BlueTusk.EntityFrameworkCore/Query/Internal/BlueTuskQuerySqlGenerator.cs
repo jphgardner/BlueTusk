@@ -10,6 +10,20 @@ namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies dependencies)
     : QuerySqlGenerator(dependencies)
 {
+#if !BLUETUSK_EF9_OR_GREATER
+    private void GenerateProjection(SelectExpression selectExpression)
+    {
+        for (var index = 0; index < selectExpression.Projection.Count; index++)
+        {
+            if (index != 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Visit(selectExpression.Projection[index]);
+        }
+    }
+#endif
     private bool _renderingCteBody;
 
     private BlueTuskRecursiveCteClause? _recursiveCteSource;
@@ -363,34 +377,44 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         }
     }
 
+#if BLUETUSK_EF7_OR_GREATER
     protected override Expression VisitJsonScalar(JsonScalarExpression jsonScalarExpression)
     {
+        var json =
+#if BLUETUSK_EF8_OR_GREATER
+            jsonScalarExpression.Json;
+#else
+            jsonScalarExpression.JsonColumn;
+#endif
         if (jsonScalarExpression.Path.Count == 0)
         {
-            Visit(jsonScalarExpression.Json);
+            Visit(json);
             return jsonScalarExpression;
         }
 
         var typeMapping = jsonScalarExpression.TypeMapping;
         if (typeMapping is BlueTuskStructuralJsonTypeMapping
-            || typeMapping is { StoreType: "json" or "jsonb", ElementTypeMapping: not null })
+#if BLUETUSK_EF8_OR_GREATER
+            || typeMapping is { StoreType: "json" or "jsonb", ElementTypeMapping: not null }
+#endif
+        )
         {
-            GenerateJsonPath(jsonScalarExpression.Json, returnsText: false, jsonScalarExpression.Path);
+            GenerateJsonPath(json, returnsText: false, jsonScalarExpression.Path);
         }
         else if (typeMapping is StringTypeMapping)
         {
-            GenerateJsonPath(jsonScalarExpression.Json, returnsText: true, jsonScalarExpression.Path);
+            GenerateJsonPath(json, returnsText: true, jsonScalarExpression.Path);
         }
         else if (typeMapping is ByteArrayTypeMapping)
         {
             Sql.Append("decode(");
-            GenerateJsonPath(jsonScalarExpression.Json, returnsText: true, jsonScalarExpression.Path);
+            GenerateJsonPath(json, returnsText: true, jsonScalarExpression.Path);
             Sql.Append(", 'base64')");
         }
         else
         {
             Sql.Append("CAST(");
-            GenerateJsonPath(jsonScalarExpression.Json, returnsText: true, jsonScalarExpression.Path);
+            GenerateJsonPath(json, returnsText: true, jsonScalarExpression.Path);
             Sql.Append(" AS ").Append(typeMapping!.StoreType).Append(")");
         }
 
@@ -426,6 +450,7 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
 
     private void GenerateJsonPathSegment(PathSegment segment, bool inArray)
     {
+#if BLUETUSK_EF8_OR_GREATER
         if (segment.PropertyName is { } propertyName)
         {
             Sql.Append("'")
@@ -449,7 +474,11 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         {
             Sql.Append(" AS text)");
         }
+#else
+        Sql.Append("'").Append(segment.Key.Replace("'", "''", StringComparison.Ordinal)).Append("'");
+#endif
     }
+#endif
 
     protected override Expression VisitSelect(SelectExpression selectExpression)
     {

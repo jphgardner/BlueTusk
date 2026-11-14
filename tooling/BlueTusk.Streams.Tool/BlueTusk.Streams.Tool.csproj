@@ -4,7 +4,9 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>bluetusk-streams</ToolCommandName>
     <PackageId>BlueTusk.Streams.Tool</PackageId>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
     <BlueTuskProductFamily>Streams</BlueTuskProductFamily>
     <Description>Validation and provisioning CLI for BlueTusk Streams PostgreSQL sources and relay storage.</Description>
     <PackageTags>postgresql;cdc;logical-replication;tool;provisioning</PackageTags>

@@ -11,7 +11,7 @@ internal static class BlueTuskExtensionMetadata
 
     public static BlueTuskExtensionDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? BlueTuskExtensionDefinitionSet.Empty : Deserialize(json);
     }
@@ -30,7 +30,7 @@ internal static class BlueTuskExtensionMetadata
 
     public static BlueTuskExtensionDefinitionSet Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskExtensionDefinitionSet>(json, SerializerOptions)
             ?? throw new ArgumentException("The extension definition set is empty.", nameof(json));
         Validate(definitions);
@@ -39,7 +39,7 @@ internal static class BlueTuskExtensionMetadata
 
     public static BlueTuskExtensionDefinition DeserializeDefinition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskExtensionDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The extension definition is empty.", nameof(json));
         Validate(definition);
@@ -48,8 +48,8 @@ internal static class BlueTuskExtensionMetadata
 
     public static void Validate(BlueTuskExtensionDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.Extensions);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.Extensions);
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var definition in definitions.Extensions)
         {
@@ -67,23 +67,23 @@ internal static class BlueTuskExtensionMetadata
 
     public static void Validate(BlueTuskExtensionDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
         if (definition.Schema is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.Schema);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.Schema);
         }
 
         if (definition.Version is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.Version);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.Version);
         }
 
-        ArgumentNullException.ThrowIfNull(definition.Dependencies);
+        BlueTuskGuard.NotNull(definition.Dependencies);
         var dependencies = new HashSet<string>(StringComparer.Ordinal);
         foreach (var dependency in definition.Dependencies)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(dependency);
+            BlueTuskGuard.NotNullOrWhiteSpace(dependency);
             if (string.Equals(dependency, definition.Name, StringComparison.Ordinal))
             {
                 throw new ArgumentException(
@@ -107,7 +107,7 @@ internal static class BlueTuskExtensionMetadata
 
     public static BlueTuskExtensionDefinition Normalize(BlueTuskExtensionDefinition definition) => definition with
     {
-        Dependencies = definition.Dependencies.Order(StringComparer.Ordinal).ToArray(),
+        Dependencies = definition.Dependencies.OrderBy(value => value, StringComparer.Ordinal).ToArray(),
     };
 
     private static void ValidateDependencyCycles(IReadOnlyList<BlueTuskExtensionDefinition> definitions)

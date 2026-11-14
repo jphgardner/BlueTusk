@@ -5,7 +5,7 @@ public sealed class BlueTuskPgDurablePlugin : IBlueTuskPlugin
 {
     public void Configure(IBlueTuskPluginContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         context.Features.Register(
             BlueTuskPgDurableFeature.RegistryName,
             new BlueTuskPgDurableFeature());

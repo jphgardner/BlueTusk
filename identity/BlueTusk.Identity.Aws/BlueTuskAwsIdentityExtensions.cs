@@ -13,7 +13,7 @@ public static class BlueTuskAwsIdentityExtensions
     public static BlueTuskDataSourceBuilder UseAwsRdsIamAuthentication(
         this BlueTuskDataSourceBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         return Configure(
             builder,
             static request => RDSAuthTokenGenerator.GenerateAuthToken(
@@ -31,8 +31,8 @@ public static class BlueTuskAwsIdentityExtensions
         this BlueTuskDataSourceBuilder builder,
         RegionEndpoint region)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentNullException.ThrowIfNull(region);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNull(region);
         return Configure(
             builder,
             request => RDSAuthTokenGenerator.GenerateAuthToken(
@@ -52,8 +52,8 @@ public static class BlueTuskAwsIdentityExtensions
         this BlueTuskDataSourceBuilder builder,
         AWSCredentials credentials)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentNullException.ThrowIfNull(credentials);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNull(credentials);
         return Configure(
             builder,
             request => RDSAuthTokenGenerator.GenerateAuthToken(
@@ -74,9 +74,9 @@ public static class BlueTuskAwsIdentityExtensions
         AWSCredentials credentials,
         RegionEndpoint region)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentNullException.ThrowIfNull(credentials);
-        ArgumentNullException.ThrowIfNull(region);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNull(credentials);
+        BlueTuskGuard.NotNull(region);
         return Configure(
             builder,
             request => RDSAuthTokenGenerator.GenerateAuthToken(

@@ -11,7 +11,7 @@ internal static class BlueTuskEventTriggerMetadata
 
     public static BlueTuskEventTriggerDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var value = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(value) ? BlueTuskEventTriggerDefinitionSet.Empty : Deserialize(value);
     }
@@ -24,7 +24,7 @@ internal static class BlueTuskEventTriggerMetadata
 
     public static BlueTuskEventTriggerDefinitionSet Deserialize(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         var definitions = JsonSerializer.Deserialize<BlueTuskEventTriggerDefinitionSet>(value, SerializerOptions)
             ?? throw new ArgumentException("The event-trigger definition set is empty.", nameof(value));
         Validate(definitions);
@@ -39,7 +39,7 @@ internal static class BlueTuskEventTriggerMetadata
 
     public static BlueTuskEventTriggerDefinition DeserializeDefinition(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         var definition = JsonSerializer.Deserialize<BlueTuskEventTriggerDefinition>(value, SerializerOptions)
             ?? throw new ArgumentException("The event-trigger definition is empty.", nameof(value));
         Validate(definition);
@@ -59,8 +59,8 @@ internal static class BlueTuskEventTriggerMetadata
 
     public static void Validate(BlueTuskEventTriggerDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.EventTriggers);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.EventTriggers);
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var definition in definitions.EventTriggers)
         {
@@ -74,13 +74,13 @@ internal static class BlueTuskEventTriggerMetadata
 
     public static void Validate(BlueTuskEventTriggerDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
-        ArgumentNullException.ThrowIfNull(definition.Function);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Function.Name);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNull(definition.Function);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Function.Name);
         if (definition.Function.Schema is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.Function.Schema);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.Function.Schema);
         }
 
         if (!Enum.IsDefined(definition.Event) || !Enum.IsDefined(definition.EnabledMode))
@@ -88,11 +88,11 @@ internal static class BlueTuskEventTriggerMetadata
             throw new ArgumentOutOfRangeException(nameof(definition), "The event or enabled mode is invalid.");
         }
 
-        ArgumentNullException.ThrowIfNull(definition.Tags);
+        BlueTuskGuard.NotNull(definition.Tags);
         var tags = new HashSet<string>(StringComparer.Ordinal);
         foreach (var tag in definition.Tags)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+            BlueTuskGuard.NotNullOrWhiteSpace(tag);
             if (!tags.Add(tag))
             {
                 throw new ArgumentException($"Event-trigger command tag '{tag}' is configured more than once.");

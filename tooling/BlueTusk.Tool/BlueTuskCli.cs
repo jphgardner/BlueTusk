@@ -19,7 +19,7 @@ public static class BlueTuskCli
         TextWriter? output = null,
         TextWriter? error = null)
     {
-        ArgumentNullException.ThrowIfNull(arguments);
+        BlueTuskGuard.NotNull(arguments);
         output ??= Console.Out;
         error ??= Console.Error;
 
@@ -128,9 +128,11 @@ public static class BlueTuskCli
                 ModelNamespace = options.ModelNamespace,
                 RootNamespace = options.RootNamespace,
                 Language = "C#",
+#if BLUETUSK_EF6_OR_GREATER
                 ProjectDir = projectDirectory,
-                UseDataAnnotations = options.UseDataAnnotations,
                 UseNullableReferenceTypes = true,
+#endif
+                UseDataAnnotations = options.UseDataAnnotations,
                 SuppressOnConfiguring = !options.IncludeConnectionString,
                 SuppressConnectionStringWarning = false,
             });

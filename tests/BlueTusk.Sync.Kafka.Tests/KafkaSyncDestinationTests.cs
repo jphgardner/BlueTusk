@@ -4,7 +4,6 @@ using BlueTusk.Sync.Testing;
 using BlueTusk.TypeSystem;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sync.Kafka.Tests;
 
@@ -69,13 +68,13 @@ public sealed class KafkaSyncDestinationTests
         }));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_KAFKA_BOOTSTRAP_SERVERS")]
     public async Task Live_Kafka_persists_atomic_event_and_checkpoint_across_restart()
     {
         var bootstrapServers = Environment.GetEnvironmentVariable("BLUETUSK_KAFKA_BOOTSTRAP_SERVERS");
         if (string.IsNullOrWhiteSpace(bootstrapServers))
         {
-            throw SkipException.ForSkip(
+            throw new InvalidOperationException(
                 "BLUETUSK_KAFKA_BOOTSTRAP_SERVERS is not configured.");
         }
 

@@ -15,8 +15,8 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
         string? schema = null,
         bool orReplace = false)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
         BlueTuskTriggerMetadata.Validate(definition);
         if (orReplace && definition.IsConstraint)
         {
@@ -54,9 +54,9 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropTriggerOperation
         {
             Table = table,
@@ -75,10 +75,10 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
         string newName,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new RenameTriggerOperation
         {
             Table = table,
@@ -97,9 +97,9 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
         BlueTuskTriggerEnabledMode enabledMode,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (!Enum.IsDefined(enabledMode))
         {
             throw new ArgumentOutOfRangeException(nameof(enabledMode));

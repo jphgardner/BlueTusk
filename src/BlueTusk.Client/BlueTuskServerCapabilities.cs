@@ -35,7 +35,7 @@ public sealed record BlueTuskServerCapabilities
 
     internal static BlueTuskServerCapabilities Detect(IReadOnlyDictionary<string, string> parameters)
     {
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
         var serverVersion = parameters.TryGetValue("server_version", out var value)
             ? ParseServerVersion(value)
             : new Version(0, 0);
@@ -60,7 +60,7 @@ public sealed record BlueTuskServerCapabilities
     {
         var span = value.AsSpan().Trim();
         var majorLength = 0;
-        while (majorLength < span.Length && char.IsAsciiDigit(span[majorLength]))
+        while (majorLength < span.Length && BlueTuskRuntime.IsAsciiDigit(span[majorLength]))
         {
             majorLength++;
         }
@@ -75,7 +75,7 @@ public sealed record BlueTuskServerCapabilities
         {
             var minorStart = majorLength + 1;
             var minorLength = 0;
-            while (minorStart + minorLength < span.Length && char.IsAsciiDigit(span[minorStart + minorLength]))
+            while (minorStart + minorLength < span.Length && BlueTuskRuntime.IsAsciiDigit(span[minorStart + minorLength]))
             {
                 minorLength++;
             }

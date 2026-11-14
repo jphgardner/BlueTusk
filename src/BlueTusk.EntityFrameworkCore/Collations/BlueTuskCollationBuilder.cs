@@ -37,7 +37,7 @@ public sealed class BlueTuskCollationBuilder
     /// <summary>Uses one locale for the provider's collation behavior.</summary>
     public BlueTuskCollationBuilder UseLocale(string locale)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(locale);
+        BlueTuskGuard.NotNullOrWhiteSpace(locale);
         Locale = locale;
         LcCollate = null;
         LcCtype = null;
@@ -47,8 +47,8 @@ public sealed class BlueTuskCollationBuilder
     /// <summary>Uses separate libc <c>LC_COLLATE</c> and <c>LC_CTYPE</c> locales.</summary>
     public BlueTuskCollationBuilder UseLibcLocales(string lcCollate, string lcCtype)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(lcCollate);
-        ArgumentException.ThrowIfNullOrWhiteSpace(lcCtype);
+        BlueTuskGuard.NotNullOrWhiteSpace(lcCollate);
+        BlueTuskGuard.NotNullOrWhiteSpace(lcCtype);
         Locale = null;
         LcCollate = lcCollate;
         LcCtype = lcCtype;
@@ -65,7 +65,7 @@ public sealed class BlueTuskCollationBuilder
     /// <summary>Sets trusted ICU collation rules, supported by PostgreSQL 16 and later.</summary>
     public BlueTuskCollationBuilder HasRules(string rules)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(rules);
+        BlueTuskGuard.NotNullOrWhiteSpace(rules);
         Rules = rules;
         return this;
     }
@@ -73,7 +73,7 @@ public sealed class BlueTuskCollationBuilder
     /// <summary>Sets the provider version recorded when the collation is created.</summary>
     public BlueTuskCollationBuilder HasVersion(string version)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+        BlueTuskGuard.NotNullOrWhiteSpace(version);
         Version = version;
         return this;
     }

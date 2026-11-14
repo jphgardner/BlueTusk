@@ -3,6 +3,9 @@ using BlueTusk.Live.Testing;
 using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
 using BlueTusk.TypeSystem;
+#if !NET8_0_OR_GREATER
+using Xunit.Abstractions;
+#endif
 
 namespace BlueTusk.ContinuousGraph.Tests;
 
@@ -660,7 +663,7 @@ public sealed class ContinuousGraphIncrementalTests(ITestOutputHelper output)
                 cancellationToken.ThrowIfCancellationRequested();
                 evaluator.AuthoritativeExecutions++;
                 IReadOnlyList<GraphRow> rows = authoritative
-                    .Order(sessionOptions.ResultOrdering)
+                    .OrderBy(static row => row, sessionOptions.ResultOrdering)
                     .ThenBy(row => row.Id, sessionOptions.KeyOrdering)
                     .Take(resultLimit)
                     .ToArray();

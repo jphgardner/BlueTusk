@@ -56,7 +56,7 @@ public sealed record BlueTuskRowSecurityRoleDefinition(
     /// <summary>Creates a named database-role target.</summary>
     public static BlueTuskRowSecurityRoleDefinition Named(string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         return new BlueTuskRowSecurityRoleDefinition(BlueTuskRowSecurityRoleKind.Named, name);
     }
 

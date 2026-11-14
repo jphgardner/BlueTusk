@@ -39,7 +39,7 @@ public sealed class ControlPlaneFormatCompatibilityTests
                 "migrated-in-place"),
         };
 
-        Assert.Equal(expected.Keys.Order(), registered.Select(format => format.Id).Order());
+        Assert.Equal(expected.Keys.OrderBy(static id => id), registered.Select(format => format.Id).OrderBy(static id => id));
         foreach (var format in registered)
         {
             var contract = expected[format.Id];

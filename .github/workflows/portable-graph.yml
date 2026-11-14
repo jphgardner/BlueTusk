@@ -28,9 +28,9 @@ jobs:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable # ggignore
         run: |
           $results = Join-Path $PWD 'artifacts/portable-graph-matrix'
-          dotnet test tests/BlueTusk.EntityFrameworkCore.Tests -c Release --filter 'FullyQualifiedName~PropertyGraph|FullyQualifiedName~PortableGraph' --logger 'trx;LogFileName=ef.trx' --results-directory $results
+          dotnet test tests/BlueTusk.EntityFrameworkCore.Tests -c Release -f net10.0 --filter 'FullyQualifiedName~PropertyGraph|FullyQualifiedName~PortableGraph' --logger 'trx;LogFileName=ef.trx' --results-directory $results
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          dotnet test tests/BlueTusk.ContinuousGraph.Tests -c Release --logger 'trx;LogFileName=live.trx' --results-directory $results
+          dotnet test tests/BlueTusk.ContinuousGraph.Tests -c Release -f net10.0 --logger 'trx;LogFileName=live.trx' --results-directory $results
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           foreach ($file in @('ef.trx', 'live.trx')) {
             [xml]$testRun = Get-Content (Join-Path $results $file) -Raw

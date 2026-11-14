@@ -2,17 +2,21 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:0e53453ccfc8ff2d51319fe8
 ARG SOURCE_COMMIT
 WORKDIR /source
 COPY Directory.Build.props Directory.Build.targets Directory.Packages.props README.md ./
+COPY eng/TargetFrameworks.props eng/Compatibility.targets eng/LegacyPublicApi.targets eng/EntityFrameworkCore.props eng/
+COPY eng/compatibility/ eng/compatibility/
 COPY eng/versions/ eng/versions/
 COPY src/ src/
 COPY website/public/bluetusk-mark.png website/public/
 COPY website/src/brand.css website/src/
 COPY samples/BlueTusk.Samples.Dashboard/ samples/BlueTusk.Samples.Dashboard/
 RUN dotnet restore samples/BlueTusk.Samples.Dashboard/BlueTusk.Samples.Dashboard.csproj \
-    --locked-mode
+    --locked-mode \
+    /p:BlueTuskRuntimeTargetFrameworks=net10.0
 RUN dotnet publish samples/BlueTusk.Samples.Dashboard/BlueTusk.Samples.Dashboard.csproj \
     --configuration Release \
     --no-restore \
     --output /app \
+    /p:BlueTuskRuntimeTargetFrameworks=net10.0 \
     /p:UseAppHost=false \
     /p:SourceRevisionId=${SOURCE_COMMIT}
 

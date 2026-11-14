@@ -10,7 +10,9 @@ namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 internal sealed class BlueTuskPostgreSqlAggregateTranslator(
     ISqlExpressionFactory sqlExpressionFactory,
     IRelationalTypeMappingSource typeMappingSource)
+#if BLUETUSK_EF7_OR_GREATER
     : IAggregateMethodCallTranslator
+#endif
 {
     private static readonly Dictionary<string, string> Functions =
         new(StringComparer.Ordinal)
@@ -97,6 +99,9 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
         nameof(BlueTuskDbFunctionsExtensions.RegressionSumProducts),
         nameof(BlueTuskDbFunctionsExtensions.RegressionSumSquaresY),
     ];
+
+    internal static bool CanTranslate(MethodInfo method) => method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
+        && Functions.ContainsKey(method.Name);
 
     public SqlExpression? Translate(
         MethodInfo method,

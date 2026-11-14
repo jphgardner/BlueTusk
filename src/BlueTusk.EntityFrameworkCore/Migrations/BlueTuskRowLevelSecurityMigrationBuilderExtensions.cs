@@ -15,9 +15,9 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
         BlueTuskRowSecurityPolicyDefinition definition,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNull(definition);
         BlueTuskRowLevelSecurityBuilder.ValidatePolicy(definition);
         var operation = new CreateRowSecurityPolicyOperation
         {
@@ -47,9 +47,9 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropRowSecurityPolicyOperation
         {
             Table = table,
@@ -66,9 +66,9 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
         BlueTuskRowSecurityPolicyDefinition definition,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNull(definition);
         BlueTuskRowLevelSecurityBuilder.ValidatePolicy(definition);
         var operation = new AlterRowSecurityPolicyOperation
         {
@@ -99,10 +99,10 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
         string newName,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new RenameRowSecurityPolicyOperation
         {
             Table = table,
@@ -121,8 +121,8 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
         bool? forced = null,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
         if (enabled is null && forced is null)
         {
             throw new ArgumentException("At least one row-level security setting must be supplied.");

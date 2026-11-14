@@ -13,7 +13,7 @@ internal sealed class BlueTuskCitextTypeMappingSourcePlugin : IRelationalTypeMap
 
     public BlueTuskCitextTypeMappingSourcePlugin(BlueTuskCitextTypeMappingOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         _schema = options.Schema;
         _scalar = new BlueTuskCitextTypeMapping(_schema);
         _array = new BlueTuskCitextArrayTypeMapping(_schema, _scalar);

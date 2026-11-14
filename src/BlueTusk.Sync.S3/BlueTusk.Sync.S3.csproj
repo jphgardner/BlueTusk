@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>Sync</BlueTuskProductFamily>
     <Description>Immutable S3 and Parquet lake destination for BlueTusk Sync.</Description>
     <PackageTags>postgresql;cdc;sync;s3;parquet;data-lake</PackageTags>
@@ -11,9 +12,14 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" />
     <PackageReference Include="Parquet.Net" />
+    <PackageReference Include="Snappier" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Sync\BlueTusk.Sync.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
   </ItemGroup>
 </Project>

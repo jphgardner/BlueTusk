@@ -41,7 +41,7 @@ internal readonly record struct BlueTuskBatchCommandExecution
             return Parameters[index];
         }
 
-        ArgumentOutOfRangeException.ThrowIfNotEqual(index, 0);
+        BlueTuskGuard.Equal(index, 0);
         if (SingleParameter.TypeOid == 0)
         {
             throw new ArgumentOutOfRangeException(nameof(index));

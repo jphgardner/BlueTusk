@@ -106,6 +106,7 @@ internal sealed class BlueTuskPostGisArrayTypeMapping<TGeometry, TProvider> : Re
     where TProvider : class
 {
     private readonly string _postgreSqlTypeName;
+    private readonly RelationalTypeMapping _arrayElementMapping;
 
     public BlueTuskPostGisArrayTypeMapping(
         string schema,
@@ -114,20 +115,21 @@ internal sealed class BlueTuskPostGisArrayTypeMapping<TGeometry, TProvider> : Re
         string? storeType = null)
         : this(
             CreateParameters(schema, typeName, elementMapping, storeType),
-            $"{BlueTuskSqlIdentifier.Delimit(typeName, schema)}[]")
+            $"{BlueTuskSqlIdentifier.Delimit(typeName, schema)}[]", elementMapping)
     {
     }
 
     private BlueTuskPostGisArrayTypeMapping(
         RelationalTypeMappingParameters parameters,
-        string postgreSqlTypeName)
+        string postgreSqlTypeName, RelationalTypeMapping elementMapping)
         : base(parameters)
     {
         _postgreSqlTypeName = postgreSqlTypeName;
+        _arrayElementMapping = elementMapping;
     }
 
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters) =>
-        new BlueTuskPostGisArrayTypeMapping<TGeometry, TProvider>(parameters, _postgreSqlTypeName);
+        new BlueTuskPostGisArrayTypeMapping<TGeometry, TProvider>(parameters, _postgreSqlTypeName, _arrayElementMapping);
 
     protected override void ConfigureParameter(DbParameter parameter)
     {
@@ -149,7 +151,11 @@ internal sealed class BlueTuskPostGisArrayTypeMapping<TGeometry, TProvider> : Re
                 builder.Append(',');
             }
 
+#if BLUETUSK_EF8_OR_GREATER
             builder.Append(((RelationalTypeMapping)ElementTypeMapping!).GenerateSqlLiteral(values[index]));
+#else
+            builder.Append(_arrayElementMapping.GenerateSqlLiteral(values[index]));
+#endif
         }
 
         return builder.Append("]::").Append(StoreType).ToString();
@@ -170,8 +176,11 @@ internal sealed class BlueTuskPostGisArrayTypeMapping<TGeometry, TProvider> : Re
                 typeof(TGeometry[]),
                 converter: CreateConverter(),
                 comparer: comparer,
-                keyComparer: comparer,
-                elementMapping: elementMapping),
+                keyComparer: comparer
+#if NET8_0_OR_GREATER
+                , elementMapping: elementMapping
+#endif
+            ),
             storeType ?? $"{BlueTuskSqlIdentifier.Delimit(typeName, schema)}[]",
             StoreTypePostfix.None,
             System.Data.DbType.Object);

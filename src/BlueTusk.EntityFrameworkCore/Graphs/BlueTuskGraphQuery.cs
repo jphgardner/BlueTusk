@@ -28,7 +28,7 @@ public sealed class BlueTuskGraphLabelExpression
 
     private BlueTuskGraphLabelExpression(IEnumerable<string> labels)
     {
-        ArgumentNullException.ThrowIfNull(labels);
+        BlueTuskGuard.NotNull(labels);
         var resolved = labels.ToArray();
         if (resolved.Length is 0 or > 8 || resolved.Any(string.IsNullOrWhiteSpace))
         {
@@ -103,10 +103,10 @@ public sealed class BlueTuskGraphPatternBuilder
         Expression<Func<TEntity, bool>>? predicate)
         where TEntity : class
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(variable);
+        BlueTuskGuard.NotNullOrWhiteSpace(variable);
         if (elementTableAlias is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(elementTableAlias);
+            BlueTuskGuard.NotNullOrWhiteSpace(elementTableAlias);
         }
 
         if (_steps.Count % 2 != 0)
@@ -186,10 +186,10 @@ public sealed class BlueTuskGraphPatternBuilder
         int maximumHops)
         where TEdge : class
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(variable);
+        BlueTuskGuard.NotNullOrWhiteSpace(variable);
         if (elementTableAlias is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(elementTableAlias);
+            BlueTuskGuard.NotNullOrWhiteSpace(elementTableAlias);
         }
 
         if (_steps.Count == 0 || _steps.Count % 2 == 0)
@@ -270,9 +270,9 @@ public sealed class BlueTuskGraphProjectionBuilder<TResult>
         Expression<Func<TResult, TValue>> resultProperty)
         where TElement : class
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(variable);
-        ArgumentNullException.ThrowIfNull(graphProperty);
-        ArgumentNullException.ThrowIfNull(resultProperty);
+        BlueTuskGuard.NotNullOrWhiteSpace(variable);
+        BlueTuskGuard.NotNull(graphProperty);
+        BlueTuskGuard.NotNull(resultProperty);
         var sourceName = GetMemberName(graphProperty.Body, "graph property");
         var resultName = GetMemberName(resultProperty.Body, "result property");
         if (_projections.Any(projection =>
@@ -331,13 +331,17 @@ public sealed class BlueTuskGraphMatch
         Action<BlueTuskGraphProjectionBuilder<TResult>> configure)
         where TResult : class
     {
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(configure);
         var projection = new BlueTuskGraphProjectionBuilder<TResult>();
         configure(projection);
         var translation = BlueTuskGraphSqlTranslator.Translate(
             _context, _graph, _pattern.Steps, projection.Projections, typeof(TResult));
         var query = _context.Model.FindEntityType(typeof(TResult)) is null
+#if BLUETUSK_EF8_OR_GREATER
             ? _context.Database.SqlQueryRaw<TResult>(translation.Sql, translation.Parameters)
+#else
+            ? BlueTuskLegacyGraphProjection.CreateQuery<TResult>(_context, translation.Sql, translation.Parameters)
+#endif
             : _context.Set<TResult>().FromSqlRaw(translation.Sql, translation.Parameters);
 #pragma warning disable EF1001 // Preserve EF's relational root and supply a graph-specific argument shape.
         if (query.Expression is FromSqlQueryRootExpression root &&
@@ -367,7 +371,7 @@ public sealed class BlueTuskGraphQueryRoot
     public BlueTuskGraphMatch Match(
         Func<BlueTuskGraphPatternBuilder, BlueTuskGraphPatternBuilder> configure)
     {
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(configure);
         var pattern = configure(new BlueTuskGraphPatternBuilder())
             ?? throw new BlueTuskGraphTranslationException("The graph pattern builder cannot be null.");
         if (pattern.Steps.Count == 0 || pattern.Steps.Count % 2 == 0)

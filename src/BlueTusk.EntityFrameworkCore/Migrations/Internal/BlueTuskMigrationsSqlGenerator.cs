@@ -69,8 +69,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         switch (operation)
         {
@@ -480,7 +480,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropExtensionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("DROP EXTENSION ");
         if (operation.IfExists)
         {
@@ -592,8 +592,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         CreateCollationFromOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.SourceName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.SourceName);
         var helper = Dependencies.SqlGenerationHelper;
         builder.Append("CREATE COLLATION ");
         if (operation.IfNotExists)
@@ -611,8 +611,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenameCollationOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         var helper = Dependencies.SqlGenerationHelper;
         var currentSchema = operation.Schema;
         if (!string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal))
@@ -645,7 +645,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RefreshCollationVersionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("ALTER COLLATION ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
             .Append(" REFRESH VERSION");
@@ -656,7 +656,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropCollationOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("DROP COLLATION ");
         if (operation.IfExists)
         {
@@ -754,8 +754,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenameTablespaceOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         var helper = Dependencies.SqlGenerationHelper;
         builder.Append("ALTER TABLESPACE ").Append(helper.DelimitIdentifier(operation.Name))
             .Append(" RENAME TO ").Append(helper.DelimitIdentifier(operation.NewName));
@@ -766,7 +766,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropTablespaceOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("DROP TABLESPACE ");
         if (operation.IfExists)
         {
@@ -951,7 +951,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropViewOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append(operation.Kind == BlueTuskViewKind.View ? "DROP VIEW " : "DROP MATERIALIZED VIEW ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
         EndStatement(builder);
@@ -961,8 +961,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenameViewOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         var helper = Dependencies.SqlGenerationHelper;
         var keyword = operation.Kind == BlueTuskViewKind.View ? "VIEW" : "MATERIALIZED VIEW";
         var currentSchema = operation.Schema;
@@ -993,7 +993,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RefreshMaterializedViewOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         if (operation.Concurrently && !operation.WithData)
         {
             throw new InvalidOperationException(
@@ -1157,8 +1157,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropRoutineOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentNullException.ThrowIfNull(operation.IdentityArgumentsSql);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNull(operation.IdentityArgumentsSql);
         builder.Append(operation.Kind == BlueTuskRoutineKind.Function ? "DROP FUNCTION " : "DROP PROCEDURE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
             .Append("(").Append(operation.IdentityArgumentsSql).Append(")");
@@ -1169,9 +1169,9 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenameRoutineOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
-        ArgumentNullException.ThrowIfNull(operation.IdentityArgumentsSql);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNull(operation.IdentityArgumentsSql);
         var helper = Dependencies.SqlGenerationHelper;
         var keyword = operation.Kind == BlueTuskRoutineKind.Function ? "FUNCTION" : "PROCEDURE";
         var currentSchema = operation.Schema;
@@ -1709,8 +1709,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         MigrationCommandListBuilder builder,
         bool terminate = true)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
         GenerateVirtualGeneratedColumnGuard(operation.Columns, builder);
         GenerateCheckConstraintVersionGuard(operation.CheckConstraints, builder);
         var foreignTable = operation[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] is string foreignJson
@@ -1827,8 +1827,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
         var currentForeign = operation[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] as string;
         var previousForeign = operation.OldTable[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] as string;
         if (currentForeign is not null || previousForeign is not null)
@@ -1872,8 +1872,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         MigrationCommandListBuilder builder,
         bool terminate = true)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
         GenerateVirtualGeneratedColumnGuard([operation], builder);
         base.Generate(operation, model, builder, terminate);
         if (terminate && operation.Comment is not null)
@@ -1888,8 +1888,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         MigrationCommandListBuilder builder,
         bool terminate = true)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
         if (operation[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] is null)
         {
             base.Generate(operation, model, builder, terminate);
@@ -1974,8 +1974,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         MigrationCommandListBuilder builder,
         bool terminate = true)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         var helper = Dependencies.SqlGenerationHelper;
         var concurrently = operation[BlueTuskIndexAnnotations.IsConcurrent] as bool? == true;
@@ -2219,8 +2219,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         var helper = Dependencies.SqlGenerationHelper;
         var table = helper.DelimitIdentifier(operation.Table, operation.Schema);
@@ -2230,7 +2230,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             operation.Table,
             operation.Name,
             operation,
-            model);
+            model) ?? throw new InvalidOperationException("A PostgreSQL column requires a mapped store type.");
         var generatedSql = operation.ComputedColumnSql;
         var oldGeneratedSql = operation.OldColumn.ComputedColumnSql;
         if (generatedSql is not null || oldGeneratedSql is not null)
@@ -2396,8 +2396,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         builder
             .Append("ALTER TABLE ")
@@ -2414,8 +2414,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         builder
             .Append("ALTER INDEX ")
@@ -2431,8 +2431,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         MigrationCommandListBuilder builder,
         bool terminate = true)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         builder
             .Append("DROP INDEX ")
@@ -2451,8 +2451,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         var helper = Dependencies.SqlGenerationHelper;
         var name = operation.Name;
@@ -2480,8 +2480,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         var sequence = Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema);
         if (operation.StartValue is { } startValue)
@@ -2502,8 +2502,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         var helper = Dependencies.SqlGenerationHelper;
         var name = operation.Name;
@@ -2531,8 +2531,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
         builder
             .Append("CREATE SCHEMA IF NOT EXISTS ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
@@ -2544,8 +2544,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
         builder
             .Append("DROP SCHEMA ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
@@ -2562,7 +2562,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     {
         if (operation.ComputedColumnSql is not null)
         {
-            var columnType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model);
+            var columnType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model) ?? throw new InvalidOperationException("A PostgreSQL column requires a mapped store type.");
             builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
                 .Append(" ")
                 .Append(columnType);
@@ -2581,7 +2581,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         if (operation[BlueTuskForeignDataMetadata.ForeignColumnOptionsAnnotationName] is string serializedOptions)
         {
-            var columnType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model);
+            var columnType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model) ?? throw new InvalidOperationException("A PostgreSQL column requires a mapped store type.");
             builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
                 .Append(" ")
                 .Append(columnType);
@@ -2597,7 +2597,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             return;
         }
 
-        var relationalType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model);
+        var relationalType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model) ?? throw new InvalidOperationException("A PostgreSQL column requires a mapped store type.");
         builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
             .Append(" ")
             .Append(relationalType);
@@ -2844,8 +2844,13 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             .EndCommand(suppressTransaction: suppressTransaction);
 
     private static bool IsDescending(CreateIndexOperation operation, int index) =>
+#if BLUETUSK_EF7_OR_GREATER
         operation.IsDescending is { Length: 0 } ||
         operation.IsDescending is { Length: > 0 } values && index < values.Length && values[index];
+#else
+        operation[BlueTuskIndexAnnotations.Descending] is bool[] values
+        && (values.Length == 0 || index < values.Length && values[index]);
+#endif
 
     private void AppendQualifiedIdentifier(MigrationCommandListBuilder builder, string identifier)
     {
@@ -2865,9 +2870,9 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         CreatePartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.ParentName);
-        ArgumentNullException.ThrowIfNull(operation.Definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Definition.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.ParentName);
+        BlueTuskGuard.NotNull(operation.Definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Definition.Name);
         builder
             .Append("CREATE TABLE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
@@ -2891,7 +2896,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropPartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder
             .Append("DROP TABLE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
@@ -2902,8 +2907,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         AlterPartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         var helper = Dependencies.SqlGenerationHelper;
         var currentName = operation.Name;
         var currentSchema = operation.Schema;
@@ -2934,9 +2939,9 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         AttachPartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.ParentName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.PartitionName);
-        ArgumentNullException.ThrowIfNull(operation.Bound);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.ParentName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.PartitionName);
+        BlueTuskGuard.NotNull(operation.Bound);
         builder
             .Append("ALTER TABLE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
@@ -2955,8 +2960,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DetachPartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.ParentName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.PartitionName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.ParentName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.PartitionName);
         builder
             .Append("ALTER TABLE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
@@ -3039,7 +3044,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         MigrationCommandListBuilder builder,
         BlueTuskPartitionBound bound)
     {
-        ArgumentNullException.ThrowIfNull(bound);
+        BlueTuskGuard.NotNull(bound);
         switch (bound.Kind)
         {
             case BlueTuskPartitionBoundKind.Range:
@@ -3086,8 +3091,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         CreateRowSecurityPolicyOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentNullException.ThrowIfNull(operation.Definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNull(operation.Definition);
         BlueTuskRowLevelSecurityBuilder.ValidatePolicy(operation.Definition);
         var helper = Dependencies.SqlGenerationHelper;
         var policy = operation.Definition;
@@ -3141,8 +3146,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropRowSecurityPolicyOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         var helper = Dependencies.SqlGenerationHelper;
         builder
             .Append("DROP POLICY ")
@@ -3156,8 +3161,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         AlterRowSecurityPolicyOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentNullException.ThrowIfNull(operation.Definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNull(operation.Definition);
         BlueTuskRowLevelSecurityBuilder.ValidatePolicy(operation.Definition);
         var helper = Dependencies.SqlGenerationHelper;
         var policy = operation.Definition;
@@ -3194,9 +3199,9 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenameRowSecurityPolicyOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         var helper = Dependencies.SqlGenerationHelper;
         builder
             .Append("ALTER POLICY ")
@@ -3212,7 +3217,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         AlterRowLevelSecurityOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
         if (operation.Enabled is null && operation.Forced is null)
         {
             throw new InvalidOperationException("A row-level security operation has no setting changes.");
@@ -3244,7 +3249,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         AddExclusionConstraintOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
         var definition = operation.Definition;
         BlueTuskExclusionConstraintMetadata.Validate(definition);
         var helper = Dependencies.SqlGenerationHelper;
@@ -3314,8 +3319,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropExclusionConstraintOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         var helper = Dependencies.SqlGenerationHelper;
         builder.Append("ALTER TABLE ")
             .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
@@ -3329,9 +3334,9 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenameExclusionConstraintOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         var helper = Dependencies.SqlGenerationHelper;
         builder.Append("ALTER TABLE ")
             .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
@@ -3470,7 +3475,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void Generate(DropEventTriggerOperation operation, MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("DROP EVENT TRIGGER ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RESTRICT");
@@ -3479,8 +3484,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void Generate(RenameEventTriggerOperation operation, MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         builder.Append("ALTER EVENT TRIGGER ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RENAME TO ")
@@ -3492,7 +3497,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         AlterEventTriggerEnabledModeOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("ALTER EVENT TRIGGER ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(operation.EnabledMode switch
@@ -3518,7 +3523,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void Generate(CreateTriggerOperation operation, MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
         var definition = operation.Definition;
         BlueTuskTriggerMetadata.Validate(definition);
         if (operation.OrReplace && definition.IsConstraint)
@@ -3692,8 +3697,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void Generate(DropTriggerOperation operation, MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         var helper = Dependencies.SqlGenerationHelper;
         builder.Append("DROP TRIGGER ")
             .Append(helper.DelimitIdentifier(operation.Name))
@@ -3705,9 +3710,9 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void Generate(RenameTriggerOperation operation, MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         var helper = Dependencies.SqlGenerationHelper;
         builder.Append("ALTER TRIGGER ")
             .Append(helper.DelimitIdentifier(operation.Name))
@@ -3722,8 +3727,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         AlterTriggerEnabledModeOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         AppendTriggerEnabledMode(
             builder,
             operation.Table,
@@ -3757,7 +3762,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void Generate(CreateRuleOperation operation, MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
         var definition = operation.Definition;
         BlueTuskRuleMetadata.Validate(definition);
         if (definition.CanonicalCreateSql is not null)
@@ -3805,8 +3810,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void Generate(DropRuleOperation operation, MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         var helper = Dependencies.SqlGenerationHelper;
         builder.Append("DROP RULE ")
             .Append(helper.DelimitIdentifier(operation.Name))
@@ -3818,9 +3823,9 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void Generate(RenameRuleOperation operation, MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         var helper = Dependencies.SqlGenerationHelper;
         builder.Append("ALTER RULE ")
             .Append(helper.DelimitIdentifier(operation.Name))
@@ -3835,8 +3840,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         AlterRuleEnabledModeOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         AppendRuleEnabledMode(builder, operation.Table, operation.Schema, operation.Name, operation.EnabledMode);
         EndStatement(builder);
     }
@@ -3932,7 +3937,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropPublicationOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("DROP PUBLICATION ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RESTRICT");
@@ -3943,8 +3948,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenamePublicationOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         builder.Append("ALTER PUBLICATION ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RENAME TO ")
@@ -4872,7 +4877,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropForeignDataWrapperOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("DROP FOREIGN DATA WRAPPER ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RESTRICT");
@@ -4883,8 +4888,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenameForeignDataWrapperOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         builder.Append("ALTER FOREIGN DATA WRAPPER ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RENAME TO ")
@@ -4962,7 +4967,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropForeignServerOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("DROP SERVER ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RESTRICT");
@@ -4973,8 +4978,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenameForeignServerOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         builder.Append("ALTER SERVER ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RENAME TO ")
@@ -5035,7 +5040,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropUserMappingOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.ServerName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.ServerName);
         builder.Append("DROP USER MAPPING FOR ");
         AppendUserMappingTarget(builder, operation.UserName);
         builder.Append(" SERVER ")
@@ -5132,7 +5137,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         var oldByName = oldOptions.ToDictionary(option => option.Name, StringComparer.Ordinal);
         var newByName = options.ToDictionary(option => option.Name, StringComparer.Ordinal);
         var changes = oldByName.Keys.Except(newByName.Keys, StringComparer.Ordinal)
-            .Order(StringComparer.Ordinal)
+            .OrderBy(value => value, StringComparer.Ordinal)
             .Select(name => new ForeignOptionChange("DROP", name, null))
             .Concat(newByName.Values.Where(option => !oldByName.ContainsKey(option.Name))
                 .OrderBy(option => option.Name, StringComparer.Ordinal)
@@ -5215,7 +5220,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropSubscriptionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("DROP SUBSCRIPTION ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RESTRICT");
@@ -5226,8 +5231,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RenameSubscriptionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         builder.Append("ALTER SUBSCRIPTION ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" RENAME TO ")
@@ -5239,7 +5244,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RefreshSubscriptionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         builder.Append("ALTER SUBSCRIPTION ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
             .Append(" REFRESH PUBLICATION WITH (copy_data = ")
@@ -5252,7 +5257,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         RefreshSubscriptionSequencesOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         GenerateMinimumVersionGuarded(
             Array.Empty<string>(),
             190000,
@@ -5269,10 +5274,10 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         SkipSubscriptionTransactionOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         if (operation.FinishLsn is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(operation.FinishLsn);
+            BlueTuskGuard.NotNullOrWhiteSpace(operation.FinishLsn);
         }
 
         builder.Append("ALTER SUBSCRIPTION ")
@@ -5637,7 +5642,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         DropPropertyGraphOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
         GenerateCapabilityGuarded(
             [$"DROP PROPERTY GRAPH {Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema)}"],
             builder);
@@ -5647,8 +5652,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         AlterPropertyGraphOperation operation,
         MigrationCommandListBuilder builder)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(operation.NewName);
         var helper = Dependencies.SqlGenerationHelper;
         var statements = new List<string>();
         var currentName = operation.Name;
@@ -5684,7 +5689,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private string BuildCreateSql(BlueTuskPropertyGraphDefinition graph)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(graph.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(graph.Name);
         if (graph.ElementTables.Count == 0)
         {
             throw new InvalidOperationException(
@@ -5733,8 +5738,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void AppendElement(StringBuilder sql, BlueTuskGraphElementTableDefinition element)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(element.Alias);
-        ArgumentException.ThrowIfNullOrWhiteSpace(element.Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(element.Alias);
+        BlueTuskGuard.NotNullOrWhiteSpace(element.Table);
         var helper = Dependencies.SqlGenerationHelper;
         sql.Append(helper.DelimitIdentifier(element.Table, element.Schema))
             .Append(" AS ")
@@ -5749,7 +5754,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         foreach (var label in element.Labels)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(label.Name);
+            BlueTuskGuard.NotNullOrWhiteSpace(label.Name);
             sql.Append(" LABEL ").Append(helper.DelimitIdentifier(label.Name));
             if (label.Properties.Count > 0)
             {
@@ -5762,8 +5767,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                     }
 
                     var property = label.Properties[index];
-                    ArgumentException.ThrowIfNullOrWhiteSpace(property.Expression);
-                    ArgumentException.ThrowIfNullOrWhiteSpace(property.Name);
+                    BlueTuskGuard.NotNullOrWhiteSpace(property.Expression);
+                    BlueTuskGuard.NotNullOrWhiteSpace(property.Name);
                     sql.Append(property.IsColumn
                             ? helper.DelimitIdentifier(property.Expression)
                             : property.Expression)

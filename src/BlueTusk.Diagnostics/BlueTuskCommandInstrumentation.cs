@@ -42,7 +42,7 @@ internal readonly struct BlueTuskCommandInstrumentation
         int port,
         BlueTuskDiagnosticsOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         if (!IsEnabled(options))
         {
             return default;
@@ -83,7 +83,7 @@ internal readonly struct BlueTuskCommandInstrumentation
 
     private static bool IsEnabled(BlueTuskDiagnosticsOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         return BlueTuskDiagnostics.ActivitySource.HasListeners() ||
             BlueTuskDiagnostics.DatabaseClientOperationDuration.Enabled ||
             BlueTuskDiagnostics.CommandsExecuted.Enabled ||
@@ -127,7 +127,7 @@ internal readonly struct BlueTuskCommandInstrumentation
 
         internal void Complete(Exception? exception)
         {
-            var elapsed = Stopwatch.GetElapsedTime(_started);
+            var elapsed = BlueTuskRuntime.GetElapsedTime(_started);
             var errorType = exception?.GetType().FullName;
             var tags = new TagList
             {
@@ -168,6 +168,7 @@ internal sealed class BlueTuskSlowCommandEventSource : EventSource
     internal static BlueTuskSlowCommandEventSource Log { get; } = new();
 
     [Event(1, Level = EventLevel.Warning, Message = "Slow PostgreSQL {0} command on {1}: {2:F6}s; tags={3}")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event payload contains only strings and a double; no object properties are serialized.")]
     internal void SlowCommand(
         string operation,
         string database,

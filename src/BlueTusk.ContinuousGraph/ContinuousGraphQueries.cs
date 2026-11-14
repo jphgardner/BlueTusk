@@ -9,7 +9,11 @@ using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.Live;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
+#if BLUETUSK_EF5
+using EntityQueryRootExpression = Microsoft.EntityFrameworkCore.Query.QueryRootExpression;
+#endif
 
 namespace BlueTusk.ContinuousGraph;
 
@@ -109,7 +113,7 @@ public sealed class PostgreSql19ContinuousGraphCapabilityProbe : IContinuousGrap
         DbContext context,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         var connection = context.Database.GetDbConnection();
         var openedHere = connection.State is not ConnectionState.Open;
         try
@@ -165,17 +169,17 @@ public sealed class ContinuousGraphQueryDefinition<TContext, TResult, TKey>
         Expression<Func<TResult, TKey>> keySelector,
         IEqualityComparer<TResult> rowComparer)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentException.ThrowIfNullOrWhiteSpace(version);
-        ArgumentException.ThrowIfNullOrWhiteSpace(graphName);
-        ArgumentNullException.ThrowIfNull(elementTableAliases);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(validationArguments);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResultCount);
-        ArgumentNullException.ThrowIfNull(queryFactory);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentNullException.ThrowIfNull(rowComparer);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(version);
+        BlueTuskGuard.NotNullOrWhiteSpace(graphName);
+        BlueTuskGuard.NotNull(elementTableAliases);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(validationArguments);
+        BlueTuskGuard.NotNegativeOrZero(maximumResultCount);
+        BlueTuskGuard.NotNull(queryFactory);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNull(rowComparer);
 
         var aliases = elementTableAliases.ToArray();
         if (aliases.Length == 0 || aliases.Any(string.IsNullOrWhiteSpace))
@@ -388,10 +392,10 @@ public static class ContinuousGraphQueryCompiler
         where TResult : class
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(contextFactory);
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(contextFactory);
+        BlueTuskGuard.NotNull(definition);
         await using var context =
-            await contextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            await CreateContextAsync(contextFactory, cancellationToken).ConfigureAwait(false);
         var graph = FindGraph(context, definition);
         if (capabilityProbe is null && graph.Backend == BlueTuskPropertyGraphBackend.NativeSqlPgq)
         {
@@ -462,7 +466,7 @@ public static class ContinuousGraphQueryCompiler
             typeof(TKey).AssemblyQualifiedName,
             graph.Schema,
             graph.Name,
-            string.Join(',', definition.ElementTableAliases.Order(StringComparer.Ordinal)),
+            string.Join(',', definition.ElementTableAliases.OrderBy(static value => value, StringComparer.Ordinal)),
             string.Join(',', dependencies.Select(static dependency => dependency.ToString())),
             keyProperty,
             definition.MaximumResultCount.ToString(CultureInfo.InvariantCulture),
@@ -519,7 +523,7 @@ public static class ContinuousGraphQueryCompiler
             async (execution, token) =>
             {
                 await using var executionContext =
-                    await contextFactory.CreateDbContextAsync(token).ConfigureAwait(false);
+                    await CreateContextAsync(contextFactory, token).ConfigureAwait(false);
                 var executionQuery = CreateExecutionQuery(executionContext, execution.Arguments);
                 if (singleKeyQuery?.TryExecuteFull(executionContext, executionQuery) is { } compiled)
                 {
@@ -597,7 +601,7 @@ public static class ContinuousGraphQueryCompiler
                             if (boundScope is null)
                             {
                                 await using var bindingContext =
-                                    await contextFactory.CreateDbContextAsync(token).ConfigureAwait(false);
+                                    await CreateContextAsync(contextFactory, token).ConfigureAwait(false);
                                 var bindingQuery = CreateExecutionQuery(bindingContext, execution.Arguments);
                                 boundScope = singleKeyQuery.TryBindScope(bindingContext, bindingQuery, keyProperty);
                                 if (boundScope is null)
@@ -615,7 +619,7 @@ public static class ContinuousGraphQueryCompiler
                         }
 
                         await using var scopedContext =
-                            await contextFactory.CreateDbContextAsync(token)
+                            await CreateContextAsync(contextFactory, token)
                                 .ConfigureAwait(false);
                         var scopedQuery = CreateExecutionQuery(scopedContext, execution.Arguments);
                         return await ExecuteEfScopeAsync(scopedContext, scopedQuery, keys, token).ConfigureAwait(false);
@@ -700,6 +704,17 @@ public static class ContinuousGraphQueryCompiler
         return true;
     }
 
+    private static ValueTask<TContext> CreateContextAsync<TContext>(IDbContextFactory<TContext> factory, CancellationToken cancellationToken)
+        where TContext : DbContext
+    {
+#if NET6_0_OR_GREATER
+        return new ValueTask<TContext>(factory.CreateDbContextAsync(cancellationToken));
+#else
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<TContext>(factory.CreateDbContext());
+#endif
+    }
+
     private static bool MatchesEndpoint(BlueTuskGraphEndpointDefinition? left, BlueTuskGraphEndpointDefinition? right) =>
         ReferenceEquals(left, right) ||
         (left is not null && right is not null && left.VertexTableAlias == right.VertexTableAlias &&
@@ -754,7 +769,7 @@ public static class ContinuousGraphQueryCompiler
 
             Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
             SHA256.HashData(bytes.AsSpan(0, written), hash);
-            return Convert.ToHexStringLower(hash);
+            return BlueTuskRuntime.ToHexStringLower(hash);
         }
         finally
         {
@@ -1070,7 +1085,7 @@ public static class ContinuousGraphQueryCompiler
             }
 
             if (node is EntityQueryRootExpression entityRoot &&
-                (entityRoot.EntityType.GetRootType().GetDeclaredQueryFilters().Count != 0 ||
+                (HasQueryFilter(entityRoot.EntityType.GetRootType()) ||
                  entityRoot.EntityType.GetNavigations().Any(navigation => navigation.IsEagerLoaded) ||
                  entityRoot.EntityType.GetSkipNavigations().Any(navigation => navigation.IsEagerLoaded)))
             {
@@ -1080,6 +1095,15 @@ public static class ContinuousGraphQueryCompiler
 
             _impact = impact;
             return node;
+        }
+
+        private static bool HasQueryFilter(IEntityType root)
+        {
+#if BLUETUSK_EF10_OR_GREATER
+            return root.GetDeclaredQueryFilters().Count != 0;
+#else
+            return root.GetQueryFilter() is not null;
+#endif
         }
 
         protected override Expression VisitMember(MemberExpression node)

@@ -227,7 +227,7 @@ public sealed class RedisSyncDestination :
 
     public RedisSyncDestination(RedisSyncOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _database = options.Connection.GetDatabase(options.Database);
@@ -246,7 +246,7 @@ public sealed class RedisSyncDestination :
         SyncProvisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         var keys = CreateKeys(request.PipelineId);
         var result = await _database.ScriptEvaluateAsync(
                 ProvisionScript,
@@ -300,7 +300,7 @@ public sealed class RedisSyncDestination :
         SnapshotReset reset,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         var runtime = RequirePipeline(pipelineId, reset.Epoch.Source);
         await using var gate = await runtime.EnterAsync(cancellationToken).ConfigureAwait(false);
         var registered = await _database.SetMembersAsync(runtime.Keys.Collections)
@@ -327,7 +327,7 @@ public sealed class RedisSyncDestination :
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         var runtime = RequirePipeline(pipelineId, start.Epoch.Source, transform);
         await ValidateSnapshotStateAsync(runtime, start.Epoch.Value, false, cancellationToken)
             .ConfigureAwait(false);
@@ -337,7 +337,7 @@ public sealed class RedisSyncDestination :
         SyncSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var runtime = RequirePipeline(
             batch.PipelineId,
             batch.SourceBatch.Epoch.Source,
@@ -373,7 +373,7 @@ public sealed class RedisSyncDestination :
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         var runtime = RequirePipeline(pipelineId, complete.Epoch.Source, transform);
         await ValidateSnapshotStateAsync(runtime, complete.Epoch.Value, true, cancellationToken)
             .ConfigureAwait(false);
@@ -383,7 +383,7 @@ public sealed class RedisSyncDestination :
         SyncTransactionBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var runtime = RequirePipeline(batch.PipelineId, batch.Transaction.Source);
         if (!string.Equals(
                 batch.Transform.Fingerprint,
@@ -427,8 +427,8 @@ public sealed class RedisSyncDestination :
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(key);
         var runtime = RequirePipeline(pipelineId);
         var value = await _database.HashGetAsync(CollectionKey(runtime.Keys, collection), key)
             .WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -439,7 +439,7 @@ public sealed class RedisSyncDestination :
         SyncQuarantineRecord record,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        BlueTuskGuard.NotNull(record);
         var runtime = RequirePipeline(record.PipelineId, record.Source, record.Transform);
         var field = QuarantineField(record.CommitEndPosition, record.TransactionId);
         var value = EncodeQuarantine(new QuarantineDocument(
@@ -463,7 +463,7 @@ public sealed class RedisSyncDestination :
         SyncQuarantineIdentity identity,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
+        BlueTuskGuard.NotNull(identity);
         var runtime = RequirePipeline(identity.PipelineId, identity.Source);
         var value = await _database.HashGetAsync(
                 runtime.Keys.Quarantine,
@@ -479,10 +479,10 @@ public sealed class RedisSyncDestination :
         DateTimeOffset resolvedAt,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentException.ThrowIfNullOrWhiteSpace(expectedTransformFingerprint);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNullOrWhiteSpace(expectedTransformFingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         var runtime = RequirePipeline(identity.PipelineId, identity.Source);
         var field = QuarantineField(identity.CommitEndPosition, identity.TransactionId);
         for (var attempt = 0; attempt < 4; attempt++)
@@ -554,9 +554,9 @@ public sealed class RedisSyncDestination :
         string operationId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         var runtime = RequirePipeline(batch.PipelineId, batch.Transaction.Source, batch.Transform);
         ValidateLimits(batch.Mutations.Count, batch.Mutations.Select(static mutation => mutation.Content));
         if (batch.Mutations.Any(static mutation =>
@@ -603,7 +603,7 @@ public sealed class RedisSyncDestination :
         string collection,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
         var runtime = RequirePipeline(pipelineId);
         return await _database.HashLengthAsync(CollectionKey(runtime.Keys, collection))
             .WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -616,10 +616,10 @@ public sealed class RedisSyncDestination :
         int partitionCount,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
-        ArgumentOutOfRangeException.ThrowIfLessThan(partitionCount, 1);
-        ArgumentOutOfRangeException.ThrowIfNegative(partitionIndex);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(partitionIndex, partitionCount);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotLessThan(partitionCount, 1);
+        BlueTuskGuard.NotNegative(partitionIndex);
+        BlueTuskGuard.NotGreaterThanOrEqual(partitionIndex, partitionCount);
         var runtime = RequirePipeline(pipelineId);
         var documentsKey = CollectionKey(runtime.Keys, collection);
         var indexKey = CollectionIndexKey(runtime.Keys, collection);
@@ -670,7 +670,7 @@ public sealed class RedisSyncDestination :
         SyncRepairBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         ValidateLimits(
             batch.Mutations.Count,
             batch.Mutations
@@ -694,7 +694,7 @@ public sealed class RedisSyncDestination :
             {
                 var document = mutation.Document!;
                 var value = RedisSyncDocumentCodec.Encode(
-                    "repair:" + Convert.ToHexStringLower(SHA256.HashData(document.Content.Span)),
+                    "repair:" + BlueTuskRuntime.ToHexStringLower(SHA256.HashData(document.Content.Span)),
                     document.Content,
                     document.ContentType,
                     document.PartitionKey);
@@ -957,7 +957,7 @@ public sealed class RedisSyncDestination :
         ChangeSourceIdentity? source = null,
         SyncTransformVersion? transform = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
         if (!_pipelines.TryGetValue(pipelineId, out var runtime))
         {
             throw new RedisSyncException(
@@ -1003,7 +1003,7 @@ public sealed class RedisSyncDestination :
         keys.Root + ":collection-index:" + Fingerprint(collection);
 
     private static string Fingerprint(string value) =>
-        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+        BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
     private static string Position(BlueTuskLogSequenceNumber value) =>
         value.Value.ToString("x16", CultureInfo.InvariantCulture);

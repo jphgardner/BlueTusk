@@ -99,7 +99,13 @@ public sealed record ControlPlanePostgreSqlSource
 {
     private static readonly Regex SchemaPattern = new(
         "^[A-Za-z_][A-Za-z0-9_$]*$",
-        RegexOptions.CultureInvariant | RegexOptions.NonBacktracking);
+        RegexOptions.CultureInvariant
+#if NET7_0_OR_GREATER
+        | RegexOptions.NonBacktracking
+#else
+        | RegexOptions.Compiled
+#endif
+        );
 
     public ControlPlanePostgreSqlSource(
         string instanceName,
@@ -107,10 +113,10 @@ public sealed record ControlPlanePostgreSqlSource
         DbDataSource controlDataSource,
         string controlSchema = "bluetusk_streams")
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(instanceName);
-        ArgumentNullException.ThrowIfNull(sourceDataSource);
-        ArgumentNullException.ThrowIfNull(controlDataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(controlSchema);
+        BlueTuskGuard.NotNullOrWhiteSpace(instanceName);
+        BlueTuskGuard.NotNull(sourceDataSource);
+        BlueTuskGuard.NotNull(controlDataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(controlSchema);
         if (!SchemaPattern.IsMatch(controlSchema))
         {
             throw new ArgumentException(

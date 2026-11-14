@@ -12,8 +12,8 @@ public static class LiveReplayStoreConformance
         string storeName,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentException.ThrowIfNullOrWhiteSpace(storeName);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNullOrWhiteSpace(storeName);
         var started = TimeProvider.System.GetTimestamp();
         var assertions = 0;
         var identity = Identity("scope:a");

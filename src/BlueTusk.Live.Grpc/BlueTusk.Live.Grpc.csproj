@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>Live</BlueTuskProductFamily>
     <Description>Authenticated gRPC streaming transport for BlueTusk Live.</Description>
     <PackageTags>postgresql;live-query;grpc;realtime</PackageTags>
@@ -24,5 +25,9 @@
     <Protobuf Include="Protos\bluetusk_live.proto" GrpcServices="Both" />
     <None Update="Protos\bluetusk_live.proto" Pack="true" PackagePath="protos" />
     <InternalsVisibleTo Include="BlueTusk.Live.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
   </ItemGroup>
 </Project>

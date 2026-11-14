@@ -1,0 +1,18 @@
+#nullable enable
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.ConnectionString.get -> string!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateDbBatch() -> System.Data.Common.DbBatch!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateDbCommand(string! commandText) -> System.Data.Common.DbCommand!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateDbConnection() -> System.Data.Common.DbConnection!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.OpenDbConnection() -> System.Data.Common.DbConnection!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.OpenDbConnectionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Data.Common.DbConnection!>
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.BlueTuskLegacyDataSource() -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateBatch() -> System.Data.Common.DbBatch!
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateCommand(string? commandText = null) -> System.Data.Common.DbCommand!
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateConnection() -> System.Data.Common.DbConnection!
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.Dispose() -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.OpenConnection() -> System.Data.Common.DbConnection!
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.OpenConnectionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Data.Common.DbConnection!>
+virtual BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.Dispose(bool disposing) -> void
+virtual BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.DisposeAsyncCore() -> System.Threading.Tasks.ValueTask

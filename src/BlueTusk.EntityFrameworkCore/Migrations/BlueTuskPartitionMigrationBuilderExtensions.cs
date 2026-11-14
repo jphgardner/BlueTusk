@@ -15,9 +15,9 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
         BlueTuskPartitionDefinition definition,
         string? parentSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(parentName);
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(parentName);
+        BlueTuskGuard.NotNull(definition);
         var operation = new CreatePartitionOperation
         {
             ParentName = parentName,
@@ -45,8 +45,8 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropPartitionOperation { Name = name, Schema = schema };
         migrationBuilder.Operations.Add(operation);
         return new OperationBuilder<DropPartitionOperation>(operation);
@@ -59,9 +59,9 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
         string? schema = null,
         string? newSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new AlterPartitionOperation
         {
             Name = name,
@@ -81,10 +81,10 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
         string? parentSchema = null,
         string? partitionSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(parentName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(partitionName);
-        ArgumentNullException.ThrowIfNull(bound);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(parentName);
+        BlueTuskGuard.NotNullOrWhiteSpace(partitionName);
+        BlueTuskGuard.NotNull(bound);
         var operation = new AttachPartitionOperation
         {
             ParentName = parentName,
@@ -121,9 +121,9 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
         string? parentSchema = null,
         string? partitionSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(parentName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(partitionName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(parentName);
+        BlueTuskGuard.NotNullOrWhiteSpace(partitionName);
         if (!Enum.IsDefined(mode))
         {
             throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown partition detach mode.");

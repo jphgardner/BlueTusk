@@ -14,14 +14,14 @@ internal static partial class BlueTuskExpressionIndexMetadata
 
     public static IReadOnlyList<BlueTuskExpressionIndexDefinition> Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? [] : Deserialize(json);
     }
 
     public static string Serialize(IEnumerable<BlueTuskExpressionIndexDefinition> definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
+        BlueTuskGuard.NotNull(definitions);
         var normalized = Normalize(definitions);
         Validate(normalized);
         return JsonSerializer.Serialize(normalized, SerializerOptions);
@@ -29,7 +29,7 @@ internal static partial class BlueTuskExpressionIndexMetadata
 
     public static string Serialize(BlueTuskExpressionIndexDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         var normalized = Normalize(definition);
         Validate(normalized);
         return JsonSerializer.Serialize(normalized, SerializerOptions);
@@ -44,7 +44,7 @@ internal static partial class BlueTuskExpressionIndexMetadata
 
     public static IReadOnlyList<BlueTuskExpressionIndexDefinition> Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskExpressionIndexDefinition[]>(json, SerializerOptions)
             ?? throw new ArgumentException("The expression-index definition set is empty.", nameof(json));
         var normalized = Normalize(definitions);
@@ -54,7 +54,7 @@ internal static partial class BlueTuskExpressionIndexMetadata
 
     public static BlueTuskExpressionIndexDefinition DeserializeDefinition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskExpressionIndexDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The expression-index definition is empty.", nameof(json));
         var normalized = Normalize(definition);
@@ -134,12 +134,12 @@ internal static partial class BlueTuskExpressionIndexMetadata
 
     public static void Validate(BlueTuskExpressionIndexDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Method);
-        ArgumentNullException.ThrowIfNull(definition.KeySql);
-        ArgumentNullException.ThrowIfNull(definition.IncludedColumns);
-        ArgumentNullException.ThrowIfNull(definition.StorageParameters);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Method);
+        BlueTuskGuard.NotNull(definition.KeySql);
+        BlueTuskGuard.NotNull(definition.IncludedColumns);
+        BlueTuskGuard.NotNull(definition.StorageParameters);
         if (definition.KeySql.Count == 0)
         {
             throw new ArgumentException("An expression index requires at least one key.", nameof(definition));
@@ -147,13 +147,13 @@ internal static partial class BlueTuskExpressionIndexMetadata
 
         foreach (var key in definition.KeySql)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            BlueTuskGuard.NotNullOrWhiteSpace(key);
         }
 
         ValidateUniqueIdentifiers(definition.IncludedColumns, nameof(definition));
         foreach (var parameter in definition.StorageParameters)
         {
-            ArgumentNullException.ThrowIfNull(parameter);
+            BlueTuskGuard.NotNull(parameter);
             ValidateStorageParameter(parameter.Name, parameter.Value);
         }
 
@@ -170,19 +170,19 @@ internal static partial class BlueTuskExpressionIndexMetadata
 
         if (definition.PredicateSql is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.PredicateSql);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.PredicateSql);
         }
 
         if (definition.Tablespace is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.Tablespace);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.Tablespace);
         }
     }
 
     public static void ValidateStorageParameter(string name, string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (!StorageParameterNamePattern().IsMatch(name))
         {
             throw new ArgumentException("Storage parameter names must be unquoted PostgreSQL identifiers.", nameof(name));
@@ -222,7 +222,7 @@ internal static partial class BlueTuskExpressionIndexMetadata
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var value in values)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            BlueTuskGuard.NotNullOrWhiteSpace(value);
             if (!names.Add(value))
             {
                 throw new ArgumentException("Included index columns must be unique.", parameterName);
@@ -230,9 +230,19 @@ internal static partial class BlueTuskExpressionIndexMetadata
         }
     }
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^[a-z_][a-z0-9_]*$", RegexOptions.CultureInvariant)]
     private static partial Regex StorageParameterNamePattern();
+#else
+    private static readonly Regex _storageParameterNamePattern = new("^[a-z_][a-z0-9_]*$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static Regex StorageParameterNamePattern() => _storageParameterNamePattern;
+#endif
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^[A-Za-z0-9_.+\\-]+$", RegexOptions.CultureInvariant)]
     private static partial Regex StorageParameterValuePattern();
+#else
+    private static readonly Regex _storageParameterValuePattern = new("^[A-Za-z0-9_.+\\-]+$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static Regex StorageParameterValuePattern() => _storageParameterValuePattern;
+#endif
 }

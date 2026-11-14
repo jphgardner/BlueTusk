@@ -209,7 +209,12 @@ internal static partial class BlueTuskDoctor
         }
 
         await using var stream = File.OpenRead(path);
+#if NET7_0_OR_GREATER
         var actual = await SHA256.HashDataAsync(stream, cancellationToken).ConfigureAwait(false);
+#else
+        using var sha256 = SHA256.Create();
+        var actual = await sha256.ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
+#endif
         if (!Convert.ToHexString(actual).Equals(expected, StringComparison.OrdinalIgnoreCase))
         {
             return (false, null);
@@ -221,7 +226,12 @@ internal static partial class BlueTuskDoctor
         }
 
         stream.Position = 0;
+#if NET7_0_OR_GREATER
         var packageHash = await SHA512.HashDataAsync(stream, cancellationToken).ConfigureAwait(false);
+#else
+        using var sha512 = SHA512.Create();
+        var packageHash = await sha512.ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
+#endif
         return (true, Convert.ToBase64String(packageHash));
     }
 
@@ -233,9 +243,21 @@ internal static partial class BlueTuskDoctor
         exception is IOException or UnauthorizedAccessException or JsonException or FormatException or
             ArgumentException or InvalidOperationException or KeyNotFoundException or NotSupportedException;
 
-    [GeneratedRegex(@"\A[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?\z", RegexOptions.CultureInvariant)]
+    private const string CandidateVersionPattern = @"\A[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?\z";
+    private const string CandidateArchivePattern = @"\A[A-Za-z][A-Za-z0-9-]*/[A-Za-z0-9][A-Za-z0-9._-]*\.(?:nupkg|snupkg|tgz)\z";
+
+#if NET7_0_OR_GREATER
+    [GeneratedRegex(CandidateVersionPattern, RegexOptions.CultureInvariant)]
     private static partial Regex CandidateVersion();
 
-    [GeneratedRegex(@"\A[A-Za-z][A-Za-z0-9-]*/[A-Za-z0-9][A-Za-z0-9._-]*\.(?:nupkg|snupkg|tgz)\z", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(CandidateArchivePattern, RegexOptions.CultureInvariant)]
     private static partial Regex CandidateArchivePath();
+#else
+    private static readonly Regex VersionRegex = new(CandidateVersionPattern, RegexOptions.CultureInvariant);
+    private static readonly Regex ArchivePathRegex = new(CandidateArchivePattern, RegexOptions.CultureInvariant);
+
+    private static Regex CandidateVersion() => VersionRegex;
+
+    private static Regex CandidateArchivePath() => ArchivePathRegex;
+#endif
 }

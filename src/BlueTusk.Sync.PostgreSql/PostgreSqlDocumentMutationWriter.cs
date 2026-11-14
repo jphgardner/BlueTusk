@@ -12,7 +12,7 @@ public sealed class PostgreSqlDocumentMutationWriter : IPostgreSqlSyncMutationWr
 
     public PostgreSqlDocumentMutationWriter(string controlSchema)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(controlSchema);
+        BlueTuskGuard.NotNullOrWhiteSpace(controlSchema);
         _documentsTable = QuoteIdentifier(controlSchema) + ".documents";
     }
 
@@ -142,7 +142,11 @@ public sealed class PostgreSqlDocumentMutationWriter : IPostgreSqlSyncMutationWr
                 }
 
                 sql.AppendLine();
+#if NET6_0_OR_GREATER
                 sql.Append(CultureInfo.InvariantCulture, $"(@pipeline, @collection{index}, @key{index}, @partition{index}, @content_type{index}, @content{index}, @change_id{index}, @snapshot_epoch{index}, clock_timestamp())");
+#else
+                sql.Append(BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"(@pipeline, @collection{index}, @key{index}, @partition{index}, @content_type{index}, @content{index}, @change_id{index}, @snapshot_epoch{index}, clock_timestamp())"));
+#endif
                 var item = chunk[index];
                 AddParameter(command, $"collection{index}", item.Collection);
                 AddParameter(command, $"key{index}", item.Key);
@@ -220,12 +224,12 @@ public sealed class PostgreSqlDocumentMutationWriter : IPostgreSqlSyncMutationWr
     }
 
     private static string FormatChangeId(ChangeId id) =>
-        string.Create(
+        BlueTuskRuntime.Format(
             CultureInfo.InvariantCulture,
             $"{id.Source.Fingerprint}:{id.CommitEndPosition.Value:X16}:{id.TransactionId}:{id.Ordinal}");
 
     private static string FormatSnapshotId(SnapshotRowId id) =>
-        string.Create(CultureInfo.InvariantCulture, $"{id.Epoch:N}:{id.TableIdentity}:{id.KeyIdentity}");
+        BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{id.Epoch:N}:{id.TableIdentity}:{id.KeyIdentity}");
 
     internal static byte[] CopyParameterPayload(ReadOnlyMemory<byte> content) =>
         content.ToArray();

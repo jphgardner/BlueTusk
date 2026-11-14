@@ -19,16 +19,16 @@ public static class BlueTuskSqlExpressionFactory
         Type resultType,
         RelationalTypeMapping resultTypeMapping)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(arguments);
-        ArgumentNullException.ThrowIfNull(orderings);
-        ArgumentNullException.ThrowIfNull(withinGroupOrderings);
-        ArgumentNullException.ThrowIfNull(resultType);
-        ArgumentNullException.ThrowIfNull(resultTypeMapping);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(arguments);
+        BlueTuskGuard.NotNull(orderings);
+        BlueTuskGuard.NotNull(withinGroupOrderings);
+        BlueTuskGuard.NotNull(resultType);
+        BlueTuskGuard.NotNull(resultTypeMapping);
         ValidateIdentifier(name, nameof(name));
         if (schema is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+            BlueTuskGuard.NotNullOrWhiteSpace(schema);
             ValidateIdentifier(schema, nameof(schema));
         }
         else if (!IsSafeUnquotedIdentifier(name))
@@ -55,7 +55,7 @@ public static class BlueTuskSqlExpressionFactory
         SqlExpression expression,
         out IReadOnlyList<SqlExpression> values)
     {
-        ArgumentNullException.ThrowIfNull(expression);
+        BlueTuskGuard.NotNull(expression);
         if (expression is BlueTuskRowValueExpression row)
         {
             values = row.Values;
@@ -74,11 +74,11 @@ public static class BlueTuskSqlExpressionFactory
         Type resultType,
         RelationalTypeMapping resultTypeMapping)
     {
-        ArgumentNullException.ThrowIfNull(left);
-        ArgumentNullException.ThrowIfNull(right);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operatorToken);
-        ArgumentNullException.ThrowIfNull(resultType);
-        ArgumentNullException.ThrowIfNull(resultTypeMapping);
+        BlueTuskGuard.NotNull(left);
+        BlueTuskGuard.NotNull(right);
+        BlueTuskGuard.NotNullOrWhiteSpace(operatorToken);
+        BlueTuskGuard.NotNull(resultType);
+        BlueTuskGuard.NotNull(resultTypeMapping);
         if (operatorToken.Length > 63 || !operatorToken.All(IsOperatorCharacter))
         {
             throw new ArgumentException(

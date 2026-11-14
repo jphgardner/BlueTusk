@@ -23,7 +23,7 @@ public sealed class BlueTuskTransactionSnapshot :
         ulong maximumTransactionId,
         IEnumerable<ulong> inProgressTransactionIds)
     {
-        ArgumentNullException.ThrowIfNull(inProgressTransactionIds);
+        BlueTuskGuard.NotNull(inProgressTransactionIds);
         if (minimumTransactionId > maximumTransactionId)
         {
             throw new ArgumentOutOfRangeException(

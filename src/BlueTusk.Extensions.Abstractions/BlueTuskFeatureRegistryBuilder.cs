@@ -1,15 +1,25 @@
+#if NET8_0_OR_GREATER
 using System.Collections.Frozen;
+#endif
 
 namespace BlueTusk.Extensions;
 
 /// <summary>An immutable snapshot of optional provider features configured for one data source.</summary>
 public sealed class BlueTuskFeatureRegistry
 {
+#if NET8_0_OR_GREATER
     private readonly FrozenDictionary<string, object> _features;
+#else
+    private readonly Dictionary<string, object> _features;
+#endif
 
     internal BlueTuskFeatureRegistry(IReadOnlyDictionary<string, object> features)
     {
+#if NET8_0_OR_GREATER
         _features = features.ToFrozenDictionary(StringComparer.Ordinal);
+#else
+        _features = features.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+#endif
     }
 
     public static BlueTuskFeatureRegistry Empty { get; } =
@@ -21,13 +31,13 @@ public sealed class BlueTuskFeatureRegistry
 
     public bool Contains(string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         return _features.ContainsKey(name);
     }
 
     public bool TryGet(string name, out object? feature)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         return _features.TryGetValue(name, out feature);
     }
 
@@ -60,8 +70,8 @@ public sealed class BlueTuskFeatureRegistryBuilder
     public BlueTuskFeatureRegistryBuilder Register<TFeature>(string name, TFeature feature)
         where TFeature : notnull
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(feature);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(feature);
 
         if (!_features.TryAdd(name, feature))
         {

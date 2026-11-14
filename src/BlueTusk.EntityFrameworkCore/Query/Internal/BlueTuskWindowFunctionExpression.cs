@@ -15,7 +15,9 @@ internal sealed class BlueTuskWindowFunctionExpression(
     RelationalTypeMapping typeMapping)
     : SqlExpression(type, typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public string Name { get; } = name;
 
@@ -55,6 +57,7 @@ internal sealed class BlueTuskWindowFunctionExpression(
         return Update(arguments, partitions, orderings);
     }
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -73,6 +76,7 @@ internal sealed class BlueTuskWindowFunctionExpression(
             NewArrayInit(typeof(OrderingExpression), Orderings.Select(ordering => ordering.Quote())),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)
@@ -149,9 +153,11 @@ internal sealed class BlueTuskWindowOrderingExpression(
             : new BlueTuskWindowOrderingExpression(visited, IsAscending);
     }
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
         => throw new InvalidOperationException(
             "A PostgreSQL window-order marker must be consumed by a window function.");
+#endif
 
     protected override void Print(ExpressionPrinter expressionPrinter)
     {

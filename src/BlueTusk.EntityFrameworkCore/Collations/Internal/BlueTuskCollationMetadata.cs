@@ -11,7 +11,7 @@ internal static class BlueTuskCollationMetadata
 
     public static BlueTuskCollationDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? BlueTuskCollationDefinitionSet.Empty : Deserialize(json);
     }
@@ -30,7 +30,7 @@ internal static class BlueTuskCollationMetadata
 
     public static BlueTuskCollationDefinitionSet Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskCollationDefinitionSet>(json, SerializerOptions)
             ?? throw new ArgumentException("The collation definition set is empty.", nameof(json));
         Validate(definitions);
@@ -39,7 +39,7 @@ internal static class BlueTuskCollationMetadata
 
     public static BlueTuskCollationDefinition DeserializeDefinition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskCollationDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The collation definition is empty.", nameof(json));
         Validate(definition);
@@ -48,8 +48,8 @@ internal static class BlueTuskCollationMetadata
 
     public static void Validate(BlueTuskCollationDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.Collations);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.Collations);
         var names = new HashSet<(string? Schema, string Name)>();
         foreach (var definition in definitions.Collations)
         {
@@ -65,8 +65,8 @@ internal static class BlueTuskCollationMetadata
 
     public static void Validate(BlueTuskCollationDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
         ValidateOptional(definition.Schema, nameof(definition.Schema));
         ValidateOptional(definition.Locale, nameof(definition.Locale));
         ValidateOptional(definition.LcCollate, nameof(definition.LcCollate));
@@ -127,7 +127,7 @@ internal static class BlueTuskCollationMetadata
     {
         if (value is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+            BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         }
     }
 }

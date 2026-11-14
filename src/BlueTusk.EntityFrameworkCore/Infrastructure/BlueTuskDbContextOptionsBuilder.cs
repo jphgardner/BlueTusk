@@ -46,7 +46,7 @@ public sealed class BlueTuskDbContextOptionsBuilder
     /// </remarks>
     public BlueTuskDbContextOptionsBuilder UseAdminDatabase(string databaseName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseName);
         var extension = OptionsBuilder.Options.FindExtension<BlueTuskOptionsExtension>()
             ?? throw new InvalidOperationException("BlueTusk provider options have not been configured.");
         extension = extension.WithAdminDatabase(databaseName);

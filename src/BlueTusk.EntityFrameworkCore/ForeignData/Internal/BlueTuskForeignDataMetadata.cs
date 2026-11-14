@@ -15,7 +15,7 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static BlueTuskForeignDataDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? BlueTuskForeignDataDefinitionSet.Empty : Deserialize(json);
     }
@@ -28,7 +28,7 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static BlueTuskForeignDataDefinitionSet Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskForeignDataDefinitionSet>(json, SerializerOptions)
             ?? throw new ArgumentException("The foreign-data definition set is empty.", nameof(json));
         ValidateForModel(definitions);
@@ -43,7 +43,7 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static BlueTuskForeignDataWrapperDefinition DeserializeWrapper(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskForeignDataWrapperDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The foreign-data wrapper definition is empty.", nameof(json));
         Validate(definition);
@@ -58,7 +58,7 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static BlueTuskForeignServerDefinition DeserializeServer(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskForeignServerDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The foreign-server definition is empty.", nameof(json));
         Validate(definition);
@@ -81,7 +81,7 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static BlueTuskUserMappingDefinition DeserializeUserMapping(string json, bool forModel = false)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskUserMappingDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The user-mapping definition is empty.", nameof(json));
         if (forModel)
@@ -104,7 +104,7 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static BlueTuskForeignTableDefinition DeserializeForeignTable(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskForeignTableDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The foreign-table definition is empty.", nameof(json));
         Validate(definition);
@@ -119,7 +119,7 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static IReadOnlyList<BlueTuskForeignOptionDefinition> DeserializeOptions(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var options = JsonSerializer.Deserialize<BlueTuskForeignOptionDefinition[]>(json, SerializerOptions)
             ?? throw new ArgumentException("The foreign-column option list is empty.", nameof(json));
         ValidateOptions(options);
@@ -128,16 +128,16 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static BlueTuskForeignTableDefinition? GetForeignTable(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(ForeignTableAnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? null : DeserializeForeignTable(json);
     }
 
     public static BlueTuskForeignTableDefinition? GetTableDefinition(ITable table)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        BlueTuskGuard.NotNull(table);
         var definitions = table.EntityTypeMappings
-            .Select(mapping => mapping.TypeBase is IReadOnlyEntityType entityType
+            .Select(mapping => mapping.GetBlueTuskEntityType() is IReadOnlyEntityType entityType
                 ? GetForeignTable(entityType)
                 : null)
             .Where(definition => definition is not null)
@@ -215,10 +215,10 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static void Validate(BlueTuskForeignDataDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.Wrappers);
-        ArgumentNullException.ThrowIfNull(definitions.Servers);
-        ArgumentNullException.ThrowIfNull(definitions.UserMappings);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.Wrappers);
+        BlueTuskGuard.NotNull(definitions.Servers);
+        BlueTuskGuard.NotNull(definitions.UserMappings);
         ValidateUnique(definitions.Wrappers, item => item.Name, "foreign-data wrapper");
         ValidateUnique(definitions.Servers, item => item.Name, "foreign server");
         ValidateUnique(definitions.UserMappings, item => $"{item.ServerName}\0{item.UserName}", "user mapping");
@@ -240,8 +240,8 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static void Validate(BlueTuskForeignDataWrapperDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
         ValidateOptional(definition.HandlerFunction, nameof(definition.HandlerFunction));
         ValidateOptional(definition.ValidatorFunction, nameof(definition.ValidatorFunction));
         ValidateOptional(definition.ConnectionFunction, nameof(definition.ConnectionFunction));
@@ -250,9 +250,9 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static void Validate(BlueTuskForeignServerDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.ForeignDataWrapper);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.ForeignDataWrapper);
         ValidateOptional(definition.Type, nameof(definition.Type));
         ValidateOptional(definition.Version, nameof(definition.Version));
         ValidateOptions(definition.Options);
@@ -260,8 +260,8 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static void Validate(BlueTuskUserMappingDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.ServerName);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.ServerName);
         ValidateOptional(definition.UserName, nameof(definition.UserName));
         ValidateOptions(definition.Options);
         if (definition.OptionsRedacted && definition.Options.Count > 0)
@@ -285,14 +285,14 @@ internal static partial class BlueTuskForeignDataMetadata
 
     public static void Validate(BlueTuskForeignTableDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.ServerName);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.ServerName);
         ValidateOptions(definition.Options);
-        ArgumentNullException.ThrowIfNull(definition.Columns);
+        BlueTuskGuard.NotNull(definition.Columns);
         ValidateUnique(definition.Columns, column => column.Name, "foreign-table column");
         foreach (var column in definition.Columns)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(column.Name);
+            BlueTuskGuard.NotNullOrWhiteSpace(column.Name);
             ValidateOptions(column.Options);
         }
     }
@@ -303,13 +303,13 @@ internal static partial class BlueTuskForeignDataMetadata
 
     private static void ValidateOptions(IReadOnlyList<BlueTuskForeignOptionDefinition> options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         ValidateUnique(options, option => option.Name, "foreign option");
         foreach (var option in options)
         {
-            ArgumentNullException.ThrowIfNull(option);
-            ArgumentException.ThrowIfNullOrWhiteSpace(option.Name);
-            ArgumentNullException.ThrowIfNull(option.Value);
+            BlueTuskGuard.NotNull(option);
+            BlueTuskGuard.NotNullOrWhiteSpace(option.Name);
+            BlueTuskGuard.NotNull(option.Value);
         }
     }
 
@@ -332,12 +332,17 @@ internal static partial class BlueTuskForeignDataMetadata
     {
         if (value is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+            BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         }
     }
 
     private static string? NormalizeNullable(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("(?:password|passwd|pwd|secret|token|credential|api[_-]?key)", RegexOptions.IgnoreCase)]
     private static partial Regex SensitiveOptionRegex();
+#else
+    private static readonly Regex _sensitiveOptionRegex = new("(?:password|passwd|pwd|secret|token|credential|api[_-]?key)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static Regex SensitiveOptionRegex() => _sensitiveOptionRegex;
+#endif
 }

@@ -27,7 +27,7 @@ public sealed class BlueTuskEventTriggerBuilder
     /// <summary>Restricts firing to the supplied PostgreSQL command tags.</summary>
     public BlueTuskEventTriggerBuilder HasTags(params string[] tags)
     {
-        ArgumentNullException.ThrowIfNull(tags);
+        BlueTuskGuard.NotNull(tags);
         _tags.AddRange(tags);
         return this;
     }

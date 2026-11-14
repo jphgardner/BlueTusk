@@ -40,7 +40,11 @@ public sealed class BlueTuskObjectIdentifierCodec<T> :
             throw new ArgumentOutOfRangeException(nameof(format));
         }
 
+#if NET7_0_OR_GREATER
         return T.FromIdentifier(identifier);
+#else
+        return default(T).FromIdentifier(identifier);
+#endif
     }
 
     public override void WriteTyped(

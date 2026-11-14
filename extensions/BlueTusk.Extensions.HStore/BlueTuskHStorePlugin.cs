@@ -14,7 +14,7 @@ public sealed class BlueTuskHStorePlugin : IBlueTuskPlugin
 
     public void Configure(IBlueTuskPluginContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         context.Types.Register(TypeName.Schema, TypeName.Name, new BlueTuskHStoreCodec());
         context.Features.Register(
             BlueTuskHStoreFeature.RegistryName,

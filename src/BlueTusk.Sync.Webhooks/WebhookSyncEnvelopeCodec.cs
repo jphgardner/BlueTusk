@@ -260,11 +260,11 @@ internal static class WebhookSyncEnvelopeCodec
         writer.WriteEndObject();
     }
 
-    private static string StableChangeId(ChangeId id) => string.Create(
+    private static string StableChangeId(ChangeId id) => BlueTuskRuntime.Format(
         CultureInfo.InvariantCulture,
         $"{id.Source.Fingerprint}:{id.CommitEndPosition.Value:x16}:{id.TransactionId:x8}:{id.Ordinal}");
 
-    private static string StableSnapshotId(SnapshotRowId id) => string.Create(
+    private static string StableSnapshotId(SnapshotRowId id) => BlueTuskRuntime.Format(
         CultureInfo.InvariantCulture,
         $"{id.Epoch:N}:{id.TableIdentity}:{id.KeyIdentity}");
 }

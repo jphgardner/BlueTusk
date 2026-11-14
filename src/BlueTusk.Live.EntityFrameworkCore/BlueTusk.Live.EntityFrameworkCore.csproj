@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>Live</BlueTuskProductFamily>
     <Description>Whitelist-based Entity Framework Core live-query registration and validation for BlueTusk Live.</Description>
     <PackageTags>postgresql;entity-framework-core;live-query;realtime</PackageTags>

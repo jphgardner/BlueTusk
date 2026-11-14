@@ -30,7 +30,7 @@ public sealed class PostgreSqlRelaySyncPipelineSource : ISyncPipelineSource
         _transform = transform ?? throw new ArgumentNullException(nameof(transform));
         _relayOptions = relayOptions ?? throw new ArgumentNullException(nameof(relayOptions));
         _snapshotOptions = snapshotOptions ?? new SnapshotThenStreamOptions();
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
+        BlueTuskGuard.NotNegativeOrZero(
             _snapshotOptions.MaximumSnapshotAttempts);
     }
 
@@ -39,7 +39,7 @@ public sealed class PostgreSqlRelaySyncPipelineSource : ISyncPipelineSource
         IChangeStreamConsumer consumer,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(consumer);
+        BlueTuskGuard.NotNull(consumer);
         await _relay.InitializeAsync(cancellationToken).ConfigureAwait(false);
         var registration = await _relay.RegisterSourceAsync(
             _source,

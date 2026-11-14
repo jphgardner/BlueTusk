@@ -42,8 +42,8 @@ public sealed record SyncRebuildOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(PipelineId);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumSnapshotAttempts);
+        BlueTuskGuard.NotNullOrWhiteSpace(PipelineId);
+        BlueTuskGuard.NotNegativeOrZero(MaximumSnapshotAttempts);
     }
 }
 
@@ -63,7 +63,7 @@ public sealed record SyncRebuildPreparation
     /// <summary>Initializes validated opaque destination generation metadata.</summary>
     public SyncRebuildPreparation(string previousGeneration)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(previousGeneration);
+        BlueTuskGuard.NotNullOrWhiteSpace(previousGeneration);
         PreviousGeneration = previousGeneration;
     }
 
@@ -159,8 +159,8 @@ public sealed class SyncRebuildReconciliation
         SyncReconciliationRequest request,
         ISyncReconciliationReader source)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNull(source);
         if (request.Mode is not SyncReconciliationMode.PartitionedContentHash || request.Repair)
         {
             throw new ArgumentException(
@@ -189,7 +189,7 @@ public sealed class SyncReconciliationRebuildVerifier : ISyncRebuildVerifier
     public SyncReconciliationRebuildVerifier(
         IEnumerable<SyncRebuildReconciliation> reconciliations)
     {
-        ArgumentNullException.ThrowIfNull(reconciliations);
+        BlueTuskGuard.NotNull(reconciliations);
         _reconciliations = Array.AsReadOnly(reconciliations.ToArray());
         if (_reconciliations.Count == 0)
         {
@@ -205,8 +205,8 @@ public sealed class SyncReconciliationRebuildVerifier : ISyncRebuildVerifier
         ISyncDestination destination,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNull(destination);
         foreach (var reconciliation in _reconciliations)
         {
             if (!string.Equals(
@@ -260,14 +260,14 @@ public sealed class SyncRebuildCoordinator
         ISyncRebuildVerifier verifier,
         IProgress<SyncRebuildProgress>? progress = null)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
-        ArgumentNullException.ThrowIfNull(sourceIdentity);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(transform);
-        ArgumentNullException.ThrowIfNull(destination);
-        ArgumentNullException.ThrowIfNull(cutoverBarrier);
-        ArgumentNullException.ThrowIfNull(verifier);
+        BlueTuskGuard.NotNull(sourceIdentity);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(transform);
+        BlueTuskGuard.NotNull(destination);
+        BlueTuskGuard.NotNull(cutoverBarrier);
+        BlueTuskGuard.NotNull(verifier);
         if (!destination.Capabilities.HasFlag(SyncDestinationCapabilities.AliasSwap) ||
             destination is not ISyncRebuildDestination rebuildDestination)
         {
@@ -299,7 +299,7 @@ public sealed class SyncRebuildCoordinator
         var preparation = await _rebuildDestination.PrepareRebuildAsync(
             request,
             cancellationToken).ConfigureAwait(false);
-        ArgumentNullException.ThrowIfNull(preparation);
+        BlueTuskGuard.NotNull(preparation);
 
         Guid? abandonedEpoch = null;
         SnapshotOutcome? outcome = null;
@@ -387,7 +387,7 @@ public sealed class SyncRebuildCoordinator
                     _options.PipelineId,
                     attempt.Epoch,
                     cancellationToken).ConfigureAwait(false);
-                ArgumentNullException.ThrowIfNull(cutoverLease);
+                BlueTuskGuard.NotNull(cutoverLease);
                 if (cutoverLease.TargetPosition.Value == 0 ||
                     cutoverLease.TargetPosition < attempt.Epoch.ConsistentPosition)
                 {
@@ -448,7 +448,7 @@ public sealed class SyncRebuildCoordinator
         var verification = await _rebuildDestination.VerifyRebuildReadyAsync(
             _options.PipelineId,
             cancellationToken).ConfigureAwait(false);
-        ArgumentNullException.ThrowIfNull(verification);
+        BlueTuskGuard.NotNull(verification);
         if (!verification.IsMatch)
         {
             throw new SyncRebuildVerificationException(
@@ -460,7 +460,7 @@ public sealed class SyncRebuildCoordinator
             _options.PipelineId,
             _destination,
             cancellationToken).ConfigureAwait(false);
-        ArgumentNullException.ThrowIfNull(authoritativeVerification);
+        BlueTuskGuard.NotNull(authoritativeVerification);
         if (!authoritativeVerification.IsMatch)
         {
             throw new SyncRebuildVerificationException(
@@ -655,7 +655,7 @@ public sealed class SyncRebuildCoordinator
         SyncApplyResult result,
         BlueTuskLogSequenceNumber expectedPosition)
     {
-        ArgumentNullException.ThrowIfNull(result);
+        BlueTuskGuard.NotNull(result);
         if (result.Status is SyncApplyStatus.TransformVersionMismatch)
         {
             throw new SyncTransformVersionMismatchException(

@@ -12,7 +12,7 @@ public sealed partial class OpenSearchSyncDestination
         string collection,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
         var runtime = RequirePipeline(pipelineId);
         await using var gate = await runtime.EnterAsync(cancellationToken).ConfigureAwait(false);
         var definition = await RequireCollectionAsync(runtime, collection, cancellationToken)
@@ -39,10 +39,10 @@ public sealed partial class OpenSearchSyncDestination
         int partitionCount,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
-        ArgumentOutOfRangeException.ThrowIfLessThan(partitionCount, 1);
-        ArgumentOutOfRangeException.ThrowIfNegative(partitionIndex);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(partitionIndex, partitionCount);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotLessThan(partitionCount, 1);
+        BlueTuskGuard.NotNegative(partitionIndex);
+        BlueTuskGuard.NotGreaterThanOrEqual(partitionIndex, partitionCount);
         var runtime = RequirePipeline(pipelineId);
         await using var gate = await runtime.EnterAsync(cancellationToken).ConfigureAwait(false);
         var definition = await RequireCollectionAsync(runtime, collection, cancellationToken)
@@ -100,7 +100,7 @@ public sealed partial class OpenSearchSyncDestination
         SyncRepairBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         ValidateLimits(
             batch.Mutations.Count,
             batch.Mutations

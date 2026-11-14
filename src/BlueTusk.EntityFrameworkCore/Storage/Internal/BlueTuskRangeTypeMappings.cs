@@ -14,7 +14,7 @@ internal sealed class BlueTuskRangeTypeMapping<T> : RelationalTypeMapping
     public BlueTuskRangeTypeMapping(string storeType, uint postgreSqlTypeOid)
         : base(storeType, typeof(BlueTuskRange<T>), System.Data.DbType.Object)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(postgreSqlTypeOid);
+        BlueTuskGuard.NotZero(postgreSqlTypeOid);
         _postgreSqlTypeOid = postgreSqlTypeOid;
     }
 
@@ -47,7 +47,7 @@ internal sealed class BlueTuskMultirangeTypeMapping<T> : RelationalTypeMapping
     public BlueTuskMultirangeTypeMapping(string storeType, uint postgreSqlTypeOid)
         : base(storeType, typeof(BlueTuskMultirange<T>), System.Data.DbType.Object)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(postgreSqlTypeOid);
+        BlueTuskGuard.NotZero(postgreSqlTypeOid);
         _postgreSqlTypeOid = postgreSqlTypeOid;
     }
 

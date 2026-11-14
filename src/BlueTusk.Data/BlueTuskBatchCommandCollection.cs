@@ -29,7 +29,7 @@ public sealed class BlueTuskBatchCommandCollection : DbBatchCommandCollection
 
     public override void CopyTo(DbBatchCommand[] array, int arrayIndex)
     {
-        ArgumentNullException.ThrowIfNull(array);
+        BlueTuskGuard.NotNull(array);
         for (var index = 0; index < _commands.Count; index++)
         {
             array[arrayIndex + index] = _commands[index];
@@ -58,7 +58,7 @@ public sealed class BlueTuskBatchCommandCollection : DbBatchCommandCollection
 
     private static BlueTuskBatchCommand RequireCommand(DbBatchCommand command)
     {
-        ArgumentNullException.ThrowIfNull(command);
+        BlueTuskGuard.NotNull(command);
         return command as BlueTuskBatchCommand ??
             throw new ArgumentException(
                 "Only BlueTuskBatchCommand instances can be added.",

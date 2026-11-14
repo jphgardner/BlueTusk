@@ -9,7 +9,7 @@ public sealed class BlueTuskTextSearchVectorCodec : BlueTuskCodec<BlueTuskTextSe
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskTextSearchVector.Parse(reader.ReadRemainingUtf8());
@@ -72,8 +72,8 @@ public sealed class BlueTuskTextSearchVectorCodec : BlueTuskCodec<BlueTuskTextSe
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());
@@ -100,7 +100,7 @@ public sealed class BlueTuskTextSearchVectorCodec : BlueTuskCodec<BlueTuskTextSe
 
     public static int GetBinarySize(BlueTuskTextSearchVector value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var size = sizeof(int);
         foreach (var entry in value)
         {
@@ -126,7 +126,7 @@ public sealed class BlueTuskTextSearchQueryCodec : BlueTuskCodec<BlueTuskTextSea
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskTextSearchQuery.Parse(reader.ReadRemainingUtf8());
@@ -269,8 +269,8 @@ public sealed class BlueTuskTextSearchQueryCodec : BlueTuskCodec<BlueTuskTextSea
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());
@@ -316,7 +316,7 @@ public sealed class BlueTuskTextSearchQueryCodec : BlueTuskCodec<BlueTuskTextSea
 
     public static int GetBinarySize(BlueTuskTextSearchQuery value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var size = sizeof(int);
         foreach (var node in GetWireNodes(value))
         {

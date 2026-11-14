@@ -9,7 +9,7 @@ public static class BlueTuskPostGisDataSourceBuilderExtensions
         this BlueTuskDataSourceBuilder builder,
         string schema = "public")
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         return builder.UsePlugin(new BlueTuskPostGisPlugin(schema));
     }
 }

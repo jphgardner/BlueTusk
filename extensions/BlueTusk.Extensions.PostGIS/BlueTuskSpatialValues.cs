@@ -115,7 +115,7 @@ internal static class BlueTuskSpatialValue
 
     public static string ValidateText(string value, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         if (value.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("A PostGIS text value cannot contain a null character.", parameterName);

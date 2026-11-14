@@ -6,7 +6,8 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <PackageId>BlueTusk.Identity.GoogleCloud</PackageId>
     <Description>Optional Google Cloud SQL for PostgreSQL IAM authentication for BlueTusk.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;google-cloud;cloud-sql;iam</PackageTags>

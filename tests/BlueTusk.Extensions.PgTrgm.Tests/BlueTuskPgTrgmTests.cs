@@ -36,7 +36,7 @@ public sealed class BlueTuskPgTrgmTests
             await dataSource.ComparePgTrgmAsync("BlueTusk", "PostgreSQL"));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Pg_trgm_plugin_executes_functions_operators_and_safe_parameters_live()
     {
         var connectionString = GetConnectionString();

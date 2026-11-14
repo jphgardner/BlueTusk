@@ -1,0 +1,162 @@
+# .NET runtime compatibility
+
+Published BlueTusk `1.0.0` and `1.1.0-rc.1` packages target .NET 10. Work in
+this checkout is expanding runtime compatibility to every .NET major from
+.NET 5 through .NET 11. This is ongoing migration work; successful foundation
+tests do not establish full product support or qualify a release.
+
+The executable inventory is
+[`eng/dotnet-compatibility.json`](../../eng/dotnet-compatibility.json).
+Every product-family package appears in it. Runtime packages remain `pending`
+until their declared targets have executable tests. Analyzers and templates
+are identified separately because they do not execute as application runtime
+libraries. New product-family packages cannot silently escape the inventory.
+
+The Streams, Sync, and Live Aspire packages target .NET 8–11 because
+[Aspire.Hosting 13.6.5](https://www.nuget.org/packages/Aspire.Hosting/13.6.5)
+requires .NET 8 or later. The provider and corresponding non-Aspire packages
+target the full runtime range. The inventory records each upstream minimum
+and its source.
+
+The EF Core provider and its add-ons use the EF Core major selected for each
+application target.
+
+| Application target | EF Core version |
+| --- | --- |
+| .NET 5 | 5.0.17 |
+| .NET 6 and 7 | 7.0.20 |
+| .NET 8 | 8.0.34 |
+| .NET 9 | 9.0.23 |
+| .NET 10 | 10.0.11 |
+| .NET 11 | 11.0.0 |
+
+Use the corresponding EF Core major for application and design-time package
+references. See Microsoft's [EF Core release table](https://learn.microsoft.com/en-us/ef/core/what-is-new/)
+for framework requirements and servicing dates.
+
+Use `BlueTuskDataSource`, `BlueTuskBatch`, and `BlueTuskBatchCommand` in
+application code shared across all seven runtimes. On .NET 5 and 6 the data
+source extends `BlueTuskLegacyDataSource` because `DbDataSource` was
+introduced in .NET 7. On .NET 5, the batch types use BlueTusk's compatibility
+base classes because `DbBatch` and `DbBatchCommand` were introduced in .NET 6.
+The concrete BlueTusk types support the same provider operations on each target.
+
+The repository builds with the SDK pinned in `global.json` (currently
+11.0.100). This build-time requirement is separate from the application's
+runtime version. The C# compiler and private PolySharp build dependency supply
+language support; runtime-specific code paths preserve functionality where
+framework APIs differ. Libraries may use a dependency's compatible .NET
+Standard assets on an older runtime. The compatibility suite verifies BlueTusk
+behavior on the requested runtime. Microsoft tracks upstream servicing
+separately in its [.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core).
+
+## Run the compatibility matrix
+
+PowerShell 7 and the platform's normal .NET native prerequisites are required.
+The installer creates an isolated SDK/runtime installation under `artifacts`;
+it does not replace the system installation. Versions come from the checked-in
+contract, and each downloaded archive must match the SHA512 in Microsoft's
+official release metadata before extraction.
+
+```powershell
+./eng/install-dotnet-compatibility.ps1
+$dotnet = Join-Path $PWD $(if ($IsWindows) { 'artifacts/dotnet/dotnet.exe' } else { 'artifacts/dotnet/dotnet' })
+./eng/verify-dotnet-compatibility.ps1
+./eng/test-dotnet-compatibility-contract.ps1
+./eng/run-dotnet-compatibility.ps1 -DotNetPath $dotnet -UseLegacyLinuxContainers:$IsLinux
+```
+
+Select one version while developing:
+
+```powershell
+./eng/install-dotnet-compatibility.ps1 -Framework net5.0
+./eng/run-dotnet-compatibility.ps1 -DotNetPath $dotnet -Framework net5.0 -UseLegacyLinuxContainers:$IsLinux
+```
+
+.NET 5 and 6 Linux runs use digest-pinned official SDK containers. This retains
+their required native libraries on modern CI hosts. The runner builds with
+the current SDK and stages portable test outputs for the older test controller.
+It invokes that controller directly, so the repository's SDK selection cannot
+redirect a legacy runtime test to the modern SDK. The .NET 6 controller's
+required empty probing-path list is written only into the staged copy.
+
+The provider and dependency injection suites use an isolated PostgreSQL 18.6
+database. The runner starts it automatically from the digest-pinned Linux
+image or the SHA256-verified Windows binaries. It generates a per-run SCRAM
+password, binds the server to loopback, and stops it after testing. The legacy
+Linux test container shares the PostgreSQL container's network namespace. CI
+evidence records the server version and distribution identity.
+
+PgVector tests use pgvector 0.8.6. Windows builds the extension from the
+verified upstream source using Visual C++ and the PostgreSQL archive headers.
+Linux uses a digest-pinned pgvector image. S3 tests use the same MinIO release
+on both platforms. The runner verifies each executable's SHA256 and starts
+a loopback server with generated credentials. Use `-TestProject` to rerun
+registered test projects or CLI packages by project path.
+
+Each run uses an isolated SDK artifacts path for its build and restore outputs,
+so concurrent work on another framework cannot overwrite its NuGet assets.
+The runner forbids rolling a test forward to another .NET major, requires the
+pinned runtime patch to be present, and rejects zero-test or skipped-test
+results. For a registered command-line tool it installs the packed tool for
+the selected target and runs its help command. It keeps build logs, test
+assemblies and runtime configurations, TRX results, package and payload
+hashes, source fingerprints, and a JSON report under
+`artifacts/dotnet-compatibility/runs`. A report records
+remaining package coverage explicitly. It is local validation evidence, not a
+claim of independently approved immutable release provenance.
+
+The dedicated
+[`dotnet-compatibility` workflow](../../.github/workflows/dotnet-compatibility.yml)
+executes each registered suite on Windows and Linux for every contracted .NET
+major. Its summary displays both covered and pending package counts. As
+migration work completes, add a package's tests and change its status to
+`covered`; the verifier checks project targeting and an explicit unconditional
+project-reference chain from each registered test suite. Shared provider tests
+can therefore also cover the core libraries they execute through the provider.
+
+Before declaring complete runtime support, the following must pass:
+
+```powershell
+./eng/verify-dotnet-compatibility.ps1 -RequireComplete
+./eng/run-dotnet-compatibility.ps1 -DotNetPath $dotnet -RequireComplete -UseLegacyLinuxContainers:$IsLinux
+```
+
+The full gate accepts documented upstream minimums, and fails if any runtime
+package remains pending. Passing it is additional compatibility evidence; the
+existing package, PostgreSQL, security, performance, endurance, and independent
+release-approval gates remain applicable.
+
+An individual run never declares full runtime qualification. Collect the
+reports for every Windows/Linux/framework/test-project pair from the same
+unchanged source, then verify the complete evidence set:
+
+```powershell
+./eng/verify-dotnet-compatibility-evidence.ps1 -ReportPath $reports -RequireMatrixComplete -RequireComplete
+```
+
+The aggregate verifier rejects missing or duplicate pairs, changed source
+fingerprints, stale contracts, wrong compiled frameworks, modified payloads,
+zero tests, failures, and skipped tests. The CI workflow runs this aggregate
+check after its matrix jobs. `-Historical` permits inspection of older source
+snapshots, and can never establish complete support for the current checkout.
+
+Verify the actual NuGet artifacts from the candidate feed as part of release qualification.
+
+```powershell
+./eng/verify-dotnet-compatibility-packages.ps1 -PackageDirectory $feedPath -RequireComplete
+```
+
+This verifies the expected framework assets and the embedded target framework
+and identity of each assembly.
+
+Run asset verification against the candidate NuGet feed after packing. The
+verifier checks the framework folders and nuspec dependency groups for
+libraries. For CLI packages it checks every framework's installed command,
+entrypoint, and runtime configuration. It checks the compiled target in each
+managed assembly and lists the SHA256 of each verified artifact.
+
+```powershell
+./eng/verify-dotnet-compatibility-packages.ps1 -PackageDirectory artifacts/prerelease/feed
+./eng/verify-dotnet-compatibility-packages.ps1 -PackageDirectory artifacts/prerelease/feed -RequireComplete
+```

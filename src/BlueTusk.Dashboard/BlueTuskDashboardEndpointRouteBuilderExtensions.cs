@@ -3,11 +3,13 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using BlueTusk.ControlPlane;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BlueTusk.Dashboard;
@@ -32,101 +34,138 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         this IEndpointRouteBuilder endpoints,
         Action<BlueTuskDashboardOptions>? configure = null)
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        BlueTuskGuard.NotNull(endpoints);
         var options = new BlueTuskDashboardOptions();
         configure?.Invoke(options);
         options.Validate();
 
-        var group = endpoints.MapGroup(options.RoutePrefix)
-            .RequireAuthorization(options.ReadAuthorizationPolicy);
-        group.MapGet("/", () => Results.Redirect(options.RoutePrefix + "/overview"));
+        var group = new BlueTuskDashboardRoutes(endpoints, options.RoutePrefix, options.ReadAuthorizationPolicy);
+        group.MapGet("/", () => Results.Redirect(options.RoutePrefix.TrimEnd('/') + "/overview"));
         group.MapGet(
             "/api/overview",
-            async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
-                Json(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                return Json(await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false));
+            });
         group.MapGet(
             "/api/sync",
-            async (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
-                Json(await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneSyncQueryService>();
+                return Json(await queries.GetSyncOverviewAsync(context.RequestAborted).ConfigureAwait(false));
+            });
         group.MapGet(
             "/api/live",
-            async (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
-                Json(await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneLiveQueryService>();
+                return Json(await queries.GetLiveOverviewAsync(context.RequestAborted).ConfigureAwait(false));
+            });
         group.MapGet(
             "/api/graphs",
-            async (IControlPlaneContinuousGraphQueryService queries, CancellationToken cancellationToken) =>
-                Json(await queries.GetContinuousGraphOverviewAsync(cancellationToken).ConfigureAwait(false)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneContinuousGraphQueryService>();
+                return Json(await queries.GetContinuousGraphOverviewAsync(context.RequestAborted).ConfigureAwait(false));
+            });
         group.MapGet(
             "/api/fleet",
-            async (IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
-                Json(await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneFleetQueryService>();
+                return Json(await queries.GetFleetOverviewAsync(context.RequestAborted).ConfigureAwait(false));
+            });
         group.MapGet(
             "/api/capabilities",
             () => Json(ControlPlaneApiContract.Capabilities));
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/overview",
-            async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
-                Json(Versioned(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false))));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                return Json(Versioned(await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false)));
+            });
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/sync",
-            async (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
-                Json(Versioned(await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false))));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneSyncQueryService>();
+                return Json(Versioned(await queries.GetSyncOverviewAsync(context.RequestAborted).ConfigureAwait(false)));
+            });
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/live",
-            async (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
-                Json(Versioned(await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false))));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneLiveQueryService>();
+                return Json(Versioned(await queries.GetLiveOverviewAsync(context.RequestAborted).ConfigureAwait(false)));
+            });
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/graphs",
-            async (IControlPlaneContinuousGraphQueryService queries,
-                    CancellationToken cancellationToken) =>
-                Json(Versioned(
-                    await queries.GetContinuousGraphOverviewAsync(cancellationToken)
-                        .ConfigureAwait(false))));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneContinuousGraphQueryService>();
+                return Json(Versioned(
+                    await queries.GetContinuousGraphOverviewAsync(context.RequestAborted)
+                        .ConfigureAwait(false)));
+            });
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/fleet",
-            async (IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
-                Json(Versioned(
-                    await queries.GetFleetOverviewAsync(cancellationToken)
-                        .ConfigureAwait(false))));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneFleetQueryService>();
+                return Json(Versioned(
+                    await queries.GetFleetOverviewAsync(context.RequestAborted)
+                        .ConfigureAwait(false)));
+            });
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/fleet/deployments",
-            (HttpContext context, IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
-                ReadFleetPageAsync(context, queries, options, html: false, cancellationToken));
+            context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneFleetQueryService>();
+                return ReadFleetPageAsync(context, queries, options, html: false, context.RequestAborted);
+            });
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/fleet/deployments/{deploymentId}",
-            (string deploymentId, HttpContext context, IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
-                ReadDeploymentAsync(deploymentId, context, queries, options, html: false, cancellationToken));
+            context =>
+            {
+                var deploymentId = context.Request.RouteValues["deploymentId"] as string ?? string.Empty;
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneFleetQueryService>();
+                return ReadDeploymentAsync(deploymentId, context, queries, options, html: false, context.RequestAborted);
+            });
         group.MapPost(
                 "/api/graphs/{queryFingerprint}/run",
-                (string queryFingerprint,
-                        HttpContext context,
-                        IControlPlaneContinuousGraphExecutionService executions,
-                        ILoggerFactory loggerFactory,
-                        CancellationToken cancellationToken) =>
-                    ExecuteGraphAsync(
+                context =>
+                {
+                    var queryFingerprint = context.Request.RouteValues["queryFingerprint"] as string ?? string.Empty;
+                    var executions = context.RequestServices.GetRequiredService<IControlPlaneContinuousGraphExecutionService>();
+                    var loggerFactory = context.RequestServices.GetRequiredService<ILoggerFactory>();
+                    return ExecuteGraphAsync(
                         queryFingerprint,
                         context,
                         executions,
                         loggerFactory.CreateLogger("BlueTusk.Dashboard.ContinuousGraph"),
                         options,
                         versionedResponse: false,
-                        cancellationToken))
+                        context.RequestAborted);
+                })
             .RequireAuthorization(options.GraphExecutionAuthorizationPolicy);
         group.MapPost(
                 ControlPlaneApiContract.VersionedRoutePrefix + "/graphs/{queryFingerprint}/run",
-                (string queryFingerprint,
-                        HttpContext context,
-                        IControlPlaneContinuousGraphExecutionService executions,
-                        ILoggerFactory loggerFactory,
-                        CancellationToken cancellationToken) =>
-                    ExecuteGraphAsync(
+                context =>
+                {
+                    var queryFingerprint = context.Request.RouteValues["queryFingerprint"] as string ?? string.Empty;
+                    var executions = context.RequestServices.GetRequiredService<IControlPlaneContinuousGraphExecutionService>();
+                    var loggerFactory = context.RequestServices.GetRequiredService<ILoggerFactory>();
+                    return ExecuteGraphAsync(
                         queryFingerprint,
                         context,
                         executions,
                         loggerFactory.CreateLogger("BlueTusk.Dashboard.ContinuousGraph"),
                         options,
                         versionedResponse: true,
-                        cancellationToken))
+                        context.RequestAborted);
+                })
             .RequireAuthorization(options.GraphExecutionAuthorizationPolicy);
         group.MapGet(
             "/assets/dashboard.js",
@@ -136,57 +175,66 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             () => Results.Stream(OpenAsset("bluetusk-mark.png"), "image/png"));
         group.MapPost(
                 "/api/operations",
-                (HttpContext context,
-                        ControlPlaneOperationExecutor executor,
-                        ILoggerFactory loggerFactory,
-                        CancellationToken cancellationToken) =>
-                    ExecuteOperationAsync(
+                context =>
+                {
+                    var executor = context.RequestServices.GetRequiredService<ControlPlaneOperationExecutor>();
+                    var loggerFactory = context.RequestServices.GetRequiredService<ILoggerFactory>();
+                    return ExecuteOperationAsync(
                         context,
                         executor,
                         loggerFactory.CreateLogger("BlueTusk.Dashboard.Operations"),
                         options,
                         versionedResponse: false,
-                        cancellationToken))
+                        context.RequestAborted);
+                })
             .RequireAuthorization(options.MutationAuthorizationPolicy);
         group.MapPost(
                 ControlPlaneApiContract.VersionedRoutePrefix + "/operations",
-                (HttpContext context,
-                        ControlPlaneOperationExecutor executor,
-                        ILoggerFactory loggerFactory,
-                        CancellationToken cancellationToken) =>
-                    ExecuteOperationAsync(
+                context =>
+                {
+                    var executor = context.RequestServices.GetRequiredService<ControlPlaneOperationExecutor>();
+                    var loggerFactory = context.RequestServices.GetRequiredService<ILoggerFactory>();
+                    return ExecuteOperationAsync(
                         context,
                         executor,
                         loggerFactory.CreateLogger("BlueTusk.Dashboard.Operations"),
                         options,
                         versionedResponse: true,
-                        cancellationToken))
+                        context.RequestAborted);
+                })
             .RequireAuthorization(options.MutationAuthorizationPolicy);
         group.MapGet(
             "/overview",
-            async (IControlPlaneQueryService sources,
-                    IControlPlaneSyncQueryService sync,
-                    IControlPlaneLiveQueryService live,
-                    IControlPlaneContinuousGraphQueryService graphs,
-                    IControlPlaneFleetQueryService fleet,
-                    CancellationToken cancellationToken) =>
-                Html(RenderOverview(
-                    await sources.GetOverviewAsync(cancellationToken).ConfigureAwait(false),
-                    await sync.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false),
-                    await live.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false),
-                    await graphs.GetContinuousGraphOverviewAsync(cancellationToken)
+            async context =>
+            {
+                var sources = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                var sync = context.RequestServices.GetRequiredService<IControlPlaneSyncQueryService>();
+                var live = context.RequestServices.GetRequiredService<IControlPlaneLiveQueryService>();
+                var graphs = context.RequestServices.GetRequiredService<IControlPlaneContinuousGraphQueryService>();
+                var fleet = context.RequestServices.GetRequiredService<IControlPlaneFleetQueryService>();
+                return Html(RenderOverview(
+                    await sources.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false),
+                    await sync.GetSyncOverviewAsync(context.RequestAborted).ConfigureAwait(false),
+                    await live.GetLiveOverviewAsync(context.RequestAborted).ConfigureAwait(false),
+                    await graphs.GetContinuousGraphOverviewAsync(context.RequestAborted)
                         .ConfigureAwait(false),
-                    await fleet.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false),
-                    options)));
+                    await fleet.GetFleetOverviewAsync(context.RequestAborted).ConfigureAwait(false),
+                    options));
+            });
         group.MapGet(
             "/sources",
-            async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
-                Html(RenderSources(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false), options)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                return Html(RenderSources(await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false), options));
+            });
         group.MapGet(
             "/sources/{sourceKey}",
-            async (string sourceKey, IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
+            async context =>
             {
-                var overview = await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var sourceKey = context.Request.RouteValues["sourceKey"] as string ?? string.Empty;
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                var overview = await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false);
                 var source = FindSource(overview, sourceKey);
                 return source is null
                      ? Results.NotFound()
@@ -194,12 +242,12 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             });
         group.MapGet(
             "/sources/{sourceKey}/consumer-groups/{groupName}",
-            async (string sourceKey,
-                    string groupName,
-                    IControlPlaneQueryService queries,
-                    CancellationToken cancellationToken) =>
+            async context =>
             {
-                var overview = await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var sourceKey = context.Request.RouteValues["sourceKey"] as string ?? string.Empty;
+                var groupName = context.Request.RouteValues["groupName"] as string ?? string.Empty;
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                var overview = await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false);
                 var source = FindSource(overview, sourceKey);
                 var consumerGroup = source?.ConsumerGroups.FirstOrDefault(
                     candidate => string.Equals(candidate.Name, groupName, StringComparison.Ordinal));
@@ -209,12 +257,12 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             });
         group.MapGet(
             "/sources/{sourceKey}/snapshots/{snapshotEpoch}",
-            async (string sourceKey,
-                    string snapshotEpoch,
-                    IControlPlaneQueryService queries,
-                    CancellationToken cancellationToken) =>
+            async context =>
             {
-                var overview = await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var sourceKey = context.Request.RouteValues["sourceKey"] as string ?? string.Empty;
+                var snapshotEpoch = context.Request.RouteValues["snapshotEpoch"] as string ?? string.Empty;
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                var overview = await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false);
                 var source = FindSource(overview, sourceKey);
                 var snapshot = source?.SnapshotRuns.FirstOrDefault(
                     candidate => string.Equals(
@@ -227,12 +275,12 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             });
         group.MapGet(
             "/sources/{sourceKey}/checkpoints/{consumerGroup}",
-            async (string sourceKey,
-                    string consumerGroup,
-                    IControlPlaneQueryService queries,
-                    CancellationToken cancellationToken) =>
+            async context =>
             {
-                var overview = await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var sourceKey = context.Request.RouteValues["sourceKey"] as string ?? string.Empty;
+                var consumerGroup = context.Request.RouteValues["consumerGroup"] as string ?? string.Empty;
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                var overview = await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false);
                 var source = FindSource(overview, sourceKey);
                 var checkpoint = source?.Checkpoints.FirstOrDefault(
                     candidate => string.Equals(
@@ -245,33 +293,42 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             });
         group.MapGet(
             "/snapshots",
-            async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
-                Html(RenderSnapshots(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false), options)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                return Html(RenderSnapshots(await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false), options));
+            });
         group.MapGet(
             "/consumer-groups",
-            async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
-                Html(RenderGroups(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false), options)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                return Html(RenderGroups(await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false), options));
+            });
         group.MapGet(
             "/checkpoints",
-            async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
-                Html(RenderCheckpoints(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false), options)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneQueryService>();
+                return Html(RenderCheckpoints(await queries.GetOverviewAsync(context.RequestAborted).ConfigureAwait(false), options));
+            });
         group.MapGet(
             "/pipelines",
-            async (HttpContext context,
-                    IControlPlaneSyncQueryService queries,
-                    CancellationToken cancellationToken) =>
-                Html(RenderPipelines(
-                    await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false),
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneSyncQueryService>();
+                return Html(RenderPipelines(
+                    await queries.GetSyncOverviewAsync(context.RequestAborted).ConfigureAwait(false),
                     options,
-                    CanMutate(context.User, options))));
+                    CanMutate(context.User, options)));
+            });
         group.MapGet(
             "/pipelines/{pipelineId}",
-            async (string pipelineId,
-                    HttpContext context,
-                    IControlPlaneSyncQueryService queries,
-                    CancellationToken cancellationToken) =>
+            async context =>
             {
-                var overview = await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var pipelineId = context.Request.RouteValues["pipelineId"] as string ?? string.Empty;
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneSyncQueryService>();
+                var overview = await queries.GetSyncOverviewAsync(context.RequestAborted).ConfigureAwait(false);
                 var pipeline = overview.Pipelines.FirstOrDefault(
                     candidate => string.Equals(candidate.PipelineId, pipelineId, StringComparison.Ordinal));
                 return pipeline is null
@@ -284,17 +341,20 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             });
         group.MapGet(
             "/live",
-            async (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
-                Html(RenderLive(
-                    await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false),
-                    options)));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneLiveQueryService>();
+                return Html(RenderLive(
+                    await queries.GetLiveOverviewAsync(context.RequestAborted).ConfigureAwait(false),
+                    options));
+            });
         group.MapGet(
             "/live/{subscriptionFingerprint}",
-            async (string subscriptionFingerprint,
-                    IControlPlaneLiveQueryService queries,
-                    CancellationToken cancellationToken) =>
+            async context =>
             {
-                var overview = await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var subscriptionFingerprint = context.Request.RouteValues["subscriptionFingerprint"] as string ?? string.Empty;
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneLiveQueryService>();
+                var overview = await queries.GetLiveOverviewAsync(context.RequestAborted).ConfigureAwait(false);
                 var subscription = overview.Subscriptions.FirstOrDefault(
                     candidate => string.Equals(
                         candidate.SubscriptionFingerprint,
@@ -306,20 +366,21 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             });
         group.MapGet(
             "/graphs",
-            async (IControlPlaneContinuousGraphQueryService queries,
-                    CancellationToken cancellationToken) =>
-                Html(RenderContinuousGraphs(
-                    await queries.GetContinuousGraphOverviewAsync(cancellationToken)
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneContinuousGraphQueryService>();
+                return Html(RenderContinuousGraphs(
+                    await queries.GetContinuousGraphOverviewAsync(context.RequestAborted)
                         .ConfigureAwait(false),
-                    options)));
+                    options));
+            });
         group.MapGet(
             "/graphs/{queryFingerprint}",
-            async (string queryFingerprint,
-                    HttpContext context,
-                    IControlPlaneContinuousGraphQueryService queries,
-                    CancellationToken cancellationToken) =>
+            async context =>
             {
-                var overview = await queries.GetContinuousGraphOverviewAsync(cancellationToken)
+                var queryFingerprint = context.Request.RouteValues["queryFingerprint"] as string ?? string.Empty;
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneContinuousGraphQueryService>();
+                var overview = await queries.GetContinuousGraphOverviewAsync(context.RequestAborted)
                     .ConfigureAwait(false);
                 var query = overview.Queries.FirstOrDefault(
                     candidate => string.Equals(
@@ -336,17 +397,19 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             });
         group.MapGet(
             "/deployments",
-            async (HttpContext context,
-                    IControlPlaneFleetQueryService queries,
-                    CancellationToken cancellationToken) =>
-                await ReadFleetPageAsync(context, queries, options, html: true, cancellationToken).ConfigureAwait(false));
+            async context =>
+            {
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneFleetQueryService>();
+                return await ReadFleetPageAsync(context, queries, options, html: true, context.RequestAborted).ConfigureAwait(false);
+            });
         group.MapGet(
-            "/deployments/{**deploymentId}",
-            async (string deploymentId,
-                    HttpContext context,
-                    IControlPlaneFleetQueryService queries,
-                    CancellationToken cancellationToken) =>
-                await ReadDeploymentAsync(deploymentId, context, queries, options, html: true, cancellationToken).ConfigureAwait(false));
+            "/deployments/{deploymentId}",
+            async context =>
+            {
+                var deploymentId = context.Request.RouteValues["deploymentId"] as string ?? string.Empty;
+                var queries = context.RequestServices.GetRequiredService<IControlPlaneFleetQueryService>();
+                return await ReadDeploymentAsync(deploymentId, context, queries, options, html: true, context.RequestAborted).ConfigureAwait(false);
+            });
         return endpoints;
     }
 
@@ -372,7 +435,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         ControlPlaneOperationRequest? request;
         try
         {
-            request = await context.Request.ReadFromJsonAsync<ControlPlaneOperationRequest>(
+            request = await ReadDashboardJsonAsync(context.Request,
                 BlueTuskDashboardJsonContext.Default.ControlPlaneOperationRequest,
                 cancellationToken).ConfigureAwait(false);
         }
@@ -492,8 +555,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         ControlPlaneContinuousGraphRunRequest? request;
         try
         {
-            request = await context.Request
-                .ReadFromJsonAsync<ControlPlaneContinuousGraphRunRequest>(
+            request = await ReadDashboardJsonAsync(context.Request,
                     BlueTuskDashboardJsonContext.Default.ControlPlaneContinuousGraphRunRequest,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -580,21 +642,37 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             ["executionId"] = executionId,
         });
 
-    private static IResult Html(string content) => Results.Content(
-        content,
-        "text/html; charset=utf-8",
-        Encoding.UTF8,
-        StatusCodes.Status200OK);
+    private static IResult Html(string content) => Results.Text(content, "text/html; charset=utf-8");
 
     private static ControlPlaneApiResponse<T> Versioned<T>(T data) =>
         new(ControlPlaneApiContract.CurrentVersion, data);
+
+    private static ValueTask<T?> ReadDashboardJsonAsync<T>(
+        HttpRequest request, JsonTypeInfo<T> typeInfo, CancellationToken cancellationToken)
+    {
+#if NET7_0_OR_GREATER
+        return request.ReadFromJsonAsync(typeInfo, cancellationToken);
+#else
+        return request.ReadFromJsonAsync<T>(typeInfo.Options, cancellationToken);
+#endif
+    }
 
     private static IResult Json<T>(T value)
     {
         var typeInfo = BlueTuskDashboardJsonContext.Default.GetTypeInfo(typeof(T)) as JsonTypeInfo<T> ??
             throw new InvalidOperationException(
                 $"No source-generated dashboard JSON contract is registered for '{typeof(T)}'.");
+#if NET8_0_OR_GREATER
         return Results.Json(value, typeInfo);
+#elif NET6_0_OR_GREATER
+        return Results.Json(value, typeInfo.Options);
+#else
+        return new IResult(context =>
+        {
+            context.Response.ContentType = "application/json; charset=utf-8";
+            return JsonSerializer.SerializeAsync(context.Response.Body, value, typeInfo, context.RequestAborted);
+        });
+#endif
     }
 
     internal sealed record OperationSucceededResponse(Guid OperationId, string Status);

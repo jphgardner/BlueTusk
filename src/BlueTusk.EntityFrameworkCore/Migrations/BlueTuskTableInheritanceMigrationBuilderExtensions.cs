@@ -14,9 +14,9 @@ public static class BlueTuskTableInheritanceMigrationBuilderExtensions
         string? schema = null,
         string? parentSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(parentTable);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(parentTable);
         var operation = new AddTableInheritanceOperation
         {
             Table = table,
@@ -36,9 +36,9 @@ public static class BlueTuskTableInheritanceMigrationBuilderExtensions
         string? schema = null,
         string? parentSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(parentTable);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(parentTable);
         var operation = new RemoveTableInheritanceOperation
         {
             Table = table,

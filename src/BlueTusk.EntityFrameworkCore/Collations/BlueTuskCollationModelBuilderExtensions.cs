@@ -15,8 +15,8 @@ public static class BlueTuskCollationModelBuilderExtensions
         Action<BlueTuskCollationBuilder> buildAction,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentNullException.ThrowIfNull(buildAction);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNull(buildAction);
         var builder = new BlueTuskCollationBuilder(name, schema);
         buildAction(builder);
         return HasCollation(modelBuilder, builder.Build());
@@ -27,7 +27,7 @@ public static class BlueTuskCollationModelBuilderExtensions
         this ModelBuilder modelBuilder,
         BlueTuskCollationDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         BlueTuskCollationMetadata.Validate(definition);
         var definitions = BlueTuskCollationMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, new BlueTuskCollationDefinitionSet(
@@ -44,8 +44,8 @@ public static class BlueTuskCollationModelBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var definitions = BlueTuskCollationMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, new BlueTuskCollationDefinitionSet(
             definitions.Collations
@@ -57,7 +57,7 @@ public static class BlueTuskCollationModelBuilderExtensions
     /// <summary>Reads provider-owned PostgreSQL collation definitions from an EF model.</summary>
     public static BlueTuskCollationDefinitionSet GetCollations(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskCollationMetadata.Get(model);
     }
 
@@ -66,7 +66,7 @@ public static class BlueTuskCollationModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskCollationMetadata.Deserialize(serializedDefinitions));
     }
 

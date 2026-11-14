@@ -71,19 +71,19 @@ public sealed record SyncReconciliationRequest
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(PipelineId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(Collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(PipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(Collection);
         if (!Enum.IsDefined(Mode))
         {
             throw new ArgumentOutOfRangeException(nameof(Mode));
         }
 
-        ArgumentOutOfRangeException.ThrowIfLessThan(PartitionCount, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(PartitionCount, 65_536);
-        ArgumentOutOfRangeException.ThrowIfNegative(MaxReportedDifferences);
-        ArgumentOutOfRangeException.ThrowIfLessThan(RepairBatchSize, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(RepairBatchSize, 10_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaxBufferedRepairsPerPartition, 1);
+        BlueTuskGuard.NotLessThan(PartitionCount, 1);
+        BlueTuskGuard.NotGreaterThan(PartitionCount, 65_536);
+        BlueTuskGuard.NotNegative(MaxReportedDifferences);
+        BlueTuskGuard.NotLessThan(RepairBatchSize, 1);
+        BlueTuskGuard.NotGreaterThan(RepairBatchSize, 10_000);
+        BlueTuskGuard.NotLessThan(MaxBufferedRepairsPerPartition, 1);
         if (Repair && Mode is SyncReconciliationMode.Count)
         {
             throw new ArgumentException(
@@ -104,7 +104,7 @@ public sealed class SyncRepairDocument
         string contentType,
         string? partitionKey = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
+        BlueTuskGuard.NotNullOrWhiteSpace(contentType);
         _content = content.ToArray();
         ContentType = contentType;
         PartitionKey = partitionKey;
@@ -129,8 +129,8 @@ public sealed class SyncReconciliationEntry
         string contentHash,
         SyncRepairDocument? repairDocument = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        ArgumentException.ThrowIfNullOrWhiteSpace(contentHash);
+        BlueTuskGuard.NotNullOrWhiteSpace(key);
+        BlueTuskGuard.NotNullOrWhiteSpace(contentHash);
         if (contentHash.Length != 64 || !contentHash.All(Uri.IsHexDigit))
         {
             throw new ArgumentException(
@@ -160,7 +160,7 @@ public sealed class SyncReconciliationEntry
         string? partitionKey = null) =>
         new(
             key,
-            Convert.ToHexStringLower(SHA256.HashData(content.Span)),
+            BlueTuskRuntime.ToHexStringLower(SHA256.HashData(content.Span)),
             contentType is null
                 ? null
                 : new SyncRepairDocument(content, contentType, partitionKey));
@@ -198,15 +198,15 @@ public sealed class SyncRepairMutation
     /// <summary>Creates an idempotent upsert repair.</summary>
     public static SyncRepairMutation Upsert(string key, SyncRepairDocument document)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        ArgumentNullException.ThrowIfNull(document);
+        BlueTuskGuard.NotNullOrWhiteSpace(key);
+        BlueTuskGuard.NotNull(document);
         return new SyncRepairMutation(SyncRepairMutationKind.Upsert, key, document);
     }
 
     /// <summary>Creates an idempotent delete repair.</summary>
     public static SyncRepairMutation Delete(string key)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        BlueTuskGuard.NotNullOrWhiteSpace(key);
         return new SyncRepairMutation(SyncRepairMutationKind.Delete, key, null);
     }
 }
@@ -222,9 +222,9 @@ public sealed class SyncRepairBatch
         string collection,
         IEnumerable<SyncRepairMutation> mutations)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNull(mutations);
         _mutations = Array.AsReadOnly(mutations.ToArray());
         if (_mutations.Count == 0)
         {
@@ -369,10 +369,10 @@ public static class SyncReconciler
         ISyncDestination destination,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         request.Validate();
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(destination);
         if (!destination.Capabilities.HasFlag(SyncDestinationCapabilities.Reconciliation) ||
             destination is not ISyncReconciliationReader destinationReader)
         {
@@ -556,16 +556,16 @@ public static class SyncReconciler
     /// <summary>Returns the deterministic SHA-256 partition for a logical key.</summary>
     public static int GetPartitionIndex(string key, int partitionCount)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        ArgumentOutOfRangeException.ThrowIfLessThan(partitionCount, 1);
+        BlueTuskGuard.NotNullOrWhiteSpace(key);
+        BlueTuskGuard.NotLessThan(partitionCount, 1);
         return (int)(((ulong)GetKeyHash(key) * (uint)partitionCount) >> 32);
     }
 
     /// <summary>Returns the unsigned high 32 bits of a logical key's SHA-256 hash.</summary>
     public static uint GetKeyHash(string key)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
+        BlueTuskGuard.NotNullOrWhiteSpace(key);
+        Span<byte> hash = stackalloc byte[32];
         _ = SHA256.HashData(Encoding.UTF8.GetBytes(key), hash);
         return BinaryPrimitives.ReadUInt32BigEndian(hash);
     }

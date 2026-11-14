@@ -12,13 +12,13 @@ public sealed class BlueTuskProtocolCaptureReader
 
     public BlueTuskProtocolCaptureReader(Stream input, int maximumPayloadLength = DefaultMaximumPayloadLength)
     {
-        ArgumentNullException.ThrowIfNull(input);
+        BlueTuskGuard.NotNull(input);
         if (!input.CanRead)
         {
             throw new ArgumentException("The capture stream must be readable.", nameof(input));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumPayloadLength);
+        BlueTuskGuard.NotNegativeOrZero(maximumPayloadLength);
         _input = input;
         _maximumPayloadLength = maximumPayloadLength;
         CreatedAt = ReadFileHeader();

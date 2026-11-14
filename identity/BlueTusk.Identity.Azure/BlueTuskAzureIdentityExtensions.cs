@@ -18,9 +18,9 @@ public static class BlueTuskAzureIdentityExtensions
         TokenCredential credential,
         string scope = DefaultScope)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentNullException.ThrowIfNull(credential);
-        ArgumentException.ThrowIfNullOrWhiteSpace(scope);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNull(credential);
+        BlueTuskGuard.NotNullOrWhiteSpace(scope);
         var requestContext = new TokenRequestContext([scope]);
 
         return builder

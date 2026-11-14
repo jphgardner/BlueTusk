@@ -1,0 +1,144 @@
+<Project>
+  <UsingTask TaskName="BlueTuskGenerateLegacyPublicApi" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <ProjectDirectory ParameterType="System.String" Required="true" />
+      <TargetFramework ParameterType="System.String" Required="true" />
+      <Mode ParameterType="System.String" Required="true" />
+      <SupplementPath ParameterType="System.String" />
+      <TargetSupplementPath ParameterType="System.String" />
+      <OutputDirectory ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        bool dataTarget = TargetFramework == "net5.0" || TargetFramework == "net6.0" || TargetFramework == "net7.0";
+        bool sourceTarget = TargetFramework == "net5.0" || TargetFramework == "net6.0";
+        bool efTarget = dataTarget || TargetFramework == "net8.0" || TargetFramework == "net9.0";
+        if (!((Mode == "Data" && dataTarget) || (Mode == "DataSource" && sourceTarget) || (Mode == "EntityFramework" && efTarget)))
+        {
+            Log.LogError("Unknown legacy public API specialization mode or target framework.");
+            return false;
+        }
+        Func<string, string> transform = line =>
+        {
+            if (Mode == "Data" && TargetFramework == "net5.0")
+            {
+                line = line.Replace("System.Data.Common.DbBatchCommandCollection", "BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection")
+                    .Replace("System.Data.Common.DbBatchCommand", "BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand")
+                    .Replace("System.Data.Common.DbBatch", "BlueTusk.Data.Compatibility.BlueTuskLegacyBatch");
+                string[] instanceMembers = {
+                    "override BlueTusk.Data.BlueTuskConnection.CanCreateBatch.",
+                    "override BlueTusk.Data.BlueTuskProviderFactory.CanCreateBatch.",
+                    "override BlueTusk.Data.BlueTuskProviderFactory.CreateBatch(",
+                    "override BlueTusk.Data.BlueTuskProviderFactory.CreateBatchCommand("
+                };
+                if (instanceMembers.Any(prefix => line.StartsWith(prefix, StringComparison.Ordinal)))
+                {
+                    line = line.Substring("override ".Length);
+                }
+            }
+            if (TargetFramework == "net5.0" || TargetFramework == "net6.0")
+            {
+                line = line.Replace("System.Data.Common.DbDataSource", "BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource");
+                if (Mode == "Data" && line.StartsWith("override BlueTusk.Data.BlueTuskProviderFactory.CreateDataSource(", StringComparison.Ordinal))
+                {
+                    line = line.Substring("override ".Length);
+                }
+            }
+            if (Mode == "Data" && (TargetFramework == "net6.0" || TargetFramework == "net7.0"))
+            {
+                if (line.StartsWith("override BlueTusk.Data.BlueTuskBatchCommand.CanCreateParameter.", StringComparison.Ordinal) ||
+                    line.StartsWith("override BlueTusk.Data.BlueTuskBatchCommand.CreateParameter(", StringComparison.Ordinal))
+                {
+                    line = line.Substring("override ".Length);
+                }
+            }
+            if (Mode == "EntityFramework")
+            {
+                line = line.Replace("Microsoft.EntityFrameworkCore.Query.UpdateSettersBuilder", "BlueTusk.EntityFrameworkCore.BlueTuskUpdateSettersBuilder");
+                if (TargetFramework == "net5.0")
+                {
+                    line = line.Replace("Microsoft.EntityFrameworkCore.Metadata.IReadOnlyModel", "Microsoft.EntityFrameworkCore.Metadata.IModel")
+                        .Replace("Microsoft.EntityFrameworkCore.Metadata.IReadOnlyEntityType", "Microsoft.EntityFrameworkCore.Metadata.IEntityType")
+                        .Replace("Microsoft.EntityFrameworkCore.Metadata.IReadOnlyCheckConstraint", "Microsoft.EntityFrameworkCore.Metadata.ICheckConstraint")
+                        .Replace("Microsoft.EntityFrameworkCore.Metadata.Builders.CheckConstraintBuilder", "BlueTusk.EntityFrameworkCore.BlueTuskCheckConstraintBuilder");
+                }
+            }
+            return line;
+        };
+        Directory.CreateDirectory(OutputDirectory);
+        foreach (string kind in new[] { "Shipped", "Unshipped" })
+        {
+            string name = "PublicAPI." + kind + ".txt";
+            var lines = File.ReadAllLines(Path.Combine(ProjectDirectory, name)).Select(transform).ToList();
+            if (kind == "Unshipped" && !string.IsNullOrEmpty(SupplementPath))
+            {
+                lines.AddRange(File.ReadAllLines(SupplementPath).Where(line => line != "#nullable enable"));
+            }
+            if (kind == "Unshipped" && !string.IsNullOrEmpty(TargetSupplementPath))
+            {
+                lines.AddRange(File.ReadAllLines(TargetSupplementPath).Where(line => line != "#nullable enable"));
+            }
+            string content = string.Join("\n", lines) + "\n";
+            string outputPath = Path.Combine(OutputDirectory, name);
+            if (!File.Exists(outputPath) || File.ReadAllText(outputPath) != content)
+            {
+                File.WriteAllText(outputPath, content);
+            }
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <!-- Preserve the modern shipped baseline. Only missing legacy BCL aliases
+       and known override differences change; new adapter APIs have checked-in
+       target-specific baselines, so RS0016/RS0017 remain release gates. -->
+  <Target Name="GenerateBlueTuskLegacyDataPublicApi" BeforeTargets="CoreCompile"
+          Condition="'$(BlueTuskLegacyPublicApi)' == 'true' and ('$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net7.0')">
+    <Error Condition="'$(MSBuildProjectName)' != 'BlueTusk.Data'" Text="Legacy Data API transformations must only be enabled in BlueTusk.Data." />
+    <PropertyGroup>
+      <_BlueTuskLegacyApiOutput>$(IntermediateOutputPath)LegacyPublicApi</_BlueTuskLegacyApiOutput>
+    </PropertyGroup>
+    <BlueTuskGenerateLegacyPublicApi ProjectDirectory="$(MSBuildProjectDirectory)" TargetFramework="$(TargetFramework)" Mode="Data"
+                                    SupplementPath="$(MSBuildThisFileDirectory)api-compatibility/BlueTusk.Data.$(TargetFramework).Unshipped.txt"
+                                    OutputDirectory="$(_BlueTuskLegacyApiOutput)" />
+    <ItemGroup>
+      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(AdditionalFiles.Filename)%(AdditionalFiles.Extension)' == 'PublicAPI.Shipped.txt' or '%(AdditionalFiles.Filename)%(AdditionalFiles.Extension)' == 'PublicAPI.Unshipped.txt'" />
+      <AdditionalFiles Include="$(_BlueTuskLegacyApiOutput)/PublicAPI.Shipped.txt;$(_BlueTuskLegacyApiOutput)/PublicAPI.Unshipped.txt" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="GenerateBlueTuskLegacyDataSourcePublicApi" BeforeTargets="CoreCompile"
+          Condition="'$(BlueTuskLegacyDataSourcePublicApi)' == 'true' and ('$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'net6.0')">
+    <Error Condition="'$(BlueTuskLegacyPublicApi)' == 'true'" Text="Select either the Data API specialization or alias-only data-source specialization, not both." />
+    <PropertyGroup>
+      <_BlueTuskLegacySourceApiOutput>$(IntermediateOutputPath)LegacyDataSourcePublicApi</_BlueTuskLegacySourceApiOutput>
+    </PropertyGroup>
+    <BlueTuskGenerateLegacyPublicApi ProjectDirectory="$(MSBuildProjectDirectory)" TargetFramework="$(TargetFramework)"
+                                    Mode="DataSource" OutputDirectory="$(_BlueTuskLegacySourceApiOutput)" />
+    <ItemGroup>
+      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(AdditionalFiles.Filename)%(AdditionalFiles.Extension)' == 'PublicAPI.Shipped.txt' or '%(AdditionalFiles.Filename)%(AdditionalFiles.Extension)' == 'PublicAPI.Unshipped.txt'" />
+      <AdditionalFiles Include="$(_BlueTuskLegacySourceApiOutput)/PublicAPI.Shipped.txt;$(_BlueTuskLegacySourceApiOutput)/PublicAPI.Unshipped.txt" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="GenerateBlueTuskLegacyEntityFrameworkPublicApi" BeforeTargets="CoreCompile"
+          Condition="'$(BlueTuskLegacyEntityFrameworkPublicApi)' == 'true' and ('$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net7.0' or '$(TargetFramework)' == 'net8.0' or '$(TargetFramework)' == 'net9.0')">
+    <Error Condition="'$(MSBuildProjectName)' != 'BlueTusk.EntityFrameworkCore'" Text="Legacy EF API transformations must only be enabled in BlueTusk.EntityFrameworkCore." />
+    <PropertyGroup>
+      <_BlueTuskLegacyEfApiOutput>$(IntermediateOutputPath)LegacyEntityFrameworkPublicApi</_BlueTuskLegacyEfApiOutput>
+      <_BlueTuskLegacyEfTargetSupplement Condition="'$(TargetFramework)' == 'net5.0'">$(MSBuildThisFileDirectory)api-compatibility/BlueTusk.EntityFrameworkCore.net5.0.Unshipped.txt</_BlueTuskLegacyEfTargetSupplement>
+    </PropertyGroup>
+    <BlueTuskGenerateLegacyPublicApi ProjectDirectory="$(MSBuildProjectDirectory)" TargetFramework="$(TargetFramework)"
+                                    Mode="EntityFramework" SupplementPath="$(MSBuildThisFileDirectory)api-compatibility/BlueTusk.EntityFrameworkCore.Legacy.Unshipped.txt"
+                                    TargetSupplementPath="$(_BlueTuskLegacyEfTargetSupplement)"
+                                    OutputDirectory="$(_BlueTuskLegacyEfApiOutput)" />
+    <ItemGroup>
+      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(AdditionalFiles.Filename)%(AdditionalFiles.Extension)' == 'PublicAPI.Shipped.txt' or '%(AdditionalFiles.Filename)%(AdditionalFiles.Extension)' == 'PublicAPI.Unshipped.txt'" />
+      <AdditionalFiles Include="$(_BlueTuskLegacyEfApiOutput)/PublicAPI.Shipped.txt;$(_BlueTuskLegacyEfApiOutput)/PublicAPI.Unshipped.txt" />
+    </ItemGroup>
+  </Target>
+</Project>

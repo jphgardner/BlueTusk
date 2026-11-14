@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeTests>true</BlueTuskRuntimeTests>
+    <UseAppHost Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</UseAppHost>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="xunit" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\identity\BlueTusk.Identity.Aws\BlueTusk.Identity.Aws.csproj" />
+    <ProjectReference Include="..\..\identity\BlueTusk.Identity.Azure\BlueTusk.Identity.Azure.csproj" />
+    <ProjectReference Include="..\..\identity\BlueTusk.Identity.GoogleCloud\BlueTusk.Identity.GoogleCloud.csproj" />
+  </ItemGroup>
+</Project>

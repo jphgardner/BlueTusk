@@ -14,8 +14,8 @@ public sealed class ManagedDeploymentQuery
 
     public void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(PageSize, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(PageSize, 500);
+        BlueTuskGuard.NotLessThan(PageSize, 1);
+        BlueTuskGuard.NotGreaterThan(PageSize, 500);
         ValidateOptional(AfterDeploymentId, nameof(AfterDeploymentId));
         ValidateOptional(DeploymentIdPrefix, nameof(DeploymentIdPrefix));
         ValidateOptional(TenantId, nameof(TenantId));
@@ -36,7 +36,7 @@ public sealed class ManagedDeploymentQuery
     private static void ValidateOptional(string? value, string parameter)
     {
         if (value is null) return;
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameter);
         if (value.Length > 128 || value.Any(character => char.IsControl(character) || char.IsSurrogate(character)))
         {
             throw new ArgumentException("Inventory filters must be bounded printable values.", parameter);

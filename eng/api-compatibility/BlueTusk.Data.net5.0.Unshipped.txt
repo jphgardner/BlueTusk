@@ -1,0 +1,78 @@
+#nullable enable
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Cancel() -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.CreateDbBatchCommand() -> BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.DbBatchCommands.get -> BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.DbConnection.get -> System.Data.Common.DbConnection?
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.DbConnection.set -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.DbTransaction.get -> System.Data.Common.DbTransaction?
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.DbTransaction.set -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteDbDataReader(System.Data.CommandBehavior behavior) -> System.Data.Common.DbDataReader!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteDbDataReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Data.Common.DbDataReader!>!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteNonQuery() -> int
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteScalar() -> object?
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<object?>!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Prepare() -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.PrepareAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Timeout.get -> int
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Timeout.set -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.CommandText.get -> string!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.CommandText.set -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.CommandType.get -> System.Data.CommandType
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.CommandType.set -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.CreateParameter() -> System.Data.Common.DbParameter!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.DbParameterCollection.get -> System.Data.Common.DbParameterCollection!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.RecordsAffected.get -> int
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.Add(BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand! item) -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.Clear() -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.Contains(BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand! item) -> bool
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.CopyTo(BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand![]! array, int arrayIndex) -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.Count.get -> int
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.GetBatchCommand(int index) -> BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.GetEnumerator() -> System.Collections.Generic.IEnumerator<BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand!>!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.IndexOf(BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand! item) -> int
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.Insert(int index, BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand! item) -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.IsReadOnly.get -> bool
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.Remove(BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand! item) -> bool
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.RemoveAt(int index) -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.SetBatchCommand(int index, BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand! batchCommand) -> void
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.ConnectionString.get -> string!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateDbBatch() -> BlueTusk.Data.Compatibility.BlueTuskLegacyBatch!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateDbCommand(string! commandText) -> System.Data.Common.DbCommand!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateDbConnection() -> System.Data.Common.DbConnection!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.OpenDbConnection() -> System.Data.Common.DbConnection!
+abstract BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.OpenDbConnectionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Data.Common.DbConnection!>
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.BatchCommands.get -> BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection!
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.BlueTuskLegacyBatch() -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Connection.get -> System.Data.Common.DbConnection?
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Connection.set -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.CreateBatchCommand() -> BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand!
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Dispose() -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteReader(System.Data.CommandBehavior behavior = System.Data.CommandBehavior.Default) -> System.Data.Common.DbDataReader!
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteReaderAsync() -> System.Threading.Tasks.Task<System.Data.Common.DbDataReader!>!
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Data.Common.DbDataReader!>!
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.ExecuteReaderAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Data.Common.DbDataReader!>!
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Transaction.get -> System.Data.Common.DbTransaction?
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Transaction.set -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.BlueTuskLegacyBatchCommand() -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.Parameters.get -> System.Data.Common.DbParameterCollection!
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.BlueTuskLegacyBatchCommandCollection() -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.this[int index].get -> BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand!
+BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommandCollection.this[int index].set -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.BlueTuskLegacyDataSource() -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateBatch() -> BlueTusk.Data.Compatibility.BlueTuskLegacyBatch!
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateCommand(string? commandText = null) -> System.Data.Common.DbCommand!
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.CreateConnection() -> System.Data.Common.DbConnection!
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.Dispose() -> void
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.OpenConnection() -> System.Data.Common.DbConnection!
+BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.OpenConnectionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Data.Common.DbConnection!>
+virtual BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.Dispose(bool disposing) -> void
+virtual BlueTusk.Data.Compatibility.BlueTuskLegacyBatch.DisposeAsync() -> System.Threading.Tasks.ValueTask
+virtual BlueTusk.Data.Compatibility.BlueTuskLegacyBatchCommand.CanCreateParameter.get -> bool
+virtual BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.Dispose(bool disposing) -> void
+virtual BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource.DisposeAsyncCore() -> System.Threading.Tasks.ValueTask

@@ -19,7 +19,13 @@ public sealed class PostgreSqlManagedDeploymentStore :
 
     private static readonly Regex SchemaPattern = new(
         "^[A-Za-z_][A-Za-z0-9_$]*$",
-        RegexOptions.CultureInvariant | RegexOptions.NonBacktracking);
+        RegexOptions.CultureInvariant
+#if NET7_0_OR_GREATER
+        | RegexOptions.NonBacktracking
+#else
+        | RegexOptions.Compiled
+#endif
+        );
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private const string SelectColumns =
         "SELECT desired_document::text, document_format, state, observed_generation, " +
@@ -34,8 +40,8 @@ public sealed class PostgreSqlManagedDeploymentStore :
         DbDataSource dataSource,
         string controlSchema = "bluetusk_control")
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(controlSchema);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(controlSchema);
         if (!SchemaPattern.IsMatch(controlSchema))
         {
             throw new ArgumentException(
@@ -215,7 +221,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
     public async ValueTask<ManagedDeploymentPage> QueryAsync(
         ManagedDeploymentQuery query, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(query);
+        BlueTuskGuard.NotNull(query);
         query.Validate();
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
@@ -264,7 +270,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
         CancellationToken cancellationToken = default)
     {
         ManagedDeploymentValidation.Validate(spec);
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedGeneration);
+        BlueTuskGuard.NotNegative(expectedGeneration);
 
         var document = JsonSerializer.Serialize(spec, JsonOptions);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
@@ -518,7 +524,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateLeaseInput(lease.DeploymentId, lease.Owner, duration);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -551,7 +557,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
         ManagedDeploymentLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var command = connection.CreateCommand();
@@ -659,7 +665,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
 
     private static void ValidateStatus(ManagedDeploymentStatus status, long expectedRevision)
     {
-        ArgumentNullException.ThrowIfNull(status);
+        BlueTuskGuard.NotNull(status);
         if (expectedRevision < 0 ||
             status.Revision != checked(expectedRevision + 1) ||
             status.ObservedGeneration <= 0 ||
@@ -690,7 +696,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
 
     private static void ValidateIdentifier(string value, int maximumLength, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (value.Length > maximumLength)
         {
             throw new ArgumentException(

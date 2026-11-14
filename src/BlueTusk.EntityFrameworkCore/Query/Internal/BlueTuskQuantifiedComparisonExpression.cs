@@ -20,7 +20,9 @@ internal sealed class BlueTuskQuantifiedComparisonExpression(
     RelationalTypeMapping typeMapping)
     : SqlExpression(typeof(bool), typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public SqlExpression Item { get; } = item;
 
@@ -45,6 +47,7 @@ internal sealed class BlueTuskQuantifiedComparisonExpression(
             (SqlExpression)visitor.Visit(Item),
             (SqlExpression)visitor.Visit(Array));
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -61,6 +64,7 @@ internal sealed class BlueTuskQuantifiedComparisonExpression(
             Constant(OperatorToken),
             Constant(Quantifier),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)

@@ -7,8 +7,12 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskEntityFrameworkTargetFrameworks Condition="'$(BlueTuskEntityFrameworkTargetFrameworks)' == ''">$(BlueTuskRuntimeTargetFrameworks)</BlueTuskEntityFrameworkTargetFrameworks>
+    <TargetFrameworks>$(BlueTuskEntityFrameworkTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
+    <BlueTuskLegacyEntityFrameworkPublicApi>true</BlueTuskLegacyEntityFrameworkPublicApi>
     <Description>Entity Framework Core provider for PostgreSQL backed by BlueTusk.Data.</Description>
   </PropertyGroup>
 
+  <Import Project="..\..\eng\EntityFrameworkCore.props" />
 </Project>

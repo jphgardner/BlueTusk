@@ -12,8 +12,8 @@ public static class BlueTuskPgVectorDbContextOptionsBuilderExtensions
         this BlueTuskDbContextOptionsBuilder optionsBuilder,
         string schema = "public")
     {
-        ArgumentNullException.ThrowIfNull(optionsBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNull(optionsBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
         var extension = new BlueTuskPgVectorOptionsExtension(schema);
         ((IDbContextOptionsBuilderInfrastructure)optionsBuilder.ContextOptionsBuilder)
             .AddOrUpdateExtension(extension);

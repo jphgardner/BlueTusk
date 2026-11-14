@@ -14,7 +14,7 @@ public sealed class BlueTuskVector : IReadOnlyList<float>, IEquatable<BlueTuskVe
 
     public BlueTuskVector(params float[] values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         Validate(values);
         _values = values.ToArray();
     }
@@ -28,7 +28,7 @@ public sealed class BlueTuskVector : IReadOnlyList<float>, IEquatable<BlueTuskVe
 
     public static BlueTuskVector Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return Parse(value.AsSpan());
     }
 

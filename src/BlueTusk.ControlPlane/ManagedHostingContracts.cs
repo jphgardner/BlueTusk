@@ -110,7 +110,7 @@ public sealed class ManagedDeploymentValidationException : Exception
     public ManagedDeploymentValidationException(string code, string message)
         : base(message)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+        BlueTuskGuard.NotNullOrWhiteSpace(code);
         Code = code;
     }
 

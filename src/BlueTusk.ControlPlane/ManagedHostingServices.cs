@@ -9,13 +9,13 @@ public sealed class ManagedInfrastructureProviderResolver :
     public ManagedInfrastructureProviderResolver(
         IEnumerable<IManagedInfrastructureProvider> providers)
     {
-        ArgumentNullException.ThrowIfNull(providers);
+        BlueTuskGuard.NotNull(providers);
         var registry = new Dictionary<string, IManagedInfrastructureProvider>(
             StringComparer.Ordinal);
         foreach (var provider in providers)
         {
-            ArgumentNullException.ThrowIfNull(provider);
-            ArgumentException.ThrowIfNullOrWhiteSpace(provider.Name);
+            BlueTuskGuard.NotNull(provider);
+            BlueTuskGuard.NotNullOrWhiteSpace(provider.Name);
             if (provider.Name.Length > 128 || !registry.TryAdd(provider.Name, provider))
             {
                 throw new ArgumentException(
@@ -36,7 +36,7 @@ public sealed class ManagedInfrastructureProviderResolver :
 
     public IManagedInfrastructureProvider Resolve(string provider)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(provider);
+        BlueTuskGuard.NotNullOrWhiteSpace(provider);
         if (!_providers.TryGetValue(provider, out var resolved))
         {
             throw new ManagedDeploymentValidationException(
@@ -60,8 +60,8 @@ public sealed class ManagedDeploymentQuotaSource : IManagedTenantQuotaSource
         IReadOnlyDictionary<string, ManagedTenantQuota> tenantQuotas,
         ManagedTenantQuota? defaultQuota = null)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(tenantQuotas);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(tenantQuotas);
         if (tenantQuotas.Any(
                 static pair =>
                     string.IsNullOrWhiteSpace(pair.Key) ||
@@ -82,7 +82,7 @@ public sealed class ManagedDeploymentQuotaSource : IManagedTenantQuotaSource
         string tenantId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
+        BlueTuskGuard.NotNullOrWhiteSpace(tenantId);
         cancellationToken.ThrowIfCancellationRequested();
         if (_tenantQuotas.TryGetValue(tenantId, out var quota))
         {
@@ -105,9 +105,9 @@ public sealed class ManagedDeploymentQuotaSource : IManagedTenantQuotaSource
         ManagedDeploymentSpec desired,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(replacingDeploymentId);
-        ArgumentNullException.ThrowIfNull(desired);
+        BlueTuskGuard.NotNullOrWhiteSpace(tenantId);
+        BlueTuskGuard.NotNullOrWhiteSpace(replacingDeploymentId);
+        BlueTuskGuard.NotNull(desired);
         var requested = ManagedDeploymentValidation.GetRequestedUsage(desired);
         var deployments = requested.Deployments;
         var replicas = requested.Replicas;
@@ -165,7 +165,7 @@ public sealed class InMemoryManagedDeploymentStore :
         string deploymentId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(deploymentId);
+        BlueTuskGuard.NotNullOrWhiteSpace(deploymentId);
         cancellationToken.ThrowIfCancellationRequested();
         lock (_sync)
         {
@@ -183,7 +183,7 @@ public sealed class InMemoryManagedDeploymentStore :
     {
         if (tenantId is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
+            BlueTuskGuard.NotNullOrWhiteSpace(tenantId);
         }
 
         ManagedDeployment[] snapshot;
@@ -213,7 +213,7 @@ public sealed class InMemoryManagedDeploymentStore :
     public ValueTask<ManagedDeploymentPage> QueryAsync(
         ManagedDeploymentQuery query, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(query);
+        BlueTuskGuard.NotNull(query);
         query.Validate();
         cancellationToken.ThrowIfCancellationRequested();
         lock (_sync)
@@ -248,7 +248,7 @@ public sealed class InMemoryManagedDeploymentStore :
         CancellationToken cancellationToken = default)
     {
         ManagedDeploymentValidation.Validate(spec);
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedGeneration);
+        BlueTuskGuard.NotNegative(expectedGeneration);
 
         cancellationToken.ThrowIfCancellationRequested();
         lock (_sync)
@@ -322,8 +322,8 @@ public sealed class InMemoryManagedDeploymentStore :
         long expectedRevision,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(deploymentId);
-        ArgumentNullException.ThrowIfNull(status);
+        BlueTuskGuard.NotNullOrWhiteSpace(deploymentId);
+        BlueTuskGuard.NotNull(status);
         if (expectedRevision < 0 ||
             status.Revision != checked(expectedRevision + 1) ||
             status.ObservedGeneration <= 0 ||
@@ -396,7 +396,7 @@ public sealed class InMemoryManagedDeploymentStore :
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateLeaseInput(lease.DeploymentId, lease.Owner, duration);
         cancellationToken.ThrowIfCancellationRequested();
         lock (_sync)
@@ -421,7 +421,7 @@ public sealed class InMemoryManagedDeploymentStore :
         ManagedDeploymentLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         cancellationToken.ThrowIfCancellationRequested();
         lock (_sync)
         {
@@ -443,8 +443,8 @@ public sealed class InMemoryManagedDeploymentStore :
         string owner,
         TimeSpan duration)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(deploymentId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        BlueTuskGuard.NotNullOrWhiteSpace(deploymentId);
+        BlueTuskGuard.NotNullOrWhiteSpace(owner);
         if (deploymentId.Length > 128 ||
             owner.Length > 512 ||
             duration <= TimeSpan.Zero ||

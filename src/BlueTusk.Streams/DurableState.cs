@@ -1,3 +1,6 @@
+#if !NET9_0_OR_GREATER
+using Lock = System.Object;
+#endif
 namespace BlueTusk.Streams;
 
 public readonly record struct ChangeStreamStateKey(
@@ -6,8 +9,8 @@ public readonly record struct ChangeStreamStateKey(
 {
     public static ChangeStreamStateKey Create(ChangeSourceIdentity source, string consumerGroup)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrWhiteSpace(consumerGroup);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNullOrWhiteSpace(consumerGroup);
         return new ChangeStreamStateKey(source.Fingerprint, consumerGroup);
     }
 }
@@ -25,13 +28,13 @@ public sealed record ChangeStreamCheckpoint
         BlueTuskLogSequenceNumber acknowledgedCommitPosition,
         long storeGeneration)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(formatVersion);
+        BlueTuskGuard.NotNegativeOrZero(formatVersion);
 
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputPlugin);
-        ArgumentException.ThrowIfNullOrWhiteSpace(mappingFingerprint);
-        ArgumentOutOfRangeException.ThrowIfLessThan(storeGeneration, -1);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(outputPlugin);
+        BlueTuskGuard.NotNullOrWhiteSpace(mappingFingerprint);
+        BlueTuskGuard.NotLessThan(storeGeneration, -1);
 
         FormatVersion = formatVersion;
         Source = source;
@@ -91,7 +94,7 @@ public sealed record ChangeStreamCheckpoint
 
     public void EnsureCompatibleWith(ChangeStreamCheckpoint expected)
     {
-        ArgumentNullException.ThrowIfNull(expected);
+        BlueTuskGuard.NotNull(expected);
         if (FormatVersion != expected.FormatVersion ||
             !Equals(Source, expected.Source) ||
             !string.Equals(DatabaseIdentity, expected.DatabaseIdentity, StringComparison.Ordinal) ||
@@ -207,8 +210,8 @@ public sealed class MemoryChangeStreamStateStore : IChangeStreamStateStore
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        ArgumentNullException.ThrowIfNull(replacement);
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(replacement);
+        BlueTuskGuard.NotNull(lease);
         lock (_gate)
         {
             var current = _checkpoints.GetValueOrDefault(key);
@@ -300,7 +303,7 @@ public sealed class MemoryChangeStreamStateStore : IChangeStreamStateStore
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateLeaseArguments(lease.OwnerId, duration);
         lock (_gate)
         {
@@ -320,7 +323,7 @@ public sealed class MemoryChangeStreamStateStore : IChangeStreamStateStore
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         lock (_gate)
         {
             if (!IsLeaseCurrent(lease.Key, lease, requireUnexpired: false))
@@ -344,8 +347,8 @@ public sealed class MemoryChangeStreamStateStore : IChangeStreamStateStore
 
     private static void ValidateLeaseArguments(string ownerId, TimeSpan duration)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(ownerId);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(duration, TimeSpan.Zero);
+        BlueTuskGuard.NotNullOrWhiteSpace(ownerId);
+        BlueTuskGuard.NotLessThanOrEqual(duration, TimeSpan.Zero);
     }
 }
 
@@ -363,7 +366,7 @@ public sealed class LogicalReplicationFeedbackSender : IReplicationFeedbackSende
     public LogicalReplicationFeedbackSender(
         BlueTusk.Replication.BlueTuskReplicationConnection connection)
     {
-        ArgumentNullException.ThrowIfNull(connection);
+        BlueTuskGuard.NotNull(connection);
         _connection = connection;
     }
 
@@ -424,9 +427,9 @@ public sealed class CheckpointingChangeDeliveryObserver : IChangeDeliveryObserve
         IReplicationFeedbackSender feedback,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentNullException.ThrowIfNull(feedback);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNull(feedback);
         if (!string.Equals(key.SourceFingerprint, identity.Source.Fingerprint, StringComparison.Ordinal))
         {
             throw new ArgumentException(
@@ -470,8 +473,8 @@ public sealed class CheckpointingChangeDeliveryObserver : IChangeDeliveryObserve
         ChangeTransaction transaction,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotNull(transaction);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -523,7 +526,7 @@ public sealed class CheckpointingChangeDeliveryObserver : IChangeDeliveryObserve
         Exception? failure,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.CompletedTask;
     }

@@ -99,14 +99,14 @@ public sealed class BlueTuskCopyBothChannel : IAsyncDisposable
         ReadOnlyMemory<byte> data,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(IsCompleted, this);
+        BlueTuskGuard.NotDisposed(IsCompleted, this);
         await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         var writing = false;
         try
         {
             lock (_completionSync)
             {
-                ObjectDisposedException.ThrowIf(IsCompleted, this);
+                BlueTuskGuard.NotDisposed(IsCompleted, this);
                 _activeWrites++;
                 writing = true;
             }

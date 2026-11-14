@@ -101,7 +101,7 @@ internal sealed class ProviderServices : IProviderServices
 
     public IProviderConnection GetConnection(DbConnection connection)
     {
-        ArgumentNullException.ThrowIfNull(connection);
+        BlueTuskGuard.NotNull(connection);
         return connection as IProviderConnection ??
             throw new InvalidOperationException(
                 $"The EF provider requires a BlueTusk provider connection, not '{connection.GetType().FullName}'.");
@@ -109,7 +109,7 @@ internal sealed class ProviderServices : IProviderServices
 
     public IProviderDataSource GetDataSource(DbDataSource dataSource)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         return dataSource as IProviderDataSource ??
             throw new InvalidOperationException(
                 $"The EF provider requires a BlueTusk provider data source, not '{dataSource.GetType().FullName}'.");
@@ -121,12 +121,12 @@ internal sealed class ProviderServices : IProviderServices
     {
         var settings = new BlueTuskConnectionStringBuilder(connectionString);
         var targetDatabase = settings.Database;
-        ArgumentException.ThrowIfNullOrWhiteSpace(targetDatabase);
+        BlueTuskGuard.NotNullOrWhiteSpace(targetDatabase);
         var adminDatabase = configuredAdminDatabase ??
             (string.Equals(targetDatabase, "postgres", StringComparison.Ordinal)
                 ? "template1"
                 : "postgres");
-        ArgumentException.ThrowIfNullOrWhiteSpace(adminDatabase);
+        BlueTuskGuard.NotNullOrWhiteSpace(adminDatabase);
         if (string.Equals(targetDatabase, adminDatabase, StringComparison.Ordinal))
         {
             throw new InvalidOperationException(

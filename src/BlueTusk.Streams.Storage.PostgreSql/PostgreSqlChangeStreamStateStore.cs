@@ -11,7 +11,7 @@ public sealed class PostgreSqlChangeStreamStateStore : IChangeStreamStateStore
 
     public PostgreSqlChangeStreamStateStore(PostgreSqlStreamsStorageOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _dataSource = options.ControlDataSource;
         _table = options.QuotedControlSchema + ".stream_state";
@@ -88,8 +88,8 @@ public sealed class PostgreSqlChangeStreamStateStore : IChangeStreamStateStore
         ChangeStreamLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(replacement);
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(replacement);
+        BlueTuskGuard.NotNull(lease);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(
@@ -232,7 +232,7 @@ public sealed class PostgreSqlChangeStreamStateStore : IChangeStreamStateStore
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateLeaseArguments(lease.OwnerId, duration);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -261,7 +261,7 @@ public sealed class PostgreSqlChangeStreamStateStore : IChangeStreamStateStore
         ChangeStreamLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var command = CreateCommand(
@@ -431,8 +431,8 @@ public sealed class PostgreSqlChangeStreamStateStore : IChangeStreamStateStore
 
     private static void ValidateLeaseArguments(string ownerId, TimeSpan duration)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(ownerId);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(duration, TimeSpan.Zero);
+        BlueTuskGuard.NotNullOrWhiteSpace(ownerId);
+        BlueTuskGuard.NotLessThanOrEqual(duration, TimeSpan.Zero);
     }
 
     private sealed record LockedState(

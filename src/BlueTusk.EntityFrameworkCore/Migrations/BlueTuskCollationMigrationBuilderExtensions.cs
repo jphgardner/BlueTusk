@@ -31,8 +31,8 @@ public static class BlueTuskCollationMigrationBuilderExtensions
         string? sourceSchema = null,
         bool ifNotExists = false)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourceName);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(sourceName);
         ValidateOptional(schema, nameof(schema));
         ValidateOptional(sourceSchema, nameof(sourceSchema));
         return Add(migrationBuilder, new CreateCollationFromOperation
@@ -52,8 +52,8 @@ public static class BlueTuskCollationMigrationBuilderExtensions
         string? schema = null,
         string? newSchema = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         ValidateOptional(schema, nameof(schema));
         ValidateOptional(newSchema, nameof(newSchema));
         return Add(migrationBuilder, new RenameCollationOperation
@@ -70,7 +70,7 @@ public static class BlueTuskCollationMigrationBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         ValidateOptional(schema, nameof(schema));
         return Add(migrationBuilder, new RefreshCollationVersionOperation
         {
@@ -86,7 +86,7 @@ public static class BlueTuskCollationMigrationBuilderExtensions
         bool ifExists = false,
         bool cascade = false)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         ValidateOptional(schema, nameof(schema));
         return Add(migrationBuilder, new DropCollationOperation
         {
@@ -113,7 +113,7 @@ public static class BlueTuskCollationMigrationBuilderExtensions
         TOperation operation)
         where TOperation : MigrationOperation
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         migrationBuilder.Operations.Add(operation);
         return new OperationBuilder<TOperation>(operation);
     }
@@ -122,7 +122,7 @@ public static class BlueTuskCollationMigrationBuilderExtensions
     {
         if (value is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+            BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         }
     }
 }

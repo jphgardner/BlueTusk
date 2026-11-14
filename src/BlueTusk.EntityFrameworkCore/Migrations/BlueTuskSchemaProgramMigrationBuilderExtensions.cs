@@ -201,7 +201,7 @@ public static class BlueTuskSchemaProgramMigrationBuilderExtensions
     private static OperationBuilder<TOperation> Add<TOperation>(MigrationBuilder builder, TOperation operation)
         where TOperation : MigrationOperation
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         builder.Operations.Add(operation);
         return new OperationBuilder<TOperation>(operation);
     }

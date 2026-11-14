@@ -12,9 +12,9 @@ public sealed class BlueTuskCompositeMember<T>
 {
     private BlueTuskCompositeMember(string name, Type clrType, Func<T, object?> getter)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(clrType);
-        ArgumentNullException.ThrowIfNull(getter);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(clrType);
+        BlueTuskGuard.NotNull(getter);
         Name = name;
         ClrType = clrType;
         Getter = getter;
@@ -53,8 +53,8 @@ public sealed class BlueTuskCompositeMapping<T>
         IEnumerable<BlueTuskCompositeMember<T>> members,
         Func<IReadOnlyList<object?>, T> factory)
     {
-        ArgumentNullException.ThrowIfNull(members);
-        ArgumentNullException.ThrowIfNull(factory);
+        BlueTuskGuard.NotNull(members);
+        BlueTuskGuard.NotNull(factory);
         _members = members.ToArray();
         if (_members.Length == 0)
         {
@@ -64,7 +64,7 @@ public sealed class BlueTuskCompositeMapping<T>
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var member in _members)
         {
-            ArgumentNullException.ThrowIfNull(member);
+            BlueTuskGuard.NotNull(member);
             if (!names.Add(member.Name))
             {
                 throw new ArgumentException(

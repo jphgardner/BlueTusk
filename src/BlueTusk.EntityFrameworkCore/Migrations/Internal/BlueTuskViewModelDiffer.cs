@@ -97,7 +97,7 @@ internal static class BlueTuskViewModelDiffer
             .Select(operation => operation.Name)
             .ToHashSet(StringComparer.Ordinal);
         var orderedAfterEntries = OrderByDependencies(
-            creates.Values.Concat(after.Select(item => item.Entry)).DistinctBy(entry => entry.Key),
+            creates.Values.Concat(after.Select(item => item.Entry)).GroupBy(entry => entry.Key).Select(group => group.First()),
             target);
         foreach (var schema in creates.Values.Select(entry => entry.Schema)
                      .Concat(after.Select(item => item.Entry.Schema))

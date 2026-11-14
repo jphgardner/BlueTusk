@@ -6,7 +6,7 @@ internal static class BlueTuskRecordTextParser
 {
     public static string?[] Parse(string text, int? expectedFieldCount = null)
     {
-        ArgumentNullException.ThrowIfNull(text);
+        BlueTuskGuard.NotNull(text);
         var parser = new Parser(text);
         return parser.Parse(expectedFieldCount);
     }

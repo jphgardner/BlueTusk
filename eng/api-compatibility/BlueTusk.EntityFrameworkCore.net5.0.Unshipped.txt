@@ -1,0 +1,5 @@
+#nullable enable
+BlueTusk.EntityFrameworkCore.BlueTuskCheckConstraintBuilder
+BlueTusk.EntityFrameworkCore.BlueTuskCheckConstraintBuilder.Metadata.get -> Microsoft.EntityFrameworkCore.Metadata.IMutableCheckConstraint!
+BlueTusk.EntityFrameworkCore.BlueTuskLegacyCheckConstraintExtensions
+static BlueTusk.EntityFrameworkCore.BlueTuskLegacyCheckConstraintExtensions.HasCheckConstraint(this Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder! builder, string! name, string! sql, System.Action<BlueTusk.EntityFrameworkCore.BlueTuskCheckConstraintBuilder!>! configure) -> Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder!

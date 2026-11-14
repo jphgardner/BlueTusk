@@ -22,7 +22,11 @@ internal sealed class BlueTuskPgVectorOptionsExtension(string schema) : IDbConte
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IRelationalTypeMappingSourcePlugin, BlueTuskPgVectorTypeMappingSourcePlugin>());
         services.TryAddEnumerable(
+#if BLUETUSK_EF6_OR_GREATER
             ServiceDescriptor.Scoped<IMethodCallTranslatorPlugin, BlueTuskPgVectorMethodCallTranslatorPlugin>());
+#else
+            ServiceDescriptor.Singleton<IMethodCallTranslatorPlugin, BlueTuskPgVectorMethodCallTranslatorPlugin>());
+#endif
     }
 
     public void Validate(IDbContextOptions options)
@@ -36,12 +40,18 @@ internal sealed class BlueTuskPgVectorOptionsExtension(string schema) : IDbConte
 
         public override string LogFragment => $"using pgvector in {extension.Schema} ";
 
+#if BLUETUSK_EF6_OR_GREATER
         public override int GetServiceProviderHashCode() =>
+#else
+        public override long GetServiceProviderHashCode() =>
+#endif
             StringComparer.Ordinal.GetHashCode(extension.Schema);
 
+#if BLUETUSK_EF6_OR_GREATER
         public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other) =>
             other is ExtensionInfo otherInfo &&
             string.Equals(extension.Schema, otherInfo.Extension.Schema, StringComparison.Ordinal);
+#endif
 
         public override void PopulateDebugInfo(IDictionary<string, string> debugInfo) =>
             debugInfo["BlueTusk:PgVector"] = extension.Schema;

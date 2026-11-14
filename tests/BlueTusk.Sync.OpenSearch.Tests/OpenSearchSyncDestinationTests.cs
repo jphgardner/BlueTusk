@@ -5,7 +5,6 @@ using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
 using BlueTusk.Sync.Testing;
 using BlueTusk.TypeSystem;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sync.OpenSearch.Tests;
 
@@ -24,7 +23,7 @@ public sealed class OpenSearchSyncDestinationTests
         Assert.Contains("BaseAddress", exception.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_OPENSEARCH_URL")]
     public async Task OpenSearch_recovers_partial_bulk_work_and_atomically_swaps_rebuild_aliases()
     {
         var endpoint = GetEndpoint();
@@ -270,7 +269,7 @@ public sealed class OpenSearchSyncDestinationTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_OPENSEARCH_URL")]
     public async Task OpenSearch_sidecar_reconciliation_repairs_without_advancing_checkpoint()
     {
         var endpoint = GetEndpoint();
@@ -440,7 +439,7 @@ public sealed class OpenSearchSyncDestinationTests
         var value = Environment.GetEnvironmentVariable("BLUETUSK_OPENSEARCH_URL");
         if (string.IsNullOrWhiteSpace(value))
         {
-            throw SkipException.ForSkip("BLUETUSK_OPENSEARCH_URL is not configured.");
+            throw new InvalidOperationException("BLUETUSK_OPENSEARCH_URL is not configured.");
         }
 
         return new Uri(value.EndsWith('/') ? value : value + '/', UriKind.Absolute);

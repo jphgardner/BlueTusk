@@ -509,12 +509,12 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         BlueTuskConnectionStringBuilder settings,
         BlueTuskClientConfiguration? clientConfiguration = null)
     {
-        ArgumentNullException.ThrowIfNull(settings);
+        BlueTuskGuard.NotNull(settings);
         settings.Validate();
         var endpoints = settings.HostEndpoints.ToArray();
         if (settings.LoadBalanceHosts == BlueTuskLoadBalanceHosts.Random)
         {
-            Random.Shared.Shuffle(endpoints);
+            BlueTuskRuntime.Shuffle(endpoints);
         }
 
         var target = settings.TargetSessionAttributes;
@@ -601,12 +601,12 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         BlueTuskClientConfiguration? clientConfiguration,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(settings);
+        BlueTuskGuard.NotNull(settings);
         settings.Validate();
         var endpoints = settings.HostEndpoints.ToArray();
         if (settings.LoadBalanceHosts == BlueTuskLoadBalanceHosts.Random)
         {
-            Random.Shared.Shuffle(endpoints);
+            BlueTuskRuntime.Shuffle(endpoints);
         }
 
         var target = settings.TargetSessionAttributes;

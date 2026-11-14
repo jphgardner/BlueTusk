@@ -12,7 +12,7 @@ public static class BlueTuskPropertyGraphModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var definitions = BlueTuskPropertyGraphMetadata.DeserializeMany(serializedDefinitions);
         modelBuilder.Model.SetAnnotation(
             BlueTuskPropertyGraphMetadata.AnnotationName,
@@ -26,9 +26,9 @@ public static class BlueTuskPropertyGraphModelBuilderExtensions
         Action<BlueTuskPropertyGraphBuilder> configure,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(configure);
 
         schema ??= modelBuilder.Model.GetDefaultSchema();
         var builder = new BlueTuskPropertyGraphBuilder(modelBuilder, name, schema);

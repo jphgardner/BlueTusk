@@ -139,7 +139,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
 
     public PostgreSqlDurableChangeRelay(PostgreSqlStreamsStorageOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _dataSource = options.ControlDataSource;
@@ -353,7 +353,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         bool beginNewEpoch = false,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(
@@ -424,7 +424,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         return _stateStore.AcquireAsync(
             ChangeStreamStateKey.Create(source.Source, SourceLeaseConsumerGroup),
             ownerId,
@@ -449,9 +449,9 @@ public sealed partial class PostgreSqlDurableChangeRelay
         ChangeStreamLease sourceLease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(transactionToAppend);
-        ArgumentNullException.ThrowIfNull(sourceLease);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(transactionToAppend);
+        BlueTuskGuard.NotNull(sourceLease);
         EnsureSourceCompatible(source.Source, transactionToAppend.Source);
         var envelope = await ChangeTransactionEnvelopeCodec.EncodeAsync(
             transactionToAppend,
@@ -572,8 +572,8 @@ public sealed partial class PostgreSqlDurableChangeRelay
         ChangeRelayConsumerGroupStart start = ChangeRelayConsumerGroupStart.EarliestAvailable,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrWhiteSpace(consumerGroup);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNullOrWhiteSpace(consumerGroup);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(
@@ -653,7 +653,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(group);
+        BlueTuskGuard.NotNull(group);
         ValidateLeaseArguments(ownerId, duration);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -722,7 +722,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateLeaseArguments(lease.OwnerId, duration);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -753,7 +753,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         ChangeRelayGroupLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var command = CreateCommand(
@@ -780,9 +780,9 @@ public sealed partial class PostgreSqlDurableChangeRelay
         ChangeRelayConsumerGroupRemovalMode mode = ChangeRelayConsumerGroupRemovalMode.PreserveResumeWindow,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(group);
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedGeneration);
-        ArgumentException.ThrowIfNullOrWhiteSpace(confirmation);
+        BlueTuskGuard.NotNull(group);
+        BlueTuskGuard.NotNegative(expectedGeneration);
+        BlueTuskGuard.NotNullOrWhiteSpace(confirmation);
         if (!Enum.IsDefined(mode))
         {
             throw new ArgumentOutOfRangeException(nameof(mode));
@@ -891,9 +891,9 @@ public sealed partial class PostgreSqlDurableChangeRelay
         long maxBytes,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxTransactions);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxBytes);
+        BlueTuskGuard.NotNull(lease);
+        BlueTuskGuard.NotNegativeOrZero(maxTransactions);
+        BlueTuskGuard.NotNegativeOrZero(maxBytes);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         var groupState = await ReadGroupAsync(
@@ -968,7 +968,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         uint transactionId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         var registered = await ReadSourceAsync(
@@ -1028,8 +1028,8 @@ public sealed partial class PostgreSqlDurableChangeRelay
         long sequence,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
-        ArgumentOutOfRangeException.ThrowIfNegative(sequence);
+        BlueTuskGuard.NotNull(lease);
+        BlueTuskGuard.NotNegative(sequence);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(
@@ -1105,7 +1105,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         ChangeRelaySourceRegistration source,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(
@@ -1209,7 +1209,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         bool vacuum = true,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         long deletedTransactions = 0;
         long deletedBytes = 0;
         var batches = 0;
@@ -1250,7 +1250,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         ChangeRelaySourceRegistration source,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var command = CreateCommand(
@@ -1299,7 +1299,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
         BlueTuskLogSequenceNumber serverWalEnd,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         var metrics = await GetMetricsAsync(source, cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -1654,8 +1654,8 @@ public sealed partial class PostgreSqlDurableChangeRelay
 
     private static void ValidateLeaseArguments(string ownerId, TimeSpan duration)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(ownerId);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(duration, TimeSpan.Zero);
+        BlueTuskGuard.NotNullOrWhiteSpace(ownerId);
+        BlueTuskGuard.NotLessThanOrEqual(duration, TimeSpan.Zero);
     }
 
     private sealed record GroupState(
@@ -1706,9 +1706,9 @@ public sealed class PostgreSqlRelayChangeDeliveryObserver : IChangeDeliveryObser
         IReplicationFeedbackSender feedback,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(relay);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(feedback);
+        BlueTuskGuard.NotNull(relay);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(feedback);
         var registration = await relay.RegisterSourceAsync(source, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var acquired = await relay.AcquireSourceLeaseAsync(
@@ -1734,8 +1734,8 @@ public sealed class PostgreSqlRelayChangeDeliveryObserver : IChangeDeliveryObser
         ChangeTransaction transaction,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotNull(transaction);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -1761,7 +1761,7 @@ public sealed class PostgreSqlRelayChangeDeliveryObserver : IChangeDeliveryObser
         Exception? failure,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.CompletedTask;
     }

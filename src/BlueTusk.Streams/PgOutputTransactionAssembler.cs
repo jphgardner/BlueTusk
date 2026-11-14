@@ -29,7 +29,7 @@ internal sealed class PgOutputTransactionAssembler
         BlueTuskPgOutputEnvelope envelope,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(envelope);
+        BlueTuskGuard.NotNull(envelope);
         switch (envelope.Message)
         {
             case BlueTuskPgOutputType type:

@@ -8,26 +8,26 @@ public static class BlueTuskSqlIdentifier
     /// <summary>Delimits one PostgreSQL identifier.</summary>
     public static string Delimit(string identifier)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(identifier);
+        BlueTuskGuard.NotNullOrWhiteSpace(identifier);
         return $"\"{identifier.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
     }
 
     /// <summary>Delimits a possibly schema-qualified PostgreSQL identifier.</summary>
     public static string Delimit(string identifier, string? schema)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(identifier);
+        BlueTuskGuard.NotNullOrWhiteSpace(identifier);
         return schema is null ? Delimit(identifier) : $"{Delimit(schema)}.{Delimit(identifier)}";
     }
 
     internal static void Append(StringBuilder builder, string identifier)
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         builder.Append(Delimit(identifier));
     }
 
     internal static void Append(StringBuilder builder, string identifier, string? schema)
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         builder.Append(Delimit(identifier, schema));
     }
 }

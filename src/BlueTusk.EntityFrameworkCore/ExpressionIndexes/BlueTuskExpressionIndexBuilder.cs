@@ -18,10 +18,10 @@ public sealed class BlueTuskExpressionIndexBuilder(string name)
     /// <summary>Adds trusted, preformatted PostgreSQL SQL for one or more ordered index keys.</summary>
     public BlueTuskExpressionIndexBuilder HasKeySql(params string[] keySql)
     {
-        ArgumentNullException.ThrowIfNull(keySql);
+        BlueTuskGuard.NotNull(keySql);
         foreach (var key in keySql)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            BlueTuskGuard.NotNullOrWhiteSpace(key);
             _keySql.Add(key);
         }
 
@@ -31,7 +31,7 @@ public sealed class BlueTuskExpressionIndexBuilder(string name)
     /// <summary>Configures the PostgreSQL index access method.</summary>
     public BlueTuskExpressionIndexBuilder UseMethod(string method)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(method);
+        BlueTuskGuard.NotNullOrWhiteSpace(method);
         _method = method;
         return this;
     }
@@ -39,10 +39,10 @@ public sealed class BlueTuskExpressionIndexBuilder(string name)
     /// <summary>Adds quoted database-column names to the INCLUDE list.</summary>
     public BlueTuskExpressionIndexBuilder IncludeColumns(params string[] columns)
     {
-        ArgumentNullException.ThrowIfNull(columns);
+        BlueTuskGuard.NotNull(columns);
         foreach (var column in columns)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(column);
+            BlueTuskGuard.NotNullOrWhiteSpace(column);
             _includedColumns.Add(column);
         }
 
@@ -68,7 +68,7 @@ public sealed class BlueTuskExpressionIndexBuilder(string name)
     {
         if (predicateSql is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(predicateSql);
+            BlueTuskGuard.NotNullOrWhiteSpace(predicateSql);
         }
 
         _predicateSql = predicateSql;
@@ -88,7 +88,7 @@ public sealed class BlueTuskExpressionIndexBuilder(string name)
     {
         if (tablespace is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(tablespace);
+            BlueTuskGuard.NotNullOrWhiteSpace(tablespace);
         }
 
         _tablespace = tablespace;

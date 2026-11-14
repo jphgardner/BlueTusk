@@ -20,9 +20,9 @@ public sealed class BlueTuskLiveGrpcService(
         IServerStreamWriter<LiveGrpcTransportMessage> responseStream,
         ServerCallContext context)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(responseStream);
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNull(responseStream);
+        BlueTuskGuard.NotNull(context);
         var requestBytes =
             (long)Encoding.UTF8.GetByteCount(request.Query) +
             Encoding.UTF8.GetByteCount(request.ParametersJson) +
@@ -110,7 +110,7 @@ internal static class LiveGrpcMessageMapper
 {
     public static LiveGrpcTransportMessage Map(LiveTransportMessage message)
     {
-        ArgumentNullException.ThrowIfNull(message);
+        BlueTuskGuard.NotNull(message);
         return new LiveGrpcTransportMessage
         {
             Kind = message.Kind switch
@@ -132,7 +132,7 @@ public static class BlueTuskLiveGrpcEndpointRouteBuilderExtensions
     public static GrpcServiceEndpointConventionBuilder MapBlueTuskLiveGrpc(
         this IEndpointRouteBuilder endpoints)
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        BlueTuskGuard.NotNull(endpoints);
         return endpoints.MapGrpcService<BlueTuskLiveGrpcService>();
     }
 }

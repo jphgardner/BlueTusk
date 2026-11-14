@@ -32,10 +32,10 @@ public sealed class CompositeSyncTransform : ISyncTransform
         ISyncTransform source,
         IEnumerable<ISyncTransformStage> stages)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(version);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(stages);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(version);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(stages);
         _source = source;
         _stages = stages.ToArray();
         if (_stages.Any(static stage => stage is null))
@@ -52,7 +52,7 @@ public sealed class CompositeSyncTransform : ISyncTransform
         ChangeTransaction transaction,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         var mutations = await _source.TransformTransactionAsync(transaction, cancellationToken)
             .ConfigureAwait(false) ??
             throw new SyncPoisonRecordException("The source transform returned null transaction mutations.");
@@ -84,7 +84,7 @@ public sealed class CompositeSyncTransform : ISyncTransform
         ChangeSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var mutations = await _source.TransformSnapshotBatchAsync(batch, cancellationToken)
             .ConfigureAwait(false) ??
             throw new SyncPoisonRecordException("The source transform returned null snapshot mutations.");
@@ -151,9 +151,9 @@ public sealed class SyncPredicateTransformStage : ISyncTransformStage
         Func<SyncMutation, bool> transactionPredicate,
         Func<SyncSnapshotMutation, bool> snapshotPredicate)
     {
-        ArgumentNullException.ThrowIfNull(version);
-        ArgumentNullException.ThrowIfNull(transactionPredicate);
-        ArgumentNullException.ThrowIfNull(snapshotPredicate);
+        BlueTuskGuard.NotNull(version);
+        BlueTuskGuard.NotNull(transactionPredicate);
+        BlueTuskGuard.NotNull(snapshotPredicate);
         Version = version;
         _transactionPredicate = transactionPredicate;
         _snapshotPredicate = snapshotPredicate;
@@ -166,8 +166,8 @@ public sealed class SyncPredicateTransformStage : ISyncTransformStage
         IReadOnlyList<SyncMutation> mutations,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNull(transaction);
+        BlueTuskGuard.NotNull(mutations);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.FromResult<IReadOnlyList<SyncMutation>>(
             mutations.Where(_transactionPredicate).ToArray());
@@ -178,8 +178,8 @@ public sealed class SyncPredicateTransformStage : ISyncTransformStage
         IReadOnlyList<SyncSnapshotMutation> mutations,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNull(mutations);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.FromResult<IReadOnlyList<SyncSnapshotMutation>>(
             mutations.Where(_snapshotPredicate).ToArray());
@@ -224,13 +224,13 @@ public sealed class JsonSyncTransformStage : ISyncTransformStage
 
     public JsonSyncTransformStage(JsonSyncTransformStageOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.Version);
-        ArgumentNullException.ThrowIfNull(options.RedactedPaths);
-        ArgumentNullException.ThrowIfNull(options.EnrichmentJson);
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.FlattenSeparator);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumDocumentBytes, 1);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNullOrWhiteSpace(options.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(options.Version);
+        BlueTuskGuard.NotNull(options.RedactedPaths);
+        BlueTuskGuard.NotNull(options.EnrichmentJson);
+        BlueTuskGuard.NotNullOrWhiteSpace(options.FlattenSeparator);
+        BlueTuskGuard.NotLessThan(options.MaximumDocumentBytes, 1);
         if (options.FlattenSeparator.Length > 8)
         {
             throw new ArgumentException(
@@ -318,8 +318,8 @@ public sealed class JsonSyncTransformStage : ISyncTransformStage
         IReadOnlyList<SyncMutation> mutations,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNull(transaction);
+        BlueTuskGuard.NotNull(mutations);
         var transformed = new SyncMutation[mutations.Count];
         for (var index = 0; index < mutations.Count; index++)
         {
@@ -351,8 +351,8 @@ public sealed class JsonSyncTransformStage : ISyncTransformStage
         IReadOnlyList<SyncSnapshotMutation> mutations,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNull(mutations);
         var transformed = new SyncSnapshotMutation[mutations.Count];
         for (var index = 0; index < mutations.Count; index++)
         {
@@ -610,7 +610,7 @@ public sealed class JsonSyncTransformStage : ISyncTransformStage
             writer.WriteBoolean("requireTenant", options.RequireTenant);
             writer.WriteNumber("maximumDocumentBytes", options.MaximumDocumentBytes);
             writer.WriteStartArray("redacted");
-            foreach (var path in redactedPaths.Order(StringComparer.Ordinal))
+            foreach (var path in redactedPaths.OrderBy(static value => value, StringComparer.Ordinal))
             {
                 writer.WriteStringValue(path);
             }
@@ -632,7 +632,7 @@ public sealed class JsonSyncTransformStage : ISyncTransformStage
 
     private static void ValidatePath(string path, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(path, parameterName);
         foreach (var segment in path.Split('.'))
         {
             ValidateProperty(segment, parameterName);
@@ -641,7 +641,7 @@ public sealed class JsonSyncTransformStage : ISyncTransformStage
 
     private static void ValidateProperty(string property, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(property, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(property, parameterName);
         if (property.Length > 256)
         {
             throw new ArgumentException(

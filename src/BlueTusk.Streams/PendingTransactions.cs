@@ -248,8 +248,8 @@ internal static class PendingChangeCodec
 
     public static void Write(IBufferWriter<byte> writer, PendingChange change)
     {
-        ArgumentNullException.ThrowIfNull(writer);
-        ArgumentNullException.ThrowIfNull(change);
+        BlueTuskGuard.NotNull(writer);
+        BlueTuskGuard.NotNull(change);
         WriteByte(writer, (byte)change.Kind);
         switch (change.Kind)
         {

@@ -150,7 +150,7 @@ public sealed class BlueTuskPathCodec : BlueTuskCodec<BlueTuskPath>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskPath.Parse(reader.ReadRemainingUtf8());
@@ -178,7 +178,7 @@ public sealed class BlueTuskPathCodec : BlueTuskCodec<BlueTuskPath>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());
@@ -203,7 +203,7 @@ public sealed class BlueTuskPolygonCodec : BlueTuskCodec<BlueTuskPolygon>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskPolygon.Parse(reader.ReadRemainingUtf8());
@@ -230,7 +230,7 @@ public sealed class BlueTuskPolygonCodec : BlueTuskCodec<BlueTuskPolygon>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());
@@ -326,7 +326,7 @@ internal static class BlueTuskGeometricBinary
         BlueTuskTypeDescriptor type,
         BinaryWriter<T> binaryWriter)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value?.ToString() ?? string.Empty);
@@ -347,7 +347,7 @@ internal static class BlueTuskGeometricBinary
         BlueTuskTypeDescriptor type,
         int width)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format != BlueTuskDataFormat.Binary)
         {
             throw new ArgumentOutOfRangeException(nameof(format));
@@ -361,7 +361,7 @@ internal static class BlueTuskGeometricBinary
 
     public static InvalidOperationException InvalidWidth(BlueTuskTypeDescriptor type, int width)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return new InvalidOperationException(
             $"PostgreSQL {type.QualifiedName} binary values must contain exactly {width} bytes.");
     }

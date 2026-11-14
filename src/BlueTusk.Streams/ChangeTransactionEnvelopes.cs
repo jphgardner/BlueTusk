@@ -18,11 +18,11 @@ public sealed record ChangeTransactionEnvelopeOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxEnvelopeBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxChanges);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxTables);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxColumnsPerTable);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxStringBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxEnvelopeBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxChanges);
+        BlueTuskGuard.NotNegativeOrZero(MaxTables);
+        BlueTuskGuard.NotNegativeOrZero(MaxColumnsPerTable);
+        BlueTuskGuard.NotNegativeOrZero(MaxStringBytes);
     }
 }
 
@@ -58,7 +58,7 @@ public static class ChangeTransactionEnvelopeCodec
         ChangeTransactionEnvelopeOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         var effectiveOptions = options ?? new ChangeTransactionEnvelopeOptions();
         effectiveOptions.Validate();
         var changes = await transaction.Changes.MaterializeAsync(cancellationToken).ConfigureAwait(false);
@@ -124,7 +124,7 @@ public static class ChangeTransactionEnvelopeCodec
         ChangeTransactionEnvelope envelope,
         ChangeTransactionEnvelopeOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(envelope);
+        BlueTuskGuard.NotNull(envelope);
         var effectiveOptions = options ?? new ChangeTransactionEnvelopeOptions();
         effectiveOptions.Validate();
         var data = envelope.Data;

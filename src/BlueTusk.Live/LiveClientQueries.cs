@@ -54,13 +54,13 @@ public sealed class LiveClientRelation
         string table,
         IEnumerable<string> columns)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentNullException.ThrowIfNull(columns);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNull(columns);
         var materialized = columns
             .Select(ValidateIdentifier)
             .Distinct(StringComparer.Ordinal)
-            .Order(StringComparer.Ordinal)
+            .OrderBy(static value => value, StringComparer.Ordinal)
             .ToArray();
         if (materialized.Length == 0)
         {
@@ -87,7 +87,7 @@ public sealed class LiveClientRelation
 
     internal static string ValidateIdentifier(string identifier)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(identifier);
+        BlueTuskGuard.NotNullOrWhiteSpace(identifier);
         if (identifier.Length > 63 ||
             identifier.Any(static character =>
                 character is '\0' or '\r' or '\n' ||
@@ -126,7 +126,7 @@ public sealed class LiveClientFilter
         }
         else
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(parameter);
+            BlueTuskGuard.NotNullOrWhiteSpace(parameter);
             ValidateParameterName(parameter);
         }
 
@@ -142,11 +142,11 @@ public sealed class LiveClientFilter
 
     internal static void ValidateParameterName(string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (name.Length > 128 ||
-            !(char.IsAsciiLetter(name[0]) || name[0] == '_') ||
+            !(BlueTuskRuntime.IsAsciiLetter(name[0]) || name[0] == '_') ||
             name.Skip(1).Any(static character =>
-                !(char.IsAsciiLetterOrDigit(character) || character == '_')))
+                !(BlueTuskRuntime.IsAsciiLetterOrDigit(character) || character == '_')))
         {
             throw new ArgumentException(
                 "A client-query parameter name must be a simple ASCII identifier of at most 128 characters.",
@@ -189,11 +189,11 @@ public sealed class LiveClientLinqQuery
         IEnumerable<LiveClientFilter> filters,
         IEnumerable<LiveClientOrdering> orderings)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentNullException.ThrowIfNull(columns);
-        ArgumentNullException.ThrowIfNull(filters);
-        ArgumentNullException.ThrowIfNull(orderings);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNull(columns);
+        BlueTuskGuard.NotNull(filters);
+        BlueTuskGuard.NotNull(orderings);
         var materializedColumns = columns
             .Select(LiveClientRelation.ValidateIdentifier)
             .Distinct(StringComparer.Ordinal)
@@ -256,11 +256,11 @@ public sealed class LiveClientQueryDefinition
         IEnumerable<string> keyColumns,
         int maximumResultCount)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(version);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(keyColumns);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResultCount);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(version);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(keyColumns);
+        BlueTuskGuard.NotNegativeOrZero(maximumResultCount);
         if (maximumResultCount == int.MaxValue)
         {
             throw new ArgumentOutOfRangeException(
@@ -289,7 +289,7 @@ public sealed class LiveClientQueryDefinition
 
         foreach (var parameter in materializedParameters)
         {
-            ArgumentNullException.ThrowIfNull(parameter);
+            BlueTuskGuard.NotNull(parameter);
             LiveClientFilter.ValidateParameterName(parameter.Name);
         }
 
@@ -327,7 +327,7 @@ public sealed class LiveClientQueryDefinition
         IEnumerable<string> keyColumns,
         int maximumResultCount)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
+        BlueTuskGuard.NotNullOrWhiteSpace(sql);
         return new LiveClientQueryDefinition(
             name,
             version,
@@ -347,7 +347,7 @@ public sealed class LiveClientQueryDefinition
         IEnumerable<string> keyColumns,
         int maximumResultCount)
     {
-        ArgumentNullException.ThrowIfNull(query);
+        BlueTuskGuard.NotNull(query);
         return new LiveClientQueryDefinition(
             name,
             version,
@@ -380,9 +380,9 @@ public sealed class LiveClientQueryPolicy
         TimeSpan? statementTimeout = null,
         TimeSpan? lockTimeout = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(version);
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(version);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
         const LiveClientSecurityMode supportedSecurityModes =
             LiveClientSecurityMode.DatabaseRowLevelSecurity |
             LiveClientSecurityMode.DedicatedReadOnlyRole;
@@ -392,22 +392,22 @@ public sealed class LiveClientQueryPolicy
             throw new ArgumentOutOfRangeException(nameof(securityMode));
         }
 
-        ArgumentNullException.ThrowIfNull(relations);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumQueryBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumParameters);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResultCount);
+        BlueTuskGuard.NotNull(relations);
+        BlueTuskGuard.NotNegativeOrZero(maximumQueryBytes);
+        BlueTuskGuard.NotNegativeOrZero(maximumParameters);
+        BlueTuskGuard.NotNegativeOrZero(maximumResultCount);
         if (maximumResultCount == int.MaxValue)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(maximumResultCount),
                 "A client-query policy must leave room for one overflow-detection row.");
         }
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResultColumns);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResultBytes);
+        BlueTuskGuard.NotNegativeOrZero(maximumResultColumns);
+        BlueTuskGuard.NotNegativeOrZero(maximumResultBytes);
         statementTimeout ??= TimeSpan.FromSeconds(5);
         lockTimeout ??= TimeSpan.FromSeconds(1);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(statementTimeout.Value, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(lockTimeout.Value, TimeSpan.Zero);
+        BlueTuskGuard.NotLessThanOrEqual(statementTimeout.Value, TimeSpan.Zero);
+        BlueTuskGuard.NotLessThanOrEqual(lockTimeout.Value, TimeSpan.Zero);
         if (statementTimeout.Value > TimeSpan.FromMinutes(5) ||
             lockTimeout.Value > statementTimeout.Value)
         {
@@ -497,7 +497,7 @@ public sealed class LiveClientRow
 
     public T? Get<T>(string column)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(column);
+        BlueTuskGuard.NotNullOrWhiteSpace(column);
         if (!_values.TryGetValue(column, out var value))
         {
             throw new KeyNotFoundException(
@@ -522,7 +522,7 @@ public sealed class LiveClientRow
             Append(hash, value.GetRawText());
         }
 
-        return Convert.ToHexStringLower(hash.GetHashAndReset());
+        return BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private static void Append(IncrementalHash hash, string value)
@@ -637,9 +637,9 @@ public static class LiveClientQueryCompiler
         LiveClientQueryPolicy policy,
         LiveClientQueryDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentNullException.ThrowIfNull(policy);
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNull(policy);
+        BlueTuskGuard.NotNull(definition);
         if (definition.Parameters.Count > policy.MaximumParameters)
         {
             throw new LiveClientQueryRegistrationException(
@@ -961,7 +961,7 @@ public static class LiveClientQueryCompiler
 
             if (character == '$' &&
                 index + 1 < sql.Length &&
-                (sql[index + 1] == '$' || char.IsAsciiLetterOrDigit(sql[index + 1])))
+                (sql[index + 1] == '$' || BlueTuskRuntime.IsAsciiLetterOrDigit(sql[index + 1])))
             {
                 throw new LiveClientQueryRegistrationException(
                     "Client SQL dollar quoting and positional parameters are not accepted; use named parameters.");
@@ -981,7 +981,7 @@ public static class LiveClientQueryCompiler
                 continue;
             }
 
-            if (char.IsAsciiLetterOrDigit(character) || character == '_')
+            if (BlueTuskRuntime.IsAsciiLetterOrDigit(character) || character == '_')
             {
                 token.Append(char.ToLowerInvariant(character));
             }
@@ -1242,7 +1242,7 @@ public static class LiveClientQueryCompiler
 
                 rows.Add(new LiveClientRow(
                     values,
-                    Convert.ToHexStringLower(rowHash.GetHashAndReset())));
+                    BlueTuskRuntime.ToHexStringLower(rowHash.GetHashAndReset())));
             }
 
             await transaction.CommitAsync(token).ConfigureAwait(false);

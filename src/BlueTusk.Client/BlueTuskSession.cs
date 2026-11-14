@@ -112,7 +112,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         // The previous owner may have lost the wire boundary while this
         // caller was waiting. Release the gate without entering the protocol.
         _operationLock.Release();
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         throw new InvalidOperationException("The PostgreSQL session is not open.");
     }
 
@@ -179,7 +179,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     public static BlueTuskSession Open(BlueTuskClientOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
 
         var telemetry = BlueTuskDiagnostics.StartConnection(
@@ -210,7 +210,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         BlueTuskClientOptions options,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
 
         var telemetry = BlueTuskDiagnostics.StartConnection(
@@ -322,7 +322,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string? beginStatement = null)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(resetCompleted);
+        BlueTuskGuard.NotNull(resetCompleted);
         if (beginStatement is not null)
         {
             ValidateQuery(beginStatement);
@@ -382,7 +382,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             if (started != 0)
             {
                 BlueTuskDiagnostics.CommandDuration.Record(
-                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+                    BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             }
 
             _operationLock.Release();
@@ -396,7 +396,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(resetCompleted);
+        BlueTuskGuard.NotNull(resetCompleted);
         if (beginStatement is not null)
         {
             ValidateQuery(beginStatement);
@@ -474,7 +474,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             if (started != 0)
             {
                 BlueTuskDiagnostics.CommandDuration.Record(
-                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+                    BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             }
 
             _operationLock.Release();
@@ -489,8 +489,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string? beginStatement = null)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(resetCompleted);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(resetCompleted);
         if (beginStatement is not null)
         {
             ValidateQuery(beginStatement);
@@ -547,7 +547,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             if (started != 0)
             {
                 BlueTuskDiagnostics.CommandDuration.Record(
-                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+                    BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             }
 
             _operationLock.Release();
@@ -563,8 +563,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(resetCompleted);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(resetCompleted);
         if (beginStatement is not null)
         {
             ValidateQuery(beginStatement);
@@ -639,7 +639,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             if (started != 0)
             {
                 BlueTuskDiagnostics.CommandDuration.Record(
-                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+                    BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             }
 
             _operationLock.Release();
@@ -657,7 +657,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         bool useBinaryResults)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
 
         return ExecuteQuery(
             output =>
@@ -693,7 +693,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
 
         return ExecuteQueryAsync(
             output =>
@@ -726,7 +726,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         ValidateQuery(beginStatement);
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
 
         var result = await ExecuteQueryAsync(
             output =>
@@ -776,7 +776,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
 
         return ExecuteScalarQueryAsync(
             new ExtendedScalarWriteState(sql, sql, parameters, useBinaryResults),
@@ -795,7 +795,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         ValidateQuery(beginStatement);
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
 
         return ExecuteScalarQueryAsync(
             new ExtendedScalarWriteState(
@@ -820,8 +820,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(resetCompleted);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(resetCompleted);
         if (beginStatement is not null)
         {
             ValidateQuery(beginStatement);
@@ -851,8 +851,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         int fetchSize = 0)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNegative(fetchSize);
         var portalName = fetchSize == 0
             ? string.Empty
             : $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
@@ -868,8 +868,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNegative(fetchSize);
         var portalName = fetchSize == 0
             ? string.Empty
             : $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
@@ -893,8 +893,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         ValidateQuery(beginStatement);
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNegative(fetchSize);
         var portalName = fetchSize == 0
             ? string.Empty
             : $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
@@ -918,9 +918,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string? beginStatement = null)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(resetCompleted);
-        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(resetCompleted);
+        BlueTuskGuard.NotNegative(fetchSize);
         if (beginStatement is not null)
         {
             ValidateQuery(beginStatement);
@@ -950,9 +950,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(resetCompleted);
-        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(resetCompleted);
+        BlueTuskGuard.NotNegative(fetchSize);
         if (beginStatement is not null)
         {
             ValidateQuery(beginStatement);
@@ -981,14 +981,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         int fetchSize = 0)
     {
         ValidatePreparedStatementName(statementName);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
         }
 
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNegative(fetchSize);
         var portalName = fetchSize == 0
             ? string.Empty
             : $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
@@ -1004,14 +1004,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidatePreparedStatementName(statementName);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
         }
 
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNegative(fetchSize);
         var portalName = fetchSize == 0
             ? string.Empty
             : $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
@@ -1034,7 +1034,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         ValidatePreparedStatementName(statementName);
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameterTypeOids);
+        BlueTuskGuard.NotNull(parameterTypeOids);
 
         var result = await ExecuteQueryAsync(
             output =>
@@ -1062,7 +1062,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         ValidatePreparedStatementName(statementName);
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(parameterTypeOids);
+        BlueTuskGuard.NotNull(parameterTypeOids);
 
         var result = ExecuteQuery(
             output =>
@@ -1089,13 +1089,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidatePreparedStatementName(statementName);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
         }
 
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
         var bindParameters = new BlueTuskBindParameter[parameters.Count];
         for (var index = 0; index < parameters.Count; index++)
         {
@@ -1126,13 +1126,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         bool parameterEncodingUnchanged,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
         }
 
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
         var hasDescription = TryGetPreparedStatementDescription(
             statementName,
             out var description);
@@ -1195,13 +1195,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         bool useBinaryResults = true)
     {
         ValidatePreparedStatementName(statementName);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
         }
 
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
         var bindParameters = new BlueTuskBindParameter[parameters.Count];
         for (var index = 0; index < parameters.Count; index++)
         {
@@ -1230,7 +1230,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidatePreparedStatementName(statementName);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
@@ -1250,7 +1250,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     public void ClosePreparedStatement(string statementName)
     {
         ValidatePreparedStatementName(statementName);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
@@ -1270,7 +1270,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         IReadOnlyList<BlueTuskBatchQuery> queries,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(queries);
+        BlueTuskGuard.NotNull(queries);
         if (queries.Count == 0)
         {
             throw new ArgumentException("A batch requires at least one query.", nameof(queries));
@@ -1278,9 +1278,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
         foreach (var query in queries)
         {
-            ArgumentNullException.ThrowIfNull(query);
+            BlueTuskGuard.NotNull(query);
             ValidateQuery(query.Sql);
-            ArgumentNullException.ThrowIfNull(query.Parameters);
+            BlueTuskGuard.NotNull(query.Parameters);
         }
 
         return ExecuteQueryAsync(
@@ -1384,7 +1384,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         bool useBinaryResults,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(queries);
+        BlueTuskGuard.NotNull(queries);
         if (queryCount <= 0 || queryCount > queries.Length)
         {
             throw new ArgumentOutOfRangeException(nameof(queryCount));
@@ -1403,7 +1403,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     /// <summary>Executes multiple unnamed extended-query statements in one protocol cycle.</summary>
     public BlueTuskQueryResult ExecuteBatch(IReadOnlyList<BlueTuskBatchQuery> queries)
     {
-        ArgumentNullException.ThrowIfNull(queries);
+        BlueTuskGuard.NotNull(queries);
         if (queries.Count == 0)
         {
             throw new ArgumentException("A batch requires at least one query.", nameof(queries));
@@ -1411,9 +1411,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
         foreach (var query in queries)
         {
-            ArgumentNullException.ThrowIfNull(query);
+            BlueTuskGuard.NotNull(query);
             ValidateQuery(query.Sql);
-            ArgumentNullException.ThrowIfNull(query.Parameters);
+            BlueTuskGuard.NotNull(query.Parameters);
         }
 
         return ExecuteQuery(
@@ -1483,7 +1483,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
@@ -1546,12 +1546,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     internal async ValueTask ExecuteMultiplexedPipelineAsync(
             IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands,
             IReadOnlyList<CancellationToken>? groupCancellationTokens,
@@ -1561,7 +1563,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             CancellationToken dispatchCancellationToken)
     {
         ValidateMultiplexedPipeline(commands);
-        ArgumentNullException.ThrowIfNull(outcomeCompleted);
+        BlueTuskGuard.NotNull(outcomeCompleted);
         if (groupCancellationTokens is not null &&
             groupCancellationTokens.Count != commands.Count)
         {
@@ -1674,7 +1676,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
@@ -1684,7 +1686,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         IReadOnlyList<BlueTuskPreparedBatchQuery> queries,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(queries);
+        BlueTuskGuard.NotNull(queries);
         if (queries.Count == 0)
         {
             throw new ArgumentException("A batch requires at least one query.", nameof(queries));
@@ -1692,12 +1694,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
         foreach (var query in queries)
         {
-            ArgumentNullException.ThrowIfNull(query);
+            BlueTuskGuard.NotNull(query);
             ValidatePreparedStatementName(query.StatementName);
-            ArgumentNullException.ThrowIfNull(query.Parameters);
+            BlueTuskGuard.NotNull(query.Parameters);
         }
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
@@ -1731,7 +1733,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     public BlueTuskQueryResult ExecutePreparedBatch(
         IReadOnlyList<BlueTuskPreparedBatchQuery> queries)
     {
-        ArgumentNullException.ThrowIfNull(queries);
+        BlueTuskGuard.NotNull(queries);
         if (queries.Count == 0)
         {
             throw new ArgumentException("A batch requires at least one query.", nameof(queries));
@@ -1739,12 +1741,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
         foreach (var query in queries)
         {
-            ArgumentNullException.ThrowIfNull(query);
+            BlueTuskGuard.NotNull(query);
             ValidatePreparedStatementName(query.StatementName);
-            ArgumentNullException.ThrowIfNull(query.Parameters);
+            BlueTuskGuard.NotNull(query.Parameters);
         }
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
@@ -1804,7 +1806,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     internal async ValueTask<BlueTuskCopyInOperation> BeginCopyInAsync(
         string sql,
         string? beginStatement,
@@ -1892,7 +1896,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     internal async ValueTask<BlueTuskCopyOutOperation> BeginCopyOutAsync(
         string sql,
         CancellationToken cancellationToken = default)
@@ -1936,13 +1942,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         Action<BlueTuskCopyResponse>? copyStarted)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         if (!source.CanRead)
         {
             throw new ArgumentException("The COPY source stream must be readable.", nameof(source));
         }
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         AcquireOperation();
         var started = Stopwatch.GetTimestamp();
         try
@@ -1951,7 +1957,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
@@ -1965,7 +1971,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         Action<BlueTuskCopyResponse>? copyStarted)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNull(destination);
         if (!destination.CanWrite)
         {
             throw new ArgumentException(
@@ -1973,7 +1979,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 nameof(destination));
         }
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         AcquireOperation();
         var started = Stopwatch.GetTimestamp();
         try
@@ -1982,7 +1988,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
@@ -2024,13 +2030,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             ValidateQuery(beginStatement);
         }
 
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         if (!source.CanRead)
         {
             throw new ArgumentException("The COPY source stream must be readable.", nameof(source));
         }
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         await AcquireOperationAsync(cancellationToken).ConfigureAwait(false);
         var started = Stopwatch.GetTimestamp();
         try
@@ -2044,7 +2050,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
@@ -2066,7 +2072,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNull(destination);
         if (!destination.CanWrite)
         {
             throw new ArgumentException(
@@ -2074,7 +2080,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 nameof(destination));
         }
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         await AcquireOperationAsync(cancellationToken).ConfigureAwait(false);
         var started = Stopwatch.GetTimestamp();
         try
@@ -2087,7 +2093,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
@@ -2134,7 +2140,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     /// <summary>Waits for the next asynchronous notification delivered by PostgreSQL.</summary>
     public BlueTuskNotificationResponse WaitForNotification()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
@@ -2189,7 +2195,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     public async ValueTask<BlueTuskNotificationResponse> WaitForNotificationAsync(
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
@@ -2440,7 +2446,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskPortal> BeginPortalCoreAsync(
         string portalName,
         string statementName,
@@ -3024,7 +3032,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskPortalRow?> ReadPortalRowSlowAsync(
         BlueTuskPortal portal,
         BlueTuskBackendMessageHeader header,
@@ -3129,7 +3139,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     internal void ReturnPortalRow(BlueTuskPortalRow row)
     {
-        ArgumentNullException.ThrowIfNull(row);
+        BlueTuskGuard.NotNull(row);
         _ = Interlocked.CompareExchange(ref _reusablePortalRow, row, null);
     }
 
@@ -3185,7 +3195,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return ValueTask.CompletedTask;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask ContinueReadPortalPayloadExactlyAsync(
         ValueTask<int> pendingRead,
         Memory<byte> destination,
@@ -3250,7 +3262,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     internal ValueTask DisposePortalAsync(BlueTuskPortal portal, BlueTuskPortalRow? row) =>
         CleanupPortalAsync(portal, row, cancelServer: false);
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask CleanupPortalAsync(BlueTuskPortal portal, BlueTuskPortalRow? row, bool cancelServer)
     {
         if (Volatile.Read(ref _portalOperationActive) == 0)
@@ -3324,7 +3338,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         catch { MarkUnusableIfWirePositionUnknown(); throw; }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask CompletePortalAsync(BlueTuskPortal portal, CancellationToken cancellationToken)
     {
         if (!portal.SyncSent)
@@ -3449,7 +3465,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask DrainPortalToReadyAsync(CancellationToken cancellationToken)
     {
         while (true)
@@ -3595,7 +3613,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskBackendMessage> ReadStreamedMessageAsync(
         CancellationToken cancellationToken)
     {
@@ -3603,7 +3623,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return await ReadStreamedMessageAsync(header, cancellationToken).ConfigureAwait(false);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskBackendMessage> ReadStreamedMessageAsync(
         BlueTuskBackendMessageHeader header,
         CancellationToken cancellationToken)
@@ -3626,7 +3648,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return header;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskBackendMessageHeader> ReadStreamedMessageHeaderAsync(
         CancellationToken cancellationToken)
     {
@@ -3641,7 +3665,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private void EnsurePortalOperation()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (Volatile.Read(ref _portalOperationActive) == 0)
         {
             throw new InvalidOperationException("No PostgreSQL portal operation is active.");
@@ -3655,7 +3679,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             if (startedTimestamp != 0)
             {
                 BlueTuskDiagnostics.CommandDuration.Record(
-                    Stopwatch.GetElapsedTime(startedTimestamp).TotalSeconds);
+                    BlueTuskRuntime.GetElapsedTime(startedTimestamp).TotalSeconds);
             }
 
             _connection.EndPortalReadLease();
@@ -3665,13 +3689,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private void ValidatePipeline(IReadOnlyList<BlueTuskPipelineGroup> groups)
     {
-        ArgumentNullException.ThrowIfNull(groups);
+        BlueTuskGuard.NotNull(groups);
         if (groups.Count == 0)
         {
             throw new ArgumentException("A PostgreSQL pipeline requires at least one synchronization group.", nameof(groups));
         }
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
@@ -3685,8 +3709,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
         foreach (var group in groups)
         {
-            ArgumentNullException.ThrowIfNull(group);
-            ArgumentNullException.ThrowIfNull(group.Queries);
+            BlueTuskGuard.NotNull(group);
+            BlueTuskGuard.NotNull(group.Queries);
             if (group.Queries.Count == 0)
             {
                 throw new ArgumentException(
@@ -3696,9 +3720,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
             foreach (var query in group.Queries)
             {
-                ArgumentNullException.ThrowIfNull(query);
+                BlueTuskGuard.NotNull(query);
                 ValidateQuery(query.Sql);
-                ArgumentNullException.ThrowIfNull(query.Parameters);
+                BlueTuskGuard.NotNull(query.Parameters);
             }
         }
     }
@@ -3706,7 +3730,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private void ValidateMultiplexedPipeline(
         IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands)
     {
-        ArgumentNullException.ThrowIfNull(commands);
+        BlueTuskGuard.NotNull(commands);
         if (commands.Count == 0)
         {
             throw new ArgumentException(
@@ -3714,7 +3738,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 nameof(commands));
         }
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
@@ -3729,7 +3753,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         foreach (var command in commands)
         {
             ValidateQuery(command.Sql);
-            ArgumentNullException.ThrowIfNull(command.Parameters);
+            BlueTuskGuard.NotNull(command.Parameters);
         }
     }
 
@@ -3834,8 +3858,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         bool invalidatesUnnamedStatement = false,
         int expectedResultSetCount = 0)
     {
-        ArgumentNullException.ThrowIfNull(writeMessages);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessages);
+        BlueTuskGuard.NotDisposed(_disposed, this);
 
         AcquireOperation();
         var started = Stopwatch.GetTimestamp();
@@ -3859,7 +3883,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
@@ -3893,7 +3917,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return WriteCopyInCoreAsync(data, cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask WriteCopyInCoreAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken)
     {
         try
@@ -3933,7 +3959,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     internal async ValueTask<BlueTuskCopyResult> CompleteCopyInAsync(
         BlueTuskCopyResponse response,
         long bytesTransferred,
@@ -4119,7 +4147,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskCopyOutBufferEvent>
         ReadCopyOutBufferEventAfterTransportReadAsync(
             Memory<byte> destination,
@@ -4142,7 +4172,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return await ReadCopyOutBufferEventCore(cancellationToken).ConfigureAwait(false);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskCopyOutBufferEvent> CompleteCopyOutBufferReadyAsync(
         BlueTuskTransactionStatus transactionStatus)
     {
@@ -4187,7 +4219,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private void EnsureSynchronousCopyState(BlueTuskConnectionState expectedState)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (Volatile.Read(ref _synchronousCopyOperationActive) == 0 ||
             _connection.StateMachine.State != expectedState)
         {
@@ -4210,11 +4242,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         {
             var started = _asyncCopyInStarted;
             _asyncCopyInStarted = 0;
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskQueryResult> ExecuteQueryAsync(
         Action<IBufferWriter<byte>> writeMessages,
         CancellationToken cancellationToken,
@@ -4222,8 +4256,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         int expectedResultSetCount = 0,
         bool poolBufferedRows = false)
     {
-        ArgumentNullException.ThrowIfNull(writeMessages);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessages);
+        BlueTuskGuard.NotDisposed(_disposed, this);
 
         await AcquireOperationAsync(cancellationToken).ConfigureAwait(false);
         var started = Stopwatch.GetTimestamp();
@@ -4250,12 +4284,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskQueryResult> ExecuteQueryAsync<TState>(
         TState state,
         Action<IBufferWriter<byte>, TState> writeMessages,
@@ -4264,8 +4300,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         int expectedResultSetCount = 0,
         bool poolBufferedRows = false)
     {
-        ArgumentNullException.ThrowIfNull(writeMessages);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessages);
+        BlueTuskGuard.NotDisposed(_disposed, this);
 
         await AcquireOperationAsync(cancellationToken).ConfigureAwait(false);
         var started = Stopwatch.GetTimestamp();
@@ -4292,20 +4328,22 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> ExecuteNonQueryAsync<TState>(
         TState state,
         Action<IBufferWriter<byte>, TState> writeMessages,
         CancellationToken cancellationToken,
         bool invalidatesUnnamedStatement = false)
     {
-        ArgumentNullException.ThrowIfNull(writeMessages);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessages);
+        BlueTuskGuard.NotDisposed(_disposed, this);
 
         cancellationToken.ThrowIfCancellationRequested();
         await AcquireOperationAsync(cancellationToken).ConfigureAwait(false);
@@ -4336,7 +4374,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             if (recordCommandDuration)
             {
                 BlueTuskDiagnostics.CommandDuration.Record(
-                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+                    BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             }
 
             _operationLock.Release();
@@ -4348,8 +4386,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken,
         PreparedStatementDescription? preparedDescription = null)
     {
-        ArgumentNullException.ThrowIfNull(writeMessages);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessages);
+        BlueTuskGuard.NotDisposed(_disposed, this);
 
         await AcquireOperationAsync(cancellationToken).ConfigureAwait(false);
         var started = Stopwatch.GetTimestamp();
@@ -4370,12 +4408,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            BlueTuskDiagnostics.CommandDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskScalarQueryResult> ExecuteScalarQueryAsync<TState>(
         TState state,
         Action<IBufferWriter<byte>, TState> writeMessages,
@@ -4389,8 +4429,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         Action? prependedCompleted = null,
         ReadOnlyMemory<byte> preEncodedMessages = default)
     {
-        ArgumentNullException.ThrowIfNull(writeMessages);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotNull(writeMessages);
+        BlueTuskGuard.NotDisposed(_disposed, this);
 
         cancellationToken.ThrowIfCancellationRequested();
         await AcquireOperationAsync(cancellationToken).ConfigureAwait(false);
@@ -4559,7 +4599,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             if (recordCommandDuration)
             {
                 BlueTuskDiagnostics.CommandDuration.Record(
-                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+                    BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
             }
 
             _operationLock.Release();
@@ -4955,7 +4995,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskCopyResult> CopyInCoreAsync(
         string sql,
         Stream source,
@@ -5041,7 +5083,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskCopyResult> CopyOutCoreAsync(
         string sql,
         Stream destination,
@@ -5142,7 +5186,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private static async ValueTask WriteCopyDataAsync(
         Stream destination,
         ReadOnlySequence<byte> payload,
@@ -5236,7 +5282,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskCopyResponse> ReadCopyInStartWithCancellationAsync(
         CancellationToken cancellationToken)
     {
@@ -5306,7 +5354,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         await SynchronizeAfterCancellationAsync(preserveFailedTransaction: true).ConfigureAwait(false);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskCopyResponse> ReadCopyStartAsync(
         char expectedIdentifier,
         CancellationToken cancellationToken = default)
@@ -5348,7 +5398,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<string> ReadCopyCompletionAsync(
         bool suppressServerError,
         CancellationToken cancellationToken = default)
@@ -5597,7 +5649,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask WriteOwnedMessageAsync<TState>(
         TState state, Action<IBufferWriter<byte>, TState> writer, CancellationToken cancellationToken)
     {
@@ -5702,7 +5756,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             "PostgreSQL continued to cancel synchronization queries after COPY cleanup.");
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskBackendMessage> ReadMessageAsync(
         CancellationToken cancellationToken)
     {
@@ -5794,7 +5850,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskQueryResult> ReadQueryResponseWithCancellationAsync(
         CancellationToken cancellationToken,
         int expectedResultSetCount = 0,
@@ -5828,7 +5886,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskQueryResult> ReadQueryResponseAsync(
         int expectedResultSetCount = 0,
         bool poolBufferedRows = false)
@@ -5844,7 +5904,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return response.Result;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> ReadNonQueryResponseWithCancellationAsync(
         CancellationToken cancellationToken)
     {
@@ -5873,7 +5935,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> ReadNonQueryResponseAsync()
     {
         var affected = 0;
@@ -5946,7 +6010,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskScalarQueryResult> ReadScalarResponseWithCancellationSlowAsync(
         PreparedStatementDescription? preparedDescription,
         int prependedResultSetCount,
@@ -5976,7 +6042,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskScalarQueryResult> ReadScalarResponseAsync(
         PreparedStatementDescription? preparedDescription,
         int prependedResultSetCount = 0,
@@ -6083,7 +6151,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskPipelineGroupResult> ReadPipelineGroupResponseAsync(
         int expectedResultSetCount = 0,
         bool poolBufferedRows = false,
@@ -6165,7 +6235,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskPipelineGroupResult> ReadPipelineGroupResponseWithCancellationAsync(
         CancellationToken cancellationToken)
     {
@@ -6395,7 +6467,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private void ValidateQuery(string sql)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         ArgumentException.ThrowIfNullOrWhiteSpace(sql);
         if (!_open)
         {

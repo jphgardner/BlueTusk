@@ -18,8 +18,8 @@ public sealed record BlueTuskPgOutputDecoderOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(ProtocolVersion, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(ProtocolVersion, 4);
+        BlueTuskGuard.NotLessThan(ProtocolVersion, 1);
+        BlueTuskGuard.NotGreaterThan(ProtocolVersion, 4);
         if (!Enum.IsDefined(StreamingMode))
         {
             throw new ArgumentOutOfRangeException(nameof(StreamingMode));

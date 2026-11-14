@@ -5,7 +5,6 @@ using BlueTusk.Streams.Testing;
 using BlueTusk.Sync.Testing;
 using BlueTusk.TypeSystem;
 using StackExchange.Redis;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sync.Redis.Tests;
 
@@ -14,14 +13,14 @@ public sealed class RedisSyncReconciliationTests
     private static readonly ChangeSourceIdentity Source =
         new("reconcile-system", "reconcile-database", "reconcile-slot", "public:items");
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_REDIS_CONNECTION_STRING")]
     public async Task Redis_partitioned_hash_reconciliation_repairs_atomically()
     {
         var connectionString = Environment.GetEnvironmentVariable(
             "BLUETUSK_TEST_REDIS_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw SkipException.ForSkip(
+            throw new InvalidOperationException(
                 "BLUETUSK_TEST_REDIS_CONNECTION_STRING is not configured.");
         }
 
@@ -74,8 +73,8 @@ public sealed class RedisSyncReconciliationTests
             Assert.Equal(3, repaired.RepairedDifferences);
             Assert.True(verified.IsMatch);
             Assert.Equal(3, verified.MatchedKeys);
-            var pipelineHash = Convert.ToHexStringLower(
-                SHA256.HashData(Encoding.UTF8.GetBytes("reconciliation")));
+            var pipelineHash = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes("reconciliation"))).ToLowerInvariant();
             var checkpoint = await connection.GetDatabase().HashGetAsync(
                 $"{prefix}:{{{pipelineHash}}}:state",
                 "checkpoint");

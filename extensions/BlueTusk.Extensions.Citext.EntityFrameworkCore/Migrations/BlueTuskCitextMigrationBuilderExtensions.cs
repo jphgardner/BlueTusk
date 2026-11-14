@@ -12,8 +12,8 @@ public static class BlueTuskCitextMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         string schema = "public")
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
         return migrationBuilder.Sql(
             $"CREATE EXTENSION IF NOT EXISTS {BlueTuskSqlIdentifier.Delimit("citext")} " +
             $"WITH SCHEMA {BlueTuskSqlIdentifier.Delimit(schema)}");
@@ -24,7 +24,7 @@ public static class BlueTuskCitextMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         bool cascade = false)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         return migrationBuilder.Sql(
             $"DROP EXTENSION IF EXISTS {BlueTuskSqlIdentifier.Delimit("citext")}" +
             (cascade ? " CASCADE" : string.Empty));

@@ -9,7 +9,7 @@ public sealed class BlueTuskHalfVectorCodec : BlueTuskCodec<BlueTuskHalfVector>
 
     public static int GetBinarySize(BlueTuskHalfVector value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return checked(HeaderSize + (value.Count * sizeof(ushort)));
     }
 
@@ -18,7 +18,7 @@ public sealed class BlueTuskHalfVectorCodec : BlueTuskCodec<BlueTuskHalfVector>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskHalfVector.Parse(reader.ReadRemainingUtf8());
@@ -57,7 +57,12 @@ public sealed class BlueTuskHalfVectorCodec : BlueTuskCodec<BlueTuskHalfVector>
         var values = new Half[dimensions];
         for (var index = 0; index < values.Length; index++)
         {
+#if NET6_0_OR_GREATER
             values[index] = BitConverter.UInt16BitsToHalf(reader.ReadUInt16BigEndian());
+#else
+            var bits = reader.ReadUInt16BigEndian();
+            values[index] = System.Runtime.CompilerServices.Unsafe.As<ushort, Half>(ref bits);
+#endif
             if (!Half.IsFinite(values[index]))
             {
                 throw InvalidBinary(type, $"element {index} is not finite");
@@ -73,8 +78,8 @@ public sealed class BlueTuskHalfVectorCodec : BlueTuskCodec<BlueTuskHalfVector>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());
@@ -90,7 +95,12 @@ public sealed class BlueTuskHalfVectorCodec : BlueTuskCodec<BlueTuskHalfVector>
         writer.WriteInt16BigEndian(0);
         foreach (var element in value.AsSpan())
         {
+#if NET6_0_OR_GREATER
             writer.WriteUInt16BigEndian(BitConverter.HalfToUInt16Bits(element));
+#else
+            var half = element;
+            writer.WriteUInt16BigEndian(System.Runtime.CompilerServices.Unsafe.As<Half, ushort>(ref half));
+#endif
         }
     }
 

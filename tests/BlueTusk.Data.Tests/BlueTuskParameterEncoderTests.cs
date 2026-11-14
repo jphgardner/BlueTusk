@@ -167,7 +167,7 @@ public sealed class BlueTuskParameterEncoderTests
         var date = BlueTuskParameterEncoder.Encode(new BlueTuskParameter<DateOnly>(new DateOnly(2000, 1, 1)));
         var time = BlueTuskParameterEncoder.Encode(new BlueTuskParameter<TimeSpan>(TimeSpan.FromHours(24)));
         var timestamp = BlueTuskParameterEncoder.Encode(
-            new BlueTuskParameter<DateTime>(new DateTime(2000, 1, 1).AddTicks(TimeSpan.TicksPerMicrosecond)));
+            new BlueTuskParameter<DateTime>(new DateTime(2000, 1, 1).AddTicks(10)));
 
         Assert.Equal("00112233445566778899AABBCCDDEEFF", Convert.ToHexString(guid.Value!.Value.Span));
         Assert.Equal(0, BinaryPrimitives.ReadInt32BigEndian(date.Value!.Value.Span));

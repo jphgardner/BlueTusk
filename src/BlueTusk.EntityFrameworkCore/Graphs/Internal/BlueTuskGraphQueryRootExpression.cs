@@ -47,15 +47,21 @@ internal sealed class BlueTuskGraphQueryRootExpression : EntityQueryRootExpressi
     public bool HasSameSqlShape(BlueTuskGraphQueryRootExpression other) =>
         ReferenceEquals(EntityType, other.EntityType) &&
         string.Equals(Sql, other.Sql, StringComparison.Ordinal) &&
+#if NET6_0_OR_GREATER
         _types.AsSpan().SequenceEqual(other._types);
+#else
+        _types.SequenceEqual(other._types);
+#endif
 
     public override Expression DetachQueryProvider() =>
         new BlueTuskGraphQueryRootExpression(EntityType, Sql, Values, _types, OrderedBranches);
 
+#if BLUETUSK_EF7_OR_GREATER
     public override EntityQueryRootExpression UpdateEntityType(IEntityType entityType)
         => entityType.ClrType == EntityType.ClrType && entityType.Name == EntityType.Name
             ? new BlueTuskGraphQueryRootExpression(entityType, Sql, Values, _types, OrderedBranches)
             : throw new InvalidOperationException("Cannot change a typed graph query's entity type.");
+#endif
 
     protected override Expression VisitChildren(ExpressionVisitor visitor)
     {
@@ -71,7 +77,11 @@ internal sealed class BlueTuskGraphQueryRootExpression : EntityQueryRootExpressi
         && base.Equals(other)
         && Sql == other.Sql
         && OrderedBranches?.OutputColumn == other.OrderedBranches?.OutputColumn
+#if NET6_0_OR_GREATER
         && _types.AsSpan().SequenceEqual(other._types)
+#else
+        && _types.SequenceEqual(other._types)
+#endif
         && ExpressionEqualityComparer.Instance.Equals(Values, other.Values);
 
     public override int GetHashCode()

@@ -21,7 +21,7 @@ internal static class BlueTuskValueDecoder
         BlueTuskFieldDescription field,
         ReadOnlyMemory<byte>? value)
     {
-        ArgumentNullException.ThrowIfNull(types);
+        BlueTuskGuard.NotNull(types);
         var resolved = Resolve(types, field);
         return Decode(resolved, value);
     }
@@ -30,7 +30,7 @@ internal static class BlueTuskValueDecoder
         BlueTuskTypeRegistry types,
         BlueTuskFieldDescription field)
     {
-        ArgumentNullException.ThrowIfNull(types);
+        BlueTuskGuard.NotNull(types);
         var format = field.FormatCode switch
         {
             0 => BlueTuskDataFormat.Text,
@@ -136,7 +136,7 @@ internal static class BlueTuskValueDecoder
 
     public static Type GetFieldType(BlueTuskTypeRegistry types, BlueTuskFieldDescription field)
     {
-        ArgumentNullException.ThrowIfNull(types);
+        BlueTuskGuard.NotNull(types);
         return GetFieldType(Resolve(types, field));
     }
 
@@ -148,7 +148,7 @@ internal static class BlueTuskValueDecoder
 
     public static string GetDataTypeName(BlueTuskTypeRegistry types, uint oid)
     {
-        ArgumentNullException.ThrowIfNull(types);
+        BlueTuskGuard.NotNull(types);
         return types.TryGetType(new BlueTuskTypeId(oid), out var type) && type is not null
             ? type.Name
             : $"oid_{oid}";

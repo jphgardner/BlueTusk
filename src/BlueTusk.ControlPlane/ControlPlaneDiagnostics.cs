@@ -78,7 +78,7 @@ internal static class ControlPlaneDiagnostics
             if (_started != 0 && OperationDuration.Enabled)
             {
                 OperationDuration.Record(
-                    Stopwatch.GetElapsedTime(_started).TotalSeconds,
+                    BlueTuskRuntime.GetElapsedTime(_started).TotalSeconds,
                     tags);
             }
 

@@ -1,12 +1,22 @@
-using System.Globalization;
 using System.Linq.Expressions;
-using System.Text;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Storage.Internal;
+#if BLUETUSK_EF10_OR_GREATER
+using System.Globalization;
+using System.Text;
+#endif
+#if !BLUETUSK_EF9_OR_GREATER
+using RelationalParameterBasedSqlProcessorParameters = System.Boolean;
+#endif
+#if BLUETUSK_EF7_OR_GREATER
+using BlueTuskSqlQueryExpression = System.Linq.Expressions.Expression;
+#else
+using BlueTuskSqlQueryExpression = Microsoft.EntityFrameworkCore.Query.SqlExpressions.SelectExpression;
+#endif
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
@@ -15,6 +25,7 @@ internal sealed class BlueTuskParameterBasedSqlProcessor(
     RelationalParameterBasedSqlProcessorParameters parameters)
     : RelationalParameterBasedSqlProcessor(dependencies, parameters)
 {
+#if BLUETUSK_EF10_OR_GREATER
     protected override Expression ProcessSqlNullability(
         Expression selectExpression,
         ParametersCacheDecorator parametersDecorator)
@@ -27,8 +38,36 @@ internal sealed class BlueTuskParameterBasedSqlProcessor(
         ParametersCacheDecorator parametersDecorator)
         => new BlueTuskGraphRelationalParameterProcessor(Dependencies).Expand(queryExpression, parametersDecorator);
 #pragma warning restore EF1001
+#else
+    protected override BlueTuskSqlQueryExpression ProcessSqlNullability(
+        BlueTuskSqlQueryExpression queryExpression,
+        IReadOnlyDictionary<string, object?> parameterValues,
+        out bool canCache)
+        => new BlueTuskSqlNullabilityProcessor(Dependencies,
+#if BLUETUSK_EF9_OR_GREATER
+            Parameters)
+#else
+            UseRelationalNulls)
+#endif
+            .Process(queryExpression, parameterValues, out canCache);
+
+    protected override BlueTuskSqlQueryExpression ExpandFromSqlParameter(
+        BlueTuskSqlQueryExpression queryExpression,
+        IReadOnlyDictionary<string, object?> parameterValues,
+        out bool canCache)
+        => base.ExpandFromSqlParameter((BlueTuskSqlQueryExpression)new GraphArgumentUnwrapper().Visit(queryExpression), parameterValues, out canCache);
+
+    private sealed class GraphArgumentUnwrapper : ExpressionVisitor
+    {
+        protected override Expression VisitExtension(Expression expression) => expression is
+            FromSqlExpression { Arguments: BlueTuskGraphSqlArguments arguments } fromSql
+                ? fromSql.Update(arguments.Values)
+                : base.VisitExtension(expression);
+    }
+#endif
 }
 
+#if BLUETUSK_EF10_OR_GREATER
 #pragma warning disable EF1001 // Uses the same relational binding and name allocation as EF's FromSql path.
 internal sealed class BlueTuskGraphRelationalParameterProcessor(RelationalParameterBasedSqlProcessorDependencies dependencies)
     : RelationalParameterProcessor(dependencies)
@@ -139,12 +178,23 @@ internal sealed class BlueTuskGraphRelationalParameterProcessor(RelationalParame
     }
 }
 #pragma warning restore EF1001
+#endif
 
 internal sealed class BlueTuskSqlNullabilityProcessor(
     RelationalParameterBasedSqlProcessorDependencies dependencies,
     RelationalParameterBasedSqlProcessorParameters parameters)
     : SqlNullabilityProcessor(dependencies, parameters)
 {
+#if !BLUETUSK_EF8_OR_GREATER
+    protected override TableExpressionBase Visit(TableExpressionBase tableExpressionBase) => tableExpressionBase switch
+    {
+        BlueTuskSetReturningFunctionTableExpression function => function.Update(
+            function.Arguments.Select(argument => Visit(argument, out _)).ToArray()),
+        BlueTuskUnnestExpression unnest => unnest.Update(Visit(unnest.Array, out _)),
+        _ => base.Visit(tableExpressionBase),
+    };
+#endif
+
     protected override SqlExpression VisitCustomSqlExpression(
         SqlExpression sqlExpression,
         bool allowOptimizedExpansion,

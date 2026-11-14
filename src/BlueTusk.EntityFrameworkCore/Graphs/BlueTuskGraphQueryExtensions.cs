@@ -11,8 +11,8 @@ public static class BlueTuskGraphQueryExtensions
         string name,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(context);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var matches = BlueTuskPropertyGraphMetadata.GetRuntimeGraphs(context.Model)
             .Where(graph =>
                 string.Equals(graph.Name, name, StringComparison.Ordinal) &&

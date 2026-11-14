@@ -202,7 +202,7 @@ internal static class BlueTuskForeignDataModelDiffer
         IRelationalModel? targetModel,
         IReadOnlyList<MigrationOperation> operations)
     {
-        var tables = targetModel?.Tables.ToDictionary(table => (table.Schema, table.Name))
+        var tables = targetModel?.Tables.ToDictionary(table => ((string?)table.Schema, table.Name))
             ?? new Dictionary<(string? Schema, string Name), ITable>();
         foreach (var operation in operations)
         {

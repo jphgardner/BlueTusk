@@ -12,6 +12,13 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
 {
     private readonly IModel _model;
 
+    private static bool HasQueryFilters(IEntityType entityType) =>
+#if BLUETUSK_EF10_OR_GREATER
+        entityType.GetDeclaredQueryFilters().Count != 0;
+#else
+        entityType.GetQueryFilter() is not null;
+#endif
+
     public BlueTuskQueryTranslationPreprocessor(
         QueryTranslationPreprocessorDependencies dependencies,
         RelationalQueryTranslationPreprocessorDependencies relationalDependencies,
@@ -21,14 +28,29 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
         _model = queryCompilationContext.Model;
     }
 
+#if BLUETUSK_EF8_OR_GREATER
     protected override Expression ProcessQueryRoots(Expression expression)
         => new GenerateSeriesQueryRootRewritingExpressionVisitor(_model).Visit(
             base.ProcessQueryRoots(expression));
+#else
+    public override Expression Process(Expression expression)
+        => base.Process(new GenerateSeriesQueryRootRewritingExpressionVisitor(_model).Visit(expression));
+#endif
 
     private sealed class GenerateSeriesQueryRootRewritingExpressionVisitor(IModel model)
         : ExpressionVisitor
     {
+#if !BLUETUSK_EF7_OR_GREATER
         protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
+        {
+            var rewritten = RewriteMethodCall(methodCallExpression);
+            return rewritten is BlueTuskLegacyQueryRootExpression legacy ? legacy.ProjectResult() : rewritten;
+        }
+
+        private Expression RewriteMethodCall(MethodCallExpression methodCallExpression)
+#else
+        protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
+#endif
         {
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
                 && methodCallExpression.Method.Name == nameof(BlueTuskQueryableExtensions.InsertOnConflictReturningCore))
@@ -77,7 +99,7 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
                     updateProperties);
                 return noTracking is null
                     ? insertRoot
-                    : noTracking.Update(null, [insertRoot]);
+                    : noTracking.Update(noTracking.Object!, [insertRoot]);
             }
 
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
@@ -107,7 +129,7 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
                     updateProperties);
                 return noTracking is null
                     ? insertRoot
-                    : noTracking.Update(null, [insertRoot]);
+                    : noTracking.Update(noTracking.Object!, [insertRoot]);
             }
 
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
@@ -152,7 +174,7 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
 
                 if (root.EntityType.BaseType is not null
                     || root.EntityType.GetDirectlyDerivedTypes().Any()
-                    || root.EntityType.GetDeclaredQueryFilters().Count != 0)
+                    || HasQueryFilters(root.EntityType))
                 {
                     throw new InvalidOperationException(
                         "PostgreSQL recursive hierarchy traversal requires a non-inherited entity without a global query filter.");
@@ -251,7 +273,10 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
                 if (entityType.BaseType is not null
                     || entityType.GetDirectlyDerivedTypes().Any()
                     || entityType.GetNavigations().Any()
-                    || entityType.GetComplexProperties().Any())
+#if BLUETUSK_EF8_OR_GREATER
+                    || entityType.GetComplexProperties().Any()
+#endif
+                )
                 {
                     throw new InvalidOperationException(
                         $"The JSON recordset row type '{elementType.Name}' must be a flat keyless entity "
@@ -335,7 +360,7 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
         {
             if (root.EntityType.BaseType is not null
                 || root.EntityType.GetDirectlyDerivedTypes().Any()
-                || root.EntityType.GetDeclaredQueryFilters().Count != 0)
+                || HasQueryFilters(root.EntityType))
             {
                 throw new InvalidOperationException(
                     "PostgreSQL INSERT ON CONFLICT RETURNING requires a non-inherited entity without a global query filter.");
@@ -402,7 +427,7 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
                     Method.DeclaringType: not null,
                     Method.Name: nameof(ValueTuple.Create),
                 } tuple when tuple.Method.DeclaringType == typeof(ValueTuple) => tuple.Arguments,
-                _ => [selector.Body],
+                _ => Array.AsReadOnly(new[] { selector.Body }),
             };
             var properties = new string[expressions.Count];
             var propertyNames = new HashSet<string>(StringComparer.Ordinal);

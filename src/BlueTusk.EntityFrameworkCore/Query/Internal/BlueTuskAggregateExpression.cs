@@ -18,7 +18,9 @@ internal sealed class BlueTuskAggregateExpression(
     RelationalTypeMapping typeMapping)
     : SqlExpression(type, typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public string? Schema { get; } = schema;
 
@@ -73,6 +75,7 @@ internal sealed class BlueTuskAggregateExpression(
         return Update(arguments, orderings, withinGroupOrderings, predicate);
     }
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -99,6 +102,7 @@ internal sealed class BlueTuskAggregateExpression(
             Predicate?.Quote() ?? Constant(null, typeof(SqlExpression)),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)

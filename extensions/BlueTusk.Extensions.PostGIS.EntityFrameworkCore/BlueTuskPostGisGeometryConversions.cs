@@ -10,21 +10,21 @@ public static class BlueTuskPostGisGeometryConversions
     /// <summary>Encodes a NetTopologySuite geometry as an immutable EWKB transport value.</summary>
     public static BlueTuskGeometry ToBlueTuskGeometry(this Geometry geometry)
     {
-        ArgumentNullException.ThrowIfNull(geometry);
+        BlueTuskGuard.NotNull(geometry);
         return BlueTuskGeometry.FromWellKnownBinary(Write(geometry));
     }
 
     /// <summary>Encodes a NetTopologySuite geometry as an immutable EWKB geography transport value.</summary>
     public static BlueTuskGeography ToBlueTuskGeography(this Geometry geometry)
     {
-        ArgumentNullException.ThrowIfNull(geometry);
+        BlueTuskGuard.NotNull(geometry);
         return BlueTuskGeography.FromWellKnownBinary(Write(geometry));
     }
 
     /// <summary>Decodes a BlueTusk geometry transport value into the rich NetTopologySuite model.</summary>
     public static Geometry ToNetTopologySuite(this BlueTuskGeometry geometry)
     {
-        ArgumentNullException.ThrowIfNull(geometry);
+        BlueTuskGuard.NotNull(geometry);
         return geometry.HasWellKnownBinary
             ? Read(geometry.GetWellKnownBinary().ToArray())
             : ReadText(geometry.GetText());
@@ -33,7 +33,7 @@ public static class BlueTuskPostGisGeometryConversions
     /// <summary>Decodes a BlueTusk geography transport value into the rich NetTopologySuite model.</summary>
     public static Geometry ToNetTopologySuite(this BlueTuskGeography geography)
     {
-        ArgumentNullException.ThrowIfNull(geography);
+        BlueTuskGuard.NotNull(geography);
         return geography.HasWellKnownBinary
             ? Read(geography.GetWellKnownBinary().ToArray())
             : ReadText(geography.GetText());

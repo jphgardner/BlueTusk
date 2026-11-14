@@ -3,9 +3,8 @@ using System.Text.Json;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.Tool;
-using Xunit.Sdk;
 
-namespace BlueTusk.EntityFrameworkCore.Tests;
+namespace BlueTusk.EntityFrameworkCore.CompatibilityTests;
 
 public sealed class BlueTuskCliTests
 {
@@ -64,7 +63,7 @@ public sealed class BlueTuskCliTests
         string? expectedCommandHint)
     {
         const string candidateVersion = "1.1.0-rc.2.local.1";
-        var directory = Directory.CreateTempSubdirectory("bluetusk-doctor-");
+        var directory = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"bluetusk-doctor-{Guid.NewGuid():N}"));
         try
         {
             var archiveName = $"BlueTusk.Data.{candidateVersion}.nupkg";
@@ -149,7 +148,7 @@ public sealed class BlueTuskCliTests
         Assert.Equal(string.Empty, error.ToString());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public void Doctor_reports_machine_readable_production_state()
     {
         var connectionString = ConnectionString();
@@ -168,7 +167,7 @@ public sealed class BlueTuskCliTests
         Assert.DoesNotContain(connectionString, output.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Doctor_reports_the_server_major_and_minor_version()
     {
         var connectionString = ConnectionString();
@@ -187,14 +186,14 @@ public sealed class BlueTuskCliTests
         var result = BlueTuskCli.Run(["doctor", "--connection", connectionString], output, error);
 
         // PostgreSQL 10+ reports major * 10000 + minor, for example 180006 for 18.6.
-        var expected = string.Create(
+        var expected = BlueTuskRuntime.Format(
             System.Globalization.CultureInfo.InvariantCulture,
             $"PostgreSQL {versionNumber / 10000}.{versionNumber % 10000};");
         Assert.Equal(0, result);
         Assert.Contains(expected, output.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Scaffold_command_writes_filtered_secure_by_default_models()
     {
         var connectionString = ConnectionString();
@@ -280,13 +279,8 @@ public sealed class BlueTuskCliTests
 
     private static string ConnectionString()
     {
-        var value = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
-        }
-
-        return new BlueTuskConnectionStringBuilder(value)
+        return new BlueTuskConnectionStringBuilder(
+            Environment.GetEnvironmentVariable(PostgreSqlFactAttribute.ConnectionStringVariable)!)
         {
             SslMode = BlueTuskSslMode.Disable,
             ChannelBinding = BlueTuskChannelBindingMode.Disable,

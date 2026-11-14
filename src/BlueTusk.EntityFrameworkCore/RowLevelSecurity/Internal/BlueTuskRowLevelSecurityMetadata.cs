@@ -14,26 +14,26 @@ internal static class BlueTuskRowLevelSecurityMetadata
 
     public static BlueTuskRowLevelSecurityDefinition? Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? null : Deserialize(json);
     }
 
     public static string Serialize(BlueTuskRowLevelSecurityDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         return JsonSerializer.Serialize(Normalize(definition), SerializerOptions);
     }
 
     public static string Serialize(BlueTuskRowSecurityPolicyDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         return JsonSerializer.Serialize(Normalize(definition), SerializerOptions);
     }
 
     public static string Serialize(IEnumerable<BlueTuskRowLevelSecurityTableDefinition> definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
+        BlueTuskGuard.NotNull(definitions);
         return JsonSerializer.Serialize(
             definitions.OrderBy(definition => definition.Schema, StringComparer.Ordinal)
                 .ThenBy(definition => definition.Name, StringComparer.Ordinal)
@@ -46,7 +46,7 @@ internal static class BlueTuskRowLevelSecurityMetadata
 
     public static BlueTuskRowLevelSecurityDefinition Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return Normalize(
             JsonSerializer.Deserialize<BlueTuskRowLevelSecurityDefinition>(json, SerializerOptions)
                 ?? throw new ArgumentException("The row-level security definition is empty.", nameof(json)));
@@ -54,7 +54,7 @@ internal static class BlueTuskRowLevelSecurityMetadata
 
     public static BlueTuskRowSecurityPolicyDefinition DeserializePolicy(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return Normalize(
             JsonSerializer.Deserialize<BlueTuskRowSecurityPolicyDefinition>(json, SerializerOptions)
                 ?? throw new ArgumentException("The row-security policy definition is empty.", nameof(json)));
@@ -106,10 +106,10 @@ internal static class BlueTuskRowLevelSecurityMetadata
 
     public static BlueTuskRowLevelSecurityDefinition? GetTableDefinition(ITable table)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        BlueTuskGuard.NotNull(table);
         foreach (var mapping in table.EntityTypeMappings)
         {
-            if (mapping.TypeBase is IReadOnlyEntityType entityType && Get(entityType) is { } definition)
+            if (mapping.GetBlueTuskEntityType() is IReadOnlyEntityType entityType && Get(entityType) is { } definition)
             {
                 return Normalize(definition) with
                 {

@@ -15,14 +15,14 @@ public sealed record SyncPipelineOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(PipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(PipelineId);
         if (!Enum.IsDefined(PoisonRecordPolicy))
         {
             throw new ArgumentOutOfRangeException(nameof(PoisonRecordPolicy));
         }
 
-        ArgumentNullException.ThrowIfNull(Retry);
-        ArgumentNullException.ThrowIfNull(RateLimit);
+        BlueTuskGuard.NotNull(Retry);
+        BlueTuskGuard.NotNull(RateLimit);
         Retry.Validate();
         RateLimit.Validate();
     }
@@ -69,10 +69,10 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         ISyncRetryClassifier? retryClassifier = null,
         TimeProvider? timeProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
-        ArgumentNullException.ThrowIfNull(transform);
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNull(transform);
+        BlueTuskGuard.NotNull(destination);
         if (options.PoisonRecordPolicy is
                 SyncPoisonRecordPolicy.QuarantineAndAdvance or
                 SyncPoisonRecordPolicy.QuarantineAndPause &&
@@ -130,7 +130,7 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
                         new SyncProvisionRequest(_options.PipelineId, _source, _transform.Version),
                         token),
                     cancellationToken).ConfigureAwait(false);
-                ArgumentNullException.ThrowIfNull(result);
+                BlueTuskGuard.NotNull(result);
                 if (!Enum.IsDefined(result.Status))
                 {
                     throw new SyncDestinationDurabilityException(
@@ -213,8 +213,8 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         ISyncReconciliationReader source,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNull(source);
         if (!string.Equals(request.PipelineId, _options.PipelineId, StringComparison.Ordinal))
         {
             throw new ArgumentException(
@@ -376,7 +376,7 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         ChangeTransactionDelivery delivery,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(delivery);
+        BlueTuskGuard.NotNull(delivery);
         await EnterAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -561,7 +561,7 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         SyncApplyResult result,
         BlueTusk.TypeSystem.BlueTuskLogSequenceNumber expectedPosition)
     {
-        ArgumentNullException.ThrowIfNull(result);
+        BlueTuskGuard.NotNull(result);
         if (result.Status is SyncApplyStatus.TransformVersionMismatch)
         {
             throw new SyncTransformVersionMismatchException(
@@ -656,7 +656,11 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
                 var delay = _options.Retry.DelayBeforeAttempt(attempt + 1);
                 if (delay > TimeSpan.Zero)
                 {
+#if NET8_0_OR_GREATER
                     await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(false);
+#else
+                    await _timeProvider.Delay(delay, cancellationToken).ConfigureAwait(false);
+#endif
                 }
             }
         }
@@ -664,7 +668,7 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
 
     private async ValueTask EnterAsync(CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
     }
 

@@ -53,7 +53,7 @@ public static class BlueTuskPgDurableDataSourceExtensions
         BlueTuskPgDurableTransactionMode transactionMode = BlueTuskPgDurableTransactionMode.Caller,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(workflow);
+        BlueTuskGuard.NotNullOrWhiteSpace(workflow);
         ValidateOptionalText(label, nameof(label));
         ValidateOptionalText(database, nameof(database));
         _ = GetFeature(dataSource);
@@ -135,7 +135,7 @@ public static class BlueTuskPgDurableDataSourceExtensions
         CancellationToken cancellationToken = default)
     {
         ValidateInstanceId(instanceId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        BlueTuskGuard.NotNullOrWhiteSpace(reason);
         _ = GetFeature(dataSource);
         await using var command = dataSource.CreateCommand(
             "SELECT \"df\".\"cancel\"($1::text, $2::text)");
@@ -154,8 +154,8 @@ public static class BlueTuskPgDurableDataSourceExtensions
         CancellationToken cancellationToken = default)
     {
         ValidateInstanceId(instanceId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(signalName);
-        ArgumentNullException.ThrowIfNull(signalData);
+        BlueTuskGuard.NotNullOrWhiteSpace(signalName);
+        BlueTuskGuard.NotNull(signalData);
         _ = GetFeature(dataSource);
         await using var command = dataSource.CreateCommand(
             "SELECT \"df\".\"signal\"($1::text, $2::text, $3::text)");
@@ -195,7 +195,7 @@ public static class BlueTuskPgDurableDataSourceExtensions
 
     private static BlueTuskPgDurableFeature GetFeature(BlueTuskDataSource dataSource)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         return dataSource.Features.GetRequired<BlueTuskPgDurableFeature>(
             BlueTuskPgDurableFeature.RegistryName);
     }
@@ -215,7 +215,7 @@ public static class BlueTuskPgDurableDataSourceExtensions
         new(value) { DbType = DbType.String };
 
     private static void ValidateInstanceId(string instanceId) =>
-        ArgumentException.ThrowIfNullOrWhiteSpace(instanceId);
+        BlueTuskGuard.NotNullOrWhiteSpace(instanceId);
 
     private static void ValidateOptionalText(string? value, string parameterName)
     {

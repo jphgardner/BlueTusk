@@ -25,6 +25,12 @@ a new suffix such as `rc.2`; an existing package is never overwritten.
 
 ## Compatibility policy
 
+The working tree is expanding runtime compatibility to .NET 5–11. Published
+package assets in the matrix above remain unchanged. The
+[runtime compatibility inventory and executable gates](docs/contributing/dotnet-compatibility.md)
+track completed coverage, pending packages, and upstream integration minimums;
+full support is not claimed until the complete compatibility gate passes.
+
 Before `1.0.0`, public APIs may change between minor releases. Patch releases
 should remain source- and binary-compatible unless a security or correctness
 defect makes that unsafe. The shipped API/nullability baselines make accidental

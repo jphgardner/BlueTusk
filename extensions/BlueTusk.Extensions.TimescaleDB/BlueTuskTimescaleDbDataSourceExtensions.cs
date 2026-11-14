@@ -30,8 +30,8 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
         bool migrateData = false,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relation);
-        ArgumentException.ThrowIfNullOrWhiteSpace(timeColumn);
+        BlueTuskGuard.NotNullOrWhiteSpace(relation);
+        BlueTuskGuard.NotNullOrWhiteSpace(timeColumn);
         var schema = DelimitIdentifier(GetFeature(dataSource).Schema);
         var sql = $"""
             SELECT hypertable_id, created
@@ -63,7 +63,7 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
         bool ifNotExists = true,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relation);
+        BlueTuskGuard.NotNullOrWhiteSpace(relation);
         ValidateFiniteInterval(dropAfter, nameof(dropAfter));
 
         var schema = DelimitIdentifier(GetFeature(dataSource).Schema);
@@ -87,7 +87,7 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
         bool ifExists = true,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relation);
+        BlueTuskGuard.NotNullOrWhiteSpace(relation);
         var schema = DelimitIdentifier(GetFeature(dataSource).Schema);
         var sql = $"""
             SELECT {schema}."remove_retention_policy"(
@@ -106,7 +106,7 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
         string relation,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relation);
+        BlueTuskGuard.NotNullOrWhiteSpace(relation);
         var schema = DelimitIdentifier(GetFeature(dataSource).Schema);
         await using var command = dataSource.CreateCommand(
             $"SELECT {schema}.\"approximate_row_count\"($1::regclass)");
@@ -122,7 +122,7 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
         bool ifNotExists = true,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relation);
+        BlueTuskGuard.NotNullOrWhiteSpace(relation);
         ValidateFiniteInterval(after, nameof(after));
         var schema = DelimitIdentifier(GetFeature(dataSource).Schema);
         var sql = $"""
@@ -145,7 +145,7 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
         bool ifExists = true,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relation);
+        BlueTuskGuard.NotNullOrWhiteSpace(relation);
         var schema = DelimitIdentifier(GetFeature(dataSource).Schema);
         await using var command = dataSource.CreateCommand(
             $"CALL {schema}.\"remove_columnstore_policy\"($1::regclass, if_exists => $2)");
@@ -164,7 +164,7 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
         bool ifNotExists = true,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relation);
+        BlueTuskGuard.NotNullOrWhiteSpace(relation);
         ValidateFiniteInterval(startOffset, nameof(startOffset));
         ValidateFiniteInterval(endOffset, nameof(endOffset));
         ValidateFiniteInterval(scheduleInterval, nameof(scheduleInterval));
@@ -193,7 +193,7 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
         bool ifExists = true,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relation);
+        BlueTuskGuard.NotNullOrWhiteSpace(relation);
         var schema = DelimitIdentifier(GetFeature(dataSource).Schema);
         await using var command = dataSource.CreateCommand(
             $"SELECT {schema}.\"remove_continuous_aggregate_policy\"($1::regclass, if_exists => $2)");
@@ -211,7 +211,7 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
         bool force = false,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relation);
+        BlueTuskGuard.NotNullOrWhiteSpace(relation);
         if (windowStart >= windowEnd)
         {
             throw new ArgumentOutOfRangeException(
@@ -237,7 +237,7 @@ public static class BlueTuskTimescaleDbDataSourceExtensions
 
     private static BlueTuskTimescaleDbFeature GetFeature(BlueTuskDataSource dataSource)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         return dataSource.Features.GetRequired<BlueTuskTimescaleDbFeature>(
             BlueTuskTimescaleDbFeature.RegistryName);
     }

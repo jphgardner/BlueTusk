@@ -18,7 +18,7 @@ internal sealed class BlueTuskMigrationsAnnotationProvider(
 {
     public override IEnumerable<IAnnotation> ForRemove(ITable table)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        BlueTuskGuard.NotNull(table);
         return base.ForRemove(table)
             .Concat(table.GetAnnotations()
                 .Where(annotation => annotation.Name is
@@ -30,7 +30,7 @@ internal sealed class BlueTuskMigrationsAnnotationProvider(
 
     public override IEnumerable<IAnnotation> ForRemove(ITableIndex index)
     {
-        ArgumentNullException.ThrowIfNull(index);
+        BlueTuskGuard.NotNull(index);
         return base.ForRemove(index)
             .Concat(index.GetAnnotations()
                 .Where(annotation => annotation.Name.StartsWith(BlueTuskIndexAnnotations.Prefix, StringComparison.Ordinal)));
@@ -38,7 +38,7 @@ internal sealed class BlueTuskMigrationsAnnotationProvider(
 
     public override IEnumerable<IAnnotation> ForRemove(IColumn column)
     {
-        ArgumentNullException.ThrowIfNull(column);
+        BlueTuskGuard.NotNull(column);
         return base.ForRemove(column)
             .Concat(column.GetAnnotations()
                 .Where(annotation => annotation.Name is
@@ -48,7 +48,7 @@ internal sealed class BlueTuskMigrationsAnnotationProvider(
 
     public override IEnumerable<IAnnotation> ForRemove(ICheckConstraint constraint)
     {
-        ArgumentNullException.ThrowIfNull(constraint);
+        BlueTuskGuard.NotNull(constraint);
         return base.ForRemove(constraint)
             .Concat(constraint.GetAnnotations()
                 .Where(annotation => annotation.Name.StartsWith(

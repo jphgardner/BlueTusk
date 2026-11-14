@@ -90,7 +90,7 @@ internal static class LiveDiagnostics
         if (started != 0 && AuthoritativeQueryDuration.Enabled)
         {
             Record(AuthoritativeQueryDuration,
-                Stopwatch.GetElapsedTime(started).TotalSeconds,
+                BlueTuskRuntime.GetElapsedTime(started).TotalSeconds,
                 tags);
         }
 
@@ -110,7 +110,7 @@ internal static class LiveDiagnostics
         if (started != 0 && RefreshDuration.Enabled)
         {
             Record(RefreshDuration,
-                Stopwatch.GetElapsedTime(started).TotalSeconds,
+                BlueTuskRuntime.GetElapsedTime(started).TotalSeconds,
                 tags);
         }
 

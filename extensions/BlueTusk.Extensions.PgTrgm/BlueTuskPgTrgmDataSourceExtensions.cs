@@ -25,9 +25,9 @@ public static class BlueTuskPgTrgmDataSourceExtensions
         string target,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentNullException.ThrowIfNull(query);
-        ArgumentNullException.ThrowIfNull(target);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNull(query);
+        BlueTuskGuard.NotNull(target);
         var feature = dataSource.Features.GetRequired<BlueTuskPgTrgmFeature>(
             BlueTuskPgTrgmFeature.RegistryName);
         var schema = DelimitIdentifier(feature.Schema);

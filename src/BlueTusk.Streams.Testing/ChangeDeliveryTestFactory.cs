@@ -60,7 +60,7 @@ public static class ChangeDeliveryTestFactory
         IChangeDeliveryObserver? observer,
         DateTimeOffset? commitTimestamp)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         var materialized = changes?.ToArray() ?? [];
         if (materialized.Any(change =>
                 change.Id.Source != source ||
@@ -103,8 +103,8 @@ public static class ChangeDeliveryTestFactory
         IChangeDeliveryObserver? observer = null,
         DateTimeOffset? commitTimestamp = null)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrWhiteSpace(globalTransactionId);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNullOrWhiteSpace(globalTransactionId);
         var materialized = changes?.ToArray() ?? [];
         if (materialized.Any(change =>
                 change.Id.Source != source ||

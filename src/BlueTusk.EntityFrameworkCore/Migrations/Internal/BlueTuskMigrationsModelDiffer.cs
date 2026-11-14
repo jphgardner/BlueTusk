@@ -9,6 +9,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Update.Internal;
+#if !BLUETUSK_EF7_OR_GREATER
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Microsoft.EntityFrameworkCore.Update;
+#endif
 
 #pragma warning disable EF1001 // Provider implementation requires EF Core infrastructure services.
 
@@ -17,14 +21,28 @@ namespace BlueTusk.EntityFrameworkCore.Migrations.Internal;
 internal sealed class BlueTuskMigrationsModelDiffer(
     IRelationalTypeMappingSource typeMappingSource,
     IMigrationsAnnotationProvider migrationsAnnotationProvider,
+#if BLUETUSK_EF9_OR_GREATER
     IRelationalAnnotationProvider relationalAnnotationProvider,
+#endif
+#if BLUETUSK_EF7_OR_GREATER
     IRowIdentityMapFactory rowIdentityMapFactory,
+#else
+    IChangeDetector changeDetector,
+    IUpdateAdapterFactory updateAdapterFactory,
+#endif
     CommandBatchPreparerDependencies commandBatchPreparerDependencies)
     : Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationsModelDiffer(
         typeMappingSource,
         migrationsAnnotationProvider,
+#if BLUETUSK_EF9_OR_GREATER
         relationalAnnotationProvider,
+#endif
+#if BLUETUSK_EF7_OR_GREATER
         rowIdentityMapFactory,
+#else
+        changeDetector,
+        updateAdapterFactory,
+#endif
         commandBatchPreparerDependencies)
 {
     public override bool HasDifferences(IRelationalModel? source, IRelationalModel? target) =>

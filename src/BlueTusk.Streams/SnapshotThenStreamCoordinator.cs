@@ -24,7 +24,7 @@ public sealed record SnapshotThenStreamOptions
     public int MaximumSnapshotAttempts { get; init; } = 3;
 
     internal void Validate() =>
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumSnapshotAttempts);
+        BlueTuskGuard.NotNegativeOrZero(MaximumSnapshotAttempts);
 }
 
 public class SnapshotAttemptException : Exception
@@ -82,7 +82,7 @@ public sealed class SnapshotThenStreamCoordinator
         IChangeStreamConsumer consumer,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(consumer);
+        BlueTuskGuard.NotNull(consumer);
         Guid? abandonedEpoch = null;
         for (var attemptNumber = 1; attemptNumber <= _options.MaximumSnapshotAttempts; attemptNumber++)
         {

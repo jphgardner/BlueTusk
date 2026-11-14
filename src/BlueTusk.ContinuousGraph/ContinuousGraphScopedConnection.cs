@@ -19,7 +19,7 @@ public sealed class ContinuousGraphScopedConnection
         Func<LiveQueryExecutionContext, CancellationToken, ValueTask<BlueTuskDataSource>> resolveDataSourceAsync,
         Func<BlueTuskConnection, LiveQueryExecutionContext, CancellationToken, ValueTask>? authorizeAsync = null)
     {
-        ArgumentNullException.ThrowIfNull(resolveDataSourceAsync);
+        BlueTuskGuard.NotNull(resolveDataSourceAsync);
         ResolveDataSourceAsync = resolveDataSourceAsync;
         AuthorizeAsync = authorizeAsync;
     }
@@ -28,7 +28,7 @@ public sealed class ContinuousGraphScopedConnection
     public ContinuousGraphScopedConnection(
         Func<LiveQueryExecutionContext, CancellationToken, ValueTask<IContinuousGraphScopedConnectionLease>> acquireAuthorizedLeaseAsync)
     {
-        ArgumentNullException.ThrowIfNull(acquireAuthorizedLeaseAsync);
+        BlueTuskGuard.NotNull(acquireAuthorizedLeaseAsync);
         AcquireAuthorizedLeaseAsync = acquireAuthorizedLeaseAsync;
     }
 

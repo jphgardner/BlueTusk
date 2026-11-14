@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -6,12 +7,16 @@ using BlueTusk.Streams.Testing;
 using BlueTusk.Sync.Testing;
 using BlueTusk.TypeSystem;
 using Parquet.Serialization;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sync.S3.Tests;
 
 public sealed class S3SyncDestinationTests
 {
+    private const string EndpointVariable = "BLUETUSK_S3_ENDPOINT";
+    private const string AccessKeyVariable = "BLUETUSK_S3_ACCESS_KEY";
+    private const string SecretKeyVariable = "BLUETUSK_S3_SECRET_KEY";
+    private const string MissingFixture = "BLUETUSK_S3_ENDPOINT, BLUETUSK_S3_ACCESS_KEY, and BLUETUSK_S3_SECRET_KEY are not configured.";
+
     [Fact]
     public async Task S3_passes_shared_destination_conformance_with_immutable_manifests()
     {
@@ -45,8 +50,15 @@ public sealed class S3SyncDestinationTests
         Assert.NotNull(bytes);
         await using var stream = new MemoryStream(bytes);
         var rows = await ParquetSerializer.DeserializeAsync<S3SyncParquetCodec.S3SyncParquetRow>(stream);
+#if NET8_0_OR_GREATER
         var row = Assert.Single(rows.Data);
         Assert.Equal("delivery-1", rows.CustomMetadata["bluetusk.delivery-id"]);
+#else
+        var row = Assert.Single(rows);
+        stream.Position = 0;
+        using var reader = await Parquet.ParquetReader.CreateAsync(stream, leaveStreamOpen: true);
+        Assert.Equal("delivery-1", reader.CustomMetadata["bluetusk.delivery-id"]);
+#endif
         Assert.Equal("delivery-1", row.DeliveryId);
         Assert.Equal("orders", row.Collection);
         Assert.Equal("42", row.Key);
@@ -83,18 +95,17 @@ public sealed class S3SyncDestinationTests
                 Transaction(transform, delivery.Transaction, "changed"))).Status);
     }
 
-    [Fact]
+    [S3FixtureFact]
     public async Task Live_S3_compatible_store_persists_immutable_data_then_manifest()
     {
-        var endpoint = Environment.GetEnvironmentVariable("BLUETUSK_S3_ENDPOINT");
-        var accessKey = Environment.GetEnvironmentVariable("BLUETUSK_S3_ACCESS_KEY");
-        var secretKey = Environment.GetEnvironmentVariable("BLUETUSK_S3_SECRET_KEY");
+        var endpoint = Environment.GetEnvironmentVariable(EndpointVariable);
+        var accessKey = Environment.GetEnvironmentVariable(AccessKeyVariable);
+        var secretKey = Environment.GetEnvironmentVariable(SecretKeyVariable);
         if (string.IsNullOrWhiteSpace(endpoint) ||
             string.IsNullOrWhiteSpace(accessKey) ||
             string.IsNullOrWhiteSpace(secretKey))
         {
-            throw SkipException.ForSkip(
-                "BLUETUSK_S3_ENDPOINT, BLUETUSK_S3_ACCESS_KEY, and BLUETUSK_S3_SECRET_KEY are not configured.");
+            throw new InvalidOperationException(MissingFixture);
         }
 
         using var client = new AmazonS3Client(
@@ -161,6 +172,24 @@ public sealed class S3SyncDestinationTests
             }
 
             _ = await client.DeleteBucketAsync(bucket);
+        }
+    }
+
+    private sealed class S3FixtureFactAttribute : FactAttribute
+    {
+#if NET8_0_OR_GREATER
+        public S3FixtureFactAttribute([CallerFilePath] string? sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
+            : base(sourceFilePath, sourceLineNumber)
+#else
+        public S3FixtureFactAttribute()
+#endif
+        {
+            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(EndpointVariable)) ||
+                string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(AccessKeyVariable)) ||
+                string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(SecretKeyVariable)))
+            {
+                Skip = MissingFixture;
+            }
         }
     }
 

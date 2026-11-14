@@ -115,7 +115,7 @@ internal static class BlueTuskReplicationWireProtocol
         {
             var ticks = checked(
                 PostgreSqlEpoch.UtcTicks +
-                checked(microseconds * TimeSpan.TicksPerMicrosecond));
+                checked(microseconds * BlueTuskRuntime.TicksPerMicrosecond));
             return new DateTimeOffset(ticks, TimeSpan.Zero);
         }
         catch (ArgumentOutOfRangeException exception)
@@ -134,5 +134,5 @@ internal static class BlueTuskReplicationWireProtocol
 
     private static long ToPostgreSqlMicroseconds(DateTimeOffset value) =>
         (value.UtcTicks - PostgreSqlEpoch.UtcTicks) /
-        TimeSpan.TicksPerMicrosecond;
+        BlueTuskRuntime.TicksPerMicrosecond;
 }

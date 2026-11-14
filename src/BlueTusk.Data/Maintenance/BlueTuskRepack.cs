@@ -99,7 +99,7 @@ public static class BlueTuskRepackExtensions
         this BlueTuskConnection connection,
         BlueTuskRepackRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         EnsureSupported(connection);
         ValidateTransaction(connection, request);
 
@@ -113,7 +113,7 @@ public static class BlueTuskRepackExtensions
         BlueTuskRepackRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         EnsureSupported(connection);
         ValidateTransaction(connection, request);
 
@@ -157,7 +157,7 @@ public static class BlueTuskRepackExtensions
 
     internal static string BuildCommandText(BlueTuskRepackRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         Validate(request);
 
         var sql = new StringBuilder("REPACK");
@@ -256,7 +256,7 @@ public static class BlueTuskRepackExtensions
 
     private static void EnsureSupported(BlueTuskConnection connection)
     {
-        ArgumentNullException.ThrowIfNull(connection);
+        BlueTuskGuard.NotNull(connection);
         if (connection.State != ConnectionState.Open)
         {
             throw new InvalidOperationException("The connection must be open before running REPACK.");
@@ -283,7 +283,7 @@ public static class BlueTuskRepackExtensions
 
     private static void Validate(BlueTuskRepackRequest request)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(request.CommandTimeoutSeconds);
+        BlueTuskGuard.NotNegative(request.CommandTimeoutSeconds);
         if (request.AnalyzeColumns is null)
         {
             throw new ArgumentException("AnalyzeColumns cannot be null.", nameof(request));

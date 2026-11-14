@@ -51,7 +51,7 @@ internal sealed class BlueTuskTypeMetadataCache
         IBlueTuskPhysicalSession session,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(session);
+        BlueTuskGuard.NotNull(session);
         if (Volatile.Read(ref _loaded) != 0)
         {
             return;
@@ -67,7 +67,7 @@ internal sealed class BlueTuskTypeMetadataCache
 
     public void EnsureLoaded(IBlueTuskPhysicalSession session)
     {
-        ArgumentNullException.ThrowIfNull(session);
+        BlueTuskGuard.NotNull(session);
         if (Volatile.Read(ref _loaded) == 0)
         {
             Load(session, force: false);

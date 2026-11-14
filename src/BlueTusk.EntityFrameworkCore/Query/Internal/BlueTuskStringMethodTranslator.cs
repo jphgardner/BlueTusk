@@ -114,7 +114,11 @@ internal sealed class BlueTuskStringMethodTranslator(ISqlExpressionFactory sqlEx
             argument);
     }
 
+#if BLUETUSK_EF9_OR_GREATER
     private SqlExpression Function(
+#else
+    private SqlFunctionExpression Function(
+#endif
         string name,
         SqlExpression first,
         SqlExpression? second = null,

@@ -12,8 +12,8 @@ public static class BlueTuskCitextDbContextOptionsBuilderExtensions
         this BlueTuskDbContextOptionsBuilder optionsBuilder,
         string schema = "public")
     {
-        ArgumentNullException.ThrowIfNull(optionsBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNull(optionsBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
         var extension = new BlueTuskCitextOptionsExtension(schema);
         ((IDbContextOptionsBuilderInfrastructure)optionsBuilder.ContextOptionsBuilder)
             .AddOrUpdateExtension(extension);

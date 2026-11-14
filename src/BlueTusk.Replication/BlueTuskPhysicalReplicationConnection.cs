@@ -31,7 +31,7 @@ public sealed class BlueTuskPhysicalReplicationConnection : BlueTuskReplicationC
         BlueTuskClientOptions options,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         var session = await BlueTuskSession.OpenAsync(
             options with { ReplicationMode = BlueTuskReplicationMode.Physical },
             cancellationToken).ConfigureAwait(false);
@@ -54,7 +54,7 @@ public sealed class BlueTuskPhysicalReplicationConnection : BlueTuskReplicationC
         command += $"PHYSICAL {startPosition}";
         if (timeline is { } timelineValue)
         {
-            ArgumentOutOfRangeException.ThrowIfZero(timelineValue);
+            BlueTuskGuard.NotZero(timelineValue);
             command += $" TIMELINE {timelineValue}";
         }
 

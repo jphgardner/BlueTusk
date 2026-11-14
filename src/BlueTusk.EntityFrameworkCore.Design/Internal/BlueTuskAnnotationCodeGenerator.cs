@@ -139,8 +139,8 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         IIndex index,
         IAnnotation annotation)
     {
-        ArgumentNullException.ThrowIfNull(index);
-        ArgumentNullException.ThrowIfNull(annotation);
+        BlueTuskGuard.NotNull(index);
+        BlueTuskGuard.NotNull(annotation);
 
         return annotation.Name switch
         {
@@ -174,8 +174,8 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         IEntityType entityType,
         IAnnotation annotation)
     {
-        ArgumentNullException.ThrowIfNull(entityType);
-        ArgumentNullException.ThrowIfNull(annotation);
+        BlueTuskGuard.NotNull(entityType);
+        BlueTuskGuard.NotNull(annotation);
 
         if (annotation.Name == BlueTuskPartitionMetadata.AnnotationName &&
             annotation.Value is string serializedDefinition)
@@ -252,12 +252,13 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         return base.GenerateFluentApi(entityType, annotation);
     }
 
+#if BLUETUSK_EF6_OR_GREATER
     protected override MethodCallCodeFragment? GenerateFluentApi(
         ICheckConstraint checkConstraint,
         IAnnotation annotation)
     {
-        ArgumentNullException.ThrowIfNull(checkConstraint);
-        ArgumentNullException.ThrowIfNull(annotation);
+        BlueTuskGuard.NotNull(checkConstraint);
+        BlueTuskGuard.NotNull(annotation);
 
         return annotation.Name switch
         {
@@ -276,13 +277,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             _ => base.GenerateFluentApi(checkConstraint, annotation),
         };
     }
+#endif
 
     protected override MethodCallCodeFragment? GenerateFluentApi(
         IProperty property,
         IAnnotation annotation)
     {
-        ArgumentNullException.ThrowIfNull(property);
-        ArgumentNullException.ThrowIfNull(annotation);
+        BlueTuskGuard.NotNull(property);
+        BlueTuskGuard.NotNull(annotation);
 
         if (annotation.Name == BlueTuskValueGenerationAnnotations.IdentityGeneration &&
             annotation.Value is not null)

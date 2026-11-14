@@ -10,7 +10,7 @@ public sealed partial class OpenSearchSyncDestination
         SyncProvisionRequest request,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         var pipelineHash = Fingerprint(request.PipelineId, 24);
         var current = await ReadControlDocumentAsync<PipelineDocument>(
@@ -55,7 +55,7 @@ public sealed partial class OpenSearchSyncDestination
         SyncProvisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         var pipelineHash = Fingerprint(request.PipelineId, 24);
         for (var attempt = 0; attempt < 8; attempt++)
@@ -185,7 +185,7 @@ public sealed partial class OpenSearchSyncDestination
             StringComparer.Ordinal);
         var counts = new List<OpenSearchCollectionCount>();
         foreach (var collectionName in active.Keys.Union(rebuilding.Keys, StringComparer.Ordinal)
-                     .Order(StringComparer.Ordinal))
+                     .OrderBy(static value => value, StringComparer.Ordinal))
         {
             var activeCount = active.TryGetValue(collectionName, out var activeCollection)
                 ? await CountDocumentsAsync(activeCollection.Index, cancellationToken).ConfigureAwait(false)
@@ -316,8 +316,8 @@ public sealed partial class OpenSearchSyncDestination
         string generation,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(generation);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(generation);
         if (generation.Length != 16 || !generation.All(Uri.IsHexDigit))
         {
             throw new ArgumentException(
@@ -564,7 +564,7 @@ public sealed partial class OpenSearchSyncDestination
         writer.WriteStartObject();
         writer.WritePropertyName("actions");
         writer.WriteStartArray();
-        foreach (var collectionName in collectionNames.Order(StringComparer.Ordinal))
+        foreach (var collectionName in collectionNames.OrderBy(static value => value, StringComparer.Ordinal))
         {
             if (active.TryGetValue(collectionName, out var current))
             {

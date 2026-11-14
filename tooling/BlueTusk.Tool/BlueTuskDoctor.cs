@@ -19,9 +19,9 @@ internal static partial class BlueTuskDoctor
         TextWriter output,
         TextWriter error)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(output);
-        ArgumentNullException.ThrowIfNull(error);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNull(output);
+        BlueTuskGuard.NotNull(error);
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(options.TimeoutSeconds));
         var checks = new List<DoctorCheck>();
 

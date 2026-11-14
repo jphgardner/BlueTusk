@@ -119,7 +119,7 @@ public sealed record LiveDiffOptions
 {
     public int MaximumEventsPerRefresh { get; init; } = 1_024;
 
-    internal void Validate() => ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumEventsPerRefresh);
+    internal void Validate() => BlueTuskGuard.NotNegativeOrZero(MaximumEventsPerRefresh);
 }
 
 public sealed class LiveDiffBatch<T, TKey>
@@ -150,8 +150,8 @@ public sealed class LiveDiffBatch<T, TKey>
         LiveResultSnapshot<T, TKey> snapshot,
         LiveResultEvent<T, TKey>[] events)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
-        ArgumentNullException.ThrowIfNull(events);
+        BlueTuskGuard.NotNull(snapshot);
+        BlueTuskGuard.NotNull(events);
         return new LiveDiffBatch<T, TKey>(snapshot, events);
     }
 }
@@ -165,9 +165,9 @@ public static class LiveResultDiffer
         long sequence = 1)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(rows);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sequence);
+        BlueTuskGuard.NotNull(rows);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNegativeOrZero(sequence);
         var snapshot = CreateSnapshot(rows, keySelector, keyComparer ?? EqualityComparer<TKey>.Default);
         var initial = new LiveResultEvent<T, TKey>(
             sequence,
@@ -192,10 +192,10 @@ public static class LiveResultDiffer
         long nextSequence = 1)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(previous);
-        ArgumentNullException.ThrowIfNull(currentRows);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(nextSequence);
+        BlueTuskGuard.NotNull(previous);
+        BlueTuskGuard.NotNull(currentRows);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNegativeOrZero(nextSequence);
         options ??= new LiveDiffOptions();
         options.Validate();
         rowComparer ??= EqualityComparer<T>.Default;
@@ -302,10 +302,10 @@ public static class LiveResultDiffer
         long nextSequence = 1)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(previous);
-        ArgumentNullException.ThrowIfNull(affectedRows);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(nextSequence);
+        BlueTuskGuard.NotNull(previous);
+        BlueTuskGuard.NotNull(affectedRows);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNegativeOrZero(nextSequence);
         options ??= new LiveDiffOptions();
         options.Validate();
         rowComparer ??= EqualityComparer<T>.Default;
@@ -317,7 +317,7 @@ public static class LiveResultDiffer
         var sequence = nextSequence;
         foreach (var row in affectedRows)
         {
-            ArgumentNullException.ThrowIfNull(row);
+            BlueTuskGuard.NotNull(row);
             var key = keySelector(row) ??
                 throw new InvalidOperationException("A live query key selector returned null.");
             if (!seen.Add(key))

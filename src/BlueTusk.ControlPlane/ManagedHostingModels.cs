@@ -129,14 +129,14 @@ internal static class ManagedHostingCollections
     internal static IReadOnlyDictionary<string, string> Copy(
         IReadOnlyDictionary<string, string> source)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         return new ReadOnlyDictionary<string, string>(
             new Dictionary<string, string>(source, StringComparer.Ordinal));
     }
 
     internal static IReadOnlyList<T> Copy<T>(IReadOnlyList<T> source)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         return Array.AsReadOnly(source.ToArray());
     }
 }

@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
     <ProjectReference Include="..\BlueTusk.Client\BlueTusk.Client.csproj" />
     <ProjectReference Include="..\BlueTusk.Protocol\BlueTusk.Protocol.csproj" />
     <ProjectReference Include="..\BlueTusk.Security\BlueTusk.Security.csproj" />
@@ -10,9 +11,11 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <IsTrimmable>true</IsTrimmable>
-    <IsAotCompatible>true</IsAotCompatible>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
+    <BlueTuskLegacyPublicApi>true</BlueTuskLegacyPublicApi>
+    <IsTrimmable Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">true</IsTrimmable>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
     <Description>Native ADO.NET provider for PostgreSQL built on the BlueTusk wire stack.</Description>
   </PropertyGroup>
 

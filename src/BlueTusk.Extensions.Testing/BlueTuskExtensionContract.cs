@@ -41,8 +41,8 @@ public static class BlueTuskExtensionCompatibility
         BlueTuskExtensionContract contract,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentNullException.ThrowIfNull(contract);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNull(contract);
         ValidateContract(contract);
 
         if (!dataSource.Features.TryGet(contract.FeatureName, out var feature) ||
@@ -93,10 +93,10 @@ public static class BlueTuskExtensionCompatibility
 
     private static void ValidateContract(BlueTuskExtensionContract contract)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(contract.FeatureName);
-        ArgumentNullException.ThrowIfNull(contract.FeatureType);
-        ArgumentNullException.ThrowIfNull(contract.ClrType);
-        ArgumentNullException.ThrowIfNull(contract.CodecType);
+        BlueTuskGuard.NotNullOrWhiteSpace(contract.FeatureName);
+        BlueTuskGuard.NotNull(contract.FeatureType);
+        BlueTuskGuard.NotNull(contract.ClrType);
+        BlueTuskGuard.NotNull(contract.CodecType);
         if (!typeof(IBlueTuskCodec).IsAssignableFrom(contract.CodecType))
         {
             throw new ArgumentException(

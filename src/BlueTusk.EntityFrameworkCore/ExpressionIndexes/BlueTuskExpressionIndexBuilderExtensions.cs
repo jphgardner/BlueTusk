@@ -16,9 +16,9 @@ public static class BlueTuskExpressionIndexBuilderExtensions
         string name,
         Action<BlueTuskExpressionIndexBuilder> configure)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskExpressionIndexBuilder(name);
         configure(builder);
         Set(entityBuilder.Metadata, Replace(Get(entityBuilder.Metadata), builder.Build()));
@@ -41,8 +41,8 @@ public static class BlueTuskExpressionIndexBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         string name)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         Set(
             entityBuilder.Metadata,
             Get(entityBuilder.Metadata)
@@ -55,7 +55,7 @@ public static class BlueTuskExpressionIndexBuilderExtensions
     public static IReadOnlyList<BlueTuskExpressionIndexDefinition> GetExpressionIndexes(
         this IReadOnlyEntityType entityType)
     {
-        ArgumentNullException.ThrowIfNull(entityType);
+        BlueTuskGuard.NotNull(entityType);
         return Get(entityType);
     }
 
@@ -64,7 +64,7 @@ public static class BlueTuskExpressionIndexBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         Set(entityBuilder.Metadata, BlueTuskExpressionIndexMetadata.Deserialize(serializedDefinitions));
         return entityBuilder;
     }

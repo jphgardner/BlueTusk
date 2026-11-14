@@ -16,7 +16,7 @@ internal sealed class BlueTuskUserDefinedTypeMapping : RelationalTypeMapping
     public BlueTuskUserDefinedTypeMapping(string storeType, Type clrType, string postgreSqlTypeName)
         : base(storeType, clrType, System.Data.DbType.Object)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(postgreSqlTypeName);
+        BlueTuskGuard.NotNullOrWhiteSpace(postgreSqlTypeName);
         _postgreSqlTypeName = postgreSqlTypeName;
     }
 

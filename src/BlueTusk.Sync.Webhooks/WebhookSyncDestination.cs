@@ -16,7 +16,7 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
 
     public WebhookSyncDestination(WebhookSyncOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _signingKey = options.SigningKey.ToArray();
@@ -33,7 +33,7 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
         SyncProvisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         var deliveryId = DeliveryId(
             "provision",
             request.PipelineId,
@@ -67,7 +67,7 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
         SnapshotReset reset,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         var pipeline = RequirePipeline(pipelineId, reset.Epoch.Source);
         var deliveryId = DeliveryId(
             "snapshot-reset",
@@ -94,7 +94,7 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         var pipeline = RequirePipeline(pipelineId, start.Epoch.Source, transform);
         var deliveryId = DeliveryId(
             "snapshot-start",
@@ -119,7 +119,7 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
         SyncSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var pipeline = RequirePipeline(
             batch.PipelineId,
             batch.SourceBatch.Epoch.Source,
@@ -150,7 +150,7 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         var pipeline = RequirePipeline(pipelineId, complete.Epoch.Source, transform);
         var deliveryId = DeliveryId(
             "snapshot-complete",
@@ -175,7 +175,7 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
         SyncTransactionBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var pipeline = RequirePipeline(batch.PipelineId, batch.Transaction.Source);
         if (!string.Equals(
                 batch.Transform.Fingerprint,
@@ -202,9 +202,9 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
         string operationId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         var pipeline = RequirePipeline(batch.PipelineId, batch.Transaction.Source, batch.Transform);
         var acknowledgement = await SendTransactionAsync(
             pipeline,
@@ -310,7 +310,11 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
                     exception);
             }
 
+#if NET8_0_OR_GREATER
             await Task.Delay(delay, _options.TimeProvider, cancellationToken).ConfigureAwait(false);
+#else
+            await _options.TimeProvider.Delay(delay, cancellationToken).ConfigureAwait(false);
+#endif
             var nextTicks = Math.Min(
                 checked(delay.Ticks * 2),
                 _options.MaximumRetryDelay.Ticks);
@@ -352,7 +356,7 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
         hash.AppendData(Encoding.ASCII.GetBytes(timestamp));
         hash.AppendData("."u8);
         hash.AppendData(payload);
-        return "v1=" + Convert.ToHexStringLower(hash.GetHashAndReset());
+        return "v1=" + BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private ProvisionedPipeline RequirePipeline(
@@ -360,8 +364,8 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
         ChangeSourceIdentity source,
         SyncTransformVersion? transform = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNull(source);
         var pipeline = Volatile.Read(ref _pipeline) ??
             throw new WebhookSyncException(
                 "The webhook Sync destination must be provisioned successfully before delivery.");
@@ -405,7 +409,7 @@ public sealed class WebhookSyncDestination : ISyncDestination, ISyncQuarantineRe
             Append(hash, value);
         }
 
-        return "btw-" + Convert.ToHexStringLower(hash.GetHashAndReset());
+        return "btw-" + BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private static void Append(IncrementalHash hash, string value)

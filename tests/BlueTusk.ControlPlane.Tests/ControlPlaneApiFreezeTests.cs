@@ -35,10 +35,10 @@ public sealed class ControlPlaneApiFreezeTests
                 SearchOption.AllDirectories)
             .Where(IsControlPlaneApiBaseline)
             .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
-            .Order(StringComparer.Ordinal)
+            .OrderBy(static path => path, StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(discovered, registered.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(discovered, registered.Keys.OrderBy(static path => path, StringComparer.Ordinal));
         foreach (var path in discovered)
         {
             var shippedPath = Path.Combine(repositoryRoot, path);

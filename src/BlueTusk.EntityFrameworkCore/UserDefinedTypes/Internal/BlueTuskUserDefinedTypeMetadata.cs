@@ -12,7 +12,7 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static BlueTuskUserDefinedTypeDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json)
             ? BlueTuskUserDefinedTypeDefinitionSet.Empty
@@ -21,7 +21,7 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static string Serialize(BlueTuskUserDefinedTypeDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
+        BlueTuskGuard.NotNull(definitions);
         Validate(definitions);
         var normalized = Normalize(definitions);
         return JsonSerializer.Serialize(normalized, SerializerOptions);
@@ -44,7 +44,7 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static BlueTuskUserDefinedTypeDefinitionSet Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskUserDefinedTypeDefinitionSet>(json, SerializerOptions)
             ?? throw new ArgumentException("The user-defined type definition set is empty.", nameof(json));
         Validate(definitions);
@@ -53,7 +53,7 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static BlueTuskEnumTypeDefinition DeserializeEnum(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return ValidateAndReturn(
             JsonSerializer.Deserialize<BlueTuskEnumTypeDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The enum definition is empty.", nameof(json)));
@@ -61,7 +61,7 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static BlueTuskDomainTypeDefinition DeserializeDomain(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskDomainTypeDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The domain definition is empty.", nameof(json));
         Validate(definition);
@@ -70,7 +70,7 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static BlueTuskCompositeTypeDefinition DeserializeComposite(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return ValidateAndReturn(
             JsonSerializer.Deserialize<BlueTuskCompositeTypeDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The composite definition is empty.", nameof(json)));
@@ -78,7 +78,7 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static BlueTuskRangeTypeDefinition DeserializeRange(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         return ValidateAndReturn(
             JsonSerializer.Deserialize<BlueTuskRangeTypeDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The range definition is empty.", nameof(json)));
@@ -86,11 +86,11 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static void Validate(BlueTuskUserDefinedTypeDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.Enums);
-        ArgumentNullException.ThrowIfNull(definitions.Domains);
-        ArgumentNullException.ThrowIfNull(definitions.Composites);
-        ArgumentNullException.ThrowIfNull(definitions.Ranges);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.Enums);
+        BlueTuskGuard.NotNull(definitions.Domains);
+        BlueTuskGuard.NotNull(definitions.Composites);
+        BlueTuskGuard.NotNull(definitions.Ranges);
         var names = new HashSet<(string? Schema, string Name)>();
         foreach (var definition in definitions.Enums)
         {
@@ -120,13 +120,13 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static void Validate(BlueTuskEnumTypeDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         ValidateName(definition.Name, definition.Schema);
-        ArgumentNullException.ThrowIfNull(definition.Labels);
+        BlueTuskGuard.NotNull(definition.Labels);
         var labels = new HashSet<string>(StringComparer.Ordinal);
         foreach (var label in definition.Labels)
         {
-            ArgumentNullException.ThrowIfNull(label);
+            BlueTuskGuard.NotNull(label);
             if (!labels.Add(label))
             {
                 throw new ArgumentException(
@@ -138,18 +138,18 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static void Validate(BlueTuskDomainTypeDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         ValidateName(definition.Name, definition.Schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.BaseStoreType);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.BaseStoreType);
         ValidateOptionalSql(definition.Collation, nameof(definition.Collation));
         ValidateOptionalSql(definition.DefaultSql, nameof(definition.DefaultSql));
-        ArgumentNullException.ThrowIfNull(definition.Constraints);
+        BlueTuskGuard.NotNull(definition.Constraints);
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var constraint in definition.Constraints)
         {
-            ArgumentNullException.ThrowIfNull(constraint);
-            ArgumentException.ThrowIfNullOrWhiteSpace(constraint.Name);
-            ArgumentException.ThrowIfNullOrWhiteSpace(constraint.CheckSql);
+            BlueTuskGuard.NotNull(constraint);
+            BlueTuskGuard.NotNullOrWhiteSpace(constraint.Name);
+            BlueTuskGuard.NotNullOrWhiteSpace(constraint.CheckSql);
             if (!names.Add(constraint.Name))
             {
                 throw new ArgumentException(
@@ -161,15 +161,15 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static void Validate(BlueTuskCompositeTypeDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         ValidateName(definition.Name, definition.Schema);
-        ArgumentNullException.ThrowIfNull(definition.Attributes);
+        BlueTuskGuard.NotNull(definition.Attributes);
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var attribute in definition.Attributes)
         {
-            ArgumentNullException.ThrowIfNull(attribute);
-            ArgumentException.ThrowIfNullOrWhiteSpace(attribute.Name);
-            ArgumentException.ThrowIfNullOrWhiteSpace(attribute.StoreType);
+            BlueTuskGuard.NotNull(attribute);
+            BlueTuskGuard.NotNullOrWhiteSpace(attribute.Name);
+            BlueTuskGuard.NotNullOrWhiteSpace(attribute.StoreType);
             ValidateOptionalSql(attribute.Collation, nameof(attribute.Collation));
             if (!names.Add(attribute.Name))
             {
@@ -182,7 +182,7 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     public static void Validate(BlueTuskRangeTypeDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         ValidateName(definition.Name, definition.Schema);
         Validate(definition.Subtype, nameof(definition.Subtype));
         Validate(definition.SubtypeOperatorClass, nameof(definition.SubtypeOperatorClass));
@@ -262,10 +262,10 @@ internal static class BlueTuskUserDefinedTypeMetadata
 
     private static void ValidateName(string name, string? schema)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (schema is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+            BlueTuskGuard.NotNullOrWhiteSpace(schema);
         }
     }
 
@@ -276,10 +276,10 @@ internal static class BlueTuskUserDefinedTypeMetadata
             return;
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(name.Name, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(name.Name, parameterName);
         if (name.Schema is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(name.Schema, parameterName);
+            BlueTuskGuard.NotNullOrWhiteSpace(name.Schema, parameterName);
         }
     }
 
@@ -287,7 +287,7 @@ internal static class BlueTuskUserDefinedTypeMetadata
     {
         if (value is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+            BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         }
     }
 }

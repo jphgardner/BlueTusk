@@ -51,8 +51,8 @@ public readonly record struct BlueTuskNumeric
 
     public BlueTuskNumeric(BigInteger unscaledValue, int scale)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(scale);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(scale, MaximumScale);
+        BlueTuskGuard.NotNegative(scale);
+        BlueTuskGuard.NotGreaterThan(scale, MaximumScale);
         UnscaledValue = unscaledValue;
         Scale = scale;
         Kind = BlueTuskNumericKind.Finite;
@@ -86,7 +86,7 @@ public readonly record struct BlueTuskNumeric
 
     public static BlueTuskNumeric Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         if (text.Equals("NaN", StringComparison.OrdinalIgnoreCase))
         {
@@ -150,7 +150,7 @@ public readonly record struct BlueTuskNumeric
                 continue;
             }
 
-            if (!char.IsAsciiDigit(character))
+            if (!BlueTuskRuntime.IsAsciiDigit(character))
             {
                 throw new FormatException($"The PostgreSQL numeric value contains invalid character '{character}'.");
             }
@@ -166,7 +166,7 @@ public readonly record struct BlueTuskNumeric
             scale = 0;
         }
 
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(scale, MaximumScale);
+        BlueTuskGuard.NotGreaterThan(scale, MaximumScale);
         return new BlueTuskNumeric(negative ? -unscaled : unscaled, scale);
     }
 

@@ -2,6 +2,9 @@ using BlueTusk.Data.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+#if !BLUETUSK_EF8_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
 
@@ -19,11 +22,25 @@ public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
         AdminDatabase = copyFrom.AdminDatabase;
         DataSource = copyFrom.DataSource;
         GraphBackend = copyFrom.GraphBackend;
+#if !BLUETUSK_EF8_OR_GREATER
+        LegacyContextOwnsConnection = copyFrom.LegacyContextOwnsConnection;
+#endif
     }
 
     internal string? AdminDatabase { get; private set; }
 
     internal IProviderDataSource? DataSource { get; private set; }
+
+#if !BLUETUSK_EF8_OR_GREATER
+    internal bool LegacyContextOwnsConnection { get; private set; }
+
+    internal BlueTuskOptionsExtension WithConnection(DbConnection connection, bool contextOwnsConnection)
+    {
+        var clone = (BlueTuskOptionsExtension)base.WithConnection(connection);
+        clone.LegacyContextOwnsConnection = contextOwnsConnection;
+        return clone;
+    }
+#endif
 
     internal BlueTuskPropertyGraphBackend GraphBackend { get; private set; } =
         BlueTuskPropertyGraphBackend.Relational;
@@ -67,7 +84,11 @@ public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
             ? "using BlueTusk "
             : "using BlueTusk data source ";
 
+#if BLUETUSK_EF6_OR_GREATER
         public override int GetServiceProviderHashCode() => 0;
+#else
+        public override long GetServiceProviderHashCode() => 0;
+#endif
 
         public override void PopulateDebugInfo(IDictionary<string, string> debugInfo)
         {

@@ -40,7 +40,7 @@ public sealed partial record OpenSearchSyncOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(Client);
+        BlueTuskGuard.NotNull(Client);
         if (Client.BaseAddress is null || !Client.BaseAddress.IsAbsoluteUri)
         {
             throw new ArgumentException(
@@ -48,7 +48,7 @@ public sealed partial record OpenSearchSyncOptions
                 nameof(Client));
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(IndexPrefix);
+        BlueTuskGuard.NotNullOrWhiteSpace(IndexPrefix);
         if (IndexPrefix.Length > 80 || !IndexPrefixExpression().IsMatch(IndexPrefix))
         {
             throw new ArgumentException(
@@ -56,9 +56,9 @@ public sealed partial record OpenSearchSyncOptions
                 nameof(IndexPrefix));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(NumberOfShards);
-        ArgumentOutOfRangeException.ThrowIfNegative(NumberOfReplicas);
-        ArgumentException.ThrowIfNullOrWhiteSpace(WaitForActiveShards);
+        BlueTuskGuard.NotNegativeOrZero(NumberOfShards);
+        BlueTuskGuard.NotNegative(NumberOfReplicas);
+        BlueTuskGuard.NotNullOrWhiteSpace(WaitForActiveShards);
         if (WaitForActiveShards != "all" &&
             (!int.TryParse(
                 WaitForActiveShards,
@@ -71,18 +71,24 @@ public sealed partial record OpenSearchSyncOptions
                 nameof(WaitForActiveShards));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxDocumentBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxBulkBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan((long)MaxDocumentBytes, MaxBulkBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxMutationsPerTransaction);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxReconciliationKeyBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxReconciliationKeyBytes, 32_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(ReconciliationPageSize, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(ReconciliationPageSize, 10_000);
+        BlueTuskGuard.NotNegativeOrZero(MaxDocumentBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxBulkBytes);
+        BlueTuskGuard.NotGreaterThan((long)MaxDocumentBytes, MaxBulkBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxMutationsPerTransaction);
+        BlueTuskGuard.NotNegativeOrZero(MaxReconciliationKeyBytes);
+        BlueTuskGuard.NotGreaterThan(MaxReconciliationKeyBytes, 32_000);
+        BlueTuskGuard.NotLessThan(ReconciliationPageSize, 1);
+        BlueTuskGuard.NotGreaterThan(ReconciliationPageSize, 10_000);
     }
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^[a-z0-9][a-z0-9_-]*$", RegexOptions.CultureInvariant)]
     private static partial Regex IndexPrefixExpression();
+#else
+    private static readonly Regex IndexPrefixRegex = new("^[a-z0-9][a-z0-9_-]*$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static Regex IndexPrefixExpression() => IndexPrefixRegex;
+#endif
 }
 
 /// <summary>Represents an OpenSearch Sync destination failure.</summary>

@@ -19,8 +19,8 @@ public static class BlueTuskPostgreSqlMd5Password
         Justification = "PostgreSQL's legacy wire protocol explicitly requires MD5 for this compatibility path.")]
     public static byte[] CreateResponse(string username, string password, ReadOnlySpan<byte> salt)
     {
-        ArgumentNullException.ThrowIfNull(username);
-        ArgumentNullException.ThrowIfNull(password);
+        BlueTuskGuard.NotNull(username);
+        BlueTuskGuard.NotNull(password);
         if (salt.Length != sizeof(int))
         {
             throw new ArgumentException("A PostgreSQL MD5 authentication salt must contain exactly four bytes.", nameof(salt));

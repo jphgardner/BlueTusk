@@ -11,7 +11,7 @@ public sealed class TransactionSpoolCompatibilityTests
     [InlineData(true)]
     public async Task Writer_preserves_every_byte_of_the_legacy_ieee_crc32_format(bool protectedRecords)
     {
-        var directory = Directory.CreateTempSubdirectory("bluetusk-spool-format-").FullName;
+        var directory = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"bluetusk-spool-format-{Guid.NewGuid():N}")).FullName;
         try
         {
             var protector = protectedRecords ? new TestProtector() : null;

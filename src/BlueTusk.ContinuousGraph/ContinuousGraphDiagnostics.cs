@@ -117,7 +117,7 @@ internal static class ContinuousGraphDiagnostics
         if (started != 0 && EvaluationDuration.Enabled)
         {
             EvaluationDuration.Record(
-                Stopwatch.GetElapsedTime(started).TotalSeconds,
+                BlueTuskRuntime.GetElapsedTime(started).TotalSeconds,
                 tags);
         }
 

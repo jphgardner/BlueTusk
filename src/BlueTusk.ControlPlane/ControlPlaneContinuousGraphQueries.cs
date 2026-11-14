@@ -194,7 +194,7 @@ public sealed class ControlPlaneContinuousGraphExecutionException : Exception
     public ControlPlaneContinuousGraphExecutionException(string code, string message)
         : base(message)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+        BlueTuskGuard.NotNullOrWhiteSpace(code);
         Code = code;
     }
 

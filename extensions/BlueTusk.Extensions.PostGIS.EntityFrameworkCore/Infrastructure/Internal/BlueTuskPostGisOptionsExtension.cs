@@ -21,10 +21,17 @@ internal sealed class BlueTuskPostGisOptionsExtension(string schema) : IDbContex
         services.AddSingleton(new BlueTuskPostGisTypeMappingOptions(Schema));
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IRelationalTypeMappingSourcePlugin, BlueTuskPostGisTypeMappingSourcePlugin>());
+#if BLUETUSK_EF6_OR_GREATER
         services.TryAddEnumerable(
             ServiceDescriptor.Scoped<IMethodCallTranslatorPlugin, BlueTuskPostGisMethodCallTranslatorPlugin>());
         services.TryAddEnumerable(
             ServiceDescriptor.Scoped<IMemberTranslatorPlugin, BlueTuskPostGisMemberTranslatorPlugin>());
+#else
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IMethodCallTranslatorPlugin, BlueTuskPostGisMethodCallTranslatorPlugin>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IMemberTranslatorPlugin, BlueTuskPostGisMemberTranslatorPlugin>());
+#endif
     }
 
     public void Validate(IDbContextOptions options)
@@ -38,12 +45,18 @@ internal sealed class BlueTuskPostGisOptionsExtension(string schema) : IDbContex
 
         public override string LogFragment => $"using PostGIS in {extension.Schema} ";
 
+#if BLUETUSK_EF6_OR_GREATER
         public override int GetServiceProviderHashCode() =>
+#else
+        public override long GetServiceProviderHashCode() =>
+#endif
             StringComparer.Ordinal.GetHashCode(extension.Schema);
 
+#if BLUETUSK_EF6_OR_GREATER
         public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other) =>
             other is ExtensionInfo otherInfo &&
             string.Equals(extension.Schema, otherInfo.Extension.Schema, StringComparison.Ordinal);
+#endif
 
         public override void PopulateDebugInfo(IDictionary<string, string> debugInfo) =>
             debugInfo["BlueTusk:PostGIS"] = extension.Schema;

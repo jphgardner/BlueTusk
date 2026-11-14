@@ -1,3 +1,6 @@
+#if !NET9_0_OR_GREATER
+using Lock = System.Object;
+#endif
 using BlueTusk.Sync.DependencyInjection;
 using BlueTusk.TypeSystem;
 

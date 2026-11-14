@@ -15,8 +15,8 @@ public static class BlueTuskExclusionConstraintMigrationBuilderExtensions
         BlueTuskExclusionConstraintDefinition definition,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
         BlueTuskExclusionConstraintMetadata.Validate(definition);
         var operation = new AddExclusionConstraintOperation
         {
@@ -46,9 +46,9 @@ public static class BlueTuskExclusionConstraintMigrationBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropExclusionConstraintOperation
         {
             Table = table,
@@ -67,10 +67,10 @@ public static class BlueTuskExclusionConstraintMigrationBuilderExtensions
         string newName,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new RenameExclusionConstraintOperation
         {
             Table = table,

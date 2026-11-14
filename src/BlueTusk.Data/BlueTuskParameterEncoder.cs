@@ -50,7 +50,7 @@ internal static class BlueTuskParameterEncoder
         BlueTuskParameterCollection parameters,
         BlueTuskTypeRegistry? types = null)
     {
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
         return Encode(parameters.Items, types);
     }
 
@@ -58,7 +58,7 @@ internal static class BlueTuskParameterEncoder
         IReadOnlyList<BlueTuskParameter> parameters,
         BlueTuskTypeRegistry? types = null)
     {
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
         if (parameters.Count == 0)
         {
             return Array.Empty<BlueTuskExtendedQueryParameter>();
@@ -79,9 +79,9 @@ internal static class BlueTuskParameterEncoder
         BlueTuskExtendedQueryParameter[] destination,
         byte[]?[] reusableBuffers)
     {
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(destination);
-        ArgumentNullException.ThrowIfNull(reusableBuffers);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(destination);
+        BlueTuskGuard.NotNull(reusableBuffers);
         if (destination.Length < parameters.Count || reusableBuffers.Length < parameters.Count)
         {
             throw new ArgumentException("Reusable parameter storage must match the parameter count.");
@@ -111,7 +111,7 @@ internal static class BlueTuskParameterEncoder
         ref byte[]? reusableBuffer,
         bool rentBuffer = false)
     {
-        ArgumentNullException.ThrowIfNull(parameter);
+        BlueTuskGuard.NotNull(parameter);
         var value = parameter.Value is DBNull ? null : parameter.Value;
         var typeOid = parameter.PostgreSqlTypeOid
             ?? ResolveTypeOid(parameter.PostgreSqlTypeName, parameter.DbType, value, types);
@@ -629,9 +629,9 @@ internal static class BlueTuskParameterEncoder
                     (short)format,
                     buffer.AsMemory(0, writer.WrittenCount));
             }
-            catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
+            catch (BlueTuskWriteBufferTooSmallException) when (length < BlueTuskRuntime.MaxArrayLength)
             {
-                length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+                length = length > BlueTuskRuntime.MaxArrayLength / 2 ? BlueTuskRuntime.MaxArrayLength : length * 2;
             }
         }
     }
@@ -660,11 +660,11 @@ internal static class BlueTuskParameterEncoder
                         (short)format,
                         owned);
                 }
-                catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
+                catch (BlueTuskWriteBufferTooSmallException) when (length < BlueTuskRuntime.MaxArrayLength)
                 {
                     ArrayPool<byte>.Shared.Return(temporary, clearArray: true);
                     temporary = null;
-                    length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+                    length = length > BlueTuskRuntime.MaxArrayLength / 2 ? BlueTuskRuntime.MaxArrayLength : length * 2;
                 }
             }
         }

@@ -1,4 +1,9 @@
 using Microsoft.EntityFrameworkCore.Infrastructure;
+#if !BLUETUSK_EF8_OR_GREATER
+using System.Linq.Expressions;
+using BlueTusk.EntityFrameworkCore.Query.Internal;
+using Microsoft.EntityFrameworkCore.Query;
+#endif
 
 namespace Microsoft.EntityFrameworkCore;
 
@@ -11,8 +16,9 @@ public static class BlueTuskSetReturningFunctionsExtensions
         int stop,
         int step = 1)
     {
-        ArgumentNullException.ThrowIfNull(database);
-        ArgumentOutOfRangeException.ThrowIfZero(step);
+        BlueTuskGuard.NotNull(database);
+        BlueTuskGuard.NotZero(step);
+#if BLUETUSK_EF8_OR_GREATER
         return database.SqlQueryRaw<int>(
             """
             SELECT "Value"
@@ -21,6 +27,9 @@ public static class BlueTuskSetReturningFunctionsExtensions
             start,
             stop,
             step);
+#else
+        return CreateLegacySeries(database, () => start, () => stop, () => step, "integer", "integer");
+#endif
     }
 
     public static IQueryable<long> GenerateSeries(
@@ -29,8 +38,9 @@ public static class BlueTuskSetReturningFunctionsExtensions
         long stop,
         long step = 1)
     {
-        ArgumentNullException.ThrowIfNull(database);
-        ArgumentOutOfRangeException.ThrowIfZero(step);
+        BlueTuskGuard.NotNull(database);
+        BlueTuskGuard.NotZero(step);
+#if BLUETUSK_EF8_OR_GREATER
         return database.SqlQueryRaw<long>(
             """
             SELECT "Value"
@@ -39,6 +49,9 @@ public static class BlueTuskSetReturningFunctionsExtensions
             start,
             stop,
             step);
+#else
+        return CreateLegacySeries(database, () => start, () => stop, () => step, "bigint", "bigint");
+#endif
     }
 
     public static IQueryable<decimal> GenerateSeries(
@@ -47,8 +60,9 @@ public static class BlueTuskSetReturningFunctionsExtensions
         decimal stop,
         decimal step = 1)
     {
-        ArgumentNullException.ThrowIfNull(database);
-        ArgumentOutOfRangeException.ThrowIfZero(step);
+        BlueTuskGuard.NotNull(database);
+        BlueTuskGuard.NotZero(step);
+#if BLUETUSK_EF8_OR_GREATER
         return database.SqlQueryRaw<decimal>(
             """
             SELECT "Value"
@@ -57,6 +71,9 @@ public static class BlueTuskSetReturningFunctionsExtensions
             start,
             stop,
             step);
+#else
+        return CreateLegacySeries(database, () => start, () => stop, () => step, "numeric", "numeric");
+#endif
     }
 
     public static IQueryable<DateTime> GenerateSeries(
@@ -65,8 +82,9 @@ public static class BlueTuskSetReturningFunctionsExtensions
         DateTime stop,
         TimeSpan step)
     {
-        ArgumentNullException.ThrowIfNull(database);
+        BlueTuskGuard.NotNull(database);
         ThrowIfZero(step);
+#if BLUETUSK_EF8_OR_GREATER
         return database.SqlQueryRaw<DateTime>(
             """
             SELECT "Value"
@@ -78,6 +96,9 @@ public static class BlueTuskSetReturningFunctionsExtensions
             start,
             stop,
             step);
+#else
+        return CreateLegacySeries(database, () => start, () => stop, () => step, "timestamp without time zone", "interval");
+#endif
     }
 
     public static IQueryable<DateTimeOffset> GenerateSeries(
@@ -86,8 +107,9 @@ public static class BlueTuskSetReturningFunctionsExtensions
         DateTimeOffset stop,
         TimeSpan step)
     {
-        ArgumentNullException.ThrowIfNull(database);
+        BlueTuskGuard.NotNull(database);
         ThrowIfZero(step);
+#if BLUETUSK_EF8_OR_GREATER
         return database.SqlQueryRaw<DateTimeOffset>(
             """
             SELECT "Value"
@@ -99,7 +121,26 @@ public static class BlueTuskSetReturningFunctionsExtensions
             start,
             stop,
             step);
+#else
+        return CreateLegacySeries(database, () => start, () => stop, () => step, "timestamp with time zone", "interval");
+#endif
     }
+
+#if !BLUETUSK_EF8_OR_GREATER
+    private static IQueryable<TResult> CreateLegacySeries<TResult, TStep>(DatabaseFacade database,
+        Expression<Func<TResult>> start, Expression<Func<TResult>> stop, Expression<Func<TStep>> step,
+        string resultStoreType, string stepStoreType)
+    {
+        var root = new BlueTuskSetReturningFunctionQueryRootExpression(
+            "generate_series", typeof(TResult), [start.Body, stop.Body, step.Body],
+            [resultStoreType, resultStoreType, stepStoreType], resultStoreType, isNullable: false, withOrdinality: false);
+#if BLUETUSK_EF7_OR_GREATER
+        return database.GetService<IAsyncQueryProvider>().CreateQuery<TResult>(root);
+#else
+        return database.GetService<IAsyncQueryProvider>().CreateQuery<TResult>(root.ProjectResult());
+#endif
+    }
+#endif
 
     private static void ThrowIfZero(TimeSpan step)
     {

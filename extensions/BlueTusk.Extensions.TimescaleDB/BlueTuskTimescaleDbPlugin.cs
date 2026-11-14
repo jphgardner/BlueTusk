@@ -5,7 +5,7 @@ public sealed class BlueTuskTimescaleDbPlugin : IBlueTuskPlugin
 {
     public BlueTuskTimescaleDbPlugin(string schema = "public")
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
         Schema = schema;
     }
 
@@ -13,7 +13,7 @@ public sealed class BlueTuskTimescaleDbPlugin : IBlueTuskPlugin
 
     public void Configure(IBlueTuskPluginContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         context.Features.Register(
             BlueTuskTimescaleDbFeature.RegistryName,
             new BlueTuskTimescaleDbFeature(Schema));

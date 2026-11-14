@@ -69,9 +69,9 @@ public sealed record FileTransactionSpoolOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(DirectoryPath);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxStorageBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRecordBytes);
+        BlueTuskGuard.NotNullOrWhiteSpace(DirectoryPath);
+        BlueTuskGuard.NotNegativeOrZero(MaxStorageBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxRecordBytes);
     }
 }
 
@@ -104,7 +104,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
 
     public FileTransactionSpool(FileTransactionSpoolOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _protector = options.Protector ?? PassThroughTransactionSpoolProtector.Instance;
@@ -125,7 +125,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        ArgumentException.ThrowIfNullOrWhiteSpace(key.SourceFingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(key.SourceFingerprint);
 
         var stem = $"{Sanitize(key.SourceFingerprint)}-{key.TransactionId}-{Guid.NewGuid():N}";
         var partialPath = Path.Combine(_options.DirectoryPath, stem + ".partial");
@@ -147,7 +147,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
         for (var index = 0; index < length; index++)
         {
             var character = value[index];
-            buffer[index] = char.IsAsciiLetterOrDigit(character) ? character : '_';
+            buffer[index] = BlueTuskRuntime.IsAsciiLetterOrDigit(character) ? character : '_';
         }
 
         return new string(buffer);
@@ -299,7 +299,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
             Action<IBufferWriter<byte>, TState> serializer,
             CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(serializer);
+            BlueTuskGuard.NotNull(serializer);
             if (!ReferenceEquals(_protector, PassThroughTransactionSpoolProtector.Instance))
             {
                 var contiguous = new ArrayBufferWriter<byte>();
@@ -562,7 +562,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
 
         private void EnsureBuffer(int sizeHint)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(sizeHint);
+            BlueTuskGuard.NotNegative(sizeHint);
             if (sizeHint == 0)
             {
                 sizeHint = 1;
@@ -617,7 +617,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
         public async IAsyncEnumerable<ReadOnlyMemory<byte>> ReadRecordsAsync(
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+            BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
             await using var stream = new FileStream(
                 _path,
                 FileMode.Open,
@@ -813,14 +813,14 @@ public sealed class FileTransactionSpool : ITransactionSpool
 
         public override Span<byte> GetSpan()
         {
-            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+            BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
             return new Span<byte>(_owner.Pointer, _length);
         }
 
         public override MemoryHandle Pin(int elementIndex = 0)
         {
-            ArgumentOutOfRangeException.ThrowIfGreaterThan((uint)elementIndex, (uint)_length);
-            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+            BlueTuskGuard.NotGreaterThan((uint)elementIndex, (uint)_length);
+            BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
             return new MemoryHandle(_owner.Pointer + elementIndex, pinnable: this);
         }
 
@@ -864,7 +864,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
         {
             get
             {
-                ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+                BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
                 return _pointer;
             }
         }

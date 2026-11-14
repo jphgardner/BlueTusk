@@ -13,7 +13,9 @@ internal sealed class BlueTuskCompositeFieldExpression(
     RelationalTypeMapping typeMapping)
     : SqlExpression(type, typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public SqlExpression Instance { get; } = instance;
 
@@ -27,6 +29,7 @@ internal sealed class BlueTuskCompositeFieldExpression(
     protected override Expression VisitChildren(ExpressionVisitor visitor)
         => Update((SqlExpression)visitor.Visit(Instance));
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -36,6 +39,7 @@ internal sealed class BlueTuskCompositeFieldExpression(
             Constant(FieldName),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)

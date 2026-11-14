@@ -11,7 +11,7 @@ public sealed class BlueTuskBackendMessageParser
 
     public BlueTuskBackendMessageParser(int maximumMessageSize = DefaultMaximumMessageSize)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumMessageSize, LengthFieldSize);
+        BlueTuskGuard.NotLessThan(maximumMessageSize, LengthFieldSize);
 
         MaximumMessageSize = maximumMessageSize;
     }

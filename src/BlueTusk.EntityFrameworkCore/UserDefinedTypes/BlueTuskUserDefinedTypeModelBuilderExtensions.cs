@@ -15,7 +15,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
         IReadOnlyList<string> labels,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var definitions = BlueTuskUserDefinedTypeMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, definitions with
         {
@@ -31,7 +31,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
         Action<BlueTuskDomainBuilder>? buildAction = null,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var builder = new BlueTuskDomainBuilder(name, schema, baseStoreType);
         buildAction?.Invoke(builder);
         var definitions = BlueTuskUserDefinedTypeMetadata.Get(modelBuilder.Model);
@@ -48,8 +48,8 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
         Action<BlueTuskCompositeTypeBuilder> buildAction,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentNullException.ThrowIfNull(buildAction);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNull(buildAction);
         var builder = new BlueTuskCompositeTypeBuilder(name, schema);
         buildAction(builder);
         var definitions = BlueTuskUserDefinedTypeMetadata.Get(modelBuilder.Model);
@@ -68,7 +68,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
         string? schema = null,
         string? subtypeSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var builder = new BlueTuskRangeTypeBuilder(name, schema, subtypeName, subtypeSchema);
         buildAction?.Invoke(builder);
         var definitions = BlueTuskUserDefinedTypeMetadata.Get(modelBuilder.Model);
@@ -84,8 +84,8 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var definitions = BlueTuskUserDefinedTypeMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, definitions with
         {
@@ -102,7 +102,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
     /// <summary>Reads all provider-owned PostgreSQL type definitions from an EF model.</summary>
     public static BlueTuskUserDefinedTypeDefinitionSet GetUserDefinedTypes(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskUserDefinedTypeMetadata.Get(model);
     }
 
@@ -111,7 +111,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskUserDefinedTypeMetadata.Deserialize(serializedDefinitions));
     }
 

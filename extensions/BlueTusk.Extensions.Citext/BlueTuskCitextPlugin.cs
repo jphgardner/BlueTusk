@@ -14,7 +14,7 @@ public sealed class BlueTuskCitextPlugin : IBlueTuskPlugin
 
     public void Configure(IBlueTuskPluginContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         context.Types.Register(TypeName.Schema, TypeName.Name, new BlueTuskCitextCodec());
         context.Features.Register(
             BlueTuskCitextFeature.RegistryName,

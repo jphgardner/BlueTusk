@@ -84,20 +84,48 @@ internal static class S3SyncParquetCodec
             return null;
         }
 
+        var metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["bluetusk.format-version"] = "1",
+            ["bluetusk.delivery-id"] = deliveryId,
+            ["bluetusk.event"] = eventName,
+            ["bluetusk.pipeline"] = pipelineId,
+            ["bluetusk.transform"] = transform.Fingerprint,
+        };
         await using var stream = new MemoryStream();
+#if NET8_0_OR_GREATER
         await ParquetSerializer.SerializeAsync(
             rows,
             stream,
             new ParquetOptions { CompressionMethod = CompressionMethod.Zstd },
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["bluetusk.format-version"] = "1",
-                ["bluetusk.delivery-id"] = deliveryId,
-                ["bluetusk.event"] = eventName,
-                ["bluetusk.pipeline"] = pipelineId,
-                ["bluetusk.transform"] = transform.Fingerprint,
-            },
+            metadata,
             cancellationToken).ConfigureAwait(false);
+#else
+        await ParquetSerializer.SerializeAsync(
+            rows,
+            stream,
+            new ParquetSerializerOptions { CompressionMethod = CompressionMethod.Zstd },
+            cancellationToken).ConfigureAwait(false);
+
+        // Parquet 5's serializer has no metadata parameter. Reopen its existing
+        // footer in append mode and update only the file metadata, retaining all
+        // row groups and the same Zstandard-compressed column payloads.
+        stream.Position = 0;
+        Parquet.Schema.ParquetSchema schema;
+        using (var reader = await ParquetReader.CreateAsync(
+            stream, leaveStreamOpen: true, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            schema = reader.Schema;
+        }
+
+        await using (var writer = await ParquetWriter.CreateAsync(
+            schema, stream, append: true, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            writer.CustomMetadata = metadata;
+        }
+
+        stream.SetLength(stream.Position);
+#endif
         if (stream.Length > maximumBytes)
         {
             throw new S3SyncDeliveryException(
@@ -108,11 +136,11 @@ internal static class S3SyncParquetCodec
         return stream.ToArray();
     }
 
-    private static string StableChangeId(ChangeId id) => string.Create(
+    private static string StableChangeId(ChangeId id) => BlueTuskRuntime.Format(
         CultureInfo.InvariantCulture,
         $"{id.Source.Fingerprint}:{id.CommitEndPosition.Value:x16}:{id.TransactionId:x8}:{id.Ordinal}");
 
-    private static string StableSnapshotId(SnapshotRowId id) => string.Create(
+    private static string StableSnapshotId(SnapshotRowId id) => BlueTuskRuntime.Format(
         CultureInfo.InvariantCulture,
         $"{id.Epoch:N}:{id.TableIdentity}:{id.KeyIdentity}");
 

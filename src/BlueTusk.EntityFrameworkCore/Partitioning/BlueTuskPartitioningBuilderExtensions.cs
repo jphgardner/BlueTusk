@@ -16,8 +16,8 @@ public static class BlueTuskPartitioningBuilderExtensions
         BlueTuskPartitionStrategy strategy,
         params BlueTuskPartitionKeyDefinition[] keys)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentNullException.ThrowIfNull(keys);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNull(keys);
         var definition = new BlueTuskPartitioningDefinition(strategy, keys, []);
         BlueTuskPartitioningBuilder.ValidateDefinition(definition);
         entityBuilder.Metadata.SetAnnotation(
@@ -50,7 +50,7 @@ public static class BlueTuskPartitioningBuilderExtensions
     /// <summary>Removes PostgreSQL partitioning metadata from an entity table.</summary>
     public static EntityTypeBuilder HasNoPartitioning(this EntityTypeBuilder entityBuilder)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         entityBuilder.Metadata.RemoveAnnotation(BlueTuskPartitionMetadata.AnnotationName);
         return entityBuilder;
     }
@@ -59,7 +59,7 @@ public static class BlueTuskPartitioningBuilderExtensions
     public static BlueTuskPartitioningDefinition? GetPartitioning(
         this IReadOnlyEntityType entityType)
     {
-        ArgumentNullException.ThrowIfNull(entityType);
+        BlueTuskGuard.NotNull(entityType);
         return BlueTuskPartitionMetadata.Get(entityType);
     }
 
@@ -68,7 +68,7 @@ public static class BlueTuskPartitioningBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         string serializedDefinition)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         var definition = BlueTuskPartitionMetadata.Deserialize(serializedDefinition);
         BlueTuskPartitioningBuilder.ValidateDefinition(definition);
         entityBuilder.Metadata.SetAnnotation(
@@ -83,8 +83,8 @@ public static class BlueTuskPartitioningBuilderExtensions
         Expression<Func<TEntity, object?>> keys)
         where TEntity : class
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentNullException.ThrowIfNull(keys);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNull(keys);
         var definitions = GetPropertyNames(keys)
             .Select(
                 propertyName =>

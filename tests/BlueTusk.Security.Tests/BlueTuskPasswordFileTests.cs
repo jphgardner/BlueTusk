@@ -81,9 +81,7 @@ public sealed class BlueTuskPasswordFileTests
         var path = CreatePasswordFile("host:5432:app:user:secret");
         try
         {
-            File.SetUnixFileMode(
-                path,
-                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead);
+            FilePermissionCompatibility.SetPasswordFilePermissions(path, groupReadable: true);
 
             Assert.Null(BlueTuskPasswordFile.Resolve(path, "host", 5432, "app", "user"));
         }
@@ -99,7 +97,7 @@ public sealed class BlueTuskPasswordFileTests
         File.WriteAllText(path, contents);
         if (!OperatingSystem.IsWindows())
         {
-            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            FilePermissionCompatibility.SetPasswordFilePermissions(path);
         }
 
         return path;

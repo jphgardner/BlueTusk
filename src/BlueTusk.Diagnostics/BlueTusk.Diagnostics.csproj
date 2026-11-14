@@ -1,14 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <IsTrimmable>true</IsTrimmable>
-    <IsAotCompatible>true</IsAotCompatible>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
+    <IsTrimmable Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">true</IsTrimmable>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
     <Description>Redaction-safe tracing, metrics, and slow-command events for BlueTusk.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;opentelemetry;diagnostics;metrics;tracing</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
     <InternalsVisibleTo Include="BlueTusk.Client" />
     <InternalsVisibleTo Include="BlueTusk.Data" />
     <InternalsVisibleTo Include="BlueTusk.Diagnostics.Tests" />

@@ -12,7 +12,9 @@ internal sealed class BlueTuskRowValueExpression(
     RelationalTypeMapping? typeMapping = null)
     : SqlExpression(type, typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public IReadOnlyList<SqlExpression> Values { get; } = values;
 
@@ -47,6 +49,7 @@ internal sealed class BlueTuskRowValueExpression(
         return visitedValues is null ? this : Update(visitedValues);
     }
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -55,6 +58,7 @@ internal sealed class BlueTuskRowValueExpression(
             NewArrayInit(typeof(SqlExpression), Values.Select(value => value.Quote())),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)

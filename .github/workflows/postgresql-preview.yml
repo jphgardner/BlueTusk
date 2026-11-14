@@ -21,6 +21,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
       - name: Verify historical preview fixture identity
         shell: pwsh
         run: ./eng/verify-postgresql19-programme.ps1
@@ -31,7 +32,7 @@ jobs:
       - name: Validate historical preview compatibility
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
-        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/historical-postgres19
+        run: dotnet test BlueTusk.Core.slnx --framework net10.0 --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/historical-postgres19
       - name: Retain historical preview results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

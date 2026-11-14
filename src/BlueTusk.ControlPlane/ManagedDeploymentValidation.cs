@@ -15,7 +15,7 @@ public static class ManagedDeploymentValidation
 
     public static void Validate(ManagedDeploymentSpec spec)
     {
-        ArgumentNullException.ThrowIfNull(spec);
+        BlueTuskGuard.NotNull(spec);
         ValidateToken(spec.DeploymentId, 128, nameof(spec.DeploymentId));
         ValidateToken(spec.TenantId, 128, nameof(spec.TenantId));
         ValidateToken(spec.Provider, 128, nameof(spec.Provider));
@@ -25,8 +25,8 @@ public static class ManagedDeploymentValidation
             throw Invalid("generation-invalid", "Generation must be greater than zero.");
         }
 
-        ArgumentNullException.ThrowIfNull(spec.Workloads);
-        ArgumentNullException.ThrowIfNull(spec.Labels);
+        BlueTuskGuard.NotNull(spec.Workloads);
+        BlueTuskGuard.NotNull(spec.Labels);
         if (spec.Workloads.Count is < 1 or > MaximumWorkloads)
         {
             throw Invalid(
@@ -37,7 +37,7 @@ public static class ManagedDeploymentValidation
         var kinds = new HashSet<ManagedWorkloadKind>();
         foreach (var workload in spec.Workloads)
         {
-            ArgumentNullException.ThrowIfNull(workload);
+            BlueTuskGuard.NotNull(workload);
             if (!Enum.IsDefined(workload.Kind))
             {
                 throw Invalid("workload-kind-invalid", "A workload kind is not supported.");
@@ -113,7 +113,7 @@ public static class ManagedDeploymentValidation
             writer.WriteEndObject();
         }
 
-        return Convert.ToHexStringLower(SHA256.HashData(stream.GetBuffer().AsSpan(0, (int)stream.Length)));
+        return BlueTuskRuntime.ToHexStringLower(SHA256.HashData(stream.GetBuffer().AsSpan(0, (int)stream.Length)));
     }
 
     public static ManagedTenantUsage GetRequestedUsage(ManagedDeploymentSpec spec)
@@ -142,8 +142,8 @@ public static class ManagedDeploymentValidation
         ManagedTenantUsage usage)
     {
         Validate(spec);
-        ArgumentNullException.ThrowIfNull(quota);
-        ArgumentNullException.ThrowIfNull(usage);
+        BlueTuskGuard.NotNull(quota);
+        BlueTuskGuard.NotNull(usage);
         if (quota.MaximumDeployments < 0 ||
             quota.MaximumReplicas < 0 ||
             quota.MaximumCpuMillicores < 0 ||
@@ -181,7 +181,7 @@ public static class ManagedDeploymentValidation
 
     private static void ValidateResources(ManagedResourceRequest resources)
     {
-        ArgumentNullException.ThrowIfNull(resources);
+        BlueTuskGuard.NotNull(resources);
         if (resources.Replicas is < 1 or > MaximumReplicasPerWorkload)
         {
             throw Invalid(
@@ -213,7 +213,7 @@ public static class ManagedDeploymentValidation
 
     private static void ValidateSecrets(IReadOnlyList<ManagedSecretReference> references)
     {
-        ArgumentNullException.ThrowIfNull(references);
+        BlueTuskGuard.NotNull(references);
         if (references.Count > MaximumSecretReferencesPerWorkload)
         {
             throw Invalid(
@@ -224,7 +224,7 @@ public static class ManagedDeploymentValidation
         var identities = new HashSet<string>(StringComparer.Ordinal);
         foreach (var reference in references)
         {
-            ArgumentNullException.ThrowIfNull(reference);
+            BlueTuskGuard.NotNull(reference);
             ValidateToken(reference.Store, 128, nameof(reference.Store));
             ValidateToken(reference.Name, 1024, nameof(reference.Name));
             if (reference.Version is not null)
@@ -247,7 +247,7 @@ public static class ManagedDeploymentValidation
         string countCode,
         string description)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         if (values.Count > maximum)
         {
             throw Invalid(countCode, $"Too many {description} values.");
@@ -256,7 +256,7 @@ public static class ManagedDeploymentValidation
         foreach (var pair in values)
         {
             ValidateToken(pair.Key, 128, description + " key");
-            ArgumentNullException.ThrowIfNull(pair.Value);
+            BlueTuskGuard.NotNull(pair.Value);
             if (pair.Value.Length > 4096)
             {
                 throw Invalid(
@@ -279,13 +279,13 @@ public static class ManagedDeploymentValidation
 
     private static void ValidateToken(string value, int maximumLength, string parameter)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (value.Length > maximumLength ||
             value.Any(static character => char.IsControl(character) || char.IsSurrogate(character)))
         {
             throw Invalid(
                 "identifier-invalid",
-                string.Create(
+                BlueTuskRuntime.Format(
                     CultureInfo.InvariantCulture,
                     $"{parameter} must be a bounded printable value."));
         }

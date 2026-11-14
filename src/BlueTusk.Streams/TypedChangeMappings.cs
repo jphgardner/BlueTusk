@@ -101,7 +101,7 @@ public static class ChangeSchemaFingerprint
 {
     public static string Create(ChangeTable table)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        BlueTuskGuard.NotNull(table);
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         Add(hash, table.Schema);
         Add(hash, table.Name);
@@ -117,7 +117,7 @@ public static class ChangeSchemaFingerprint
             Add(hash, column.Type?.Name ?? string.Empty);
         }
 
-        return Convert.ToHexStringLower(hash.GetHashAndReset());
+        return BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private static void Add(IncrementalHash hash, string value)
@@ -158,8 +158,8 @@ public sealed class ChangeEntityMappingBuilder<[DynamicallyAccessedMembers(Dynam
 
     public ChangeEntityMappingBuilder<T> ToTable(string schema, string table)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
         _schema = schema;
         _table = table;
         return this;
@@ -167,7 +167,7 @@ public sealed class ChangeEntityMappingBuilder<[DynamicallyAccessedMembers(Dynam
 
     public ChangeEntityMappingBuilder<T> HasKey(params string[] columnNames)
     {
-        ArgumentNullException.ThrowIfNull(columnNames);
+        BlueTuskGuard.NotNull(columnNames);
         if (columnNames.Length == 0)
         {
             throw new ArgumentException("At least one key column is required.", nameof(columnNames));
@@ -176,7 +176,7 @@ public sealed class ChangeEntityMappingBuilder<[DynamicallyAccessedMembers(Dynam
         _keys.Clear();
         foreach (var name in columnNames)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            BlueTuskGuard.NotNullOrWhiteSpace(name);
             _keys.Add(name);
         }
 
@@ -195,12 +195,12 @@ public sealed class ChangeEntityMappingBuilder<[DynamicallyAccessedMembers(Dynam
         uint? expectedTypeOid = null,
         ChangeColumnDecoder<TProperty>? decoder = null)
     {
-        ArgumentNullException.ThrowIfNull(property);
+        BlueTuskGuard.NotNull(property);
         var propertyInfo = GetProperty(property);
         var sourceColumn = string.IsNullOrWhiteSpace(columnName)
             ? ToSnakeCase(propertyInfo.Name)
             : columnName;
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourceColumn);
+        BlueTuskGuard.NotNullOrWhiteSpace(sourceColumn);
         _bindings[propertyInfo.Name] = PropertyBinding<T>.Create(
             propertyInfo,
             sourceColumn,
@@ -211,7 +211,7 @@ public sealed class ChangeEntityMappingBuilder<[DynamicallyAccessedMembers(Dynam
 
     public ChangeEntityMapping<T> Build(ChangeTable table, ChangeMappingPolicy? policy = null)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        BlueTuskGuard.NotNull(table);
         var schema = _schema ?? table.Schema;
         var tableName = _table ?? table.Name;
         if (!string.Equals(schema, table.Schema, StringComparison.Ordinal) ||
@@ -251,7 +251,7 @@ public sealed class ChangeEntityMappingBuilder<[DynamicallyAccessedMembers(Dynam
 
         var keys = _keys.Count == 0
             ? GetKeyNames(table)
-            : _keys.Order(StringComparer.Ordinal).ToArray();
+            : _keys.OrderBy(static value => value, StringComparer.Ordinal).ToArray();
         foreach (var key in keys)
         {
             if (!table.TryGetColumn(key, out _))
@@ -372,7 +372,7 @@ public sealed class ChangeEntityMapping<T>
 
     public ChangeRow<T> MapRow(ChangeRow row)
     {
-        ArgumentNullException.ThrowIfNull(row);
+        BlueTuskGuard.NotNull(row);
         EnsureTable(row.Table);
         var value = new T();
         foreach (var binding in _bindings)
@@ -411,7 +411,7 @@ public sealed class ChangeEntityMapping<T>
 
     public Change Map(Change change)
     {
-        ArgumentNullException.ThrowIfNull(change);
+        BlueTuskGuard.NotNull(change);
         try
         {
             return change switch
@@ -525,7 +525,7 @@ public sealed class ChangeEntityMapping<T>
             .Append(typeof(T).AssemblyQualifiedName).Append('\n')
             .Append(table.Schema).Append('\n')
             .Append(table.Name).Append('\n');
-        foreach (var key in keys.Order(StringComparer.Ordinal))
+        foreach (var key in keys.OrderBy(static value => value, StringComparer.Ordinal))
         {
             canonical.Append("key:").Append(key).Append('\n');
         }
@@ -540,7 +540,7 @@ public sealed class ChangeEntityMapping<T>
                 .Append('\n');
         }
 
-        return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical.ToString())));
+        return BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical.ToString())));
     }
 
     private sealed class DynamicChangeContinuationException : Exception
@@ -681,8 +681,8 @@ public static class ChangeValueDecoders
     internal static object? DecodeDefault(Type propertyType, Type decodeType, bool acceptsNull,
         ChangeColumn column, ChangeColumnValue value)
     {
-        ArgumentNullException.ThrowIfNull(column);
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(column);
+        BlueTuskGuard.NotNull(value);
         if (value.State == ChangeColumnState.DatabaseNull)
         {
             return acceptsNull ? null : throw new InvalidOperationException(
@@ -702,8 +702,8 @@ public static class ChangeValueDecoders
 
     public static T Decode<T>(ChangeColumn column, ChangeColumnValue value)
     {
-        ArgumentNullException.ThrowIfNull(column);
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(column);
+        BlueTuskGuard.NotNull(value);
         if (value.State == ChangeColumnState.DatabaseNull)
         {
             if (default(T) is not null)
@@ -786,7 +786,7 @@ public static class ChangeValueDecoders
         var text = Encoding.UTF8.GetString(data);
         if (target == typeof(Guid))
         {
-            return Guid.Parse(text, CultureInfo.InvariantCulture);
+            return Guid.Parse(text);
         }
 
         if (target == typeof(DateTime))
@@ -847,7 +847,7 @@ public static class ChangeValueDecoders
 
         if (target == typeof(Guid) && data.Length == 16)
         {
-            return new Guid(data, bigEndian: true);
+            return BlueTuskRuntime.ReadGuidBigEndian(data);
         }
 
         throw new NotSupportedException(

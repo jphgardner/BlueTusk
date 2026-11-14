@@ -18,8 +18,8 @@ public static class BlueTuskGoogleCloudIdentityExtensions
         GoogleCredential credential,
         string scope = CloudSqlLoginScope)
     {
-        ArgumentNullException.ThrowIfNull(credential);
-        ArgumentException.ThrowIfNullOrWhiteSpace(scope);
+        BlueTuskGuard.NotNull(credential);
+        BlueTuskGuard.NotNullOrWhiteSpace(scope);
         return builder.UseGoogleCloudSqlIamAuthentication(credential.CreateScoped(scope));
     }
 
@@ -31,8 +31,8 @@ public static class BlueTuskGoogleCloudIdentityExtensions
         this BlueTuskDataSourceBuilder builder,
         ITokenAccess tokenAccess)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentNullException.ThrowIfNull(tokenAccess);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNull(tokenAccess);
 
         return builder
             .UseAccessTokenProvider(async (_, cancellationToken) => RequireToken(

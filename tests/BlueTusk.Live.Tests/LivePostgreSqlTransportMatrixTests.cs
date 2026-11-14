@@ -24,9 +24,9 @@ using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Xunit.Sdk;
 
 namespace BlueTusk.Live.Tests;
 
@@ -37,7 +37,7 @@ public sealed class LivePostgreSqlTransportMatrixTests
     private static readonly ChangeSourceIdentity Source =
         new("live-transport-system", DatabaseIdentity, "live-transport-slot", "public:orders");
 
-    [Theory]
+    [PostgreSqlTheory]
     [InlineData(LiveTransportKind.ServerSentEvents)]
     [InlineData(LiveTransportKind.SignalR)]
     [InlineData(LiveTransportKind.Grpc)]
@@ -45,7 +45,7 @@ public sealed class LivePostgreSqlTransportMatrixTests
         LiveTransportKind transportKind)
     {
         var schema = "bluetusk_live_transport_" + Guid.NewGuid().ToString("N");
-        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var dataSource = BlueTuskDataSource.Create(PostgreSqlFixture.GetConnectionString());
         var store = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions
         {
             ControlDataSource = dataSource,
@@ -172,7 +172,11 @@ public sealed class LivePostgreSqlTransportMatrixTests
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
+#if NET8_0_OR_GREATER
         while (await reader.ReadLineAsync(cancellationToken) is { } line)
+#else
+        while (await reader.ReadLineAsync().WaitAsync(cancellationToken) is { } line)
+#endif
         {
             if (line.StartsWith("data: ", StringComparison.Ordinal))
             {
@@ -288,16 +292,6 @@ public sealed class LivePostgreSqlTransportMatrixTests
             [change]);
     }
 
-    private static string GetConnectionString()
-    {
-        var connectionString = Environment.GetEnvironmentVariable(
-            "BLUETUSK_TEST_CONNECTION_STRING");
-        return string.IsNullOrWhiteSpace(connectionString)
-            ? throw SkipException.ForSkip(
-                "BLUETUSK_TEST_CONNECTION_STRING is not configured.")
-            : connectionString;
-    }
-
     private static async ValueTask DropSchemaAsync(DbDataSource dataSource, string schema)
     {
         await using var connection = await dataSource.OpenConnectionAsync();
@@ -336,12 +330,16 @@ public sealed class LivePostgreSqlTransportMatrixTests
         }
     }
 
-    private sealed class TestAuthenticationHandler(
-        IOptionsMonitor<AuthenticationSchemeOptions> options,
-        ILoggerFactory logger,
-        UrlEncoder encoder) :
-        AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    private sealed class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
+#if NET8_0_OR_GREATER
+        public TestAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
+            : base(options, logger, encoder) { }
+#else
+        public TestAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock)
+            : base(options, logger, encoder, clock) { }
+#endif
+
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             var identity = new ClaimsIdentity(
@@ -353,7 +351,7 @@ public sealed class LivePostgreSqlTransportMatrixTests
     }
 
     private sealed class LiveTransportHost(
-        WebApplication application,
+        IHost application,
         Uri address) : IAsyncDisposable
     {
         public Uri Address { get; } = address;
@@ -364,66 +362,76 @@ public sealed class LivePostgreSqlTransportMatrixTests
             LiveResumeTokenProtector tokenProtector,
             CancellationToken cancellationToken)
         {
-            var builder = WebApplication.CreateSlimBuilder();
-            builder.Logging.ClearProviders();
-            builder.WebHost.ConfigureKestrel(options =>
-                options.Listen(
+            var application = Host.CreateDefaultBuilder()
+                .ConfigureLogging(logging => logging.ClearProviders())
+                .ConfigureWebHostDefaults(webHost => webHost.ConfigureKestrel(options => options.Listen(
                     IPAddress.Loopback,
                     0,
                     listen => listen.Protocols = transportKind is LiveTransportKind.Grpc
                         ? HttpProtocols.Http2
-                        : HttpProtocols.Http1));
-            builder.Services
-                .AddAuthentication(AuthenticationScheme)
-                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                    AuthenticationScheme,
-                    _ => { });
-            builder.Services.AddAuthorization();
-            builder.Services.AddSingleton<ILiveTransportSubscriptionResolver>(
-                new Resolver(subscription));
-            builder.Services.AddBlueTuskLiveAspNetCore(tokenProtector);
-            if (transportKind is LiveTransportKind.SignalR)
+                        : HttpProtocols.Http1))
+                .ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddAuthentication(AuthenticationScheme)
+                        .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(AuthenticationScheme, _ => { });
+                    services.AddAuthorization();
+                    services.AddSingleton<ILiveTransportSubscriptionResolver>(new Resolver(subscription));
+                    services.AddBlueTuskLiveAspNetCore(tokenProtector);
+                    if (transportKind is LiveTransportKind.SignalR)
+                    {
+                        services.AddSignalR();
+                    }
+                    else if (transportKind is LiveTransportKind.Grpc)
+                    {
+                        services.AddGrpc();
+                    }
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseAuthentication();
+                    app.UseAuthorization();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        switch (transportKind)
+                        {
+                            case LiveTransportKind.ServerSentEvents:
+                                endpoints.MapBlueTuskLiveServerSentEvents();
+                                break;
+                            case LiveTransportKind.SignalR:
+                                endpoints.MapBlueTuskLiveHub();
+                                break;
+                            case LiveTransportKind.Grpc:
+                                endpoints.MapBlueTuskLiveGrpc();
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException(nameof(transportKind), transportKind, "Unknown Live transport.");
+                        }
+                    });
+                }))
+                .Build();
+            try
             {
-                builder.Services.AddSignalR();
+                await application.StartAsync(cancellationToken);
+                var server = application.Services.GetRequiredService<IServer>();
+                var addressFeature = server.Features.Get<IServerAddressesFeature>() ??
+                    throw new InvalidOperationException("Kestrel did not report a bound address.");
+                return new LiveTransportHost(application, new Uri(addressFeature.Addresses.Single()));
             }
-            else if (transportKind is LiveTransportKind.Grpc)
+            catch
             {
-                builder.Services.AddGrpc();
+                application.Dispose();
+                throw;
             }
-
-            var application = builder.Build();
-            application.UseAuthentication();
-            application.UseAuthorization();
-            switch (transportKind)
-            {
-                case LiveTransportKind.ServerSentEvents:
-                    application.MapBlueTuskLiveServerSentEvents();
-                    break;
-                case LiveTransportKind.SignalR:
-                    application.MapBlueTuskLiveHub();
-                    break;
-                case LiveTransportKind.Grpc:
-                    application.MapBlueTuskLiveGrpc();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(transportKind),
-                        transportKind,
-                        "Unknown Live transport.");
-            }
-
-            await application.StartAsync(cancellationToken);
-            var server = application.Services.GetRequiredService<IServer>();
-            var addressFeature = server.Features.Get<IServerAddressesFeature>() ??
-                throw new InvalidOperationException("Kestrel did not report a bound address.");
-            var address = new Uri(addressFeature.Addresses.Single());
-            return new LiveTransportHost(application, address);
         }
 
         public async ValueTask DisposeAsync()
         {
-            await application.StopAsync();
-            await application.DisposeAsync();
+            using (application)
+            {
+                await application.StopAsync();
+            }
         }
     }
 }

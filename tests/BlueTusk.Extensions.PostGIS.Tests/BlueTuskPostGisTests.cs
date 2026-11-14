@@ -69,7 +69,7 @@ public sealed class BlueTuskPostGisTests
         Assert.False(dataSource.Features.Contains("test.late-feature"));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Postgis_plugin_executes_text_binary_array_and_spatial_live_paths()
     {
         var connectionString = GetConnectionString();

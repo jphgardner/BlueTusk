@@ -1,5 +1,6 @@
 using System.Data.Common;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Graphs;
@@ -10,7 +11,6 @@ using BlueTusk.Streams.Testing;
 using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Xunit.Sdk;
 
 namespace BlueTusk.ContinuousGraph.Tests;
 
@@ -21,8 +21,10 @@ public sealed class ContinuousGraphQueryIntegrationTests
     private const string GraphName = "bluetusk_continuous_graph";
     private const string AlphaRole = "bluetusk_graph_alpha";
     private const string BetaRole = "bluetusk_graph_beta";
+    private const string ConnectionStringVariable = "BLUETUSK_TEST_CONNECTION_STRING";
+    private const string MissingConnectionString = "BLUETUSK_TEST_CONNECTION_STRING is not configured.";
 
-    [Theory]
+    [PostgreSqlTheory]
     [InlineData(BlueTuskPropertyGraphBackend.Relational)]
     [InlineData(BlueTuskPropertyGraphBackend.NativeSqlPgq)]
     public async Task PostgreSQL_requeries_affected_graphs_and_cancels_blocked_execution(
@@ -96,7 +98,7 @@ public sealed class ContinuousGraphQueryIntegrationTests
         }
     }
 
-    [Theory]
+    [PostgreSqlTheory]
     [InlineData(false, false)]
     [InlineData(true, false)]
     [InlineData(true, true)]
@@ -308,7 +310,7 @@ public sealed class ContinuousGraphQueryIntegrationTests
         }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Full_reads_honor_current_order_limit_and_parameters_after_compilation()
     {
         var token = TestContext.Current.CancellationToken;
@@ -344,7 +346,7 @@ public sealed class ContinuousGraphQueryIntegrationTests
         }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Single_key_delta_rebinds_graph_arguments_and_detects_parallel_edges()
     {
         var token = TestContext.Current.CancellationToken;
@@ -565,12 +567,10 @@ public sealed class ContinuousGraphQueryIntegrationTests
 
     private static string GetConnectionString()
     {
-        var connectionString = Environment.GetEnvironmentVariable(
-            "BLUETUSK_TEST_CONNECTION_STRING");
+        var connectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw SkipException.ForSkip(
-                "BLUETUSK_TEST_CONNECTION_STRING is not configured.");
+            throw new InvalidOperationException(MissingConnectionString);
         }
 
         return new BlueTuskConnectionStringBuilder(connectionString)
@@ -579,6 +579,38 @@ public sealed class ContinuousGraphQueryIntegrationTests
             SslMode = BlueTuskSslMode.Disable,
             ChannelBinding = BlueTuskChannelBindingMode.Disable,
         }.ConnectionString;
+    }
+
+    private sealed class PostgreSqlFactAttribute : FactAttribute
+    {
+#if NET8_0_OR_GREATER
+        public PostgreSqlFactAttribute([CallerFilePath] string? sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
+            : base(sourceFilePath, sourceLineNumber)
+#else
+        public PostgreSqlFactAttribute()
+#endif
+        {
+            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(ConnectionStringVariable)))
+            {
+                Skip = MissingConnectionString;
+            }
+        }
+    }
+
+    private sealed class PostgreSqlTheoryAttribute : TheoryAttribute
+    {
+#if NET8_0_OR_GREATER
+        public PostgreSqlTheoryAttribute([CallerFilePath] string? sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
+            : base(sourceFilePath, sourceLineNumber)
+#else
+        public PostgreSqlTheoryAttribute()
+#endif
+        {
+            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(ConnectionStringVariable)))
+            {
+                Skip = MissingConnectionString;
+            }
+        }
     }
 
     private sealed class GraphReadObserver : DbCommandInterceptor
@@ -615,7 +647,23 @@ public sealed class ContinuousGraphQueryIntegrationTests
         private readonly DbContextOptions<GraphContext> _options = new DbContextOptionsBuilder<GraphContext>()
             .UseBlueTusk(dataSource).Options;
 
-        public GraphContext CreateDbContext() => throw new NotSupportedException("Use the asynchronous factory.");
+        public GraphContext CreateDbContext()
+        {
+            var context = new GraphContext(_options);
+            try
+            {
+                context.Database.OpenConnection();
+                using var command = context.Database.GetDbConnection().CreateCommand();
+                command.CommandText = $"SET ROLE {role};";
+                _ = command.ExecuteNonQuery();
+                return context;
+            }
+            catch
+            {
+                context.Dispose();
+                throw;
+            }
+        }
 
         public async Task<GraphContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
         {

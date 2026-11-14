@@ -78,7 +78,7 @@ public sealed class BlueTuskCitextEntityFrameworkCoreTests
         Assert.Equal("DROP EXTENSION IF EXISTS \"citext\" CASCADE", operations[1].Sql);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Plugin_round_trips_scalar_array_and_case_insensitive_query_through_EF()
     {
         var connectionString = GetConnectionString();

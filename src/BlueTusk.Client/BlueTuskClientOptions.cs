@@ -106,7 +106,7 @@ public sealed record BlueTuskClientOptions
     /// <summary>Creates client options from a BlueTusk connection string.</summary>
     public static BlueTuskClientOptions FromConnectionString(string connectionString)
     {
-        ArgumentNullException.ThrowIfNull(connectionString);
+        BlueTuskGuard.NotNull(connectionString);
         var settings = ParseConnectionString(connectionString);
 
         return new BlueTuskClientOptions
@@ -131,14 +131,14 @@ public sealed record BlueTuskClientOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(Host);
-        ArgumentOutOfRangeException.ThrowIfLessThan(Port, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(Port, 65_535);
-        ArgumentException.ThrowIfNullOrWhiteSpace(Database);
-        ArgumentException.ThrowIfNullOrWhiteSpace(Username);
-        ArgumentNullException.ThrowIfNull(ApplicationName);
-        ArgumentNullException.ThrowIfNull(ClientCertificates);
-        ArgumentException.ThrowIfNullOrWhiteSpace(KerberosServiceName);
+        BlueTuskGuard.NotNullOrWhiteSpace(Host);
+        BlueTuskGuard.NotLessThan(Port, 1);
+        BlueTuskGuard.NotGreaterThan(Port, 65_535);
+        BlueTuskGuard.NotNullOrWhiteSpace(Database);
+        BlueTuskGuard.NotNullOrWhiteSpace(Username);
+        BlueTuskGuard.NotNull(ApplicationName);
+        BlueTuskGuard.NotNull(ClientCertificates);
+        BlueTuskGuard.NotNullOrWhiteSpace(KerberosServiceName);
 
         if (KerberosServiceName.IndexOfAny(['/', '@', '\0']) >= 0)
         {

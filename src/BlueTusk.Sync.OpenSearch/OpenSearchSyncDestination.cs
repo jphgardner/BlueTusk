@@ -41,7 +41,7 @@ public sealed partial class OpenSearchSyncDestination :
     /// <summary>Initializes a new OpenSearch Sync destination.</summary>
     public OpenSearchSyncDestination(OpenSearchSyncOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _controlIndex = options.IndexPrefix + "-control";
@@ -89,7 +89,7 @@ public sealed partial class OpenSearchSyncDestination :
         SyncProvisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         var pipelineHash = Fingerprint(request.PipelineId, 24);
         var documentId = PipelineDocumentId(pipelineHash);
@@ -157,7 +157,7 @@ public sealed partial class OpenSearchSyncDestination :
         SnapshotReset reset,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         var runtime = RequirePipeline(pipelineId, reset.Epoch.Source);
         await using var gate = await runtime.EnterAsync(cancellationToken).ConfigureAwait(false);
         var collections = await ReadCollectionsAsync(runtime, cancellationToken).ConfigureAwait(false);
@@ -202,7 +202,7 @@ public sealed partial class OpenSearchSyncDestination :
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         var runtime = RequirePipeline(pipelineId, start.Epoch.Source, transform);
         await ValidateSnapshotStateAsync(
             runtime,
@@ -216,7 +216,7 @@ public sealed partial class OpenSearchSyncDestination :
         SyncSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var runtime = RequirePipeline(
             batch.PipelineId,
             batch.SourceBatch.Epoch.Source,
@@ -259,7 +259,7 @@ public sealed partial class OpenSearchSyncDestination :
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         var runtime = RequirePipeline(pipelineId, complete.Epoch.Source, transform);
         await using var gate = await runtime.EnterAsync(cancellationToken).ConfigureAwait(false);
         var current = await ValidateSnapshotStateAsync(
@@ -282,7 +282,7 @@ public sealed partial class OpenSearchSyncDestination :
         SyncTransactionBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var runtime = RequirePipeline(batch.PipelineId, batch.Transaction.Source);
         if (!string.Equals(
                 runtime.Transform.Fingerprint,
@@ -430,8 +430,8 @@ public sealed partial class OpenSearchSyncDestination :
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(key);
         var runtime = RequirePipeline(pipelineId);
         var index = CollectionIndex(runtime, collection);
         var response = await SendAsync(
@@ -457,7 +457,7 @@ public sealed partial class OpenSearchSyncDestination :
         SyncQuarantineRecord record,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        BlueTuskGuard.NotNull(record);
         var runtime = RequirePipeline(record.PipelineId, record.Source, record.Transform);
         var documentId = QuarantineDocumentId(
             runtime,
@@ -489,7 +489,7 @@ public sealed partial class OpenSearchSyncDestination :
         SyncQuarantineIdentity identity,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
+        BlueTuskGuard.NotNull(identity);
         var runtime = RequirePipeline(identity.PipelineId, identity.Source);
         var control = await ReadControlDocumentAsync<QuarantineDocument>(
             QuarantineDocumentId(runtime, identity.CommitEndPosition, identity.TransactionId),
@@ -504,10 +504,10 @@ public sealed partial class OpenSearchSyncDestination :
         DateTimeOffset resolvedAt,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentException.ThrowIfNullOrWhiteSpace(expectedTransformFingerprint);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNullOrWhiteSpace(expectedTransformFingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         var runtime = RequirePipeline(identity.PipelineId, identity.Source);
         var documentId = QuarantineDocumentId(
             runtime,
@@ -576,9 +576,9 @@ public sealed partial class OpenSearchSyncDestination :
         string operationId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         var runtime = RequirePipeline(batch.PipelineId, batch.Transaction.Source, batch.Transform);
         return await ApplyTransactionCoreAsync(
             runtime,
@@ -654,7 +654,7 @@ public sealed partial class OpenSearchSyncDestination :
         ChangeSourceIdentity? source = null,
         SyncTransformVersion? transform = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
         if (!_pipelines.TryGetValue(pipelineId, out var runtime))
         {
             throw new OpenSearchSyncException(
@@ -760,7 +760,7 @@ public sealed partial class OpenSearchSyncDestination :
         }
 
         return new TransactionPlan(
-            resets.Order(StringComparer.Ordinal).ToArray(),
+            resets.OrderBy(static value => value, StringComparer.Ordinal).ToArray(),
             latest.Values
                 .Where(value =>
                     !resetOrdinals.TryGetValue(value.Mutation.Collection, out var resetOrdinal) ||
@@ -772,7 +772,7 @@ public sealed partial class OpenSearchSyncDestination :
 
     private static string Fingerprint(string value, int length = 64)
     {
-        var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+        var hash = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
         return hash[..length];
     }
 

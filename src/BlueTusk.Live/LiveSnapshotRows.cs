@@ -23,8 +23,8 @@ internal sealed class LiveSnapshotRows<T> : IReadOnlyList<T>
     {
         get
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(index);
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Count);
+            BlueTuskGuard.NotNegative(index);
+            BlueTuskGuard.NotGreaterThanOrEqual(index, Count);
             return _chunks[index / ChunkSize][index % ChunkSize];
         }
     }
@@ -62,7 +62,7 @@ internal sealed class LiveSnapshotRows<T> : IReadOnlyList<T>
 
         internal Builder(int count)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(count);
+            BlueTuskGuard.NotNegative(count);
             _chunks = ImmutableList.CreateBuilder<T[]>();
             _count = count;
             for (var remaining = count; remaining > 0;)
@@ -81,8 +81,8 @@ internal sealed class LiveSnapshotRows<T> : IReadOnlyList<T>
                 {
                     throw new InvalidOperationException("The snapshot builder has already completed.");
                 }
-                ArgumentOutOfRangeException.ThrowIfNegative(index);
-                ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _count);
+                BlueTuskGuard.NotNegative(index);
+                BlueTuskGuard.NotGreaterThanOrEqual(index, _count);
                 var chunkIndex = index / ChunkSize;
                 if (_copiedChunks is not null && _copiedChunks.Add(chunkIndex))
                 {

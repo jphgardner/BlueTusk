@@ -15,9 +15,9 @@ public static class BlueTuskExclusionConstraintBuilderExtensions
         string name,
         Action<BlueTuskExclusionConstraintBuilder> configure)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskExclusionConstraintBuilder(entityBuilder.Metadata, name);
         configure(builder);
         Set(entityBuilder.Metadata, Replace(BlueTuskExclusionConstraintMetadata.Get(entityBuilder.Metadata), builder.Build()));
@@ -31,9 +31,9 @@ public static class BlueTuskExclusionConstraintBuilderExtensions
         Action<BlueTuskExclusionConstraintBuilder<TEntity>> configure)
         where TEntity : class
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskExclusionConstraintBuilder<TEntity>(entityBuilder.Metadata, name);
         configure(builder);
         Set(entityBuilder.Metadata, Replace(BlueTuskExclusionConstraintMetadata.Get(entityBuilder.Metadata), builder.Build()));
@@ -45,8 +45,8 @@ public static class BlueTuskExclusionConstraintBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         string name)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         Set(
             entityBuilder.Metadata,
             BlueTuskExclusionConstraintMetadata.Get(entityBuilder.Metadata)
@@ -59,7 +59,7 @@ public static class BlueTuskExclusionConstraintBuilderExtensions
     public static IReadOnlyList<BlueTuskExclusionConstraintDefinition> GetExclusionConstraints(
         this IReadOnlyEntityType entityType)
     {
-        ArgumentNullException.ThrowIfNull(entityType);
+        BlueTuskGuard.NotNull(entityType);
         return BlueTuskExclusionConstraintMetadata.Get(entityType);
     }
 
@@ -68,7 +68,7 @@ public static class BlueTuskExclusionConstraintBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         Set(entityBuilder.Metadata, BlueTuskExclusionConstraintMetadata.Deserialize(serializedDefinitions));
         return entityBuilder;
     }

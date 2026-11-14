@@ -43,6 +43,7 @@ internal interface IBlueTuskMultirangeCodecFactory
 
 internal static class BlueTuskDynamicRangeCodecFactory
 {
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "RuntimeFeature.IsDynamicCodeSupported guards dynamic range construction; NativeAOT receives the explicit unsupported codec.")]
     public static IBlueTuskCodec Create(
         Type subtypeClrType,
         BlueTuskTypeDescriptor subtype,
@@ -223,7 +224,7 @@ public abstract class BlueTuskCodec<T> :
 
         if (!RuntimeFeature.IsDynamicCodeSupported)
         {
-            if (lowerBounds.ContainsAnyExcept(0))
+            if (HasNonzeroLowerBound(lowerBounds))
             {
                 throw new NotSupportedException(
                     "NativeAOT supports PostgreSQL arrays with the standard lower bound of 1. " +
@@ -239,5 +240,18 @@ public abstract class BlueTuskCodec<T> :
             typeof(T),
             lengths.ToArray(),
             lowerBounds.ToArray());
+    }
+
+    private static bool HasNonzeroLowerBound(ReadOnlySpan<int> lowerBounds)
+    {
+        foreach (var lowerBound in lowerBounds)
+        {
+            if (lowerBound != 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

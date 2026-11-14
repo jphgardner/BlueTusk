@@ -13,7 +13,9 @@ internal sealed class BlueTuskUnaryExpression(
     RelationalTypeMapping typeMapping)
     : SqlExpression(resultType, typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public SqlExpression Operand { get; } = operand;
 
@@ -27,6 +29,7 @@ internal sealed class BlueTuskUnaryExpression(
     protected override Expression VisitChildren(ExpressionVisitor visitor)
         => Update((SqlExpression)visitor.Visit(Operand));
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -36,6 +39,7 @@ internal sealed class BlueTuskUnaryExpression(
             Constant(OperatorToken),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)

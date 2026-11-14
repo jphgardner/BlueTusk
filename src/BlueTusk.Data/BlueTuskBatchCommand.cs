@@ -41,13 +41,23 @@ public sealed class BlueTuskBatchCommand : DbBatchCommand
 
     public override int RecordsAffected => _recordsAffected;
 
+#if NET8_0_OR_GREATER || !NET6_0_OR_GREATER
     public override bool CanCreateParameter => true;
+#else
+    [SuppressMessage("Performance", "CA1822", Justification = "Retain the instance API of DbBatchCommand on runtimes predating these BCL members.")]
+    public bool CanCreateParameter => true;
+#endif
 
     protected override DbParameterCollection DbParameterCollection => _parameters;
 
     public new BlueTuskParameterCollection Parameters => _parameters;
 
+#if NET8_0_OR_GREATER || !NET6_0_OR_GREATER
     public override DbParameter CreateParameter() => new BlueTuskParameter();
+#else
+    [SuppressMessage("Performance", "CA1822", Justification = "Retain the instance API of DbBatchCommand on runtimes predating these BCL members.")]
+    public DbParameter CreateParameter() => new BlueTuskParameter();
+#endif
 
     internal void SetRecordsAffected(int value) => _recordsAffected = value;
 }

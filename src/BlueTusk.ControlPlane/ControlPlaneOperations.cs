@@ -68,7 +68,7 @@ public static class ControlPlaneOperationPolicies
         ControlPlaneOperationKind kind,
         string target)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(target);
+        BlueTuskGuard.NotNullOrWhiteSpace(target);
         if (!Enum.IsDefined(kind))
         {
             throw new ArgumentOutOfRangeException(nameof(kind));
@@ -115,8 +115,8 @@ public sealed class RoleControlPlaneAuthorizer : IControlPlaneAuthorizer
         ControlPlaneRole requiredRole,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(actor);
-        ArgumentNullException.ThrowIfNull(actor.Roles);
+        BlueTuskGuard.NotNull(actor);
+        BlueTuskGuard.NotNull(actor.Roles);
         cancellationToken.ThrowIfCancellationRequested();
         if (!Enum.IsDefined(requiredRole))
         {
@@ -142,9 +142,9 @@ public sealed class ControlPlaneOperationExecutor
         IControlPlaneOperationHandler handler,
         TimeProvider? timeProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(authorizer);
-        ArgumentNullException.ThrowIfNull(auditStore);
-        ArgumentNullException.ThrowIfNull(handler);
+        BlueTuskGuard.NotNull(authorizer);
+        BlueTuskGuard.NotNull(auditStore);
+        BlueTuskGuard.NotNull(handler);
         _authorizer = authorizer;
         _auditStore = auditStore;
         _handler = handler;
@@ -269,13 +269,13 @@ public sealed class ControlPlaneOperationExecutor
 
     private static void Validate(ControlPlaneActor actor, ControlPlaneOperationRequest request)
     {
-        ArgumentNullException.ThrowIfNull(actor);
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentException.ThrowIfNullOrWhiteSpace(actor.ActorId);
-        ArgumentNullException.ThrowIfNull(actor.Roles);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.Target);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.Confirmation);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.Reason);
+        BlueTuskGuard.NotNull(actor);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNullOrWhiteSpace(actor.ActorId);
+        BlueTuskGuard.NotNull(actor.Roles);
+        BlueTuskGuard.NotNullOrWhiteSpace(request.Target);
+        BlueTuskGuard.NotNullOrWhiteSpace(request.Confirmation);
+        BlueTuskGuard.NotNullOrWhiteSpace(request.Reason);
         if (request.OperationId == Guid.Empty)
         {
             throw new ArgumentException("The operation ID cannot be empty.", nameof(request));

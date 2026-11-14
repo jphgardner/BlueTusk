@@ -12,7 +12,9 @@ internal sealed class BlueTuskArrayConstructorExpression(
     RelationalTypeMapping typeMapping)
     : SqlExpression(type, typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public IReadOnlyList<SqlExpression> Rows { get; } = rows;
 
@@ -24,6 +26,7 @@ internal sealed class BlueTuskArrayConstructorExpression(
     protected override Expression VisitChildren(ExpressionVisitor visitor)
         => Update(Rows.Select(row => (SqlExpression)visitor.Visit(row)).ToArray());
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -32,6 +35,7 @@ internal sealed class BlueTuskArrayConstructorExpression(
             NewArrayInit(typeof(SqlExpression), Rows.Select(row => row.Quote())),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)
@@ -66,7 +70,9 @@ internal sealed class BlueTuskArraySubscriptExpression(
     RelationalTypeMapping typeMapping)
     : SqlExpression(type, typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public SqlExpression Array { get; } = array;
 
@@ -84,6 +90,7 @@ internal sealed class BlueTuskArraySubscriptExpression(
             (SqlExpression)visitor.Visit(Array),
             Subscripts.Select(subscript => (SqlExpression)visitor.Visit(subscript)).ToArray());
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -98,6 +105,7 @@ internal sealed class BlueTuskArraySubscriptExpression(
             NewArrayInit(typeof(SqlExpression), Subscripts.Select(subscript => subscript.Quote())),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)
@@ -141,7 +149,9 @@ internal sealed class BlueTuskArraySliceExpression(
     RelationalTypeMapping typeMapping)
     : SqlExpression(type, typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public SqlExpression Array { get; } = array;
 
@@ -170,6 +180,7 @@ internal sealed class BlueTuskArraySliceExpression(
             LowerBounds.Select(bound => (SqlExpression)visitor.Visit(bound)).ToArray(),
             UpperBounds.Select(bound => (SqlExpression)visitor.Visit(bound)).ToArray());
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -186,6 +197,7 @@ internal sealed class BlueTuskArraySliceExpression(
             NewArrayInit(typeof(SqlExpression), UpperBounds.Select(bound => bound.Quote())),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)

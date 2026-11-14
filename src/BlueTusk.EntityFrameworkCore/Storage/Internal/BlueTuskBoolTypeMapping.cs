@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore.Storage;
+#if BLUETUSK_EF8_OR_GREATER
 using Microsoft.EntityFrameworkCore.Storage.Json;
+#endif
 
 namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
 
@@ -9,8 +11,11 @@ internal sealed class BlueTuskBoolTypeMapping : RelationalTypeMapping
         : base(
             "boolean",
             typeof(bool),
-            System.Data.DbType.Boolean,
-            jsonValueReaderWriter: JsonBoolReaderWriter.Instance)
+            System.Data.DbType.Boolean
+#if BLUETUSK_EF8_OR_GREATER
+            , jsonValueReaderWriter: JsonBoolReaderWriter.Instance
+#endif
+        )
     {
     }
 

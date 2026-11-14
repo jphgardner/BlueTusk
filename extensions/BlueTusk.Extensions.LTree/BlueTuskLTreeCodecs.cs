@@ -17,7 +17,7 @@ public abstract class BlueTuskLTreeTextCodec<T> : BlueTuskCodec<T>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             if (reader.Remaining < 1)
@@ -52,8 +52,8 @@ public abstract class BlueTuskLTreeTextCodec<T> : BlueTuskCodec<T>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteByte(BinaryVersion);
@@ -83,7 +83,7 @@ public sealed class BlueTuskLTreeCodec : BlueTuskLTreeTextCodec<BlueTuskLTree>
 {
     public static int GetBinarySize(BlueTuskLTree value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return GetBinarySize(value.Value);
     }
 
@@ -97,7 +97,7 @@ public sealed class BlueTuskLQueryCodec : BlueTuskLTreeTextCodec<BlueTuskLQuery>
 {
     public static int GetBinarySize(BlueTuskLQuery value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return GetBinarySize(value.Value);
     }
 
@@ -111,7 +111,7 @@ public sealed class BlueTuskLTxtQueryCodec : BlueTuskLTreeTextCodec<BlueTuskLTxt
 {
     public static int GetBinarySize(BlueTuskLTxtQuery value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return GetBinarySize(value.Value);
     }
 

@@ -18,7 +18,7 @@ public sealed record BlueTuskLTree
 
     private static string Validate(string value, string parameterName)
     {
-        ArgumentNullException.ThrowIfNull(value, parameterName);
+        BlueTuskGuard.NotNull(value, parameterName);
         if (value.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("PostgreSQL ltree values cannot contain a null character.", parameterName);
@@ -46,7 +46,7 @@ public sealed record BlueTuskLQuery
 
     private static string Validate(string value, string parameterName)
     {
-        ArgumentNullException.ThrowIfNull(value, parameterName);
+        BlueTuskGuard.NotNull(value, parameterName);
         if (value.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("PostgreSQL lquery values cannot contain a null character.", parameterName);
@@ -74,7 +74,7 @@ public sealed record BlueTuskLTxtQuery
 
     private static string Validate(string value, string parameterName)
     {
-        ArgumentNullException.ThrowIfNull(value, parameterName);
+        BlueTuskGuard.NotNull(value, parameterName);
         if (value.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("PostgreSQL ltxtquery values cannot contain a null character.", parameterName);
