@@ -33,6 +33,8 @@ public sealed class BlueTuskGraphIdentity
 /// <summary>Sets the work limits and direction of a registered graph traversal.</summary>
 public sealed class BlueTuskGraphTraversalOptions
 {
+    private readonly IReadOnlyList<string>? _edgeAliases;
+
     public BlueTuskGraphEdgeDirection Direction { get; init; }
     public int MaximumDepth { get; init; } = 8;
     public int MaximumFrontier { get; init; } = 4_096;
@@ -40,8 +42,15 @@ public sealed class BlueTuskGraphTraversalOptions
     public int MaximumResults { get; init; } = 1_000;
     public int MaximumBytes { get; init; } = 8_388_608;
 
-    /// <summary>Allows use of an installed, compatible BlueTusk graph engine.</summary>
-    public bool UseServerEngine { get; init; }
+    /// <summary>Selects the installed, compatible server engine by default.</summary>
+    public bool UseServerEngine { get; init; } = true;
+
+    /// <summary>Limits traversal to the named edge elements. Null selects every edge element.</summary>
+    public IReadOnlyList<string>? EdgeAliases
+    {
+        get => _edgeAliases;
+        init => _edgeAliases = value is null ? null : Array.AsReadOnly(value.ToArray());
+    }
 
     internal void Validate()
     {

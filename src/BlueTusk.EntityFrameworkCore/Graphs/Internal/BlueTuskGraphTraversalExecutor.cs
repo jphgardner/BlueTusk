@@ -74,6 +74,12 @@ internal static class BlueTuskGraphTraversalExecutor
         BlueTuskGuard.NotNull(start);
         options ??= new BlueTuskGraphTraversalOptions();
         options.Validate();
+        if (options.EdgeAliases is { } selected &&
+            (selected.Count > 64 || selected.Any(alias => !graph.ElementTables.Any(element =>
+                element.Kind == BlueTuskGraphElementKind.Edge &&
+                string.Equals(element.Alias, alias, StringComparison.Ordinal)))))
+            throw new ArgumentException("Edge filters must name registered graph edge aliases.", nameof(options));
+
         ValidateIdentity(graph, start, BlueTuskGraphElementKind.Vertex);
         if (target is not null)
             ValidateIdentity(graph, target, BlueTuskGraphElementKind.Vertex);
@@ -85,7 +91,7 @@ internal static class BlueTuskGraphTraversalExecutor
         await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (options.UseServerEngine && await HasEngineAsync(context, cancellationToken).ConfigureAwait(false))
+            if (options.UseServerEngine && await HasEngineAsync(context, options.EdgeAliases is not null, cancellationToken).ConfigureAwait(false))
             {
                 var definition = EncodeDefinition(graph, defaultSchema);
                 var native = await ExecuteEngineAsync(context, schema, graph.Name, definition, operation,
@@ -127,16 +133,18 @@ internal static class BlueTuskGraphTraversalExecutor
                 $"Graph identity '{identity.Element}' does not match an element with that key arity.", nameof(identity));
     }
 
-    private static async Task<bool> HasEngineAsync(DbContext context, CancellationToken cancellationToken)
+    private static async Task<bool> HasEngineAsync(
+        DbContext context, bool requiresEdgeFilter, CancellationToken cancellationToken)
     {
         await using var command = CreateCommand(context, """
             SELECT EXISTS (
                 SELECT FROM pg_catalog.pg_extension e
                 JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
                 WHERE e.extname = 'bluetusk_graph' AND n.nspname = 'bluetusk_graph'
-                  AND e.extversion IN ('1.0', '1.1')
+                  AND e.extversion IN ('1.0', '1.1', '1.2')
+                  AND (NOT @filtered OR e.extversion = '1.2')
             )
-            """);
+            """, ("filtered", requiresEdgeFilter));
         return await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is true;
     }
 
@@ -152,10 +160,18 @@ internal static class BlueTuskGraphTraversalExecutor
             ("edges", options.MaximumEdges), ("bytes", options.MaximumBytes),
         };
 
+        var filtered = options.EdgeAliases is not null;
+        if (options.EdgeAliases is { } selected)
+            arguments.Add(("edge_aliases", JsonSerializer.Serialize(selected)));
+
+        var filterArgument = filtered
+            ? "ARRAY(SELECT pg_catalog.jsonb_array_elements_text(CAST(@edge_aliases AS jsonb))),"
+            : string.Empty;
         string call;
         if (operation == "neighbors")
         {
-            call = "neighbors(@schema,@graph,@start_element,CAST(@start_key AS jsonb),@direction," +
+            var function = filtered ? "neighbors_on" : "neighbors";
+            call = $"{function}(@schema,@graph,@start_element,CAST(@start_key AS jsonb),{filterArgument}@direction," +
                    "@results,NULLIF(CAST(@after_edge AS jsonb), 'null'::jsonb),@edges,@bytes)";
             arguments.Add(("after_edge", afterEdge is null ? "null" : afterEdge.EncodeIdentity()));
             arguments.Add(("results", options.MaximumResults));
@@ -166,14 +182,19 @@ internal static class BlueTuskGraphTraversalExecutor
             arguments.Add(("frontier", options.MaximumFrontier));
             if (target is null)
             {
-                call = "reachable(@schema,@graph,@start_element,CAST(@start_key AS jsonb)," +
-                       "@depth,@direction,@frontier,@edges,@results,@bytes)";
+                call = filtered
+                    ? "reachable_from(@schema,@graph,pg_catalog.jsonb_build_array(pg_catalog.jsonb_build_array(" +
+                      "CAST(@start_element AS text),CAST(@start_key AS jsonb)))," + filterArgument +
+                      "@depth,@direction,@frontier,@edges,@results,@bytes)"
+                    : "reachable(@schema,@graph,@start_element,CAST(@start_key AS jsonb)," +
+                      "@depth,@direction,@frontier,@edges,@results,@bytes)";
                 arguments.Add(("results", options.MaximumResults));
             }
             else
             {
-                call = "shortest_path(@schema,@graph,@start_element,CAST(@start_key AS jsonb)," +
-                       "@target_element,CAST(@target_key AS jsonb),@depth,@direction,@frontier,@edges,@bytes)";
+                var function = filtered ? "shortest_path_on" : "shortest_path";
+                    call = $"{function}(@schema,@graph,@start_element,CAST(@start_key AS jsonb)," +
+                       $"@target_element,CAST(@target_key AS jsonb),{filterArgument}@depth,@direction,@frontier,@edges,@bytes)";
                 arguments.Add(("target_element", target.Element));
                 arguments.Add(("target_key", target.EncodeKey()));
             }

@@ -1,11 +1,12 @@
 # Query connected data with BlueTusk Graphs
 
-BlueTusk Graphs turns EF graph patterns into parameterized PostgreSQL joins.
-Map your existing tables as vertices and edges with `HasPropertyGraph`, then
-query them with `PropertyGraph(...).Match(...).Select(...)`. The default
-backend works on PostgreSQL 15–18 without SQL/PGQ, a server extension, or graph
-DDL. Use [Continuous Graph](../continuous-graph/README.md) to maintain a bounded
-result after commits.
+Map existing PostgreSQL tables as vertices and edges with `HasPropertyGraph`.
+BlueTusk uses `bluetusk_graph` by default for supported traversal operations
+when a compatible extension and matching graph registration are installed.
+`PropertyGraph(...).Match(...).Select(...)` supports composable graph patterns
+through parameterized PostgreSQL joins on versions 15–18. Use
+[Continuous Graph](../continuous-graph/README.md) to maintain a bounded result
+after commits.
 
 **Availability.** Portable Graph is implemented and locally verified on
 PostgreSQL 15–18. This guide applies to a checkout or local candidate containing

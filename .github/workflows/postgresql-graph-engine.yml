@@ -5,6 +5,9 @@ on:
   pull_request:
     paths:
       - 'extensions/bluetusk_graph/**'
+      - 'eng/run-native-graph-topology.ps1'
+      - 'applications/src/ServiceTopology/**'
+      - 'tests/BlueTusk.ContinuousGraph.Tests/ServiceTopologyGraphCanaryTests.cs'
       - 'src/BlueTusk.EntityFrameworkCore/Graphs/**'
       - 'eng/compatibility/**'
       - 'eng/dotnet-compatibility.json'
@@ -80,7 +83,7 @@ jobs:
           done
           docker exec "$container" pg_isready -h 127.0.0.1 -U postgres -d graph_engine
           if [ "$GRAPH_FRAMEWORK" = net10.0 ]; then
-            for test in traversal oracle fraud-rank-refill; do
+            for test in traversal features oracle fraud-rank-refill; do
               docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d graph_engine \
                 < "extensions/bluetusk_graph/sql/$test.sql"
             done
@@ -150,6 +153,14 @@ jobs:
             test "$after" = 'f|complete'
             docker exec -u postgres "$container" pg_ctl -D /tmp/graph-engine-standby -m fast -w stop
           fi
+      - name: Run the native Service Topology canary and soak
+        if: matrix.major == 18 && matrix.framework == 'net10.0'
+        shell: pwsh
+        run: |
+          $env:DOTNET_ROOT = Join-Path $PWD 'artifacts/dotnet'
+          $env:DOTNET_HOST_PATH = Join-Path $env:DOTNET_ROOT 'dotnet'
+          $env:DOTNET_ROLL_FORWARD = 'LatestPatch'
+          ./eng/run-native-graph-topology.ps1 -Duration '00:02:00' -MinimumEvaluations 1000 -DotNetPath $env:DOTNET_HOST_PATH -OutputRoot 'artifacts/graph-engine/topology'
       - name: Package the tested native extension
         if: matrix.framework == 'net10.0'
         shell: bash

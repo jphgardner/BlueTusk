@@ -28,6 +28,7 @@ typedef struct GraphVertex
     char *key;
     char *edge;
     struct GraphVertex *parent;
+    struct GraphVertex *anchor;
     int depth;
     int64 cost;
 } GraphVertex;
@@ -45,6 +46,7 @@ typedef struct
     GraphVertex **queue;
     int count;
     int capacity;
+    int seed_count;
     int edges;
     int peak_frontier;
     int max_depth;
@@ -117,6 +119,7 @@ add_vertex(GraphWalk *walk, const char *key, const char *edge, GraphVertex *pare
         }
         vertex->cost = cost;
         vertex->parent = parent;
+        vertex->anchor = parent->anchor;
         pfree(vertex->edge);
         vertex->edge = pstrdup(edge);
         return vertex;
@@ -126,6 +129,7 @@ add_vertex(GraphWalk *walk, const char *key, const char *edge, GraphVertex *pare
     vertex->key = pstrdup(key);
     vertex->edge = edge == NULL ? NULL : pstrdup(edge);
     vertex->parent = parent;
+    vertex->anchor = parent == NULL ? vertex : parent->anchor;
     vertex->depth = parent == NULL ? 0 : parent->depth + 1;
     vertex->cost = cost;
     visit->key = vertex->key;
@@ -290,19 +294,30 @@ make_visited(MemoryContext context)
 }
 
 static GraphVertex *
-search_graph(GraphWalk *walk, SPIPlanPtr plan, const char *start, const char *target,
-             GraphOperation operation)
+search_graph(GraphWalk *walk, SPIPlanPtr plan, char *const *starts, int start_count,
+             const char *target, GraphOperation operation)
 {
     StringInfoData frontier;
     int first = 0;
-    int last = 1;
+    int last;
     bool weighted = operation == GRAPH_WEIGHTED;
     GraphVertex *best = NULL;
 
     walk->visited = make_visited(walk->memory);
     walk->capacity = 64;
     walk->queue = palloc(sizeof(*walk->queue) * walk->capacity);
-    add_vertex(walk, start, NULL, NULL, 0, false);
+    for (int i = 0; i < start_count; i++)
+        add_vertex(walk, starts[i], NULL, NULL, 0, false);
+    walk->seed_count = walk->count;
+    last = walk->count;
+    walk->peak_frontier = last;
+    if (last > walk->max_frontier)
+    {
+        walk->exhausted = "frontier";
+        return NULL;
+    }
+    if (!has_memory(walk))
+        return NULL;
     initStringInfo(&frontier);
 
     for (int depth = 0;
@@ -390,7 +405,7 @@ search_graph(GraphWalk *walk, SPIPlanPtr plan, const char *start, const char *ta
                     if (!weighted)
                         break;
                 }
-                if (operation == GRAPH_REACHABLE && walk->count - 1 > walk->max_results)
+                if (operation == GRAPH_REACHABLE && walk->count - walk->seed_count > walk->max_results)
                 {
                     walk->exhausted = "results";
                     break;
@@ -472,12 +487,15 @@ bluetusk_graph_walk(PG_FUNCTION_ARGS)
     const char *direction;
     const char *after = NULL;
     SPIPlanPtr step;
-    Datum plan_args[6];
-    char plan_nulls[] = {' ', ' ', ' ', 'n', ' ', 'n'};
+    Datum plan_args[7];
+    char plan_nulls[] = {' ', ' ', ' ', 'n', ' ', 'n', 'n'};
+    const bool extended = PG_NARGS() == 18;
+    const bool multiple = extended && !PG_ARGISNULL(17);
     char *anchor_sql;
     char *target_sql;
     char *step_sql;
-    char *start;
+    char *starts[128];
+    int start_count = 0;
     char *target = NULL;
     GraphVertex *last = NULL;
     StringInfoData rows;
@@ -486,7 +504,7 @@ bluetusk_graph_walk(PG_FUNCTION_ARGS)
     Datum json;
 
     for (int i = 0; i <= 12; i++)
-        if (i != 6 && i != 7 && PG_ARGISNULL(i))
+        if (i != 6 && i != 7 && !(multiple && (i == 2 || i == 3)) && PG_ARGISNULL(i))
             ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
                             errmsg("Graph traversal requires all non-target arguments")));
 
@@ -507,7 +525,18 @@ bluetusk_graph_walk(PG_FUNCTION_ARGS)
         strcmp(direction, "undirected") != 0)
         ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("Unknown graph direction")));
 
-    check_key(PG_GETARG_JSONB_P(3));
+    if (multiple)
+    {
+        Jsonb *anchors = PG_GETARG_JSONB_P(17);
+
+        if (operation != GRAPH_REACHABLE || !JB_ROOT_IS_ARRAY(anchors) ||
+            JB_ROOT_IS_SCALAR(anchors) || JB_ROOT_COUNT(anchors) < 1 ||
+            JB_ROOT_COUNT(anchors) > lengthof(starts) || VARSIZE(anchors) > 65536)
+            ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                            errmsg("Reachability requires one to 128 bounded anchor identities")));
+    }
+    else
+        check_key(PG_GETARG_JSONB_P(3));
     if (operation == GRAPH_SHORTEST || operation == GRAPH_WEIGHTED)
     {
         if (PG_ARGISNULL(6) || PG_ARGISNULL(7))
@@ -550,7 +579,11 @@ bluetusk_graph_walk(PG_FUNCTION_ARGS)
     initStringInfo(&continuation);
     plan_args[0] = PG_GETARG_DATUM(0);
     plan_args[1] = PG_GETARG_DATUM(1);
-    plan_args[2] = PG_GETARG_DATUM(2);
+    plan_args[2] = (Datum) 0;
+    if (multiple)
+        plan_nulls[2] = 'n';
+    else
+        plan_args[2] = PG_GETARG_DATUM(2);
     plan_args[3] = (Datum) 0;
     plan_args[4] = PG_GETARG_DATUM(4);
     plan_args[5] = (Datum) 0;
@@ -564,9 +597,18 @@ bluetusk_graph_walk(PG_FUNCTION_ARGS)
         plan_args[5] = PG_GETARG_DATUM(15);
         plan_nulls[5] = ' ';
     }
+    plan_args[6] = (Datum) 0;
+    if (extended && !PG_ARGISNULL(16))
+    {
+        plan_args[6] = PG_GETARG_DATUM(16);
+        plan_nulls[6] = ' ';
+    }
     check_spi(SPI_execute_with_args(
-        "SELECT * FROM bluetusk_graph._plan($1, $2, $3, $4, $5, $6)", 6,
-        (Oid[]) {TEXTOID, TEXTOID, TEXTOID, TEXTOID, TEXTOID, TEXTOID},
+        extended
+            ? "SELECT * FROM bluetusk_graph._plan_v2($1, $2, $3, $4, $5, $6, $7)"
+            : "SELECT * FROM bluetusk_graph._plan($1, $2, $3, $4, $5, $6)",
+        extended ? 7 : 6,
+        (Oid[]) {TEXTOID, TEXTOID, TEXTOID, TEXTOID, TEXTOID, TEXTOID, TEXTARRAYOID},
         plan_args, plan_nulls, true, 1), "resolve graph");
     MemoryContextSwitchTo(work);
     if (SPI_processed != 1)
@@ -575,36 +617,64 @@ bluetusk_graph_walk(PG_FUNCTION_ARGS)
     anchor_sql = SPI_getvalue(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1);
     target_sql = SPI_getvalue(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 2);
     step_sql = SPI_getvalue(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 3);
-    SPI_freetuptable(SPI_tuptable);
+    if (multiple)
+    {
+        Datum definition;
+        bool missing_definition;
 
-    start = find_visible_vertex(anchor_sql, PG_GETARG_DATUM(3));
-    if ((operation == GRAPH_SHORTEST || operation == GRAPH_WEIGHTED) && start != NULL)
+        definition = SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 4, &missing_definition);
+        if (missing_definition)
+            elog(ERROR, "BlueTusk Graph plan is missing its vertex mappings");
+        definition = PointerGetDatum(DatumGetJsonbPCopy(definition));
+        SPI_freetuptable(SPI_tuptable);
+        check_spi(SPI_execute_with_args(
+            "SELECT * FROM bluetusk_graph._visible_anchors($1, $2)", 2,
+            (Oid[]) {JSONBOID, JSONBOID}, (Datum[]) {definition, PG_GETARG_DATUM(17)},
+            NULL, true, lengthof(starts) + 1), "resolve anchors");
+        MemoryContextSwitchTo(work);
+        if (SPI_processed > lengthof(starts))
+            elog(ERROR, "BlueTusk Graph returned too many anchors");
+        for (uint64 i = 0; i < SPI_processed; i++)
+            starts[start_count++] = SPI_getvalue(SPI_tuptable->vals[i], SPI_tuptable->tupdesc, 1);
+        SPI_freetuptable(SPI_tuptable);
+    }
+    else
+    {
+        SPI_freetuptable(SPI_tuptable);
+        starts[0] = find_visible_vertex(anchor_sql, PG_GETARG_DATUM(3));
+        start_count = starts[0] == NULL ? 0 : 1;
+    }
+
+    if ((operation == GRAPH_SHORTEST || operation == GRAPH_WEIGHTED) && start_count > 0)
         target = find_visible_vertex(target_sql, PG_GETARG_DATUM(7));
-    if (start != NULL && target != NULL && strcmp(start, target) == 0)
+    if (start_count > 0 && target != NULL && strcmp(starts[0], target) == 0)
     {
         last = palloc0(sizeof(*last));
-        last->key = start;
+        last->key = starts[0];
     }
-    else if (start != NULL && step_sql != NULL && walk.max_depth > 0 &&
+    else if (start_count > 0 && step_sql != NULL && walk.max_depth > 0 &&
              ((operation != GRAPH_SHORTEST && operation != GRAPH_WEIGHTED) || target != NULL) &&
              has_memory(&walk))
     {
         step = prepare_plan(step_sql, 4, (Oid[]) {JSONBOID, INT4OID, TEXTOID, JSONBOID});
         if (operation == GRAPH_NEIGHBORS)
-            read_neighbors(&walk, step, start, after, &rows, &continuation);
+            read_neighbors(&walk, step, starts[0], after, &rows, &continuation);
         else
-            last = search_graph(&walk, step, start, target, operation);
+            last = search_graph(&walk, step, starts, start_count, target, operation);
         SPI_freeplan(step);
     }
 
     if (operation == GRAPH_REACHABLE && walk.exhausted == NULL)
     {
-        for (int i = 1; i < walk.count; i++)
+        for (int i = walk.seed_count; i < walk.count; i++)
         {
             GraphVertex *vertex = walk.queue[i];
 
-            appendStringInfo(&rows, "%s{\"vertex\":%s,\"hops\":%d}",
-                             i == 1 ? "" : ",", vertex->key, vertex->depth);
+            appendStringInfo(&rows, "%s{\"vertex\":%s,\"hops\":%d",
+                             i == walk.seed_count ? "" : ",", vertex->key, vertex->depth);
+            if (multiple)
+                appendStringInfo(&rows, ",\"anchor\":%s", vertex->anchor->key);
+            appendStringInfoChar(&rows, '}');
             if (!has_memory(&walk))
                 break;
         }

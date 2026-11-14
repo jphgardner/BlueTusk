@@ -32,4 +32,16 @@
     <ProjectReference Include="..\..\src\BlueTusk.Live.Testing\BlueTusk.Live.Testing.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
   </ItemGroup>
+  <ItemGroup Condition="'$(BlueTuskTopologyCanaryTests)' != 'true'">
+    <Compile Remove="ServiceTopologyGraphCanaryTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(BlueTuskTopologyCanaryTests)' == 'true'">
+    <Compile Include="../../applications/src/ServiceTopology/BlueTusk.ServiceTopology.Domain/TopologyModel.cs" Link="Topology/TopologyModel.cs" />
+    <Compile Include="../../applications/src/ServiceTopology/BlueTusk.ServiceTopology.Application/TopologyService.cs" Link="Topology/TopologyService.cs" />
+    <Compile Include="../../applications/src/ServiceTopology/BlueTusk.ServiceTopology.Infrastructure/TopologyInfrastructure.cs" Link="Topology/TopologyInfrastructure.cs" />
+    <Compile Include="../../applications/src/ServiceTopology/BlueTusk.ServiceTopology.Infrastructure/Migrations/*.cs" Link="Topology/Migrations/%(Filename)%(Extension)" />
+    <ProjectReference Include="../../src/BlueTusk.Live.DependencyInjection/BlueTusk.Live.DependencyInjection.csproj" />
+  </ItemGroup>
+
 </Project>

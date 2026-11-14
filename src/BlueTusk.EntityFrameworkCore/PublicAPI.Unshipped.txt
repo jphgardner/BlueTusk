@@ -38,6 +38,8 @@ BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphQueryRoot.RegisterEngineAsync(S
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphQueryRoot.ShortestPathAsync(BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity! start, BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity! target, BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult!>!
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.BlueTuskGraphTraversalOptions() -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.EdgeAliases.get -> System.Collections.Generic.IReadOnlyList<string!>?
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.EdgeAliases.init -> void
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.Direction.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgeDirection
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.Direction.init -> void
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumBytes.get -> int

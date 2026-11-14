@@ -153,6 +153,9 @@ internal sealed class BlueTuskPortableGraphTraversal(
         var branches = new List<string>();
         foreach (var edge in graph.ElementTables.Where(static element => element.Kind == BlueTuskGraphElementKind.Edge))
         {
+            if (options.EdgeAliases is { } selected && !selected.Contains(edge.Alias, StringComparer.Ordinal))
+                continue;
+
             var source = edge.Source!;
             var destination = edge.Destination!;
             if (options.Direction != BlueTuskGraphEdgeDirection.Incoming)

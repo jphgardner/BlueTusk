@@ -1,6 +1,6 @@
 # BlueTusk PostgreSQL graph engine
 
-The optional `bluetusk_graph` extension executes traversal in PostgreSQL
+The `bluetusk_graph` extension executes traversal in PostgreSQL
 against the tables registered as vertices and edges. It uses the caller's
 permissions and row-level security for every visible hop. The existing
 portable EF graph pattern interface is available on ordinary PostgreSQL.
@@ -67,6 +67,14 @@ SELECT bluetusk_graph.reachable(
 - `weighted_shortest_path` uses an exposed integer or bigint cost column
   on every edge element. It minimizes total cost, then hop count, then the
   edge-key sequence. A null or negative examined cost raises an error.
+- Version 1.2 adds edge-element filters to `neighbors_on`, `shortest_path_on`, and
+  `weighted_shortest_path_on`. Supply registered edge aliases. An empty array
+  selects zero edge elements.
+- `reachable_from` accepts up to 128 `[element, key tuple]` anchors and an
+  optional edge filter. It uses one shared search and work budget. Each
+  result gives the minimum hop count and the winning anchor. Equal distances
+  use input anchor order. Duplicate, hidden, and missing anchors contribute
+  no extra frontier entries.
 
 Each result reports its status and authorized work counters. An exhausted
 edge, frontier, result, or memory budget returns `budget_exhausted` with
@@ -88,7 +96,6 @@ var result = await graph.ReachableAsync(
     new BlueTuskGraphIdentity("services", serviceId),
     new BlueTuskGraphTraversalOptions
     {
-        UseServerEngine = true,
         Direction = BlueTuskGraphEdgeDirection.Incoming,
         MaximumDepth = 6,
         MaximumResults = 250,
@@ -97,11 +104,14 @@ var result = await graph.ReachableAsync(
 ~~~
 
 `NeighborsAsync` and `ShortestPathAsync` use the same identity and options.
-`UsedServerEngine` reports the selected execution path. EF checks for the
-extension and a matching registered definition before using it. The portable
+`UsedServerEngine` reports the selected execution path. EF uses the engine by default
+for supported operations when the extension and registered definition match.
+Set `EdgeAliases` to filter by registered edge element. Server-side filters
+require extension 1.2. The portable
 fallback runs batched reads inside one repeatable-read transaction, or uses
 an existing repeatable-read or serializable transaction. Database errors
-and cancellation propagate to the caller.
+and cancellation propagate to the caller. Set `UseServerEngine` to false
+to select the portable implementation explicitly.
 
 `ContinuousGraphQueryCompiler` can register a bounded watch with
 `CompileReachability`, `CompileNeighbors`, or `CompileShortestPath`. Supply
@@ -110,9 +120,9 @@ The plan tracks every vertex and edge table in the graph. For incremental
 session options, order reachability rows by hop count and neighbors or
 singleton paths by equal rank, with ordinal result keys as the tie-breaker.
 Relevant changes request authoritative requery and Live diff. Budget failures
-fail the evaluation before replay or acknowledgement. Keep
-`UseServerEngine` enabled only for the registrations participating in a
-canary. Set it to false to return those registrations to portable execution.
+fail the evaluation before replay or acknowledgement. Edge aliases are part
+of the watch's query identity. A change of execution engine preserves the
+identity when the traversal definition is unchanged.
 
 ## Verification
 
@@ -134,7 +144,7 @@ commit, and base image digest. Build from source with your server's
 The workflow tests SQL and .NET 10 integration on every supported PostgreSQL
 major and tests the EF and Continuous Graph client on each .NET runtime from
 5 through 11 against PostgreSQL 18. The SQL suite installs version 1.0,
-registers a graph, then upgrades it to 1.1. For undefined-behavior instrumentation,
+registers a graph, then verifies the 1.1 and 1.2 upgrades. For undefined-behavior instrumentation,
 build with `--build-arg GRAPH_UBSAN=1` and start the container with
 `-e LD_PRELOAD=/usr/local/lib/libubsan.so.1`.
 
@@ -143,3 +153,9 @@ to a disposable database on the extension image. Run the Continuous Graph test
 project with `-p:BlueTuskGraphEngineTests=true` and filter for
 `GraphEngineIntegrationTests`. The portable suite uses its own database
 fixture.
+
+Run `eng/run-native-graph-topology.ps1` to compare native traversal with
+the migrated Service Topology application on a disposable, digest-pinned
+PostgreSQL 18 image. The runner also exercises native Continuous Graph
+replay with synthetic transaction delivery and writes each phase's TRX,
+PostgreSQL logs, and provenance to a new directory under `artifacts`.

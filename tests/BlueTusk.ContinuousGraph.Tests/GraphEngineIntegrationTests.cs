@@ -62,19 +62,21 @@ public sealed class GraphEngineIntegrationTests
             var efOptions = new DbContextOptionsBuilder<GraphEngineContext>().UseBlueTusk(readerConnection).Options;
             await using var context = new GraphEngineContext(efOptions);
             var graph = context.PropertyGraph("topology");
-            var engine = new BlueTuskGraphTraversalOptions { UseServerEngine = true };
+            var engine = new BlueTuskGraphTraversalOptions { EdgeAliases = ["depends"] };
             var start = new BlueTuskGraphIdentity("services", 1L);
             var target = new BlueTuskGraphIdentity("services", 3L);
 
-            var native = await graph.ReachableAsync(start, engine, token);
-            var portable = await graph.ReachableAsync(start, cancellationToken: token);
+            var native = await graph.ReachableAsync(start, cancellationToken: token);
+            var portable = await graph.ReachableAsync(start,
+                new BlueTuskGraphTraversalOptions { UseServerEngine = false }, token);
             Assert.True(native.UsedServerEngine);
             Assert.False(portable.UsedServerEngine);
             Assert.Equal([2L, 4L, 3L], native.Rows.Select(static row => (long) row.Vertex.Key[0]));
             Assert.Equal(native.Rows.Select(Row), portable.Rows.Select(Row));
             var path = await graph.ShortestPathAsync(start, target, engine, token);
             Assert.Equal([10L, 20L], path.Path!.Edges.Select(static edge => (long) edge.Key[0]));
-            var portablePath = await graph.ShortestPathAsync(start, target, cancellationToken: token);
+            var portablePath = await graph.ShortestPathAsync(start, target,
+                new BlueTuskGraphTraversalOptions { UseServerEngine = false }, token);
             Assert.Equal(path.Path.Edges.Select(static edge => edge.Key[0]),
                 portablePath.Path!.Edges.Select(static edge => edge.Key[0]));
 
@@ -84,6 +86,19 @@ public sealed class GraphEngineIntegrationTests
             Assert.NotNull(first.NextEdge);
             var second = await graph.NeighborsAsync(start, engine, first.NextEdge, token);
             Assert.Equal(30L, Assert.Single(second.Rows).Edge!.Key[0]);
+
+            var filtered = await graph.ReachableAsync(start,
+                new BlueTuskGraphTraversalOptions { EdgeAliases = ["depends"] }, token);
+            Assert.True(filtered.UsedServerEngine);
+            Assert.Equal(native.Rows.Select(Row), filtered.Rows.Select(Row));
+            var filteredPath = await graph.ShortestPathAsync(start, target,
+                new BlueTuskGraphTraversalOptions { EdgeAliases = [] }, token);
+            Assert.True(filteredPath.UsedServerEngine);
+            Assert.Null(filteredPath.Path);
+            var filteredNeighbors = await graph.NeighborsAsync(start,
+                new BlueTuskGraphTraversalOptions { EdgeAliases = ["depends"] }, cancellationToken: token);
+            Assert.True(filteredNeighbors.UsedServerEngine);
+            Assert.Equal(2, filteredNeighbors.Rows.Count);
 
             var budget = await graph.ReachableAsync(start,
                 new BlueTuskGraphTraversalOptions { UseServerEngine = true, MaximumEdges = 1 }, token);

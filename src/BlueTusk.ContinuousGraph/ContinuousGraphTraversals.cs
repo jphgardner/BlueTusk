@@ -123,6 +123,8 @@ public static partial class ContinuousGraphQueryCompiler
             options.MaximumResults,
             options.MaximumBytes,
         });
+        if (options.EdgeAliases is { } selected)
+            canonical += "|" + JsonSerializer.Serialize(selected.Distinct(StringComparer.Ordinal).OrderBy(static alias => alias, StringComparer.Ordinal));
         var fingerprint = CreateFingerprint(name, version, canonical);
         var live = new LiveQueryPlan<TResult, string>(
             name, databaseIdentity, fingerprint,
