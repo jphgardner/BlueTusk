@@ -59,17 +59,34 @@ jobs:
 
       - name: Run 24-hour ContinuousGraph recovery endurance
         shell: pwsh
-        env:
-          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
-        run: >-
-          ./eng/run-continuous-graph-endurance.ps1
-          -Duration '1.00:00:00'
-          -MinimumEvaluations 100000
-          -IntervalMilliseconds 250
-          -ReportPath 'artifacts/test-results/continuous-graph-endurance/report.json'
-          -CandidateProvenancePath 'artifacts/test-results/continuous-graph-endurance/candidate-sbom/build-provenance.json'
-          -PostgreSqlImage $env:BLUETUSK_PORTABLE_GRAPH_IMAGE
-          -Configuration Release
+        run: |
+          $portBinding = docker compose -f eng/compose/postgres.yml port postgres18 5432
+          if ($LASTEXITCODE -ne 0 -or $portBinding -isnot [string] -or $portBinding -notmatch ':(?<port>[0-9]+)$') {
+            throw 'Could not resolve the published portable PostgreSQL port.'
+          }
+          $port = [int]$Matches.port
+          $settings = @(docker compose -f eng/compose/postgres.yml exec -T postgres18 printenv POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB)
+          if ($LASTEXITCODE -ne 0 -or $settings.Count -ne 3 -or $settings -contains '') {
+            throw 'Could not read the disposable PostgreSQL connection settings.'
+          }
+          $connection = [System.Data.Common.DbConnectionStringBuilder]::new()
+          $connection['Host'] = 'localhost'
+          $connection['Port'] = $port
+          $connection['Username'] = [string]$settings[0]
+          $connection['Password'] = [string]$settings[1]
+          $connection['Database'] = [string]$settings[2]
+          $connection['SSL Mode'] = 'Disable'
+          $connection['Channel Binding'] = 'Disable'
+          $env:BLUETUSK_TEST_CONNECTION_STRING = $connection.ConnectionString
+
+          ./eng/run-continuous-graph-endurance.ps1 `
+            -Duration '1.00:00:00' `
+            -MinimumEvaluations 100000 `
+            -IntervalMilliseconds 250 `
+            -ReportPath 'artifacts/test-results/continuous-graph-endurance/report.json' `
+            -CandidateProvenancePath 'artifacts/test-results/continuous-graph-endurance/candidate-sbom/build-provenance.json' `
+            -PostgreSqlImage $env:BLUETUSK_PORTABLE_GRAPH_IMAGE `
+            -Configuration Release
 
       - name: Verify ContinuousGraph endurance evidence
         shell: pwsh
