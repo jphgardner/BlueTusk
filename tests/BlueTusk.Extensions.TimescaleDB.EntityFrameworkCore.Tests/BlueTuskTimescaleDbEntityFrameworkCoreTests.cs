@@ -64,16 +64,16 @@ public sealed class BlueTuskTimescaleDbEntityFrameworkCoreTests
             .ToQueryString();
 
         Assert.Contains("\"Application Extensions\".\"time_bucket\"", bucketSql, StringComparison.Ordinal);
-        Assert.Contains("@width", bucketSql, StringComparison.Ordinal);
-        Assert.Contains("@offset", bucketSql, StringComparison.Ordinal);
-        Assert.Contains("@origin", bucketSql, StringComparison.Ordinal);
-        Assert.Contains("@timezone", bucketSql, StringComparison.Ordinal);
+        Assert.Matches(@"@(?:width|__width_\d+)\b", bucketSql);
+        Assert.Matches(@"@(?:offset|__offset_\d+)\b", bucketSql);
+        Assert.Matches(@"@(?:origin|__origin_\d+)\b", bucketSql);
+        Assert.Matches(@"@(?:timezone|__timezone_\d+)\b", bucketSql);
         Assert.Contains("\"Application Extensions\".\"first\"(", aggregateSql, StringComparison.Ordinal);
         Assert.Contains(" ORDER BY ", aggregateSql, StringComparison.Ordinal);
         Assert.Contains("\"Application Extensions\".\"last\"(DISTINCT ", aggregateSql, StringComparison.Ordinal);
         Assert.Contains("\"Application Extensions\".\"histogram\"(", aggregateSql, StringComparison.Ordinal);
         Assert.Contains(" FILTER (WHERE ", aggregateSql, StringComparison.Ordinal);
-        Assert.Contains("@minimum", aggregateSql, StringComparison.Ordinal);
+        Assert.Matches(@"@(?:minimum|__minimum_\d+)\b", aggregateSql);
     }
 
     [Fact]
@@ -87,8 +87,14 @@ public sealed class BlueTuskTimescaleDbEntityFrameworkCoreTests
 
         publicExtension.Info.PopulateDebugInfo(debugInfo);
 
+#if NET5_0
+        Assert.Equal(
+            publicExtension.Info.GetServiceProviderHashCode(),
+            matchingExtension.Info.GetServiceProviderHashCode());
+#else
         Assert.True(publicExtension.Info.ShouldUseSameServiceProvider(matchingExtension.Info));
         Assert.False(publicExtension.Info.ShouldUseSameServiceProvider(customExtension.Info));
+#endif
         Assert.NotEqual(
             publicExtension.Info.GetServiceProviderHashCode(),
             customExtension.Info.GetServiceProviderHashCode());

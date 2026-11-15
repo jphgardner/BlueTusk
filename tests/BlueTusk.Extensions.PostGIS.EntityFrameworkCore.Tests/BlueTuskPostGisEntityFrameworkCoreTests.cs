@@ -103,8 +103,8 @@ public sealed class BlueTuskPostGisEntityFrameworkCoreTests
         Assert.Contains("st_force2d", sql, StringComparison.Ordinal);
         Assert.Contains("st_transform", sql, StringComparison.Ordinal);
         Assert.Contains("st_asgeojson", sql, StringComparison.Ordinal);
-        Assert.Contains("@probe", sql, StringComparison.Ordinal);
-        Assert.Contains("@geographyProbe", sql, StringComparison.Ordinal);
+        Assert.Matches(@"@(?:probe|__probe_\d+)\b", sql);
+        Assert.Matches(@"@(?:geographyProbe|__geographyProbe_\d+)\b", sql);
 
         var unsupported = Assert.Throws<InvalidOperationException>(() => context.Values
             .Where(value => value.ServiceArea.Contains(geographyProbe))
@@ -130,8 +130,14 @@ public sealed class BlueTuskPostGisEntityFrameworkCoreTests
 
         publicExtension.Info.PopulateDebugInfo(debugInfo);
 
+#if NET5_0
+        Assert.Equal(
+            publicExtension.Info.GetServiceProviderHashCode(),
+            matchingExtension.Info.GetServiceProviderHashCode());
+#else
         Assert.True(publicExtension.Info.ShouldUseSameServiceProvider(matchingExtension.Info));
         Assert.False(publicExtension.Info.ShouldUseSameServiceProvider(customExtension.Info));
+#endif
         Assert.NotEqual(
             publicExtension.Info.GetServiceProviderHashCode(),
             customExtension.Info.GetServiceProviderHashCode());

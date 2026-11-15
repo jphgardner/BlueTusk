@@ -208,7 +208,10 @@ function Install-DotNetCompatibilityPostgreSqlExtension
         if ($roots.Count -ne 1) { throw 'Could not locate the pinned PostGIS bundle layout.' }
         foreach ($directory in 'bin', 'lib', 'share')
         {
+            # The PostGIS bundle's libcurl imports DLLs absent from its server bin directory.
+            # Keep the EDB archive's libcurl so the server can load PostGIS.
             Get-ChildItem -LiteralPath (Join-Path $roots[0].FullName $directory) |
+                Where-Object { $_.Name -ine 'libcurl.dll' } |
                 Copy-Item -Destination (Join-Path $PostgreSqlRoot $directory) -Recurse -Force
         }
     }
