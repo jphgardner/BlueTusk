@@ -14,13 +14,14 @@
     "llms.txt",
     "llms-full.txt",
     ".well-known/security.txt",
+    "bluetusk-mark.png",
     "platform-layers.webp",
     "platform-social.jpg",
-    "index.csr.html",
     "use-cases/order-fulfilment.webp",
     "use-cases/service-topology.webp",
     "use-cases/fraud-investigation.webp"
   ],
+  "requiredGeneratedAssets": ["index.csr.html"],
   "requiredPrerenderedRoutes": [
     "/",
     "/platform",

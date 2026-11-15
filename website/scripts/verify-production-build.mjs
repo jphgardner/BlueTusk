@@ -105,7 +105,7 @@ for (const [route, { links }] of renderedRoutes) {
   }
 }
 
-for (const requiredAsset of contract.requiredAssets) {
+for (const requiredAsset of [...contract.requiredAssets, ...contract.requiredGeneratedAssets]) {
   if (!fileMap.has(requiredAsset)) {
     throw new Error(`Required production website asset is missing: ${requiredAsset}`);
   }
