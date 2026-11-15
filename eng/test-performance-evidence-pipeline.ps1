@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [string] $BenchmarkAssemblyPath = 'benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll',
+    [string] $CheckerAssemblyPath = 'eng/PerformanceEvidenceChecker/bin/Release/net10.0/PerformanceEvidenceChecker.dll',
     [switch] $NoCheckerBuild
 )
 
@@ -14,7 +15,7 @@ $contractPath = Join-Path $PSScriptRoot 'performance-leadership-contract.json'
 $mapPath = Join-Path $PSScriptRoot 'performance-variant-map.json'
 $verifier = Join-Path $PSScriptRoot 'verify-performance-leadership-evidence.ps1'
 $checkerProject = Join-Path $PSScriptRoot 'PerformanceEvidenceChecker/PerformanceEvidenceChecker.csproj'
-$checker = Join-Path $PSScriptRoot 'PerformanceEvidenceChecker/bin/Release/net10.0/PerformanceEvidenceChecker.dll'
+$checker = Join-Path $root $CheckerAssemblyPath
 $commit = '3333333333333333333333333333333333333333'
 $temporary = Join-Path ([IO.Path]::GetTempPath()) ('bluetusk-performance-pipeline-' + [Guid]::NewGuid().ToString('N'))
 $null = New-Item -ItemType Directory -Path $temporary
@@ -281,6 +282,41 @@ try
         $commit, 'windows', 'win', $contractPath, $mapPath)
     if ($result.ExitCode -eq 0 -or -not $result.Output.Contains('no adopted meaning'))
     { throw 'The committed map must not produce unresolved cross-OS captures.' }
+
+    $head = (& git -C $root rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0) { throw 'Could not resolve the performance test checkout.' }
+    $active = & (Join-Path $PSScriptRoot 'resolve-core-performance-release.ps1') -ExpectedCommit $head
+    if ($active.Release -ceq '1.2.0')
+    {
+        # Reuse the synthetic raw inputs and preserve their diagnostic labels.
+        $activeRoot = Join-Path $temporary 'release-1.2'
+        $activeOs = Join-Path $activeRoot 'windows'
+        $null = New-Item -ItemType Directory -Path $activeOs
+        Copy-Item -LiteralPath (Join-Path $win 'windows/raw') -Destination $activeOs -Recurse
+        Copy-Item -LiteralPath (Join-Path $win 'windows/environment-manifest.json') -Destination $activeOs
+        $generation = Invoke-Dotnet @($benchmark, '--performance-evidence-generate-synthetic', $activeOs, $commit, 'windows', $active.ContractPath, $testMap)
+        if ($generation.ExitCode -ne 0) { throw "1.2 summary generation failed: $($generation.Output)" }
+        Assert-Rejected '1.2-summary-with-historical-contract' {
+            Invoke-Dotnet @($checker, 'check', $activeOs, $commit, 'windows', $testMap)
+        } 'Summary identity, release'
+        $check = Invoke-Dotnet @($checker, 'check', $activeOs, $commit, 'windows', $testMap, '--contract', $active.ContractPath)
+        if ($check.ExitCode -ne 0) { throw "1.2 independent check failed: $($check.Output)" }
+        $assemblyArguments = @{
+            EvidenceRoot = $activeRoot; ExpectedCommit = $commit; VerifierSelfTestLogPath = $log
+            ContractPath = $active.ContractPath; VariantMapPath = $testMap; Diagnostic = $true
+        }
+        & (Join-Path $PSScriptRoot 'assemble-performance-leadership-evidence.ps1') @assemblyArguments | Out-Null
+        $activeEvidence = Join-Path $activeRoot 'diagnostic-performance-leadership-evidence.json'
+        $activeDocument = Get-Content -LiteralPath $activeEvidence -Raw | ConvertFrom-Json
+        if ($activeDocument.release -cne '1.2.0' -or $activeDocument.diagnostic -ne $true -or $activeDocument.synthetic -ne $true)
+        { throw 'Active performance assembly must retain the 1.2 identity and diagnostic labels.' }
+        Assert-Rejected 'diagnostic-1.2' {
+            & $verifier -EvidencePath $activeEvidence -ExpectedCommit $commit -ContractPath $active.ContractPath
+        } 'never release evidence'
+        Assert-Rejected 'historical-evidence-in-1.2' {
+            & $verifier -EvidencePath $diagnosticEvidence -ExpectedCommit $commit -ContractPath $active.ContractPath
+        } 'identity, release'
+    }
 
     Write-Output "Performance evidence pipeline self-test passed: complete synthetic Windows/Linux matrices generated, independently checked and assembled; diagnostic labels rejected; generated shape accepted only in a test probe; ties failed; $script:rejections rejected substitutions."
 }

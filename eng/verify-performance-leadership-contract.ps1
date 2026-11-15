@@ -7,10 +7,16 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
-if ($contract.schemaVersion -ne 2 -or $contract.release -ne '1.1.0' -or
+if ($contract.schemaVersion -ne 2 -or $contract.release -cnotin @('1.1.0', '1.2.0') -or
     $contract.releaseTracksFile -cne 'eng/release-tracks.json')
 {
-    throw 'The performance-leadership contract must be schema 2 for release 1.1.0 and bind the family release tracks.'
+    throw 'The performance-leadership contract must be schema 2 for a supported release and bind the family release tracks.'
+}
+if ($contract.release -ceq '1.2.0')
+{
+    $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
+    if ($tracks.releaseVersion -cne $contract.release)
+    { throw 'The 1.2 performance contract must match the active release track.' }
 }
 & (Join-Path $PSScriptRoot 'verify-release-track.ps1')
 
@@ -111,4 +117,4 @@ if ($workflow -notmatch '(?m)^\s*workflow_dispatch\s*:' -or
     throw 'The manual exact-SHA Windows/Linux evidence capture workflow is incomplete.'
 }
 
-Write-Output 'Verified the complete BlueTusk 1.1 performance-leadership contract.'
+Write-Output "Verified the complete BlueTusk $($contract.release) performance-leadership contract."

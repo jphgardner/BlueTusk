@@ -191,9 +191,14 @@ CPU and memory are recorded in each environment manifest.
 **Workflow.** Run `core-performance-evidence.yml` manually with:
 
 - `candidate_sha`;
-- confirmation `CAPTURE-1.1-PERFORMANCE-EVIDENCE`;
+- confirmation `CAPTURE-1.2-CORE-PERFORMANCE-EVIDENCE` for a 1.2 candidate;
 - `evidence_class`. `qualification` plans every leg. `diagnostic` may select families and skips
   legs that cannot run.
+
+The workflow resolves the release version at the exact candidate SHA. The
+effective plan and contract carry that release identity and preserve the
+committed workload and threshold definitions. The readiness verifier derives
+the same contract when it checks the evidence.
 
 The `assemble` job runs the verifier and pipeline self-tests into `verifier-self-tests.log`,
 assembles the evidence and runs the verifier. It uploads `artifacts/core-performance/`, which
@@ -201,7 +206,7 @@ contains `performance/` with the summaries, raw-sample manifests, check reports 
 Raw samples stay in the evidence store, because a full capture far exceeds the 2 GiB delivery
 limit for artifact capture.
 
-**Local producer.** After a qualification run on the host, run
+**Historical 1.1 local producer.** After a qualification run on the host, run
 `eng/build-core-local-performance-record.ps1`. It:
 
 - runs the unchanged verifier;

@@ -3,14 +3,17 @@ param(
     [ValidateSet('qualification', 'diagnostic')][string] $EvidenceClass = 'qualification',
     # Diagnostic runs may select a subset; qualification always plans every leg.
     [string] $Families = 'Provider,Streams,Sync,Live,ControlPlane,primary-hot-path',
-    [string] $VariantMapPath = (Join-Path $PSScriptRoot 'performance-variant-map.json')
+    [string] $VariantMapPath = (Join-Path $PSScriptRoot 'performance-variant-map.json'),
+    [string] $ContractPath = (Join-Path $PSScriptRoot 'performance-leadership-contract.json'),
+    [string] $PlanPath = (Join-Path $PSScriptRoot 'performance-evidence-plan.json')
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 # Emits the GitHub Actions matrix for core-performance-evidence.yml from the data-driven tables.
-$contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw | ConvertFrom-Json
-$plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-plan.json') -Raw | ConvertFrom-Json
+$contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
+$plan = Get-Content -LiteralPath $PlanPath -Raw | ConvertFrom-Json
+if ($plan.release -cne $contract.release) { throw 'The performance plan and contract must bind the same release.' }
 $map = Get-Content -LiteralPath $VariantMapPath -Raw | ConvertFrom-Json
 $known = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'primary-hot-path')
 $selected = @($Families.Split(',', ([StringSplitOptions]::RemoveEmptyEntries -bor [StringSplitOptions]::TrimEntries)))

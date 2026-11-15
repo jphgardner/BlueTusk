@@ -165,6 +165,8 @@ function Add-Expected
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
 & (Join-Path $PSScriptRoot 'verify-performance-leadership-contract.ps1') -ContractPath $ContractPath | Out-Null
 $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
+$activeCore = $contract.release -ceq '1.2.0'
+if ($activeCore -and $Scope -cne 'Core') { throw 'The 1.2 performance contract applies to Core evidence.' }
 $scopeFamilies = if ($Scope -eq 'Core') { @($tracks.stableFamilies) } else { @($tracks.previewFamilies) }
 $evidenceRoot = Split-Path -Parent (Resolve-Path -LiteralPath $EvidencePath).Path
 $evidence = Get-Content -LiteralPath $EvidencePath -Raw | ConvertFrom-Json
@@ -190,6 +192,13 @@ function Assert-NotDiagnostic
     }
 }
 Assert-NotDiagnostic $evidence 'Performance evidence'
+if ($activeCore)
+{
+    $contractHash = (Get-FileHash -LiteralPath $ContractPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($evidence.pipeline.contractSha256 -cne $contractHash -or
+        $evidence.diagnostic -cne $false -or $evidence.synthetic -cne $false)
+    { throw 'Core 1.2 performance evidence requires the exact contract hash and qualification labels.' }
+}
 
 $null = Assert-EvidenceArtifact $evidence.consolidatedReportPath `
     $evidence.consolidatedReportSha256 'Consolidated report'
@@ -212,6 +221,15 @@ foreach ($environmentName in $environmentNames)
     }
     $manifestPath = Assert-EvidenceArtifact $matches[0].environmentManifestPath `
         $matches[0].environmentManifestSha256 "$environmentName environment manifest"
+    if ($activeCore)
+    {
+        $summaryPath = Assert-EvidenceArtifact $matches[0].summaryPath $matches[0].summarySha256 "$environmentName performance summary"
+        $summary = Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json
+        Assert-NotDiagnostic $summary "Performance summary '$environmentName'"
+        if ($summary.release -cne $contract.release -or $summary.contract.sha256 -cne $contractHash -or
+            $summary.sourceCommit -cne $ExpectedCommit -or $summary.scope -cne $Scope -or $summary.os -cne $environmentName)
+        { throw "Performance summary '$environmentName' has the wrong release, contract, or candidate." }
+    }
     $null = Assert-EvidenceArtifact $matches[0].rawSamplesPath `
         $matches[0].rawSamplesSha256 "$environmentName raw samples"
     $digests = @($matches[0].containerImageDigests)

@@ -64,6 +64,7 @@ jobs:
           EVIDENCE_CLASS: ${{ inputs.evidence_class }}
           FAMILIES: ${{ inputs.families }}
           TRIALS: ${{ inputs.trials }}
+          CONFIRMATION: ${{ inputs.confirmation }}
         run: |
           if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'candidate_sha must be a full lowercase Git SHA.' }
           if ((git rev-parse HEAD).Trim() -cne $env:CANDIDATE_SHA) { throw 'Checked-out commit differs from candidate_sha.' }
@@ -71,8 +72,14 @@ jobs:
               ($env:EVIDENCE_CLASS -eq 'qualification' -and [int]$env:TRIALS -lt 30) -or [int]$env:TRIALS -lt 3) {
             throw 'Trials must be 30..50 for qualification and 3..50 for diagnostics.'
           }
-          ./eng/verify-performance-leadership-contract.ps1
-          $plan = ./eng/get-core-performance-capture-plan.ps1 -EvidenceClass $env:EVIDENCE_CLASS -Families $env:FAMILIES | ConvertFrom-Json
+          $release = ./eng/resolve-core-performance-release.ps1 -ExpectedCommit $env:CANDIDATE_SHA
+          if ($env:CONFIRMATION -cne $release.Confirmation) { throw 'The confirmation token does not match the candidate release.' }
+          ./eng/verify-performance-leadership-contract.ps1 -ContractPath $release.ContractPath
+          $planArguments = @{
+            EvidenceClass = $env:EVIDENCE_CLASS; Families = $env:FAMILIES
+            ContractPath = $release.ContractPath; PlanPath = $release.PlanPath
+          }
+          $plan = ./eng/get-core-performance-capture-plan.ps1 @planArguments | ConvertFrom-Json
           if ($env:EVIDENCE_CLASS -eq 'qualification') {
             $unavailable = @($plan.capture.include | Where-Object { $_.status -cnotin @('ready', 'implemented') })
             if ($unavailable.Count -ne 0) {
@@ -171,21 +178,21 @@ jobs:
           CANDIDATE_SHA: ${{ inputs.candidate_sha }}
           EVIDENCE_OS: ${{ matrix.os }}
         run: |
-          if ((git rev-parse HEAD).Trim() -cne $env:CANDIDATE_SHA) { throw 'Checked-out commit differs from candidate_sha.' }
+          $release = ./eng/resolve-core-performance-release.ps1 -ExpectedCommit $env:CANDIDATE_SHA
           dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release
           if ($LASTEXITCODE -ne 0) { throw 'Benchmark build failed.' }
           dotnet build eng/PerformanceEvidenceChecker/PerformanceEvidenceChecker.csproj --configuration Release
           if ($LASTEXITCODE -ne 0) { throw 'Checker build failed.' }
           $osRoot = Join-Path $env:BLUETUSK_EVIDENCE_STORE "$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/$env:EVIDENCE_OS"
           dotnet benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll --performance-evidence-generate `
-            $osRoot $env:CANDIDATE_SHA $env:EVIDENCE_OS eng/performance-leadership-contract.json eng/performance-variant-map.json
+            $osRoot $env:CANDIDATE_SHA $env:EVIDENCE_OS $release.ContractPath eng/performance-variant-map.json
           if ($LASTEXITCODE -ne 0) { throw 'Summary generation failed.' }
           $topology = if ($env:EVIDENCE_OS -eq 'windows') {
             'Windows runner process -> 127.0.0.1 published Docker Desktop (WSL2) port -> Linux PostgreSQL container'
           } else { 'Linux runner container -> fixture Docker network -> Linux PostgreSQL container (same physical host)' }
           ./eng/write-performance-environment-manifest.ps1 -OsRoot $osRoot -ExpectedCommit $env:CANDIDATE_SHA -Os $env:EVIDENCE_OS -Topology $topology
           dotnet eng/PerformanceEvidenceChecker/bin/Release/net10.0/PerformanceEvidenceChecker.dll check `
-            $osRoot $env:CANDIDATE_SHA $env:EVIDENCE_OS eng/performance-variant-map.json
+            $osRoot $env:CANDIDATE_SHA $env:EVIDENCE_OS eng/performance-variant-map.json --contract $release.ContractPath
           if ($LASTEXITCODE -ne 0) { throw 'The independent raw-to-summary check failed.' }
           $upload = "artifacts/core-performance-upload/$env:EVIDENCE_OS"
           New-Item -ItemType Directory -Path $upload -Force | Out-Null
@@ -222,7 +229,7 @@ jobs:
           CANDIDATE_SHA: ${{ inputs.candidate_sha }}
           EVIDENCE_CLASS: ${{ inputs.evidence_class }}
         run: |
-          if ((git rev-parse HEAD).Trim() -cne $env:CANDIDATE_SHA) { throw 'Checked-out commit differs from candidate_sha.' }
+          $release = ./eng/resolve-core-performance-release.ps1 -ExpectedCommit $env:CANDIDATE_SHA
           dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release
           if ($LASTEXITCODE -ne 0) { throw 'Benchmark build failed.' }
           $performance = 'artifacts/core-performance/performance'
@@ -241,16 +248,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'A verifier or pipeline self-test failed.' }
           $diagnostic = $env:EVIDENCE_CLASS -eq 'diagnostic'
           ./eng/assemble-performance-leadership-evidence.ps1 -EvidenceRoot $performance -ExpectedCommit $env:CANDIDATE_SHA `
-            -VerifierSelfTestLogPath $log -Diagnostic:$diagnostic
+            -VerifierSelfTestLogPath $log -Diagnostic:$diagnostic -ContractPath $release.ContractPath
           if ($diagnostic) {
             $accepted = $false
             try {
-              ./eng/verify-performance-leadership-evidence.ps1 -EvidencePath "$performance/diagnostic-performance-leadership-evidence.json" -ExpectedCommit $env:CANDIDATE_SHA
+              ./eng/verify-performance-leadership-evidence.ps1 -EvidencePath "$performance/diagnostic-performance-leadership-evidence.json" -ExpectedCommit $env:CANDIDATE_SHA -ContractPath $release.ContractPath
               $accepted = $true
             } catch { Write-Output "Expected diagnostic rejection: $($_.Exception.Message)" }
             if ($accepted) { throw 'Diagnostic evidence passed the release verifier.' }
           } else {
-            ./eng/verify-performance-leadership-evidence.ps1 -EvidencePath "$performance/performance-leadership-evidence.json" -ExpectedCommit $env:CANDIDATE_SHA
+            ./eng/verify-performance-leadership-evidence.ps1 -EvidencePath "$performance/performance-leadership-evidence.json" -ExpectedCommit $env:CANDIDATE_SHA -ContractPath $release.ContractPath
           }
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()

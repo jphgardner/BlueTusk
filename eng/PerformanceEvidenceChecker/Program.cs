@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 
 // Independent raw-to-summary checker. Usage:
 //   PerformanceEvidenceChecker check <osRoot> <expectedCommit> <windows|linux> <variantMapPath> [reportPath]
+//   PerformanceEvidenceChecker check <osRoot> <expectedCommit> <windows|linux> <variantMapPath> --contract <path> [reportPath]
 //   PerformanceEvidenceChecker self-test
 try
 {
@@ -19,11 +20,17 @@ try
             // Re-check retained evidence later (for example before emitting a local record) without touching it.
             Console.WriteLine(Checker.Check(root, commit, os, map, report));
             return 0;
+        case ["check", var root, var commit, var os, var map, "--contract", var contract]:
+            Console.WriteLine(Checker.Check(root, commit, os, map, null, contract));
+            return 0;
+        case ["check", var root, var commit, var os, var map, "--contract", var contract, var report]:
+            Console.WriteLine(Checker.Check(root, commit, os, map, report, contract));
+            return 0;
         case ["self-test"]:
             Console.WriteLine(Checker.SelfTest());
             return 0;
         default:
-            Console.Error.WriteLine("Usage: check <osRoot> <expectedCommit> <windows|linux> <variantMapPath> [reportPath] | self-test");
+            Console.Error.WriteLine("Usage: check <osRoot> <expectedCommit> <windows|linux> <variantMapPath> [--contract <path>] [reportPath] | self-test");
             return 2;
     }
 }
@@ -62,7 +69,8 @@ internal static class Checker
 
     private sealed record TrialMetrics(string Key, string Role, int Trial, string Path, string Sha256, Dictionary<string, double> Values);
 
-    public static string Check(string osRoot, string commit, string os, string variantMapPath, string? reportOverride)
+    public static string Check(string osRoot, string commit, string os, string variantMapPath, string? reportOverride,
+        string? contractPath = null)
     {
         Require(Regex.IsMatch(commit, "^[0-9a-f]{40}$") && os is "windows" or "linux", "An exact commit and windows/linux OS are required.");
         var root = Path.GetFullPath(osRoot);
@@ -71,8 +79,18 @@ internal static class Checker
         var summaryBytes = ReadFile(root, "summary.json");
         using var summaryDocument = JsonDocument.Parse(summaryBytes, DocumentOptions);
         var summary = summaryDocument.RootElement;
+        var release = "1.1.0";
+        if (contractPath is not null)
+        {
+            var contractBytes = File.ReadAllBytes(contractPath);
+            using var contract = JsonDocument.Parse(contractBytes, DocumentOptions);
+            release = Str(contract.RootElement, "release");
+            Require(release is "1.1.0" or "1.2.0", "The selected contract must identify a supported release.");
+            Require(Str(summary.GetProperty("contract"), "sha256") == Convert.ToHexStringLower(SHA256.HashData(contractBytes)),
+                "Summary contract hash differs from the selected contract.");
+        }
         Require(Int(summary, "schemaVersion") == 1 && Str(summary, "evidenceKind") == "bluetusk-performance-summary" &&
-            Str(summary, "release") == "1.1.0" && Str(summary, "scope") == "Core" && Str(summary, "sourceCommit") == commit &&
+            Str(summary, "release") == release && Str(summary, "scope") == "Core" && Str(summary, "sourceCommit") == commit &&
             Str(summary, "os") == os && Str(summary, "architecture") == "x64" && !Bool(summary, "leadershipGatePassed"),
             "Summary identity, release, scope, commit, OS or gate status is invalid.");
         var diagnostic = Bool(summary, "diagnostic");

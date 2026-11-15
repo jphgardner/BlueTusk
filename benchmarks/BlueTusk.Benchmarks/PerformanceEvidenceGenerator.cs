@@ -85,6 +85,11 @@ internal static class PerformanceEvidenceGenerator
         var mapBytes = await File.ReadAllBytesAsync(variantMapPath);
         using var contract = JsonDocument.Parse(contractBytes, new JsonDocumentOptions { AllowDuplicateProperties = false });
         using var map = JsonDocument.Parse(mapBytes, new JsonDocumentOptions { AllowDuplicateProperties = false });
+        var release = contract.RootElement.GetProperty("release").GetString();
+        if (release is not ("1.1.0" or "1.2.0"))
+        {
+            throw new InvalidDataException("The performance contract must identify a supported release.");
+        }
         var expected = ExpectedCoreWorkloads(contract.RootElement, os);
 
         var inputs = new List<InputSummary>();
@@ -218,7 +223,7 @@ internal static class PerformanceEvidenceGenerator
         {
             SchemaVersion = 1,
             EvidenceKind = "bluetusk-performance-summary",
-            Release = "1.1.0",
+            Release = release,
             Scope = "Core",
             SourceCommit = expectedCommit,
             Os = os,

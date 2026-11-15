@@ -109,7 +109,13 @@ if ($runtime.schemaVersion -ne 1 -or $runtime.sourceCommit -cne $ExpectedCommit 
 { throw 'The exact candidate is missing a complete verified runtime matrix.' }
 
 $perfManifest = Resolve-CoreEvidenceFile $root 'performance/performance/performance-leadership-evidence.json'
-& (Join-Path $PSScriptRoot 'verify-performance-leadership-evidence.ps1') -EvidencePath $perfManifest -ExpectedCommit $ExpectedCommit -Scope Core | Out-Null
+$performanceRelease = & (Join-Path $PSScriptRoot 'resolve-core-performance-release.ps1') -ExpectedCommit $ExpectedCommit
+if ($performanceRelease.Release -cne $contract.releaseVersion) { throw 'Core performance evidence must bind the package release version.' }
+$performanceArguments = @{
+    EvidencePath = $perfManifest; ExpectedCommit = $ExpectedCommit
+    Scope = 'Core'; ContractPath = $performanceRelease.ContractPath
+}
+& (Join-Path $PSScriptRoot 'verify-performance-leadership-evidence.ps1') @performanceArguments | Out-Null
 
 $streamsReport = Resolve-CoreEvidenceFile $root 'streams/report.json'
 $streamsArguments = @{
