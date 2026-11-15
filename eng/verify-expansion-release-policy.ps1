@@ -127,10 +127,13 @@ foreach ($selectedFamily in $selectedFamilies)
 
     if (-not $armed)
     {
-        if ([string]$publication.channel -cne 'preview' -or
-            [string]::IsNullOrWhiteSpace($suffix))
+        $previewVersion = [string]$publication.channel -ceq 'preview' -and
+            -not [string]::IsNullOrWhiteSpace($suffix)
+        $stableVersion = [string]$publication.channel -ceq 'stable' -and
+            $parsedVersion.Major -ge 1 -and [string]::IsNullOrWhiteSpace($suffix)
+        if (-not $previewVersion -and -not $stableVersion)
         {
-            throw "Unreleased expansion family '$selectedFamily' must retain a preview channel and version."
+            throw "Unreleased expansion family '$selectedFamily' must use a version matching its publication channel."
         }
         continue
     }
