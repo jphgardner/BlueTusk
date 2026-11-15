@@ -23,6 +23,12 @@ if (args is ["--ef-batch-capture", var efOptionsPath, var efRowCount, var efBatc
     return;
 }
 
+if (args is ["--streams-commit-delivery-candidate", var streamsCaptureOptions])
+{
+    await StreamsCommitDeliveryCapture.RunAsync(streamsCaptureOptions);
+    return;
+}
+
 if (args is ["--provider-request-analyze", var captureIndexPath, var captureCommit, var analysisDirectory])
 {
     await ProviderRequestAnalysis.RunAsync(captureIndexPath, captureCommit, analysisDirectory);
