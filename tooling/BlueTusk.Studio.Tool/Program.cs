@@ -22,7 +22,7 @@ internal static class StudioCli
         {
             if (arguments.Count == 0 || arguments is ["--help"] or ["-h"])
             {
-                await output.WriteLineAsync("bluetusk-studio subscriptions|streams|events --endpoint URL [--limit 1..1000] [--after CURSOR] [--stream ALIAS]\nAuthenticate with BLUETUSK_STUDIO_TOKEN. HTTPS is required except for loopback fixtures.\nCommands inspect authorized operational metadata only. Exit: 0 success; 2 unauthorized; 1 invalid/failure.").ConfigureAwait(false);
+                await output.WriteLineAsync(("bluetusk-studio subscriptions|streams|events --endpoint URL [--limit 1..1000] [--after CURSOR] [--stream ALIAS]\nAuthenticate with BLUETUSK_STUDIO_TOKEN. HTTPS is required except for loopback fixtures.\nCommands inspect authorized operational metadata only. Exit: 0 success; 2 unauthorized; 1 invalid/failure.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
                 return 0;
             }
             var route = Parse(arguments);
@@ -41,7 +41,7 @@ internal static class StudioCli
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token).ConfigureAwait(false);
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
-                await error.WriteLineAsync("Studio inspection denied.").ConfigureAwait(false);
+                await error.WriteLineAsync(("Studio inspection denied.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
                 return 2;
             }
             if (!response.IsSuccessStatusCode || response.Content.Headers.ContentLength > MaximumReplyBytes ||
@@ -65,18 +65,18 @@ internal static class StudioCli
             using var json = JsonDocument.Parse(bytes.GetBuffer().AsMemory(0, checked((int)bytes.Length)), new() { MaxDepth = 8 });
             ValidateResponse(arguments[0], json.RootElement);
             // Canonical JSON escaping prevents arbitrary metadata from becoming terminal control sequences.
-            await output.WriteLineAsync(JsonSerializer.Serialize(json.RootElement)).ConfigureAwait(false);
+            await output.WriteLineAsync((JsonSerializer.Serialize(json.RootElement)).AsMemory(), CancellationToken.None).ConfigureAwait(false);
             return 0;
         }
         catch (OperationCanceledException)
         {
-            await error.WriteLineAsync("Studio inspection cancelled or timed out.").ConfigureAwait(false);
+            await error.WriteLineAsync(("Studio inspection cancelled or timed out.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
             return 1;
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
             // HTTP errors, parsing exceptions and authentication inputs never become log text.
-            await error.WriteLineAsync("Studio inspection failed or arguments were invalid.").ConfigureAwait(false);
+            await error.WriteLineAsync(("Studio inspection failed or arguments were invalid.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
             return 1;
         }
     }

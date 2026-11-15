@@ -18,13 +18,13 @@ internal static class SchemaCli
         {
             if (arguments.Length == 0 || arguments[0] is "help" or "--help")
             {
-                await output.WriteLineAsync("bluetusk-schema capture --schemas app,public --output schema.json\n" +
+                await output.WriteLineAsync(("bluetusk-schema capture --schemas app,public --output schema.json\n" +
                     "bluetusk-schema compare --before before.json --after after.json [--output changes.json]\n" +
                     "bluetusk-schema check --baseline schema.json --schemas app,public [--output changes.json]\n" +
                     "bluetusk-schema capture-catalog --schemas app,public --output catalog.json\n" +
                     "bluetusk-schema compare-catalog --before before.json --after after.json [--output changes.json]\n" +
                     "bluetusk-schema check-catalog --baseline catalog.json --schemas app,public [--output changes.json]\n" +
-                    "Database commands read BLUETUSK_SCHEMA_CONNECTION_STRING. Exit 2 = incompatibility/drift; 3 = review; 1 = invalid operation.").ConfigureAwait(false);
+                    "Database commands read BLUETUSK_SCHEMA_CONNECTION_STRING. Exit 2 = incompatibility/drift; 3 = review; 1 = invalid operation.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
                 return 0;
             }
             using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -64,7 +64,7 @@ internal static class SchemaCli
                     if (arguments[0] == "capture-catalog")
                     {
                         await WriteAtomicAsync(Required(options, "output"), SchemaCatalogSerializer.Serialize(catalog), token).ConfigureAwait(false);
-                        await output.WriteLineAsync($"Captured catalogue; fingerprint {catalog.Fingerprint}.").ConfigureAwait(false);
+                        await output.WriteLineAsync(($"Captured catalogue; fingerprint {catalog.Fingerprint}.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
                         return 0;
                     }
                     var baselineCatalog = SchemaCatalogSerializer.Deserialize(await ReadBytesAsync(Required(options, "baseline"), token).ConfigureAwait(false));
@@ -74,7 +74,7 @@ internal static class SchemaCli
                 if (arguments[0] == "capture")
                 {
                     await WriteAtomicAsync(Required(options, "output"), SchemaSnapshotSerializer.Serialize(current), token).ConfigureAwait(false);
-                    await output.WriteLineAsync($"Captured {current.Relations.Count} relations; fingerprint {current.Fingerprint}.").ConfigureAwait(false);
+                    await output.WriteLineAsync(($"Captured {current.Relations.Count} relations; fingerprint {current.Fingerprint}.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
                     return 0;
                 }
                 var baseline = await ReadAsync(Required(options, "baseline"), token).ConfigureAwait(false);
@@ -96,7 +96,7 @@ internal static class SchemaCli
                 IOException => "snapshot file operation failed",
                 _ => "database or schema operation failed",
             };
-            await error.WriteLineAsync("Schema verification failed: " + category + ".").ConfigureAwait(false);
+            await error.WriteLineAsync(("Schema verification failed: " + category + ".").AsMemory(), CancellationToken.None).ConfigureAwait(false);
             return 1;
         }
     }
@@ -168,7 +168,7 @@ internal static class SchemaCli
         {
             await WriteAtomicAsync(reportPath, JsonSerializer.SerializeToUtf8Bytes(report, SchemaCliJson.Default.SchemaCliReport), cancellationToken).ConfigureAwait(false);
         }
-        await output.WriteLineAsync($"Schema changes: {comparison.Changes.Count}; drift={report.HasDrift}; incompatible={report.HasIncompatibleChanges}; review={report.RequiresReview}.").ConfigureAwait(false);
+        await output.WriteLineAsync(($"Schema changes: {comparison.Changes.Count}; drift={report.HasDrift}; incompatible={report.HasIncompatibleChanges}; review={report.RequiresReview}.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
         return strict && report.HasDrift || report.HasIncompatibleChanges ? 2 : report.RequiresReview ? 3 : 0;
     }
 
@@ -180,7 +180,7 @@ internal static class SchemaCli
             comparison.HasIncompatibleChanges, comparison.RequiresReview, comparison.Relations.Changes, comparison.Changes);
         if (reportPath is not null)
         { await WriteAtomicAsync(reportPath, JsonSerializer.SerializeToUtf8Bytes(report, SchemaCliJson.Default.SchemaCatalogCliReport), cancellationToken).ConfigureAwait(false); }
-        await output.WriteLineAsync($"Catalogue changes: {comparison.Relations.Changes.Count + comparison.Changes.Count}; drift={report.HasDrift}; incompatible={report.HasIncompatibleChanges}; review={report.RequiresReview}.").ConfigureAwait(false);
+        await output.WriteLineAsync(($"Catalogue changes: {comparison.Relations.Changes.Count + comparison.Changes.Count}; drift={report.HasDrift}; incompatible={report.HasIncompatibleChanges}; review={report.RequiresReview}.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
         return strict && report.HasDrift || report.HasIncompatibleChanges ? 2 : report.RequiresReview ? 3 : 0;
     }
 }
