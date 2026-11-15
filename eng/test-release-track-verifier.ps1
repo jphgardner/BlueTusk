@@ -21,6 +21,8 @@ try
         throw 'An unsupported Graph stable release was not rejected.'
     }
     $mutations = @(
+        { param($value) $value.releaseVersion = '1.1.0' },
+        { param($value) $value.graph.nativeExtension.version = '1.0' },
         { param($value) $value.stableFamilies += 'ContinuousGraph' },
         { param($value) $value.previewFamilies = @() },
         { param($value) $value.stablePostgreSqlMajors += 19 },

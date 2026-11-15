@@ -11,7 +11,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $tracks = Get-Content -LiteralPath $TrackPath -Raw | ConvertFrom-Json
 $core = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane')
-if ($tracks.schemaVersion -ne 1 -or $tracks.releaseVersion -cne '1.1.0' -or
+if ($tracks.schemaVersion -ne 1 -or $tracks.releaseVersion -cnotmatch '^[1-9][0-9]*\.[0-9]+\.[0-9]+$' -or
     @($tracks.stableFamilies).Count -ne $core.Count -or
     @(Compare-Object $core @($tracks.stableFamilies) -SyncWindow 0).Count -ne 0 -or
     @($tracks.previewFamilies).Count -ne 1 -or $tracks.previewFamilies[0] -cne 'ContinuousGraph' -or
@@ -41,6 +41,27 @@ if ($Family -eq 'ContinuousGraph' -and $Channel -eq 'stable')
     throw 'ContinuousGraph stable publication is unavailable: qualify portable PostgreSQL on the independent Graph release track first.'
 }
 $families = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'product-families.json') -Raw | ConvertFrom-Json
+$repositoryRoot = Split-Path $PSScriptRoot -Parent
+foreach ($familyEntry in $families.families.PSObject.Properties)
+{
+    [xml]$version = Get-Content -LiteralPath (Join-Path $repositoryRoot $familyEntry.Value.versionFile) -Raw
+    if ([string]$version.Project.PropertyGroup.VersionPrefix -cne $tracks.releaseVersion -or
+        -not [string]::IsNullOrWhiteSpace([string]$version.Project.PropertyGroup.VersionSuffix))
+    {
+        throw "Release-track version '$($tracks.releaseVersion)' must match the stable candidate package version for '$($familyEntry.Name)'."
+    }
+}
+$nativeExtension = $tracks.graph.nativeExtension
+$controlPath = Join-Path $repositoryRoot 'extensions/bluetusk_graph/bluetusk_graph.control'
+$control = Get-Content -LiteralPath $controlPath -Raw
+if ($nativeExtension.name -cne 'bluetusk_graph' -or
+    $nativeExtension.version -cnotmatch '^\d+\.\d+$' -or
+    $control -cnotmatch ("(?m)^default_version = '" + [regex]::Escape($nativeExtension.version) + "'\r?$") -or
+    $nativeExtension.releaseWorkflow -cne 'postgresql-graph-engine.yml' -or
+    -not (Test-Path -LiteralPath (Join-Path $repositoryRoot ".github/workflows/$($nativeExtension.releaseWorkflow)") -PathType Leaf))
+{
+    throw 'The release track must match the installed native Graph version and qualification workflow.'
+}
 foreach ($coreFamily in $core)
 {
     foreach ($dependency in @($families.families.PSObject.Properties[$coreFamily].Value.releaseDependencies))
