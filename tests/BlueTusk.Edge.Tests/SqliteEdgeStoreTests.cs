@@ -488,7 +488,7 @@ public sealed class SqliteEdgeStoreTests
         } while (cursor is not null);
         Assert.Equal(128, ids.Count);
         Assert.Equal(128, ids.Distinct(StringComparer.Ordinal).Count());
-    });
+    }, new SqliteEdgeOptions { DatabasePath = "placeholder", BusyTimeoutSeconds = 30 });
 
     [Fact]
     public Task Synchronization_replays_one_stable_mutation_after_server_commit_before_local_ack_loss() => WithReadyStoreAsync(async (store, options) =>
