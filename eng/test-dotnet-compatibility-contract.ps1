@@ -64,6 +64,18 @@ Assert-Rejected -Name mutable-legacy-image -ExpectedMessage 'immutable official 
     param($fixture)
     $fixture.legacyLinuxContainers.'net5.0'.image = 'mcr.microsoft.com/dotnet/sdk:5.0'
 }
+Assert-Rejected -Name mutable-edge-host-image -ExpectedMessage 'pinned official host and a verified Dockerfile' -Mutate {
+    param($fixture)
+    $fixture.legacyLinuxContainers.'net5.0'.edgeHost.image = 'mcr.microsoft.com/dotnet/sdk:10.0-noble'
+}
+Assert-Rejected -Name changed-edge-image-recipe -ExpectedMessage 'pinned official host and a verified Dockerfile' -Mutate {
+    param($fixture)
+    $fixture.legacyLinuxContainers.'net5.0'.edgeHost.dockerfileSha256 = '1' * 64
+}
+Assert-Rejected -Name mutable-docker-service-fixture -ExpectedMessage 'pinned upstream image by digest' -Mutate {
+    param($fixture)
+    ($fixture.dockerServiceFixtures | Where-Object kind -CEQ 'redis').image = 'redis:8-alpine'
+}
 Assert-Rejected -Name mutable-postgresql-image -ExpectedMessage 'immutable Linux image' -Mutate {
     param($fixture)
     $fixture.postgreSqlFixture.linuxImage = 'postgres:18-alpine'
@@ -82,7 +94,7 @@ Assert-Rejected -Name wrong-minio-platform-archive -ExpectedMessage 'verified di
 }
 Assert-Rejected -Name wrong-cli-command -ExpectedMessage 'Invalid installed CLI smoke mapping' -Mutate {
     param($fixture)
-    ($fixture.cliTools | Where-Object packageId -CEQ 'BlueTusk.Streams.Tool').command = 'bluetusk'
+    ($fixture.cliTools | Where-Object packageId -CEQ 'BlueTusk.Streams.Tool').command = 'bluetusk-unmapped'
 }
 Assert-Rejected -Name omits-live-postgresql-suite -ExpectedMessage 'live test suites must use the pinned' -Mutate {
     param($fixture)

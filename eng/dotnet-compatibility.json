@@ -115,38 +115,46 @@
     {
       "project": "extensions/BlueTusk.Extensions.PostGIS.EntityFrameworkCore/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests.csproj"
+      ]
     },
     {
       "project": "extensions/BlueTusk.Extensions.PostGIS/BlueTusk.Extensions.PostGIS.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Extensions.PostGIS.Tests/BlueTusk.Extensions.PostGIS.Tests.csproj"
+      ]
     },
     {
       "project": "extensions/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj"
+      ]
     },
     {
       "project": "extensions/BlueTusk.Extensions.TimescaleDB/BlueTusk.Extensions.TimescaleDB.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Extensions.TimescaleDB.Tests/BlueTusk.Extensions.TimescaleDB.Tests.csproj"
+      ]
     },
     {
       "project": "identity/BlueTusk.Identity.Aws/BlueTusk.Identity.Aws.csproj",
@@ -1169,6 +1177,24 @@
   ],
   "postgreSqlExtensionFixtures": [
     {
+      "extension": "postgis",
+      "version": "18.7",
+      "extensionVersion": "3.7.0",
+      "linuxImage": "postgis/postgis:18-3.7@sha256:5310df603032fde023a90f448971f432b3dc89c2c11d570c073431b3d894d5a3",
+      "windowsArchive": {
+        "url": "https://get.enterprisedb.com/postgresql/postgresql-18.7-1-windows-x64-binaries.zip",
+        "sha256": "ead0bbc27fb678fa24dcf86b738981323042abd073c744103bf7f3aed23f9a33"
+      },
+      "windowsExtensionArchive": {
+        "url": "https://download.osgeo.org/postgis/windows/pg18/postgis-bundle-pg18-3.7.0x64.zip",
+        "sha256": "ac9e9486b3f9161ad86aea948c99b34ca67438f59263f91d2bcb961b51c7a419"
+      },
+      "testProjects": [
+        "tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests.csproj",
+        "tests/BlueTusk.Extensions.PostGIS.Tests/BlueTusk.Extensions.PostGIS.Tests.csproj"
+      ]
+    },
+    {
       "extension": "timescaledb",
       "version": "18.6",
       "extensionVersion": "2.32.0",
@@ -1181,7 +1207,10 @@
         "url": "https://github.com/timescale/timescaledb/releases/download/2.32.0/timescaledb-postgresql-18-windows-amd64.zip",
         "sha256": "309eba6bb24c3562b9ecfd279ff1bbe0eb638eaed8b16395c839047c670a9c45"
       },
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj",
+        "tests/BlueTusk.Extensions.TimescaleDB.Tests/BlueTusk.Extensions.TimescaleDB.Tests.csproj"
+      ]
     }
   ],
   "dockerServiceFixtures": [
