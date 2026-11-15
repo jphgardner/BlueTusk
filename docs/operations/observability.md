@@ -1,6 +1,6 @@
 # Production observability and SLOs
 
-BlueTusk V1 exposes one OpenTelemetry meter per product area and treats
+BlueTusk exposes one OpenTelemetry meter per product area and treats
 telemetry as a versioned operational contract. Metrics are low-overhead when no
 listener is attached, exporter-neutral, and deliberately avoid SQL text,
 parameter values, tenant security scopes, resume tokens, payloads and
@@ -23,8 +23,7 @@ tag is not emitted, or a new metric has no cardinality review.
 | `BlueTusk.ContinuousGraph` | 6 | Active/prepared evaluations, settlement outcome, event count, affected keys, authoritative query count and lifecycle duration |
 | `BlueTusk.ControlPlane` | 3 | Active operations, reconcile/delete outcomes and operation duration |
 
-The 62-instrument count is a minimum gate, not an invitation to add arbitrary
-metrics. Every new series consumes memory, storage and query cost.
+Choose metric series for the features you deploy. Each series consumes memory, storage, and query capacity.
 
 ## Application registration
 
@@ -75,7 +74,7 @@ attributes.
 
 - an OTLP Collector configuration with a memory limiter, batching, Prometheus
   export and a required TLS trace backend;
-- Prometheus rules for all 14 primary V1 SLO alerts plus six ratio-SLO
+- Prometheus rules for all 14 primary SLO alerts plus six ratio-SLO
   slow-burn alerts; and
 - a Grafana dashboard for all six meters.
 
@@ -224,8 +223,7 @@ The reference profile requires rehearsed evidence, not a written intention:
 | Live replay | 30 minutes | Durable replay-store commit | Store restore plus signed resume and forced reset |
 | Control Plane | 60 minutes | 15 minutes desired state; audit exported externally | Database restore, convergence, audit export and delete-protection check |
 
-Record date, candidate commit, operators, timings, object counts, hashes,
-failure observations and follow-up actions in the release evidence directory.
+Record the restore duration, recovered position, and any application errors in your runbook.
 
 ## Telemetry failure
 

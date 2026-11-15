@@ -4,393 +4,115 @@ import type { GuideManifestEntry } from '../../app/content/models';
 export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "graph",
-    "categoryLabel": "Graph",
-    "slug": "sql-pgq",
-    "summary": "Run typed EF graph queries over existing PostgreSQL tables and opt in to native SQL/PGQ where supported.",
-    "keywords": [
-      "bluetusk graphs",
-      "portable graph",
-      "ef core",
-      "sql/pgq",
-      "property graph"
+    "categoryLabel": "Graphs",
+    "slug": "property-graphs",
+    "title": "Query a property graph",
+    "summary": "Map vertex and edge tables and run typed, portable graph patterns.",
+    "order": 0,
+    "headings": [
+      {
+        "id": "1-map-existing-tables",
+        "text": "1. Map existing tables",
+        "level": 2
+      },
+      {
+        "id": "2-query-a-directed-hop",
+        "text": "2. Query a directed hop",
+        "level": 2
+      },
+      {
+        "id": "3-index-the-direction-you-traverse",
+        "text": "3. Index the direction you traverse",
+        "level": 2
+      },
+      {
+        "id": "choose-the-next-operation",
+        "text": "Choose the next operation",
+        "level": 2
+      }
     ],
-    "order": 10,
-    "listed": true,
-    "title": "Query connected data with BlueTusk Graphs",
     "sourcePath": "docs/graph/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/README.md",
-    "headings": [
-      {
-        "id": "query-connected-data-with-bluetusk-graphs",
-        "text": "Query connected data with BlueTusk Graphs",
-        "level": 1
-      },
-      {
-        "id": "run-the-sample",
-        "text": "Run the sample",
-        "level": 2
-      },
-      {
-        "id": "select-native-sql-pgq",
-        "text": "Select native SQL/PGQ",
-        "level": 2
-      }
-    ],
-    "wordCount": 282,
-    "readMinutes": 2,
-    "searchText": "Query connected data with BlueTusk Graphs BlueTusk Graphs turns EF graph patterns into parameterized PostgreSQL joins. Map your existing tables as vertices and edges with `HasPropertyGraph`, then query them with `PropertyGraph(...).Match(...).Select(...)`. The default backend works on PostgreSQL 15–18 without SQL/PGQ, a server extension, or graph DDL. Use [Continuous Graph](../continuous-graph/README.md) to maintain a bounded result after commits. **Availability.** Portable Graph is implemented and locally verified on PostgreSQL 15–18. This guide applies to a checkout or local candidate containing the portable implementation. The published `1.1.0-rc.1` packages predate it; the local Core qualification bundle does not include it. [Stable qualification](../releases/release-tracks.md#portable-graph-status) still requires cross-platform performance and 24-hour recovery evidence. Run the sample The sample creates two temporary tables and prints `Ada knows Grace`. For real schemas, index edge source columns for outgoing traversal and edge destination columns for incoming traversal. Index both for undirected traversal. For composite endpoints, index all key columns together in endpoint order. Keep selective predicates on the starting vertex and configure an EF command timeout for broad queries. Select native SQL/PGQ Use the same model declaration and select the backend in EF options: Native mode requires verified server support and the native graph objects. PostgreSQL 19 Beta 4 removed SQL/PGQ. The pinned Beta 3 fixture is retained for native regression coverage. The default portable mode uses ordinary table permissions and row-level security. [PostgreSQL Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/) See the [graph reference](reference.md) for typed mapping and migration guidance and the [release tracks](../releases/release-tracks.md) for qualification status.",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Query connected data with BlueTusk Graphs</h1>\n<p>BlueTusk Graphs turns EF graph patterns into parameterized PostgreSQL joins.\nMap your existing tables as vertices and edges with <code>HasPropertyGraph</code>, then\nquery them with <code>PropertyGraph(...).Match(...).Select(...)</code>. The default\nbackend works on PostgreSQL 15–18 without SQL/PGQ, a server extension, or graph\nDDL. Use <a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a> to maintain a bounded\nresult after commits.</p>\n<p><strong>Availability.</strong> Portable Graph is implemented and locally verified on\nPostgreSQL 15–18. This guide applies to a checkout or local candidate containing\nthe portable implementation. The published <code>1.1.0-rc.1</code> packages predate it; the local Core qualification bundle does not include it.\n<a href=\"/documentation/operations/releases-release-tracks#portable-graph-status\">Stable qualification</a>\nstill requires cross-platform performance and 24-hour recovery evidence.</p>\n<h2>Run the sample</h2>\n"
+        "html": "<p>Map existing PostgreSQL tables as vertices and edges. With the default\nBlueTusk Graphs compatibility mode, EF Core translates a typed graph pattern\ninto parameterized joins over those tables. Use PostgreSQL 15–18 and a\nBlueTusk 1.2.</p>\n<p>Bounded neighbor, reachability, and shortest-path operations prefer the\n<a href=\"/documentation/graph/engine\">BlueTusk server engine</a> when a compatible extension and a matching\ngraph registration are available. They use portable traversal when those\nprerequisites are unavailable. <code>Match(...).Select(...)</code> composes over\nrelational joins independently of the traversal engine.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "docker compose -f eng/compose/postgres.yml up -d --wait postgres18\n$fixturePassword = docker compose -f eng/compose/postgres.yml exec -T postgres18 printenv POSTGRES_PASSWORD\n$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Port=5418;Username=postgres;Password=$fixturePassword;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet run --project samples/BlueTusk.Samples.Graph\n",
-        "highlighted": "docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml up <span class=\"hljs-literal\">-d</span> <span class=\"hljs-literal\">--wait</span> postgres18\n<span class=\"hljs-variable\">$fixturePassword</span> = docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml exec <span class=\"hljs-literal\">-T</span> postgres18 printenv POSTGRES_PASSWORD\n<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5418;Username=postgres;Password=<span class=\"hljs-variable\">$fixturePassword</span>;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.Graph\n",
-        "language": "powershell"
+        "kind": "heading",
+        "heading": {
+          "id": "1-map-existing-tables",
+          "text": "1. Map existing tables",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>The sample creates two temporary tables and prints <code>Ada knows Grace</code>. For real\nschemas, index edge source columns for outgoing traversal and edge destination\ncolumns for incoming traversal. Index both for undirected traversal. For\ncomposite endpoints, index all key columns together in endpoint order. Keep\nselective predicates on the starting vertex and configure an EF command timeout\nfor broad queries.</p>\n<h2>Select native SQL/PGQ</h2>\n<p>Use the same model declaration and select the backend in EF options:</p>\n"
+        "html": "<p>Configure normal EF table mappings first. This example uses <code>people</code> as\nvertices and <code>friendships</code> as directed edges, with a foreign key at each\nendpoint.</p>\n"
       },
       {
         "kind": "code",
-        "code": "options.UseBlueTusk(connectionString,\n    ef => ef.UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq));\n",
-        "highlighted": "options.UseBlueTusk(connectionString,\n    ef =&gt; ef.UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq));\n",
+        "code": "modelBuilder.HasPropertyGraph(\"social\", graph =>\n{\n    graph.Vertex<Person>(\"people\", vertex => vertex\n        .HasLabel(\"person\")\n        .HasKey(x => x.Id)\n        .Properties(x => new { x.Id, x.Name }));\n\n    graph.Edge<Friendship>(\"friendships\", edge => edge\n        .HasLabel(\"follows\")\n        .HasKey(x => x.Id)\n        .Properties(x => new { x.Id })\n        .HasSource<Person>(x => x.FromPersonId, x => x.Id)\n        .HasDestination<Person>(x => x.ToPersonId, x => x.Id));\n});",
+        "highlighted": "modelBuilder.HasPropertyGraph(<span class=\"hljs-string\">&quot;social&quot;</span>, graph =&gt;\n{\n    graph.Vertex&lt;Person&gt;(<span class=\"hljs-string\">&quot;people&quot;</span>, vertex =&gt; vertex\n        .HasLabel(<span class=\"hljs-string\">&quot;person&quot;</span>)\n        .HasKey(x =&gt; x.Id)\n        .Properties(x =&gt; <span class=\"hljs-keyword\">new</span> { x.Id, x.Name }));\n\n    graph.Edge&lt;Friendship&gt;(<span class=\"hljs-string\">&quot;friendships&quot;</span>, edge =&gt; edge\n        .HasLabel(<span class=\"hljs-string\">&quot;follows&quot;</span>)\n        .HasKey(x =&gt; x.Id)\n        .Properties(x =&gt; <span class=\"hljs-keyword\">new</span> { x.Id })\n        .HasSource&lt;Person&gt;(x =&gt; x.FromPersonId, x =&gt; x.Id)\n        .HasDestination&lt;Person&gt;(x =&gt; x.ToPersonId, x =&gt; x.Id));\n});",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Native mode requires verified server support and the native graph objects.\nPostgreSQL 19 Beta 4 removed SQL/PGQ. The pinned Beta 3 fixture is retained\nfor native regression coverage. The default portable mode uses ordinary table\npermissions and row-level security. <a href=\"https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/\" target=\"_blank\" rel=\"noreferrer\">PostgreSQL Beta 4 announcement</a></p>\n<p>See the <a href=\"/documentation/graph/graph-reference\">graph reference</a> for typed mapping and migration guidance\nand the <a href=\"/documentation/operations/releases-release-tracks\">release tracks</a> for qualification status.</p>\n"
+        "html": "<p>Migrate the underlying tables and endpoint indexes as usual. Portable graph\nmappings are stored in EF metadata, and their migrations create only\nrelational database objects.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "2-query-a-directed-hop",
+          "text": "2. Query a directed hop",
+          "level": 2
+        }
+      },
+      {
+        "kind": "code",
+        "code": "var matches = await db.PropertyGraph(\"social\")\n    .Match(pattern => pattern\n        .Vertex<Person>(\"source\", person => person.Id == personId)\n        .Outgoing<Friendship>(\"follow\")\n        .Vertex<Person>(\"target\"))\n    .Select<FollowMatch>(projection => projection\n        .Property<Friendship, long>(\"follow\", edge => edge.Id, row => row.EdgeId)\n        .Property<Person, string>(\"target\", person => person.Name, row => row.Name))\n    .OrderBy(row => row.EdgeId)\n    .Take(50)\n    .ToListAsync(cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> matches = <span class=\"hljs-keyword\">await</span> db.PropertyGraph(<span class=\"hljs-string\">&quot;social&quot;</span>)\n    .Match(pattern =&gt; pattern\n        .Vertex&lt;Person&gt;(<span class=\"hljs-string\">&quot;source&quot;</span>, person =&gt; person.Id == personId)\n        .Outgoing&lt;Friendship&gt;(<span class=\"hljs-string\">&quot;follow&quot;</span>)\n        .Vertex&lt;Person&gt;(<span class=\"hljs-string\">&quot;target&quot;</span>))\n    .Select&lt;FollowMatch&gt;(projection =&gt; projection\n        .Property&lt;Friendship, <span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-string\">&quot;follow&quot;</span>, edge =&gt; edge.Id, row =&gt; row.EdgeId)\n        .Property&lt;Person, <span class=\"hljs-built_in\">string</span>&gt;(<span class=\"hljs-string\">&quot;target&quot;</span>, person =&gt; person.Name, row =&gt; row.Name))\n    .OrderBy(row =&gt; row.EdgeId)\n    .Take(<span class=\"hljs-number\">50</span>)\n    .ToListAsync(cancellationToken);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Define <code>FollowMatch</code> as a class with writable <code>long EdgeId</code> and <code>string Name</code>\nproperties. You can compose ordinary EF filtering, ordering, and limits on\nthe projected rows. Each matching walk produces a row. Parallel edges can\ntherefore return the same target more than once.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "3-index-the-direction-you-traverse",
+          "text": "3. Index the direction you traverse",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Index the edge’s source columns for outgoing queries and destination columns\nfor incoming queries. Keep both indexes for undirected traversal. Index\ncomposite endpoint keys together in the declared key order. Use an anchor\npredicate, a bounded path, and a timeout for high-degree vertices. Check\n<code>EXPLAIN (ANALYZE, BUFFERS)</code> against representative data before relying on a\nparticular plan.</p>\n<p>The database role needs access to the mapped vertex and edge tables. Apply\ntenant restrictions through PostgreSQL RLS or explicit predicates in the graph\nquery. EF filters on a source entity do not automatically constrain the\nvertices and edges inside the generated SQL.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "choose-the-next-operation",
+          "text": "Choose the next operation",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li>Use the <a href=\"/documentation/graph/graph-reference\">Graph reference</a> for bounded patterns, composite keys, native SQL/PGQ, and migration compatibility.</li>\n<li>Use <a href=\"/documentation/graph/traversals\">bounded traversals</a> for neighbors, reachability, and shortest paths.</li>\n<li>Use <a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a> for authorized results that refresh after relevant commits.</li>\n<li>Run the <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/samples/BlueTusk.Samples.Graph/\">Graph sample</a> from a checkout to see a complete model and query.</li>\n</ul>\n"
       }
     ]
   },
   {
     "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
-    "slug": "continuous-graph-api-compatibility",
-    "summary": "The immutable 1.0 surface and additive 1.1 candidate surface are locked by two independent gates:",
-    "keywords": [
-      "docs",
-      "continuous",
-      "graph",
-      "api",
-      "compatibility"
-    ],
-    "order": 1049,
-    "title": "ContinuousGraph public API compatibility",
-    "sourcePath": "docs/continuous-graph/api-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/api-compatibility.md",
-    "headings": [
-      {
-        "id": "continuousgraph-public-api-compatibility",
-        "text": "ContinuousGraph public API compatibility",
-        "level": 1
-      }
-    ],
-    "wordCount": 171,
-    "readMinutes": 1,
-    "searchText": "ContinuousGraph public API compatibility The immutable 1.0 surface and additive 1.1 candidate surface are locked by two independent gates: Roslyn PublicApiAnalyzers reject undeclared additions and incompatible removals in both ContinuousGraph packages while allowing reviewed additive 1.1 APIs; and [`eng/continuous-graph-api-freeze.json`](../../eng/continuous-graph-api-freeze.json) records a platform-independent SHA-256 digest for every public API baseline. To change the candidate, prove that every 1.0 member remains source and binary compatible, update the implementation and API baseline, run the complete ContinuousGraph suite on PostgreSQL 15–18 and the separate native Beta 3 regression suite, and update the freeze manifest in the same reviewed commit. The reviewed 1.1 additions cover automatic incremental sessions, immutable impact/capability metadata, maintenance tiers, the trusted CDC projector contract, and per-tier status. Any signature change after candidate freeze invalidates every exact-SHA result. The 1.0 packages remain unchanged. The 1.1 candidate becomes publishable only after the portable PostgreSQL qualification matrix, 24-hour endurance, dependency publication, performance evidence, and final protected release verification pass. Until then, the 1.1 freeze is an engineering contract, not a release claim.",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>ContinuousGraph public API compatibility</h1>\n<p>The immutable 1.0 surface and additive 1.1 candidate surface are locked by two\nindependent gates:</p>\n<ul>\n<li>Roslyn PublicApiAnalyzers reject undeclared additions and incompatible\nremovals in both ContinuousGraph packages while allowing reviewed additive\n1.1 APIs; and</li>\n<li><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/continuous-graph-api-freeze.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/continuous-graph-api-freeze.json</code></a>\nrecords a platform-independent SHA-256 digest for every public API baseline.</li>\n</ul>\n<p>To change the candidate, prove that every 1.0 member remains source and binary\ncompatible, update the implementation and API baseline, run the complete\nContinuousGraph suite on PostgreSQL 15–18 and the separate native Beta 3\nregression suite, and update the freeze manifest in the\nsame reviewed commit. The reviewed 1.1 additions cover automatic incremental\nsessions, immutable impact/capability metadata, maintenance tiers, the trusted\nCDC projector contract, and per-tier status. Any signature change after\ncandidate freeze invalidates every exact-SHA result.</p>\n<p>The 1.0 packages remain unchanged. The 1.1 candidate becomes publishable only\nafter the portable PostgreSQL qualification matrix, 24-hour endurance, dependency\npublication, performance evidence, and final protected release verification\npass. Until then, the 1.1 freeze is an engineering contract, not a release\nclaim.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
-    "slug": "continuous-graph-reference",
-    "summary": "BlueTusk.ContinuousGraph provides the maintained graph runtime. Trusted server code registers bounded typed graph queries; the compiler validates the query against EF property-graph metadata and then delegates gap-free",
-    "keywords": [
-      "docs",
-      "continuous",
-      "graph",
-      "reference"
-    ],
-    "order": 1050,
-    "title": "BlueTusk Continuous Graph",
-    "sourcePath": "docs/continuous-graph/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/reference.md",
-    "headings": [
-      {
-        "id": "bluetusk-continuous-graph",
-        "text": "BlueTusk Continuous Graph",
-        "level": 1
-      },
-      {
-        "id": "registration",
-        "text": "Registration",
-        "level": 2
-      },
-      {
-        "id": "expanded-graph-patterns-in-1-2",
-        "text": "Expanded graph patterns in 1.2",
-        "level": 3
-      },
-      {
-        "id": "capability-and-correctness",
-        "text": "Capability and correctness",
-        "level": 2
-      },
-      {
-        "id": "three-tier-incremental-maintenance-in-1-1",
-        "text": "Three-tier incremental maintenance in 1.1",
-        "level": 2
-      },
-      {
-        "id": "opting-in-to-connection-scoped-reads",
-        "text": "Opting in to connection-scoped reads",
-        "level": 3
-      },
-      {
-        "id": "opting-in-to-direct-cdc-projection",
-        "text": "Opting in to direct CDC projection",
-        "level": 3
-      },
-      {
-        "id": "ordered-mutation-and-fallbacks",
-        "text": "Ordered mutation and fallbacks",
-        "level": 3
-      },
-      {
-        "id": "samples",
-        "text": "Samples",
-        "level": 2
-      },
-      {
-        "id": "operations",
-        "text": "Operations",
-        "level": 2
-      },
-      {
-        "id": "release-state",
-        "text": "Release state",
-        "level": 2
-      }
-    ],
-    "wordCount": 2502,
-    "readMinutes": 12,
-    "searchText": "BlueTusk Continuous Graph `BlueTusk.ContinuousGraph` provides the maintained graph runtime. Trusted server code registers bounded typed graph queries; the compiler validates the query against EF property-graph metadata and then delegates gap-free invalidation, authoritative requery, and keyed result diffs to BlueTusk Live. It never reads replication or pgoutput messages. Registration Configure the property graph in the EF model first, then register the specific element-table aliases used by the query: The alias declaration is deliberately explicit. The compiler resolves each alias through the configured `BlueTuskPropertyGraphDefinition` and records only the corresponding relational tables as Live invalidation dependencies. A change to an unrelated graph element therefore does not rerun this query. Unknown and duplicate aliases fail during registration. The V1 query envelope permits outer `Where`, `Select`, deterministic `OrderBy`/`ThenBy`, one bounded `Take`, and `AsNoTracking`. Ordering must include the direct result key. The ordinary typed graph builder remains responsible for safe graph-pattern and projection translation, and EF must produce the resolved backend SQL at registration. Unsupported query operators, translation failures, unbounded results, and unstable ordering fail before clients can subscribe. Expanded graph patterns in 1.2 Both backends support the typed patterns needed by larger relationship models: `Undirected` matches either edge direction. `Outgoing` and `Incoming` remain directional. `LabelsAnyOf` matches any of the named labels. Every selected label must exist on the resolved element table, and projected properties must be identical across those labels. `OutgoingPath`, `IncomingPath`, and `UndirectedPath` accept a bounded range of one to eight hops. BlueTusk compiles the range into fixed-hop query branches joined with `UNION ALL`. At most 64 branches are allowed. A multi-hop edge variable cannot be projected because one match can contain seve",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>BlueTusk Continuous Graph</h1>\n<p><code>BlueTusk.ContinuousGraph</code> provides the maintained graph runtime. Trusted\nserver code registers bounded typed graph queries; the compiler validates the\nquery against EF property-graph metadata and then delegates gap-free\ninvalidation, authoritative requery, and keyed result diffs to BlueTusk Live.\nIt never reads replication or pgoutput messages.</p>\n<h2>Registration</h2>\n<p>Configure the property graph in the EF model first, then register the specific\nelement-table aliases used by the query:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var definition =\n    new ContinuousGraphQueryDefinition<RiskContext, FraudPath, long>(\n        name: \"suspicious-transfers\",\n        databaseIdentity: \"risk-primary\",\n        version: \"1\",\n        graphName: \"payments\",\n        graphSchema: \"risk\",\n        elementTableAliases: [\"accounts\", \"transfers\"],\n        parameters: [new LiveQueryParameter(\"accountId\", typeof(long))],\n        validationArguments: new Dictionary<string, object?>\n        {\n            [\"accountId\"] = 42L,\n        },\n        maximumResultCount: 100,\n        queryFactory: (context, arguments) =>\n        {\n            var accountId = arguments.Get<long>(\"accountId\");\n            return context.PropertyGraph(\"payments\", \"risk\")\n                .Match(pattern => pattern\n                    .Vertex<Account>(\"source\", account => account.Id == accountId)\n                    .Outgoing<Transfer>(\"transfer\")\n                    .Vertex<Account>(\"target\"))\n                .Select<FraudPath>(projection => projection\n                    .Property<Account, long>(\n                        \"source\", account => account.Id, result => result.SourceId)\n                    .Property<Transfer, decimal>(\n                        \"transfer\", transfer => transfer.Amount, result => result.Amount)\n                    .Property<Account, long>(\n                        \"target\", account => account.Id, result => result.TargetId))\n                .OrderByDescending(result => result.Amount)\n                .ThenBy(result => result.TargetId)\n                .Take(100);\n        },\n        keySelector: result => result.TargetId,\n        rowComparer: FraudPathComparer.Instance);\n\nvar plan = await ContinuousGraphQueryCompiler.CompileAsync(\n    contextFactory,\n    definition,\n    cancellationToken: cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> definition =\n    <span class=\"hljs-keyword\">new</span> ContinuousGraphQueryDefinition&lt;RiskContext, FraudPath, <span class=\"hljs-built_in\">long</span>&gt;(\n        name: <span class=\"hljs-string\">&quot;suspicious-transfers&quot;</span>,\n        databaseIdentity: <span class=\"hljs-string\">&quot;risk-primary&quot;</span>,\n        version: <span class=\"hljs-string\">&quot;1&quot;</span>,\n        graphName: <span class=\"hljs-string\">&quot;payments&quot;</span>,\n        graphSchema: <span class=\"hljs-string\">&quot;risk&quot;</span>,\n        elementTableAliases: [<span class=\"hljs-string\">&quot;accounts&quot;</span>, <span class=\"hljs-string\">&quot;transfers&quot;</span>],\n        parameters: [<span class=\"hljs-keyword\">new</span> LiveQueryParameter(<span class=\"hljs-string\">&quot;accountId&quot;</span>, <span class=\"hljs-keyword\">typeof</span>(<span class=\"hljs-built_in\">long</span>))],\n        validationArguments: <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">object</span>?&gt;\n        {\n            [<span class=\"hljs-string\">&quot;accountId&quot;</span>] = <span class=\"hljs-number\">42L</span>,\n        },\n        maximumResultCount: <span class=\"hljs-number\">100</span>,\n        queryFactory: (context, arguments) =&gt;\n        {\n            <span class=\"hljs-keyword\">var</span> accountId = arguments.Get&lt;<span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-string\">&quot;accountId&quot;</span>);\n            <span class=\"hljs-keyword\">return</span> context.PropertyGraph(<span class=\"hljs-string\">&quot;payments&quot;</span>, <span class=\"hljs-string\">&quot;risk&quot;</span>)\n                .Match(pattern =&gt; pattern\n                    .Vertex&lt;Account&gt;(<span class=\"hljs-string\">&quot;source&quot;</span>, account =&gt; account.Id == accountId)\n                    .Outgoing&lt;Transfer&gt;(<span class=\"hljs-string\">&quot;transfer&quot;</span>)\n                    .Vertex&lt;Account&gt;(<span class=\"hljs-string\">&quot;target&quot;</span>))\n                .Select&lt;FraudPath&gt;(projection =&gt; projection\n                    .Property&lt;Account, <span class=\"hljs-built_in\">long</span>&gt;(\n                        <span class=\"hljs-string\">&quot;source&quot;</span>, account =&gt; account.Id, result =&gt; result.SourceId)\n                    .Property&lt;Transfer, <span class=\"hljs-built_in\">decimal</span>&gt;(\n                        <span class=\"hljs-string\">&quot;transfer&quot;</span>, transfer =&gt; transfer.Amount, result =&gt; result.Amount)\n                    .Property&lt;Account, <span class=\"hljs-built_in\">long</span>&gt;(\n                        <span class=\"hljs-string\">&quot;target&quot;</span>, account =&gt; account.Id, result =&gt; result.TargetId))\n                .OrderByDescending(result =&gt; result.Amount)\n                .ThenBy(result =&gt; result.TargetId)\n                .Take(<span class=\"hljs-number\">100</span>);\n        },\n        keySelector: result =&gt; result.TargetId,\n        rowComparer: FraudPathComparer.Instance);\n\n<span class=\"hljs-keyword\">var</span> plan = <span class=\"hljs-keyword\">await</span> ContinuousGraphQueryCompiler.CompileAsync(\n    contextFactory,\n    definition,\n    cancellationToken: cancellationToken);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The alias declaration is deliberately explicit. The compiler resolves each\nalias through the configured <code>BlueTuskPropertyGraphDefinition</code> and records only\nthe corresponding relational tables as Live invalidation dependencies. A\nchange to an unrelated graph element therefore does not rerun this query.\nUnknown and duplicate aliases fail during registration.</p>\n<p>The V1 query envelope permits outer <code>Where</code>, <code>Select</code>, deterministic\n<code>OrderBy</code>/<code>ThenBy</code>, one bounded <code>Take</code>, and <code>AsNoTracking</code>. Ordering must include\nthe direct result key. The ordinary typed graph builder remains responsible for\nsafe graph-pattern and projection translation, and EF must produce\nthe resolved backend SQL at registration. Unsupported query operators, translation\nfailures, unbounded results, and unstable ordering fail before clients can\nsubscribe.</p>\n<h3>Expanded graph patterns in 1.2</h3>\n<p>Both backends support the typed patterns needed by larger\nrelationship models:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var related = context.PropertyGraph(\"payments\", \"risk\")\n    .Match(pattern => pattern\n        .Vertex<Account>(\"source\", account => account.Id == accountId)\n        .LabelsAnyOf(\"account\", \"customer\")\n        .UndirectedPath<Transfer>(\"path\", minimumHops: 1, maximumHops: 4)\n        .LabelsAnyOf(\"sent\", \"received\")\n        .Vertex<Account>(\"target\")\n        .LabelsAnyOf(\"account\", \"customer\"))\n    .Select<RelatedAccount>(projection => projection\n        .Property<Account, long>(\n            \"source\", account => account.Id, result => result.SourceId)\n        .Property<Account, long>(\n            \"target\", account => account.Id, result => result.TargetId));\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> related = context.PropertyGraph(<span class=\"hljs-string\">&quot;payments&quot;</span>, <span class=\"hljs-string\">&quot;risk&quot;</span>)\n    .Match(pattern =&gt; pattern\n        .Vertex&lt;Account&gt;(<span class=\"hljs-string\">&quot;source&quot;</span>, account =&gt; account.Id == accountId)\n        .LabelsAnyOf(<span class=\"hljs-string\">&quot;account&quot;</span>, <span class=\"hljs-string\">&quot;customer&quot;</span>)\n        .UndirectedPath&lt;Transfer&gt;(<span class=\"hljs-string\">&quot;path&quot;</span>, minimumHops: <span class=\"hljs-number\">1</span>, maximumHops: <span class=\"hljs-number\">4</span>)\n        .LabelsAnyOf(<span class=\"hljs-string\">&quot;sent&quot;</span>, <span class=\"hljs-string\">&quot;received&quot;</span>)\n        .Vertex&lt;Account&gt;(<span class=\"hljs-string\">&quot;target&quot;</span>)\n        .LabelsAnyOf(<span class=\"hljs-string\">&quot;account&quot;</span>, <span class=\"hljs-string\">&quot;customer&quot;</span>))\n    .Select&lt;RelatedAccount&gt;(projection =&gt; projection\n        .Property&lt;Account, <span class=\"hljs-built_in\">long</span>&gt;(\n            <span class=\"hljs-string\">&quot;source&quot;</span>, account =&gt; account.Id, result =&gt; result.SourceId)\n        .Property&lt;Account, <span class=\"hljs-built_in\">long</span>&gt;(\n            <span class=\"hljs-string\">&quot;target&quot;</span>, account =&gt; account.Id, result =&gt; result.TargetId));\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<ul>\n<li><code>Undirected</code> matches either edge direction. <code>Outgoing</code> and <code>Incoming</code> remain directional.</li>\n<li><code>LabelsAnyOf</code> matches any of the named labels. Every selected\nlabel must exist on the resolved element table, and projected properties must\nbe identical across those labels.</li>\n<li><code>OutgoingPath</code>, <code>IncomingPath</code>, and <code>UndirectedPath</code> accept a bounded range of\none to eight hops. BlueTusk compiles the range into fixed-hop query branches\njoined with <code>UNION ALL</code>. At most 64 branches are allowed.</li>\n</ul>\n<p>A multi-hop edge variable cannot be projected because one match can contain\nseveral edges. Project the start and end vertices instead. Repeating a path is\nallowed only when the edge connects the same vertex element table to itself.\nThese rules are checked during translation. Portable acceptance runs on PostgreSQL 15–18. Native regression coverage uses the pinned Beta 3 fixture.</p>\n<p>Continuous Graph treats variable-length and undirected patterns as broad-impact\nqueries. They receive authoritative full repair rather than affected-key delta\nmaintenance because a changed edge can alter reachability for keys that are not\npresent in the changed row. Multi-label expressions retain scoped delta support\nwhen the ordinary endpoint proof remains complete.</p>\n<h2>Capability and correctness</h2>\n<p>The compiler verifies that the query originates from the typed graph builder and\nthat its graph and table dependencies match the registration. Portable\nregistration requires no SQL/PGQ capability. In explicit native mode the\ncapability probe checks the connected PostgreSQL server. The backend and resolved\nmappings are part of replay identity.</p>\n<p>The compiled plan owns an ordinary <code>LiveQueryPlan</code>. Bind only its declared\nscalar arguments, create a session with the caller’s complete\n<code>LiveSecurityScope</code>, and use the normal Live invalidation log:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var arguments = plan.Bind(new Dictionary<string, object?>\n{\n    [\"accountId\"] = 42L,\n});\n\nawait using var session = plan.CreateSession(\n    arguments,\n    new LiveSecurityScope(\"tenant:acme:user:17\", \"fraud-policy-v4\"),\n    invalidationLog);\n\nvar initial = await session.StartAsync(cancellationToken);\nvar update = await session.RefreshToCurrentAsync(cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> arguments = plan.Bind(<span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">object</span>?&gt;\n{\n    [<span class=\"hljs-string\">&quot;accountId&quot;</span>] = <span class=\"hljs-number\">42L</span>,\n});\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> session = plan.CreateSession(\n    arguments,\n    <span class=\"hljs-keyword\">new</span> LiveSecurityScope(<span class=\"hljs-string\">&quot;tenant:acme:user:17&quot;</span>, <span class=\"hljs-string\">&quot;fraud-policy-v4&quot;</span>),\n    invalidationLog);\n\n<span class=\"hljs-keyword\">var</span> initial = <span class=\"hljs-keyword\">await</span> session.StartAsync(cancellationToken);\n<span class=\"hljs-keyword\">var</span> update = <span class=\"hljs-keyword\">await</span> session.RefreshToCurrentAsync(cancellationToken);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The initial result uses Live’s cursor-reserve/query/replay boundary. Later\naffected transactions are coalesced, the authorised graph query is run\nagain, and keyed additions, updates, removals, reorderings, or a bounded reset\nare emitted. PostgreSQL/EF query execution—not CDC row images—is always the\nsource of client-visible data. The context factory and registered query remain\nresponsible for applying RLS, tenant settings, and application authorisation.\nSecurity scopes participate in Live subscription identity and are never shared.</p>\n<p>Cancellation flows through context creation and EF execution. Unbounded paths,\nmore than eight hops, more than 64 compiled branches, and dependency inference\nfrom caller-authored raw SQL remain unsupported.</p>\n<h2>Three-tier incremental maintenance in 1.1</h2>\n<p>The 1.1 compiler retains an immutable impact plan alongside the executable\nquery. The plan contains the resolved graph pattern, physical element tables,\nvertex and edge keys, edge endpoints, projected columns, predicates, ordering,\nresult key, and bounded result limit. That metadata drives three maintenance\ntiers; it is not inferred again from a replication message.</p>\n<ol>\n<li><strong>Trusted CDC delta.</strong> An explicitly registered projector can update affected\nrows directly from complete old/new tuples.</li>\n<li><strong>Authoritative scoped delta.</strong> The automatic default extracts affected\nelement keys and runs the compiler-generated, prepared key-scoped\ngraph query.</li>\n<li><strong>Authoritative repair.</strong> The original complete query is rerun whenever\ncorrectness of either delta path cannot be proven.</li>\n</ol>\n<p>The simple automatic overload selects tiers two and three:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var incremental = plan.CreateIncrementalSession(\n    arguments,\n    new LiveSecurityScope(\"tenant:acme:user:17\", \"fraud-policy-v4\"),\n    new ContinuousGraphIncrementalOptions<FraudPath, long>\n    {\n        ResultOrdering = FraudPathOrdering.Instance,\n        KeyOrdering = Comparer<long>.Default,\n        MaximumAffectedKeys = 512,\n        RepairAfterTransactions = 1_000,\n        MaximumRepairInterval = TimeSpan.FromMinutes(5),\n    });\n\nvar consumer = new ContinuousGraphIncrementalConsumer<FraudPath, long>(\n    incremental,\n    replayStore);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> incremental = plan.CreateIncrementalSession(\n    arguments,\n    <span class=\"hljs-keyword\">new</span> LiveSecurityScope(<span class=\"hljs-string\">&quot;tenant:acme:user:17&quot;</span>, <span class=\"hljs-string\">&quot;fraud-policy-v4&quot;</span>),\n    <span class=\"hljs-keyword\">new</span> ContinuousGraphIncrementalOptions&lt;FraudPath, <span class=\"hljs-built_in\">long</span>&gt;\n    {\n        ResultOrdering = FraudPathOrdering.Instance,\n        KeyOrdering = Comparer&lt;<span class=\"hljs-built_in\">long</span>&gt;.Default,\n        MaximumAffectedKeys = <span class=\"hljs-number\">512</span>,\n        RepairAfterTransactions = <span class=\"hljs-number\">1_000</span>,\n        MaximumRepairInterval = TimeSpan.FromMinutes(<span class=\"hljs-number\">5</span>),\n    });\n\n<span class=\"hljs-keyword\">var</span> consumer = <span class=\"hljs-keyword\">new</span> ContinuousGraphIncrementalConsumer&lt;FraudPath, <span class=\"hljs-built_in\">long</span>&gt;(\n    incremental,\n    replayStore);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The scoped query executes under the original <code>LiveSecurityScope</code>; PostgreSQL\npermissions, RLS, tenant settings, and the registered query remain the\nauthority. The engine never constructs client-visible authoritative rows from\nuntrusted tuple bytes.</p>\n<h3>Opting in to connection-scoped reads</h3>\n<p>Set <code>ContinuousGraphIncrementalOptions.ScopedConnection</code> when the registered\nquery shape and its bound filter values stay fixed for the subscription.\nBlueTusk binds the typed query for that subscription and reuses it for eligible\nsingle-key updates. Each update resolves the subscriber’s authorized\n<code>BlueTuskDataSource</code> and takes a fresh connection lease. The resolver must\nchoose the same database and enforce the same subscriber scope as the EF\nregistration. Check current access in the resolver or the optional\n<code>AuthorizeAsync</code> callback, including revocation and policy version changes.</p>\n<p>Use the callback to apply any required PostgreSQL role or tenant settings on\nthe supplied connection before the read. BlueTusk owns the connection and\nreturns it to the provider pool after the query. PostgreSQL evaluates its\npermissions and RLS on that connection. If the application’s query shape or\nbound filters change with policy, start a new subscription for that scope.</p>\n<p>For applications that already manage authorized connections, pass an\n<code>IContinuousGraphScopedConnectionLease</code> factory to\n<code>ContinuousGraphScopedConnection</code>. BlueTusk calls the factory for every\neligible read, including when PostgreSQL has prepared the statement. Enforce\ncurrent subscriber access and return an open connection to the registered\ndatabase with the subscriber’s role and tenant settings applied. The\nconnection must be exclusive for the lease and outside any active transaction.\nBlueTusk disposes the lease after the read, and the application is responsible\nfor returning or closing the connection. The two-row probe can reuse the\nprovider’s bounded statement cache when the leased connection has\n<code>Max Auto Prepare</code> enabled.</p>\n<p>The optimization applies to simple ordered portable graph projections with\nsupported scalar keys and materialization. Composed queries, custom EF\ninterceptors, transactions, and unsupported mappings use the scoped EF path.\nInitial snapshots and authoritative repairs use the registered EF query.\nEligible ordered queries reuse a compiled EF read while the model, options,\nordering, and limit match registration. Every full read invokes the registered\ncontext and query factories and binds the current values. A changed ordering\nor limit uses the current query through the ordinary EF pipeline.</p>\n<p>The release performance matrix uses a dedicated restricted PostgreSQL login\nand verifies RLS on both mapped tables. Scoped reads acquire an exclusive\nauthorized lease on every update. Full reads use the same subscriber login\nthrough EF. The recovery gate alternates scoped updates and full repair,\ncompares each snapshot with a fresh authorized query, checks revocation,\nreconnects terminated read leases, and persists replay before acknowledging\nthe source transaction. Progress checkpoints accompany the final report.</p>\n<h3>Opting in to direct CDC projection</h3>\n<p>Tier one is intentionally explicit. Implement\n<code>IContinuousGraphCdcProjector&lt;TResult,TKey&gt;</code> and provide a\n<code>ContinuousGraphCdcTrustContract</code> whose impact-plan fingerprint matches the\ncompiled plan. All four trust facts must be true: complete required old/new\nvalues, exact changed columns, sufficient replica identity, and enforcement of\nthe original security scope. A mismatch or incomplete fact bypasses the\nprojector and continues through the authoritative tiers.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var incremental = plan.CreateAutomaticIncrementalSession(\n    arguments,\n    securityScope,\n    options,\n    resultLimit: 100,\n    trustedProjector: projector);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> incremental = plan.CreateAutomaticIncrementalSession(\n    arguments,\n    securityScope,\n    options,\n    resultLimit: <span class=\"hljs-number\">100</span>,\n    trustedProjector: projector);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Treat projector registration as privileged application code. Schema\nfingerprints must be regenerated after graph or projection changes. Do not\nclaim the trusted tier merely because a publication happens to include the\ncolumns in one observed transaction.</p>\n<h3>Ordered mutation and fallbacks</h3>\n<p>The session uses Live’s existing immutable key index to locate affected visible\nrows. It checks their proposed values against adjacent ranks, including the\nproposed values of affected neighbours. When membership and order remain\nunchanged, it uses Live’s persistent snapshot chunks without scanning or\ncopying the complete result. A still-hidden candidate behind a full top-N\nboundary needs no result mutation.</p>\n<p>If a candidate enters the window or a row improves across a neighbour, the\nsession sorts the affected candidates, merges them with the ordered unaffected\nsequence, and applies the authoritative membership/order diff. This path still\nvisits the complete visible result. Rank worsening and visible removals retain\nauthoritative repair to recover hidden candidates. Prepared proposals share\nimmutable history and change committed state only after replay persistence.</p>\n<p>The session forces authoritative repair for incomplete or undecodable tuples,\nunknown schemas, truncation, commit-prepared, unsafe deletes, affected-key\noverflow, rank-boundary uncertainty, unsupported query shapes, projector\nuncertainty, visible rows leaving the predicate, rank worsening, and periodic\ndrift detection. Repairs recover candidates outside the visible top-N.\nMalformed projector or scoped-query output fails closed.</p>\n<p>The custom <code>IContinuousGraphIncrementalEvaluator&lt;TResult,TKey&gt;</code> overload remains\navailable and source/binary compatible for applications with an existing\nauthoritative affected-key implementation.</p>\n<p>Each evaluation is a prepared transition. Disposing it rolls back; committing\nit advances the source position and event sequence. The supplied Streams\nconsumer persists Live replay first, commits the transition second, and\nacknowledges the source delivery last. Byte-identical replay retry closes the\npost-store/pre-ack crash window. A process restart emits a new authoritative\ninitial result at the next replay sequence before source consumption resumes.\nSee <a href=\"/documentation/architecture/architecture-decisions-0016-authoritative-incremental-graph-maintenance\">ADR 0016</a>.</p>\n<h2>Samples</h2>\n<p>The executable <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/samples/BlueTusk.Samples.ContinuousGraph.Fraud\" target=\"_blank\" rel=\"noreferrer\">fraud sample</a>\nregisters a high-value transfer traversal and shows a newly suspicious transfer\nentering the authorised result after an affected edge changes. The executable\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/samples/BlueTusk.Samples.ContinuousGraph.Network\" target=\"_blank\" rel=\"noreferrer\">network sample</a>\nregisters gateway dependencies and shows a vertex health update becoming a\nkeyed Live graph event. Both use temporary tables on the default portable backend. An in-memory\ninvalidation log keeps each sample self-contained:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "$fixturePassword = docker compose -f eng/compose/postgres.yml exec -T postgres18 printenv POSTGRES_PASSWORD\n$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Port=5418;Username=postgres;Password=$fixturePassword;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Fraud\ndotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Network\n",
-        "highlighted": "<span class=\"hljs-variable\">$fixturePassword</span> = docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml exec <span class=\"hljs-literal\">-T</span> postgres18 printenv POSTGRES_PASSWORD\n<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5418;Username=postgres;Password=<span class=\"hljs-variable\">$fixturePassword</span>;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.ContinuousGraph.Fraud\ndotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.ContinuousGraph.Network\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<h2>Operations</h2>\n<p><code>ContinuousGraphQueryRegistry</code> stores non-generic registration descriptors\nwithout retaining bound parameter values or result rows. Register each compiled\nplan with the application registry. Install the optional\n<code>BlueTusk.ContinuousGraph.ControlPlane</code> package to add the metadata-only\n<code>HostedContinuousGraphControlPlaneQueryService</code> or the executable explorer.</p>\n<p>The explorer uses a separate <code>ContinuousGraphControlPlaneExecutionRegistry</code>.\nRegistration is deliberately explicit: provide the compiled plan, all bound\narguments, the small allowlist of parameters an operator may edit, a server-side\nsecurity-scope resolver, and a result projector. Never mark a tenant, role,\npermission, or RLS binding editable.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var executions = new ContinuousGraphControlPlaneExecutionRegistry();\nexecutions.Register(\n    compiledPlan,\n    new Dictionary<string, object?>\n    {\n        [\"minimumRisk\"] = 0.75m,\n        [\"tenantId\"] = tenantId,\n    },\n    editableParameters: [\"minimumRisk\"],\n    securityScopeFactory: actor => scopes.Resolve(actor.ActorId),\n    projector: row => new ControlPlaneContinuousGraphFragment(\n        Nodes: ProjectNodes(row),\n        Edges: ProjectEdges(row)));\n\nbuilder.Services.AddSingleton(executions);\nbuilder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(\n    new ExecutableContinuousGraphControlPlaneQueryService(metadata, executions));\nbuilder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(\n    new HostedContinuousGraphControlPlaneExecutionService(executions));\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> executions = <span class=\"hljs-keyword\">new</span> ContinuousGraphControlPlaneExecutionRegistry();\nexecutions.Register(\n    compiledPlan,\n    <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">object</span>?&gt;\n    {\n        [<span class=\"hljs-string\">&quot;minimumRisk&quot;</span>] = <span class=\"hljs-number\">0.75m</span>,\n        [<span class=\"hljs-string\">&quot;tenantId&quot;</span>] = tenantId,\n    },\n    editableParameters: [<span class=\"hljs-string\">&quot;minimumRisk&quot;</span>],\n    securityScopeFactory: actor =&gt; scopes.Resolve(actor.ActorId),\n    projector: row =&gt; <span class=\"hljs-keyword\">new</span> ControlPlaneContinuousGraphFragment(\n        Nodes: ProjectNodes(row),\n        Edges: ProjectEdges(row)));\n\nbuilder.Services.AddSingleton(executions);\nbuilder.Services.AddSingleton&lt;IControlPlaneContinuousGraphQueryService&gt;(\n    <span class=\"hljs-keyword\">new</span> ExecutableContinuousGraphControlPlaneQueryService(metadata, executions));\nbuilder.Services.AddSingleton&lt;IControlPlaneContinuousGraphExecutionService&gt;(\n    <span class=\"hljs-keyword\">new</span> HostedContinuousGraphControlPlaneExecutionService(executions));\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The authorised detail page can then execute only the registered fingerprint and\nshow every projected node, edge, category, label, endpoint, and property in the\nbounded result. The canvas uses the graph’s directed relationships to produce a\ndeterministic left-to-right topology rather than arranging decorative category\nbubbles. Known Kubernetes elements use Cluster, Namespace, Workload, Controller,\nRuntime, Networking, Exposure, and Image stages. Other graph shapes derive\nbounded stages from their directed edges, including a deterministic cycle\nfallback. Category-coloured arrows remain visible in the complete fit view;\nselecting a node highlights its immediate neighbours and relationships, while\nselecting an edge exposes its endpoints, direction, type, and projected\nproperties.</p>\n<p>Pan, zoom, search, fit, node selection, and edge selection are additive to the\ncomplete node and edge tables, which remain the accessible representation and\ndo not depend on canvas hit testing. When projected rows contain <code>observedAt</code>,\n<code>provenance</code>, and <code>storage</code> properties, the explorer displays the source,\nsnapshot age, local time-zone-qualified observation time, and authoritative\nstore above the result. A snapshot older than two minutes is visibly marked\nstale. This is presentation metadata only: it does not weaken the registered\nquery’s security scope or turn browser input into SQL.</p>\n<p>Limits, timeouts, conflicting element IDs, and dangling endpoints fail visibly;\nBlueTusk does not return a partial graph and call it complete. The optional\nadapter owns the graph dependency; the Control Plane core does not reference\nContinuousGraph.</p>\n<p><code>ContinuousGraphIncrementalSession.Status</code> exposes counts for trusted CDC,\nauthoritative delta, and authoritative repair evaluations, plus affected-key\nand query totals and the last fallback reason. OpenTelemetry instruments add\nmaintenance tier, affected-key count, query count, evaluation latency,\nrepair/fallback counters, and a redacted detail code. Alert on sustained repair\nrate, affected-key-limit fallbacks, schema mismatch, or drift-repair differences\nrather than attempting to suppress repair.</p>\n<h2>Release state</h2>\n<p>The two 1.0.0 packages remain immutable. <code>BlueTusk.ContinuousGraph</code> contains\nthe runtime; <code>BlueTusk.ContinuousGraph.ControlPlane</code> contains the optional\noperations adapter. The coordinated <code>1.1.0-rc.1</code> packages are public for\nproduction-like evaluation and predate the portable backend. Portable Graph\nhas passed local compatibility checks on PostgreSQL 15–18. Stable qualification requires a\nsupported PostgreSQL matrix, exact candidate dependencies, 24-hour recovery\nendurance, and performance evidence. The release script\nmachine-enforces dependency readiness and protected tag ordering. The 1.0\npublic surface remains a compatible subset of the hash-locked 1.1 candidate\nsurface; see the\n<a href=\"/documentation/graph/continuous-graph-api-compatibility\">API compatibility contract</a>. See the\n<a href=\"/documentation/graph/continuous-graph-release-notes-1-0-0\">1.0.0 release record</a> for the exact support and\npublication boundary.\nOffline compiler tests cover exact dependency extraction, stable fingerprints,\nLive session handoff, unsupported-server rejection, and fail-closed query\nshapes. Incremental state-machine tests cover exact top-N updates, repair\nfallbacks, bounded affected keys, two-phase lifecycle handling, rollback,\nduplicate delivery, evaluator contract failures, and replay-before-ack\nrecovery. Live acceptance verifies typed results, affected-key updates, cancellation,\nand row-level security across pooled reads and repairs. The native case\nruns on the pinned historical fixture.</p>\n<p>Run that live gate against the repository’s PostgreSQL 18 service:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "docker compose -f eng/compose/postgres.yml up -d --wait postgres18\n$fixturePassword = docker compose -f eng/compose/postgres.yml exec -T postgres18 printenv POSTGRES_PASSWORD\n$env:BLUETUSK_TEST_CONNECTION_STRING = \"Host=localhost;Port=5418;Username=postgres;Password=$fixturePassword;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet test tests/BlueTusk.ContinuousGraph.Tests\n",
-        "highlighted": "docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml up <span class=\"hljs-literal\">-d</span> <span class=\"hljs-literal\">--wait</span> postgres18\n<span class=\"hljs-variable\">$fixturePassword</span> = docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml exec <span class=\"hljs-literal\">-T</span> postgres18 printenv POSTGRES_PASSWORD\n<span class=\"hljs-variable\">$env:BLUETUSK_TEST_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5418;Username=postgres;Password=<span class=\"hljs-variable\">$fixturePassword</span>;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet test tests/BlueTusk.ContinuousGraph.Tests\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Run only the deterministic incremental contract:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet test tests/BlueTusk.ContinuousGraph.Tests/BlueTusk.ContinuousGraph.Tests.csproj --filter FullyQualifiedName~ContinuousGraphIncrementalTests\n",
-        "highlighted": "dotnet test tests/BlueTusk.ContinuousGraph.Tests/BlueTusk.ContinuousGraph.Tests.csproj <span class=\"hljs-literal\">--filter</span> FullyQualifiedName~ContinuousGraphIncrementalTests\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The checked-in live workload measures registration,\nauthoritative materialisation of 999 graph paths, and an affected invalidation\nthrough PostgreSQL requery plus keyed Live diff. On the repository’s reference\nmachine the ShortRun recorded 988 µs/103,446 B, 2.827 ms/666,055 B, and\n4.225 ms/888,159 B respectively. These three-iteration values are regression\nbudgets, not service-level objectives; see the\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/benchmarks/README.md\" target=\"_blank\" rel=\"noreferrer\">benchmark guide</a>.</p>\n<p>Reproduce the gated NuGet candidate without opening the publication gate:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "./eng/pack-product-family.ps1 -Family ContinuousGraph -Candidate -NoRestore\n",
-        "highlighted": "./eng/pack<span class=\"hljs-literal\">-product-family</span>.ps1 <span class=\"hljs-literal\">-Family</span> ContinuousGraph <span class=\"hljs-literal\">-Candidate</span> <span class=\"hljs-literal\">-NoRestore</span>\n",
-        "language": "powershell"
-      }
-    ]
-  },
-  {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
-    "slug": "continuous-graph-release-notes-0-1-0-preview-1",
-    "summary": "This is the first package-verified Continuous Graph preview candidate. It builds trusted, registered PostgreSQL 19 SQL/PGQ plans on the existing BlueTusk property-graph, Live, and Control Plane foundations without exp…",
-    "keywords": [
-      "docs",
-      "continuous",
-      "graph",
-      "release",
-      "notes",
-      "0",
-      "1",
-      "0",
-      "preview",
-      "1"
-    ],
-    "order": 1051,
-    "title": "BlueTusk Continuous Graph 0.1.0-preview.1",
-    "sourcePath": "docs/continuous-graph/release-notes-0.1.0-preview.1.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-0.1.0-preview.1.md",
-    "headings": [
-      {
-        "id": "bluetusk-continuous-graph-0-1-0-preview-1",
-        "text": "BlueTusk Continuous Graph 0.1.0-preview.1",
-        "level": 1
-      },
-      {
-        "id": "packages",
-        "text": "Packages",
-        "level": 2
-      },
-      {
-        "id": "capabilities-in-this-preview",
-        "text": "Capabilities in this preview",
-        "level": 2
-      },
-      {
-        "id": "preview-boundaries",
-        "text": "Preview boundaries",
-        "level": 2
-      }
-    ],
-    "wordCount": 429,
-    "readMinutes": 2,
-    "searchText": "BlueTusk Continuous Graph 0.1.0-preview.1 This is the first package-verified Continuous Graph preview candidate. It builds trusted, registered PostgreSQL 19 SQL/PGQ plans on the existing BlueTusk property-graph, Live, and Control Plane foundations without exposing replication internals to applications. Packages `BlueTusk.ContinuousGraph` `BlueTusk.ContinuousGraph.ControlPlane` Both packages use the repository's MIT licence and the independent Continuous Graph `0.1.0-preview.1` version property. Capabilities in this preview trusted typed graph-query registration against EF property-graph metadata; a production capability probe that requires negotiated PostgreSQL 19 SQL/PGQ support; explicit graph-element aliases resolved to exact relational invalidation dependencies; fail-closed query-shape validation with deterministic key ordering and one bounded `Take`; stable registration fingerprints and result-free operational descriptors; gap-free Live cursor reservation, authoritative `GRAPH_TABLE` requery, and keyed add/update/remove/reorder/reset events; security-scoped subscription identities and normal Live cancellation; authorised, HTML-safe Control Plane dashboard and API inventory; executable fraud-transfer and network-health PostgreSQL 19 samples; and checked-in live registration, 999-path requery, invalidation/diff, and allocation budgets. The candidate verification gate includes a zero-warning repository Release build, the complete offline solution suite, all eight Continuous Graph tests including the pinned PostgreSQL 19 Beta 2 acceptance test, public API and dependency conformance, documentation validation, allocation budgets, and an inspected NuGet pack. The gated pack is reproducible with `./eng/pack-product-family.ps1 -Family ContinuousGraph -Candidate -NoRestore`; candidate mode emits verification artifacts but does not open the publication gate. Preview boundaries PostgreSQL 15–18 and PostgreSQL 19 servers without negotiated SQL/PGQ capability fail during reg",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>BlueTusk Continuous Graph 0.1.0-preview.1</h1>\n<p>This is the first package-verified Continuous Graph preview candidate. It\nbuilds trusted, registered PostgreSQL 19 SQL/PGQ plans on the existing BlueTusk\nproperty-graph, Live, and Control Plane foundations without exposing\nreplication internals to applications.</p>\n<h2>Packages</h2>\n<ul>\n<li><code>BlueTusk.ContinuousGraph</code></li>\n<li><code>BlueTusk.ContinuousGraph.ControlPlane</code></li>\n</ul>\n<p>Both packages use the repository’s MIT licence and the independent Continuous\nGraph <code>0.1.0-preview.1</code> version property.</p>\n<h2>Capabilities in this preview</h2>\n<ul>\n<li>trusted typed graph-query registration against EF property-graph metadata;</li>\n<li>a production capability probe that requires negotiated PostgreSQL 19\nSQL/PGQ support;</li>\n<li>explicit graph-element aliases resolved to exact relational invalidation\ndependencies;</li>\n<li>fail-closed query-shape validation with deterministic key ordering and one\nbounded <code>Take</code>;</li>\n<li>stable registration fingerprints and result-free operational descriptors;</li>\n<li>gap-free Live cursor reservation, authoritative <code>GRAPH_TABLE</code> requery, and\nkeyed add/update/remove/reorder/reset events;</li>\n<li>security-scoped subscription identities and normal Live cancellation;</li>\n<li>authorised, HTML-safe Control Plane dashboard and API inventory;</li>\n<li>executable fraud-transfer and network-health PostgreSQL 19 samples; and</li>\n<li>checked-in live registration, 999-path requery, invalidation/diff, and\nallocation budgets.</li>\n</ul>\n<p>The candidate verification gate includes a zero-warning repository Release\nbuild, the complete offline solution suite, all eight Continuous Graph tests\nincluding the pinned PostgreSQL 19 Beta 2 acceptance test, public API and dependency\nconformance, documentation validation, allocation budgets, and an inspected\nNuGet pack.\nThe gated pack is reproducible with\n<code>./eng/pack-product-family.ps1 -Family ContinuousGraph -Candidate -NoRestore</code>;\ncandidate mode emits verification artifacts but does not open the publication\ngate.</p>\n<h2>Preview boundaries</h2>\n<ul>\n<li>PostgreSQL 15–18 and PostgreSQL 19 servers without negotiated SQL/PGQ\ncapability fail during registration.</li>\n<li>Queries are registered by trusted server code. Arbitrary client SQL, LINQ,\ngraph patterns, and unbounded paths are not accepted.</li>\n<li>CDC is an invalidation signal. Client-visible rows always come from a fresh\nauthorised EF/<code>GRAPH_TABLE</code> query.</li>\n<li>Incremental graph maintenance is deferred; affected subscriptions use\nauthoritative requery and keyed diff.</li>\n<li>Explicit element aliases are required. Dependencies are not inferred from\ncaller-authored raw SQL.</li>\n<li>PostgreSQL 19 remains beta-sensitive, so server syntax and capability\ncompatibility can change before PostgreSQL 19 is final.</li>\n<li>The reference ShortRun figures are regression evidence, not latency service\nlevels or universal production performance claims.</li>\n<li>Provider, Live, and Control Plane must be released before these packages.\nThe family remains gated until that dependency chain is publishable, and the\nrelease script machine-enforces dependency readiness.</li>\n<li>Package verification does not complete the separate Streams 72-hour, Sync\n24-hour, or Control Plane release gates.</li>\n</ul>\n<p>The independent release workflow creates candidate artifacts on manual\ndispatch but cannot publish them. The preview remains disabled until its\nProvider, Live, and Control Plane dependencies are publishable and the exact\ntagged commit has the required workflow evidence.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
-    "slug": "continuous-graph-release-notes-1-0-0",
-    "summary": "Status: published on 2026-08-23 from continuous-graph-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
-    "keywords": [
-      "docs",
-      "continuous",
-      "graph",
-      "release",
-      "notes",
-      "1",
-      "0",
-      "0"
-    ],
-    "order": 1052,
-    "title": "BlueTusk ContinuousGraph 1.0.0 release record",
-    "sourcePath": "docs/continuous-graph/release-notes-1.0.0.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-1.0.0.md",
-    "headings": [
-      {
-        "id": "bluetusk-continuousgraph-1-0-0-release-record",
-        "text": "BlueTusk ContinuousGraph 1.0.0 release record",
-        "level": 1
-      }
-    ],
-    "wordCount": 187,
-    "readMinutes": 1,
-    "searchText": "BlueTusk ContinuousGraph 1.0.0 release record Status: published on 2026-08-23 from `continuous-graph-v1.0.0` at release commit `7380d7b028c72b2aae348b778711d104d022a3f8`. The complete release evidence, registry inventory, and explicit owner-accepted exceptions are recorded in the [V1 publication record](../releases/1.0.0-publication-record.md). ContinuousGraph 1.0.0 stabilises capability-guarded registered SQL/PGQ plans, dependency-aware invalidation, bounded affected-key incremental evaluation, authoritative repair, replay/checkpoint restart, and the optional Control Plane adapter. Its public API is frozen by [`eng/continuous-graph-api-freeze.json`](../../eng/continuous-graph-api-freeze.json). The planned standard publication gate required PostgreSQL 19 GA, Provider, Streams, Live, and Control Plane 1.0.0 plus a successful exact-candidate 24-hour endurance run and an independent application pilot. The package dependencies were published first; the owner exception records the deferred GA, endurance, and pilot evidence. Support starts with the immutable `continuous-graph-v1.0.0` packages. Registry availability, contents, hashes, SBOMs, provenance, tests, and dependency resolution passed in the recorded release workflow. Defects use rollback or pinning and a new fixed version. Service Topology Centre and Fraud Graph Investigator exercise repair, checkpoint/restart, disconnect recovery, cancellation, path analysis, and ordered result handling from exact RC packages. They also use readable fluent property-graph migrations. This is PostgreSQL 19 Beta 3 staging coverage; neither application is yet an independent stable pilot.",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>BlueTusk ContinuousGraph 1.0.0 release record</h1>\n<p>Status: published on 2026-08-23 from <code>continuous-graph-v1.0.0</code> at release commit\n<code>7380d7b028c72b2aae348b778711d104d022a3f8</code>.</p>\n<p>The complete release evidence, registry inventory, and explicit owner-accepted\nexceptions are recorded in the\n<a href=\"/documentation/operations/releases-1-0-0-publication-record\">V1 publication record</a>.</p>\n<p>ContinuousGraph 1.0.0 stabilises capability-guarded registered SQL/PGQ plans,\ndependency-aware invalidation, bounded affected-key incremental evaluation,\nauthoritative repair, replay/checkpoint restart, and the optional Control Plane\nadapter. Its public API is frozen by\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/continuous-graph-api-freeze.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/continuous-graph-api-freeze.json</code></a>.</p>\n<p>The planned standard publication gate required PostgreSQL 19 GA, Provider,\nStreams, Live, and Control Plane 1.0.0 plus a successful exact-candidate 24-hour\nendurance run and an independent application pilot. The package dependencies\nwere published first; the owner exception records the deferred GA, endurance,\nand pilot evidence.</p>\n<p>Support starts with the immutable <code>continuous-graph-v1.0.0</code> packages. Registry\navailability, contents, hashes, SBOMs, provenance, tests, and dependency\nresolution passed in the recorded release workflow. Defects use rollback or\npinning and a new fixed version.</p>\n<p>Service Topology Centre and Fraud Graph Investigator exercise repair,\ncheckpoint/restart, disconnect recovery, cancellation, path analysis, and\nordered result handling from exact RC packages. They also use readable fluent\nproperty-graph migrations. This is PostgreSQL 19 Beta 3 staging coverage;\nneither application is yet an independent stable pilot.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
+    "categoryLabel": "Graphs",
     "slug": "graph-reference",
-    "summary": "Use HasPropertyGraph with the default BlueTusk Graphs backend for portable typed queries. Vertex and edge definitions describe tables, keys, labels, and exposed scalar columns. Queries run on those tables under the ca…",
-    "keywords": [
-      "docs",
-      "graph",
-      "reference"
-    ],
-    "order": 1098,
     "title": "BlueTusk Graphs reference",
-    "sourcePath": "docs/graph/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
+    "summary": "Look up graph metadata, path semantics, migration options, and native SQL/PGQ.",
+    "order": 1,
     "headings": [
-      {
-        "id": "bluetusk-graphs-reference",
-        "text": "BlueTusk Graphs reference",
-        "level": 1
-      },
       {
         "id": "native-raw-sql-example",
         "text": "Native raw SQL example",
@@ -412,33 +134,53 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       },
       {
-        "id": "exact-v1-typed-subset-boundary",
-        "text": "Exact V1 typed-subset boundary",
+        "id": "supported-typed-patterns",
+        "text": "Supported typed patterns",
         "level": 2
       }
     ],
-    "wordCount": 1307,
-    "readMinutes": 6,
-    "searchText": "BlueTusk Graphs reference Use `HasPropertyGraph` with the default BlueTusk Graphs backend for portable typed queries. Vertex and edge definitions describe tables, keys, labels, and exposed scalar columns. Queries run on those tables under the caller's database role. EF global filters on the source entity do not automatically apply to the graph SQL. Put tenant and authorization checks in PostgreSQL row-level security or in the authorized graph query. Native SQL/PGQ is selected through the EF context's graph compatibility option. It can also be used directly through the command APIs. ADO.NET detects `SupportsSqlPgq` through the server catalogue. Native release evidence is tracked in the [PostgreSQL compatibility programme](../postgresql19-programme.md). The live PostgreSQL 19 Beta 3 acceptance tests cover: `CREATE PROPERTY GRAPH`, `CREATE TEMP PROPERTY GRAPH`, `ALTER PROPERTY GRAPH`, and `DROP PROPERTY GRAPH`; `GRAPH_TABLE` vertex and directed-edge patterns; prepared and typed value parameters applied to graph results; field metadata, batches, mixed relational/graph statements, and data-source pooling; typed discovery of graphs, vertex and edge tables, key columns, labels, element properties, edge endpoints, column mappings, and property data types; typed EF model configuration, migration diffing/scaffolding, and database-first graph retention; live capability-guarded and centrally quoted EF migration SQL for graph creation, rename/schema alteration, and removal; typed EF linear-path matching, parameterized predicates, DTO and tracked-entity materialization, and relational composition; capability-guarded empty discovery results on PostgreSQL 15–18; and the normal provider suite, including cancellation, pipeline mode, types, COPY, replication, and EF regression coverage. Native discovery reads the information-schema views exposed by the historical SQL/PGQ fixture. These include `property_graphs`, `pg_element_tables`, `pg_element_table_key_columns`, `pg_element_table_la",
+    "sourcePath": "docs/graph/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>BlueTusk Graphs reference</h1>\n<p>Use <code>HasPropertyGraph</code> with the default BlueTusk Graphs backend for portable\ntyped queries. Vertex and edge definitions describe tables, keys, labels, and\nexposed scalar columns. Queries run on those tables under the caller’s database\nrole. EF global filters on the source entity do not automatically apply to\nthe graph SQL. Put tenant and authorization checks in PostgreSQL row-level\nsecurity or in the authorized graph query.</p>\n<p>Native SQL/PGQ is selected through the EF context’s graph compatibility option.\nIt can also be used directly through the command APIs. ADO.NET detects\n<code>SupportsSqlPgq</code> through the server catalogue. Native release evidence is\ntracked in the <a href=\"/documentation/operations/postgresql19-programme\">PostgreSQL compatibility programme</a>.</p>\n<p>The live PostgreSQL 19 Beta 3 acceptance tests cover:</p>\n<ul>\n<li><code>CREATE PROPERTY GRAPH</code>, <code>CREATE TEMP PROPERTY GRAPH</code>, <code>ALTER PROPERTY GRAPH</code>,\nand <code>DROP PROPERTY GRAPH</code>;</li>\n<li><code>GRAPH_TABLE</code> vertex and directed-edge patterns;</li>\n<li>prepared and typed value parameters applied to graph results;</li>\n<li>field metadata, batches, mixed relational/graph statements, and data-source\npooling;</li>\n<li>typed discovery of graphs, vertex and edge tables, key columns, labels,\nelement properties, edge endpoints, column mappings, and property data types;</li>\n<li>typed EF model configuration, migration diffing/scaffolding, and database-first\ngraph retention;</li>\n<li>live capability-guarded and centrally quoted EF migration SQL for graph\ncreation, rename/schema alteration, and removal;</li>\n<li>typed EF linear-path matching, parameterized predicates, DTO and tracked-entity\nmaterialization, and relational composition;</li>\n<li>capability-guarded empty discovery results on PostgreSQL 15–18; and</li>\n<li>the normal provider suite, including cancellation, pipeline mode, types,\nCOPY, replication, and EF regression coverage.</li>\n</ul>\n<p>Native discovery reads the information-schema views exposed by the historical\nSQL/PGQ fixture. These include <code>property_graphs</code>, <code>pg_element_tables</code>,\n<code>pg_element_table_key_columns</code>, <code>pg_element_table_labels</code>,\n<code>pg_element_table_properties</code>, <code>pg_edge_table_components</code>, <code>pg_labels</code>,\n<code>pg_label_properties</code>, and <code>pg_property_data_types</code>. Portable graphs are\ndefined in EF metadata and do not use these views.</p>\n<h2>Native raw SQL example</h2>\n<p>For the portable EF sample, follow the <a href=\"/documentation/graph/sql-pgq#run-the-sample\">Graph quickstart</a>.\nUse <code>GRAPH_TABLE</code> directly only after <code>SupportsSqlPgq</code> succeeds and the native\nproperty graph exists. For example, given a graph named <code>social_graph</code> with\n<code>person</code> vertices and <code>follows</code> edges:</p>\n"
+        "html": "<p>Use <code>HasPropertyGraph</code> with the default BlueTusk Graphs backend for portable\ntyped queries. Vertex and edge definitions describe tables, keys, labels, and\nexposed scalar columns. Queries run on those tables under the caller’s database\nrole. EF global filters on the source entity do not automatically apply to\nthe graph SQL. Put tenant and authorization checks in PostgreSQL row-level\nsecurity or in the authorized graph query.</p>\n<p>Native SQL/PGQ is selected through the EF context’s graph compatibility option.\nIt can also be used directly through the command APIs. ADO.NET detects\n<code>SupportsSqlPgq</code> through the server catalogue.</p>\n<p>Native discovery reads the information-schema views exposed by the SQL/PGQ server. These include <code>property_graphs</code>, <code>pg_element_tables</code>,\n<code>pg_element_table_key_columns</code>, <code>pg_element_table_labels</code>,\n<code>pg_element_table_properties</code>, <code>pg_edge_table_components</code>, <code>pg_labels</code>,\n<code>pg_label_properties</code>, and <code>pg_property_data_types</code>. Portable graphs are\ndefined in EF metadata and do not use these views.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "SELECT *\nFROM GRAPH_TABLE (\n  social_graph\n  MATCH (source IS person)-[edge IS follows]->(target IS person)\n  COLUMNS (source.name AS source_name, target.name AS target_name)\n);\n",
-        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> <span class=\"hljs-operator\">*</span>\n<span class=\"hljs-keyword\">FROM</span> GRAPH_TABLE (\n  social_graph\n  <span class=\"hljs-keyword\">MATCH</span> (source <span class=\"hljs-keyword\">IS</span> person)<span class=\"hljs-operator\">-</span>[edge <span class=\"hljs-keyword\">IS</span> follows]<span class=\"hljs-operator\">-</span><span class=\"hljs-operator\">&gt;</span>(target <span class=\"hljs-keyword\">IS</span> person)\n  COLUMNS (source.name <span class=\"hljs-keyword\">AS</span> source_name, target.name <span class=\"hljs-keyword\">AS</span> target_name)\n);\n",
-        "language": "sql"
+        "kind": "heading",
+        "heading": {
+          "id": "native-raw-sql-example",
+          "text": "Native raw SQL example",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<h2>Typed schema discovery</h2>\n<p>Use a long-lived <code>BlueTuskDataSource</code> for normal application discovery. The\ninspector opens and returns its own pooled connection:</p>\n"
+        "html": "<p>For the portable EF sample, follow the <a href=\"/documentation/graph/property-graphs\">Graph quickstart</a>.\nUse <code>GRAPH_TABLE</code> directly only after <code>SupportsSqlPgq</code> succeeds and the native\nproperty graph exists. For example, given a graph named <code>social_graph</code> with\n<code>person</code> vertices and <code>follows</code> edges:</p>\n"
       },
       {
         "kind": "code",
-        "code": "using BlueTusk.Data;\nusing BlueTusk.Data.Schema;\n\nawait using var dataSource = BlueTuskDataSource.Create(connectionString);\nvar inspector = new BlueTuskPropertyGraphSchemaInspector(dataSource);\nvar graphs = await inspector.InspectAsync(\n    new BlueTuskPropertyGraphInspectionOptions\n    {\n        Schema = \"application\",\n        Name = \"social\",\n    },\n    cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data.Schema;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = BlueTuskDataSource.Create(connectionString);\n<span class=\"hljs-keyword\">var</span> inspector = <span class=\"hljs-keyword\">new</span> BlueTuskPropertyGraphSchemaInspector(dataSource);\n<span class=\"hljs-keyword\">var</span> graphs = <span class=\"hljs-keyword\">await</span> inspector.InspectAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskPropertyGraphInspectionOptions\n    {\n        Schema = <span class=\"hljs-string\">&quot;application&quot;</span>,\n        Name = <span class=\"hljs-string\">&quot;social&quot;</span>,\n    },\n    cancellationToken);\n",
+        "code": "SELECT *\nFROM GRAPH_TABLE (\n  social_graph\n  MATCH (source IS person)-[edge IS follows]->(target IS person)\n  COLUMNS (source.name AS source_name, target.name AS target_name)\n);",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> <span class=\"hljs-operator\">*</span>\n<span class=\"hljs-keyword\">FROM</span> GRAPH_TABLE (\n  social_graph\n  <span class=\"hljs-keyword\">MATCH</span> (source <span class=\"hljs-keyword\">IS</span> person)<span class=\"hljs-operator\">-</span>[edge <span class=\"hljs-keyword\">IS</span> follows]<span class=\"hljs-operator\">-</span><span class=\"hljs-operator\">&gt;</span>(target <span class=\"hljs-keyword\">IS</span> person)\n  COLUMNS (source.name <span class=\"hljs-keyword\">AS</span> source_name, target.name <span class=\"hljs-keyword\">AS</span> target_name)\n);",
+        "language": "sql"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "typed-schema-discovery",
+          "text": "Typed schema discovery",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use a long-lived <code>BlueTuskDataSource</code> for normal application discovery. The\ninspector opens and returns its own pooled connection:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using BlueTusk.Data;\nusing BlueTusk.Data.Schema;\n\nawait using var dataSource = BlueTuskDataSource.Create(connectionString);\nvar inspector = new BlueTuskPropertyGraphSchemaInspector(dataSource);\nvar graphs = await inspector.InspectAsync(\n    new BlueTuskPropertyGraphInspectionOptions\n    {\n        Schema = \"application\",\n        Name = \"social\",\n    },\n    cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data.Schema;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = BlueTuskDataSource.Create(connectionString);\n<span class=\"hljs-keyword\">var</span> inspector = <span class=\"hljs-keyword\">new</span> BlueTuskPropertyGraphSchemaInspector(dataSource);\n<span class=\"hljs-keyword\">var</span> graphs = <span class=\"hljs-keyword\">await</span> inspector.InspectAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskPropertyGraphInspectionOptions\n    {\n        Schema = <span class=\"hljs-string\">&quot;application&quot;</span>,\n        Name = <span class=\"hljs-string\">&quot;social&quot;</span>,\n    },\n    cancellationToken);",
         "language": "csharp"
       },
       {
@@ -447,33 +189,312 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "code",
-        "code": "$fixturePassword = docker compose -f eng/compose/postgres.yml exec -T postgres19 printenv POSTGRES_PASSWORD\n$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Port=5419;Username=postgres;Password=$fixturePassword;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet run --project tooling/BlueTusk.SchemaInspector -- --schema application --graph social\ndotnet run --project tooling/BlueTusk.SchemaInspector -- --schema application --json\n",
-        "highlighted": "<span class=\"hljs-variable\">$fixturePassword</span> = docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml exec <span class=\"hljs-literal\">-T</span> postgres19 printenv POSTGRES_PASSWORD\n<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5419;Username=postgres;Password=<span class=\"hljs-variable\">$fixturePassword</span>;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> tooling/BlueTusk.SchemaInspector <span class=\"hljs-literal\">--</span> <span class=\"hljs-literal\">--schema</span> application <span class=\"hljs-literal\">--graph</span> social\ndotnet run <span class=\"hljs-literal\">--project</span> tooling/BlueTusk.SchemaInspector <span class=\"hljs-literal\">--</span> <span class=\"hljs-literal\">--schema</span> application <span class=\"hljs-literal\">--json</span>\n",
+        "code": "$fixturePassword = docker compose -f eng/compose/postgres.yml exec -T postgres19 printenv POSTGRES_PASSWORD\n$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Port=5419;Username=postgres;Password=$fixturePassword;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet run --project tooling/BlueTusk.SchemaInspector -- --schema application --graph social\ndotnet run --project tooling/BlueTusk.SchemaInspector -- --schema application --json",
+        "highlighted": "<span class=\"hljs-variable\">$fixturePassword</span> = docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml exec <span class=\"hljs-literal\">-T</span> postgres19 printenv POSTGRES_PASSWORD\n<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5419;Username=postgres;Password=<span class=\"hljs-variable\">$fixturePassword</span>;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> tooling/BlueTusk.SchemaInspector <span class=\"hljs-literal\">--</span> <span class=\"hljs-literal\">--schema</span> application <span class=\"hljs-literal\">--graph</span> social\ndotnet run <span class=\"hljs-literal\">--project</span> tooling/BlueTusk.SchemaInspector <span class=\"hljs-literal\">--</span> <span class=\"hljs-literal\">--schema</span> application <span class=\"hljs-literal\">--json</span>",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>The tool reports an empty graph collection and <code>supportsSqlPgq: false</code> on\nservers without SQL/PGQ instead of querying views that do not exist.</p>\n<h2>EF model, migrations, and reverse engineering</h2>\n<p>Configure relational table/column mappings before adding the graph. The graph\nbuilder accepts only direct mapped-property selectors, so identifiers are\nresolved from EF metadata rather than caller-authored SQL:</p>\n"
+        "html": "<p>The tool reports an empty graph collection and <code>supportsSqlPgq: false</code> on\nservers without SQL/PGQ instead of querying views that do not exist.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "ef-model-migrations-and-reverse-engineering",
+          "text": "EF model, migrations, and reverse engineering",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Configure relational table/column mappings before adding the graph. The graph\nbuilder accepts only direct mapped-property selectors, so identifiers are\nresolved from EF metadata rather than caller-authored SQL:</p>\n"
       },
       {
         "kind": "code",
-        "code": "modelBuilder.HasPropertyGraph(\n    \"social\",\n    graph =>\n    {\n        graph.Vertex<Person>(\"people\", vertex => vertex\n            .HasLabel(\"person\")\n            .HasKey(person => person.Id)\n            .Properties(person => new { person.Id, person.Name }));\n\n        graph.Edge<Friendship>(\"friendships\", edge => edge\n            .HasLabel(\"follows\")\n            .HasKey(friendship => friendship.Id)\n            .Properties(friendship => new { friendship.Id, friendship.Since })\n            .HasSource<Person>(\n                friendship => friendship.FromPersonId,\n                person => person.Id)\n            .HasDestination<Person>(\n                friendship => friendship.ToPersonId,\n                person => person.Id));\n    },\n    schema: \"application\");\n",
-        "highlighted": "modelBuilder.HasPropertyGraph(\n    <span class=\"hljs-string\">&quot;social&quot;</span>,\n    graph =&gt;\n    {\n        graph.Vertex&lt;Person&gt;(<span class=\"hljs-string\">&quot;people&quot;</span>, vertex =&gt; vertex\n            .HasLabel(<span class=\"hljs-string\">&quot;person&quot;</span>)\n            .HasKey(person =&gt; person.Id)\n            .Properties(person =&gt; <span class=\"hljs-keyword\">new</span> { person.Id, person.Name }));\n\n        graph.Edge&lt;Friendship&gt;(<span class=\"hljs-string\">&quot;friendships&quot;</span>, edge =&gt; edge\n            .HasLabel(<span class=\"hljs-string\">&quot;follows&quot;</span>)\n            .HasKey(friendship =&gt; friendship.Id)\n            .Properties(friendship =&gt; <span class=\"hljs-keyword\">new</span> { friendship.Id, friendship.Since })\n            .HasSource&lt;Person&gt;(\n                friendship =&gt; friendship.FromPersonId,\n                person =&gt; person.Id)\n            .HasDestination&lt;Person&gt;(\n                friendship =&gt; friendship.ToPersonId,\n                person =&gt; person.Id));\n    },\n    schema: <span class=\"hljs-string\">&quot;application&quot;</span>);\n",
+        "code": "modelBuilder.HasPropertyGraph(\n    \"social\",\n    graph =>\n    {\n        graph.Vertex<Person>(\"people\", vertex => vertex\n            .HasLabel(\"person\")\n            .HasKey(person => person.Id)\n            .Properties(person => new { person.Id, person.Name }));\n\n        graph.Edge<Friendship>(\"friendships\", edge => edge\n            .HasLabel(\"follows\")\n            .HasKey(friendship => friendship.Id)\n            .Properties(friendship => new { friendship.Id, friendship.Since })\n            .HasSource<Person>(\n                friendship => friendship.FromPersonId,\n                person => person.Id)\n            .HasDestination<Person>(\n                friendship => friendship.ToPersonId,\n                person => person.Id));\n    },\n    schema: \"application\");",
+        "highlighted": "modelBuilder.HasPropertyGraph(\n    <span class=\"hljs-string\">&quot;social&quot;</span>,\n    graph =&gt;\n    {\n        graph.Vertex&lt;Person&gt;(<span class=\"hljs-string\">&quot;people&quot;</span>, vertex =&gt; vertex\n            .HasLabel(<span class=\"hljs-string\">&quot;person&quot;</span>)\n            .HasKey(person =&gt; person.Id)\n            .Properties(person =&gt; <span class=\"hljs-keyword\">new</span> { person.Id, person.Name }));\n\n        graph.Edge&lt;Friendship&gt;(<span class=\"hljs-string\">&quot;friendships&quot;</span>, edge =&gt; edge\n            .HasLabel(<span class=\"hljs-string\">&quot;follows&quot;</span>)\n            .HasKey(friendship =&gt; friendship.Id)\n            .Properties(friendship =&gt; <span class=\"hljs-keyword\">new</span> { friendship.Id, friendship.Since })\n            .HasSource&lt;Person&gt;(\n                friendship =&gt; friendship.FromPersonId,\n                person =&gt; person.Id)\n            .HasDestination&lt;Person&gt;(\n                friendship =&gt; friendship.ToPersonId,\n                person =&gt; person.Id));\n    },\n    schema: <span class=\"hljs-string\">&quot;application&quot;</span>);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>The model snapshot stores the resolved backend. Portable graph definitions emit\nordinary table and index migrations. In native mode, migration diffing emits\ngraph creation after its relational tables and graph removal before table\nremoval. A graph rename or schema move emits <code>ALTER PROPERTY GRAPH</code>; changing an element definition emits drop/create because PostgreSQL’s\nindividual label/element alterations cannot represent every model change as\none atomic command.</p>\n<p>Generated migration C# uses the public fluent graph builder rather than a\nserialized definition string. It describes vertices, edges, labels,\nproperties, keys and endpoints directly and validates the definition before\nadding the operation. The strongly typed model builder above remains the\npreferred source of truth; the migration builder makes the generated schema\nchange readable and reviewable.</p>\n<p>Use the same compatibility setting at runtime and design time. Legacy snapshots\nwith no backend describe native graphs. To retain native migrations, set\n<code>UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq)</code> in both\nconfigurations. Maintain separate migration histories if you deploy both modes.\nFor a portable deployment with a native migration history, establish a reviewed\nrelational baseline from the existing schema and migration history. Fresh\nportable installations must start with a migration sequence that contains\nportable table DDL. An existing preview database may need a guarded migration\nto drop its native graph object before changing dependent tables.</p>\n<p>All generated graph DDL is executed inside a server-side guard. PostgreSQL\n15–18 receive SQLSTATE <code>0A000</code> with a BlueTusk-specific requirement message;\nthe PostgreSQL 19 DDL is dynamic inside the guard so an older parser never sees\nSQL/PGQ syntax. Graph, schema, table, alias, key-column, label, and property\nidentifiers use the provider’s central SQL delimiter. Live tests include spaces\nand embedded double quotes in every relevant identifier category.</p>\n<p>Database-first scaffolding reuses the same documented information-schema\nreader and retains discovered graphs in generated context code through\n<code>HasPropertyGraphs</code>. The retained metadata participates in subsequent\nmigration diffs and typed query translation.</p>\n<h2>Typed EF graph queries</h2>\n<p>Start a graph query from its configured model name. Pattern variables are\ncaller-chosen identifiers, while labels, properties, element aliases, and\ntables are resolved from the typed EF graph metadata and quoted by the\nprovider. Captured values become ordinary EF parameters:</p>\n"
+        "html": "<p>The model snapshot stores the resolved backend. Portable graph definitions emit\nordinary table and index migrations. In native mode, migration diffing emits\ngraph creation after its relational tables and graph removal before table\nremoval. A graph rename or schema move emits <code>ALTER PROPERTY GRAPH</code>; changing an element definition emits drop/create because PostgreSQL’s\nindividual label/element alterations cannot represent every model change as\none atomic command.</p>\n<p>Generated migration C# uses the public fluent graph builder rather than a\nserialized definition string. It describes vertices, edges, labels,\nproperties, keys and endpoints directly and validates the definition before\nadding the operation. The strongly typed model builder above remains the\npreferred source of truth; the migration builder makes the generated schema\nchange readable and reviewable.</p>\n<p>Use the same compatibility setting at runtime and design time. Legacy snapshots\nwith no backend describe native graphs. To retain native migrations, set\n<code>UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq)</code> in both\nconfigurations. Maintain separate migration histories if you deploy both modes.\nFor a portable deployment with a native migration history, establish a reviewed\nrelational baseline from the existing schema and migration history. Fresh\nportable installations must start with a migration sequence that contains\nportable table DDL. An existing preview database may need a guarded migration\nto drop its native graph object before changing dependent tables.</p>\n<p>All generated graph DDL is executed inside a server-side guard. PostgreSQL\n15–18 receive SQLSTATE <code>0A000</code> with a BlueTusk-specific requirement message;\nthe PostgreSQL 19 DDL is dynamic inside the guard so an older parser never sees\nSQL/PGQ syntax. Graph, schema, table, alias, key-column, label, and property\nidentifiers use the provider’s central SQL delimiter. Live tests include spaces\nand embedded double quotes in every relevant identifier category.</p>\n<p>Database-first scaffolding reuses the same documented information-schema\nreader and retains discovered graphs in generated context code through\n<code>HasPropertyGraphs</code>. The retained metadata participates in subsequent\nmigration diffs and typed query translation.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "typed-ef-graph-queries",
+          "text": "Typed EF graph queries",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Start a graph query from its configured model name. Pattern variables are\ncaller-chosen identifiers, while labels, properties, element aliases, and\ntables are resolved from the typed EF graph metadata and quoted by the\nprovider. Captured values become ordinary EF parameters:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var query = db.PropertyGraph(\"social\", \"application\")\n    .Match(pattern => pattern\n        .Vertex<Person>(\"source\", person => person.Id == personId)\n        .Outgoing<Friendship>(\"relationship\")\n        .Vertex<Person>(\"target\"))\n    .Select<FriendResult>(projection => projection\n        .Property<Person, int>(\n            \"source\", person => person.Id, result => result.SourceId)\n        .Property<Person, string>(\n            \"source\", person => person.Name, result => result.SourceName)\n        .Property<Friendship, DateOnly>(\n            \"relationship\", edge => edge.Since, result => result.Since)\n        .Property<Person, int>(\n            \"target\", person => person.Id, result => result.TargetId)\n        .Property<Person, string>(\n            \"target\", person => person.Name, result => result.TargetName))\n    .Where(result => result.TargetName != \"blocked\")\n    .OrderBy(result => result.TargetName)\n    .Take(20);\n\nvar friends = await query.ToListAsync(cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> query = db.PropertyGraph(<span class=\"hljs-string\">&quot;social&quot;</span>, <span class=\"hljs-string\">&quot;application&quot;</span>)\n    .Match(pattern =&gt; pattern\n        .Vertex&lt;Person&gt;(<span class=\"hljs-string\">&quot;source&quot;</span>, person =&gt; person.Id == personId)\n        .Outgoing&lt;Friendship&gt;(<span class=\"hljs-string\">&quot;relationship&quot;</span>)\n        .Vertex&lt;Person&gt;(<span class=\"hljs-string\">&quot;target&quot;</span>))\n    .Select&lt;FriendResult&gt;(projection =&gt; projection\n        .Property&lt;Person, <span class=\"hljs-built_in\">int</span>&gt;(\n            <span class=\"hljs-string\">&quot;source&quot;</span>, person =&gt; person.Id, result =&gt; result.SourceId)\n        .Property&lt;Person, <span class=\"hljs-built_in\">string</span>&gt;(\n            <span class=\"hljs-string\">&quot;source&quot;</span>, person =&gt; person.Name, result =&gt; result.SourceName)\n        .Property&lt;Friendship, DateOnly&gt;(\n            <span class=\"hljs-string\">&quot;relationship&quot;</span>, edge =&gt; edge.Since, result =&gt; result.Since)\n        .Property&lt;Person, <span class=\"hljs-built_in\">int</span>&gt;(\n            <span class=\"hljs-string\">&quot;target&quot;</span>, person =&gt; person.Id, result =&gt; result.TargetId)\n        .Property&lt;Person, <span class=\"hljs-built_in\">string</span>&gt;(\n            <span class=\"hljs-string\">&quot;target&quot;</span>, person =&gt; person.Name, result =&gt; result.TargetName))\n    .Where(result =&gt; result.TargetName != <span class=\"hljs-string\">&quot;blocked&quot;</span>)\n    .OrderBy(result =&gt; result.TargetName)\n    .Take(<span class=\"hljs-number\">20</span>);\n\n<span class=\"hljs-keyword\">var</span> friends = <span class=\"hljs-keyword\">await</span> query.ToListAsync(cancellationToken);\n",
+        "code": "var query = db.PropertyGraph(\"social\", \"application\")\n    .Match(pattern => pattern\n        .Vertex<Person>(\"source\", person => person.Id == personId)\n        .Outgoing<Friendship>(\"relationship\")\n        .Vertex<Person>(\"target\"))\n    .Select<FriendResult>(projection => projection\n        .Property<Person, int>(\n            \"source\", person => person.Id, result => result.SourceId)\n        .Property<Person, string>(\n            \"source\", person => person.Name, result => result.SourceName)\n        .Property<Friendship, DateOnly>(\n            \"relationship\", edge => edge.Since, result => result.Since)\n        .Property<Person, int>(\n            \"target\", person => person.Id, result => result.TargetId)\n        .Property<Person, string>(\n            \"target\", person => person.Name, result => result.TargetName))\n    .Where(result => result.TargetName != \"blocked\")\n    .OrderBy(result => result.TargetName)\n    .Take(20);\n\nvar friends = await query.ToListAsync(cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> query = db.PropertyGraph(<span class=\"hljs-string\">&quot;social&quot;</span>, <span class=\"hljs-string\">&quot;application&quot;</span>)\n    .Match(pattern =&gt; pattern\n        .Vertex&lt;Person&gt;(<span class=\"hljs-string\">&quot;source&quot;</span>, person =&gt; person.Id == personId)\n        .Outgoing&lt;Friendship&gt;(<span class=\"hljs-string\">&quot;relationship&quot;</span>)\n        .Vertex&lt;Person&gt;(<span class=\"hljs-string\">&quot;target&quot;</span>))\n    .Select&lt;FriendResult&gt;(projection =&gt; projection\n        .Property&lt;Person, <span class=\"hljs-built_in\">int</span>&gt;(\n            <span class=\"hljs-string\">&quot;source&quot;</span>, person =&gt; person.Id, result =&gt; result.SourceId)\n        .Property&lt;Person, <span class=\"hljs-built_in\">string</span>&gt;(\n            <span class=\"hljs-string\">&quot;source&quot;</span>, person =&gt; person.Name, result =&gt; result.SourceName)\n        .Property&lt;Friendship, DateOnly&gt;(\n            <span class=\"hljs-string\">&quot;relationship&quot;</span>, edge =&gt; edge.Since, result =&gt; result.Since)\n        .Property&lt;Person, <span class=\"hljs-built_in\">int</span>&gt;(\n            <span class=\"hljs-string\">&quot;target&quot;</span>, person =&gt; person.Id, result =&gt; result.TargetId)\n        .Property&lt;Person, <span class=\"hljs-built_in\">string</span>&gt;(\n            <span class=\"hljs-string\">&quot;target&quot;</span>, person =&gt; person.Name, result =&gt; result.TargetName))\n    .Where(result =&gt; result.TargetName != <span class=\"hljs-string\">&quot;blocked&quot;</span>)\n    .OrderBy(result =&gt; result.TargetName)\n    .Take(<span class=\"hljs-number\">20</span>);\n\n<span class=\"hljs-keyword\">var</span> friends = <span class=\"hljs-keyword\">await</span> query.ToListAsync(cancellationToken);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p><code>Incoming&lt;TEdge&gt;</code> reverses a directed traversal. When one CLR entity maps to\nmore than one graph element table, pass the configured element alias to\n<code>Vertex</code> or <code>Outgoing</code>/<code>Incoming</code> to disambiguate it.</p>\n<p>The projection target can be an unmapped class, as above. It can also be a\nmapped EF entity; every mapped scalar property must then be projected, and EF\napplies its normal tracking behavior. The resulting <code>IQueryable</code> supports\nordinary outer LINQ composition, including filters, joins, grouping, sorting,\npagination, and further projections.</p>\n<h2>Exact V1 typed-subset boundary</h2>\n<p>Supported now:</p>\n<ul>\n<li>all SQL/PGQ syntax accepted by PostgreSQL can pass through the ordinary\ncommand and batch APIs as caller-authored raw SQL;</li>\n<li>values outside graph grammar can use ordinary positional or named BlueTusk\nparameters;</li>\n<li>the typed schema model and inspector are read-only discovery APIs;</li>\n<li>EF models, migrations, and database-first scaffolding retain property-graph\nschema semantics; and</li>\n<li>typed EF queries support linear vertex/edge patterns, both edge directions,\nundirected paths, label OR matching, and direct scalar property\nprojections, and vertex predicates made from direct property comparisons to\ncaptured or constant values joined by <code>&amp;&amp;</code> or <code>||</code>.</li>\n</ul>\n<p>Typed paths can span one to eight hops per bounded segment and at most 64\nfixed branches. Unbounded paths and predicates beyond the documented comparison\nsubset require other SQL. The portable renderer supports column-valued\nproperties. Native SQL can express additional graph constructs. Unsupported\ntyped constructs raise <code>BlueTuskGraphTranslationException</code>; there is no string\nconcatenation fallback. Schema inspection remains read-only.</p>\n<p>Applications using raw SQL must not interpolate untrusted identifiers or graph\npatterns. The core PostgreSQL references are <a href=\"https://www.postgresql.org/docs/19/ddl-property-graphs.html\" target=\"_blank\" rel=\"noreferrer\">Property Graphs</a>,\n<a href=\"https://www.postgresql.org/docs/19/queries-graph.html\" target=\"_blank\" rel=\"noreferrer\">Graph Queries</a>, and\n<a href=\"https://www.postgresql.org/docs/19/sql-create-property-graph.html\" target=\"_blank\" rel=\"noreferrer\"><code>CREATE PROPERTY GRAPH</code></a>.</p>\n"
+        "html": "<p><code>Incoming&lt;TEdge&gt;</code> reverses a directed traversal. When one CLR entity maps to\nmore than one graph element table, pass the configured element alias to\n<code>Vertex</code> or <code>Outgoing</code>/<code>Incoming</code> to disambiguate it.</p>\n<p>The projection target can be an unmapped class, as above. It can also be a\nmapped EF entity; every mapped scalar property must then be projected, and EF\napplies its normal tracking behavior. The resulting <code>IQueryable</code> supports\nordinary outer LINQ composition, including filters, joins, grouping, sorting,\npagination, and further projections.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "supported-typed-patterns",
+          "text": "Supported typed patterns",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Supported now:</p>\n<ul>\n<li>all SQL/PGQ syntax accepted by PostgreSQL can pass through the ordinary\ncommand and batch APIs as caller-authored raw SQL;</li>\n<li>values outside graph grammar can use ordinary positional or named BlueTusk\nparameters;</li>\n<li>the typed schema model and inspector are read-only discovery APIs;</li>\n<li>EF models, migrations, and database-first scaffolding retain property-graph\nschema semantics; and</li>\n<li>typed EF queries support linear vertex/edge patterns, both edge directions,\nundirected paths, label OR matching, and direct scalar property\nprojections, and vertex predicates made from direct property comparisons to\ncaptured or constant values joined by <code>&amp;&amp;</code> or <code>||</code>.</li>\n</ul>\n<p>Typed paths can span one to eight hops per bounded segment and at most 64\nfixed branches. Unbounded paths and predicates beyond the documented comparison\nsubset require other SQL. The portable renderer supports column-valued\nproperties. Native SQL can express additional graph constructs. Unsupported\ntyped constructs raise <code>BlueTuskGraphTranslationException</code>; there is no string\nconcatenation fallback. Schema inspection remains read-only.</p>\n<p>Applications using raw SQL must not interpolate untrusted identifiers or graph\npatterns. The core PostgreSQL references are <a href=\"https://www.postgresql.org/docs/19/ddl-property-graphs.html\">Property Graphs</a>,\n<a href=\"https://www.postgresql.org/docs/19/queries-graph.html\">Graph Queries</a>, and\n<a href=\"https://www.postgresql.org/docs/19/sql-create-property-graph.html\"><code>CREATE PROPERTY GRAPH</code></a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "graph",
+    "categoryLabel": "Graphs",
+    "slug": "traversals",
+    "title": "Run a bounded traversal",
+    "summary": "Run neighbors, reachability, and shortest-path queries with bounded work.",
+    "order": 2,
+    "headings": [
+      {
+        "id": "choose-the-operation",
+        "text": "Choose the operation",
+        "level": 2
+      },
+      {
+        "id": "find-upstream-dependencies",
+        "text": "Find upstream dependencies",
+        "level": 2
+      },
+      {
+        "id": "set-traversal-limits",
+        "text": "Set traversal limits",
+        "level": 2
+      },
+      {
+        "id": "choose-an-execution-path",
+        "text": "Choose an execution path",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/graph/traversals.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/traversals.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>Use traversal methods to explore relationships from a known vertex. They\nshare the graph mapping configured by <code>HasPropertyGraph</code>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "choose-the-operation",
+          "text": "Choose the operation",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Method</th>\n<th>Result</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>NeighborsAsync</code></td>\n<td>An ordered page of authorized incident edges and neighboring vertices. Parallel edges remain separate.</td>\n</tr>\n<tr>\n<td><code>ReachableAsync</code></td>\n<td>Each authorized reachable vertex with its minimum hop count.</td>\n</tr>\n<tr>\n<td><code>ShortestPathAsync</code></td>\n<td>One minimum-hop path, with a deterministic edge-key tie break.</td>\n</tr>\n</tbody>\n</table>\n<p>Keys are ordered tuples containing one to eight integer, bigint, or UUID\nvalues. Use the vertex element alias from the mapping and supply the entire\nkey tuple. Configure incoming, outgoing, or undirected traversal according to\nthe question you want to answer.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "find-upstream-dependencies",
+          "text": "Find upstream dependencies",
+          "level": 2
+        }
+      },
+      {
+        "kind": "code",
+        "code": "var graph = context.PropertyGraph(\"service_topology_graph\");\nvar dependencies = await graph.ReachableAsync(\n    new BlueTuskGraphIdentity(\"services\", serviceId),\n    new BlueTuskGraphTraversalOptions\n    {\n        Direction = BlueTuskGraphEdgeDirection.Incoming,\n        MaximumDepth = 6,\n        MaximumResults = 250,\n    },\n    cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> graph = context.PropertyGraph(<span class=\"hljs-string\">&quot;service_topology_graph&quot;</span>);\n<span class=\"hljs-keyword\">var</span> dependencies = <span class=\"hljs-keyword\">await</span> graph.ReachableAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskGraphIdentity(<span class=\"hljs-string\">&quot;services&quot;</span>, serviceId),\n    <span class=\"hljs-keyword\">new</span> BlueTuskGraphTraversalOptions\n    {\n        Direction = BlueTuskGraphEdgeDirection.Incoming,\n        MaximumDepth = <span class=\"hljs-number\">6</span>,\n        MaximumResults = <span class=\"hljs-number\">250</span>,\n    },\n    cancellationToken);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Set depth, frontier, examined-edge, result, and engine-memory budgets to fit\nyour workload. An exhausted budget is an incomplete operation. Check <code>BudgetExhausted</code> and <code>BudgetReason</code> before interpreting an empty result. A completed shortest-path\noperation can report that no path exists inside the searched depth.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "set-traversal-limits",
+          "text": "Set traversal limits",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Option</th>\n<th style=\"text-align:right\">Default</th>\n<th style=\"text-align:right\">Allowed range</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MaximumDepth</code></td>\n<td style=\"text-align:right\">8</td>\n<td style=\"text-align:right\">0–64</td>\n</tr>\n<tr>\n<td><code>MaximumFrontier</code></td>\n<td style=\"text-align:right\">4,096</td>\n<td style=\"text-align:right\">1–100,000</td>\n</tr>\n<tr>\n<td><code>MaximumEdges</code></td>\n<td style=\"text-align:right\">100,000</td>\n<td style=\"text-align:right\">1–1,000,000</td>\n</tr>\n<tr>\n<td><code>MaximumResults</code></td>\n<td style=\"text-align:right\">1,000</td>\n<td style=\"text-align:right\">1–10,000</td>\n</tr>\n<tr>\n<td><code>MaximumBytes</code></td>\n<td style=\"text-align:right\">8 MiB</td>\n<td style=\"text-align:right\">64 KiB–64 MiB</td>\n</tr>\n</tbody>\n</table>\n<p>Use <code>NextEdge</code> with the same anchor, direction, and options to read another\nneighbor page. <code>EdgesExamined</code> and <code>PeakFrontier</code> help explain how much work\na search needed. Set a command timeout as a separate bound on database work.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "choose-an-execution-path",
+          "text": "Choose an execution path",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>BlueTusk prefers the <a href=\"/documentation/graph/engine\">server extension</a> for these operations when\nthe extension and graph registration match. <code>UsedServerEngine</code> identifies the\nexecution path. Set <code>UseServerEngine = false</code> to request portable traversal.\nThe portable path uses batched reads in a repeatable-read transaction, or an\nexisting repeatable-read or serializable transaction.</p>\n<p>Use <code>EdgeAliases</code> to restrict traversal to registered edge elements. Null\nselects all edge elements and an empty list selects none. Server-side edge\nfilters require extension 1.2. Database errors and cancellation propagate.\nA budget-exhausted result includes its reason and contains no partial search.</p>\n<p>Use the <a href=\"/documentation/graph/engine#additional-sql-operations\">SQL operations</a> for weighted\npaths, what-if comparisons, and searches starting from multiple anchors.</p>\n<p>Use <a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a> when the same traversal\nshould be rerun after committed changes. Give each registration a stable query\nname, bounded output, verified dependency mappings, and a subscriber-authorized\ncontext factory.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "graph",
+    "categoryLabel": "Graphs",
+    "slug": "engine",
+    "title": "BlueTusk PostgreSQL graph engine",
+    "summary": "Install and operate the optional PostgreSQL server extension.",
+    "order": 3,
+    "headings": [
+      {
+        "id": "install-and-register",
+        "text": "Install and register",
+        "level": 2
+      },
+      {
+        "id": "query",
+        "text": "Query",
+        "level": 2
+      },
+      {
+        "id": "additional-sql-operations",
+        "text": "Additional SQL operations",
+        "level": 2
+      },
+      {
+        "id": "ef-core-and-continuous-graph",
+        "text": "EF Core and Continuous Graph",
+        "level": 2
+      },
+      {
+        "id": "upgrade-and-recover",
+        "text": "Upgrade and recover",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/graph/engine.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/engine.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>The <code>bluetusk_graph</code> extension executes traversal in PostgreSQL\nagainst the tables registered as vertices and edges. It uses the caller’s\npermissions and row-level security for every visible hop. The existing\nportable EF graph pattern interface is available on ordinary PostgreSQL.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "install-and-register",
+          "text": "Install and register",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Choose the BlueTusk Graph 1.2 extension archive for your PostgreSQL major.\nThe Linux x86-64 archives target PostgreSQL 15–18 on Alpine. Verify the archive\nchecksum and match the PostgreSQL major, architecture, and runtime distribution\nbefore installing. For other distributions, build with PGXS and your target\nserver’s <code>pg_config</code>. The Dockerfile builds and runs on the selected image.</p>\n<p>From the BlueTusk repository:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker build --build-arg POSTGRES_IMAGE=postgres:18-alpine -t bluetusk-graph:pg18 extensions/bluetusk_graph",
+        "highlighted": "docker build --build-arg POSTGRES_IMAGE=postgres:18-alpine -t bluetusk-graph:pg18 extensions/bluetusk_graph",
+        "language": "sh"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Install the binary on every server that can run the database, including\nfailover targets. A database administrator installs the catalogue with\n<code>CREATE EXTENSION bluetusk_graph</code>. Application roles need SELECT on the\nmapped columns and the appropriate RLS policies. Grant graph registration or\ncatalogue write permissions only to a deployment role.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "CREATE EXTENSION bluetusk_graph;\nSELECT extversion FROM pg_extension WHERE extname = 'bluetusk_graph';",
+        "highlighted": "<span class=\"hljs-keyword\">CREATE</span> EXTENSION bluetusk_graph;\n<span class=\"hljs-keyword\">SELECT</span> extversion <span class=\"hljs-keyword\">FROM</span> pg_extension <span class=\"hljs-keyword\">WHERE</span> extname <span class=\"hljs-operator\">=</span> <span class=\"hljs-string\">&#x27;bluetusk_graph&#x27;</span>;",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The second statement should return <code>1.2</code> for the extension in an updated database.</p>\n<p>Register a graph over existing tables with named elements. In this example,\n<code>topology.services(id)</code> and <code>topology.dependencies(id)</code> have UUID primary keys.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "SELECT bluetusk_graph.register_graph('topology', 'dependencies', '{\n  \"vertices\": {\n    \"service\": {\"schema\":\"topology\", \"table\":\"services\", \"key\":[\"id\"]}\n  },\n  \"edges\": {\n    \"depends_on\": {\n      \"schema\":\"topology\", \"table\":\"dependencies\", \"key\":[\"id\"],\n      \"source\":{\"vertex\":\"service\", \"columns\":[\"source_id\"]},\n      \"destination\":{\"vertex\":\"service\", \"columns\":[\"destination_id\"]}\n    }\n  }\n}');",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> bluetusk_graph.register_graph(<span class=\"hljs-string\">&#x27;topology&#x27;</span>, <span class=\"hljs-string\">&#x27;dependencies&#x27;</span>, <span class=\"hljs-string\">&#x27;{\n  &quot;vertices&quot;: {\n    &quot;service&quot;: {&quot;schema&quot;:&quot;topology&quot;, &quot;table&quot;:&quot;services&quot;, &quot;key&quot;:[&quot;id&quot;]}\n  },\n  &quot;edges&quot;: {\n    &quot;depends_on&quot;: {\n      &quot;schema&quot;:&quot;topology&quot;, &quot;table&quot;:&quot;dependencies&quot;, &quot;key&quot;:[&quot;id&quot;],\n      &quot;source&quot;:{&quot;vertex&quot;:&quot;service&quot;, &quot;columns&quot;:[&quot;source_id&quot;]},\n      &quot;destination&quot;:{&quot;vertex&quot;:&quot;service&quot;, &quot;columns&quot;:[&quot;destination_id&quot;]}\n    }\n  }\n}&#x27;</span>);",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>A key is an ordered tuple of one to eight PostgreSQL integer, bigint, or UUID\nvalues. Keys must be non-null and backed by an immediate unique index.\nEndpoint columns must agree with their mapped vertex key types and order.\nCreate indexes on outgoing and incoming edge columns used in traversal.\nReregister a graph after updating a mapped key, endpoint, or exposed column.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "query",
+          "text": "Query",
+          "level": 2
+        }
+      },
+      {
+        "kind": "code",
+        "code": "SELECT bluetusk_graph.reachable(\n    'topology', 'dependencies', 'service',\n    '[\"ef879e5f-4689-4fcf-8621-6a10b0cd1e31\"]',\n    max_depth => 6, direction => 'incoming', max_results => 250\n);",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> bluetusk_graph.reachable(\n    <span class=\"hljs-string\">&#x27;topology&#x27;</span>, <span class=\"hljs-string\">&#x27;dependencies&#x27;</span>, <span class=\"hljs-string\">&#x27;service&#x27;</span>,\n    <span class=\"hljs-string\">&#x27;[&quot;ef879e5f-4689-4fcf-8621-6a10b0cd1e31&quot;]&#x27;</span>,\n    max_depth <span class=\"hljs-operator\">=</span><span class=\"hljs-operator\">&gt;</span> <span class=\"hljs-number\">6</span>, direction <span class=\"hljs-operator\">=</span><span class=\"hljs-operator\">&gt;</span> <span class=\"hljs-string\">&#x27;incoming&#x27;</span>, max_results <span class=\"hljs-operator\">=</span><span class=\"hljs-operator\">&gt;</span> <span class=\"hljs-number\">250</span>\n);",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li><code>neighbors</code> returns an edge and vertex per row, with a continuation edge\nfor the next page. Edges are ordered by canonical key encoding within\neach level. Apply the continuation to the same anchor and direction.</li>\n<li><code>reachable</code> returns vertices with their minimum hop counts, excluding\nthe anchor. <code>shortest_path</code> returns one minimum-hop path with a stable\nedge-key tie break. A zero-hop path contains only the anchor.</li>\n</ul>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "additional-sql-operations",
+          "text": "Additional SQL operations",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li><code>compare_reachability</code> evaluates baseline and hypothetical reachability\nin the same statement snapshot. Pass up to 128 edge identities as\n<code>[[&quot;edge_alias&quot;,[key_value]], ...]</code> to suppress in the scenario.</li>\n<li><code>weighted_shortest_path</code> uses an exposed integer or bigint cost column\non every edge element. It minimizes total cost, then hop count, then the\nedge-key sequence. A null or negative examined cost raises an error.</li>\n<li>Version 1.2 adds edge-element filters to <code>neighbors_on</code>, <code>shortest_path_on</code>, and\n<code>weighted_shortest_path_on</code>. Supply registered edge aliases. An empty array\nselects zero edge elements.</li>\n<li><code>reachable_from</code> accepts up to 128 <code>[element, key tuple]</code> anchors and an\noptional edge filter. It uses one shared search and work budget. Each\nresult gives the minimum hop count and the winning anchor. Equal distances\nuse input anchor order. Duplicate, hidden, and missing anchors contribute\nno extra frontier entries.</li>\n</ul>\n<p>Each result reports its status and authorized work counters. An exhausted\nedge, frontier, result, or memory budget returns <code>budget_exhausted</code> with\nno partial result. A completed bounded shortest-path search with no path\nreturns <code>path: null</code>. Engine memory covers retained traversal state. Set a\nPostgreSQL statement timeout and appropriate executor memory and temporary\nfile limits for the calling role.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "ef-core-and-continuous-graph",
+          "text": "EF Core and Continuous Graph",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use the graph already declared by <code>HasPropertyGraph</code>. Run\n<code>RegisterEngineAsync</code> with the deployment role after applying relational\nmigrations. The deployment and application contexts should use the same\nmodel mapping.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var graph = context.PropertyGraph(\"service_topology_graph\");\nvar result = await graph.ReachableAsync(\n    new BlueTuskGraphIdentity(\"services\", serviceId),\n    new BlueTuskGraphTraversalOptions\n    {\n        Direction = BlueTuskGraphEdgeDirection.Incoming,\n        MaximumDepth = 6,\n        MaximumResults = 250,\n    },\n    cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> graph = context.PropertyGraph(<span class=\"hljs-string\">&quot;service_topology_graph&quot;</span>);\n<span class=\"hljs-keyword\">var</span> result = <span class=\"hljs-keyword\">await</span> graph.ReachableAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskGraphIdentity(<span class=\"hljs-string\">&quot;services&quot;</span>, serviceId),\n    <span class=\"hljs-keyword\">new</span> BlueTuskGraphTraversalOptions\n    {\n        Direction = BlueTuskGraphEdgeDirection.Incoming,\n        MaximumDepth = <span class=\"hljs-number\">6</span>,\n        MaximumResults = <span class=\"hljs-number\">250</span>,\n    },\n    cancellationToken);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>NeighborsAsync</code> and <code>ShortestPathAsync</code> use the same identity and options.\nThe weighted-path, what-if reachability, and multi-anchor operations are SQL\nfunctions. Use <code>EdgeAliases</code> on the typed EF methods to filter individual\nneighbor, reachability, or shortest-path traversals.\n<code>UsedServerEngine</code> reports the selected execution path. EF uses the engine by default\nfor supported operations when the extension and registered definition match.\nSet <code>EdgeAliases</code> to filter by registered edge element. Server-side filters require extension 1.2. The portable fallback runs batched reads inside one repeatable-read transaction, or uses\nan existing repeatable-read or serializable transaction. Database errors\nand cancellation propagate to the caller. Set <code>UseServerEngine</code> to false\nto select the portable implementation explicitly.</p>\n<p><code>ContinuousGraphQueryCompiler</code> can register a bounded watch with\n<code>CompileReachability</code>, <code>CompileNeighbors</code>, or <code>CompileShortestPath</code>. These\nmethods use the same default engine selection as the EF traversal methods\nwhen options are omitted. Supply a factory that creates the caller-authorized\nDbContext for each execution.\nThe plan tracks every vertex and edge table in the graph. For incremental\nsession options, order reachability rows by hop count and neighbors or\nsingleton paths by equal rank, with ordinal result keys as the tie-breaker.\nRelevant changes request authoritative requery and Live diff. Budget failures\nfail the evaluation before replay or acknowledgement. Edge aliases are part\nof the watch’s query identity. A change of execution engine preserves the\nidentity when the traversal definition is unchanged.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "upgrade-and-recover",
+          "text": "Upgrade and recover",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Install the matching binary on every eligible PostgreSQL host before an\nextension upgrade. Run <code>ALTER EXTENSION bluetusk_graph UPDATE</code> as its owner.\nCheck <code>extversion</code>, registered mappings, and indexed endpoint queries after\nupgrading. Rehearse the change on the same PostgreSQL major as your deployment.</p>\n<p>Use <code>UseServerEngine = false</code> to select portable EF traversal while retaining\nthe graph mapping. Keep Live result keys, subscriber authorization, and\nreplay retention consistent when operating an existing registration.</p>\n"
       }
     ]
   }

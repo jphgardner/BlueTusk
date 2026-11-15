@@ -1,19 +1,14 @@
 # PostgreSQL 19 native REPACK
 
-> **Note:** New in 1.1.0. Requires PostgreSQL 19 (preview). PostgreSQL 19 is
-> not yet a final release, so use this API for development and testing until it
-> is. Not available in 1.0.0 or 1.1.0-rc.1.
-
-This page helps you reclaim disk space from a bloated table with PostgreSQL
-19's native `REPACK` command, and monitor its progress from .NET. This is the
+PostgreSQL 19 adds the native `REPACK` statement for rewriting a table and
+returning space occupied by dead rows to the operating system. This is the
 PostgreSQL command, not the separate `pg_repack` extension.
 
-The `BlueTusk.Data.Maintenance` namespace (in the `BlueTusk.Data` package)
-supports every documented PostgreSQL 19 form through `BlueTuskRepackRequest`,
-rejects invalid combinations before sending SQL, and reads live progress from
-`pg_stat_progress_repack`. On PostgreSQL 18 and earlier,
-`connection.SupportsRepack` is `false` and the API throws
-`NotSupportedException`.
+BlueTusk 1.2 supports every documented PostgreSQL 19 form through
+`BlueTuskRepackRequest`, prevents unsupported combinations before sending SQL,
+and exposes live server progress from `pg_stat_progress_repack`.
+
+Use the native REPACK API only when the server reports support for the requested form. Check the PostgreSQL documentation for the version you deploy.
 
 ## Repack one table
 
@@ -90,7 +85,7 @@ foreach (var operation in await observer.GetRepackProgressAsync(stoppingToken))
 
 The returned model includes the database and relation OIDs, command, phase,
 index OID, tuple counters, heap-block counters, index rebuild count, and a
-`HeapScanPercent` from 0 to 100 when PostgreSQL reports a block total. A completed
+bounded `HeapScanPercent` when PostgreSQL reports a block total. A completed
 operation disappears from the view, so store any history your operations team
 needs outside PostgreSQL.
 
@@ -114,7 +109,8 @@ Before scheduling `REPACK`:
 Database-wide and concurrent operations cannot run inside a transaction.
 PostgreSQL also rejects a partitioned-table repack inside a transaction. The
 BlueTusk request validator rejects transaction and option combinations it can
-prove invalid; the server makes the final check for each table.
+prove invalid; relation-specific eligibility remains authoritative on the
+server.
 
 The command's full behavior and restrictions are defined by the PostgreSQL 19
 [`REPACK` documentation](https://www.postgresql.org/docs/19/sql-repack.html),

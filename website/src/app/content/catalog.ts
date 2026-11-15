@@ -1,530 +1,225 @@
-import { CapabilityRecord, EvidenceRecord, ProductStatus, SearchRecord } from './models';
+import type { SearchRecord } from './models';
+import { RESOURCES } from './resources';
+import { REAL_TIME_RESOURCES } from './real-time-resources';
+import { USE_CASES } from './use-cases';
 
-export const REPOSITORY_URL = 'https://github.com/jphgardner/BlueTusk';
-export const sourceUrl = (path: string, anchor = '') =>
-  `${REPOSITORY_URL}/blob/main/${path}${anchor ? `#${anchor}` : ''}`;
+export interface Product {
+  readonly path: string;
+  readonly name: string;
+  readonly title: string;
+  readonly description: string;
+  readonly icon: string;
+  readonly package?: string;
+  readonly category: string;
+  readonly start: string;
+  readonly tasks: readonly { title: string; description: string; guide: string }[];
+}
 
-export const GRAPH_COMPATIBILITY = {
-  portableTarget: 'PostgreSQL 15–18',
-  portableStatus: 'Locally verified',
-  nativeFixture: 'PostgreSQL 19 Beta 3',
-  nativeStatus: 'Historical preview',
-} as const;
-
-export const PRODUCT_STATUSES: readonly ProductStatus[] = [
+export const PRODUCTS: readonly Product[] = [
   {
-    id: 'provider',
-    name: 'ADO.NET Provider',
-    version: '1.1.0-rc.1',
-    stage: 'gate-passed',
-    packageState: 'Public NuGet RC',
-    gateState: 'RC package and install checks passed',
-    evidence: ['Clean package install', 'Npgsql comparison', 'ADO.NET compatibility'],
-    limitations: ['Stable 1.1 waits for the final release test programme'],
-  },
-  {
-    id: 'ef-core',
-    name: 'EF Core',
-    version: '1.1.0-rc.1',
-    stage: 'gate-passed',
-    packageState: 'Public NuGet RC',
-    gateState: 'RC package and install checks passed',
-    evidence: ['1,987 official tests passed', 'PostgreSQL 15–19 tested'],
-    limitations: ['124 tests are skipped by the official upstream EF Core suite'],
-  },
-  {
-    id: 'streams',
-    name: 'Streams',
-    version: '1.1.0-rc.1',
-    stage: 'gate-passed',
-    packageState: 'Public NuGet RC',
-    gateState: '72-hour stable test pending',
-    evidence: ['Safe initial load', 'Recoverable replay', 'Exact-candidate verifier'],
-    limitations: ['Required archived 72-hour endurance run is pending'],
-  },
-  {
-    id: 'sync',
-    name: 'Sync',
-    version: '1.1.0-rc.1',
-    stage: 'gate-passed',
-    packageState: 'Public NuGet RC',
-    gateState: '24-hour stable test pending',
-    evidence: ['Four destination recovery models', 'Repair, quarantine, and rebuild'],
-    limitations: ['The exact candidate long-running test report must be archived'],
-  },
-  {
-    id: 'live',
-    name: 'Live',
-    version: '1.1.0-rc.1',
-    stage: 'gate-passed',
-    packageState: 'Public NuGet + npm RC',
-    gateState: 'RC package and install checks passed',
-    evidence: ['PostgreSQL 15–19 replay tests', 'Security and load tests'],
-    limitations: ['Stable release still needs long-running and user acceptance tests'],
-  },
-  {
-    id: 'control-plane',
-    name: 'Control Plane',
-    version: '1.1.0-rc.1',
-    stage: 'gate-passed',
-    packageState: 'Public NuGet RC',
-    gateState: 'Stable operational test pending',
-    evidence: ['Versioned agent API', 'PostgreSQL audit and repair'],
-    limitations: ['Stable release follows the tested dependency and long-running test sequence'],
-  },
-  {
-    id: 'continuous-graph',
-    name: 'Continuous Graph',
-    version: '1.1.0-rc.1',
-    stage: 'preview',
-    packageState: 'Public RC contains the native preview',
-    gateState: 'Portable compatibility passed locally; stable qualification pending',
-    evidence: ['Three safe update modes', 'Full-query repair fallback', 'Metrics for each mode'],
-    limitations: [
-      `Portable mode passed local checks on ${GRAPH_COMPATIBILITY.portableTarget} without SQL/PGQ. The public RC predates it`,
-      `Native preview evidence covers the pinned ${GRAPH_COMPATIBILITY.nativeFixture} fixture`,
+    path: 'provider',
+    name: 'ADO.NET',
+    title: 'Connect .NET to PostgreSQL.',
+    description:
+      'Run parameterized SQL, manage transactions, stream large results, and bulk-load rows through a pooled data source.',
+    icon: 'terminal',
+    package: 'BlueTusk.Data',
+    category: 'provider',
+    start: 'getting-started/quickstart',
+    tasks: [
+      {
+        title: 'Manage connections',
+        description: 'Share a data source and configure connection lifetimes and pool limits.',
+        guide: 'provider/pooling',
+      },
+      {
+        title: 'Load data in bulk',
+        description: 'Use COPY for imports and exports with PostgreSQL type mappings.',
+        guide: 'provider/copy',
+      },
+      {
+        title: 'Configure authentication',
+        description: 'Set up server identity checks and credentials.',
+        guide: 'provider/authentication',
+      },
     ],
   },
-] as const;
+  {
+    path: 'ef-core',
+    name: 'EF Core',
+    title: 'Build with LINQ and PostgreSQL.',
+    description:
+      'Map entities to PostgreSQL tables, compose queries, scaffold existing schemas, and run migrations with the BlueTusk EF Core provider.',
+    icon: 'data_object',
+    package: 'BlueTusk.EntityFrameworkCore',
+    category: 'ef-core',
+    start: 'ef-core/overview',
+    tasks: [
+      {
+        title: 'Configure a DbContext',
+        description: 'Register the provider and share a data source with direct ADO.NET code.',
+        guide: 'ef-core/overview',
+      },
+      {
+        title: 'Map PostgreSQL types',
+        description: 'Configure type mappings, query translations, and migrations.',
+        guide: 'ef-core/ef-core-reference',
+      },
+      {
+        title: 'Query relationships',
+        description: 'Compose typed graph patterns over your existing tables.',
+        guide: 'graph/property-graphs',
+      },
+    ],
+  },
+  {
+    path: 'real-time',
+    name: 'Real-time data',
+    title: 'Build from committed changes.',
+    description:
+      'Capture PostgreSQL transactions with Streams, synchronize other systems with Sync, and deliver authorized query results to applications with Live.',
+    icon: 'sensors',
+    category: 'real-time',
+    start: 'real-time/platform',
+    tasks: [
+      {
+        title: 'Consume database changes',
+        description: 'Bootstrap a snapshot and acknowledge whole transactions after processing.',
+        guide: 'real-time/streams',
+      },
+      {
+        title: 'Synchronize a destination',
+        description: 'Choose an adapter and define the destination keys and replay behavior.',
+        guide: 'real-time/sync',
+      },
+      {
+        title: 'Subscribe to query results',
+        description: 'Register a bounded query and deliver updates to authorized clients.',
+        guide: 'real-time/live',
+      },
+    ],
+  },
+  {
+    path: 'graph',
+    name: 'Graphs',
+    title: 'Follow relationships in PostgreSQL.',
+    description:
+      'Use your existing vertex and edge tables for typed patterns, bounded traversals, and live results that respect the subscriber’s access.',
+    icon: 'hub',
+    category: 'graph',
+    start: 'graph/property-graphs',
+    tasks: [
+      {
+        title: 'Define a property graph',
+        description: 'Map edges and endpoints in EF Core and query them on PostgreSQL 15–18.',
+        guide: 'graph/property-graphs',
+      },
+      {
+        title: 'Run a bounded traversal',
+        description:
+          'Explore neighbors, reachable vertices, and shortest paths with explicit budgets.',
+        guide: 'graph/traversals',
+      },
+      {
+        title: 'Watch connected data',
+        description: 'Maintain an authorized graph result after relevant commits.',
+        guide: 'real-time/continuous-graph',
+      },
+    ],
+  },
+  {
+    path: 'extensions',
+    name: 'Extensions',
+    title: 'Use PostgreSQL’s specialized types.',
+    description:
+      'Enable vector similarity, geospatial data, time series, tree paths, and more with packages for the extensions you use.',
+    icon: 'extension',
+    category: 'extensions',
+    start: 'extensions/catalog',
+    tasks: [
+      {
+        title: 'Choose a package',
+        description:
+          'Match the server extension, the client type mappings, and any EF Core adapter.',
+        guide: 'extensions/catalog',
+      },
+      {
+        title: 'Configure extension support',
+        description: 'Find registration methods, CLR types, and migration APIs.',
+        guide: 'extensions/reference',
+      },
+    ],
+  },
+  {
+    path: 'data-services',
+    name: 'Data services',
+    title: 'Build on PostgreSQL.',
+    description:
+      'Store documents and events, run durable background work, query projections, add search, and connect intermittently online applications.',
+    icon: 'layers',
+    category: 'services',
+    start: 'services/overview',
+    tasks: [
+      {
+        title: 'Store documents',
+        description: 'Work with JSONB metadata and attached content.',
+        guide: 'services/documents',
+      },
+      {
+        title: 'Build from events',
+        description: 'Append events, project state, and track projection progress.',
+        guide: 'services/events',
+      },
+      {
+        title: 'Run durable work',
+        description: 'Enqueue jobs and coordinate multi-step workflows.',
+        guide: 'services/jobs',
+      },
+      {
+        title: 'Index and query data',
+        description: 'Choose a search backend and configure the indexing pipeline.',
+        guide: 'services/search',
+      },
+    ],
+  },
+];
 
-export const EVIDENCE: readonly EvidenceRecord[] = [
-  {
-    id: 'rc-publication',
-    subsystem: 'Platform',
-    kind: 'release',
-    status: 'passed',
-    value: '65 / 65',
-    label: 'Public 1.1 RC packages',
-    detail:
-      'All 62 NuGet packages and three npm clients are public at 1.1.0-rc.1 and resolved in clean consumers.',
-    asOf: '2026-08-29',
-    sourcePath: 'docs/releases/1.1.0-rc.1.md',
-  },
-  {
-    id: 'rc-family-workflows',
-    subsystem: 'Platform',
-    kind: 'release',
-    status: 'passed',
-    value: '6 / 6',
-    label: 'All six product releases passed',
-    detail:
-      'Provider, Streams, Sync, Live, Control Plane, and Continuous Graph were built from the same source commit.',
-    asOf: '2026-08-29',
-    sourcePath: 'docs/releases/1.1.0-rc.1.md',
-  },
-  {
-    id: 'rc-consumer-smoke',
-    subsystem: 'Platform',
-    kind: 'tests',
-    status: 'passed',
-    value: '0 errors',
-    label: 'Clean application install',
-    detail:
-      'A new .NET 10 application built with all six product families, and all three npm clients installed with no reported vulnerabilities.',
-    asOf: '2026-08-29',
-    sourcePath: 'docs/releases/1.1.0-rc.1.md',
-  },
-  {
-    id: 'pg-matrix',
-    subsystem: 'Provider',
-    kind: 'compatibility',
-    status: 'passed',
-    value: '15–19',
-    label: 'PostgreSQL matrix',
-    detail:
-      'Provider, replication, compatibility, and feature tests run against five PostgreSQL generations.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/contributing/testing.md',
-  },
-  {
-    id: 'pg19-final',
-    subsystem: 'Platform',
-    kind: 'tests',
-    status: 'passed',
-    value: '3,289 / 0',
-    label: 'PostgreSQL 19 full matrix',
-    detail:
-      '3,289 passed with zero failures across 45 test assemblies; 158 environment-specific cases were not executed.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/v1-release-readiness.md',
-  },
-  {
-    id: 'ado-compat',
-    subsystem: 'Provider',
-    kind: 'compatibility',
-    status: 'passed',
-    value: '11 / 11',
-    label: 'ADO.NET live compatibility',
-    detail:
-      'Functions, procedures, IN/OUT/INOUT rows, Dapper, schema APIs, DI and health checks passed.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/ado-net/compatibility.md',
-  },
-  {
-    id: 'ef-suite',
-    subsystem: 'EF Core',
-    kind: 'tests',
-    status: 'passed',
-    value: '1,987 / 2,111',
-    label: 'Official EF Core tests',
-    detail: '1,987 passed; 124 are skipped by the official upstream EF Core suite.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/ef-core/specification-tests.md',
-  },
-  {
-    id: 'fuzzing',
-    subsystem: 'Platform',
-    kind: 'security',
-    status: 'pending',
-    value: 'Review open',
-    label: 'Parser-finding review',
-    detail:
-      'Nine parser test targets are ready. The latest run passed six and stopped safely on three; those results need independent review and a rerun on the exact release candidate.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/operations/fuzz-finding-handoff.md',
-  },
-  {
-    id: 'test-credential-boundary',
-    subsystem: 'Platform',
-    kind: 'security',
-    status: 'passed',
-    value: '22 scoped',
-    label: 'Intentional test credentials',
-    detail:
-      'All 22 test credentials are recorded and restricted to localhost or disposable test systems. Any unknown value or external host stops the check.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/security.md',
-  },
-  {
-    id: 'secret-scanner-triage',
-    subsystem: 'Platform',
-    kind: 'security',
-    status: 'pending',
-    value: '6 pending',
-    label: 'External scanner disposition',
-    detail:
-      'The pull request warnings match known test values, but an independent reviewer must still confirm that they are false positives.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/security.md',
-  },
-  {
-    id: 'api-budget',
-    subsystem: 'Platform',
-    kind: 'compatibility',
-    status: 'passed',
-    value: '13,056',
-    label: 'Public APIs checked',
-    detail:
-      '13,056 API signatures are tracked across six products. An unreviewed change fails the build.',
-    asOf: '2026-08-29',
-    sourcePath: 'docs/api-compatibility.md',
-  },
-  {
-    id: 'allocations',
-    subsystem: 'Platform',
-    kind: 'performance',
-    status: 'passed',
-    value: '46',
-    label: 'Memory-use checks',
-    detail: 'Automated memory limits cover commands, COPY, replication, EF, Live, Sync, and graph.',
-    asOf: '2026-08-29',
-    sourcePath: 'docs/architecture/allocation-discipline.md',
-  },
-  {
-    id: 'supply-chain',
-    subsystem: 'Platform',
-    kind: 'security',
-    status: 'passed',
-    value: '60 hashes',
-    label: 'Package identity and contents',
-    detail:
-      '31 Provider packages and 29 symbol packages matched the expected source commit, file hashes, and software inventories.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/release-process.md',
-  },
-  {
-    id: 'canonical-package-set',
-    subsystem: 'Platform',
-    kind: 'release',
-    status: 'passed',
-    value: '65 public',
-    label: 'All product packages verified',
-    detail:
-      'Every 1.1.0-rc.1 package is public and passed exact-version NuGet/npm installation tests.',
-    asOf: '2026-08-29',
-    sourcePath: 'docs/releases/1.1.0-rc.1.md',
-  },
-  {
-    id: 'vulnerabilities',
-    subsystem: 'Platform',
-    kind: 'security',
-    status: 'passed',
-    value: '0 matched',
-    label: 'Known dependency vulnerabilities',
-    detail:
-      'No known NuGet security advisory matched a direct or indirect dependency in the checked build.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/security.md',
-  },
-  {
-    id: 'website-delivery',
-    subsystem: 'Website',
-    kind: 'performance',
-    status: 'passed',
-    value: '< 140 KiB',
-    label: 'Initial Brotli budget',
-    detail:
-      'The Angular production build enforces raw and compressed startup, lazy-chunk and complete-distribution budgets with hashed assets and no source maps.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/operations/website-production.md',
-  },
-  {
-    id: 'website-field-vitals',
-    subsystem: 'Website',
-    kind: 'release',
-    status: 'pending',
-    value: 'Pilot pending',
-    label: 'Field Core Web Vitals',
-    detail:
-      'The public host still needs 100 field samples over 28 days with p75 LCP ≤2,500 ms, INP ≤200 ms and CLS ≤0.1.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/operations/approval-evidence.md',
-  },
-  {
-    id: 'streams-endurance',
-    subsystem: 'Streams',
-    kind: 'release',
-    status: 'pending',
-    value: '72h pending',
-    label: 'Streams 72-hour test',
-    detail:
-      'The test and automatic result checker are ready, but the required successful 72-hour run is not complete.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/streams/release-endurance.md',
-  },
-  {
-    id: 'sync-endurance',
-    subsystem: 'Sync',
-    kind: 'release',
-    status: 'pending',
-    value: '24h pending',
-    label: 'Sync 24-hour test',
-    detail: 'Stable Sync waits until the exact candidate completes and passes its 24-hour test.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/sync/release-endurance.md',
-  },
-  {
-    id: 'endurance-disturbances',
-    subsystem: 'Platform',
-    kind: 'release',
-    status: 'pending',
-    value: '14 pending',
-    label: 'Planned failure-and-recovery tests',
-    detail:
-      'The long-running Streams and Sync tests must each recover from seven planned failures and save the results for review.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/operations/endurance-disturbance-evidence.md',
-  },
-  {
-    id: 'live-preview',
-    subsystem: 'Live',
-    kind: 'release',
-    status: 'passed',
-    value: 'Code-ready',
-    label: 'Live V1 implementation',
-    detail:
-      'Replay, permissions, transports, clients, security, load, stored formats, and package tests are implemented.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/live/reference.md',
-  },
-  {
-    id: 'graph-portable-local',
-    subsystem: 'Graph',
-    kind: 'compatibility',
-    status: 'passed',
-    value: '15–18 · local',
-    label: 'Portable Graph compatibility',
-    detail:
-      '63 graph tests passed without skips on each major version. Topology and Fraud passed with locally built packages. Local Windows and Linux benchmarks met the full-query target and missed the scoped-update target. Exact-candidate performance and 24-hour recovery remain open.',
-    asOf: '2026-11-09',
-    sourcePath: 'docs/releases/release-tracks.md',
-    anchor: 'portable-graph-status',
-  },
-  {
-    id: 'graph-pg19',
-    subsystem: 'Graph',
-    kind: 'compatibility',
-    status: 'guarded',
-    value: 'Beta 3 fixture',
-    label: 'Native SQL/PGQ preview',
-    detail:
-      'Historical testing uses a pinned PostgreSQL 19 Beta 3 image. Beta 4 removed SQL/PGQ.',
-    asOf: '2026-09-24',
-    sourcePath: 'docs/graph/README.md',
-  },
-  {
-    id: 'operational-approvals',
-    subsystem: 'Platform',
-    kind: 'release',
-    status: 'pending',
-    value: '10 required',
-    label: 'Production operations approval',
-    detail:
-      'Ten measured checks need external evidence and ordered approval; written assurances without measurements do not pass.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/operations/approval-evidence.md',
-  },
-  {
-    id: 'independent-review',
-    subsystem: 'Platform',
-    kind: 'release',
-    status: 'pending',
-    value: 'Pending',
-    label: 'Final independent review',
-    detail:
-      'The exact release candidate still needs application trials, backup and restore checks, a rollback rehearsal, and maintainer approval.',
-    asOf: '2026-08-04',
-    sourcePath: 'docs/release-review-handoff.md',
-  },
-] as const;
-
-export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
-  {
-    surface: 'ADO.NET + EF',
-    feature: 'citext',
-    workload: 'Case-insensitive text',
-    postgres: '15–19',
-    state: 'supported',
-    notes: 'Scalar and array mappings with EF translation.',
-    sourcePath: 'docs/extensions/reference.md',
-  },
-  {
-    surface: 'ADO.NET + EF',
-    feature: 'pgvector',
-    workload: 'Vector search',
-    postgres: '15–19',
-    state: 'supported',
-    notes: 'Vector, half-vector, sparse-vector, and distance operators.',
-    sourcePath: 'docs/extensions/reference.md',
-  },
-  {
-    surface: 'ADO.NET + EF',
-    feature: 'hstore',
-    workload: 'Key/value data',
-    postgres: '15–19',
-    state: 'supported',
-    notes: 'Key/value mapping works in ADO.NET and EF Core, including arrays.',
-    sourcePath: 'docs/extensions/reference.md',
-  },
-  {
-    surface: 'ADO.NET + EF',
-    feature: 'ltree',
-    workload: 'Hierarchies',
-    postgres: '15–19',
-    state: 'supported',
-    notes: 'Typed .NET values for paths and PostgreSQL hierarchy queries.',
-    sourcePath: 'docs/extensions/reference.md',
-  },
-  {
-    surface: 'ADO.NET + EF',
-    feature: 'pg_trgm',
-    workload: 'Fuzzy search',
-    postgres: '15–19',
-    state: 'supported',
-    notes: 'Fuzzy text matching and similarity queries in EF Core.',
-    sourcePath: 'docs/extensions/reference.md',
-  },
-  {
-    surface: 'ADO.NET',
-    feature: 'pg_durable',
-    workload: 'Durable workflows',
-    postgres: '17 / 0.2.5 gate',
-    state: 'preview',
-    notes: 'Evaluation only. The upstream preview is not approved for production use.',
-    sourcePath: 'docs/extensions/reference.md',
-  },
-  {
-    surface: 'ADO.NET + EF',
-    feature: 'PostGIS',
-    workload: 'Spatial',
-    postgres: '18 gate',
-    state: 'supported',
-    notes: 'PostGIS 3.6 spatial values and queries tested end to end.',
-    sourcePath: 'docs/extensions/reference.md',
-  },
-  {
-    surface: 'ADO.NET + EF',
-    feature: 'TimescaleDB',
-    workload: 'Time series',
-    postgres: '17 gate',
-    state: 'supported',
-    notes: 'TimescaleDB 2.29 queries, including compiled EF Core queries.',
-    sourcePath: 'docs/extensions/reference.md',
-  },
-] as const;
+const productSearch: readonly SearchRecord[] = PRODUCTS.map((product) => ({
+  title: product.name,
+  description: product.description,
+  route: '/' + product.path,
+  group: 'Product',
+  keywords: product.package ?? '',
+}));
 
 export const SITE_SEARCH: readonly SearchRecord[] = [
+  ...productSearch,
+  ...[...RESOURCES, ...REAL_TIME_RESOURCES].map((resource) => ({
+    title: resource.title,
+    description: resource.description,
+    route: '/' + resource.path,
+    group: 'Guide',
+    keywords: resource.sections.map(({ title }) => title).join(' '),
+  })),
+  ...USE_CASES.map((item) => ({
+    title: item.name,
+    description: item.summary,
+    route: '/use-cases/' + item.slug,
+    group: 'Use cases',
+    keywords: item.stages.map(({ title }) => title).join(' '),
+  })),
   {
-    title: 'Platform architecture',
-    description: 'Choose the smallest BlueTusk layer for your workload.',
-    route: '/platform',
+    title: 'BlueTusk packages',
+    description: 'Find a 1.2 .NET library, tool, template, or browser client.',
+    route: '/packages',
+    group: 'Install',
+    keywords: 'nuget npm packages dotnet install',
+  },
+  {
+    title: 'BlueTusk architecture',
+    description: 'Trace a query, commit, or graph refresh.',
+    route: '/architecture',
     group: 'Platform',
-    keywords: 'architecture dependencies security observability',
+    keywords: 'architecture data flow design',
   },
-  {
-    title: 'ADO.NET Provider',
-    description: 'Connections, pooling, types, COPY, notifications, and replication.',
-    route: '/provider',
-    group: 'Products',
-    keywords: 'authentication tls scram oauth gssapi multi-host',
-  },
-  {
-    title: 'EF Core',
-    description: 'LINQ, PostgreSQL mappings, migrations, and database-first workflows.',
-    route: '/ef-core',
-    group: 'Products',
-    keywords: 'linq json array range schema database first',
-  },
-  {
-    title: 'Real Time',
-    description: 'Capture committed changes, deliver them, and operate the pipeline.',
-    route: '/real-time',
-    group: 'Products',
-    keywords: 'cdc snapshot relay replay checkpoint destinations',
-  },
-  {
-    title: 'Extensions',
-    description: 'PostGIS, pgvector, TimescaleDB, pg_durable, citext, hstore, ltree, and pg_trgm.',
-    route: '/extensions',
-    group: 'Products',
-    keywords: 'spatial vector timeseries types',
-  },
-  {
-    title: 'Graph',
-    description: 'Portable EF graph queries verified locally on PostgreSQL 15–18, plus optional native SQL/PGQ.',
-    route: '/graph',
-    group: 'Products',
-    keywords: 'property graph portable sql/pgq joins postgres fraud network reactive',
-  },
-  {
-    title: 'Engineering evidence',
-    description: 'Verified results, guarded capabilities, and work still open.',
-    route: '/evidence',
-    group: 'Trust',
-    keywords: '1987 2111 allocation 72h 24h',
-  },
-  {
-    title: 'Documentation',
-    description: 'Task-oriented guides generated from the repository documentation.',
-    route: '/documentation',
-    group: 'Learn',
-    keywords: 'guides getting started api',
-  },
-  {
-    title: 'Community',
-    description: 'Build, test, contribute, and report issues.',
-    route: '/community',
-    group: 'Contribute',
-    keywords: 'github issue security contributing',
-  },
-] as const;
+];

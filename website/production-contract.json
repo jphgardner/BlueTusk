@@ -5,24 +5,32 @@
     "initialRawBytes": 950000,
     "initialBrotliBytes": 225280,
     "largestLazyBrotliBytes": 286720,
-    "totalDistributionBytes": 33554432
+    "totalDistributionBytes": 25165824
   },
-  "minimumPrerenderedRoutes": 177,
   "requiredAssets": [
     "favicon.ico",
-    "bluetusk-mark.png",
     "robots.txt",
     "sitemap.xml",
     "llms.txt",
     "llms-full.txt",
-    ".well-known/security.txt"
+    ".well-known/security.txt",
+    "platform-layers.webp",
+    "platform-social.jpg",
+    "index.csr.html",
+    "use-cases/order-fulfilment.webp",
+    "use-cases/service-topology.webp",
+    "use-cases/fraud-investigation.webp"
   ],
   "requiredPrerenderedRoutes": [
     "/",
     "/platform",
     "/provider",
     "/documentation",
-    "/documentation/real-time/continuous-graph"
+    "/documentation/real-time/continuous-graph",
+    "/packages",
+    "/architecture",
+    "/use-cases/service-topology",
+    "/whats-new"
   ],
   "requiredMetadata": [
     "<html lang=\"en\"",

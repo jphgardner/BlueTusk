@@ -1,253 +1,153 @@
-<section class="hero">
-  <div class="hero-glow" aria-hidden="true"></div>
-  <div class="hero-inner">
-    <div class="hero-copy">
-      <div class="release-label"><span></span> OPEN SOURCE · POSTGRESQL NATIVE</div>
-      <h1>The PostgreSQL platform <em>for .NET</em></h1>
+<section class="home-hero">
+  <div class="site-width hero-grid">
+    <div class="hero-content">
+      <a class="hero-release" routerLink="/whats-new"
+        >Explore BlueTusk 1.2 <mat-icon>arrow_outward</mat-icon></a
+      >
+      <h1>PostgreSQL <br />for <em>.NET</em>.</h1>
       <p>
-        Connect your app, stream database changes, and keep users up to date. Start with the
-        provider and add capabilities as your workload grows.
+        Connect with ADO.NET or EF Core. Stream committed changes, query relationships, and keep
+        applications up to date.
       </p>
-      <div class="hero-actions">
-      <a
-        mat-flat-button
-        routerLink="/documentation/getting-started/quickstart"
-        class="primary-action"
-        >Start building <mat-icon>arrow_forward</mat-icon></a
-      >
-      <a
-        mat-stroked-button
-        routerLink="/documentation/getting-started/release-1-1-rc1"
-        class="secondary-action"
-        >Release notes</a
-      >
-      <a
-        mat-stroked-button
-        href="https://github.com/jphgardner/BlueTusk"
-        target="_blank"
-        rel="noreferrer"
-        class="secondary-action"
-      >
-        GitHub
-      </a>
-      </div>
-      <div class="hero-facts"><span>ADO.NET &amp; EF Core</span><span>Change data capture</span><span>Real-time delivery</span></div>
-    </div>
-    <figure class="platform-map" aria-labelledby="platform-map-title">
-      <figcaption>
-        <span id="platform-map-title">The BlueTusk stack</span>
-        <span class="map-label"><i></i> PLATFORM MAP</span>
-      </figcaption>
-      <div class="map-flow">
-        <a class="map-node" routerLink="/provider">
-          <mat-icon aria-hidden="true">terminal</mat-icon>
-          <span><strong>.NET applications</strong><small>ADO.NET · EF Core</small></span>
-          <span class="map-step">01</span>
-        </a>
-        <span class="map-connector" aria-hidden="true"></span>
-        <a class="map-node map-node-core" routerLink="/platform">
-          <img src="/bluetusk-mark.png" width="36" height="36" alt="" />
-          <span><strong>PostgreSQL</strong><small>Provider · extensions · WAL</small></span>
-          <span class="map-step">02</span>
-        </a>
-        <span class="map-connector" aria-hidden="true"></span>
-        <a class="map-node" routerLink="/real-time">
-          <mat-icon aria-hidden="true">hub</mat-icon>
-          <span><strong>Real-time delivery</strong><small>Streams · Sync · Live</small></span>
-          <span class="map-step">03</span>
-        </a>
-      </div>
-      <div class="map-footer"><span>CONTROL PLANE</span><span>Observe and operate the stack</span></div>
-    </figure>
-  </div>
-</section>
-
-<section class="architecture-wrap" aria-labelledby="architecture-title">
-  <div class="section-label-row">
-    <span id="architecture-title">HOW BLUETUSK WORKS</span>
-    <span>EVERY PRODUCT · ONE BLUETUSK PLATFORM</span>
-  </div>
-  <figure class="architecture-frame">
-    <img
-      src="/bluetusk-architecture.png?v=6"
-      width="1672"
-      height="941"
-      loading="eager"
-      fetchpriority="high"
-      decoding="async"
-      alt="The BlueTusk Platform connects .NET applications to PostgreSQL. Provider is the data-access foundation; EF Core and Extensions build on it, while PostgreSQL change data enters Streams to power Sync, Live, and Continuous Graph under Control Plane observation."
-    />
-    <figcaption>
-      <span><i></i> The BlueTusk Platform</span>
-      <span>Provider → PostgreSQL → Streams → Sync · Live · Continuous Graph</span>
-    </figcaption>
-  </figure>
-  <ol class="architecture-mobile-flow" aria-label="How data moves through BlueTusk">
-    <li>
-      <span>01 · BUILD</span><strong>.NET applications</strong><small>ADO.NET · EF Core</small>
-    </li>
-    <li>
-      <span>02 · CONNECT</span><strong>BlueTusk Provider</strong
-      ><small>Pooling · types · COPY</small>
-    </li>
-    <li><span>03 · STORE</span><strong>PostgreSQL</strong><small>SQL · WAL · extensions</small></li>
-    <li>
-      <span>04 · REACT</span><strong>Streams</strong><small>Database changes · safe recovery</small>
-    </li>
-    <li>
-      <span>05 · DELIVER</span><strong>Sync · Live · Graph</strong
-      ><small>Other systems · users · connected data</small>
-    </li>
-  </ol>
-</section>
-
-<section class="content-section path-selector">
-  <div class="section-heading-split">
-    <div>
-      <span>CHOOSE YOUR ENTRY POINT</span>
-      <h2>Start from the job in front of you.</h2>
-    </div>
-    <p>
-      Pick the outcome you need. We’ll take you to the right product, a working example, and the
-      evidence behind it.
-    </p>
-  </div>
-  <div class="path-layout">
-    <nav aria-label="Choose a BlueTusk path">
-      @for (path of paths; track path.id) {
-        <button
-          type="button"
-          [class.active]="selectedPath() === path.id"
-          (click)="selectedPath.set(path.id)"
+      <div class="flex flex-wrap gap-3">
+        <a
+          mat-flat-button
+          class="hero-primary"
+          routerLink="/documentation/getting-started/quickstart"
         >
-          <mat-icon>{{ path.icon }}</mat-icon
-          ><span
-            ><small>{{ path.label }}</small
-            ><strong>{{ path.title }}</strong></span
-          >
-        </button>
-      }
-    </nav>
-    <article>
-      <span>{{ activePath().proof }}</span
-      ><mat-icon>{{ activePath().icon }}</mat-icon>
-      <h3>{{ activePath().title }}</h3>
-      <p>{{ activePath().body }}</p>
-      <a mat-flat-button [routerLink]="activePath().route" class="primary-action">{{
-        activePath().action
-      }}</a>
-    </article>
+          Get started <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+        </a>
+        <a mat-stroked-button class="hero-secondary" routerLink="/documentation">Read the docs</a>
+      </div>
+    </div>
+    <img
+      class="hero-art"
+      src="/platform-layers.webp"
+      alt=""
+      width="1200"
+      height="675"
+      fetchpriority="high"
+    />
   </div>
 </section>
 
-<section id="ecosystem" class="content-section">
-  <div class="section-heading-center">
-    <span>THE ECOSYSTEM</span>
-    <h2>Choose the part your workload needs</h2>
-    <p>Six focused product areas, designed to compose without hiding PostgreSQL.</p>
+<section class="site-width section-space" aria-labelledby="products-title">
+  <div class="section-heading">
+    <h2 id="products-title">Find the tools for your application</h2>
+    <a class="text-link" routerLink="/platform"
+      >Explore the platform <mat-icon>arrow_forward</mat-icon></a
+    >
   </div>
-
-  <div class="ecosystem-grid">
-    @for (product of products; track product.name) {
-      <a [routerLink]="product.route" class="ecosystem-card" [attr.data-tone]="product.tone">
-        <div class="card-topline">
-          <mat-icon>{{ product.icon }}</mat-icon>
-          <span class="product-status" [attr.data-status]="product.statusKind">{{
-            product.status
-          }}</span>
-        </div>
-        <small>{{ product.kicker }}</small>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    @for (product of products; track product.path) {
+      <a class="product-tile" [routerLink]="['/', product.path]">
+        <mat-icon class="product-icon">{{ product.icon }}</mat-icon>
         <h3>{{ product.name }}</h3>
         <p>{{ product.description }}</p>
-        <span class="card-link">Explore <mat-icon>arrow_forward</mat-icon></span>
+        <mat-icon class="tile-arrow">arrow_outward</mat-icon>
       </a>
     }
   </div>
 </section>
 
-<section class="content-section code-section">
-  <div class="code-copy">
-    <span class="section-kicker">FAMILIAR .NET. FULL POSTGRESQL.</span>
-    <h2>Start with a connection.<br />Keep PostgreSQL’s strengths.</h2>
-    <p>
-      BlueTusk follows standard ADO.NET and EF Core patterns while exposing PostgreSQL features
-      directly when your application needs them.
-    </p>
-    <ul>
-      <li><mat-icon>check</mat-icon> Typed parameters, never SQL interpolation</li>
-      <li><mat-icon>check</mat-icon> Async operations with predictable resource use</li>
-      <li><mat-icon>check</mat-icon> Native COPY, replication, and type support</li>
-      <li><mat-icon>check</mat-icon> Built-in diagnostics and published test results</li>
-    </ul>
-  </div>
-
-  <div class="code-console">
-    <div class="code-tabs">
-      <mat-button-toggle-group
-        [value]="selectedExample()"
-        (change)="selectExample($event.value)"
-        aria-label="Choose a BlueTusk code example"
-        hideSingleSelectionIndicator
+<section class="flow-band">
+  <div class="site-width section-space">
+    <div class="section-heading">
+      <h2>From PostgreSQL to the application</h2>
+      <a class="text-link" routerLink="/architecture"
+        >Trace the data path <mat-icon>arrow_forward</mat-icon></a
       >
-        @for (example of examples; track example.id) {
-          <mat-button-toggle [value]="example.id">{{ example.label }}</mat-button-toggle>
-        }
-      </mat-button-toggle-group>
     </div>
-    <div class="code-filebar">
-      <span><i></i><i></i><i></i></span>
-      <strong>{{ activeExample().file }}</strong>
-      <button type="button" (click)="copyCode()" matTooltip="Copy example">
-        <mat-icon>{{ copyState() === 'Copied' ? 'check' : 'content_copy' }}</mat-icon>
-        {{ copyState() }}
-      </button>
-    </div>
-    <pre><code>{{ activeExample().code }}</code></pre>
+    <ol class="home-flow">
+      @for (step of dataPath; track step.title) {
+        <li>
+          <a [routerLink]="step.href"
+            ><mat-icon>{{ step.icon }}</mat-icon>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.detail }}</p></a
+          >
+        </li>
+      }
+    </ol>
   </div>
 </section>
 
-<section class="content-section evidence-section">
-  <div class="evidence-header">
-    <div>
-      <span>1.1 RC TEST RESULTS · 29 AUG 2026</span>
-      <h2>See what passed and what still needs work.</h2>
-    </div>
-    <p>
-      All 65 release-candidate packages are public and install correctly in clean test applications.
-      The remaining Core checks and Graph qualification are tracked separately.
-    </p>
+<section class="site-width section-space" aria-labelledby="home-stories">
+  <div class="section-heading">
+    <h2 id="home-stories">See what you can build</h2>
+    <a class="text-link" routerLink="/use-cases"
+      >All use cases <mat-icon>arrow_forward</mat-icon></a
+    >
   </div>
-
-  <div class="evidence-grid">
-    @for (item of evidence; track item.label) {
-      <article>
-        <div>
-          <mat-icon>{{ item.icon }}</mat-icon>
-          <strong>{{ item.value }}</strong>
+  <div class="grid gap-4 md:grid-cols-3">
+    @for (item of stories; track item.slug) {
+      <a class="story-card" [routerLink]="['/use-cases', item.slug]">
+        <img [src]="item.image" alt="" width="1100" height="620" loading="lazy" />
+        <div class="story-card-content">
+          <h3>{{ item.name }}</h3>
+          <p>{{ item.summary }}</p>
         </div>
-        <h3>{{ item.label }}</h3>
-        <p>{{ item.detail }}</p>
-      </article>
+      </a>
     }
   </div>
+</section>
 
-  <div class="evidence-footer">
-    <span><i></i> 1.1.0-rc.1 available from NuGet and npm</span>
-    <a routerLink="/evidence">Inspect the evidence <mat-icon>arrow_forward</mat-icon></a>
+<section class="quick-example" aria-labelledby="first-query">
+  <div class="site-width section-space grid gap-10 lg:grid-cols-[0.7fr_1fr] lg:items-center">
+    <div>
+      <h2 id="first-query">Connect to your database</h2>
+      <p>
+        Share one data source per connection configuration. Run parameterized commands directly or
+        use a DbContext with the same PostgreSQL database.
+      </p>
+      <a mat-stroked-button routerLink="/packages">Choose packages</a>
+    </div>
+    <div class="example-panel">
+      <mat-tab-group animationDuration="0ms" (selectedIndexChange)="copyMessage.set('Copy')">
+        @for (example of examples; track example.label) {
+          <mat-tab [label]="example.label">
+            <div class="code-toolbar">
+              <span>{{ example.file }}</span>
+              <button type="button" mat-button (click)="copyCode(example.code)">
+                {{ copyMessage() }}
+              </button>
+            </div>
+            <pre><code>{{ example.code }}</code></pre>
+          </mat-tab>
+        }
+      </mat-tab-group>
+      <span class="sr-only" aria-live="polite">{{ copyMessage() }}</span>
+    </div>
   </div>
 </section>
 
-<section class="community-section">
-  <div>
-    <span>BUILD WITH BLUETUSK</span>
-    <h2>Try the release candidate with a real workload.</h2>
-    <p>
-      Install the public packages, try them with a real workload, report anything you can reproduce,
-      and help make the stable 1.1 release stronger.
-    </p>
+<section class="site-width section-space" aria-labelledby="home-resources">
+  <h2 id="home-resources">Start with a path that fits</h2>
+  <div class="grid gap-4 mt-5 lg:grid-cols-3">
+    <a class="feature-tile linked-tile" routerLink="/learn"
+      ><mat-icon class="product-icon">school</mat-icon>
+      <h3>Learn by building</h3>
+      <p>Go from a first query to a live or graph feature with practical guides.</p></a
+    >
+    <a class="feature-tile linked-tile" routerLink="/compatibility"
+      ><mat-icon class="product-icon">checklist</mat-icon>
+      <h3>Check compatibility</h3>
+      <p>Choose the .NET, EF Core, and PostgreSQL combination for your workload.</p></a
+    >
+    <a class="feature-tile linked-tile" routerLink="/packages"
+      ><mat-icon class="product-icon">inventory_2</mat-icon>
+      <h3>Find your packages</h3>
+      <p>Search and install the 1.2 libraries, tools, and clients you need.</p></a
+    >
   </div>
+</section>
+
+<section class="site-width section-space home-next">
   <div>
-    <a mat-flat-button routerLink="/documentation" class="primary-action">Start Building</a>
-    <a mat-stroked-button routerLink="/community" class="secondary-action">Join the Community</a>
+    <h2>Take your app to production</h2>
+    <p>Set up database access, telemetry, and recovery before routing production traffic.</p>
   </div>
+  <a mat-flat-button routerLink="/production">
+    Explore production operations <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+  </a>
 </section>

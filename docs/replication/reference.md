@@ -58,13 +58,6 @@ BlueTusk supports PostgreSQL 15 through 19 and provides:
 - raw payloads for any logical decoding output plugin; and
 - complete `pgoutput` decoding in `BlueTusk.Replication.PgOutput`.
 
-The replication subsystem has passed its production-readiness gate: the live
-version matrix, compatibility baselines, durability and feedback checks,
-failure-recovery cases, allocation/backpressure benchmarks, cancellation stress,
-and scheduled endurance are all executable. The packages are published at
-stable 1.0.0. Later releases still require the exact immutable candidate and
-protected release evidence.
-
 ## Server setup
 
 The server must admit a role with the `REPLICATION` attribute in `pg_hba.conf`.
@@ -356,8 +349,8 @@ bounded soak.
 
 The scheduled/manual PostgreSQL 19 endurance job runs 1,000 epochs (4,000
 replicated rows) and the same test remains part of the ordinary PostgreSQL
-15–19 matrix at its fast default. The repository gate covers feedback ordering,
+15–19 matrix at its fast default. The replication tests cover feedback ordering,
 wrong-system, missing, active, stale, and retained-WAL failures plus repeated
 connection teardown/recreation. This closes the replication-specific
 durability matrix; it does not by itself make the experimental provider a
-production-ready 1.0 release.
+application deployment.

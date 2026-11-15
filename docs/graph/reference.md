@@ -9,31 +9,9 @@ security or in the authorized graph query.
 
 Native SQL/PGQ is selected through the EF context's graph compatibility option.
 It can also be used directly through the command APIs. ADO.NET detects
-`SupportsSqlPgq` through the server catalogue. Native release evidence is
-tracked in the [PostgreSQL compatibility programme](../postgresql19-programme.md).
+`SupportsSqlPgq` through the server catalogue.
 
-The live PostgreSQL 19 Beta 3 acceptance tests cover:
-
-- `CREATE PROPERTY GRAPH`, `CREATE TEMP PROPERTY GRAPH`, `ALTER PROPERTY GRAPH`,
-  and `DROP PROPERTY GRAPH`;
-- `GRAPH_TABLE` vertex and directed-edge patterns;
-- prepared and typed value parameters applied to graph results;
-- field metadata, batches, mixed relational/graph statements, and data-source
-  pooling;
-- typed discovery of graphs, vertex and edge tables, key columns, labels,
-  element properties, edge endpoints, column mappings, and property data types;
-- typed EF model configuration, migration diffing/scaffolding, and database-first
-  graph retention;
-- live capability-guarded and centrally quoted EF migration SQL for graph
-  creation, rename/schema alteration, and removal;
-- typed EF linear-path matching, parameterized predicates, DTO and tracked-entity
-  materialization, and relational composition;
-- capability-guarded empty discovery results on PostgreSQL 15–18; and
-- the normal provider suite, including cancellation, pipeline mode, types,
-  COPY, replication, and EF regression coverage.
-
-Native discovery reads the information-schema views exposed by the historical
-SQL/PGQ fixture. These include `property_graphs`, `pg_element_tables`,
+Native discovery reads the information-schema views exposed by the SQL/PGQ server. These include `property_graphs`, `pg_element_tables`,
 `pg_element_table_key_columns`, `pg_element_table_labels`,
 `pg_element_table_properties`, `pg_edge_table_components`, `pg_labels`,
 `pg_label_properties`, and `pg_property_data_types`. Portable graphs are
@@ -41,7 +19,7 @@ defined in EF metadata and do not use these views.
 
 ## Native raw SQL example
 
-For the portable EF sample, follow the [Graph quickstart](README.md#run-the-sample).
+For the portable EF sample, follow the [Graph quickstart](README.md).
 Use `GRAPH_TABLE` directly only after `SupportsSqlPgq` succeeds and the native
 property graph exists. For example, given a graph named `social_graph` with
 `person` vertices and `follows` edges:
@@ -203,7 +181,7 @@ applies its normal tracking behavior. The resulting `IQueryable` supports
 ordinary outer LINQ composition, including filters, joins, grouping, sorting,
 pagination, and further projections.
 
-## Exact V1 typed-subset boundary
+## Supported typed patterns
 
 Supported now:
 

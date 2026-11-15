@@ -1,10 +1,6 @@
 # BlueTusk Schema
 
-> **Preview.** This family is `0.1.0-preview.1` and is not published to a
-> package feed yet. It is not part of the 1.1.0 release and its API may change.
-> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
-
-`BlueTusk.Schema` is a new preview product for consistent PostgreSQL relation
+`BlueTusk.Schema` helps capture consistent PostgreSQL relation
 contracts and consumer compatibility analysis. The caller owns the data source.
 
 ```csharp
@@ -57,10 +53,6 @@ break writes. Defaults, collations, policies, constraints and view definitions
 require review. Consumer contracts filter unrelated column changes; a whole-row
 contract observes every relation change. This classification does not prove an
 arbitrary migration safe or replace testing the affected application.
-
-Index replacement/retirement, Control Plane integration, broader PostgreSQL type and dependency coverage,
-performance qualification and release evidence remain required expansion work. See the full
-[implementation programme](../ecosystem/implementation-programme.md).
 
 ## Command-line snapshots and drift
 

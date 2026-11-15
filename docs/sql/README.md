@@ -1,10 +1,6 @@
 # BlueTusk Sql
 
-> **Preview.** This family is `0.1.0-preview.1` and is not published to a
-> package feed yet. It is not part of the 1.1.0 release and its API may change.
-> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
-
-New preview typed SQL tooling consists of `BlueTusk.Sql` and the incremental
+Typed SQL tooling consists of `BlueTusk.Sql` and the incremental
 `BlueTusk.Sql.SourceGeneration` analyzer. Reference the generator as an analyzer
 with `ReferenceOutputAssembly="false"` and add `.sql` files as `AdditionalFiles`.
 
@@ -114,20 +110,6 @@ cannot prove that an arbitrary SQL expression originated from that domain.
 The database enforces domain constraints when a parameter is bound to the
 domain type. Refresh the catalogue snapshot and receipt after type DDL.
 
-`eng/test-sql-package-consumer.ps1` freshly packs the transitive BlueTusk closure,
-installs the candidate Schema/Sql CLIs into an isolated cache, captures/validates
-a fixture schema and compiles a package-only consumer with that receipt. NuGet
-source mapping resolves every `BlueTusk.*` dependency from the fresh local feed,
-with a different empty consumer cache. The actual consumer then runs all the
-shared type shapes, then validates an attested catalogue snapshot and reruns
-those shapes with its offline receipt. It then creates an owned enum/domain
-catalogue fixture, validates a second annotated query with the installed CLI,
-compiles that query from installed packages and executes scalar, nullable and
-array roundtrips. The fixture is removed after the run. Package hashes, commit and dirty state
-are retained under
-`artifacts/ecosystem/sql-package-consumer-*`. Both validation modes passed in the
-fresh local package consumer; this is not an immutable release or a production qualification.
-
 For builds that require database validation, add `-- bluetusk-validation: required`
 before the SQL body. Capture a schema with `bluetusk-schema capture`, saving it
 as `app.bluetusk-schema.json`, then run:
@@ -181,11 +163,6 @@ aggregate bounds; artifact output is atomically replaced only after successful
 validation. Failures retain prior artifacts and never print SQL or credentials.
 Exit 2 means schema drift; exit 1 means an invalid operation/contract.
 
-Remaining requirements include extension codecs, nested/custom domain shapes and broader array shapes,
-mutation-contract validation,
-performance/endurance and release qualification. The native SQL/Schema smoke
-has actually published and executed on Windows x64 against PostgreSQL,
-covering generated nullable, UUID, JSONB, bytea, timestamp and exact numeric
-bindings plus schema capture/interchange/compatibility. Linux native execution
-remains a separate qualification gate.
-See the full [implementation programme](../ecosystem/implementation-programme.md).
+### Deploy a validated SQL catalog
+
+Regenerate the catalog when the query, declared contract, or object shape changes. Validate it on a representative schema with a restricted connection. Keep the schema snapshot and receipt with the query sources.

@@ -1,13 +1,7 @@
 # BlueTusk.Jobs
 
-> **Preview.** This family is `0.1.0-preview.1` and is not published to a
-> package feed yet. It is not part of the 1.1.0 release and its API may change.
-> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
-
 BlueTusk.Jobs is a PostgreSQL durable execution library built on BlueTusk.Data.
-The current package version is `0.1.0-preview.1`, targeting .NET 10. It is an
-implemented preview; production qualification and performance leadership are
-not established by the current test results.
+Install `BlueTusk.Jobs` 1.2.0 from the same package source as the provider.
 
 ## Usage
 
@@ -162,32 +156,12 @@ enumerate unbounded terminal history. Choose a bounded probe limit and poll at
 an operator-appropriate interval. The [capacity and recovery harness](performance.md)
 provides a reproducible workload matrix and local measurement limitations.
 
-## Verification
+## Check a worker deployment
 
-Optional host adapters, trusted scopes, redacted readiness, generated JSON,
-fixed-cardinality metrics and credential replacement are documented in
-[hosting.md](hosting.md).
+Enqueue a job, stop the worker while it holds a lease, and confirm a new
+worker acquires the work after expiration. Make the handler idempotent and
+verify that a stale owner cannot record completion. Set queue limits and
+timeouts with representative payload sizes and worker concurrency.
 
-Run the unit and live suites with a disposable database:
-
-```powershell
-$env:BLUETUSK_TEST_CONNECTION_STRING = 'Host=127.0.0.1;Port=55418;Username=postgres;Password=postgres;Database=bluetusk_ecosystem;SSL Mode=Disable;Channel Binding=Disable'
-dotnet test tests/BlueTusk.Jobs.Tests/BlueTusk.Jobs.Tests.csproj -c Release -nr:false
-```
-
-Live tests use a unique schema per test and remove it on disposal. They verify
-transaction visibility/rollback, concurrent deduplication, tenant/queue/type
-boundaries, disjoint claims, expired-owner rejection before/after reclaim,
-crashed final attempts, payload constraints, retry deadlines, physically
-bounded history, cancellation, retention, typed concurrency, heartbeats,
-classified failure, redaction, invalid payloads and recurring dispatch races.
-A backlog regression loads 8,000 eligible jobs beside 40,000 retained terminal
-rows and drains claims through 16 workers with bounded batches of 64. This is
-a regression scenario, not a throughput or latency guarantee.
-
-Before production release, qualify sustained backlog/tenant/payload/concurrency
-sweeps, P50/P95/P99 latency, allocation and memory, connection count, WAL/storage
-growth, fair allocation under overload, abrupt process death, network partition,
-database failover, clock movement, format upgrade/rollback, Linux and supported
-PostgreSQL versions. Bind reports to an immutable candidate. The shared gates
-in `../ecosystem/implementation-programme.md` remain required.
+Use the [hosting guide](hosting.md) for readiness and telemetry, and the
+[maintenance guide](maintenance.md) for retention and cleanup of completed jobs.

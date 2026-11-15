@@ -60,7 +60,7 @@ the corresponding relational tables as Live invalidation dependencies. A
 change to an unrelated graph element therefore does not rerun this query.
 Unknown and duplicate aliases fail during registration.
 
-The V1 query envelope permits outer `Where`, `Select`, deterministic
+The query envelope permits outer `Where`, `Select`, deterministic
 `OrderBy`/`ThenBy`, one bounded `Take`, and `AsNoTracking`. Ordering must include
 the direct result key. The ordinary typed graph builder remains responsible for
 safe graph-pattern and projection translation, and EF must produce
@@ -100,7 +100,7 @@ var related = context.PropertyGraph("payments", "risk")
 A multi-hop edge variable cannot be projected because one match can contain
 several edges. Project the start and end vertices instead. Repeating a path is
 allowed only when the edge connects the same vertex element table to itself.
-These rules are checked during translation. Portable acceptance runs on PostgreSQL 15–18. Native regression coverage uses the pinned Beta 3 fixture.
+BlueTusk checks these rules during translation. For native SQL/PGQ, verify the server capabilities before registration.
 
 Continuous Graph treats variable-length and undirected patterns as broad-impact
 queries. They receive authoritative full repair rather than affected-key delta
@@ -147,9 +147,9 @@ Cancellation flows through context creation and EF execution. Unbounded paths,
 more than eight hops, more than 64 compiled branches, and dependency inference
 from caller-authored raw SQL remain unsupported.
 
-## Three-tier incremental maintenance in 1.1
+## Incremental maintenance
 
-The 1.1 compiler retains an immutable impact plan alongside the executable
+The compiler retains an immutable impact plan alongside the executable
 query. The plan contains the resolved graph pattern, physical element tables,
 vertex and edge keys, edge endpoints, projected columns, predicates, ordering,
 result key, and bounded result limit. That metadata drives three maintenance
@@ -226,13 +226,7 @@ ordering, and limit match registration. Every full read invokes the registered
 context and query factories and binds the current values. A changed ordering
 or limit uses the current query through the ordinary EF pipeline.
 
-The release performance matrix uses a dedicated restricted PostgreSQL login
-and verifies RLS on both mapped tables. Scoped reads acquire an exclusive
-authorized lease on every update. Full reads use the same subscriber login
-through EF. The recovery gate alternates scoped updates and full repair,
-compares each snapshot with a fresh authorized query, checks revocation,
-reconnects terminated read leases, and persists replay before acknowledging
-the source transaction. Progress checkpoints accompany the final report.
+Use a restricted PostgreSQL identity and verify RLS on every mapped table. An authorized scoped lease must be exclusive, already open, and scoped to the subscriber. Check authorization revocation and lease replacement, and compare results with a fresh query under the same identity.
 
 ### Opting in to direct CDC projection
 
@@ -380,55 +374,11 @@ repair/fallback counters, and a redacted detail code. Alert on sustained repair
 rate, affected-key-limit fallbacks, schema mismatch, or drift-repair differences
 rather than attempting to suppress repair.
 
-## Release state
+## Diagnose maintenance
 
-The two 1.0.0 packages remain immutable. `BlueTusk.ContinuousGraph` contains
-the runtime; `BlueTusk.ContinuousGraph.ControlPlane` contains the optional
-operations adapter. The coordinated `1.1.0-rc.1` packages are public for
-production-like evaluation and predate the portable backend. Portable Graph
-has passed local compatibility checks on PostgreSQL 15–18. Stable qualification requires a
-supported PostgreSQL matrix, exact candidate dependencies, 24-hour recovery
-endurance, and performance evidence. The release script
-machine-enforces dependency readiness and protected tag ordering. The 1.0
-public surface remains a compatible subset of the hash-locked 1.1 candidate
-surface; see the
-[API compatibility contract](api-compatibility.md). See the
-[1.0.0 release record](release-notes-1.0.0.md) for the exact support and
-publication boundary.
-Offline compiler tests cover exact dependency extraction, stable fingerprints,
-Live session handoff, unsupported-server rejection, and fail-closed query
-shapes. Incremental state-machine tests cover exact top-N updates, repair
-fallbacks, bounded affected keys, two-phase lifecycle handling, rollback,
-duplicate delivery, evaluator contract failures, and replay-before-ack
-recovery. Live acceptance verifies typed results, affected-key updates, cancellation,
-and row-level security across pooled reads and repairs. The native case
-runs on the pinned historical fixture.
-
-Run that live gate against the repository's PostgreSQL 18 service:
-
-```powershell
-docker compose -f eng/compose/postgres.yml up -d --wait postgres18
-$fixturePassword = docker compose -f eng/compose/postgres.yml exec -T postgres18 printenv POSTGRES_PASSWORD
-$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=$fixturePassword;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
-dotnet test tests/BlueTusk.ContinuousGraph.Tests
-```
-
-Run only the deterministic incremental contract:
-
-```powershell
-dotnet test tests/BlueTusk.ContinuousGraph.Tests/BlueTusk.ContinuousGraph.Tests.csproj --filter FullyQualifiedName~ContinuousGraphIncrementalTests
-```
-
-The checked-in live workload measures registration,
-authoritative materialisation of 999 graph paths, and an affected invalidation
-through PostgreSQL requery plus keyed Live diff. On the repository's reference
-machine the ShortRun recorded 988 µs/103,446 B, 2.827 ms/666,055 B, and
-4.225 ms/888,159 B respectively. These three-iteration values are regression
-budgets, not service-level objectives; see the
-[benchmark guide](../../benchmarks/README.md).
-
-Reproduce the gated NuGet candidate without opening the publication gate:
-
-```powershell
-./eng/pack-product-family.ps1 -Family ContinuousGraph -Candidate -NoRestore
-```
+Check the recorded tier and fallback reason before tuning a registration.
+Frequent full repairs can indicate incomplete old rows, broad dependencies,
+or a top-N boundary that affected-key queries cannot prove. Review the
+registered dependency mappings, the replica identity of tables used by CDC,
+and the endpoint indexes. Compare the maintained rows with the same fresh
+query using the subscriber’s database identity.

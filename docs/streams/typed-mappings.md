@@ -153,9 +153,6 @@ missing properties with defaults.
 
 ## Use mappings with NativeAOT and trimming
 
-> **New in 1.1.0:** NativeAOT support for typed mappings is not in 1.0.0 or
-> 1.1.0-rc.1.
-
 Convention mapping keeps the public-property metadata it needs for trimming and
 works under NativeAOT. If you wrap `ChangeEntityMappingBuilder<T>` in your own
 generic code, put

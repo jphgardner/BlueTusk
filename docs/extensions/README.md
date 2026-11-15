@@ -14,10 +14,14 @@ or LINQ translation.
 | `citext` CLR values and EF mappings                                     | `BlueTusk.Extensions.Citext` plus the optional EF package.   |
 | Vector similarity search                                                | `BlueTusk.Extensions.PgVector` plus the optional EF package. |
 | Spatial values and LINQ                                                 | `BlueTusk.Extensions.PostGIS` plus the optional EF package.  |
-| TimescaleDB helpers                                                     | `BlueTusk.Extensions.TimescaleDb` and its EF integration.    |
+| Key/value data with hstore | `BlueTusk.Extensions.HStore` |
+| Hierarchical labels with ltree | `BlueTusk.Extensions.LTree` |
+| Trigram text similarity helpers | `BlueTusk.Extensions.PgTrgm` |
+| pg_durable operations and status | `BlueTusk.Extensions.PgDurable` with a compatible server extension |
+| TimescaleDB helpers | `BlueTusk.Extensions.TimescaleDB` and its optional EF integration |
 | A new extension-defined base type                                       | Install or build a codec package.                            |
 
-Server installation is separate from client integration. Your database
+Check the [extension reference](reference.md) for supported types, server versions, and registration methods. Server installation is separate from client integration. Your database
 operator must install the extension and approve its privileges, preload needs,
 and upgrade policy.
 
@@ -84,7 +88,7 @@ client-side typing does not guarantee index use.
 Install the template and generate a package outside BlueTusk core:
 
 ```powershell
-dotnet new install BlueTusk.Templates
+dotnet new install BlueTusk.Templates::1.2.0
 dotnet new bluetusk-extension `
   -n Contoso.BlueTusk.Extensions.MyType `
   --ExtensionName MyType `

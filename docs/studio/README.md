@@ -1,10 +1,6 @@
 # BlueTusk Studio
 
-> **Preview.** This family is `0.1.0-preview.1` and is not published to a
-> package feed yet. It is not part of the 1.1.0 release and its API may change.
-> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
-
-New preview ASP.NET Core developer workspace: an embedded SQL editor, schema
+An ASP.NET Core developer workspace with an embedded SQL editor, schema
 browser, query-plan viewer, authorized event traces, Live inspection and audited
 quarantine replay. SQL/schema, Events and Control Plane integrations are separate
 packages so the core workspace does not require either operational runtime.
@@ -34,7 +30,7 @@ browser. Schema visibility is not a SQL authorization boundary: PostgreSQL
 grants, RLS and function privileges must enforce that principal's actual query
 access. Studio does not borrow an unrestricted operator data source implicitly.
 The caller owns all resolved data sources. Durable audit is also required.
-This preview upgrade requires existing host resolvers to set `AuditScopeId` to
+Configure host resolvers to set `AuditScopeId` to
 an opaque value that is stable across replicas and restarts and distinct for
 different database/tenant scopes. Leaving it empty fails the query audit closed.
 
@@ -140,7 +136,7 @@ execution parameters fails its immutable attempt audit. Clients must supply a no
 `OperationId` UUIDv7 with each `/query` request and retain it after an uncertain
 response; the UI generates and displays one. The response also exposes
 `X-BlueTusk-Studio-Operation-Id`. The host must provide a stable actor subject
-claim, unique across identity providers. This is a preview HTTP contract change:
+claim, unique across identity providers. The HTTP contract requires:
 older callers that omit `OperationId` receive HTTP 400. Audit attempts persist
 after database scope resolution and before SQL
 execution; scope-resolution failures have no query-attempt audit. Operation IDs
@@ -226,42 +222,10 @@ The two adapters use independent bounded, nonqueued admission gates; exhaustion
 returns 429. Unconfigured adapters have no operational routes. The workspace's
 optional panels allow the host to enable either integration independently.
 
-## Local verification
+## Operate Studio
 
-`bluetusk-studio` is the separate Studio .NET tool. It performs read-only
-operational inspection using a host-issued bearer token from
-`BLUETUSK_STUDIO_TOKEN`; credentials never appear in command arguments or errors.
-
-```text
-bluetusk-studio subscriptions --endpoint https://ops.example.com/bluetusk/studio/ --limit 100
-bluetusk-studio streams --endpoint https://ops.example.com/bluetusk/studio/
-bluetusk-studio events --endpoint https://ops.example.com/bluetusk/studio/ --stream orders --after 42 --limit 100
-```
-
-Endpoints require HTTPS except for loopback fixtures. Redirects are disabled,
-cookies are not sent, streamed JSON is capped at 1 MiB with a 20-second deadline,
-and unexpected top-level/row fields are rejected. Output uses JSON escaping and
-preserves long counters as strings. Exit 2 means denied; exit 1 means invalid
-arguments, cancellation or failure. Bearer validation/authorization is supplied
-by the same Studio host; a cookie-only host cannot serve this CLI until it adds
-its token policy. The tool deliberately has no command that executes replay.
-Two actual Kestrel CLI tests pass, covering bearer headers, exact values,
-escaping, denied requests, oversized responses, unknown payload fields and
-redirect rejection.
-
-Fourteen tests pass against an isolated PostgreSQL 18 fixture with zero skips.
-Real Kestrel tests cover authentication, CSRF, scope aliases, metadata redaction,
-pagination, exact Int64 counters, replay confirmation/role/audit rejection and
-nonqueued capacity. Actual PostgreSQL tests cover bounded SQL/schema, durable
-concurrent audit retries/reopen/future-version rejection and authorized domain
-event pages. These tests do not constitute production workload qualification.
-The least-privilege case provisions a separate temporary login role: PostgreSQL
-RLS removes the other tenant's rows, an ungranted table stays inaccessible, and
-server-file reads/role escalation are denied. Subsequent permitted reads still
-succeed after the denied transactions. The fixture role/schema are removed.
-
-Remaining product requirements include saved/versioned queries, interactive
-database scope selection, full durable audit deployment/archive examples,
-browser accessibility/visual tests,
-load/fault campaigns, health/telemetry and production release qualification.
-See the full [implementation programme](../ecosystem/implementation-programme.md).
+Restrict capability registration to trusted application code. Apply tenant
+authorization on every query and expose only the columns the capability
+needs. Monitor result limits, admission failures, and timeouts without
+recording query payloads. Verify that grant changes and revocation invalidate
+existing credentials and page tokens as configured by your host.

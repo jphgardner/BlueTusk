@@ -5,14 +5,9 @@ Live clients after relevant committed changes. The default BlueTusk Graphs
 backend uses ordinary PostgreSQL joins on versions 15–18. Use it for fraud paths,
 dependency maps, and network reachability.
 
-**Availability.** The portable implementation passed local compatibility tests
-on PostgreSQL 15–18. Use a checkout or local candidate containing the change.
-The public `1.1.0-rc.1` packages predate it. The native SQL/PGQ backend is an
-explicit opt-in and its historical Beta 3 coverage is separate.
-[Stable qualification](../releases/release-tracks.md#portable-graph-status)
-is still open.
+Use BlueTusk 1.2 for these examples.
 
-## The safe mental model
+## How results are maintained
 
 PostgreSQL is always authoritative. BlueTusk chooses the cheapest update path
 whose correctness it can prove:
@@ -25,8 +20,7 @@ whose correctness it can prove:
 
 Unknown schemas, incomplete old rows, truncation, two-phase commits, affected-key
 overflow, unsafe deletes, uncertain top-N ranking, projector uncertainty, and
-drift checks all force a full repair. That fallback is expected behavior, not
-silent data loss.
+drift checks all force a full repair. Repair reads the complete authorized result and replaces the prior snapshot.
 
 ## Run a working example
 
@@ -67,13 +61,14 @@ var definition = new ContinuousGraphQueryDefinition<RiskContext, FraudPath, long
                 .Vertex<Account>("target"))
             .Select<FraudPath>(projection => projection
                 .Property<Account, long>("source", x => x.Id, x => x.SourceId)
+                .Property<Transfer, long>("transfer", x => x.Id, x => x.TransferId)
                 .Property<Transfer, decimal>("transfer", x => x.Amount, x => x.Amount)
                 .Property<Account, long>("target", x => x.Id, x => x.TargetId))
             .OrderByDescending(x => x.Amount)
-            .ThenBy(x => x.TargetId)
+            .ThenBy(x => x.TransferId)
             .Take(100);
     },
-    keySelector: row => row.TargetId,
+    keySelector: row => row.TransferId,
     rowComparer: FraudPathComparer.Instance);
 
 var plan = await ContinuousGraphQueryCompiler.CompileAsync(
@@ -83,7 +78,7 @@ var plan = await ContinuousGraphQueryCompiler.CompileAsync(
 ```
 
 The compiler verifies graph aliases, bounded output, stable ordering, direct
-result keys, dependencies, and EF translation before a client subscribes.
+result keys, dependencies, and EF translation before a client subscribes. For this one-hop watch, use the transfer ID as the unique result key so parallel transfers remain separate. Order rows by amount descending and transfer ID ascending in both the database query and the result comparer.
 
 ## 2. Start with authoritative maintenance
 
@@ -123,9 +118,45 @@ For dashboard execution, register a separate bounded projector and require the
 graph-execution authorization policy. Never expose arbitrary graph SQL from a
 browser.
 
+## Watch a bounded traversal
+
+Use traversal registration for reachability, a first neighbor page, or a shortest path. This registration follows all tables in the
+graph. A relevant committed change re-runs the traversal under the current
+subscriber authorization, then Live diffs the keyed result.
+
+```csharp
+var impact = ContinuousGraphQueryCompiler.CompileReachability(
+    modelContext,
+    name: "service-impact",
+    databaseIdentity: "topology-primary",
+    version: "v1",
+    graphName: "service_topology_graph",
+    graphSchema: null,
+    parameters: [new LiveQueryParameter("serviceId", typeof(long))],
+    anchor: args => new BlueTuskGraphIdentity("services", args.Get<long>("serviceId")),
+    authorizedContextFactory: CreateAuthorizedContextAsync,
+    options: new BlueTuskGraphTraversalOptions
+    {
+        Direction = BlueTuskGraphEdgeDirection.Incoming,
+        MaximumDepth = 6,
+        MaximumResults = 250,
+    });
+```
+
+Implement `CreateAuthorizedContextAsync` using the authenticated execution
+scope and the same EF graph mapping, returning a newly authorized context.
+Use an ordinary Live session or the registered incremental session with
+result ordering by hop count and ordinal keys. A budget-exhausted
+traversal fails the evaluation before replay append or acknowledgement.
+These watches prefer the [server engine](../graph/engine.md) once its extension
+and a matching graph are registered. Set `UseServerEngine = false` to use
+portable traversal. A change to `EdgeAliases` changes the traversal identity.
+The same traversal can change execution engines while retaining its replay
+identity.
+
 ## Production checklist
 
-- Use BlueTusk Graphs by default. For native mode, verify SQL/PGQ capability on the target server.
+- Install and register the BlueTusk extension where you need server-side traversal. Choose explicit SQL/PGQ mode only on a server with that grammar and graph support.
 - Keep `LiveSecurityScope`, PostgreSQL permissions, and RLS active on every query.
 - Bound result rows, affected keys, hops, top-N, execution time, and concurrency.
 - Persist replay append, session commit, and Streams acknowledgement in order.
@@ -134,4 +165,4 @@ browser.
 
 The [full Continuous Graph reference](reference.md) documents expanded patterns,
 the trust contract, mutation ordering, every fallback, dashboard projection,
-metrics, tests, and release evidence.
+dependencies, replay, and diagnostics.

@@ -1,136 +1,54 @@
 # BlueTusk
 
-**PostgreSQL, fully exposed to .NET.**
+**PostgreSQL for .NET.**
 
-[Website](https://bluetusk.io/) ·
-[Quickstart](https://bluetusk.io/documentation/getting-started/quickstart) ·
-[Documentation](https://bluetusk.io/documentation) ·
-[GitHub](https://github.com/jphgardner/BlueTusk)
+[Website](https://bluetusk.io/) · [Documentation](docs/README.md) · [Quickstart](docs/getting-started/quickstart.md)
 
-BlueTusk is a PostgreSQL-native .NET platform. It provides a direct ADO.NET
-provider, EF Core integration, replication, real-time delivery, extension
-packages, and graph queries without an Npgsql runtime dependency.
+BlueTusk provides ADO.NET and EF Core access to PostgreSQL. Use the same
+database for application queries, committed change delivery, graph traversals,
+and durable workloads such as jobs and projections.
 
-## Choose what you need
+## Start with your workload
 
-| Need | Start with | Add when required |
-| --- | --- | --- |
-| Connect a .NET application | [`BlueTusk.Data`](docs/ado-net/README.md) | Pooling, authentication, COPY, notifications, or replication |
-| Use EF Core | [`BlueTusk.EntityFrameworkCore`](docs/ef-core/README.md) | PostgreSQL-native mappings, migrations, and scaffolding |
-| Consume committed changes | [Streams](docs/streams/README.md) | Snapshot bootstrap, replay, and durable relay |
-| Update other systems | [Sync](docs/sync/README.md) | Redis, NATS, OpenSearch, Kafka, webhooks, or object storage |
-| Push authorized live data | [Live](docs/live/README.md) | ASP.NET transports and browser clients |
-| Work with specialized PostgreSQL features | [Extensions](docs/extensions/README.md) | PostGIS, pgvector, TimescaleDB, and other focused packages |
-| Query connected data | [BlueTusk Graphs](docs/graph/README.md) | Portable EF queries, Continuous Graph, and optional native SQL/PGQ |
+| Need | Go to |
+| --- | --- |
+| Run SQL, manage connections, or load rows in bulk | [ADO.NET](docs/ado-net/README.md) |
+| Map entities and manage migrations | [EF Core](docs/ef-core/README.md) |
+| Consume commits, synchronize systems, or push authorized updates | [Real-time data](docs/realtime-platform/README.md) |
+| Query relationships or maintain graph results | [Graphs](docs/graph/README.md) and [Continuous Graph](docs/continuous-graph/README.md) |
+| Use PostgreSQL types, vector search, geospatial data, or time series | [Extensions](docs/extensions/README.md) |
+| Store documents and events, run jobs, or build an offline app | [Data services](docs/ecosystem/README.md) |
+| Secure, deploy, or troubleshoot an application | [Production checklist](docs/operations/production-checklist.md) |
 
-The [documentation index](docs/README.md) organizes the complete guide set by
-task and audience.
+## Run your first query
 
-## Install and run a query
+The [quickstart](docs/getting-started/quickstart.md) uses the .NET 10 SDK and
+PostgreSQL 15–18. From an existing .NET project, add the provider:
 
-BlueTusk `1.0.0` is the current stable line. `1.1.0-rc.1` is available for
-prerelease evaluation. Use one exact BlueTusk version throughout an
-application; see the [support matrix](VERSIONING.md) before choosing a line.
-
-```powershell
-dotnet add package BlueTusk.Data --version 1.1.0-rc.1
+```sh
+dotnet add package BlueTusk.Data --version 1.2.0
 ```
+
+Create a shared data source and pass input using parameters:
 
 ```csharp
-await using var dataSource =
-    new BlueTuskDataSourceBuilder(connectionString).Build();
+using BlueTusk.Data;
 
-await using var command = dataSource.CreateCommand(
-    "SELECT $1::int4 + $2::int4");
-
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
+await using var command = dataSource.CreateCommand("SELECT $1::int4 + $2::int4");
 command.Parameters.Add(new BlueTuskParameter<int>(20));
 command.Parameters.Add(new BlueTuskParameter<int>(22));
-
-var answer = await command.ExecuteScalarAsync<int>();
+Console.WriteLine(await command.ExecuteScalarAsync<int>());
 ```
 
-Create one long-lived data source for each distinct configuration. It owns the
-connection pool, PostgreSQL type catalogue, and runtime codecs. Replication
-uses dedicated unpooled sessions derived from the same configuration.
+Use the [installation guide](docs/getting-started/install.md) to match
+packages to your runtime and server. [Application examples](docs/getting-started/examples.md)
+show complete database, worker, and browser flows.
 
-For a runnable local setup, follow the
-[quickstart](docs/getting-started/quickstart.md). For package selection and
-stable-versus-RC guidance, use the
-[installation guide](docs/getting-started/install.md).
+## Contribute
 
-## Build the repository
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and
+[website/README.md](website/README.md) for the documentation site.
+Report a suspected vulnerability privately using [SECURITY.md](SECURITY.md).
 
-Prerequisites:
-
-- .NET SDK 11.0.100 as pinned in `global.json`
-- .NET 10 runtime for the standard test suite
-- Docker for PostgreSQL integration tests
-
-```powershell
-dotnet restore BlueTusk.slnx
-dotnet build BlueTusk.slnx --no-restore
-dotnet test BlueTusk.slnx --no-build --framework net10.0
-```
-
-Integration tests are opt-in:
-
-```powershell
-docker compose -f eng/compose/postgres.yml up -d postgres18
-$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests"
-dotnet test tests/BlueTusk.IntegrationTests
-```
-
-Extension-specific databases and test commands are documented in
-[Testing](docs/contributing/testing.md). See the
-[.NET compatibility matrix](docs/contributing/dotnet-compatibility.md) for
-running tests on .NET 5 through .NET 11. The
-[repository layout](docs/contributing/repository-layout.md) explains solution
-groups, project-registration rules, and generated output.
-
-## Architecture
-
-Dependencies flow toward the protocol and transport layers:
-
-```text
-EntityFrameworkCore → Data → Client → Protocol → Transport
-                              ↓          ↓
-                          TypeSystem   Security
-
-Replication.PgOutput → Replication → Client
-```
-
-The real-time products build on committed PostgreSQL changes:
-
-```text
-PostgreSQL → Streams → Sync / Live / Continuous Graph
-                         ↑
-                    Control Plane
-```
-
-Read the [architecture overview](docs/architecture/overview.md) for ownership
-and dependency rules, or the
-[real-time contracts](docs/realtime-platform/contracts.md) for delivery,
-checkpoint, and recovery semantics.
-
-## Release status and evidence
-
-The published `1.1.0-rc.1` train contains 62 NuGet packages and three npm
-packages from one immutable commit. Stable `1.1.0` remains gated on the exact
-candidate’s long-running, security, performance, PostgreSQL 19, and external
-acceptance evidence.
-
-- [Compatibility and versioning](VERSIONING.md)
-- [1.1.0-rc.1 release record](docs/releases/1.1.0-rc.1.md)
-- [Engineering evidence](https://bluetusk.io/evidence)
-- [Release process](docs/release-process.md)
-
-Package availability, a successful local build, and stable production approval
-are separate claims. BlueTusk records them separately.
-
-## Contributing and security
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change. Report
-security issues using the private process in [SECURITY.md](SECURITY.md); do not
-open a public issue for a suspected vulnerability.
-
-BlueTusk is licensed under the [MIT License](LICENSE).
+BlueTusk is available under the [MIT License](LICENSE).

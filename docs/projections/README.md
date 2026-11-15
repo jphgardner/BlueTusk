@@ -1,10 +1,6 @@
 # BlueTusk.Projections
 
-> **Preview.** This family is `0.1.0-preview.1` and is not published to a
-> package feed yet. It is not part of the 1.1.0 release and its API may change.
-> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
-
-BlueTusk.Projections is an independent .NET 10 `0.1.0-preview.1` family for versioned, durable
+BlueTusk.Projections provides versioned, durable
 application read models. Its PostgreSQL destination stores source mirrors, joined output documents,
 dependency indexes, decimal aggregates, snapshot coverage, and CDC checkpoints in one database.
 It consumes **BlueTusk.Streams** snapshot and committed-transaction contracts. It has no EF persistence
@@ -22,14 +18,10 @@ The definition receives a bounded `ProjectionWriteContext` inside a destination 
 
 - Store each source table's current committed row image with `UpsertSourceAsync`/`DeleteSourceAsync`,
   or bounded `UpsertSourcesAsync`/`DeleteSourcesAsync` bulk operations using one SQL command per batch.
-- Read source mirrors to calculate joins from exactly the CDC history being applied. A row the context
-  already read or wrote in the same transaction is served from an exact transaction-scoped image without
-  another round trip. Touching the borrowed `Connection`/`Transaction` or any failed command discards the
-  image, so raw SQL and aborted transactions behave exactly as before.
+- Read source mirrors to calculate joins from exactly the CDC history being applied.
 - Write typed output using source-generated `JsonTypeInfo<T>`, or persist an explicit byte payload.
-- Replace output and dependencies in bulk using `UpsertManyAsync`: three ordered SQL statements for a
-  bounded batch, independent of document count, sent as one ADO.NET batch round trip when the provider
-  supports batches.
+- Replace output and dependencies in bulk using `UpsertManyAsync`: three SQL commands for a bounded
+  batch, independent of document count.
 - Find affected joined outputs with indexed, tenant-scoped, ordinal keyset dependency pages.
 - Apply exact decimal aggregate deltas with `AddAggregateAsync` and read them in the same transaction.
 - Use its borrowed connection/transaction for application-specific relational state.
@@ -76,32 +68,7 @@ Streams delivery sequence. PostgreSQL LSNs are not consecutive counters, so the 
 missing source transaction from a numeric LSN gap. Never concurrently dispatch different source
 positions to the same version; concurrent duplicate deliveries are safely deduplicated. Parallelize
 independent projection versions/source partitions. Two-phase, synthetic, wrong-source, and typed
-mapped transactions fail closed in this preview; use raw committed Streams row contracts.
-
-### Production topology: a dedicated delivery pool
-
-Give the serial delivery path its own small connection pool. Construct the `PostgreSqlProjectionStore`
-used for CDC apply and lease renewal or rotation, and the `PostgreSqlEventDeliveryProcessor` for the
-same source, with a `DbDataSource` that application request and writer traffic does not share. Live
-reads and other application work keep their own data source. Both the store and the processor
-already take their data source as a constructor argument, so this is configuration, not a separate
-mode.
-
-Why: a leased version applies one source transaction at a time, and every transaction needs at least
-one pool checkout for its projection commit (plus one for an Events inbox commit). Application writers
-hold their pooled connections for the whole of their own transactions. When storage briefly stalls
-`COMMIT` (for example during checkpoint or background-writer bursts on a slow or virtualized disk),
-writers that serialize on a hot row, such as one event stream's sequence, keep every shared connection
-busy while waiting on each other. The single ordered consumer then queues behind them. The capacity
-harness measured individual delivery checkouts waiting 1.2–1.8 s behind 12 queued writers with a shared
-six-connection pool. That wait turns a seconds-long stall into a backlog that dominates projection and
-inbox p99, and it recurs after every stall.
-
-Sizing: one serial consumer uses at most one connection at a time, because apply, inbox and lease work
-run sequentially. Use two connections per concurrently delivered projection version or source
-partition: one for the active transaction and one spare, so replacing an expired or broken pooled
-session never queues the consumer. The data source must address the projection store's (and the
-inbox store's) database. Budget the extra backends in `max_connections` alongside the application pool.
+mapped transactions fail closed; use raw committed Streams row contracts.
 
 ## Consistent bootstrap and rebuild
 
@@ -193,49 +160,12 @@ Retirement is irreversible and rules out rollback to that version. Pause/release
 apply the application's retention policy before retiring; source-slot removal is a separate operation.
 There is no pruning of active state, Events deduplication identities or shared source history.
 
-## Verification and remaining production gates
+## Verify recovery
 
-```powershell
-$env:BLUETUSK_TEST_CONNECTION_STRING = '<disposable PostgreSQL connection string>'
-dotnet test tests/BlueTusk.Projections.Tests/BlueTusk.Projections.Tests.csproj -c Release -nr:false
-dotnet publish tests/BlueTusk.Projections.NativeAotSmoke/BlueTusk.Projections.NativeAotSmoke.csproj -c Release -r win-x64 -nr:false
-```
+Confirm that a consumer restart resumes the active generation from durable
+progress. Build a new generation when the projection shape changes and
+publish it only after its checkpoint reaches the cutover position. Check
+that a stale lease cannot update destination rows or published progress.
 
-Tests own randomly generated `projections_test_*` schemas, publications, and slots. They cover real
-PostgreSQL rollback, typed joined read models, dependency fan-out, incomplete-pagination failure,
-aggregate exactness, deletion and orphan recovery, concurrent duplicates, restart/lease fencing,
-snapshot sequence/content/coverage, source/version mismatch, and guarded version cutover.
-`ConsistentProjectionIntegrationTests` uses a **real exported snapshot and real pgoutput WAL**: one
-transaction changes two source tables while the snapshot is open, then verifies old snapshot state
-and subsequent atomic joined/aggregate state without a concurrent-write gap. The rebuild integration
-uses two real exported snapshots/slots, a concurrent source commit, verified source barrier and explicit
-lineage cutover. The sample test launches two actual server processes and exercises SSE, signed reconnect,
-abrupt restart and candidate promotion. The native smoke executes joined/bulk state, Live JSON replay,
-actual lineage capture and a verified source barrier against PostgreSQL.
-The native smoke also executes maintenance fencing, actual source DDL, fresh exported snapshot/WAL,
-durable recovery ticket, exact cutover retry and published Live reset. The deployable sample's SSE test
-executes the new operator endpoints through an actual third process and observes later WAL updates.
-
-`ProjectionBoundedWorkloadTests` imports 128 initial orders in 17-row snapshot batches, retains sixteen
-subsequent source commits behind an open candidate snapshot, applies customer dependency fan-out and
-deletion, and reacquires ownership after destination commit before source acknowledgment. It verifies
-112/64 final tenant documents, exact 176/64 totals, 17-document page bounds, duplicate suppression and
-promotion through the verified barrier. It then prunes the retired version in at most 37 derived rows
-per transaction while preserving the published pointer, checkpoint, aggregate and permanent identity.
-`ProjectionResetRecoveryTests` builds more than 10,000 derived rows and verifies exact deletion counts
-in 37-row transactions, concurrent reset continuations, canceled batches, cross-instance lease recovery,
-durable epoch reconstruction and blocked snapshot/CDC/cutover until completion.
-These fixed-size invariant tests are not a sustained throughput, allocation or p99 benchmark.
-
-The timed real SQL/outbox/pgoutput/inbox/owned-Live workload and measured 60-second local report are
-documented in [workload evidence](evidence/README.md). The captured one-producer profile verifies exact
-state through 49 lease recoveries and duplicate retries; it does not certify production capacity.
-
-This preview does not yet satisfy massive-production release gates. Required work includes sustained
-throughput/allocation/p99 tests across backlog sizes, fan-out distributions, partition counts and large
-transactions; SQL plan/lock/connection-pool analysis; crash/ambiguous-commit/failover/restore campaigns;
-cluster routing/deployment recovery; restore/PITR and sustained failover validation; automated rebuild scheduling;
-historical source-DDL verification and mapping compatibility; archive/partition policy; control-plane/runbooks; richer declarative definitions;
-and complete release/endurance validation. The per-projection publication lock serializes active and
-candidate applications and bounded reset transactions. Benchmark its contention and PostgreSQL vacuum,
-WAL and storage behavior under representative backlog sizes before production deployment.
+See [projection recovery](RECOVERY.md) for failover and
+[Live projection reads](LIVE.md) for subscriber authorization.

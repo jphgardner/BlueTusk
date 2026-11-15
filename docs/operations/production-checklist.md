@@ -1,9 +1,6 @@
 # Production checklist
 
-This checklist turns a successful BlueTusk application build into an operable
-deployment. It applies to stable packages and to production-like evaluation of
-`1.1.0-rc.1`. A public RC is not a substitute for an application owner’s load,
-security, recovery, and change-management evidence.
+Use this checklist to deploy a BlueTusk application safely.
 
 ## 1. Record the deployment contract
 
@@ -20,8 +17,7 @@ Before provisioning, record the following in the application repository:
 - accepted SLOs, RTO, RPO, error-budget policy, and incident owner; and
 - rollback binary, database/schema compatibility, and persisted-format limits.
 
-Use one BlueTusk version across the coordinated family graph. Never mix stable
-and RC packages in the same deployment.
+Restore the same locked package graph in each environment.
 
 ## 2. Apply the security baseline
 
@@ -73,8 +69,7 @@ concurrency.
   retained-WAL ceiling, backup/rebuild plan, and monitoring.
 - Test PgBouncer mode if it is present; transaction pooling cannot preserve
   arbitrary session-affine state.
-- Treat PostgreSQL 19 SQL/PGQ as capability negotiated. Do not infer it from a
-  version string or disable Continuous Graph authoritative repair.
+- Check capabilities before enabling native SQL/PGQ or the optional graph engine. Keep authoritative repair enabled for Continuous Graph.
 
 Run migrations through a dedicated role and controlled job. Application
 instances should not race to mutate production schema at startup.
@@ -181,25 +176,12 @@ WAL lag, checkpoint age, reconciliation mismatch, authorization failure, or
 recovery-time thresholds. Rehearse database restore, relay restore, destination
 rebuild, replay reset, and graph authoritative repair.
 
-## 9. Run the release acceptance suite
+## 9. Test the application under load
 
-Before declaring the application ready:
-
-- clean restore and Release build pass with warnings treated as errors;
-- package and lockfile inventory matches the approved version;
-- representative PostgreSQL integration and migration tests pass;
-- load tests cover steady state, burst, saturation, slow dependencies, and
-  cancellation;
-- memory, GC, CPU/event, peak RSS, throughput, P95, and P99 remain within the
-  application budget;
-- fault injection proves reconnect, replay, retry, fencing, and rollback;
-- backup/restore meets recorded RPO/RTO;
-- dashboards, alerts, runbook links, and escalation owners are live; and
-- the deployment record contains exact artifact digests and approval.
-
-For `1.1.0-rc.1`, explicitly record that the application is on a prerelease
-channel and define the exit criteria for stable `1.1.0` or rollback to `1.0.0`.
-
+Exercise typical traffic, peak concurrency, cancellation, slow dependencies,
+and recovery. Measure latency, throughput, resource utilization, and retained
+WAL against your application’s operating limits. Compare results with the
+deployment’s latency, recovery, and availability objectives.
 ## 10. Keep an operator handoff
 
 The on-call handoff must include:
@@ -216,5 +198,4 @@ The on-call handoff must include:
 
 Continue with [deployment](deployment.md),
 [troubleshooting](troubleshooting.md),
-[upgrade and rollback](upgrade-guide.md), and the
-[1.1.0-rc.1 release record](../releases/1.1.0-rc.1.md).
+and [upgrade and rollback](upgrade-guide.md).

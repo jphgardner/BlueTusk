@@ -1,8 +1,6 @@
 # Deployment and configuration
 
-This guide describes the application-level deployment contract for BlueTusk.
-It does not enable package publication or replace the product-family release
-process.
+Use these settings to deploy an application with PostgreSQL.
 
 ## Deployment topology
 
@@ -164,10 +162,3 @@ Before rolling out a new version:
 
 For a real-time mapping or format change, use the documented rebuild/version
 transition. Do not make old checkpoints silently mean something new.
-
-## Release boundary
-
-The repository can produce candidate artifacts while publication is disabled.
-Only the [release process](../release-process.md) can authorize stable package
-publication, and only after all required workflow evidence refers to the same
-immutable commit.

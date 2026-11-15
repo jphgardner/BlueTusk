@@ -1,10 +1,6 @@
 # BlueTusk.Events
 
-> **Preview.** This family is `0.1.0-preview.1` and is not published to a
-> package feed yet. It is not part of the 1.1.0 release and its API may change.
-> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
-
-BlueTusk.Events is an independent `0.1.0-preview.1` family targeting .NET 10. It records typed,
+BlueTusk.Events records typed,
 versioned business intent in the same PostgreSQL transaction as business data, deduplicates database
 effects in a consumer inbox, and replays an ordered tenant stream with durable fenced checkpoints.
 The runtime uses ADO.NET and BlueTusk.Data. Npgsql and EF Core are not runtime dependencies of the core.
@@ -127,10 +123,6 @@ distinct transactions in source commit order; do not dispatch them concurrently 
 consumer. The bounded processor materializes only selected business-event envelopes, not all source
 rows. Transactions are never split across inbox commits to fit a bound.
 
-The [recoverable outbox recipe](../../samples/BlueTusk.Events.RecoverableOutbox/README.md)
-demonstrates target commit, interrupted acknowledgment, and idempotent redelivery
-using the PostgreSQL Streams checkpoint store.
-
 This committed-CDC processor does not implement historical snapshot delivery or durable independent
 per-stream remote subscription offsets. Use core replay for an existing local outbox, or establish an
 explicit source bootstrap/replay policy before wiring a remote live event subscription. Source identity
@@ -202,45 +194,11 @@ The proposed published-outbox contract and its required cross-product acknowledg
 in [Published outbox retention design](PUBLISHED-RETENTION.md). No published-delete implementation is
 enabled by this package.
 
-## Validation and remaining release gates
+## Operate an event stream
 
-The `BlueTusk.Events` meter records bounded append preparation/duplicate counts, inbox attempt outcome,
-committed replay progress/remaining count and lease fencing. Append and inbox methods use caller-owned
-transactions: their `prepared` measurements do **not** claim that the caller later committed. Replay
-commit/progress measurements follow the store-owned transaction commit. Metrics omit tenant/event IDs,
-and throwing listener callbacks cannot alter database durability. No metric substitutes for an application
-transaction outcome or durable checkpoint.
-`bluetusk.events.replay.observed_remaining` records read-only status observations separately from
-committed replay progress, with no consumer/tenant/owner labels. Faulty observer callbacks cannot
-fail the metadata query.
-
-Run live tests with a disposable PostgreSQL database:
-
-```powershell
-$env:BLUETUSK_TEST_CONNECTION_STRING = '<disposable PostgreSQL connection string>'
-dotnet test tests/BlueTusk.Events.Tests/BlueTusk.Events.Tests.csproj -c Release -nr:false
-```
-
-The tests create and remove only their randomly generated `events_test_*` schemas. They cover real
-rollback/visibility, ordering under transaction lock contention, concurrent appends and identity
-retries, tenant isolation, byte limits, inbox duplicate races, EF transaction integration, cancellation,
-typed version dispatch, handler failure, owner replacement and fencing before checkpoint commit.
-Adapter tests additionally verify real pgoutput outbox WAL, text/binary wire equivalence, arbitrary
-byte payloads, atomic handler rollback, deferred-constraint target COMMIT failure, acknowledgment
-failure after commit, duplicate replay, immutable outbox admission and transaction bounds. The native
-smoke exercises the adapter's inbox and duplicate-delivery path against PostgreSQL as well.
-
-`EventsBoundedWorkloadTests` runs eight concurrent tenant streams with 512 retained events each,
-reuses the same IDs across tenants, rolls back and retries bounded append batches, and resumes fenced
-replay in 47-event pages. It verifies all 4,096 database effects, their exact sequence sum and retained
-contiguous offsets. This bounded correctness workload does not measure sustained throughput or p99.
-
-This preview is not a claim of readiness for massive production workloads. Required work before a
-stable release includes sustained throughput/allocation/p99 benchmarks at representative payload sizes
-and stream cardinalities; crash/kill and ambiguous-commit fault campaigns; failover/restore/upgrade
-testing; partition/archive/retention strategies preserving deduplication and replay; large backlog
-query-plan verification; control-plane/Streams transport integrations; observability and operational
-runbooks; least-privilege tenant/RLS deployment validation; and full NativeAOT/endurance/release gates.
-Do not delete outbox or inbox records behind a replay consumer: retained identity and contiguous offset
-invariants are part of correctness. The local-only API above is an explicit, guarded exception; it is
-not a retention path for published outboxes or a claim of bounded whole-system storage.
+Monitor append latency, contention on hot streams, checkpoint lag, and
+retained payload bytes. Run a consumer restart before the acknowledgement and
+confirm that the same event ID replays and its inbox effect remains idempotent.
+Use a restricted migration identity to initialize the schema. See
+[published retention](PUBLISHED-RETENTION.md) before deleting any stream rows
+that another consumer could still need.

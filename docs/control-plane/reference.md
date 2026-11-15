@@ -1,11 +1,6 @@
 # BlueTusk Control Plane and Dashboard
 
-`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational
-foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph
-projections. They are independently versioned under the Control Plane release
-train. The coordinated `1.1.0-rc.1` packages are public. Stable `1.1.0` remains
-blocked until the Sync dependency has archived its required 24-hour endurance
-evidence and the exact stable-candidate release chain passes.
+Use Control Plane to inspect registered resources and run authorized operations against them.
 
 ## Read-only inventory
 
@@ -372,28 +367,3 @@ leaves the finalizer in place. The shipped ClusterRole can list, watch, and
 patch only `BlueTuskDeployment` resources and their status; it has no Secret
 read permission. The provider adapter resolves secret references under a
 separate identity if its workload needs them.
-
-## Verification status
-
-The unit gate covers role escalation, exact confirmation, handler failure,
-non-sensitive audit details, Sync rate/lag/failure projection, authorization
-metadata on every dashboard endpoint, Live scope redaction and lag/fan-out
-projection, hostile source, pipeline, Live, and graph HTML values, capability
-discovery, v1 envelopes, legacy route
-preservation, and versioned operation responses. Live PostgreSQL 15–19
-acceptance creates a real logical slot, relay
-group, snapshot run, and direct checkpoint, verifies their inventory
-projections, upgrades a legacy audit table to schema version 2 without losing
-rows, initializes a fresh schema idempotently, proves stored audit rows reject
-update and delete attempts, and rejects a future schema version.
-
-The managed-hosting gate adds canonical-fingerprint, validation, quota,
-generation/revision CAS, lease exclusion, fencing, idempotent convergence,
-delete-protection, and non-sensitive failure tests. Its PostgreSQL acceptance
-initializes the durable schema idempotently, round-trips secret references,
-rejects concurrent updates, advances fencing tokens, and rejects a future
-desired-document format.
-
-See the [API and format compatibility policy](api-compatibility.md) and
-[1.0.0 release record](release-notes-1.0.0.md) for the exact
-candidate gate and remaining publication dependency.

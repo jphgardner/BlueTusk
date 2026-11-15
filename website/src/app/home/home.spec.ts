@@ -1,50 +1,31 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Home } from './home';
+import { PRODUCTS } from '../content/catalog';
 
 describe('Home', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [Home],
-      providers: [provideRouter([])],
-    }).compileComponents();
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [Home], providers: [provideRouter([])] });
   });
 
-  it('renders the current 1.1 RC results and remaining stable checks', () => {
+  it('links the first query and all products from the landing page', () => {
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-
-    expect(text).toContain('13,056');
-    expect(text).toContain('46');
-    expect(text).toContain('Memory limits checked');
-    expect(text).toContain('65 / 65');
-    expect(text).toContain('Public RC packages');
+    const page: HTMLElement = fixture.nativeElement;
+    expect(page.querySelector('h1')?.textContent).toMatch(/PostgreSQL.*\.NET/);
+    expect(page.querySelector('a[href="/documentation/getting-started/quickstart"]')).toBeTruthy();
+    expect(page.querySelectorAll('.product-tile')).toHaveLength(PRODUCTS.length);
+    expect(page.querySelectorAll('[role="tab"]')).toHaveLength(2);
   });
 
-  it('prioritizes the architecture LCP image with a stable aspect ratio', () => {
+  it('gives decorative hero art a stable aspect ratio and early fetch priority', () => {
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
-    const image = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>(
-      '.architecture-frame img',
-    );
-
-    expect(image?.getAttribute('loading')).toBe('eager');
-    expect(image?.getAttribute('fetchpriority')).toBe('high');
-    expect(image?.getAttribute('decoding')).toBe('async');
-    expect(image?.getAttribute('width')).toBe('1672');
-    expect(image?.getAttribute('height')).toBe('941');
-    expect(image?.getAttribute('src')).toBe('/bluetusk-architecture.png?v=6');
-    expect(image?.getAttribute('alt')).toContain('The BlueTusk Platform');
-  });
-
-  it('provides a readable architecture flow for small screens', () => {
-    const fixture = TestBed.createComponent(Home);
-    fixture.detectChanges();
-
-    const flow = (fixture.nativeElement as HTMLElement).querySelector('.architecture-mobile-flow');
-    expect(flow?.getAttribute('aria-label')).toBe('How data moves through BlueTusk');
-    expect(flow?.textContent).toContain('BlueTusk Provider');
-    expect(flow?.textContent).toContain('Sync · Live · Graph');
+    const art = (fixture.nativeElement as HTMLElement).querySelector('.hero-art');
+    expect(art?.getAttribute('src')).toBe('/platform-layers.webp');
+    expect(art?.getAttribute('width')).toBe('1200');
+    expect(art?.getAttribute('height')).toBe('675');
+    expect(art?.getAttribute('fetchpriority')).toBe('high');
+    expect(art?.getAttribute('alt')).toBe('');
   });
 });

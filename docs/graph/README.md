@@ -1,55 +1,81 @@
-# Query connected data with BlueTusk Graphs
+# Query a property graph
 
-Map existing PostgreSQL tables as vertices and edges with `HasPropertyGraph`.
-BlueTusk uses `bluetusk_graph` by default for bounded neighbor, reachability,
-and shortest-path queries in EF and Continuous Graph. Install the compatible
-extension in the database and register the EF graph during deployment.
-BlueTusk falls back to portable traversal when the engine or matching
-registration is unavailable.
-See [installation and registration](../../extensions/bluetusk_graph/README.md#install-and-register).
-`PropertyGraph(...).Match(...).Select(...)` supports composable graph patterns
-through parameterized PostgreSQL joins on versions 15–18. Use
-[Continuous Graph](../continuous-graph/README.md) to maintain a bounded result
-after commits.
+Map existing PostgreSQL tables as vertices and edges. With the default
+BlueTusk Graphs compatibility mode, EF Core translates a typed graph pattern
+into parameterized joins over those tables. Use PostgreSQL 15–18 and a
+BlueTusk 1.2.
 
-**Availability.** Portable Graph is implemented and locally verified on
-PostgreSQL 15–18. This guide applies to a checkout or local candidate containing
-the portable implementation. The published `1.1.0-rc.1` packages predate it; the local Core qualification bundle does not include it.
-[Stable qualification](../releases/release-tracks.md#portable-graph-status)
-still requires cross-platform performance and 24-hour recovery evidence.
+Bounded neighbor, reachability, and shortest-path operations prefer the
+[BlueTusk server engine](engine.md) when a compatible extension and a matching
+graph registration are available. They use portable traversal when those
+prerequisites are unavailable. `Match(...).Select(...)` composes over
+relational joins independently of the traversal engine.
 
-## Run the sample
+## 1. Map existing tables
 
-```powershell
-docker compose -f eng/compose/postgres.yml up -d --wait postgres18
-$fixturePassword = docker compose -f eng/compose/postgres.yml exec -T postgres18 printenv POSTGRES_PASSWORD
-$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=$fixturePassword;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
-dotnet run --project samples/BlueTusk.Samples.Graph
-```
-
-The sample creates two temporary tables and prints `Ada knows Grace`. For real
-schemas, index edge source columns for outgoing traversal and edge destination
-columns for incoming traversal. Index both for undirected traversal. For
-composite endpoints, index all key columns together in endpoint order. Keep
-selective predicates on the starting vertex and configure an EF command timeout
-for broad queries.
-
-## Select native SQL/PGQ
-
-Use the same model declaration and select the backend in EF options:
+Configure normal EF table mappings first. This example uses `people` as
+vertices and `friendships` as directed edges, with a foreign key at each
+endpoint.
 
 ```csharp
-options.UseBlueTusk(connectionString,
-    ef => ef.UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq));
+modelBuilder.HasPropertyGraph("social", graph =>
+{
+    graph.Vertex<Person>("people", vertex => vertex
+        .HasLabel("person")
+        .HasKey(x => x.Id)
+        .Properties(x => new { x.Id, x.Name }));
+
+    graph.Edge<Friendship>("friendships", edge => edge
+        .HasLabel("follows")
+        .HasKey(x => x.Id)
+        .Properties(x => new { x.Id })
+        .HasSource<Person>(x => x.FromPersonId, x => x.Id)
+        .HasDestination<Person>(x => x.ToPersonId, x => x.Id));
+});
 ```
 
-SQL/PGQ mode requires verified server support and SQL/PGQ graph objects.
-PostgreSQL 19 Beta 4 removed SQL/PGQ. The pinned Beta 3 fixture is retained
-for native regression coverage. Composable graph patterns default to PostgreSQL
-joins with ordinary table permissions and row-level security. [PostgreSQL Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/)
+Migrate the underlying tables and endpoint indexes as usual. Portable graph
+mappings are stored in EF metadata, and their migrations create only
+relational database objects.
 
-See the [graph reference](reference.md) for typed mapping and migration guidance
-and the [release tracks](../releases/release-tracks.md) for qualification status.
+## 2. Query a directed hop
 
-For bounded neighborhood, reachability, and shortest-path queries, see the
-[BlueTusk PostgreSQL graph engine](../../extensions/bluetusk_graph/README.md).
+```csharp
+var matches = await db.PropertyGraph("social")
+    .Match(pattern => pattern
+        .Vertex<Person>("source", person => person.Id == personId)
+        .Outgoing<Friendship>("follow")
+        .Vertex<Person>("target"))
+    .Select<FollowMatch>(projection => projection
+        .Property<Friendship, long>("follow", edge => edge.Id, row => row.EdgeId)
+        .Property<Person, string>("target", person => person.Name, row => row.Name))
+    .OrderBy(row => row.EdgeId)
+    .Take(50)
+    .ToListAsync(cancellationToken);
+```
+
+Define `FollowMatch` as a class with writable `long EdgeId` and `string Name`
+properties. You can compose ordinary EF filtering, ordering, and limits on
+the projected rows. Each matching walk produces a row. Parallel edges can
+therefore return the same target more than once.
+
+## 3. Index the direction you traverse
+
+Index the edge’s source columns for outgoing queries and destination columns
+for incoming queries. Keep both indexes for undirected traversal. Index
+composite endpoint keys together in the declared key order. Use an anchor
+predicate, a bounded path, and a timeout for high-degree vertices. Check
+`EXPLAIN (ANALYZE, BUFFERS)` against representative data before relying on a
+particular plan.
+
+The database role needs access to the mapped vertex and edge tables. Apply
+tenant restrictions through PostgreSQL RLS or explicit predicates in the graph
+query. EF filters on a source entity do not automatically constrain the
+vertices and edges inside the generated SQL.
+
+## Choose the next operation
+
+- Use the [Graph reference](reference.md) for bounded patterns, composite keys, native SQL/PGQ, and migration compatibility.
+- Use [bounded traversals](traversals.md) for neighbors, reachability, and shortest paths.
+- Use [Continuous Graph](../continuous-graph/README.md) for authorized results that refresh after relevant commits.
+- Run the [Graph sample](../../samples/BlueTusk.Samples.Graph/) from a checkout to see a complete model and query.

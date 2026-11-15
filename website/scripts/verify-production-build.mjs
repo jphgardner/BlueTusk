@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { JSDOM } from 'jsdom';
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const websiteRoot = path.resolve(scriptDirectory, '..');
@@ -56,15 +57,54 @@ const files = (await collectFiles(distributionRoot))
   .filter((file) => file.relativePath !== 'production-metrics.json')
   .sort((left, right) => left.relativePath.localeCompare(right.relativePath));
 const fileMap = new Map(files.map((file) => [file.relativePath, file]));
-const prerenderedRouteCount = files.filter(
-  (file) => file.relativePath === 'index.html' || file.relativePath.endsWith('/index.html'),
-).length;
-if (prerenderedRouteCount < (contract.minimumPrerenderedRoutes ?? 0)) {
-  throw new Error(
-    `Production output contains ${prerenderedRouteCount} prerendered routes; ` +
-      `${contract.minimumPrerenderedRoutes} are required.`,
-  );
+const prerenderedFiles = files.filter(({ relativePath }) =>
+  /(^|\/)index\.html$/.test(relativePath),
+);
+const prerenderedRouteCount = prerenderedFiles.length;
+const routeText = await readFile(path.join(websiteRoot, 'prerender-routes.txt'), 'utf8');
+const expectedRoutes = routeText.trim().split(/\r?\n/);
+const siteOrigin = 'https://bluetusk.io';
+const forbidden =
+  /\brelease gates?\b|\b(?:ship|stable|publication|product) gates?\b|\/evidence(?:[/"#]|$)|\/(?:release-(?:readiness|tracks|endurance|process)|(?:approval|package)-evidence)(?:[.#/"-]|$)/i;
+const errors = [];
+const renderedRoutes = new Map();
+for (const file of prerenderedFiles) {
+  const route = '/' + file.relativePath.replace(/(?:\/)?index\.html$/, '');
+  const html = await readFile(file.absolutePath, 'utf8');
+  const { window } = new JSDOM(html);
+  const doc = window.document;
+  const headings = doc.querySelectorAll('main h1');
+  if (headings.length !== 1 || !headings[0].textContent.trim()) {
+    errors.push(route + ': expected exactly one readable page title.');
+  }
+  if (doc.querySelector('link[rel="canonical"]')?.getAttribute('href') !== siteOrigin + route) {
+    errors.push(route + ': canonical URL does not match the prerendered route.');
+  }
+  if (doc.querySelector('.skip-link')?.getAttribute('href') !== route + '#main-content') {
+    errors.push(route + ': skip link does not point to the current page.');
+  }
+  if (forbidden.test(html)) errors.push(route + ': contains internal material.');
+  const ids = new Set([...doc.querySelectorAll('[id]')].map((node) => node.id));
+  const links = [...doc.querySelectorAll('a[href]')].map((node) => node.getAttribute('href'));
+  renderedRoutes.set(route, { ids, links });
+  window.close();
 }
+const expected = new Set(expectedRoutes);
+for (const route of expected) if (!renderedRoutes.has(route)) errors.push('Missing page: ' + route);
+for (const [route, { links }] of renderedRoutes) {
+  if (!expected.has(route)) errors.push('Unexpected page: ' + route);
+  for (const link of links) {
+    const target = new URL(link, siteOrigin + route);
+    if (target.origin !== siteOrigin) continue;
+    const page = renderedRoutes.get(target.pathname);
+    if (!page && !fileMap.has(target.pathname.slice(1))) {
+      errors.push(route + ': missing link target ' + link);
+    } else if (page && target.hash && !page.ids.has(decodeURIComponent(target.hash.slice(1)))) {
+      errors.push(route + ': missing anchor ' + link);
+    }
+  }
+}
+
 for (const requiredAsset of contract.requiredAssets) {
   if (!fileMap.has(requiredAsset)) {
     throw new Error(`Required production website asset is missing: ${requiredAsset}`);
@@ -82,34 +122,27 @@ for (const crawler of ['OAI-SearchBot', 'ChatGPT-User', 'GPTBot']) {
     throw new Error(`robots.txt does not explicitly allow ${crawler}.`);
   }
 }
-if (!sitemap.includes('<loc>https://bluetusk.io/documentation/real-time/continuous-graph</loc>')) {
-  throw new Error('The production sitemap is missing a representative documentation route.');
+const sitemapRoutes = [...sitemap.matchAll(/<loc>https:\/\/bluetusk\.io([^<]+)<\/loc>/g)].map(
+  (match) => match[1],
+);
+if (JSON.stringify(sitemapRoutes) !== JSON.stringify(expectedRoutes)) {
+  errors.push('Sitemap must match the public route list.');
 }
-if (
-  !llmsIndex.includes('https://bluetusk.io/documentation/getting-started/quickstart') ||
-  !llmsIndex.includes('https://bluetusk.io/llms-full.txt')
-) {
-  throw new Error('llms.txt does not advertise the quickstart and curated guide set.');
-}
-if (
-  !llmsFull.includes('# BlueTusk curated documentation') ||
-  !llmsFull.includes('# 5-minute first app') ||
-  llmsFull.includes('# Independent V1 release review handoff')
-) {
-  throw new Error('llms-full.txt does not contain the curated BlueTusk guide set.');
-}
-
-for (const route of contract.requiredPrerenderedRoutes ?? []) {
-  const relativePath = route === '/' ? 'index.html' : `${route.slice(1)}/index.html`;
-  const file = fileMap.get(relativePath);
-  if (!file) {
-    throw new Error(`Required prerendered route is missing: ${route}`);
-  }
-  const html = await readFile(file.absolutePath, 'utf8');
-  if (!/<app-root[^>]*>[\s\S]*?<h1[\s>]/i.test(html)) {
-    throw new Error(`Prerendered route does not contain readable page content: ${route}`);
+for (const asset of [llmsIndex, llmsFull]) {
+  if (
+    forbidden.test(asset) ||
+    !asset.includes(siteOrigin + '/documentation/getting-started/quickstart')
+  ) {
+    errors.push(
+      'Plain-text documentation contains internal material or is missing the quickstart.',
+    );
   }
 }
+for (const route of contract.requiredPrerenderedRoutes) {
+  if (!renderedRoutes.has(route)) errors.push('Missing required page: ' + route);
+}
+if (errors.length)
+  throw new Error('Production site validation failed:\n' + [...new Set(errors)].join('\n'));
 
 const sourceMaps = files.filter((file) => file.relativePath.endsWith('.map'));
 if (sourceMaps.length !== 0) {

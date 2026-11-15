@@ -1,10 +1,6 @@
 # BlueTusk.Search
 
-> **Preview.** This family is `0.1.0-preview.1` and is not published to a
-> package feed yet. It is not part of the 1.1.0 release and its API may change.
-> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
-
-BlueTusk.Search `0.1.0-preview.1` provides versioned PostgreSQL full-text ingestion and retrieval with tenant and permission filtering. BlueTusk.Search.PgVector adds schema-qualified vector storage, cosine retrieval and optional HNSW indexing. Both use `DbDataSource`; neither depends on Npgsql or EF Core. The adapter requires a separately installed pgvector extension, validated during initialization.
+BlueTusk.Search provides versioned PostgreSQL full-text ingestion and retrieval with tenant and permission filtering. BlueTusk.Search.PgVector adds schema-qualified vector storage, cosine retrieval and optional HNSW indexing. Both use `DbDataSource`; neither depends on Npgsql or EF Core. The adapter requires a separately installed pgvector extension, validated during initialization.
 
 ```csharp
 await using var source = BlueTuskDataSource.Create(connectionString);
@@ -127,20 +123,10 @@ A SELECT-only probe role needs schema usage, SELECT on `storage_metadata`, and c
 
 `BlueTusk.Search.Health` emits `bluetusk.search.health.probes` and `bluetusk.search.health.duration` in seconds, with only fixed `status` tags (`healthy`, `degraded`, `unhealthy`, `cancelled`). It includes no tenant/index/principal/ID, SQL parameters, connection string, query/source text, payload or provider exception message. Duration covers the reported result rather than late-driver completion. Hosts attach exporters and alerts; ingestion/ranking/provider throughput and OpenSearch/checkpoint-store operational probes remain separate integrations.
 
-## Operations and evidence
+## Operate a search index
 
-Initialization provisions versioned storage, full-text/ACL indexes and query retention tables. Run it during deployment. Storage version 2 added the ready state; version 3 adds the deployment-wide rank ledger. Initialization upgrades versions 1 or 2 in one transaction, preserves existing cursors, and accounts for retained ranks using a quota-bounded migration scan. If historical retention exceeds a new limit, prune or raise the configured limit before retrying. Drain older Search hosts before upgrading and start version-3 hosts only after initialization commits; mixed-version serving cannot maintain the ledger. Index creation is currently transactional and can block live writes. The caller owns the data source by default; explicit `SearchDataSourceOwnership.Owned` transfers disposal. Store disposal drains active embedding/ingestion/ranking slots before disposing owned resources. The host should drain retrieval operations before disposing its data source, including while it reads the first page.
-
-Live tests use `BLUETUSK_TEST_CONNECTION_STRING` for ordinary PostgreSQL and `BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING` for a database with pgvector installed:
-
-```powershell
-dotnet test tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj -c Release -nr:false
-```
-
-The local vector fixture is isolated at loopback port 55419 with PostgreSQL 18.6 and pgvector 0.8.6, image `pgvector/pgvector@sha256:2ba9ca5f2e7daa0f0e7723cba1ee9167bab54efd3640516a44ac1a928dd67e7a`. Test schemas are unique and cleaned individually.
-
-The suite covers tenant/index/ACL isolation, stable scope-bound pagination, current revocation checks, expiration and capacity, competing versions, idempotent replay and version conflicts, durable deletion fences, chunk replacement, true pgvector/hybrid retrieval, HNSW exact preservation, invalid embedding atomicity, overload rejection, authorized ranking extensions, injected server chunk failure rollback, storage-contract mismatch and cancellation. Six operator cases verify SELECT-only roles with denied payload access, scope isolation, bounded retained-query observations without side effects, actual role-protected HTTP readiness (401/403), storage/model-contract drift, metadata-lock deadlines/cancellation/recovery, retained admission for late driver work and status-only metrics. A bounded workload ingests 512 1 KiB documents through eight concurrent writers and pages every persisted candidate exactly once.
-
-The core, PgVector and optional ASP.NET adapter enable NativeAOT/trimming analyzers. The combined `tests/BlueTusk.Edge.NativeAotSmoke` was published as win-x64 NativeAOT without warnings and run against real PostgreSQL/pgvector and SQLite fixtures; Search scoped ingestion/automatic query embedding, hybrid retrieval, ACL filtering and tombstone version fencing passed. The same executable verifies authenticated ASP.NET readiness, incompatible storage detection and recovery. Both `BLUETUSK_TEST_CONNECTION_STRING` and `BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING` are required. Other native architectures and complete API paths require further qualification.
-
-OpenSearch ANN recall/latency qualification, embedding-provider idempotency integration/fair scheduling/time-based quotas, Streams ingestion integration, online index rollout/rebuild, schema/format upgrade rehearsals, ingestion/ranking/provider telemetry and OpenSearch/checkpoint-store health integration, language analysis, latency/allocation/WAL reports, distributed failover/process-kill/network-partition tests and sustained endurance remain outstanding. Search.Jobs currently targets PostgreSQL Search; durable OpenSearch dispatch requires a corresponding handler/atomic effect policy. Optional Jobs/OpenSearch packages are not included in the native executable smoke. No production qualification or performance leadership claim follows from the short functional workload.
+Set capacity and expiry limits for ingestion batches, retained results, and
+embedding checkpoints. Monitor ingestion lag, rejected admissions, expired
+results, query time, and physical storage. Use an authenticated readiness
+probe for storage or index compatibility. Test delete replay, index
+replacement, and permission changes with the same identity as the client.

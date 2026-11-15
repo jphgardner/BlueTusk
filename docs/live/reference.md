@@ -1,7 +1,7 @@
 # BlueTusk Live
 
 BlueTusk Live is the authorised real-time query layer built on BlueTusk Streams.
-Trusted server code registers bounded query plans by default. V1 also provides
+Trusted server code registers bounded query plans by default. BlueTusk also provides
 an explicitly enabled client-query capability for bounded exploratory SQL and a
 finite remote LINQ document. Uploaded CLR expression trees and dynamically
 compiled client code are never accepted.
@@ -206,8 +206,7 @@ Angular destruction is idempotent and cancels queued signal publication; Angular
 Vue and Svelte adapters cannot restart after destruction. React keeps its store
 callbacks stable for an unchanged query and cleans up old subscriptions on
 request replacement, unmount and StrictMode effect rehearsal. Server rendering
-does not start a connection. These behaviors have local framework tests; they
-do not substitute for real-browser, slow-client or large fan-out qualification.
+does not start a connection. Exercise lifecycle behavior and slow clients in the browsers your application supports.
 
 Vue and Svelte both provide two entry points. `useBlueTuskLiveQuery` starts the
 stream and binds its cleanup to the current component. The explicit
@@ -221,61 +220,18 @@ and makes teardown testable.
 
 `BlueTusk.Live.Testing` provides database-scoped deterministic invalidations, a sequence-fenced and retention-aware in-memory replay store, and a public replay-store conformance kit for custom providers. The in-memory components are for tests only and preserve the same replay identity, integrity, idempotency, and expiry rules as durable storage.
 
-## Security and load gates
+## Verify a deployment
 
-The offline adversarial suite covers initial-query/change races, concurrent
-reconnect/publication ordering, tampered and cross-scope resume tokens, expired
-replay, malicious parameter shapes, duplicate keys, cursor regression,
-slow-client exhaustion, and tenant/policy partitioning. A repeated race gate
-proves that whether reconnect or publication wins the subscription lock, each
-of 64 successive sequences arrives exactly once through replay or the bounded
-live channel.
+Test the same authenticated transport, replay store, plan and security scope
+you will run in production. Disconnect a client after receiving an update and
+reconnect using the last persisted resume token. Confirm that the subsequent
+sequence starts at the next event. Expire the retention window and confirm
+that the client clears its stale token and obtains a fresh snapshot.
 
-The deterministic scale gate coalesces 100 relevant invalidations into one
-authoritative refresh and fans its single update to 64 subscribers. The
-checked-in Ryzen 7 5800X/.NET 10 ShortRun measured a 1,000-row/one-update keyed
-diff at 76.4 µs and 221,872 B, replay serialization at 881 ns and 832 B, and
-the complete 100-invalidation/64-subscriber lifecycle at 92.3 µs and 175,060
-B. Machine-checked budgets cap those paths at 235,000 B, 900 B, and 185,000 B
-respectively. These are local regression baselines, not network latency or
-universal throughput claims.
-
-Current improvement work targets `1.2.0`; its stable publication remains
-disabled. Live is on the core [release track](../releases/release-tracks.md),
-which does not wait for Graph. PostgreSQL 15–18 is the stable server matrix;
-PostgreSQL 19 remains preview compatibility work. Production-store tests persist
-initial/update replay and exercise signed disconnect/resume through real SSE,
-SignalR/WebSockets and HTTP/2 gRPC endpoints. Passing a local run does not
-replace the exact-candidate platform, performance or endurance gates.
-The [1.0.0 release record](release-notes-1.0.0.md) and
-[1.1.0-rc.1 record](../releases/1.1.0-rc.1.md) describe historical publication
-scope, not approval of the current development candidate.
-
-The [public API candidate freeze](api-compatibility.md) and
-[durable format registry](format-compatibility.md) prepare the Live 1.0 surface
-without claiming that its dependency release gates or publication have completed.
-
-Run the production-store transport gate against any supported PostgreSQL
-service:
-
-```powershell
-$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
-dotnet test tests/BlueTusk.Live.Tests --filter FullyQualifiedName~LivePostgreSqlTransportMatrixTests
-```
-
-Run the offline client-query policy, transport, sharing, and bounded-execution
-suite:
-
-```powershell
-dotnet test tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj --filter FullyQualifiedName~LiveClientQueryTests
-npm run build --prefix clients/live
-npm test --prefix clients/live
-```
-
-Setting `BLUETUSK_TEST_CONNECTION_STRING` adds the live PostgreSQL proof that
-parameters materialise correctly and an otherwise-allowed user function cannot
-write through the enforced read-only transaction.
-
+Exercise a second caller with the same query and different tenant, user or
+policy identity. Check that it receives only its own database results and
+cannot resume the first caller’s subscription. Test that slow clients
+reconnect or reset after exceeding the bounded delivery buffer.
 ## Control-plane visibility
 
 `HostedLiveControlPlaneQueryService` projects registry and subscription telemetry without exposing rows or parameter values. Query, parameter, and subscription identities remain fingerprints. The default scope redactor preserves only a safe category such as `tenant` and a short one-way hash; applications can provide a stricter or operator-friendly redactor. Invalidation head/cursor lag is calculated per database and cursor regression is surfaced as a diagnostic instead of an unsigned value.

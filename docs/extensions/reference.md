@@ -30,14 +30,14 @@ The extension-authoring seam is compatibility-stable: the public surfaces of
 shipped API/nullability baselines. `BlueTusk.Extensions.Citext` supplied the
 first executable compatibility slice and the packaged template exercises the
 same contract. The registered first-party extension packages and their EF
-integrations are included in the stable Provider 1.0.0 API freeze.
+integrations are included in the 1.2 provider surface.
 
 ## Start an extension package
 
 `BlueTusk.Templates` provides a complete source-and-test skeleton:
 
 ```powershell
-dotnet new install BlueTusk.Templates
+dotnet new install BlueTusk.Templates::1.2.0
 dotnet new bluetusk-extension `
   -n Contoso.BlueTusk.Extensions.MyType `
   --ExtensionName MyType `
@@ -146,7 +146,7 @@ No citext SQL, CLR type, or package reference is present in `BlueTusk.Data`,
 mapping and migration SQL live only in the companion package. The authoring
 template and compatibility harness establish the executable stable authoring
 contract. Citext-specific and EF-specific convenience APIs are part of the
-stable Provider 1.0.0 contract.
+1.2 provider surface.
 
 ## pgvector
 
@@ -296,7 +296,7 @@ it to `public`.
 `pg_durable` contributes a background worker and a SQL workflow DSL over
 PostgreSQL built-in types. `BlueTusk.Extensions.PgDurable` is a non-packable
 preview adapter: catalogue discovery already covers its `text`, `jsonb`,
-`regrole`, UUID, timestamp, and integer values. It is excluded from the V1
+`regrole`, UUID, timestamp, and integer values. The source adapter is built separately from the
 Provider manifest and stable package/API counts.
 
 [Microsoft labels pg_durable as preview](https://github.com/microsoft/pg_durable/tree/v0.2.5)

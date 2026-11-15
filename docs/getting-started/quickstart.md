@@ -1,121 +1,94 @@
-# 5-minute first app
+# Run your first query
 
-In this quick start you create a .NET console app, connect it to PostgreSQL and
-run a parameterized query. It takes about five minutes.
+Create a .NET console application and send two bound parameters to
+PostgreSQL. The application prints `42`.
 
-## Before you start
+## 1. Prepare a database
 
-You need:
+You’ll need the .NET 10 SDK and a PostgreSQL 15–18 database you can use for
+development. If you have Docker, create a disposable PostgreSQL 18 instance
+bound only to your machine:
 
-- the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0);
-- a PostgreSQL 15, 16, 17 or 18 server you can use for testing. If you have
-  Docker, step 1 starts one for you.
-
-## 1. Start PostgreSQL
-
-Skip this step if you already have a test database.
-
-```powershell
-docker run --name bluetusk-postgres `
-  -e POSTGRES_PASSWORD=local-dev-only `
-  -p 5432:5432 `
-  -d postgres:18 `
-  -c wal_level=logical
+```sh
+docker run -d --name bluetusk-quickstart -p 127.0.0.1:5432:5432 -e POSTGRES_USER=quickstart -e POSTGRES_PASSWORD=local-example-only -e POSTGRES_DB=quickstart postgres:18
+docker exec bluetusk-quickstart pg_isready -U quickstart -d quickstart
 ```
 
-`wal_level=logical` is not needed for this quick start. It lets you reuse the
-same container for the [Streams guide](../streams/README.md) later.
+Repeat the readiness check until it reports `accepting connections`.
+Use different credentials and certificate verification when connecting to a
+shared PostgreSQL server.
 
-## 2. Create the app
+## 2. Create the application
 
-```powershell
+```sh
 dotnet new console --framework net10.0 --name BlueTuskQuickstart
 cd BlueTuskQuickstart
-dotnet add package BlueTusk.Data
+dotnet add package BlueTusk.Data --version 1.2.0
 ```
-
-This code works with every published BlueTusk version. See
-[Install BlueTusk](install.md) to choose and pin a version.
 
 ## 3. Set the connection string
 
-Keep credentials out of source code by using an environment variable:
+For the disposable Docker instance, run one of these commands in the shell
+you will use to start the application.
 
-```powershell
-$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable"
+**Bash or Zsh**
+
+```sh
+export BLUETUSK_CONNECTION_STRING='Host=127.0.0.1;Port=5432;Database=quickstart;Username=quickstart;Password=local-example-only;SSL Mode=Disable;Channel Binding=Disable'
 ```
 
-On Linux or macOS, use `export BLUETUSK_CONNECTION_STRING="..."` instead.
+**PowerShell**
 
-> **Warning:** `SSL Mode=Disable` is only for a local test container.
-> BlueTusk's default is `SSL Mode=VerifyFull`, which requires TLS and validates
-> the server certificate. Keep that default everywhere else.
+```powershell
+$env:BLUETUSK_CONNECTION_STRING = 'Host=127.0.0.1;Port=5432;Database=quickstart;Username=quickstart;Password=local-example-only;SSL Mode=Disable;Channel Binding=Disable'
+```
 
-## 4. Write the code
+TLS is disabled for this local example. Use the
+[authentication guide](../ado-net/authentication.md) for a shared server.
 
-Replace the contents of `Program.cs`:
+## 4. Replace Program.cs
 
 ```csharp
 using BlueTusk.Data;
 
-var connectionString =
-    Environment.GetEnvironmentVariable("BLUETUSK_CONNECTION_STRING")
+var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_CONNECTION_STRING")
     ?? throw new InvalidOperationException("Set BLUETUSK_CONNECTION_STRING first.");
 
-// Create one data source for the lifetime of the application.
 await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
+await using var command = dataSource.CreateCommand("SELECT $1::int4 + $2::int4");
 
-// Create a command, bind two typed parameters, and run it.
-await using var command = dataSource.CreateCommand("SELECT @left::int4 + @right::int4");
-command.Parameters.Add(new BlueTuskParameter<int>(20) { ParameterName = "left" });
-command.Parameters.Add(new BlueTuskParameter<int>(22) { ParameterName = "right" });
+command.Parameters.Add(new BlueTuskParameter<int>(20));
+command.Parameters.Add(new BlueTuskParameter<int>(22));
 
-var answer = await command.ExecuteScalarAsync<int>();
-Console.WriteLine($"The answer is {answer}");
+Console.WriteLine(await command.ExecuteScalarAsync<int>());
 ```
 
-## 5. Run it
+Parameters travel separately from the command text. Use the same mechanism
+for values that come from HTTP requests or other untrusted sources.
 
-```powershell
+## 5. Run and verify
+
+```sh
 dotnet run
 ```
 
-You should see:
+Expected output:
 
 ```text
-The answer is 42
+42
 ```
 
-## What just happened
+If the connection fails, confirm the server is listening on the configured
+port and check the database, role, password, and TLS settings. See
+[troubleshooting](../operations/troubleshooting.md) for common error messages.
 
-- `BlueTuskDataSourceBuilder.Build()` created a **data source**. It owns the
-  configuration, the connection pool and the PostgreSQL type catalogue. Create
-  one per connection string and keep it for the life of the app.
-- `dataSource.CreateCommand(...)` created a command that borrows a pooled
-  connection when it runs and returns it afterwards.
-- The parameter values were sent separately from the SQL text. They are never
-  pasted into the SQL, so this pattern is safe from SQL injection.
+If you started the disposable database, stop and remove that container after
+the exercise with `docker rm -f bluetusk-quickstart`.
 
-## If it fails
+## Build your next feature
 
-| Error | Fix |
-| --- | --- |
-| Connection refused or timeout | Check that PostgreSQL is running and that `Host` and `Port` are correct. |
-| TLS or certificate error | For a local container only, keep `SSL Mode=Disable`. For a real server, configure TLS. |
-| Password authentication failed | Check `Username` and `Password`. |
-
-The [ADO.NET troubleshooting guide](../ado-net/troubleshooting.md) covers more
-cases.
-
-## Clean up
-
-```powershell
-docker rm --force bluetusk-postgres
-```
-
-## Next steps
-
-- [Core concepts](concepts.md): the vocabulary every BlueTusk product uses.
-- [ADO.NET guide](../ado-net/README.md): transactions, batches, COPY and more.
-- [EF Core guide](../ef-core/README.md): LINQ and migrations.
-- [Streams guide](../streams/README.md): react to committed changes.
+Create one long-lived data source per connection configuration in a hosted
+application. Open short-lived logical connections as work arrives. See
+[dependency injection](../ado-net/dependency-injection.md) to register the
+data source, [ADO.NET](../ado-net/README.md) for commands and transactions,
+or [EF Core](../ef-core/README.md) to start with a DbContext.

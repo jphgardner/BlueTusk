@@ -8,9 +8,9 @@ The cloud SDKs are kept out of the core provider. Install only the adapter for
 the service you use:
 
 ```powershell
-dotnet add package BlueTusk.Identity.Aws
-dotnet add package BlueTusk.Identity.Azure
-dotnet add package BlueTusk.Identity.GoogleCloud
+dotnet add package BlueTusk.Identity.Aws --version 1.2.0
+dotnet add package BlueTusk.Identity.Azure --version 1.2.0
+dotnet add package BlueTusk.Identity.GoogleCloud --version 1.2.0
 ```
 
 Each adapter installs an access-token callback on the data-source builder and
