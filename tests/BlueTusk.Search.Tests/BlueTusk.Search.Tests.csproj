@@ -24,4 +24,7 @@
     <ProjectReference Include="..\..\src\BlueTusk.Search.OpenSearch\BlueTusk.Search.OpenSearch.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
   </ItemGroup>
+  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">
+    <Using Include="BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource" Alias="DbDataSource" />
+  </ItemGroup>
 </Project>

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 using NetTopologySuite.Geometries;
 
-#if BLUETUSK_EF9_OR_GREATER && !BLUETUSK_EF10_OR_GREATER
+#if BLUETUSK_EF9_OR_GREATER
 using SpatialFunctionExpression = Microsoft.EntityFrameworkCore.Query.SqlExpressions.SqlExpression;
 #else
 using SpatialFunctionExpression = Microsoft.EntityFrameworkCore.Query.SqlExpressions.SqlFunctionExpression;
