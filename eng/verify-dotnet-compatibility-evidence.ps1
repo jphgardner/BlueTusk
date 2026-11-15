@@ -14,6 +14,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1') -DisableNameChecking
 Import-Module (Join-Path $PSScriptRoot 'core-test-evidence.psm1') -DisableNameChecking
+Import-Module (Join-Path $PSScriptRoot 'dotnet-compatibility-tool.psm1') -DisableNameChecking
 if ($RequireComplete -and $Historical) { throw 'Historical evidence cannot establish current complete .NET compatibility.' }
 $inventory = & (Join-Path $PSScriptRoot 'verify-dotnet-compatibility.ps1') -RepositoryRoot $RepositoryRoot -ContractPath $ContractPath -RequireComplete:$RequireComplete -PassThru
 $contract = Read-CoreEvidenceJson $ContractPath
@@ -152,8 +153,8 @@ foreach ($path in $ReportPath)
                 { throw "CLI $name evidence failed its file hash binding." }
             }
             $help = Resolve-CoreEvidenceFile $root $result.helpLog
-            if (-not (Select-String -LiteralPath $help -Pattern '^Usage:' -CaseSensitive -Quiet))
-            { throw 'CLI output is missing the usage heading.' }
+            if (-not (Test-DotNetCompatibilityToolUsage -Path $help -Command $tool.command))
+            { throw 'CLI output is missing usage information for the registered command.' }
             $runtime = Read-CoreEvidenceJson (Resolve-CoreEvidenceFile $root $result.runtimeConfiguration)
             if ($runtime.runtimeOptions.tfm -cne $result.framework) { throw 'CLI evidence selected a different framework.' }
             $packageFile = Resolve-CoreEvidenceFile $root $result.package

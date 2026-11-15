@@ -14,7 +14,7 @@ public sealed class SchemaDeploymentPlanTests
         };
         var plan = SchemaDeploymentPlan.Create(before, after, consumers);
         Assert.True(plan.RequiresReview); Assert.Equal(2, plan.AffectedConsumers.Count);
-        Assert.Equal(plan.Fingerprint, SchemaDeploymentPlan.Create(before, after, consumers.Reverse()).Fingerprint);
+        Assert.Equal(plan.Fingerprint, SchemaDeploymentPlan.Create(before, after, Enumerable.Reverse(consumers)).Fingerprint);
         var initial = plan.Begin(); Assert.Single(initial.ReadySteps);
         Assert.Throws<InvalidOperationException>(() => initial.CompleteStep("cutover-0"));
         Assert.Throws<InvalidOperationException>(() => initial.CompleteStep("verify-baseline", after.Fingerprint));

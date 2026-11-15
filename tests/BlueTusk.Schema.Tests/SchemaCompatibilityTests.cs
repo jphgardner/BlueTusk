@@ -10,7 +10,7 @@ public sealed class SchemaCompatibilityTests
     {
         var columns = new[] { new SchemaColumn("id", 1, "bigint", false), new SchemaColumn("name", 2, "text", true) };
         var first = new SchemaSnapshot([Relation(columns), new(new("app", "other"), "r", false, false, "d", columns)]);
-        var reversed = new SchemaSnapshot([new(new("app", "other"), "r", false, false, "d", columns.Reverse()), Relation(columns.Reverse())]);
+        var reversed = new SchemaSnapshot([new(new("app", "other"), "r", false, false, "d", Enumerable.Reverse(columns)), Relation(Enumerable.Reverse(columns))]);
         Assert.Equal(first.Fingerprint, reversed.Fingerprint);
         Assert.Equal(64, first.Fingerprint.Length);
         var a = new SchemaSnapshot([new(new("a/b", "c"), "r", false, false, "d", columns)]);

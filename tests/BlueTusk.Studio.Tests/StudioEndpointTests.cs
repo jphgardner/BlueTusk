@@ -48,7 +48,7 @@ public sealed class StudioEndpointTests
                 services.AddAuthorization(options => options.AddPolicy("studio-read", policy => policy.RequireAuthenticatedUser()));
                 services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
                 services.AddBlueTuskStudioEvents<FixtureEventScope>(new() { MaximumEvents = 2 });
-            }, endpoints => endpoints.MapBlueTuskStudioEvents(), TestContext.Current.CancellationToken);
+            }, endpoints => endpoints.MapBlueTuskStudioEvents(), cancellationToken: TestContext.Current.CancellationToken);
             using var client = new HttpClient { BaseAddress = new(app.Address, "/bluetusk/studio/events/") };
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("streams", TestContext.Current.CancellationToken)).StatusCode);
             client.DefaultRequestHeaders.Add("X-Fixture-User", "reader");
@@ -96,7 +96,7 @@ public sealed class StudioEndpointTests
                 options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
             });
             services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
-        }, endpoints => endpoints.MapBlueTuskStudio(), TestContext.Current.CancellationToken);
+        }, endpoints => endpoints.MapBlueTuskStudio(), cancellationToken: TestContext.Current.CancellationToken);
         using var handler = new HttpClientHandler { CookieContainer = new CookieContainer(), AllowAutoRedirect = false };
         using var client = new HttpClient(handler) { BaseAddress = new Uri(app.Address, "/bluetusk/studio/") };
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("", TestContext.Current.CancellationToken)).StatusCode);
@@ -154,7 +154,7 @@ public sealed class StudioEndpointTests
                 MaximumConcurrentQueries = 1,
                 QueryTimeoutSeconds = 30,
             });
-        }, endpoints => endpoints.MapBlueTuskStudio(), TestContext.Current.CancellationToken);
+        }, endpoints => endpoints.MapBlueTuskStudio(), cancellationToken: TestContext.Current.CancellationToken);
         using var handler = new HttpClientHandler { CookieContainer = new CookieContainer(), AllowAutoRedirect = false };
         using var client = new HttpClient(handler) { BaseAddress = new Uri(app.Address, "/bluetusk/studio/") };
         client.DefaultRequestHeaders.Add("X-Fixture-User", "operator");
@@ -163,7 +163,7 @@ public sealed class StudioEndpointTests
         var first = client.PostAsJsonAsync("query", new { Sql = "SELECT 1", OperationId = StudioOperationId.CreateVersion7() }, TestContext.Current.CancellationToken);
         try
         {
-            await audit.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            await audit.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, TestContext.Current.CancellationToken);
             var rejected = await client.PostAsJsonAsync("query", new { Sql = "SELECT 2", OperationId = StudioOperationId.CreateVersion7() }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
             Assert.Equal(HttpStatusCode.TooManyRequests, (await client.GetAsync("schema", TestContext.Current.CancellationToken)).StatusCode);
@@ -192,7 +192,7 @@ public sealed class StudioEndpointTests
                 options.AddPolicy("studio-query", policy => policy.RequireClaim("query", "allowed"));
             });
             services.AddBlueTuskStudio<FixtureScope, FixtureAuditAdapter>(StudioQueryServiceTests.Options());
-        }, endpoints => endpoints.MapBlueTuskStudio(), TestContext.Current.CancellationToken);
+        }, endpoints => endpoints.MapBlueTuskStudio(), cancellationToken: TestContext.Current.CancellationToken);
         using var handler = new HttpClientHandler { CookieContainer = new CookieContainer() };
         using var client = new HttpClient(handler) { BaseAddress = new Uri(app.Address, "/bluetusk/studio/") };
         client.DefaultRequestHeaders.Add("X-Fixture-User", "operator");

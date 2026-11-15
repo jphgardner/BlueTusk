@@ -27,9 +27,9 @@ internal sealed class PortableHttpTestHost(IHost host, Uri address) : IAsyncDisp
     public static async Task<PortableHttpTestHost> StartAsync(
         Action<IServiceCollection> configureServices,
         Action<IEndpointRouteBuilder> configureEndpoints,
-        CancellationToken cancellationToken = default,
         int port = 0,
-        Action<IApplicationBuilder>? configureMiddleware = null)
+        Action<IApplicationBuilder>? configureMiddleware = null,
+        CancellationToken cancellationToken = default)
     {
         var host = Host.CreateDefaultBuilder()
             .ConfigureLogging(logging => logging.ClearProviders())

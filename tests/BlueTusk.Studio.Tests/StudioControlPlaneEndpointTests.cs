@@ -76,7 +76,7 @@ public sealed class StudioControlPlaneEndpointTests
         host.User("reader");
         host.State.Hold = new(TaskCreationOptions.RunContinuationsAsynchronously);
         var first = host.Client.GetAsync("operations/live", TestContext.Current.CancellationToken);
-        await host.State.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await host.State.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10), TimeProvider.System, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.TooManyRequests, (await host.Client.GetAsync("operations/live", TestContext.Current.CancellationToken)).StatusCode);
         host.State.Hold.SetResult();
         Assert.Equal(HttpStatusCode.OK, (await first).StatusCode);
@@ -171,7 +171,7 @@ public sealed class StudioControlPlaneEndpointTests
             {
                 endpoints.MapBlueTuskStudio();
                 endpoints.MapBlueTuskStudioControlPlane();
-            }, TestContext.Current.CancellationToken);
+            }, cancellationToken: TestContext.Current.CancellationToken);
             return new(app, new(new HttpClientHandler { CookieContainer = new CookieContainer() })
                 { BaseAddress = new(app.Address, "/bluetusk/studio/") }, state);
         }

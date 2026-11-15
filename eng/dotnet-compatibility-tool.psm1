@@ -1,6 +1,14 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+function Test-DotNetCompatibilityToolUsage
+{
+    param([string] $Path, [string] $Command)
+
+    $pattern = '^\s*(?:Usage:|' + [regex]::Escape($Command) + '\s+\S)'
+    return Select-String -LiteralPath $Path -Pattern $pattern -CaseSensitive -Quiet
+}
+
 function Invoke-DotNetCompatibilityTool
 {
     param(
@@ -71,8 +79,8 @@ function Invoke-DotNetCompatibilityTool
         & (Join-Path $toolPath $commandName) --help *> $testLog
     }
     $exitCode = $LASTEXITCODE
-    if ($exitCode -ne 0 -or -not (Select-String -LiteralPath $testLog -Pattern '^Usage:' -CaseSensitive -Quiet))
-    { throw "The installed '$($Tool.command) --help' did not exit zero and print a usage heading on $Framework. See '$testLog'." }
+    if ($exitCode -ne 0 -or -not (Test-DotNetCompatibilityToolUsage -Path $testLog -Command $Tool.command))
+    { throw "The installed '$($Tool.command) --help' did not exit zero and print usage information on $Framework. See '$testLog'." }
 
     $proof = Join-Path $SuiteRoot 'proof'
     New-Item -ItemType Directory -Path $proof -Force | Out-Null
@@ -84,4 +92,4 @@ function Invoke-DotNetCompatibilityTool
     }
 }
 
-Export-ModuleMember -Function Invoke-DotNetCompatibilityTool
+Export-ModuleMember -Function Invoke-DotNetCompatibilityTool, Test-DotNetCompatibilityToolUsage
