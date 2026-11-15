@@ -1,6 +1,5 @@
 using System.Net;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -23,12 +22,15 @@ namespace BlueTusk.ControlPlane.Tests;
 
 public sealed class DashboardEndpointTests
 {
+#if BLUETUSK_DASHBOARD_BROWSER_TESTS
     private const string BrowserModuleVariable = "BLUETUSK_DASHBOARD_BROWSER_MODULE";
     private const string MissingBrowserModule = "BLUETUSK_DASHBOARD_BROWSER_MODULE must identify an installed playwright-core module for browser qualification.";
+#endif
     private static readonly JsonSerializerOptions WebJson =
         new(JsonSerializerDefaults.Web);
 
-    [DashboardBrowserFact]
+#if BLUETUSK_DASHBOARD_BROWSER_TESTS
+    [Fact]
     public async Task Deployment_inventory_real_browser_checks_mobile_keyboard_and_no_script_navigation()
     {
         var browserModule = Environment.GetEnvironmentVariable(BrowserModuleVariable);
@@ -72,6 +74,8 @@ public sealed class DashboardEndpointTests
         finally { if (!browser.HasExited) browser.Kill(entireProcessTree: true); }
     }
 
+#endif
+
     [Fact]
     public async Task Deployment_inventory_routes_are_bounded_authorized_and_use_direct_lookup()
     {
@@ -97,7 +101,11 @@ public sealed class DashboardEndpointTests
         client.DefaultRequestHeaders.Remove("X-Test-Role");
         client.DefaultRequestHeaders.Add("X-Test-Role", "reader");
         var html = await client.GetStringAsync("/operations/deployments?tenant=tenant-a&pageSize=17", TestContext.Current.CancellationToken);
+#if NET7_0_OR_GREATER
         Assert.Equal(17, System.Text.RegularExpressions.Regex.Count(html, "<tr data-state="));
+#else
+        Assert.Equal(17, System.Text.RegularExpressions.Regex.Matches(html, "<tr data-state=").Count);
+#endif
         Assert.Contains("Next page", html, StringComparison.Ordinal);
         Assert.Contains("after=deployment-000032", html, StringComparison.Ordinal);
         Assert.Contains("On this page", html, StringComparison.Ordinal);
@@ -225,22 +233,6 @@ public sealed class DashboardEndpointTests
             using (host)
             {
                 await host.StopAsync();
-            }
-        }
-    }
-
-    private sealed class DashboardBrowserFactAttribute : FactAttribute
-    {
-#if NET8_0_OR_GREATER
-        public DashboardBrowserFactAttribute([CallerFilePath] string? sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
-            : base(sourceFilePath, sourceLineNumber)
-#else
-        public DashboardBrowserFactAttribute()
-#endif
-        {
-            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(BrowserModuleVariable)))
-            {
-                Skip = MissingBrowserModule;
             }
         }
     }

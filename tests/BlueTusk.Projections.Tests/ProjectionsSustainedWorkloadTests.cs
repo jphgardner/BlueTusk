@@ -8,6 +8,10 @@ using BlueTusk.Projections.Live;
 using BlueTusk.Replication;
 using BlueTusk.Streams;
 
+#if !NET8_0_OR_GREATER
+using Xunit.Abstractions;
+#endif
+
 namespace BlueTusk.Projections.Tests;
 
 public sealed class ProjectionsSustainedWorkloadTests(ITestOutputHelper output)

@@ -403,7 +403,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 return await ReadFleetPageAsync(context, queries, options, html: true, context.RequestAborted).ConfigureAwait(false);
             });
         group.MapGet(
-            "/deployments/{deploymentId}",
+            "/deployments/{**deploymentId}",
             async context =>
             {
                 var deploymentId = context.Request.RouteValues["deploymentId"] as string ?? string.Empty;

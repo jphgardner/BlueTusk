@@ -7,6 +7,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(BlueTuskDashboardBrowserTests)' == 'true' or '$(BLUETUSK_DASHBOARD_BROWSER_MODULE)' != ''">
+    <DefineConstants>$(DefineConstants);BLUETUSK_DASHBOARD_BROWSER_TESTS</DefineConstants>
+  </PropertyGroup>
+
   <Import Project="..\..\eng\versions\ControlPlane.props" />
 
   <ItemGroup>
@@ -25,5 +29,11 @@
     <ProjectReference Include="..\..\src\BlueTusk.ControlPlane\BlueTusk.ControlPlane.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Dashboard\BlueTusk.Dashboard.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.Testing\BlueTusk.Live.Testing.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Include="..\..\samples\BlueTusk.Samples.Dashboard\BlueTusk.Samples.Dashboard.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
+    <Compile Remove="KubernetesTopologyGraphBuilderTests.cs" />
   </ItemGroup>
 </Project>
