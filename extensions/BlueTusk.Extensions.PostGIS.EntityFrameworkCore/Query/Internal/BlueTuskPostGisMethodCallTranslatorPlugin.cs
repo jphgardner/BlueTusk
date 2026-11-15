@@ -158,7 +158,7 @@ internal sealed class BlueTuskPostGisMethodCallTranslator(
         };
     }
 
-    private SqlFunctionExpression TranslateSpatialFunction(
+    private SqlExpression TranslateSpatialFunction(
         string functionName,
         SqlExpression instance,
         IReadOnlyList<SqlExpression> arguments,
@@ -170,7 +170,7 @@ internal sealed class BlueTuskPostGisMethodCallTranslator(
             resultType,
             geometryOnly);
 
-    private SqlFunctionExpression TranslateStandaloneFunction(
+    private SqlExpression TranslateStandaloneFunction(
         string functionName,
         IReadOnlyList<SqlExpression> arguments,
         Type resultType,
