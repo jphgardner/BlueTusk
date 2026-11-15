@@ -39,6 +39,25 @@ $workloads = @(foreach ($sourceCount in $dimensions.sourceCounts)
 $assemblies = @{}
 $implementations = @{}
 $records = [Collections.Generic.List[object]]::new()
+
+function Wait-WindowsLoopbackCapacity
+{
+    if (-not $IsWindows) { return }
+
+    # Each fresh trial can open three sockets per client across HTTP and PostgreSQL.
+    # Let closed loopback connections drain before making the next measurement.
+    $network = [Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
+    $deadline = [Diagnostics.Stopwatch]::StartNew()
+    while (@($network.GetActiveTcpConnections() | Where-Object {
+        $_.State -eq 'TimeWait' -and $_.RemoteEndPoint.Address.Equals([Net.IPAddress]::Loopback)
+    }).Count -gt 2048)
+    {
+        if ($deadline.Elapsed.TotalMinutes -ge 5) { throw 'Windows loopback connections did not drain within five minutes.' }
+        if ($deadline.Elapsed.TotalSeconds -lt 1) { Write-Output 'Waiting for closed Windows loopback connections to drain.' }
+        Start-Sleep -Seconds 5
+    }
+}
+
 foreach ($role in 'candidate', 'reference')
 {
     $build = Join-Path $output "build/$role"
@@ -69,6 +88,7 @@ try
             $order = if ($trial % 2 -eq 0) { @('candidate', 'reference') } else { @('reference', 'candidate') }
             foreach ($role in $order)
             {
+                Wait-WindowsLoopbackCapacity
                 $relativePath = "$($workload.sourceCount)-sources-$($workload.clientCount)-clients-$role-$trial.json"
                 $path = Join-Path $raw $relativePath
                 & $dotnet $assemblies[$role] $path $role $commit $trial $WarmupSeconds $MeasurementSeconds $workload.sourceCount $workload.clientCount
