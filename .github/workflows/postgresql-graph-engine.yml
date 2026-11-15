@@ -2,6 +2,7 @@ name: PostgreSQL graph engine
 
 on:
   workflow_dispatch:
+  workflow_call:
   pull_request:
     paths:
       - 'extensions/bluetusk_graph/**'

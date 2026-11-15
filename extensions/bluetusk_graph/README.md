@@ -114,8 +114,10 @@ and cancellation propagate to the caller. Set `UseServerEngine` to false
 to select the portable implementation explicitly.
 
 `ContinuousGraphQueryCompiler` can register a bounded watch with
-`CompileReachability`, `CompileNeighbors`, or `CompileShortestPath`. Supply
-a factory that creates the caller-authorized DbContext for each execution.
+`CompileReachability`, `CompileNeighbors`, or `CompileShortestPath`. These
+methods use the same default engine selection as the EF traversal methods
+when options are omitted. Supply a factory that creates the caller-authorized
+DbContext for each execution.
 The plan tracks every vertex and edge table in the graph. For incremental
 session options, order reachability rows by hop count and neighbors or
 singleton paths by equal rank, with ordinal result keys as the tie-breaker.

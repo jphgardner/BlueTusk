@@ -1,3 +1,4 @@
+using System.Data;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.Live;
@@ -73,7 +74,8 @@ public sealed class GraphEngineIntegrationTests
             Assert.False(portable.UsedServerEngine);
             Assert.Equal([2L, 4L, 3L], native.Rows.Select(static row => (long) row.Vertex.Key[0]));
             Assert.Equal(native.Rows.Select(Row), portable.Rows.Select(Row));
-            var path = await graph.ShortestPathAsync(start, target, engine, token);
+            var path = await graph.ShortestPathAsync(start, target, cancellationToken: token);
+            Assert.True(path.UsedServerEngine);
             Assert.Equal([10L, 20L], path.Path!.Edges.Select(static edge => (long) edge.Key[0]));
             var portablePath = await graph.ShortestPathAsync(start, target,
                 new BlueTuskGraphTraversalOptions { UseServerEngine = false }, token);
@@ -81,8 +83,9 @@ public sealed class GraphEngineIntegrationTests
                 portablePath.Path!.Edges.Select(static edge => edge.Key[0]));
 
             var first = await graph.NeighborsAsync(start,
-                new BlueTuskGraphTraversalOptions { UseServerEngine = true, MaximumResults = 1 },
+                new BlueTuskGraphTraversalOptions { MaximumResults = 1 },
                 cancellationToken: token);
+            Assert.True(first.UsedServerEngine);
             Assert.NotNull(first.NextEdge);
             var second = await graph.NeighborsAsync(start, engine, first.NextEdge, token);
             Assert.Equal(30L, Assert.Single(second.Rows).Edge!.Key[0]);
@@ -109,7 +112,7 @@ public sealed class GraphEngineIntegrationTests
                 context, "impact", "engine-test", "v1", "topology", null,
                 [new LiveQueryParameter("source", typeof(long))],
                 static arguments => new BlueTuskGraphIdentity("services", arguments.Get<long>("source")),
-                (_, _) => ValueTask.FromResult(new GraphEngineContext(efOptions)), engine);
+                OpenAuthorizedReadCommittedAsync);
             var invalidations = new InMemoryLiveInvalidationLog();
             var scope = new LiveSecurityScope("tenant:a", "test-policy");
             var arguments = plan.Bind(new Dictionary<string, object?> { ["source"] = 1L });
@@ -118,14 +121,14 @@ public sealed class GraphEngineIntegrationTests
                 [new LiveQueryParameter("source", typeof(long)), new LiveQueryParameter("target", typeof(long))],
                 static bound => new BlueTuskGraphIdentity("services", bound.Get<long>("source")),
                 static bound => new BlueTuskGraphIdentity("services", bound.Get<long>("target")),
-                (_, _) => ValueTask.FromResult(new GraphEngineContext(efOptions)), engine);
+                OpenAuthorizedReadCommittedAsync);
             var pathArguments = pathPlan.Bind(new Dictionary<string, object?> { ["source"] = 1L, ["target"] = 3L });
             Assert.Equal([10L, 20L], (await ReadPathAsync()).Edges.Select(static edge => (long) edge.Key[0]));
             var neighborPlan = ContinuousGraphQueryCompiler.CompileNeighbors(
                 context, "neighbors", "engine-test", "v1", "topology", null,
                 [new LiveQueryParameter("source", typeof(long))],
                 static bound => new BlueTuskGraphIdentity("services", bound.Get<long>("source")),
-                (_, _) => ValueTask.FromResult(new GraphEngineContext(efOptions)), engine);
+                OpenAuthorizedReadCommittedAsync);
             var neighbors = await neighborPlan.LivePlan.ExecuteAsync(
                 new LiveQueryExecutionContext(arguments, scope), token);
             Assert.Equal([10L, 30L], neighbors.Select(static row => (long) row.Edge!.Key[0]));
@@ -202,6 +205,23 @@ public sealed class GraphEngineIntegrationTests
             var fallback = await graph.ReachableAsync(start, engine, token);
             Assert.False(fallback.UsedServerEngine);
             Assert.Equal(native.Rows.Select(Row), fallback.Rows.Select(Row));
+
+            async ValueTask<GraphEngineContext> OpenAuthorizedReadCommittedAsync(
+                LiveQueryExecutionContext _, CancellationToken cancellationToken)
+            {
+                var authorized = new GraphEngineContext(efOptions);
+                try
+                {
+                    // Portable traversal requires repeatable read, so successful watches exercise the native default.
+                    await authorized.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+                    return authorized;
+                }
+                catch
+                {
+                    await authorized.DisposeAsync();
+                    throw;
+                }
+            }
 
             async Task<BlueTuskGraphPath> ReadPathAsync() => Assert.Single(
                 await pathPlan.LivePlan.ExecuteAsync(new LiveQueryExecutionContext(pathArguments, scope), token));

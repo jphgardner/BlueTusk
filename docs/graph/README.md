@@ -1,8 +1,12 @@
 # Query connected data with BlueTusk Graphs
 
 Map existing PostgreSQL tables as vertices and edges with `HasPropertyGraph`.
-BlueTusk uses `bluetusk_graph` by default for supported traversal operations
-when a compatible extension and matching graph registration are installed.
+BlueTusk uses `bluetusk_graph` by default for bounded neighbor, reachability,
+and shortest-path queries in EF and Continuous Graph. Install the compatible
+extension in the database and register the EF graph during deployment.
+BlueTusk falls back to portable traversal when the engine or matching
+registration is unavailable.
+See [installation and registration](../../extensions/bluetusk_graph/README.md#install-and-register).
 `PropertyGraph(...).Match(...).Select(...)` supports composable graph patterns
 through parameterized PostgreSQL joins on versions 15–18. Use
 [Continuous Graph](../continuous-graph/README.md) to maintain a bounded result
@@ -39,10 +43,10 @@ options.UseBlueTusk(connectionString,
     ef => ef.UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq));
 ```
 
-Native mode requires verified server support and the native graph objects.
+SQL/PGQ mode requires verified server support and SQL/PGQ graph objects.
 PostgreSQL 19 Beta 4 removed SQL/PGQ. The pinned Beta 3 fixture is retained
-for native regression coverage. The default portable mode uses ordinary table
-permissions and row-level security. [PostgreSQL Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/)
+for native regression coverage. Composable graph patterns default to PostgreSQL
+joins with ordinary table permissions and row-level security. [PostgreSQL Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/)
 
 See the [graph reference](reference.md) for typed mapping and migration guidance
 and the [release tracks](../releases/release-tracks.md) for qualification status.

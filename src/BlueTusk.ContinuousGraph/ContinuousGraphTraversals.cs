@@ -19,11 +19,11 @@ public static partial class ContinuousGraphQueryCompiler
         IEnumerable<LiveQueryParameter> parameters,
         Func<LiveQueryArguments, BlueTuskGraphIdentity> anchor,
         Func<LiveQueryExecutionContext, CancellationToken, ValueTask<TContext>> authorizedContextFactory,
-        BlueTuskGraphTraversalOptions options)
+        BlueTuskGraphTraversalOptions? options = null)
         where TContext : DbContext
     {
         BlueTuskGuard.NotNull(anchor);
-        BlueTuskGuard.NotNull(options);
+        options ??= new BlueTuskGraphTraversalOptions();
         return CompileTraversal(modelContext, name, databaseIdentity, version, graphName, graphSchema,
             parameters, authorizedContextFactory, options, "reachable", options.MaximumResults,
             (root, arguments, token) => root.ReachableAsync(anchor(arguments), options, token),
@@ -43,11 +43,11 @@ public static partial class ContinuousGraphQueryCompiler
         IEnumerable<LiveQueryParameter> parameters,
         Func<LiveQueryArguments, BlueTuskGraphIdentity> anchor,
         Func<LiveQueryExecutionContext, CancellationToken, ValueTask<TContext>> authorizedContextFactory,
-        BlueTuskGraphTraversalOptions options)
+        BlueTuskGraphTraversalOptions? options = null)
         where TContext : DbContext
     {
         BlueTuskGuard.NotNull(anchor);
-        BlueTuskGuard.NotNull(options);
+        options ??= new BlueTuskGraphTraversalOptions();
         return CompileTraversal(modelContext, name, databaseIdentity, version, graphName, graphSchema,
             parameters, authorizedContextFactory, options, "neighbors", options.MaximumResults,
             (root, arguments, token) => root.NeighborsAsync(anchor(arguments), options, cancellationToken: token),
@@ -68,12 +68,12 @@ public static partial class ContinuousGraphQueryCompiler
         Func<LiveQueryArguments, BlueTuskGraphIdentity> anchor,
         Func<LiveQueryArguments, BlueTuskGraphIdentity> target,
         Func<LiveQueryExecutionContext, CancellationToken, ValueTask<TContext>> authorizedContextFactory,
-        BlueTuskGraphTraversalOptions options)
+        BlueTuskGraphTraversalOptions? options = null)
         where TContext : DbContext
     {
         BlueTuskGuard.NotNull(anchor);
         BlueTuskGuard.NotNull(target);
-        BlueTuskGuard.NotNull(options);
+        options ??= new BlueTuskGraphTraversalOptions();
         return CompileTraversal(modelContext, name, databaseIdentity, version, graphName, graphSchema,
             parameters, authorizedContextFactory, options, "shortest_path", 1,
             (root, arguments, token) => root.ShortestPathAsync(anchor(arguments), target(arguments), options, token),

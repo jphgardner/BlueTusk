@@ -215,9 +215,18 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  publish-stable:
+  qualify-graph-engine:
     needs: verify-and-package
+    if: needs.verify-and-package.outputs.family == 'ContinuousGraph'
+    uses: ./.github/workflows/postgresql-graph-engine.yml
+
+  publish-stable:
+    needs: [verify-and-package, qualify-graph-engine]
     if: >-
+      !cancelled() &&
+      needs.verify-and-package.result == 'success' &&
+      (needs.verify-and-package.outputs.family != 'ContinuousGraph' ||
+        needs.qualify-graph-engine.result == 'success') &&
       needs.verify-and-package.outputs.is_tag == 'true' &&
       needs.verify-and-package.outputs.is_prerelease != 'true'
     runs-on: ubuntu-latest
@@ -291,8 +300,12 @@ jobs:
           done
 
   publish-prerelease:
-    needs: verify-and-package
+    needs: [verify-and-package, qualify-graph-engine]
     if: >-
+      !cancelled() &&
+      needs.verify-and-package.result == 'success' &&
+      (needs.verify-and-package.outputs.family != 'ContinuousGraph' ||
+        needs.qualify-graph-engine.result == 'success') &&
       needs.verify-and-package.outputs.is_tag == 'true' &&
       needs.verify-and-package.outputs.is_prerelease == 'true'
     runs-on: ubuntu-latest

@@ -15,6 +15,18 @@ PostgreSQL 19 Beta 4 [removed SQL/PGQ](https://www.postgresql.org/about/news/pos
 Native mode requires the actual server capability. Native PostgreSQL 19 `REPACK` remains preview
 compatibility work until the GA matrix passes.
 
+## BlueTusk graph engine
+
+The Continuous Graph release workflow builds and tests `bluetusk_graph` from
+the managed package commit. It retains Linux x86-64 extension archives for the
+pinned PostgreSQL 15–18 Alpine builds, including the install and upgrade SQL,
+checksums, and source and server image identifiers. Continuous Graph publication
+requires that job to pass.
+
+Once a database administrator [installs the engine and registers the graph](../../extensions/bluetusk_graph/README.md#install-and-register),
+EF and Continuous Graph use it by default for supported bounded traversals.
+The portable qualification and recovery gates also apply to the release.
+
 ## Portable Graph status
 
 The standalone Graph baseline at `ff925b188dc32866d16212c21b4af4d84fcab612`
