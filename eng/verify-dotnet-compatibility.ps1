@@ -62,6 +62,18 @@ foreach ($container in $contract.legacyLinuxContainers.PSObject.Properties)
     {
         throw 'Legacy Linux test SDK containers must use a stable SDK and an immutable official image digest.'
     }
+    $edgeHost = $container.Value.PSObject.Properties['edgeHost']
+    if ($null -ne $edgeHost)
+    {
+        $recipe = Join-Path $RepositoryRoot 'eng/compatibility/LegacyEdge.Dockerfile'
+        if ($container.Name -cne 'net5.0' -or
+            $edgeHost.Value.image -cnotmatch '^mcr\.microsoft\.com/dotnet/sdk:[A-Za-z0-9.\-]+@sha256:[0-9a-f]{64}$' -or
+            -not (Test-Path -LiteralPath $recipe -PathType Leaf) -or
+            (Get-FileHash -LiteralPath $recipe -Algorithm SHA256).Hash.ToLowerInvariant() -cne $edgeHost.Value.dockerfileSha256)
+        {
+            throw 'The .NET 5 Edge image requires a pinned official host and a verified Dockerfile.'
+        }
+    }
 }
 $postgresql = $contract.postgreSqlFixture
 if ($postgresql.version -cnotmatch '^\d+\.\d+$' -or
@@ -268,6 +280,28 @@ if (@($fixtureTests | Sort-Object -Unique).Count -ne $fixtureTests.Count -or
     @($fixtureTests | Where-Object { $_ -cnotin $coveredTests }).Count -ne 0)
 {
     throw 'Every compatibility fixture test project must be registered as executable package coverage and bind to one fixture.'
+}
+$serviceFixtures = @($contract.dockerServiceFixtures)
+$serviceTests = @($serviceFixtures | ForEach-Object testProjects)
+$serviceRepositories = @{
+    kafka = 'apache/kafka'
+    nats = 'nats'
+    opensearch = 'opensearchproject/opensearch'
+    redis = 'redis'
+}
+if (@($serviceFixtures.kind | Sort-Object -Unique).Count -ne $serviceFixtures.Count -or
+    @($serviceTests | Sort-Object -Unique).Count -ne $serviceTests.Count -or
+    @($serviceTests | Where-Object { $_ -cnotin $coveredTests }).Count -ne 0)
+{
+    throw 'Docker services require unique fixture kinds and registered executable test projects.'
+}
+foreach ($fixture in $serviceFixtures)
+{
+    if ($fixture.kind -cnotin $serviceRepositories.Keys -or
+        $fixture.image -cnotmatch ('^' + [regex]::Escape($serviceRepositories[$fixture.kind]) + ':[a-zA-Z0-9.-]+@sha256:[0-9a-f]{64}$'))
+    {
+        throw 'Each Docker service fixture must use the pinned upstream image by digest.'
+    }
 }
 if (@('tests/BlueTusk.Data.DependencyInjection.Tests/BlueTusk.Data.DependencyInjection.Tests.csproj',
     'tests/BlueTusk.RuntimeCompatibility.Tests/BlueTusk.RuntimeCompatibility.Tests.csproj' |

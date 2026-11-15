@@ -25,6 +25,8 @@ $currentFingerprint = if (-not $Historical) { Get-CoreTestSourceFingerprint -Exp
 $baselineFingerprint = $null
 $pairs = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $expected = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$required = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$serviceTests = @($contract.dockerServiceFixtures | ForEach-Object testProjects)
 $covered = @($contract.packages | Where-Object status -CEQ 'covered')
 $toolMappings = @{}
 foreach ($tool in $contract.cliTools) { $toolMappings[$tool.project] = $tool }
@@ -37,13 +39,19 @@ foreach ($os in @($contract.requiredOperatingSystems))
             [int]($_.minimumFramework -replace '^net|\.0$', '') -le $major
         } | ForEach-Object { $_.testProjects } | Sort-Object -Unique))
         {
-            [void]$expected.Add("$os|$framework|$test")
+            $pair = "$os|$framework|$test"
+            [void]$expected.Add($pair)
+            if ($os -cne 'windows' -or $test -cnotin $serviceTests)
+            {
+                [void]$required.Add($pair)
+            }
         }
         foreach ($package in @($covered | Where-Object {
             [int]($_.minimumFramework -replace '^net|\.0$', '') -le $major -and $toolMappings.ContainsKey($_.project)
         }))
         {
             [void]$expected.Add("$os|$framework|$($package.project)")
+            [void]$required.Add("$os|$framework|$($package.project)")
         }
     }
 }
@@ -94,9 +102,40 @@ foreach ($path in $ReportPath)
         $legacy = $contract.legacyLinuxContainers.PSObject.Properties[$result.framework]
         if ($result.operatingSystem -ceq 'linux' -and $null -ne $legacy)
         {
-            if ($result.containerImage -cne $legacy.Value.image) { throw 'Legacy Linux evidence must use its exact contracted SDK image digest.' }
+            $edgeHost = $legacy.Value.PSObject.Properties['edgeHost']
+            if ($null -ne $edgeHost -and $result.testProject -ceq 'tests/BlueTusk.Edge.Tests/BlueTusk.Edge.Tests.csproj')
+            {
+                $sources = $result.PSObject.Properties['legacyContainerSources']
+                if ($result.containerImage -cnotmatch '^sha256:[0-9a-f]{64}$' -or $null -eq $sources -or
+                    $sources.Value.runtimeImage -cne $legacy.Value.image -or
+                    $sources.Value.hostImage -cne $edgeHost.Value.image -or
+                    $sources.Value.dockerfileSha256 -cne $edgeHost.Value.dockerfileSha256)
+                {
+                    throw 'Legacy Edge evidence requires the derived image and its exact pinned source images and Dockerfile.'
+                }
+            }
+            elseif ($result.containerImage -cne $legacy.Value.image)
+            {
+                throw 'Legacy Linux evidence must use its exact contracted SDK image digest.'
+            }
         }
         elseif ($null -ne $result.containerImage) { throw 'Native framework evidence must not claim an unrelated container.' }
+        $serviceFixture = $contract.dockerServiceFixtures | Where-Object { $result.testProject -cin $_.testProjects }
+        $serviceKind = $result.PSObject.Properties['serviceKind']
+        $serviceIdentity = $result.PSObject.Properties['serviceIdentity']
+        if ($null -ne $serviceFixture)
+        {
+            if ($null -eq $serviceKind -or $null -eq $serviceIdentity -or
+                $serviceKind.Value -cne $serviceFixture.kind -or $serviceIdentity.Value -cne $serviceFixture.image)
+            {
+                throw 'Service-backed compatibility evidence must bind the exact configured upstream Docker image.'
+            }
+        }
+        elseif (($null -ne $serviceKind -and $null -ne $serviceKind.Value) -or
+            ($null -ne $serviceIdentity -and $null -ne $serviceIdentity.Value))
+        {
+            throw 'A compatibility suite must be registered before claiming Docker service fixture coverage.'
+        }
         $extensionFixture = $contract.postgreSqlExtensionFixtures | Where-Object { $result.testProject -cin $_.testProjects }
         $requiresPgVector = $result.testProject -cin $contract.postgreSqlFixture.pgVector.testProjects
         if ($result.testProject -cin $contract.postgreSqlFixture.testProjects -or $null -ne $extensionFixture)
@@ -245,7 +284,7 @@ foreach ($path in $ReportPath)
         $executed += [int]$result.passed
     }
 }
-$missing = @($expected | Where-Object { -not $pairs.Contains($_) } | Sort-Object)
+$missing = @($required | Where-Object { -not $pairs.Contains($_) } | Sort-Object)
 if (($RequireMatrixComplete -or $RequireComplete) -and $missing.Count -ne 0)
 {
     throw "Compatibility evidence is missing $($missing.Count) required OS/framework/test pairs: $($missing -join ', ')."
@@ -253,8 +292,9 @@ if (($RequireMatrixComplete -or $RequireComplete) -and $missing.Count -ne 0)
 $summary = [pscustomobject]@{
     schemaVersion = 1
     sourceCommit = $head
-    verifiedPairs = $pairs.Count
-    requiredPairs = $expected.Count
+    verifiedPairs = $required.Count - $missing.Count
+    optionalPairs = @($pairs | Where-Object { -not $required.Contains($_) }).Count
+    requiredPairs = $required.Count
     missingPairs = $missing
     passedTests = $executed
     inventoryComplete = $inventory.fullRuntimeCoverage
@@ -263,4 +303,4 @@ $summary = [pscustomobject]@{
     fullRuntimeCoverage = $inventory.fullRuntimeCoverage -and $missing.Count -eq 0 -and -not $Historical
 }
 if ($PassThru) { return $summary }
-Write-Output "Verified $($pairs.Count)/$($expected.Count) compatibility pairs and $executed passed tests. Full runtime coverage: $($summary.fullRuntimeCoverage)."
+Write-Output "Verified $($summary.verifiedPairs)/$($summary.requiredPairs) required compatibility pairs and $executed passed tests. Full runtime coverage: $($summary.fullRuntimeCoverage)."

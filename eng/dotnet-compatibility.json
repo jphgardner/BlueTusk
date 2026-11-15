@@ -23,10 +23,14 @@
   "legacyLinuxContainers": {
     "net5.0": {
       "image": "mcr.microsoft.com/dotnet/sdk:5.0.408-focal@sha256:c652a1f1e82c2ee8e21acc256c69d0358386abca17f308c18abf6467027786c8",
-      "sdkVersion": "5.0.408"
+      "sdkVersion": "5.0.408",
+      "edgeHost": {
+        "image": "mcr.microsoft.com/dotnet/sdk:10.0-noble@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317",
+        "dockerfileSha256": "c9106452ff2a281e43e8851a58a415271910dd6ae353a1dede23b517e895fa59"
+      }
     },
     "net6.0": {
-      "image": "mcr.microsoft.com/dotnet/sdk:6.0@sha256:c8fdd06e430de9f4ddd066b475ea350d771f341b77dd5ff4c2fafa748e3f2ef2",
+      "image": "mcr.microsoft.com/dotnet/sdk:6.0-jammy@sha256:524b94a01751c452d70378baef86810679ed9494bf3b041d29329f5e4212f153",
       "sdkVersion": "6.0.428"
     }
   },
@@ -225,11 +229,13 @@
     {
       "project": "src/BlueTusk.ControlPlane/BlueTusk.ControlPlane.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.ControlPlane.Tests/BlueTusk.ControlPlane.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Dashboard/BlueTusk.Dashboard.csproj",
@@ -577,20 +583,24 @@
     {
       "project": "src/BlueTusk.Projections.Live/BlueTusk.Projections.Live.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Projections.Tests/BlueTusk.Projections.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Projections/BlueTusk.Projections.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Projections.Tests/BlueTusk.Projections.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Protocol/BlueTusk.Protocol.csproj",
@@ -1093,6 +1103,7 @@
       "tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj",
       "tests/BlueTusk.Jobs.Tests/BlueTusk.Jobs.Tests.csproj",
       "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj",
+      "tests/BlueTusk.Projections.Tests/BlueTusk.Projections.Tests.csproj",
       "tests/BlueTusk.RuntimeCompatibility.Tests/BlueTusk.RuntimeCompatibility.Tests.csproj",
       "tests/BlueTusk.Schema.Tests/BlueTusk.Schema.Tests.csproj",
       "tests/BlueTusk.Sql.Tests/BlueTusk.Sql.Tests.csproj",
@@ -1170,6 +1181,28 @@
         "url": "https://github.com/timescale/timescaledb/releases/download/2.32.0/timescaledb-postgresql-18-windows-amd64.zip",
         "sha256": "309eba6bb24c3562b9ecfd279ff1bbe0eb638eaed8b16395c839047c670a9c45"
       },
+      "testProjects": []
+    }
+  ],
+  "dockerServiceFixtures": [
+    {
+      "kind": "kafka",
+      "image": "apache/kafka:4.1.1@sha256:7240ff4534bd23dac2f215ba03a2d0aa9d041b45b830804bbdec3b81c2bdf479",
+      "testProjects": []
+    },
+    {
+      "kind": "nats",
+      "image": "nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66",
+      "testProjects": []
+    },
+    {
+      "kind": "opensearch",
+      "image": "opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9",
+      "testProjects": []
+    },
+    {
+      "kind": "redis",
+      "image": "redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241",
       "testProjects": []
     }
   ]

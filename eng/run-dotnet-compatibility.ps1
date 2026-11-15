@@ -7,6 +7,7 @@ param(
     [string] $Configuration = 'Release',
     [string] $OutputRoot = (Join-Path (Split-Path $PSScriptRoot -Parent) 'artifacts/dotnet-compatibility/runs'),
     [switch] $UseLegacyLinuxContainers,
+    [switch] $UseDockerServiceFixtures = $IsLinux,
     [switch] $RequireComplete,
     [string] $RepositoryRoot = (Split-Path $PSScriptRoot -Parent),
     [string] $ContractPath = (Join-Path $PSScriptRoot 'dotnet-compatibility.json')
@@ -20,6 +21,15 @@ Import-Module (Join-Path $PSScriptRoot 'dotnet-compatibility-minio.psm1') -Disab
 Import-Module (Join-Path $PSScriptRoot 'dotnet-compatibility-tool.psm1') -DisableNameChecking
 $RepositoryRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
+$serviceTests = @($contract.dockerServiceFixtures | ForEach-Object testProjects)
+if ($serviceTests.Count -ne 0 -and $UseDockerServiceFixtures)
+{
+    Import-Module (Join-Path $PSScriptRoot 'dotnet-compatibility-services.psm1') -DisableNameChecking
+}
+if (-not $UseDockerServiceFixtures -and @($TestProject | Where-Object { $_ -cin $serviceTests }).Count -ne 0)
+{
+    throw 'The selected service suite requires Linux Docker fixtures. Use -UseDockerServiceFixtures on a host with Linux Docker.'
+}
 $inventory = & (Join-Path $PSScriptRoot 'verify-dotnet-compatibility.ps1') -RepositoryRoot $RepositoryRoot -ContractPath $ContractPath -RequireComplete:$RequireComplete -PassThru
 if (-not $Framework -or $Framework.Count -eq 0) { $Framework = @($contract.frameworks) }
 if (@($Framework | Sort-Object -Unique).Count -ne $Framework.Count -or
@@ -47,14 +57,18 @@ $DotNetPath = (Get-Command -Name $DotNetPath -CommandType Application -ErrorActi
 $runRoot = Join-Path $OutputRoot ([guid]::NewGuid().ToString('N'))
 $buildRoot = Join-Path $runRoot 'build'
 New-Item -ItemType Directory -Path $runRoot -Force | Out-Null
+$fixtureEnvironmentNames = @('BLUETUSK_TEST_CONNECTION_STRING', 'BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING',
+    'BLUETUSK_S3_ENDPOINT', 'BLUETUSK_S3_ACCESS_KEY', 'BLUETUSK_S3_SECRET_KEY',
+    'BLUETUSK_TEST_REDIS_CONNECTION_STRING', 'BLUETUSK_NATS_URL', 'BLUETUSK_KAFKA_BOOTSTRAP_SERVERS',
+    'BLUETUSK_OPENSEARCH_URL', 'BLUETUSK_SEARCH_OPENSEARCH_ENDPOINT')
 $environmentNames = @('DOTNET_ROOT', 'DOTNET_ROOT_X64', 'DOTNET_HOST_PATH', 'DOTNET_ROLL_FORWARD',
-    'DOTNET_ROLL_FORWARD_TO_PRERELEASE', 'BLUETUSK_TEST_CONNECTION_STRING', 'BLUETUSK_S3_ENDPOINT',
-    'BLUETUSK_S3_ACCESS_KEY', 'BLUETUSK_S3_SECRET_KEY')
+    'DOTNET_ROLL_FORWARD_TO_PRERELEASE') + $fixtureEnvironmentNames
 $previousEnvironment = @{}
 foreach ($name in $environmentNames) { $previousEnvironment[$name] = [Environment]::GetEnvironmentVariable($name) }
 $results = [System.Collections.Generic.List[object]]::new()
 $failure = $null
 $postgresqlFixtures = @{}
+$dockerServiceFixtures = @{}
 $minio = $null
 $sourceCommit = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot identify the source commit for compatibility evidence.' }
@@ -106,6 +120,10 @@ try
         {
             $testProjects = @($testProjects | Where-Object { $_ -cin $TestProject })
         }
+        if (-not $UseDockerServiceFixtures)
+        {
+            $testProjects = @($testProjects | Where-Object { $_ -cnotin $serviceTests })
+        }
         $toolProjects = @($contract.cliTools | Where-Object {
             $toolPackage = $_.project
             $minimum = ($contract.packages | Where-Object project -CEQ $toolPackage).minimumFramework
@@ -142,11 +160,26 @@ try
                 $fixtureRoot = Join-Path $RepositoryRoot ('artifacts/dotnet-compatibility/minio/' + [guid]::NewGuid().ToString('N'))
                 $minio = Start-DotNetCompatibilityMinio -Contract $contract.minioFixture -WorkDirectory $fixtureRoot
             }
-            foreach ($name in @('BLUETUSK_TEST_CONNECTION_STRING', 'BLUETUSK_S3_ENDPOINT', 'BLUETUSK_S3_ACCESS_KEY', 'BLUETUSK_S3_SECRET_KEY'))
+            foreach ($name in $fixtureEnvironmentNames)
             { [Environment]::SetEnvironmentVariable($name, $null) }
             $suite = [IO.Path]::GetFileNameWithoutExtension($testProject)
             $suiteRoot = Join-Path $runRoot "$target/$suite"
             New-Item -ItemType Directory -Path $suiteRoot -Force | Out-Null
+            $serviceDefinition = $contract.dockerServiceFixtures | Where-Object { $testProject -cin $_.testProjects }
+            $service = $null
+            if ($null -ne $serviceDefinition)
+            {
+                if (-not $dockerServiceFixtures.ContainsKey($serviceDefinition.kind))
+                {
+                    $serviceRoot = Join-Path $runRoot "services/$($serviceDefinition.kind)"
+                    $dockerServiceFixtures[$serviceDefinition.kind] = Start-DotNetCompatibilityService -Contract $serviceDefinition -WorkDirectory $serviceRoot
+                }
+                $service = $dockerServiceFixtures[$serviceDefinition.kind]
+                foreach ($name in $service.environment.Keys)
+                {
+                    [Environment]::SetEnvironmentVariable($name, $service.environment[$name])
+                }
+            }
             $buildLog = Join-Path $suiteRoot 'build.log'
             $testLog = Join-Path $suiteRoot 'test.log'
             $testPath = Join-Path $RepositoryRoot $testProject
@@ -168,8 +201,11 @@ try
             Copy-Item -LiteralPath $targetPath[0], $runtimeConfigPath -Destination $proofRoot
             $proofAssembly = Join-Path $proofRoot "$suite.dll"
             $proofRuntime = Join-Path $proofRoot "$suite.runtimeconfig.json"
+            $containerImage = if ($null -ne $container) { [string]$container.image } else { $null }
+            $legacyContainerSources = $null
             if ($null -ne $container)
             {
+                $legacyDotNetRoot = '/usr/share/dotnet'
                 $stage = Join-Path $suiteRoot 'test-output'
                 New-Item -ItemType Directory -Path $stage -Force | Out-Null
                 $buildOutput = Split-Path $targetPath[0] -Parent
@@ -181,25 +217,67 @@ try
                 $containerStage = '/repo/' + $stage.Substring($workspacePrefix.Length).Replace('\', '/')
                 $containerResults = '/repo/' + $suiteRoot.Substring($workspacePrefix.Length).Replace('\', '/')
                 $dockerArguments = @()
+                $usesHostNetwork = $requiresMinio -or $null -ne $service
+                if ($usesHostNetwork)
+                {
+                    if (-not $IsLinux) { throw 'Run the legacy Linux service tests on a Linux host to share fixture loopback.' }
+                    $dockerArguments += @('--network', 'host')
+                }
                 if ($requiresPostgreSql)
                 {
-                    $env:BLUETUSK_TEST_CONNECTION_STRING = $postgresql.containerConnection
-                    $dockerArguments += @('--network', "container:$($postgresql.container)", '--env', 'BLUETUSK_TEST_CONNECTION_STRING')
+                    if ($usesHostNetwork) { $env:BLUETUSK_TEST_CONNECTION_STRING = $postgresql.connection }
+                    else
+                    {
+                        $env:BLUETUSK_TEST_CONNECTION_STRING = $postgresql.containerConnection
+                        $dockerArguments += @('--network', "container:$($postgresql.container)")
+                    }
+                    $dockerArguments += @('--env', 'BLUETUSK_TEST_CONNECTION_STRING')
+                    if ($requiresPgVector)
+                    {
+                        $env:BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING = $env:BLUETUSK_TEST_CONNECTION_STRING
+                        $dockerArguments += @('--env', 'BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING')
+                    }
                 }
                 if ($requiresMinio)
                 {
-                    if (-not $IsLinux) { throw 'Run the .NET Linux S3 matrix on a Linux host so it can share the native fixture loopback.' }
                     $env:BLUETUSK_S3_ENDPOINT = $minio.endpoint
                     $env:BLUETUSK_S3_ACCESS_KEY = $minio.accessKey
                     $env:BLUETUSK_S3_SECRET_KEY = $minio.secretKey
-                    $dockerArguments += @('--network', 'host', '--env', 'BLUETUSK_S3_ENDPOINT',
-                        '--env', 'BLUETUSK_S3_ACCESS_KEY', '--env', 'BLUETUSK_S3_SECRET_KEY')
+                    $dockerArguments += @('--env', 'BLUETUSK_S3_ENDPOINT', '--env', 'BLUETUSK_S3_ACCESS_KEY', '--env', 'BLUETUSK_S3_SECRET_KEY')
                 }
-                & docker run --rm @dockerArguments --mount "type=bind,source=$RepositoryRoot,target=/repo" --workdir /repo --env DOTNET_ROLL_FORWARD=LatestPatch --env DOTNET_ROLL_FORWARD_TO_PRERELEASE=0 $container.image dotnet "/usr/share/dotnet/sdk/$($container.sdkVersion)/vstest.console.dll" "$containerStage/$suite.dll" '/Logger:trx;LogFileName=results.trx' "/ResultsDirectory:$containerResults" *> $testLog
+                if ($null -ne $service)
+                {
+                    foreach ($name in $service.environment.Keys) { $dockerArguments += @('--env', $name) }
+                }
+                if ($suite -ceq 'BlueTusk.Edge.Tests')
+                {
+                    # The pinned legacy .NET images have no Node.js executable.
+                    $node = (Get-Command node -CommandType Application -ErrorAction Stop).Source
+                    $dockerArguments += @('--mount', "type=bind,source=$node,target=/usr/local/bin/node,readonly")
+                    $edgeHost = $container.PSObject.Properties['edgeHost']
+                    if ($null -ne $edgeHost)
+                    {
+                        $recipe = Join-Path $RepositoryRoot 'eng/compatibility/LegacyEdge.Dockerfile'
+                        $imageId = Join-Path $suiteRoot 'edge-image-id.txt'
+                        & docker build --iidfile $imageId --file $recipe --build-arg "LEGACY_IMAGE=$($container.image)" `
+                            --build-arg "MODERN_IMAGE=$($edgeHost.Value.image)" (Split-Path $recipe -Parent) *> (Join-Path $suiteRoot 'edge-image-build.log')
+                        if ($LASTEXITCODE -ne 0) { throw 'Building the legacy .NET Edge test image failed.' }
+                        $containerImage = (Get-Content -LiteralPath $imageId -Raw).Trim()
+                        if ($containerImage -cnotmatch '^sha256:[0-9a-f]{64}$') { throw 'The Edge test image has no immutable local identity.' }
+                        $legacyDotNetRoot = '/opt/legacy-dotnet'
+                        $legacyContainerSources = [pscustomobject]@{
+                            runtimeImage = $container.image
+                            hostImage = $edgeHost.Value.image
+                            dockerfileSha256 = $edgeHost.Value.dockerfileSha256
+                        }
+                    }
+                }
+                & docker run --rm @dockerArguments --mount "type=bind,source=$RepositoryRoot,target=/repo" --workdir /repo --env DOTNET_ROLL_FORWARD=LatestPatch --env DOTNET_ROLL_FORWARD_TO_PRERELEASE=0 $containerImage dotnet "$legacyDotNetRoot/sdk/$($container.sdkVersion)/vstest.console.dll" "$containerStage/$suite.dll" '/Logger:trx;LogFileName=results.trx' "/ResultsDirectory:$containerResults" *> $testLog
             }
             else
             {
                 if ($requiresPostgreSql) { $env:BLUETUSK_TEST_CONNECTION_STRING = $postgresql.connection }
+                if ($requiresPgVector) { $env:BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING = $postgresql.connection }
                 if ($requiresMinio)
                 {
                     $env:BLUETUSK_S3_ENDPOINT = $minio.endpoint
@@ -225,7 +303,10 @@ try
                 testProject = $testProject
                 passed = [int]$counters.passed
                 operatingSystem = $operatingSystem
-                containerImage = $(if ($null -ne $container) { $container.image } else { $null })
+                containerImage = $containerImage
+                legacyContainerSources = $legacyContainerSources
+                serviceKind = $(if ($null -ne $service) { $service.kind } else { $null })
+                serviceIdentity = $(if ($null -ne $service) { $service.identity } else { $null })
                 postgreSqlVersion = $(if ($requiresPostgreSql) { $postgresql.version } else { $null })
                 postgreSqlIdentity = $(if ($requiresPostgreSql) { $postgresql.identity } else { $null })
                 pgVectorVersion = $(if ($requiresPgVector) { $postgresql.extensionVersion } else { $null })
@@ -282,6 +363,7 @@ finally
     foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $previousEnvironment[$name]) }
     foreach ($fixture in $postgresqlFixtures.Values) { Stop-DotNetCompatibilityPostgreSql $fixture }
     if ($null -ne $minio) { Stop-DotNetCompatibilityMinio $minio }
+    foreach ($fixture in $dockerServiceFixtures.Values) { Stop-DotNetCompatibilityService -Fixture $fixture }
     $report = [ordered]@{
         schemaVersion = 2
         sourceCommit = $sourceCommit

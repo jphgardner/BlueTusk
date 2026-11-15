@@ -61,6 +61,7 @@ See [engine installation and verification](../../extensions/bluetusk_graph/READM
 ## Run the compatibility matrix
 
 PowerShell 7 and the platform's normal .NET native prerequisites are required.
+The Edge checkpoint suite also uses Node.js 24. Use the standalone Linux distribution when running in the legacy containers.
 The installer creates an isolated SDK/runtime installation under `artifacts`.
 Versions come from the checked-in contract, and each downloaded archive must
 match the SHA512 in Microsoft's official release metadata before extraction.
@@ -87,6 +88,12 @@ It invokes that controller directly, so the repository's SDK selection cannot
 redirect a legacy runtime test to the modern SDK. The .NET 6 controller's
 required empty probing-path list is written only into the staged copy.
 
+The Edge SQLite Linux x86-64 fixture uses a bundled native library that
+requires glibc 2.34 or later. The .NET 5 Edge job uses the pinned legacy SDK
+and OpenSSL from the .NET 5 image on a separately pinned Ubuntu host image.
+Its evidence records the derived image and both source image digests. The
+official .NET 6 test image already uses Ubuntu 22.04.
+
 The provider and dependency injection suites use an isolated PostgreSQL 18.6
 database. The runner starts it automatically from the digest-pinned Linux
 image or the SHA256-verified Windows binaries. It generates a per-run SCRAM
@@ -103,6 +110,14 @@ Linux uses a digest-pinned pgvector image. S3 tests use the same MinIO release
 on both platforms. The runner verifies each executable's SHA256 and starts
 a loopback server with generated credentials. Use `-TestProject` to rerun
 registered test projects or CLI packages by project path.
+
+Suites that use Redis, NATS JetStream, Kafka, or OpenSearch run against
+digest-pinned Docker services on Linux for every supported .NET runtime.
+To include them in a local Windows run with Linux Docker, add
+`-UseDockerServiceFixtures`. Ordinary Windows suites run on every target.
+For the separate Dashboard browser case, set
+`BLUETUSK_DASHBOARD_BROWSER_MODULE` to the installed Playwright module before
+building the Control Plane tests.
 
 Each run uses an isolated SDK artifacts path for its build and restore outputs,
 so concurrent work on another framework cannot overwrite its NuGet assets.
@@ -136,7 +151,7 @@ package remains pending. Release qualification also requires the package,
 PostgreSQL, security, performance, endurance, and release-approval gates.
 
 An individual run never declares full runtime qualification. Collect the
-reports for every Windows/Linux/framework/test-project pair from the same
+reports for every required OS, framework, and suite combination from the same
 unchanged source, then verify the complete evidence set:
 
 ```powershell
