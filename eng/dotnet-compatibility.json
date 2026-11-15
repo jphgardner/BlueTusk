@@ -655,47 +655,57 @@
     {
       "project": "src/BlueTusk.Search.AspNetCore/BlueTusk.Search.AspNetCore.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Search.Jobs/BlueTusk.Search.Jobs.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Search.OpenSearch/BlueTusk.Search.OpenSearch.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Search.PgVector/BlueTusk.Search.PgVector.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Search/BlueTusk.Search.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Security/BlueTusk.Security.csproj",
@@ -804,11 +814,13 @@
     {
       "project": "src/BlueTusk.Streams.Storage.Redis/BlueTusk.Streams.Storage.Redis.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Streams.Storage.Redis.Tests/BlueTusk.Streams.Storage.Redis.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Streams.Testing/BlueTusk.Streams.Testing.csproj",
@@ -890,29 +902,35 @@
     {
       "project": "src/BlueTusk.Sync.Kafka/BlueTusk.Sync.Kafka.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Sync.Kafka.Tests/BlueTusk.Sync.Kafka.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Sync.Nats/BlueTusk.Sync.Nats.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Sync.OpenSearch/BlueTusk.Sync.OpenSearch.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Sync.PostgreSql/BlueTusk.Sync.PostgreSql.csproj",
@@ -928,11 +946,13 @@
     {
       "project": "src/BlueTusk.Sync.Redis/BlueTusk.Sync.Redis.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Sync.Redis.Tests/BlueTusk.Sync.Redis.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Sync.S3/BlueTusk.Sync.S3.csproj",
@@ -1114,6 +1134,7 @@
       "tests/BlueTusk.Projections.Tests/BlueTusk.Projections.Tests.csproj",
       "tests/BlueTusk.RuntimeCompatibility.Tests/BlueTusk.RuntimeCompatibility.Tests.csproj",
       "tests/BlueTusk.Schema.Tests/BlueTusk.Schema.Tests.csproj",
+      "tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj",
       "tests/BlueTusk.Sql.Tests/BlueTusk.Sql.Tests.csproj",
       "tests/BlueTusk.Streams.Storage.PostgreSql.Tests/BlueTusk.Streams.Storage.PostgreSql.Tests.csproj",
       "tests/BlueTusk.Studio.Tests/BlueTusk.Studio.Tests.csproj",
@@ -1130,7 +1151,8 @@
       },
       "testProjects": [
         "tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests.csproj",
-        "tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj"
+        "tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj",
+        "tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj"
       ]
     }
   },
@@ -1217,22 +1239,32 @@
     {
       "kind": "kafka",
       "image": "apache/kafka:4.1.1@sha256:7240ff4534bd23dac2f215ba03a2d0aa9d041b45b830804bbdec3b81c2bdf479",
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Sync.Kafka.Tests/BlueTusk.Sync.Kafka.Tests.csproj"
+      ]
     },
     {
       "kind": "nats",
       "image": "nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66",
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj"
+      ]
     },
     {
       "kind": "opensearch",
       "image": "opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9",
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Search.Tests/BlueTusk.Search.Tests.csproj",
+        "tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj"
+      ]
     },
     {
       "kind": "redis",
       "image": "redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241",
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Streams.Storage.Redis.Tests/BlueTusk.Streams.Storage.Redis.Tests.csproj",
+        "tests/BlueTusk.Sync.Redis.Tests/BlueTusk.Sync.Redis.Tests.csproj"
+      ]
     }
   ]
 }
