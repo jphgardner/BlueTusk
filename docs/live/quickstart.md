@@ -20,7 +20,7 @@ You need:
 - [Node.js](https://nodejs.org/) 20 or later, for `npm` and `npx`;
 - a PostgreSQL 15, 16, 17 or 18 server with `wal_level=logical`, and a role
   that can create replication slots. The Docker container from the
-  [5-minute first app](../getting-started/quickstart.md#1-start-postgresql)
+  [5-minute first app](../getting-started/quickstart.md#1-prepare-a-database)
   has both.
 
 ## 1. Create the table and publication

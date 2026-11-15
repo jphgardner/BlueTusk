@@ -10,7 +10,7 @@ The sample uses `AddBlueTuskStreams().AddHostedConsumer<T>()` with a
 [hosting](hosting-observability.md). You need the .NET 10 SDK, a clone of this
 repository, and a PostgreSQL 15 to 18 test server with `wal_level = logical`
 (the `bluetusk-postgres` container from the
-[5-minute first app](../getting-started/quickstart.md#1-start-postgresql)
+[5-minute first app](../getting-started/quickstart.md#1-prepare-a-database)
 works).
 
 ## 1. Create the table and publication
