@@ -69,6 +69,10 @@ $results = [System.Collections.Generic.List[object]]::new()
 $failure = $null
 $postgresqlFixtures = @{}
 $dockerServiceFixtures = @{}
+$dockerServiceNetwork = $null
+$postgresqlNetworkAliases = @{}
+$usesLegacyServiceBridge = $UseLegacyLinuxContainers -and $IsLinux -and
+    @($Framework | Where-Object { $_ -cin $contract.legacyLinuxContainers.PSObject.Properties.Name }).Count -ne 0
 $minio = $null
 $sourceCommit = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot identify the source commit for compatibility evidence.' }
@@ -169,10 +173,26 @@ try
             $service = $null
             if ($null -ne $serviceDefinition)
             {
+                if ($usesLegacyServiceBridge -and $null -eq $dockerServiceNetwork)
+                {
+                    $networkName = "bluetusk-dotnet-services-$([guid]::NewGuid().ToString('N'))"
+                    & docker network create $networkName *> (Join-Path $runRoot 'service-network.log')
+                    if ($LASTEXITCODE -ne 0) { throw 'Could not create the isolated Docker test network.' }
+                    $dockerServiceNetwork = $networkName
+                }
                 if (-not $dockerServiceFixtures.ContainsKey($serviceDefinition.kind))
                 {
                     $serviceRoot = Join-Path $runRoot "services/$($serviceDefinition.kind)"
-                    $dockerServiceFixtures[$serviceDefinition.kind] = Start-DotNetCompatibilityService -Contract $serviceDefinition -WorkDirectory $serviceRoot
+                    $networkArgument = @{}
+                    if ($null -ne $dockerServiceNetwork) { $networkArgument.Network = $dockerServiceNetwork }
+                    $dockerServiceFixtures[$serviceDefinition.kind] = Start-DotNetCompatibilityService -Contract $serviceDefinition -WorkDirectory $serviceRoot @networkArgument
+                }
+                if ($null -ne $container -and $requiresPostgreSql -and -not $postgresqlNetworkAliases.ContainsKey($postgresqlFixtureKey))
+                {
+                    $alias = "postgresql-$postgresqlFixtureKey"
+                    & docker network connect --alias $alias $dockerServiceNetwork $postgresql.container *> (Join-Path $suiteRoot 'postgresql-network.log')
+                    if ($LASTEXITCODE -ne 0) { throw 'Could not connect the PostgreSQL fixture to the isolated service network.' }
+                    $postgresqlNetworkAliases[$postgresqlFixtureKey] = $alias
                 }
                 $service = $dockerServiceFixtures[$serviceDefinition.kind]
                 foreach ($name in $service.environment.Keys)
@@ -217,15 +237,27 @@ try
                 $containerStage = '/repo/' + $stage.Substring($workspacePrefix.Length).Replace('\', '/')
                 $containerResults = '/repo/' + $suiteRoot.Substring($workspacePrefix.Length).Replace('\', '/')
                 $dockerArguments = @()
-                $usesHostNetwork = $requiresMinio -or $null -ne $service
-                if ($usesHostNetwork)
+                if ($null -ne $service)
                 {
-                    if (-not $IsLinux) { throw 'Run the legacy Linux service tests on a Linux host to share fixture loopback.' }
+                    if ($null -eq $dockerServiceNetwork) { throw 'The legacy service test requires its isolated Docker network.' }
+                    $dockerArguments += @('--network', $dockerServiceNetwork)
+                    foreach ($name in $service.containerEnvironment.Keys)
+                    {
+                        [Environment]::SetEnvironmentVariable($name, $service.containerEnvironment[$name])
+                    }
+                }
+                elseif ($requiresMinio)
+                {
+                    if (-not $IsLinux) { throw 'Run the legacy Linux S3 tests on a Linux host to share fixture loopback.' }
                     $dockerArguments += @('--network', 'host')
                 }
                 if ($requiresPostgreSql)
                 {
-                    if ($usesHostNetwork) { $env:BLUETUSK_TEST_CONNECTION_STRING = $postgresql.connection }
+                    if ($null -ne $service)
+                    {
+                        $alias = $postgresqlNetworkAliases[$postgresqlFixtureKey]
+                        $env:BLUETUSK_TEST_CONNECTION_STRING = $postgresql.containerConnection.Replace('Host=127.0.0.1;', "Host=$alias;")
+                    }
                     else
                     {
                         $env:BLUETUSK_TEST_CONNECTION_STRING = $postgresql.containerConnection
@@ -364,6 +396,10 @@ finally
     foreach ($fixture in $postgresqlFixtures.Values) { Stop-DotNetCompatibilityPostgreSql $fixture }
     if ($null -ne $minio) { Stop-DotNetCompatibilityMinio $minio }
     foreach ($fixture in $dockerServiceFixtures.Values) { Stop-DotNetCompatibilityService -Fixture $fixture }
+    if ($null -ne $dockerServiceNetwork)
+    {
+        & docker network rm $dockerServiceNetwork *> (Join-Path $runRoot 'service-network-cleanup.log')
+    }
     $report = [ordered]@{
         schemaVersion = 2
         sourceCommit = $sourceCommit
