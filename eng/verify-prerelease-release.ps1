@@ -40,7 +40,7 @@ if (-not (Test-Path -LiteralPath $repositoryRoot -PathType Container))
 $train = Get-Content -LiteralPath $PrereleaseTrainPath -Raw |
     ConvertFrom-Json
 $families = Get-Content -LiteralPath (
-    Join-Path $PSScriptRoot 'product-families.json') -Raw |
+    Join-Path $repositoryRoot 'eng/product-families.json') -Raw |
     ConvertFrom-Json
 
 if ([int]$train.schemaVersion -ne 1 -or
