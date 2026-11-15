@@ -372,11 +372,13 @@
     {
       "project": "src/BlueTusk.EntityFrameworkCore.Design/BlueTusk.EntityFrameworkCore.Design.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.EntityFrameworkCore.CompatibilityTests/BlueTusk.EntityFrameworkCore.CompatibilityTests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.EntityFrameworkCore/BlueTusk.EntityFrameworkCore.csproj",
@@ -437,11 +439,13 @@
     {
       "project": "src/BlueTusk.Extensions.Testing/BlueTusk.Extensions.Testing.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Extensions.Citext.Tests/BlueTusk.Extensions.Citext.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Jobs.DependencyInjection/BlueTusk.Jobs.DependencyInjection.csproj",
@@ -479,74 +483,90 @@
     {
       "project": "src/BlueTusk.Live.AspNetCore/BlueTusk.Live.AspNetCore.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Live.DependencyInjection/BlueTusk.Live.DependencyInjection.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Live.EntityFrameworkCore/BlueTusk.Live.EntityFrameworkCore.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Live.Grpc/BlueTusk.Live.Grpc.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Live.ServerSentEvents/BlueTusk.Live.ServerSentEvents.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Live.SignalR/BlueTusk.Live.SignalR.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Live.Testing/BlueTusk.Live.Testing.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Live/BlueTusk.Live.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Projections.Live/BlueTusk.Projections.Live.csproj",
@@ -716,11 +736,13 @@
     {
       "project": "src/BlueTusk.Streams.DependencyInjection/BlueTusk.Streams.DependencyInjection.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Streams.DependencyInjection.Tests/BlueTusk.Streams.DependencyInjection.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Streams.EntityFrameworkCore/BlueTusk.Streams.EntityFrameworkCore.csproj",
@@ -747,11 +769,13 @@
     {
       "project": "src/BlueTusk.Streams.Storage.PostgreSql/BlueTusk.Streams.Storage.PostgreSql.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Streams.Storage.PostgreSql.Tests/BlueTusk.Streams.Storage.PostgreSql.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Streams.Storage.Redis/BlueTusk.Streams.Storage.Redis.csproj",
@@ -869,11 +893,13 @@
     {
       "project": "src/BlueTusk.Sync.PostgreSql/BlueTusk.Sync.PostgreSql.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Sync.Tests/BlueTusk.Sync.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Sync.Redis/BlueTusk.Sync.Redis.csproj",
@@ -920,11 +946,13 @@
     {
       "project": "src/BlueTusk.Sync/BlueTusk.Sync.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Sync.Tests/BlueTusk.Sync.Tests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Transport/BlueTusk.Transport.csproj",
@@ -1058,10 +1086,13 @@
       "tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests.csproj",
       "tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj",
       "tests/BlueTusk.Jobs.Tests/BlueTusk.Jobs.Tests.csproj",
+      "tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj",
       "tests/BlueTusk.RuntimeCompatibility.Tests/BlueTusk.RuntimeCompatibility.Tests.csproj",
       "tests/BlueTusk.Schema.Tests/BlueTusk.Schema.Tests.csproj",
       "tests/BlueTusk.Sql.Tests/BlueTusk.Sql.Tests.csproj",
+      "tests/BlueTusk.Streams.Storage.PostgreSql.Tests/BlueTusk.Streams.Storage.PostgreSql.Tests.csproj",
       "tests/BlueTusk.Studio.Tests/BlueTusk.Studio.Tests.csproj",
+      "tests/BlueTusk.Sync.Tests/BlueTusk.Sync.Tests.csproj",
       "tests/BlueTusk.Workflows.DependencyInjection.Tests/BlueTusk.Workflows.DependencyInjection.Tests.csproj",
       "tests/BlueTusk.Workflows.Tests/BlueTusk.Workflows.Tests.csproj"
     ],

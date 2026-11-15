@@ -35,6 +35,20 @@ public sealed class LiveQueryContractsTests
     }
 
     [Fact]
+    public void Date_and_time_scalar_fingerprints_match_the_existing_json_format()
+    {
+        var arguments = LiveQueryArguments.Create(
+            [new("day", typeof(DateOnly)), new("clock", typeof(TimeOnly))],
+            new Dictionary<string, object?>
+            {
+                ["day"] = new DateOnly(2026, 11, 14),
+                ["clock"] = new TimeOnly(3, 4, 5).Add(TimeSpan.FromTicks(1234567)),
+            });
+
+        Assert.Equal("440ce897298fc1997fdd4c33f937b2789b3971d6c8b0a12ee4403a5a73e58b6f", arguments.Fingerprint);
+    }
+
+    [Fact]
     public void Subscription_identity_partitions_security_policy_parameters_and_limit()
     {
         var plan = CreatePlan();

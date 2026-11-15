@@ -21,7 +21,7 @@
     <PackageVersion Include="Grpc.Tools" Version="2.83.0" />
     <!-- GHSA-qhrr-8q5h-9q3h affects the version selected transitively by Aspire.Hosting. -->
     <PackageVersion Include="MessagePack" Version="2.5.307" />
-    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.11" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11" />
@@ -57,6 +57,15 @@
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
   </ItemGroup>
+  <!-- The in-process transport tests use the client from the host ASP.NET Core major. -->
+  <ItemGroup>
+    <PackageVersion Update="Microsoft.AspNetCore.SignalR.Client" Version="5.0.17" Condition="'$(TargetFramework)' == 'net5.0'" />
+    <PackageVersion Update="Microsoft.AspNetCore.SignalR.Client" Version="6.0.36" Condition="'$(TargetFramework)' == 'net6.0'" />
+    <PackageVersion Update="Microsoft.AspNetCore.SignalR.Client" Version="7.0.20" Condition="'$(TargetFramework)' == 'net7.0'" />
+    <PackageVersion Update="Microsoft.AspNetCore.SignalR.Client" Version="8.0.34" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageVersion Update="Microsoft.AspNetCore.SignalR.Client" Version="9.0.23" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <PackageVersion Update="Microsoft.AspNetCore.SignalR.Client" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
+  </ItemGroup>
   <PropertyGroup>
     <BlueTuskEfCoreVersion Condition="'$(TargetFramework)' == 'net5.0'">5.0.17</BlueTuskEfCoreVersion>
     <BlueTuskEfCoreVersion Condition="'$(TargetFramework)' == 'net6.0'">7.0.20</BlueTuskEfCoreVersion>
@@ -77,9 +86,11 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
     <PackageVersion Update="Grpc.AspNetCore.Server" Version="2.56.0" />
+    <PackageVersion Update="Grpc.Net.Client" Version="2.56.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net7.0'">
     <PackageVersion Update="Grpc.AspNetCore.Server" Version="2.71.0" />
+    <PackageVersion Update="Grpc.Net.Client" Version="2.71.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net7.0'">
     <PackageVersion Update="Parquet.Net" Version="5.5.0" />

@@ -1,3 +1,7 @@
+#if !NET8_0_OR_GREATER
+using Xunit.Abstractions;
+#endif
+
 namespace BlueTusk.Live.Tests;
 
 public sealed class LiveResultDifferTests(ITestOutputHelper output)
