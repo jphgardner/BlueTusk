@@ -12,8 +12,11 @@ param(
 
     [DateTimeOffset] $NotBeforeUtc = [DateTimeOffset]::MinValue,
 
-    [ValidateSet('Legacy', 'Core')]
-    [string] $ReleaseTrack = 'Legacy'
+    [ValidateSet('Legacy', 'Core', 'CorePackages')]
+    [string] $ReleaseTrack = 'Legacy',
+
+    [ValidatePattern('^1\.2\.0-rc\.[1-9][0-9]*$')]
+    [string] $PublishedPrereleaseVersion
 )
 
 Set-StrictMode -Version Latest
@@ -151,6 +154,8 @@ function ConvertTo-UtcDateTime
     return $parsed
 }
 
+if ($ReleaseTrack -eq 'CorePackages' -and [string]::IsNullOrWhiteSpace($PublishedPrereleaseVersion))
+{ throw 'The 1.2 Core package approval set requires its published prerelease version.' }
 $contractPath = Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json'
 $contract = Get-Content -LiteralPath $contractPath -Raw | ConvertFrom-Json
 if ([int]$contract.schemaVersion -ne 1 -or
@@ -158,10 +163,10 @@ if ([int]$contract.schemaVersion -ne 1 -or
 {
     throw 'The V1 approval-evidence contract has an unsupported schema.'
 }
-if ($ReleaseTrack -eq 'Core')
+if ($ReleaseTrack -in @('Core', 'CorePackages'))
 {
     & (Join-Path $PSScriptRoot 'verify-release-track.ps1') | Out-Null
-    # Only family-count fields change scope. Every other review, security,
+    # Core evidence uses the package-family scope of the release. Other review, security,
     # operational, independence and publication requirement is retained.
     foreach ($definition in $contract.gates)
     {
@@ -170,6 +175,15 @@ if ($ReleaseTrack -eq 'Core')
             if ($definition.id -eq 'independent-release-review' -and $field.name -eq 'packageFamiliesReviewed')
             {
                 $field.equals = 5
+            }
+            if ($ReleaseTrack -eq 'CorePackages')
+            {
+                if ($definition.id -eq 'independent-release-review' -and $field.name -eq 'requiredWorkflowRunsReviewed')
+                { $field.minimum = 8 }
+                if ($definition.id -in @('application-pilot-a', 'application-pilot-b') -and $field.name -eq 'postgresqlMajorVersion')
+                { $field.maximum = 18 }
+                if ($definition.id -eq 'maintainer-signoff' -and $field.name -eq 'publishedPrereleaseVersion')
+                { $field.allowedValues = @($PublishedPrereleaseVersion) }
             }
             if ($definition.id -eq 'maintainer-signoff')
             {

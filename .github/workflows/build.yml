@@ -8,6 +8,10 @@ on:
     - cron: "17 3 * * 1"
   workflow_dispatch:
     inputs:
+      core_packages_only:
+        description: Collect Core package readiness evidence without the website build
+        type: boolean
+        default: false
       include_legacy_all_family_packages:
         description: Also retain historical six-family package evidence (not core release qualification)
         type: boolean
@@ -126,9 +130,13 @@ jobs:
 
       - name: Verify supply-chain source gates
         shell: pwsh
+        env:
+          CORE_PACKAGES_ONLY: ${{ inputs.core_packages_only || false }}
         run: |
           ./eng/verify-supply-chain.ps1
-          ./eng/verify-postgresql19-programme.ps1
+          if ($env:GITHUB_EVENT_NAME -ne 'workflow_dispatch' -or $env:CORE_PACKAGES_ONLY -ne 'true') {
+            ./eng/verify-postgresql19-programme.ps1
+          }
 
       - name: Verify independent release trains
         shell: pwsh
@@ -170,10 +178,14 @@ jobs:
           ./eng/test-performance-leadership-evidence-verifier.ps1
           ./eng/test-endurance-workflow-sbom-contract.ps1
           ./eng/test-live-control-plane-endurance-verifier.ps1
-          ./eng/verify-v1.1-release-contract.ps1
-          ./eng/test-v1.1-release-contract-verifier.ps1
+          $tracks = Get-Content -Raw eng/release-tracks.json | ConvertFrom-Json
+          if ($tracks.releaseVersion -ceq '1.1.0') {
+            ./eng/verify-v1.1-release-contract.ps1
+            ./eng/test-v1.1-release-contract-verifier.ps1
+          }
           ./eng/test-core-recovery-rehearsal.ps1
           ./eng/test-release-track-verifier.ps1
+          ./eng/test-core-1.2-package-readiness-policy.ps1
           'Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search',
           'Sql', 'Studio', 'Edge', 'Workflows' |
             ForEach-Object {
@@ -197,6 +209,7 @@ jobs:
           ./eng/test-core-endurance-contract.ps1
           ./eng/test-core-candidate-bindings.ps1
           ./eng/test-core-test-evidence.ps1
+          ./eng/test-core-test-evidence.ps1 -CoreReleaseVersion 1.2.0
 
       - name: Build
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore
@@ -236,6 +249,7 @@ jobs:
         run: >-
           ./eng/run-core-test-evidence.ps1
           -Kind Regression
+          -CoreReleaseVersion 1.2.0
           -OutputRoot artifacts/core-regression/${{ matrix.os }}
           -ExpectedCommit ${{ github.sha }}
 
@@ -243,7 +257,7 @@ jobs:
         if: always() && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: core-test-regression-${{ matrix.os }}-${{ github.sha }}-${{ github.run_id }}
+          name: core-test-regression-${{ matrix.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/core-regression/${{ matrix.os }}
           if-no-files-found: error
           retention-days: 90
@@ -272,6 +286,7 @@ jobs:
 
   website:
     name: Angular website and complete documentation
+    if: github.event_name != 'workflow_dispatch' || !inputs.core_packages_only
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -367,24 +382,26 @@ jobs:
         run: >-
           ./eng/build-v1-candidate-packages.ps1
           -ReleaseTrack Core
-          -OutputRoot artifacts/v1.1-core-packages
+          -CoreReleaseVersion 1.2.0
+          -OutputRoot artifacts/v1.2-core-packages
           -Commit ${{ github.sha }}
 
       - name: Verify stable core package reader and integrity guards
         shell: pwsh
         run: >-
           ./eng/test-core-package-evidence.ps1
-          -EvidenceRoot artifacts/v1.1-core-packages
+          -EvidenceRoot artifacts/v1.2-core-packages
+          -CoreReleaseVersion 1.2.0
           -ExpectedCommit ${{ github.sha }}
 
       - name: Archive immutable core package evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: v1.1-core-packages-${{ github.sha }}
+          name: v1.2-core-packages-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            artifacts/v1.1-core-packages/package-manifest.json
-            artifacts/v1.1-core-packages/packages
-            artifacts/v1.1-core-packages/sbom
+            artifacts/v1.2-core-packages/package-manifest.json
+            artifacts/v1.2-core-packages/packages
+            artifacts/v1.2-core-packages/sbom
           if-no-files-found: error
           retention-days: 90
 
@@ -490,7 +507,7 @@ jobs:
         run: |
           $container = (& docker compose -f eng/compose/postgres.yml --profile preview ps --quiet postgres${{ matrix.major }}).Trim()
           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($container)) { throw 'Stable PostgreSQL fixture is missing.' }
-          ./eng/run-core-test-evidence.ps1 -Kind Compatibility `
+          ./eng/run-core-test-evidence.ps1 -Kind Compatibility -CoreReleaseVersion 1.2.0 `
             -OutputRoot artifacts/core-compatibility/postgresql-${{ matrix.major }} `
             -ExpectedCommit ${{ github.sha }} `
             -PostgreSqlMajor ${{ matrix.major }} -PostgreSqlContainer $container
@@ -499,7 +516,7 @@ jobs:
         if: always() && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: core-test-compatibility-postgresql-${{ matrix.major }}-${{ github.sha }}-${{ github.run_id }}
+          name: core-test-compatibility-postgresql-${{ matrix.major }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/core-compatibility/postgresql-${{ matrix.major }}
           if-no-files-found: error
           retention-days: 90
@@ -525,39 +542,39 @@ jobs:
           global-json-file: global.json
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: core-test-regression-ubuntu-latest-${{ github.sha }}-${{ github.run_id }}
+          name: core-test-regression-ubuntu-latest-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/core-test-evidence/regression/runs/linux-x64
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: core-test-regression-windows-latest-${{ github.sha }}-${{ github.run_id }}
+          name: core-test-regression-windows-latest-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/core-test-evidence/regression/runs/windows-x64
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: core-test-compatibility-postgresql-15-${{ github.sha }}-${{ github.run_id }}
+          name: core-test-compatibility-postgresql-15-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/core-test-evidence/compatibility/runs/postgresql-15
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: core-test-compatibility-postgresql-16-${{ github.sha }}-${{ github.run_id }}
+          name: core-test-compatibility-postgresql-16-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/core-test-evidence/compatibility/runs/postgresql-16
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: core-test-compatibility-postgresql-17-${{ github.sha }}-${{ github.run_id }}
+          name: core-test-compatibility-postgresql-17-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/core-test-evidence/compatibility/runs/postgresql-17
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: core-test-compatibility-postgresql-18-${{ github.sha }}-${{ github.run_id }}
+          name: core-test-compatibility-postgresql-18-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/core-test-evidence/compatibility/runs/postgresql-18
       - name: Verify every raw test payload and build complete Core manifests
         shell: pwsh
         run: |
-          ./eng/build-core-test-manifest.ps1 -Kind Regression `
+          ./eng/build-core-test-manifest.ps1 -Kind Regression -CoreReleaseVersion 1.2.0 `
             -EvidenceRoot artifacts/core-test-evidence/regression -ExpectedCommit ${{ github.sha }}
-          ./eng/build-core-test-manifest.ps1 -Kind Compatibility `
+          ./eng/build-core-test-manifest.ps1 -Kind Compatibility -CoreReleaseVersion 1.2.0 `
             -EvidenceRoot artifacts/core-test-evidence/compatibility -ExpectedCommit ${{ github.sha }}
       - name: Retain complete immutable Core test matrices
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: v1.1-core-test-evidence-${{ github.sha }}-${{ github.run_id }}
+          name: v1.2-core-test-evidence-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/core-test-evidence
           if-no-files-found: error
           retention-days: 90
@@ -566,6 +583,7 @@ jobs:
     # Keep the existing protected status context. This is real provider preview
     # compatibility, not Graph runtime qualification or PostgreSQL 19 GA evidence.
     name: PostgreSQL 19 live matrix
+    if: github.event_name != 'workflow_dispatch' || !inputs.core_packages_only
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

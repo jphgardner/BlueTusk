@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param()
+param([ValidateSet('1.1.0', '1.2.0')][string] $CoreReleaseVersion = '1.1.0')
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'core-test-evidence.psm1') -Force
@@ -69,7 +69,7 @@ function New-Fixture([string] $Kind)
                 serverVersionNumber = $fixture.serverVersionNumber; fixture = New-CoreTestArtifact $shardRoot 'postgresql-fixture.json' }
         }
         $payload = [pscustomobject]@{
-            schemaVersion = 1; scope = 'Core'; releaseVersion = '1.1.0'; sourceCommit = $commit; sourceTreeDirty = $false;
+            schemaVersion = 1; scope = 'Core'; releaseVersion = $CoreReleaseVersion; sourceCommit = $commit; sourceTreeDirty = $false;
             kind = $Kind; environmentId = $(if ($Kind -ne 'Compatibility') { $id } else { 'linux-x64' });
             postgreSql = $database; startedAtUtc = '2026-09-01T00:00:00Z'; completedAtUtc = '2026-09-01T00:01:00Z'; projects = $rows
         }
@@ -78,7 +78,7 @@ function New-Fixture([string] $Kind)
         Save-Json (Join-Path $shardRoot $name) $payload
     }
     if ($Kind -ne 'SyncConnectors')
-    { $null = & (Join-Path $PSScriptRoot 'build-core-test-manifest.ps1') -EvidenceRoot $root -ExpectedCommit $commit -Kind $Kind }
+    { $null = & (Join-Path $PSScriptRoot 'build-core-test-manifest.ps1') -EvidenceRoot $root -ExpectedCommit $commit -Kind $Kind -CoreReleaseVersion $CoreReleaseVersion }
     return $root
 }
 function Update-Shard([string] $Root, [object] $Manifest, [object] $Shard)
@@ -108,7 +108,7 @@ try
 <EnableDefaultCompileItems>false</EnableDefaultCompileItems><AssemblyName>CoreReaderFixture</AssemblyName>
 <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries><EnableSourceLink>false</EnableSourceLink>
-<InformationalVersion>1.1.0+$commit</InformationalVersion>
+<InformationalVersion>$CoreReleaseVersion+$commit</InformationalVersion>
 </PropertyGroup></Project>
 "@ | Set-Content -LiteralPath $fixtureProject -Encoding utf8NoBOM
     '<configuration><packageSources><clear /></packageSources></configuration>' |
@@ -125,19 +125,19 @@ try
     foreach ($kind in @('Regression', 'Compatibility'))
     {
         $path = Join-Path $roots[$kind] "core-$($kind.ToLowerInvariant())-manifest.json"
-        $report = Get-CoreTestManifestReport $path $commit $kind
+        $report = Get-CoreTestManifestReport $path $commit $kind -CoreReleaseVersion $CoreReleaseVersion
         if ($report.ReleaseApproved -ne $false -or $report.RemoteIdentityValidated -ne $false -or
             $report.RawTestPayloadsValidated -ne $true -or $report.Passed -le 0)
         { throw 'Core test reader lost its partial-qualification boundary.' }
         $overwriteRejected = $false
-        try { & (Join-Path $PSScriptRoot 'build-core-test-manifest.ps1') -EvidenceRoot $roots[$kind] -ExpectedCommit $commit -Kind $kind | Out-Null }
+        try { & (Join-Path $PSScriptRoot 'build-core-test-manifest.ps1') -EvidenceRoot $roots[$kind] -ExpectedCommit $commit -Kind $kind -CoreReleaseVersion $CoreReleaseVersion | Out-Null }
         catch { $overwriteRejected = $true }
         if (-not $overwriteRejected) { throw 'Existing evidence was overwritten.' }
     }
     foreach ($id in @('linux-x64', 'windows-x64'))
     {
         $path = Join-Path $roots.SyncConnectors "runs/$id/sync-connector-validation.json"
-        $report = & (Join-Path $PSScriptRoot 'verify-sync-connector-evidence.ps1') -EvidencePath $path -ExpectedCommit $commit
+        $report = & (Join-Path $PSScriptRoot 'verify-sync-connector-evidence.ps1') -EvidencePath $path -ExpectedCommit $commit -CoreReleaseVersion $CoreReleaseVersion
         if ($report.ProjectCount -ne 9 -or $report.Passed -ne 9 -or $report.RawTestPayloadsValidated -ne $true -or
             $report.FixtureIdentityValidated -ne $false -or $report.ExecutionAuthenticityValidated -ne $false -or
             $report.EnduranceValidated -ne $false -or $report.ReleaseApproved -ne $false)
@@ -206,7 +206,7 @@ try
         & $case.Change $root $manifest $shard
         Save-Json $path $manifest
         $failed = $false
-        try { Get-CoreTestManifestReport $path $commit $case.Kind | Out-Null } catch { $failed = $true }
+        try { Get-CoreTestManifestReport $path $commit $case.Kind -CoreReleaseVersion $CoreReleaseVersion | Out-Null } catch { $failed = $true }
         if (-not $failed) { throw "Malformed Core test evidence case $rejected was accepted." }
         $rejected++
     }
@@ -245,12 +245,12 @@ try
         & $mutation $root $shard
         Save-Json $path $shard
         $failed = $false
-        try { & (Join-Path $PSScriptRoot 'verify-sync-connector-evidence.ps1') -EvidencePath $path -ExpectedCommit $commit | Out-Null }
+        try { & (Join-Path $PSScriptRoot 'verify-sync-connector-evidence.ps1') -EvidencePath $path -ExpectedCommit $commit -CoreReleaseVersion $CoreReleaseVersion | Out-Null }
         catch { $failed = $true }
         if (-not $failed) { throw "Malformed Sync connector evidence case $rejected was accepted." }
         $rejected++
     }
-    Write-Output "Core test evidence reader self-test passed: complete 2-OS/4-database and 9-project Sync synthetic captures, immutable manifests and $rejected rejected substitutions, skips, counter/schema or fixture changes. NOT release evidence."
+    Write-Output "Core $CoreReleaseVersion test evidence reader self-test passed: complete 2-OS/4-database and 9-project Sync synthetic captures, immutable manifests and $rejected rejected substitutions, skips, counter/schema or fixture changes. NOT release evidence."
 }
 finally
 {

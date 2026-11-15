@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string] $EvidenceRoot,
-    [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit
+    [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
+    [ValidateSet('1.1.0', '1.2.0')][string] $CoreReleaseVersion = '1.1.0'
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -13,10 +14,10 @@ $null = New-Item -ItemType Directory -Path $scratch
 try
 {
     # This positive case uses real packages and must not arm a prerelease train.
-    & $verifier -ReleaseTrack Core -EvidenceRoot $source -ExpectedCommit $ExpectedCommit | Out-Null
+    & $verifier -ReleaseTrack Core -CoreReleaseVersion $CoreReleaseVersion -EvidenceRoot $source -ExpectedCommit $ExpectedCommit | Out-Null
     $mutations = @(
         @{ Name = 'graph-family'; Error = 'exactly every product family'; Change = {param($m) $m.families[0].id = 'ContinuousGraph'} },
-        @{ Name = 'wrong-version'; Error = 'Core 1.1.0'; Change = {param($m) $m.releaseVersion = '1.0.0'} },
+        @{ Name = 'wrong-version'; Error = "Core $CoreReleaseVersion"; Change = {param($m) $m.releaseVersion = '1.0.0'} },
         @{ Name = 'wrong-commit'; Error = 'Package evidence commit'; Change = {param($m) $m.sourceCommit = ('0' * 40)} },
         @{ Name = 'wrong-artifact-count'; Error = 'artifact count mismatch'; Change = {param($m) $m.artifactCount++} },
         @{ Name = 'wrong-package-hash'; Error = 'does not match its hash'; Change = {param($m) $m.artifacts[0].sha256 = ('0' * 64)} },
@@ -36,12 +37,12 @@ try
         & $mutation.Change $manifest
         $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $path -Encoding utf8NoBOM
         $failure = $null
-        try { & $verifier -ReleaseTrack Core -EvidenceRoot $caseRoot -ExpectedCommit $ExpectedCommit | Out-Null }
+        try { & $verifier -ReleaseTrack Core -CoreReleaseVersion $CoreReleaseVersion -EvidenceRoot $caseRoot -ExpectedCommit $ExpectedCommit | Out-Null }
         catch { $failure = $_.Exception.Message }
         if ($null -eq $failure -or -not $failure.Contains($mutation.Error, [StringComparison]::OrdinalIgnoreCase))
         { throw "Invalid package fixture '$($mutation.Name)' did not fail at the expected guard: $failure" }
     }
-    Write-Output 'Core package-reader self-test passed against retained real packages: stable 1.1.0 accepted without prerelease arming; eight identity, scope or integrity mutations rejected.'
+    Write-Output "Verified Core $CoreReleaseVersion package evidence and rejected eight invalid identity, scope, or integrity mutations."
 }
 finally
 {

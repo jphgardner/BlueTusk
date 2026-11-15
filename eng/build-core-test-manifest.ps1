@@ -2,7 +2,8 @@
 param(
     [Parameter(Mandatory)][string] $EvidenceRoot,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
-    [Parameter(Mandatory)][ValidateSet('Regression', 'Compatibility')][string] $Kind
+    [Parameter(Mandatory)][ValidateSet('Regression', 'Compatibility')][string] $Kind,
+    [ValidateSet('1.1.0', '1.2.0')][string] $CoreReleaseVersion = '1.1.0'
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -18,9 +19,9 @@ foreach ($id in $ids)
 {
     $environment = if ($Kind -eq 'Regression') { $id } else { 'linux-x64' }
     $major = if ($Kind -eq 'Regression') { 0 } else { [int]$id.Substring('postgresql-'.Length) }
-    $null = Get-CoreTestShardReport (Join-Path $root "runs/$id/core-test-shard.json") $ExpectedCommit $Kind $environment $major
+    $null = Get-CoreTestShardReport (Join-Path $root "runs/$id/core-test-shard.json") $ExpectedCommit $Kind $environment $major -CoreReleaseVersion $CoreReleaseVersion
 }
-$manifest = [pscustomobject]@{ schemaVersion = 1; scope = 'Core'; releaseVersion = '1.1.0'; sourceCommit = $ExpectedCommit; kind = $Kind; shards = $shards }
+$manifest = [pscustomobject]@{ schemaVersion = 1; scope = 'Core'; releaseVersion = $CoreReleaseVersion; sourceCommit = $ExpectedCommit; kind = $Kind; shards = $shards }
 $stream = [IO.File]::Open($path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
 try
 {
@@ -28,4 +29,4 @@ try
     $stream.Write($bytes)
 }
 finally { $stream.Dispose() }
-Get-CoreTestManifestReport $path $ExpectedCommit $Kind
+Get-CoreTestManifestReport $path $ExpectedCommit $Kind -CoreReleaseVersion $CoreReleaseVersion

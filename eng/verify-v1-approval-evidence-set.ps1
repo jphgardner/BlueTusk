@@ -7,14 +7,16 @@ param(
     [ValidatePattern('^[0-9a-fA-F]{40}$')]
     [string] $ExpectedCommit,
 
-    [Parameter(Mandatory)]
     [ValidatePattern('^[0-9a-fA-F]{64}$')]
     [string] $ExpectedWebsiteProductionMetricsSha256,
 
     [DateTimeOffset] $NotBeforeUtc = [DateTimeOffset]::MinValue,
 
-    [ValidateSet('Legacy', 'Core')]
-    [string] $ReleaseTrack = 'Legacy'
+    [ValidateSet('Legacy', 'Core', 'CorePackages')]
+    [string] $ReleaseTrack = 'Legacy',
+
+    [ValidatePattern('^1\.2\.0-rc\.[1-9][0-9]*$')]
+    [string] $PublishedPrereleaseVersion
 )
 
 Set-StrictMode -Version Latest
@@ -31,6 +33,10 @@ if (-not (Test-Path -LiteralPath $directory -PathType Container))
 # (eng/v1.1-release-contract.json waivedReleaseGates); pilot files are rejected.
 Import-Module (Join-Path $PSScriptRoot 'approval-release-tracks.psm1') -Force
 $gateIds = @(Get-ApprovalTrackGateIds -ReleaseTrack $ReleaseTrack)
+if ('website-deployment-acceptance' -cin $gateIds -and [string]::IsNullOrWhiteSpace($ExpectedWebsiteProductionMetricsSha256))
+{ throw 'Website deployment acceptance requires the archived metrics SHA-256.' }
+if ($ReleaseTrack -eq 'CorePackages' -and [string]::IsNullOrWhiteSpace($PublishedPrereleaseVersion))
+{ throw 'The 1.2 Core package approval set requires its published prerelease version.' }
 $pilotsRequired = 'application-pilot-a' -cin $gateIds -and 'application-pilot-b' -cin $gateIds
 if (-not $pilotsRequired -and
     (('application-pilot-a' -cin $gateIds) -or ('application-pilot-b' -cin $gateIds)))
@@ -64,7 +70,9 @@ $approvals = @{}
 foreach ($gateId in $gateIds)
 {
     $path = Join-Path $directory "$gateId.json"
-    & $verifier `
+    $prerelease = @{}
+    if ($ReleaseTrack -eq 'CorePackages') { $prerelease.PublishedPrereleaseVersion = $PublishedPrereleaseVersion }
+    & $verifier @prerelease `
         -EvidencePath $path `
         -ExpectedGateId $gateId `
         -ExpectedCommit $ExpectedCommit `
@@ -105,19 +113,20 @@ $requiredFamilies = @(
     'ControlPlane',
     'ContinuousGraph'
 )
-if ($ReleaseTrack -eq 'Core')
+if ($ReleaseTrack -in @('Core', 'CorePackages'))
 {
     & (Join-Path $PSScriptRoot 'verify-release-track.ps1') | Out-Null
     $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
     $requiredFamilies = @($tracks.stableFamilies)
     $signoff = $approvals['maintainer-signoff'].details
-    $versions = @('Provider 1.1.0', 'Streams 1.1.0', 'Sync 1.1.0', 'Live 1.1.0', 'Control Plane 1.1.0')
+    $version = if ($ReleaseTrack -eq 'CorePackages') { '1.2.0' } else { '1.1.0' }
+    $versions = @('Provider', 'Streams', 'Sync', 'Live', 'Control Plane' | ForEach-Object { "$_ $version" })
     if (@($signoff.versions).Count -ne 5 -or
         @(Compare-Object $versions @($signoff.versions) -CaseSensitive).Count -ne 0 -or
         @($signoff.publishedPrereleaseFamilies).Count -ne 5 -or
         @(Compare-Object $requiredFamilies @($signoff.publishedPrereleaseFamilies) -CaseSensitive).Count -ne 0)
     {
-        throw 'Core maintainer sign-off must identify exactly the five 1.1.0 stable versions and five core prerelease families.'
+        throw "Core maintainer sign-off must identify exactly the five $version stable versions and five core prerelease families."
     }
 }
 if ($pilotsRequired)
@@ -151,15 +160,18 @@ if ($pilotsRequired)
     }
 }
 
-$websiteApproval = $approvals['website-deployment-acceptance']
-if (-not [string]::Equals(
-        [string]$websiteApproval.details.productionMetricsSha256,
-        $ExpectedWebsiteProductionMetricsSha256,
-        [StringComparison]::OrdinalIgnoreCase))
+if ('website-deployment-acceptance' -cin $gateIds)
 {
-    throw (
-        'Website deployment acceptance does not identify the exact archived ' +
-        'production-metrics record.')
+    $websiteApproval = $approvals['website-deployment-acceptance']
+    if (-not [string]::Equals(
+            [string]$websiteApproval.details.productionMetricsSha256,
+            $ExpectedWebsiteProductionMetricsSha256,
+            [StringComparison]::OrdinalIgnoreCase))
+    {
+        throw (
+            'Website deployment acceptance does not identify the exact archived ' +
+            'production-metrics record.')
+    }
 }
 
 $operationalGateIds = @(
@@ -209,6 +221,6 @@ else
 }
 Write-Output (
     "$ReleaseTrack approval-evidence set passed: $($gateIds.Count) gate-specific records, " +
-    "$pilotSummary, exact website " +
-    'production-metrics binding, and ' +
+    "$pilotSummary, " +
+    $(if ('website-deployment-acceptance' -cin $gateIds) { 'exact website production-metrics binding, and ' } else { 'and ' }) +
     'ordered independent review and maintainer sign-off.')

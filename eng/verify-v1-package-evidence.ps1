@@ -8,7 +8,10 @@ param(
     [string] $ExpectedCommit,
 
     [ValidateSet('Legacy', 'Core')]
-    [string] $ReleaseTrack = 'Legacy'
+    [string] $ReleaseTrack = 'Legacy',
+
+    [ValidateSet('1.1.0', '1.2.0')]
+    [string] $CoreReleaseVersion = '1.1.0'
 )
 
 Set-StrictMode -Version Latest
@@ -92,19 +95,23 @@ if ($ReleaseTrack -eq 'Core')
 {
     & (Join-Path $PSScriptRoot 'verify-release-track.ps1') | Out-Null
     $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
-    $expectedFamilies = @($tracks.stableFamilies | Sort-Object)
-    if ($manifest.releaseTrack -cne 'Core' -or $manifest.releaseVersion -cne '1.1.0')
+    if ($tracks.releaseVersion -cne $CoreReleaseVersion)
     {
-        throw 'Core package evidence must identify the Core 1.1.0 release track.'
+        throw "Active Core source version '$($tracks.releaseVersion)' does not match '$CoreReleaseVersion'."
+    }
+    $expectedFamilies = @($tracks.stableFamilies | Sort-Object)
+    if ($manifest.releaseTrack -cne 'Core' -or $manifest.releaseVersion -cne $CoreReleaseVersion)
+    {
+        throw "Core package evidence must identify the Core $CoreReleaseVersion release track."
     }
     foreach ($familyName in $expectedFamilies)
     {
         [xml]$version = Get-Content -LiteralPath (
             Join-Path $repositoryRoot $productManifest.families.$familyName.versionFile) -Raw
-        if ([string]$version.Project.PropertyGroup.VersionPrefix -cne '1.1.0' -or
+        if ([string]$version.Project.PropertyGroup.VersionPrefix -cne $CoreReleaseVersion -or
             -not [string]::IsNullOrWhiteSpace([string]$version.Project.PropertyGroup.VersionSuffix))
         {
-            throw "Core package verification requires exact unsuffixed 1.1.0 source versions; '$familyName' differs."
+            throw "Core package verification requires exact unsuffixed $CoreReleaseVersion source versions; '$familyName' differs."
         }
     }
 }

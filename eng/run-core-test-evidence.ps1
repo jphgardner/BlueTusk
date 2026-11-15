@@ -6,6 +6,7 @@ param(
     [ValidateSet(0, 15, 16, 17, 18)][int] $PostgreSqlMajor = 0,
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9_.-]*$')][string] $PostgreSqlContainer,
     [string] $SourceRoot = (Split-Path $PSScriptRoot -Parent),
+    [ValidateSet('1.1.0', '1.2.0')][string] $CoreReleaseVersion = '1.1.0',
     [switch] $Build,
     [switch] $ValidateOnly
 )
@@ -116,7 +117,7 @@ try
         }
         $assembly = Join-Path $repositoryRoot "tests/$($project.name)/bin/Release/net10.0/$($project.name).dll"
         if (-not (Test-Path -LiteralPath $assembly -PathType Leaf)) { throw "Build '$($project.name)' in Release before capturing Core test evidence." }
-        if ((Get-CoreTestAssemblyVersion $assembly) -cne "1.1.0+$ExpectedCommit")
+        if ((Get-CoreTestAssemblyVersion $assembly) -cne "$CoreReleaseVersion+$ExpectedCommit")
         { throw "Rebuild '$($project.name)' from the exact committed candidate before capturing evidence." }
         $assemblyHash = (Get-FileHash -LiteralPath $assembly -Algorithm SHA256).Hash
         Copy-Item -LiteralPath $assembly -Destination (Join-Path $directory "$($project.name).dll")
@@ -154,12 +155,12 @@ try
             imageId = $fixture.imageId; serverVersionNumber = $fixture.serverVersionNumber;
             fixture = New-CoreTestArtifact $output 'postgresql-fixture.json' }
     }
-    $shard = [pscustomobject]@{ schemaVersion = 1; scope = 'Core'; releaseVersion = '1.1.0'; sourceCommit = $ExpectedCommit;
+    $shard = [pscustomobject]@{ schemaVersion = 1; scope = 'Core'; releaseVersion = $CoreReleaseVersion; sourceCommit = $ExpectedCommit;
         sourceTreeDirty = $false; kind = $Kind; environmentId = $environment; postgreSql = $database;
         startedAtUtc = $started; completedAtUtc = [DateTimeOffset]::UtcNow.ToString('O'); projects = $rows.ToArray() }
     if ($Kind -eq 'SyncConnectors') { $shard | Add-Member -NotePropertyName toolSourceCommit -NotePropertyValue $toolCommit }
     $path = Join-Path $output $name
     $shard | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $path -Encoding utf8NoBOM
-    Get-CoreTestShardReport $path $ExpectedCommit $Kind $environment $PostgreSqlMajor
+    Get-CoreTestShardReport $path $ExpectedCommit $Kind $environment $PostgreSqlMajor -CoreReleaseVersion $CoreReleaseVersion
 }
 finally { $env:DOTNET_CLI_UI_LANGUAGE = $previousLanguage }

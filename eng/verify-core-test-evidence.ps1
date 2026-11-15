@@ -2,9 +2,10 @@
 param(
     [Parameter(Mandatory)][string] $EvidencePath,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
-    [Parameter(Mandatory)][ValidateSet('Regression', 'Compatibility')][string] $Kind
+    [Parameter(Mandatory)][ValidateSet('Regression', 'Compatibility')][string] $Kind,
+    [ValidateSet('1.1.0', '1.2.0')][string] $CoreReleaseVersion = '1.1.0'
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'core-test-evidence.psm1') -Force
-Get-CoreTestManifestReport $EvidencePath $ExpectedCommit $Kind
+Get-CoreTestManifestReport $EvidencePath $ExpectedCommit $Kind -CoreReleaseVersion $CoreReleaseVersion

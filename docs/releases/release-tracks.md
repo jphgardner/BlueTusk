@@ -79,7 +79,38 @@ substitute for missing core workloads. Confidence intervals, allocation,
 latency, CPU and memory limits have not been reduced. Verifier self-tests use
 synthetic fixtures only; their success is not a performance result.
 
-## Remaining release wiring
+## Core 1.2 package readiness
+
+The package track covers Provider, Streams, Sync, Live, and Control Plane on
+stable PostgreSQL 15–18. Continuous Graph qualifies through its own release
+track. Website deployment has its own scope.
+
+Dispatch the evidence producers at the same candidate SHA.
+
+1. Run the build with the Core packages-only option. It retains the five
+   package families, their SBOMs and provenance, and the regression and stable
+   PostgreSQL test matrices. The website and PostgreSQL 19 preview jobs continue
+   to run in their ordinary build contexts.
+2. Run the runtime compatibility workflow with full coverage required. Run
+   security, one-hour fuzzing, and the Core performance qualification workflow.
+   Use the qualification evidence class and the full reference topology.
+3. Give the successful package build run ID to the Streams, Sync, and Live /
+   Control Plane endurance workflows. They verify the same package archive
+   before the 72-hour, 24-hour, and 24-hour runs respectively.
+4. In the protected candidate-readiness environment, supply the real approval
+   and disturbance records for that SHA through the existing ZIP evidence
+   handoff. Use the V1_2_CORE_EVIDENCE_BASE64 secret for the 1.2 Core records.
+   Run the Core 1.2 package readiness workflow with the eight producer run IDs.
+
+The release keeps both independent application pilots, independent review,
+security, backup and restore, rollback, the incident response exercise, SLO
+approval, and maintainer sign-off. These approvals bind the candidate and must
+follow the producer runs. The protected package-production approval still
+applies to tag publication. The readiness workflow retains a summary binding
+the candidate to the verified package manifest, provenance, and workflow
+attempts.
+
+## Historical Core 1.1 release wiring
 
 The build workflow now measures stable PostgreSQL 15–18 compatibility and
 produces `v1.1-core-packages-<sha>` independently of optional historical

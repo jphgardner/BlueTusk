@@ -105,3 +105,18 @@ jobs:
           $complete = [bool]::Parse($env:REQUIRE_COMPLETE)
           $evidence = ./eng/verify-dotnet-compatibility-evidence.ps1 -ReportPath $reports -RequireMatrixComplete -RequireComplete:$complete -PassThru
           "Verified $($evidence.verifiedPairs)/$($evidence.requiredPairs) runtime/test pairs and $($evidence.passedTests) passed tests. Full support: $($evidence.fullRuntimeCoverage)." >> $env:GITHUB_STEP_SUMMARY
+          if ($complete) {
+            if ($evidence.sourceCommit -cne $env:GITHUB_SHA -or $evidence.fullRuntimeCoverage -ne $true) {
+              throw 'The release runtime matrix must cover the exact candidate.'
+            }
+            $evidence | ConvertTo-Json -Depth 8 |
+              Set-Content -LiteralPath artifacts/verified-runtime-matrix.json -Encoding utf8NoBOM
+          }
+      - name: Retain verified release runtime matrix
+        if: github.event_name == 'workflow_dispatch' && inputs.require_complete
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verified-runtime-matrix-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/verified-runtime-matrix.json
+          if-no-files-found: error
+          retention-days: 90
