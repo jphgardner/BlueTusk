@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(UsePublishedControlPlane)' == 'true'">
+    <PackageReference Include="BlueTusk.Data" Version="[1.0.0]" />
+    <PackageReference Include="BlueTusk.Dashboard" Version="[1.0.0]" />
+    <PackageReference Include="BlueTusk.Streams.Storage.PostgreSql" Version="[1.0.0]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UsePublishedControlPlane)' != 'true'">
+    <ProjectReference Include="../../src/BlueTusk.Data/BlueTusk.Data.csproj" />
+    <ProjectReference Include="../../src/BlueTusk.Dashboard/BlueTusk.Dashboard.csproj" />
+    <ProjectReference Include="../../src/BlueTusk.Streams.Storage.PostgreSql/BlueTusk.Streams.Storage.PostgreSql.csproj" />
+  </ItemGroup>
+</Project>
