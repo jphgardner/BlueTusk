@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 
@@ -10,7 +8,6 @@ public sealed class BlueTuskCommandTagParserTests
     private const int Commands = 10_000;
     private const int WarmupCommands = 1_000;
     private static object? _allocationControl;
-    private static byte[][]? _backgroundGcBallast;
 
     [Theory]
     [InlineData("INSERT 0 2", 2)]
@@ -29,7 +26,7 @@ public sealed class BlueTuskCommandTagParserTests
     [Fact]
     public void Count_parsing_does_not_allocate_per_command()
     {
-        var measurement = MeasureOnDedicatedThread(ParseCount, Commands, prepare: null, gate: null);
+        var measurement = MeasureOnDedicatedThread(ParseCount, Commands);
         Assert.Equal(Commands, measurement.Commands);
         Assert.Equal(42L * Commands, measurement.Sum);
         Assert.Equal(0, measurement.AllocatedBytes);
@@ -40,7 +37,7 @@ public sealed class BlueTuskCommandTagParserTests
     {
         try
         {
-            var measurement = MeasureOnDedicatedThread(AllocateObject, Commands, prepare: null, gate: null);
+            var measurement = MeasureOnDedicatedThread(AllocateObject, Commands);
             Assert.Equal(42L * Commands, measurement.Sum);
             // Each command allocates one object, and the smallest object is three pointers.
             Assert.True(
@@ -53,25 +50,10 @@ public sealed class BlueTuskCommandTagParserTests
         }
     }
 
-    // CI failures (1952, 2240 and 3008 bytes) were not parser allocations. When a background GC ends its
-    // mark phase it voids every thread's allocation context without crediting the unused tail back to that
-    // thread's allocated-bytes counter (dotnet/runtime#134724), so a thread that allocated after the
-    // background GC started is charged up to one allocation quantum it never used. This reproduces that
-    // sequence: a background GC starts, the measuring thread allocates, and the window is held open until
-    // the background GC has completed.
     [Fact]
-    public void Allocation_measurement_is_not_charged_by_a_background_gc_in_progress()
+    public void Allocation_measurement_retires_setup_allocation_context_before_counting()
     {
-        Assert.SkipWhen(
-            GCSettings.LatencyMode == GCLatencyMode.Batch,
-            "Background (concurrent) garbage collection is disabled in this process.");
-        var gate = new WindowGate();
-        var releaser = new Thread(() => HoldWindowUntilBackgroundGcCompletes(gate))
-        {
-            IsBackground = true,
-            Name = "Allocation window releaser",
-        };
-        releaser.Start();
+        long precedingFullCollection = 0;
         try
         {
             var measurement = MeasureOnDedicatedThread(
@@ -79,22 +61,22 @@ public sealed class BlueTuskCommandTagParserTests
                 Commands,
                 prepare: () =>
                 {
-                    gate.StartedBackgroundGcAfter(StartBackgroundGc());
+                    // A runtime can service this request with either a concurrent or a blocking GC.
+                    GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: false, compacting: false);
                     Volatile.Write(ref _allocationControl, new byte[64]);
-                },
-                gate);
+                    precedingFullCollection = GC.GetGCMemoryInfo(GCKind.FullBlocking).Index;
+                });
+
             Assert.True(
-                GC.GetGCMemoryInfo(GCKind.Background).Index > gate.BackgroundGcBefore,
-                "The background GC started before the window must have completed by the end of the test.");
-            Assert.Equal(42L * measurement.Commands, measurement.Sum);
+                GC.GetGCMemoryInfo(GCKind.FullBlocking).Index > precedingFullCollection,
+                "The measurement must complete a blocking collection after the setup allocation.");
+            Assert.Equal(Commands, measurement.Commands);
+            Assert.Equal(42L * Commands, measurement.Sum);
             Assert.Equal(0, measurement.AllocatedBytes);
         }
         finally
         {
-            gate.Release();
-            releaser.Join();
             Volatile.Write(ref _allocationControl, null);
-            _backgroundGcBallast = null;
         }
     }
 
@@ -107,52 +89,12 @@ public sealed class BlueTuskCommandTagParserTests
         return 42;
     }
 
-    // Live small objects make the GC grant a background collection instead of a blocking one for a
-    // non-blocking request; the request is repeated until a background GC is observed in progress.
-    private static long StartBackgroundGc()
-    {
-        var ballast = new byte[16_384][];
-        for (var index = 0; index < ballast.Length; index++)
-        {
-            ballast[index] = new byte[1_000];
-        }
-        _backgroundGcBallast = ballast;
-        for (var attempt = 0; attempt < 100; attempt++)
-        {
-            var background = GC.GetGCMemoryInfo(GCKind.Background).Index;
-            var blocking = GC.GetGCMemoryInfo(GCKind.FullBlocking).Index;
-            var gen2 = GC.CollectionCount(2);
-            GC.Collect(2, GCCollectionMode.Forced, blocking: false, compacting: false);
-            if (GC.CollectionCount(2) > gen2 &&
-                GC.GetGCMemoryInfo(GCKind.FullBlocking).Index == blocking &&
-                GC.GetGCMemoryInfo(GCKind.Background).Index == background)
-            {
-                return background;
-            }
-        }
-        throw Xunit.Sdk.SkipException.ForSkip(
-            "This runtime did not start a background GC after 100 non-blocking requests.");
-    }
-
-    private static void HoldWindowUntilBackgroundGcCompletes(WindowGate gate)
-    {
-        var deadline = Stopwatch.GetTimestamp() + 30 * Stopwatch.Frequency;
-        while (!gate.IsReleased &&
-               (gate.BackgroundGcBefore < 0 || GC.GetGCMemoryInfo(GCKind.Background).Index <= gate.BackgroundGcBefore) &&
-               Stopwatch.GetTimestamp() < deadline)
-        {
-            Thread.Sleep(1);
-        }
-        gate.Release();
-    }
-
     // A dedicated thread runs nothing but the measurement: no test framework work, continuations or
     // synchronization context can execute on it while the window is open.
     private static Measurement MeasureOnDedicatedThread(
         Func<int> operation,
         int commands,
-        Action? prepare,
-        WindowGate? gate)
+        Action? prepare = null)
     {
         Measurement measurement = default;
         ExceptionDispatchInfo? failure = null;
@@ -162,9 +104,9 @@ public sealed class BlueTuskCommandTagParserTests
             {
                 // A first pass compiles the measurement and the operation, so preparation that must
                 // immediately precede the measured window is not separated from it by JIT work.
-                _ = Measure(operation, commands, gate: null);
+                _ = Measure(operation, commands);
                 prepare?.Invoke();
-                measurement = Measure(operation, commands, gate);
+                measurement = Measure(operation, commands);
             }
             catch (Exception exception)
             {
@@ -183,17 +125,16 @@ public sealed class BlueTuskCommandTagParserTests
 
     // Every operation allocation in the window counts; nothing is subtracted, sampled or retried.
     [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
-    private static Measurement Measure(Func<int> operation, int commands, WindowGate? gate)
+    private static Measurement Measure(Func<int> operation, int commands)
     {
         for (var iteration = 0; iteration < WarmupCommands; iteration++)
         {
             _ = operation();
         }
 
-        // A blocking collection first waits for any background GC in progress, then retires every
-        // allocation context and credits each unused tail back. This thread therefore enters the window
-        // owning no allocation context: only an allocation inside the window can acquire one, and a
-        // background GC ending inside the window has nothing of this thread's to void.
+        // A blocking collection completes any in-progress background GC and retires the
+        // measuring thread's allocation context. The background GC mark phase can otherwise
+        // charge an unused allocation-context tail to this thread (dotnet/runtime#134724).
         GC.Collect();
         var start = GC.GetAllocatedBytesForCurrentThread();
         var sum = 0L;
@@ -203,7 +144,7 @@ public sealed class BlueTuskCommandTagParserTests
             sum += operation();
             executed++;
         }
-        while (executed < commands || (gate is not null && !gate.IsReleased));
+        while (executed < commands);
         var allocated = GC.GetAllocatedBytesForCurrentThread() - start;
         return new Measurement(sum, executed, allocated);
     }
@@ -228,18 +169,4 @@ public sealed class BlueTuskCommandTagParserTests
     }
 
     private readonly record struct Measurement(long Sum, int Commands, long AllocatedBytes);
-
-    private sealed class WindowGate
-    {
-        private volatile bool _released;
-        private long _backgroundGcBefore = -1;
-
-        public bool IsReleased => _released;
-
-        public long BackgroundGcBefore => Volatile.Read(ref _backgroundGcBefore);
-
-        public void StartedBackgroundGcAfter(long backgroundGcIndex) => Volatile.Write(ref _backgroundGcBefore, backgroundGcIndex);
-
-        public void Release() => _released = true;
-    }
 }

@@ -87,7 +87,7 @@ public sealed class KubernetesManagedDeploymentOperator
                         return;
                     }
 
-                    results[index] = await ReconcileAsync(resources[index], workerLifetime.Token)
+                    results[index] = await ReconcileIsolatedAsync(resources[index], workerLifetime.Token)
                         .ConfigureAwait(false);
                 }
             }
