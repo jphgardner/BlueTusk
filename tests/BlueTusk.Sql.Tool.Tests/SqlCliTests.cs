@@ -179,9 +179,9 @@ public sealed class SqlCliTests
         finally
         {
             await transaction.RollbackAsync(CancellationToken.None);
-            _ = await validation.WaitAsync(TimeSpan.FromSeconds(45), CancellationToken.None);
+            _ = await validation.WaitAsync(TimeSpan.FromSeconds(45), TimeProvider.System, CancellationToken.None);
         }
-        Assert.Equal(1, await validation.WaitAsync(TimeSpan.FromSeconds(45), token));
+        Assert.Equal(1, await validation.WaitAsync(TimeSpan.FromSeconds(45), TimeProvider.System, token));
         Assert.Equal("prior-receipt", await File.ReadAllTextAsync(fixture.Receipt, token));
         Assert.DoesNotContain("changed-private-body", error.ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain(Directory.EnumerateFiles(fixture.Directory), path => path.EndsWith(".tmp", StringComparison.Ordinal));
