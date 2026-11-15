@@ -6,7 +6,7 @@ param(
     [ValidateRange(1, 60)][int] $MeasurementSeconds = 10
 )
 
-# Capture one diagnostic comparison of the Dashboard inventory endpoint.
+# Capture diagnostic comparisons of the Dashboard inventory endpoint.
 # The candidate and published reference each run Kestrel and the HTTP clients
 # in one process, so their resource samples include both.
 Set-StrictMode -Version Latest
@@ -23,7 +23,19 @@ $raw = Join-Path $output 'raw/controlplane'
 $fixture = Join-Path $output 'fixture'
 New-Item -ItemType Directory -Path $raw -Force | Out-Null
 $project = Join-Path $PSScriptRoot 'ControlPlaneInventoryProbe/ControlPlaneInventoryProbe.csproj'
-$workload = "$os|ControlPlane|sources=100|clients=32"
+$contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw | ConvertFrom-Json
+$dimensions = $contract.workloads.ControlPlane
+$workloads = @(foreach ($sourceCount in $dimensions.sourceCounts)
+{
+    foreach ($clientCount in $dimensions.apiClientCounts)
+    {
+        @{
+            sourceCount = $sourceCount
+            clientCount = $clientCount
+            key = "$os|ControlPlane|sources=$sourceCount|clients=$clientCount"
+        }
+    }
+})
 $assemblies = @{}
 $implementations = @{}
 $records = [Collections.Generic.List[object]]::new()
@@ -43,36 +55,45 @@ try
         -OutputPath ([IO.Path]::GetRelativePath($root, $fixture)) -SourceCommit $commit
     $manifest = Get-Content -LiteralPath (Join-Path $fixture 'fixture.json') -Raw | ConvertFrom-Json
     $env:BLUETUSK_INVENTORY_PROBE_CONNECTION = Get-Content -LiteralPath (Join-Path $fixture 'connection.secret') -Raw
-    & $dotnet $assemblies['candidate'] seed
-    if ($LASTEXITCODE -ne 0) { throw 'Could not register the inventory sources.' }
-    $runtime = $null
-    for ($trial = 0; $trial -lt $Trials; $trial++)
+    foreach ($sourceCount in $dimensions.sourceCounts)
     {
-        $order = if ($trial % 2 -eq 0) { @('candidate', 'reference') } else { @('reference', 'candidate') }
-        foreach ($role in $order)
+        & $dotnet $assemblies['candidate'] seed $sourceCount
+        if ($LASTEXITCODE -ne 0) { throw "Could not register $sourceCount inventory sources." }
+    }
+    $runtime = $null
+    foreach ($workload in $workloads)
+    {
+        Write-Output "Measuring '$($workload.key)'."
+        for ($trial = 0; $trial -lt $Trials; $trial++)
         {
-            $relativePath = "$role-$trial.json"
-            $path = Join-Path $raw $relativePath
-            & $dotnet $assemblies[$role] $path $role $commit $trial $WarmupSeconds $MeasurementSeconds
-            if ($LASTEXITCODE -ne 0) { throw "Inventory probe $role trial $trial failed." }
-            $sample = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-            $runtime ??= $sample.environment.runtime
-            if ($sample.workloadKey -cne $workload -or $sample.environment.architecture -cne 'x64' -or
-                $sample.environment.runtime -cne $runtime -or $sample.measurement.completedOperations -le 0)
-            { throw 'Inventory trials require nonempty measurements of the same workload and runtime.' }
-            if (($role -ceq 'candidate' -and -not $sample.implementation.EndsWith("+$commit", [StringComparison]::Ordinal)) -or
-                ($role -ceq 'reference' -and $sample.implementation -cne '1.0.0+7380d7b028c72b2aae348b778711d104d022a3f8'))
-            { throw "The $role trial used a different Control Plane assembly." }
-            if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $sample.implementation)
-            { throw "The $role assembly changed between inventory trials." }
-            $implementations[$role] = $sample.implementation
-            $records.Add([ordered]@{
-                workloadKey = $workload
-                trial = $trial
-                role = $role
-                path = $relativePath
-                sha256 = (Get-FileHash -LiteralPath $path).Hash.ToLowerInvariant()
-            })
+            $order = if ($trial % 2 -eq 0) { @('candidate', 'reference') } else { @('reference', 'candidate') }
+            foreach ($role in $order)
+            {
+                $relativePath = "$($workload.sourceCount)-sources-$($workload.clientCount)-clients-$role-$trial.json"
+                $path = Join-Path $raw $relativePath
+                & $dotnet $assemblies[$role] $path $role $commit $trial $WarmupSeconds $MeasurementSeconds $workload.sourceCount $workload.clientCount
+                if ($LASTEXITCODE -ne 0) { throw "Inventory probe $role trial $trial failed for '$($workload.key)'." }
+                $sample = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+                $runtime ??= $sample.environment.runtime
+                if ($sample.workloadKey -cne $workload.key -or $sample.environment.architecture -cne 'x64' -or
+                    $sample.environment.runtime -cne $runtime -or $sample.measurement.completedOperations -le 0 -or
+                    $sample.measurement.workers.Count -ne $workload.clientCount)
+                { throw 'Inventory trials require nonempty measurements of the same workload and runtime.' }
+                if (($role -ceq 'candidate' -and -not $sample.implementation.EndsWith("+$commit", [StringComparison]::Ordinal)) -or
+                    ($role -ceq 'reference' -and $sample.implementation -cne '1.0.0+7380d7b028c72b2aae348b778711d104d022a3f8'))
+                { throw "The $role trial used a different Control Plane assembly." }
+                if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $sample.implementation)
+                { throw "The $role assembly changed between inventory trials." }
+                $implementations[$role] = $sample.implementation
+                $records.Add([ordered]@{
+                    workloadKey = $workload.key
+                    trial = $trial
+                    role = $role
+                    path = $relativePath
+                    sha256 = (Get-FileHash -LiteralPath $path).Hash.ToLowerInvariant()
+                })
+                Write-Output "Captured $role trial $($trial + 1)/$Trials."
+            }
         }
     }
     if ((& git -C $root rev-parse HEAD).Trim() -cne $commit) { throw 'The checkout commit changed during the probe.' }

@@ -10,26 +10,24 @@ using BlueTusk.Data;
 using BlueTusk.Streams;
 using BlueTusk.Streams.Storage.PostgreSql;
 
-const int sourceCount = 100;
-const int clientCount = 32;
-const string schema = "control_plane_inventory_probe";
 const string endpoint = "bluetusk/api/overview";
 
 var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_INVENTORY_PROBE_CONNECTION");
 ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
-await using var dataSource = BlueTuskDataSource.Create(connectionString);
-using var deadline = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+using var deadline = new CancellationTokenSource(TimeSpan.FromMinutes(22));
 var token = deadline.Token;
 
-if (args is ["seed"])
+if (args is ["seed", var seedCount])
 {
+    var count = ParseCount(seedCount);
+    await using var seedDataSource = BlueTuskDataSource.Create(connectionString);
     var relay = new PostgreSqlDurableChangeRelay(new PostgreSqlStreamsStorageOptions
     {
-        ControlDataSource = dataSource,
-        ControlSchema = schema,
+        ControlDataSource = seedDataSource,
+        ControlSchema = SchemaName(count),
     });
     await relay.InitializeAsync(token);
-    for (var i = 0; i < sourceCount; i++)
+    for (var i = 0; i < count; i++)
     {
         var slot = "inventory_probe_" + i.ToString(CultureInfo.InvariantCulture);
         await relay.RegisterSourceAsync(
@@ -40,17 +38,25 @@ if (args is ["seed"])
     return;
 }
 
-if (args is not [var outputPath, var role, var commit, var trialNumber, var warmup, var duration])
+if (args is not [var outputPath, var role, var commit, var trialNumber, var warmup, var duration, var sources, var clients])
 {
-    throw new ArgumentException("Select seed or specify an output path, role, commit, trial number, warmup seconds and measurement seconds.");
+    throw new ArgumentException("Specify seed and source count, or an output path, role, commit, trial number, warmup seconds, measurement seconds, source count and client count.");
 }
 
+var sourceCount = ParseCount(sources);
+var clientCount = ParseCount(clients);
+// The published reader opens a slot connection while holding its inventory connection.
+var connectionOptions = new BlueTuskConnectionStringBuilder(connectionString)
+{
+    MaximumPoolSize = Math.Max(100, 2 * clientCount),
+};
+await using var dataSource = BlueTuskDataSource.Create(connectionOptions.ConnectionString);
 var builder = WebApplication.CreateSlimBuilder();
 builder.Logging.ClearProviders();
 builder.WebHost.ConfigureKestrel(server => server.Listen(IPAddress.Loopback, 0));
 builder.Services.AddAuthorizationBuilder().AddPolicy("probe-read", policy => policy.RequireAssertion(_ => true));
 builder.Services.AddSingleton<IControlPlaneQueryService>(new PostgreSqlControlPlaneQueryService(
-    [new ControlPlanePostgreSqlSource("probe", dataSource, dataSource, schema)]));
+    [new ControlPlanePostgreSqlSource("probe", dataSource, dataSource, SchemaName(sourceCount))]));
 // The 1.0 Dashboard declares these service parameters while building routes.
 // The only exercised endpoint is the real inventory read.
 builder.Services.AddSingleton<IControlPlaneSyncQueryService>(_ => throw UnusedRoute());
@@ -64,17 +70,18 @@ await app.StartAsync(token);
 using var http = new HttpClient(new SocketsHttpHandler { MaxConnectionsPerServer = clientCount })
 {
     BaseAddress = new Uri(app.Urls.Single() + "/"),
+    Timeout = TimeSpan.FromMinutes(10),
 };
 var warmupSeconds = int.Parse(warmup, CultureInfo.InvariantCulture);
 var measurementSeconds = int.Parse(duration, CultureInfo.InvariantCulture);
-await CaptureAsync(http, warmupSeconds, false, token);
+await CaptureAsync(http, warmupSeconds, sourceCount, clientCount, false, token);
 
 using var process = Process.GetCurrentProcess();
 var gc = Collections();
 var allocated = GC.GetTotalAllocatedBytes(precise: true);
 var cpu = process.TotalProcessorTime;
 var start = Stopwatch.GetTimestamp();
-var workers = await CaptureAsync(http, measurementSeconds, true, token);
+var workers = await CaptureAsync(http, measurementSeconds, sourceCount, clientCount, true, token);
 var elapsed = Stopwatch.GetTimestamp() - start;
 process.Refresh();
 var os = OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsLinux() ? "linux" :
@@ -120,7 +127,23 @@ static int[] Collections() => [GC.CollectionCount(0), GC.CollectionCount(1), GC.
 static InvalidOperationException UnusedRoute() =>
     new("The probe only serves inventory requests.");
 
-static Task<List<long>[]> CaptureAsync(HttpClient http, int seconds, bool measure, CancellationToken token)
+static int ParseCount(string value)
+{
+    var count = int.Parse(value, CultureInfo.InvariantCulture);
+    ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+    return count;
+}
+
+static string SchemaName(int sourceCount) =>
+    "control_plane_inventory_probe_" + sourceCount.ToString(CultureInfo.InvariantCulture);
+
+static Task<List<long>[]> CaptureAsync(
+    HttpClient http,
+    int seconds,
+    int sourceCount,
+    int clientCount,
+    bool measure,
+    CancellationToken token)
 {
     var finish = Stopwatch.GetTimestamp() + seconds * Stopwatch.Frequency;
     return Task.WhenAll(Enumerable.Range(0, clientCount).Select(_ => WorkerAsync()));
