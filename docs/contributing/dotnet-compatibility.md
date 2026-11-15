@@ -46,10 +46,17 @@ The repository builds with the SDK pinned in `global.json` (currently
 11.0.100). This build-time requirement is separate from the application's
 runtime version. The C# compiler and private PolySharp build dependency supply
 language support. Runtime-specific code paths preserve functionality where
-framework APIs differ. Libraries may use a dependency's compatible .NET
-Standard assets on an older runtime. The compatibility suite verifies BlueTusk
-behavior on the requested runtime. Microsoft tracks upstream servicing
-separately in its [.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core).
+framework APIs differ.
+
+On .NET 5–7, BlueTusk uses compatible .NET Standard assets from dependencies
+such as `Microsoft.Bcl.TimeProvider`, `System.Diagnostics.DiagnosticSource`,
+and `System.Text.Json`. NuGet can restore these assets while their build
+targets warn that the selected framework is outside the upstream package's
+support and test matrix. These warnings remain visible in consuming builds.
+BlueTusk's compatibility matrix exercises its own behavior on the exact
+requested runtime. Microsoft has ended servicing for .NET 5–7 and publishes
+the lifecycle for all .NET versions in its
+[.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core).
 
 The optional PostgreSQL-native Graph engine uses a separate server extension.
 Its CI workflow verifies EF and Continuous Graph on .NET 5–11 with PostgreSQL
