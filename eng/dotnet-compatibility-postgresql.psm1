@@ -1,6 +1,37 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+function Save-DotNetCompatibilityArchive
+{
+    param([object] $Source, [string] $Archive)
+
+    if (-not [IO.File]::Exists($Archive))
+    {
+        # Stage on the cache filesystem so a second run sees only completed archives.
+        $download = "$Archive.$([guid]::NewGuid().ToString('N')).download"
+        try
+        {
+            Invoke-WebRequest -Uri $Source.url -OutFile $download
+            if ((Get-FileHash -LiteralPath $download -Algorithm SHA256).Hash -ine $Source.sha256)
+            { throw 'The downloaded PostgreSQL fixture archive did not match its pinned SHA256.' }
+            try
+            {
+                [IO.File]::Move($download, $Archive)
+            }
+            catch [IO.IOException]
+            {
+                if (-not [IO.File]::Exists($Archive)) { throw }
+            }
+        }
+        finally
+        {
+            [IO.File]::Delete($download)
+        }
+    }
+    if ((Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash -ine $Source.sha256)
+    { throw 'The cached PostgreSQL fixture archive did not match its pinned SHA256.' }
+}
+
 function Start-DotNetCompatibilityPostgreSql
 {
     param(
@@ -65,16 +96,7 @@ function Start-DotNetCompatibilityPostgreSql
             New-Item -ItemType Directory -Path $DownloadCache -Force | Out-Null
             $archiveName = [IO.Path]::GetFileName(([uri]$Contract.windowsArchive.url).AbsolutePath)
             $archive = Join-Path $DownloadCache $archiveName
-            if (-not (Test-Path -LiteralPath $archive))
-            {
-                $download = Join-Path $WorkDirectory $archiveName
-                Invoke-WebRequest -Uri $Contract.windowsArchive.url -OutFile $download
-                if ((Get-FileHash -LiteralPath $download -Algorithm SHA256).Hash -ine $Contract.windowsArchive.sha256)
-                { throw 'PostgreSQL Windows archive did not match its pinned SHA256.' }
-                Move-Item -LiteralPath $download -Destination $archive -Force
-            }
-            if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -ine $Contract.windowsArchive.sha256)
-            { throw 'PostgreSQL Windows archive did not match its pinned SHA256.' }
+            Save-DotNetCompatibilityArchive -Source $Contract.windowsArchive -Archive $archive
             $archiveEntries = @('pgsql/bin', 'pgsql/lib', 'pgsql/share')
             if ($WithPgVector) { $archiveEntries += 'pgsql/include' }
             & tar -xf $archive -C $WorkDirectory @archiveEntries
@@ -184,16 +206,7 @@ function Install-DotNetCompatibilityPostgreSqlExtension
     $source = $Contract.windowsExtensionArchive
     $name = [IO.Path]::GetFileName(([uri]$source.url).AbsolutePath)
     $archive = Join-Path $DownloadCache "$Extension-$($Contract.extensionVersion)-$name"
-    if (-not (Test-Path -LiteralPath $archive))
-    {
-        $download = Join-Path $WorkDirectory $name
-        Invoke-WebRequest -Uri $source.url -OutFile $download
-        if ((Get-FileHash -LiteralPath $download -Algorithm SHA256).Hash -ine $source.sha256)
-        { throw "$Extension archive did not match its pinned SHA256." }
-        Move-Item -LiteralPath $download -Destination $archive -Force
-    }
-    if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -ine $source.sha256)
-    { throw "$Extension archive did not match its pinned SHA256." }
+    Save-DotNetCompatibilityArchive -Source $source -Archive $archive
     $staging = Join-Path $WorkDirectory $Extension
     Expand-Archive -LiteralPath $archive -DestinationPath $staging
     if ($Extension -ceq 'postgis')
