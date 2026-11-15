@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace BlueTusk.Live.Tests;
 
@@ -100,12 +101,15 @@ public sealed class LiveAspNetCoreTransportTests
             request, Principal(), resolverA, protector, cancellationToken: cancellationToken);
         var resumeToken = Assert.IsType<string>(Assert.Single(original.Replay).ResumeToken);
 
-        var services = new ServiceCollection();
-        services.AddRouting();
-        services.AddLogging();
-        services.AddSingleton<ILiveTransportSubscriptionResolver>(resolverB);
-        services.AddBlueTuskLiveAspNetCore(protector);
-        await using var provider = services.BuildServiceProvider();
+        using var host = new HostBuilder()
+            .ConfigureServices((_, services) =>
+            {
+                services.AddRouting();
+                services.AddSingleton<ILiveTransportSubscriptionResolver>(resolverB);
+                services.AddBlueTuskLiveAspNetCore(protector);
+            })
+            .Build();
+        var provider = host.Services;
         var routes = new TestEndpointRouteBuilder(provider);
         routes.MapBlueTuskLiveServerSentEvents();
         var endpoint = Assert.Single(routes.DataSources.SelectMany(static item => item.Endpoints));
