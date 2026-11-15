@@ -84,10 +84,10 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
         Assert.Contains("<+>", sql, StringComparison.Ordinal);
         Assert.Contains("<~>", sql, StringComparison.Ordinal);
         Assert.Contains("<%>", sql, StringComparison.Ordinal);
-        Assert.Contains("@probe", sql, StringComparison.Ordinal);
-        Assert.Contains("@halfProbe", sql, StringComparison.Ordinal);
-        Assert.Contains("@sparseProbe", sql, StringComparison.Ordinal);
-        Assert.Contains("@bitProbe", sql, StringComparison.Ordinal);
+        Assert.Contains("\"embedding\" <-> @", sql, StringComparison.Ordinal);
+        Assert.Contains("\"half_embedding\" <-> @", sql, StringComparison.Ordinal);
+        Assert.Contains("\"sparse_embedding\" <-> @", sql, StringComparison.Ordinal);
+        Assert.Contains("\"bits\" <~> @", sql, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -103,8 +103,14 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
 
         publicExtension.Info.PopulateDebugInfo(debugInfo);
 
+#if NET5_0
+        Assert.Equal(
+            publicExtension.Info.GetServiceProviderHashCode(),
+            matchingExtension.Info.GetServiceProviderHashCode());
+#else
         Assert.True(publicExtension.Info.ShouldUseSameServiceProvider(matchingExtension.Info));
         Assert.False(publicExtension.Info.ShouldUseSameServiceProvider(customExtension.Info));
+#endif
         Assert.NotEqual(
             publicExtension.Info.GetServiceProviderHashCode(),
             customExtension.Info.GetServiceProviderHashCode());
