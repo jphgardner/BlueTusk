@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using BlueTusk.Data;
 using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
 using BlueTusk.Streams;
@@ -63,7 +64,10 @@ internal static class StreamsCommitDeliveryCapture
 
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         var cancellationToken = timeout.Token;
+        var wallTicks = new long[options.MeasurementTransactions];
         var samples = new long[checked(options.MeasurementTransactions * options.ChangesPerTransaction)];
+        await using var clockConnection = new BlueTuskConnection(connectionString);
+        await clockConnection.OpenAsync(cancellationToken);
         await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString, cancellationToken);
         var identity = await replication.IdentifySystemAsync(cancellationToken);
         _ = await replication.CreateReplicationSlotAsync(options.Slot, temporary: true, cancellationToken: cancellationToken);
@@ -81,6 +85,7 @@ internal static class StreamsCommitDeliveryCapture
             _ = await ReadDeliveryAsync();
         }
 
+        var clockBefore = await SampleClockOffsetAsync(clockConnection, cancellationToken);
         using var process = Process.GetCurrentProcess();
         Signal(options.MeasurementReadyPath);
 
@@ -90,17 +95,33 @@ internal static class StreamsCommitDeliveryCapture
         var started = Stopwatch.GetTimestamp();
         for (var index = 0; index < options.MeasurementTransactions; index++)
         {
-            var latency = await ReadDeliveryAsync();
-            samples.AsSpan(index * options.ChangesPerTransaction, options.ChangesPerTransaction).Fill(latency);
+            wallTicks[index] = await ReadDeliveryAsync();
         }
 
         var elapsed = Stopwatch.GetElapsedTime(started).Ticks;
         var allocated = GC.GetTotalAllocatedBytes(precise: true) - allocatedBefore;
         var gc = new[] { GC.CollectionCount(0) - gcBefore[0], GC.CollectionCount(1) - gcBefore[1], GC.CollectionCount(2) - gcBefore[2] };
         process.Refresh();
+        var cpu = (process.TotalProcessorTime - cpuBefore).TotalMilliseconds;
+        var peakRss = process.PeakWorkingSet64;
+
+        // Bracket clock offset on either side of the window. Retain the original wall-clock
+        // observations alongside upper-bound diagnostic latency, with no dropped samples.
+        var clockAfter = await SampleClockOffsetAsync(clockConnection, cancellationToken);
+        var upperOffset = Math.Max(clockBefore.LatestOffsetTicks, clockAfter.LatestOffsetTicks);
+        for (var index = 0; index < wallTicks.Length; index++)
+        {
+            var latencyUpperBound = wallTicks[index] + upperOffset;
+            if (latencyUpperBound <= 0)
+            {
+                throw new InvalidDataException("The sampled clock bounds do not explain the WAL and delivery timestamps.");
+            }
+
+            samples.AsSpan(index * options.ChangesPerTransaction, options.ChangesPerTransaction).Fill(latencyUpperBound);
+        }
+
         var measurement = new ProviderRequestCapture.Window(
-            elapsed, samples.Length, allocated, (process.TotalProcessorTime - cpuBefore).TotalMilliseconds,
-            process.PeakWorkingSet64, gc, [new(samples, samples.Length)]);
+            elapsed, samples.Length, allocated, cpu, peakRss, gc, [new(samples, samples.Length)]);
         var report = new PerformanceEvidenceGenerator.TrialFile(
             1, "bluetusk-performance-trial", "Streams",
             $"{os}|Streams|changes={options.ChangesPerTransaction}|scenario=commit-to-delivery",
@@ -111,12 +132,18 @@ internal static class StreamsCommitDeliveryCapture
                 architecture = "x64",
                 runtime = RuntimeInformation.FrameworkDescription,
                 postgreSqlImage = options.PostgreSqlImage,
-                latency = "PostgreSQL WAL commit timestamp to candidate delivery, in UTC ticks",
+                latency = "WAL commit to delivery UTC ticks plus the largest sampled source-clock offset bound",
+                clockBefore,
+                clockAfter,
+                sourceClockUpperOffsetTicks = upperOffset,
+                changesPerTransaction = options.ChangesPerTransaction,
+                rawWallTicksByTransaction = wallTicks,
+                clockOffsetAssumption = "Source-to-client offset remains within the endpoint bounds during measurement",
                 sourceWriter = "separate process",
                 allocation = "process-wide managed allocation counter delta",
                 gc = "managed collection count delta by generation",
                 peakRss = "candidate process lifetime through measurement end",
-            }),
+            }, JsonOptions),
             TimeSpan.TicksPerSecond, measurement);
         await using var output = new FileStream(options.OutputPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
         await JsonSerializer.SerializeAsync(output, report, JsonOptions, cancellationToken);
@@ -137,16 +164,40 @@ internal static class StreamsCommitDeliveryCapture
                 throw new InvalidDataException("Replication delivered an unexpected change count or a repeated/out-of-order commit.");
             }
 
-            var latency = (delivered - transaction.CommitTimestamp).Ticks;
-            if (latency <= 0)
-            {
-                throw new InvalidDataException("Delivery time did not follow the WAL commit timestamp. Check PostgreSQL and client clock synchronization.");
-            }
-
             previous = transaction.CommitPosition;
             await delivery.AcknowledgeAsync(cancellationToken);
-            return latency;
+            return (delivered - transaction.CommitTimestamp).Ticks;
         }
+    }
+
+    private sealed record ClockOffset(long EarliestOffsetTicks, long LatestOffsetTicks);
+
+    private static async Task<ClockOffset> SampleClockOffsetAsync(
+        BlueTuskConnection connection, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT (extract(epoch FROM clock_timestamp()) * 10000000)::bigint";
+        ClockOffset? narrowest = null;
+        for (var sample = 0; sample < 12; sample++)
+        {
+            var before = DateTimeOffset.UtcNow.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks;
+            var server = (long)(await command.ExecuteScalarAsync(cancellationToken))!;
+            var after = DateTimeOffset.UtcNow.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks;
+            if (after < before)
+            {
+                throw new InvalidDataException("The client wall clock moved backwards during clock sampling.");
+            }
+
+            // The server timestamp must have been sampled between the two client observations.
+            var interval = new ClockOffset(server - after, server - before);
+            if (narrowest is null ||
+                after - before < narrowest.LatestOffsetTicks - narrowest.EarliestOffsetTicks)
+            {
+                narrowest = interval;
+            }
+        }
+
+        return narrowest!;
     }
 
     private static void Signal(string path)
