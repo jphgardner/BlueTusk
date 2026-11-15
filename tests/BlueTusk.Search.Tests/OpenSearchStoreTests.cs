@@ -215,10 +215,15 @@ public sealed class OpenSearchStoreTests
     public Task OpenSearch_bounded_workload_pages_all_ranked_parents_once() => WithFixtureAsync(async fixture =>
     {
         const int count = 32;
-        await Parallel.ForEachAsync(Enumerable.Range(0, count), new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (i, token) =>
+        const int workers = 4;
+        await Task.WhenAll(Enumerable.Range(0, workers).Select(async worker =>
         {
-            _ = await fixture.Store.UpsertAsync(new SearchDocument("tenant", "knowledge", i.ToString("D3", System.Globalization.CultureInfo.InvariantCulture), 1, "cat workload", "cat " + new string('x', 1024), true), token);
-        });
+            for (var i = worker; i < count; i += workers)
+            {
+                var id = i.ToString("D3", System.Globalization.CultureInfo.InvariantCulture);
+                _ = await fixture.Store.UpsertAsync(new SearchDocument("tenant", "knowledge", id, 1, "cat workload", "cat " + new string('x', 1024), true));
+            }
+        }));
         var scope = new SearchScope("tenant", "knowledge");
         var ranked = await fixture.Store.SearchAsync(scope, new SearchRequest { Mode = SearchMode.Hybrid, Text = "cat", Vector = new float[] { 1, 0, 0 }, CandidateLimit = 64 });
         var seen = new HashSet<string>(StringComparer.Ordinal);

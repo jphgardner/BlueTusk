@@ -3,9 +3,6 @@ using System.Text.Json;
 using BlueTusk.Data;
 using BlueTusk.Search.PgVector;
 using Xunit.Sdk;
-#if !NET7_0_OR_GREATER
-using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
-#endif
 
 namespace BlueTusk.Search.Tests;
 
