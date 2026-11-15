@@ -21,7 +21,7 @@ $contract = Read-CoreEvidenceJson $ContractPath
 $contractHash = (Get-FileHash -LiteralPath $ContractPath -Algorithm SHA256).Hash.ToLowerInvariant()
 $head = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot identify the current compatibility source commit.' }
-$currentFingerprint = if (-not $Historical) { Get-CoreTestSourceFingerprint -ExpectedCommit $head } else { $null }
+$currentFingerprint = if (-not $Historical) { Get-CoreTestSourceFingerprint -ExpectedCommit $head -RepositoryRoot $RepositoryRoot } else { $null }
 $baselineFingerprint = $null
 $pairs = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $expected = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)

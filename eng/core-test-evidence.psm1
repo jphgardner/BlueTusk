@@ -2,6 +2,43 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1')
 
+function Get-CoreTestSourceFingerprint
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
+        [string] $RepositoryRoot = (Split-Path $PSScriptRoot -Parent)
+    )
+
+    $root = (Resolve-Path -LiteralPath $RepositoryRoot).Path
+    $head = (& git -C $root rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0 -or $head -cne $ExpectedCommit)
+    {
+        throw 'Test capture checkout does not match its exact source commit.'
+    }
+    $status = @(& git -C $root status --porcelain)
+    if ($LASTEXITCODE -ne 0) { throw 'Test capture could not determine source cleanliness.' }
+    [string[]] $paths = @(& git -C $root -c core.quotepath=false ls-files --cached --others --exclude-standard)
+    if ($LASTEXITCODE -ne 0) { throw 'Test capture could not enumerate source inputs.' }
+    [Array]::Sort($paths, [StringComparer]::Ordinal)
+    $records = @(
+        foreach ($relativePath in $paths)
+        {
+            $file = Resolve-CoreEvidenceFile $root $relativePath -AllowEmpty
+            [pscustomobject]@{
+                path = $relativePath
+                sha256 = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            }
+        }
+    )
+    return [pscustomobject]@{
+        schemaVersion = 1
+        sourceCommit = $head
+        worktreeClean = $status.Count -eq 0
+        files = $records
+    }
+}
+
 function Get-CoreTestPlan
 {
     param([ValidateSet('Regression', 'Compatibility', 'SyncConnectors')][string] $Kind,
@@ -318,5 +355,5 @@ function Get-CoreTestManifestReport
         RawTestPayloadsValidated = $true; RemoteIdentityValidated = $false; ReleaseApproved = $false }
 }
 
-Export-ModuleMember -Function Get-CoreTestPlan, Get-CoreTrxSummary, New-CoreTestArtifact, Get-CoreTestAssemblyVersion,
+Export-ModuleMember -Function Get-CoreTestSourceFingerprint, Get-CoreTestPlan, Get-CoreTrxSummary, New-CoreTestArtifact, Get-CoreTestAssemblyVersion,
     Get-CoreTestShardReport, Get-CoreTestManifestReport

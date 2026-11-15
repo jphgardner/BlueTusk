@@ -73,7 +73,7 @@ $minio = $null
 $sourceCommit = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot identify the source commit for compatibility evidence.' }
 $sourceDirty = @(& git -C $RepositoryRoot status --porcelain --untracked-files=normal).Count -ne 0
-$sourceFingerprint = Get-CoreTestSourceFingerprint -ExpectedCommit $sourceCommit
+$sourceFingerprint = Get-CoreTestSourceFingerprint -ExpectedCommit $sourceCommit -RepositoryRoot $RepositoryRoot
 $fingerprintPath = Join-Path $runRoot 'source-fingerprint.json'
 $sourceFingerprint | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $fingerprintPath -Encoding utf8
 $sourceUnchanged = $false
@@ -350,7 +350,7 @@ try
             Write-Output "$target $($tool.command): installed package --help passed on runtime $runtimeVersion."
         }
     }
-    $finalFingerprint = Get-CoreTestSourceFingerprint -ExpectedCommit $sourceCommit
+    $finalFingerprint = Get-CoreTestSourceFingerprint -ExpectedCommit $sourceCommit -RepositoryRoot $RepositoryRoot
     $sourceUnchanged = (ConvertTo-Json -InputObject $sourceFingerprint -Depth 8 -Compress) -ceq
         (ConvertTo-Json -InputObject $finalFingerprint -Depth 8 -Compress)
 }
