@@ -37,7 +37,7 @@ try {
     Require ($source.commit -ceq $head -and $source.dirty -eq $false) 'Source capture is not clean or exact.'
     $platform = if ($IsLinux) { 'linux' } elseif ($IsWindows) { 'win32' } else { throw 'Only Linux and Windows are supported.' }
     # Invoke the legacy SDK directly while the repository selects .NET 11 for other builds.
-    $dotnetHost = (Get-Command dotnet -CommandType Application).Source
+    $dotnetHost = (Get-Command dotnet -CommandType Application | Select-Object -First 1).Source
     $sdkPattern = '^' + [regex]::Escape($DotnetSdkVersion) + ' \[(.+)\]$'
     $sdks = @(& $dotnetHost --list-sdks | Select-String -CaseSensitive -Pattern $sdkPattern)
     Require ($LASTEXITCODE -eq 0 -and $sdks.Count -eq 1) "The Edge lane requires the installed .NET SDK $DotnetSdkVersion."
