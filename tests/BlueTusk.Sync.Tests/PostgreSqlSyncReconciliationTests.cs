@@ -5,7 +5,7 @@ using BlueTusk.Streams.Testing;
 using BlueTusk.Sync.PostgreSql;
 using BlueTusk.Sync.Testing;
 using BlueTusk.TypeSystem;
-using Xunit.Sdk;
+using BlueTusk.Tests.Shared;
 
 namespace BlueTusk.Sync.Tests;
 
@@ -14,15 +14,10 @@ public sealed class PostgreSqlSyncReconciliationTests
     private static readonly ChangeSourceIdentity Source =
         new("reconcile-system", "reconcile-database", "reconcile-slot", "public:items");
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task PostgreSql_partitioned_hash_reconciliation_repairs_without_advancing_checkpoint()
     {
-        var connectionString = Environment.GetEnvironmentVariable(
-            "BLUETUSK_TEST_CONNECTION_STRING");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
-        }
+        var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING")!;
 
         var schema = "bluetusk_sync_reconcile_" + Guid.NewGuid().ToString("N");
         await using var dataSource = BlueTuskDataSource.Create(connectionString);
@@ -106,7 +101,7 @@ public sealed class PostgreSqlSyncReconciliationTests
             "application/json");
 
     private static async ValueTask<decimal?> ReadCheckpointAsync(
-        System.Data.Common.DbDataSource dataSource,
+        BlueTuskDataSource dataSource,
         string schema)
     {
         await using var connection = await dataSource.OpenConnectionAsync();

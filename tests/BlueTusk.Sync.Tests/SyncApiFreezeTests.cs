@@ -33,10 +33,10 @@ public sealed class SyncApiFreezeTests
                 .GetFileName(Path.GetDirectoryName(path)!)
                 .StartsWith("BlueTusk.Sync", StringComparison.Ordinal))
             .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
-            .Order(StringComparer.Ordinal)
+            .OrderBy(path => path, StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(discovered, registered.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(discovered, registered.Keys.OrderBy(path => path, StringComparer.Ordinal));
         foreach (var path in discovered)
         {
             var contents = File
