@@ -89,7 +89,9 @@ Dispatch the evidence producers at the same candidate SHA.
 
 1. Run the build with the Core packages-only option. It retains the five
    package families, their SBOMs and provenance, and the regression and stable
-   PostgreSQL test matrices. The website and PostgreSQL 19 preview jobs continue
+   PostgreSQL test matrices. The Orders API and worker build from that exact
+   package feed, and the Orders migration and tenant-isolation test runs on the
+   stable database fixture. The website and PostgreSQL 19 preview jobs continue
    to run in their ordinary build contexts.
 2. Run the runtime compatibility workflow with full coverage required. Run
    security, one-hour fuzzing, and the Core performance qualification workflow.
@@ -106,7 +108,8 @@ The release keeps both independent application pilots, independent review,
 security, backup and restore, rollback, the incident response exercise, SLO
 approval, and maintainer sign-off. These approvals bind the candidate and must
 follow the producer runs. The protected package-production approval still
-applies to tag publication. The readiness workflow retains a summary binding
+applies to tag publication. Maintainer sign-off identifies the exact candidate
+package manifest SHA-256. The readiness workflow retains a summary binding
 the candidate to the verified package manifest, provenance, and workflow
 attempts.
 

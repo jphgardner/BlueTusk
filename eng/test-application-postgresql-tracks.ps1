@@ -7,7 +7,7 @@ $planner = Join-Path $PSScriptRoot 'get-application-postgresql-test-plan.ps1'
 $verifier = Join-Path $PSScriptRoot 'verify-application-postgresql-results.ps1'
 $scratch = Join-Path ([IO.Path]::GetTempPath()) "bluetusk-application-tracks-$([Guid]::NewGuid().ToString('N'))"
 $null = New-Item -ItemType Directory -Path $scratch
-$configurationNames = @('release-tracks.json', 'v1.1-candidate-readiness.json', 'postgresql19-programme.json')
+$configurationNames = @('release-tracks.json', 'v1.1-candidate-readiness.json', 'v1.2-core-package-readiness.json', 'postgresql19-programme.json')
 $baseline = @{}
 foreach ($name in $configurationNames)
 { $baseline[$name] = Get-Content -LiteralPath (Join-Path $PSScriptRoot $name) -Raw }
@@ -66,11 +66,11 @@ try
     if ($unblocked.image -cne $core.image) { throw 'Graph milestone state changed the core test plan.' }
     Reset-Configuration
     $planCases = @(
-        @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.endurancePostgreSqlImage = 'postgres:18-alpine'} },
-        @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.endurancePostgreSqlImage = "postgres:19beta3-alpine@sha256:$('a' * 64)"} },
-        @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.endurancePostgreSqlImage = $null} },
-        @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.releaseVersion = '1.0.0'} },
-        @{ track = 'Core'; file = 'v1.1-candidate-readiness.json'; change = {param($c) $c.scope = 'ContinuousGraphPortable'} },
+        @{ track = 'Core'; file = 'v1.2-core-package-readiness.json'; change = {param($c) $c.endurance.postgresqlImage = 'postgres:18-alpine'} },
+        @{ track = 'Core'; file = 'v1.2-core-package-readiness.json'; change = {param($c) $c.endurance.postgresqlImage = "postgres:19beta3-alpine@sha256:$('a' * 64)"} },
+        @{ track = 'Core'; file = 'v1.2-core-package-readiness.json'; change = {param($c) $c.endurance.postgresqlImage = $null} },
+        @{ track = 'Core'; file = 'v1.2-core-package-readiness.json'; change = {param($c) $c.releaseVersion = '1.0.0'} },
+        @{ track = 'Core'; file = 'v1.2-core-package-readiness.json'; change = {param($c) $c.scope = 'ContinuousGraphPortable'} },
         @{ track = 'Core'; file = 'release-tracks.json'; change = {param($c) $c.postgresql19RequiredForCorePublication = $true} },
         @{ track = 'ContinuousGraphPortable'; file = 'release-tracks.json'; change = {param($c) $c.graph.portablePostgreSqlImage = 'postgres:18-alpine'} },
         @{ track = 'ContinuousGraphPortable'; file = 'release-tracks.json'; change = {param($c) $c.graph.portablePostgreSqlImage = "postgres:19beta3-alpine@sha256:$('a' * 64)"} },

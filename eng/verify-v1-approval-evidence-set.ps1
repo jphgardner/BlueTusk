@@ -15,8 +15,8 @@ param(
     [ValidateSet('Legacy', 'Core', 'CorePackages')]
     [string] $ReleaseTrack = 'Legacy',
 
-    [ValidatePattern('^1\.2\.0-rc\.[1-9][0-9]*$')]
-    [string] $PublishedPrereleaseVersion
+    [ValidatePattern('^[0-9a-f]{64}$')]
+    [string] $ExpectedPackageManifestSha256
 )
 
 Set-StrictMode -Version Latest
@@ -35,8 +35,8 @@ Import-Module (Join-Path $PSScriptRoot 'approval-release-tracks.psm1') -Force
 $gateIds = @(Get-ApprovalTrackGateIds -ReleaseTrack $ReleaseTrack)
 if ('website-deployment-acceptance' -cin $gateIds -and [string]::IsNullOrWhiteSpace($ExpectedWebsiteProductionMetricsSha256))
 { throw 'Website deployment acceptance requires the archived metrics SHA-256.' }
-if ($ReleaseTrack -eq 'CorePackages' -and [string]::IsNullOrWhiteSpace($PublishedPrereleaseVersion))
-{ throw 'The 1.2 Core package approval set requires its published prerelease version.' }
+if ($ReleaseTrack -eq 'CorePackages' -and [string]::IsNullOrWhiteSpace($ExpectedPackageManifestSha256))
+{ throw 'The 1.2 Core package approval set requires the candidate package manifest hash.' }
 $pilotsRequired = 'application-pilot-a' -cin $gateIds -and 'application-pilot-b' -cin $gateIds
 if (-not $pilotsRequired -and
     (('application-pilot-a' -cin $gateIds) -or ('application-pilot-b' -cin $gateIds)))
@@ -70,9 +70,9 @@ $approvals = @{}
 foreach ($gateId in $gateIds)
 {
     $path = Join-Path $directory "$gateId.json"
-    $prerelease = @{}
-    if ($ReleaseTrack -eq 'CorePackages') { $prerelease.PublishedPrereleaseVersion = $PublishedPrereleaseVersion }
-    & $verifier @prerelease `
+    $packageEvidence = @{}
+    if ($ReleaseTrack -eq 'CorePackages') { $packageEvidence.ExpectedPackageManifestSha256 = $ExpectedPackageManifestSha256 }
+    & $verifier @packageEvidence `
         -EvidencePath $path `
         -ExpectedGateId $gateId `
         -ExpectedCommit $ExpectedCommit `
@@ -121,12 +121,14 @@ if ($ReleaseTrack -in @('Core', 'CorePackages'))
     $signoff = $approvals['maintainer-signoff'].details
     $version = if ($ReleaseTrack -eq 'CorePackages') { '1.2.0' } else { '1.1.0' }
     $versions = @('Provider', 'Streams', 'Sync', 'Live', 'Control Plane' | ForEach-Object { "$_ $version" })
-    if (@($signoff.versions).Count -ne 5 -or
-        @(Compare-Object $versions @($signoff.versions) -CaseSensitive).Count -ne 0 -or
-        @($signoff.publishedPrereleaseFamilies).Count -ne 5 -or
-        @(Compare-Object $requiredFamilies @($signoff.publishedPrereleaseFamilies) -CaseSensitive).Count -ne 0)
+    if (@($signoff.versions).Count -ne 5 -or @(Compare-Object $versions @($signoff.versions) -CaseSensitive).Count -ne 0)
     {
-        throw "Core maintainer sign-off must identify exactly the five $version stable versions and five core prerelease families."
+        throw "Core maintainer sign-off must identify exactly the five $version stable versions."
+    }
+    if ($ReleaseTrack -eq 'Core' -and (@($signoff.publishedPrereleaseFamilies).Count -ne 5 -or
+        @(Compare-Object $requiredFamilies @($signoff.publishedPrereleaseFamilies) -CaseSensitive).Count -ne 0))
+    {
+        throw 'Historical Core maintainer sign-off must identify the five 1.1.0 prerelease families.'
     }
 }
 if ($pilotsRequired)

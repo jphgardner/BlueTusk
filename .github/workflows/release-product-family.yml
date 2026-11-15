@@ -243,13 +243,17 @@ jobs:
         shell: pwsh
         env:
           V1_GOVERNANCE_TOKEN: ${{ secrets.V1_GOVERNANCE_TOKEN }}
+          RELEASE_FAMILY: ${{ needs.verify-and-package.outputs.family }}
+          RELEASE_VERSION: ${{ needs.verify-and-package.outputs.version }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:V1_GOVERNANCE_TOKEN)) {
             throw 'The protected environment has no V1_GOVERNANCE_TOKEN secret.'
           }
-          ./eng/verify-github-governance.ps1 `
-            -Mode Remote `
-            -Token $env:V1_GOVERNANCE_TOKEN
+          $arguments = @{ Mode = 'Remote'; Token = $env:V1_GOVERNANCE_TOKEN }
+          if ($env:RELEASE_VERSION -ceq '1.2.0' -and $env:RELEASE_FAMILY -cin @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane')) {
+            $arguments.Scope = 'CorePackages'
+          }
+          ./eng/verify-github-governance.ps1 @arguments
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:

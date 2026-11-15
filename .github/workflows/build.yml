@@ -23,6 +23,7 @@ permissions:
 jobs:
   applications:
     name: Package-only application suite
+    if: github.event_name != 'workflow_dispatch' || !inputs.core_packages_only
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -394,6 +395,10 @@ jobs:
           -CoreReleaseVersion 1.2.0
           -ExpectedCommit ${{ github.sha }}
 
+      - name: Verify the Orders applications use the canonical Core packages
+        shell: pwsh
+        run: ./eng/test-core-package-consumer.ps1 -ExpectedCommit $env:GITHUB_SHA
+
       - name: Archive immutable core package evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -402,6 +407,14 @@ jobs:
             artifacts/v1.2-core-packages/package-manifest.json
             artifacts/v1.2-core-packages/packages
             artifacts/v1.2-core-packages/sbom
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain canonical Core package-consumer evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-1.2-package-consumer-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/core-package-consumer
           if-no-files-found: error
           retention-days: 90
 
@@ -499,7 +512,11 @@ jobs:
           echo 'BLUETUSK_TEST_TABLESPACE_LOCATION=/srv/postgresql/bluetusk_archive_space' >> "$GITHUB_ENV"
 
       - name: Run live provider matrix
-        run: dotnet test BlueTusk.Core.slnx --framework net10.0 --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+        # These extension suites run against their own pinned images below.
+        run: >-
+          dotnet test BlueTusk.Core.slnx --framework net10.0 --configuration Release --no-restore --maxcpucount:1
+          --filter 'FullyQualifiedName!~BlueTusk.Extensions.PgVector&FullyQualifiedName!~BlueTusk.Extensions.PostGIS&FullyQualifiedName!~BlueTusk.Extensions.TimescaleDb'
+          --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
 
       - name: Capture exact Core stable compatibility evidence
         if: github.event_name == 'workflow_dispatch'

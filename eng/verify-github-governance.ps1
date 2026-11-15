@@ -3,6 +3,9 @@ param(
     [ValidateSet('Source', 'Remote')]
     [string] $Mode = 'Source',
 
+    [ValidateSet('All', 'CorePackages')]
+    [string] $Scope = 'All',
+
     [string] $RepositoryRoot = (Split-Path $PSScriptRoot -Parent),
 
     [string] $Repository,
@@ -126,6 +129,35 @@ if ($environments.Count -eq 4)
 if (@(Compare-Object $requiredEnvironmentNames @($environments.name)).Count -ne 0)
 {
     throw 'Deployment environment names must match the protected release contract.'
+}
+if ($Scope -eq 'CorePackages')
+{
+    $tracks = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'eng/release-tracks.json') -Raw | ConvertFrom-Json
+    $manifest = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'eng/product-families.json') -Raw | ConvertFrom-Json
+    $core = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane')
+    if ($tracks.releaseVersion -cne '1.2.0' -or
+        @(Compare-Object $core @($tracks.stableFamilies) -SyncWindow 0 -CaseSensitive).Count -ne 0)
+    {
+        throw 'Core package governance requires the five exact 1.2 stable release families.'
+    }
+
+    $ready = $environments | Where-Object name -ceq 'v1-candidate-readiness'
+    $production = $environments | Where-Object name -ceq 'package-production'
+    $ready.workflow = '.github/workflows/core-1.2-package-readiness.yml'
+    $ready.requiredSecrets = @('V1_GOVERNANCE_TOKEN', 'V1_2_CORE_EVIDENCE_BASE64')
+    $patterns = @(foreach ($family in $core)
+    {
+        $prefix = $manifest.families.$family.publication.tagPrefix
+        "$prefix-v$($tracks.releaseVersion)"
+    })
+    if (@($patterns | Where-Object { $_ -cnotin $production.deploymentBranchPolicy.requiredPatterns }).Count -ne 0 -or
+        $production.deploymentBranchPolicy.customBranchPolicies -ne $true -or
+        'V1_GOVERNANCE_TOKEN' -cnotin $production.requiredSecrets -or 'NPM_TOKEN' -cnotin $production.requiredSecrets)
+    {
+        throw 'Core production governance requires the five exact 1.2 tags and package publishing credentials.'
+    }
+    $production.deploymentBranchPolicy.requiredPatterns = $patterns
+    $environments = @($ready, $production)
 }
 foreach ($environment in $environments)
 {

@@ -110,6 +110,35 @@ try
         $case++
     }
     Write-Output "Core approval self-test passed: eight synthetic approval records without Graph or the waived independent pilots, and $case rejected reintroduced-pilot, missing-rehearsal, failed-rehearsal, non-independent, wrong-version or stale-review cases."
+
+    # Exercise the 1.2 sign-off schema with the existing synthetic example.
+    # These temporary records are fixture inputs for the verifier only.
+    $signoff = $examples | Where-Object gateId -ceq 'maintainer-signoff'
+    $signoff = $signoff | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+    $signoff.details.versions = @('Provider 1.2.0', 'Streams 1.2.0', 'Sync 1.2.0', 'Live 1.2.0', 'Control Plane 1.2.0')
+    foreach ($name in @($signoff.details.PSObject.Properties.Name | Where-Object { $_ -clike 'publishedPrerelease*' }))
+    { $signoff.details.PSObject.Properties.Remove($name) }
+    $hash = 'a' * 64
+    $signoff.details | Add-Member -NotePropertyName candidatePackageManifestSha256 -NotePropertyValue $hash
+    $sample = Join-Path $root 'synthetic-1.2-signoff.json'
+    $signoff | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $sample -Encoding utf8
+    $recordVerifier = Join-Path $PSScriptRoot 'verify-v1-approval-evidence.ps1'
+    $arguments = @{
+        EvidencePath = $sample; ExpectedGateId = 'maintainer-signoff'; ExpectedCommit = '0' * 40
+        ExpectedPackageManifestSha256 = $hash; ReleaseTrack = 'CorePackages'
+    }
+    & $recordVerifier @arguments | Out-Null
+    $arguments.ExpectedPackageManifestSha256 = 'b' * 64
+    $failure = $null
+    try { & $recordVerifier @arguments | Out-Null } catch { $failure = $_.Exception.Message }
+    if ($failure -notmatch 'candidatePackageManifestSha256') { throw 'A different package manifest must invalidate 1.2 sign-off.' }
+    $arguments.ExpectedPackageManifestSha256 = $hash
+    $signoff.details | Add-Member -NotePropertyName publishedPrereleaseVersion -NotePropertyValue '1.1.0-rc.2'
+    $signoff | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $sample -Encoding utf8
+    $failure = $null
+    try { & $recordVerifier @arguments | Out-Null } catch { $failure = $_.Exception.Message }
+    if ($failure -notmatch 'publishedPrereleaseVersion') { throw 'Historic prerelease details must be rejected by the 1.2 sign-off schema.' }
+    Write-Output 'Core 1.2 sign-off schema accepted the bound synthetic manifest and rejected both a different manifest and historical prerelease details.'
 }
 finally
 {

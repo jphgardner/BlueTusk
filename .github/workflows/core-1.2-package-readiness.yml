@@ -81,7 +81,7 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:V1_GOVERNANCE_TOKEN)) {
             throw 'The protected environment has no V1_GOVERNANCE_TOKEN secret.'
           }
-          ./eng/verify-github-governance.ps1 -Mode Remote -Token $env:V1_GOVERNANCE_TOKEN
+          ./eng/verify-github-governance.ps1 -Mode Remote -Scope CorePackages -Token $env:V1_GOVERNANCE_TOKEN
 
       - name: Verify packages and readiness evidence
         shell: pwsh

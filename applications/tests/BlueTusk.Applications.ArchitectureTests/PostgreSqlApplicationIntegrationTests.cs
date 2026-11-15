@@ -1,11 +1,13 @@
+#if !BLUETUSK_CORE_PACKAGES_ONLY
 using BlueTusk.FraudInvestigation.Application;
 using BlueTusk.FraudInvestigation.Domain;
 using BlueTusk.FraudInvestigation.Infrastructure;
-using BlueTusk.OrderOperations.Application;
-using BlueTusk.OrderOperations.Infrastructure;
 using BlueTusk.ServiceTopology.Application;
 using BlueTusk.ServiceTopology.Domain;
 using BlueTusk.ServiceTopology.Infrastructure;
+#endif
+using BlueTusk.OrderOperations.Application;
+using BlueTusk.OrderOperations.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -21,6 +23,7 @@ public sealed class PostgreSqlApplicationIntegrationTests
         await VerifyOrdersAsync(GetDedicatedConnectionString());
     }
 
+#if !BLUETUSK_CORE_PACKAGES_ONLY
     [Fact]
     [Trait("ReleaseTrack", "ContinuousGraphPortable")]
     public async Task Topology_migrations_tenant_isolation_and_graph_paths_work()
@@ -34,6 +37,8 @@ public sealed class PostgreSqlApplicationIntegrationTests
     {
         await VerifyFraudAsync(GetDedicatedConnectionString());
     }
+
+#endif
 
     private static string GetDedicatedConnectionString()
     {
@@ -74,6 +79,7 @@ public sealed class PostgreSqlApplicationIntegrationTests
                 TestContext.Current.CancellationToken));
     }
 
+#if !BLUETUSK_CORE_PACKAGES_ONLY
     private static async Task VerifyTopologyAsync(string connectionString)
     {
         var services = new ServiceCollection();
@@ -187,4 +193,5 @@ public sealed class PostgreSqlApplicationIntegrationTests
     {
         public Guid Id { get; set; }
     }
+#endif
 }

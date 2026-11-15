@@ -14,10 +14,21 @@ $testClass = 'BlueTusk.Applications.ArchitectureTests.PostgreSqlApplicationInteg
 
 if ($ReleaseTrack -eq 'Core')
 {
-    $contract = Get-Content -LiteralPath (
-        Join-Path $ConfigurationDirectory 'v1.1-candidate-readiness.json') -Raw | ConvertFrom-Json
-    $image = [string]$contract.endurancePostgreSqlImage
-    if ($contract.schemaVersion -ne 1 -or $contract.scope -cne 'Core' -or
+    if ($tracks.releaseVersion -ceq '1.2.0')
+    {
+        $contract = Get-Content -LiteralPath (
+            Join-Path $ConfigurationDirectory 'v1.2-core-package-readiness.json') -Raw | ConvertFrom-Json
+        $image = [string]$contract.endurance.postgresqlImage
+        $scope = 'CorePackages'
+    }
+    else
+    {
+        $contract = Get-Content -LiteralPath (
+            Join-Path $ConfigurationDirectory 'v1.1-candidate-readiness.json') -Raw | ConvertFrom-Json
+        $image = [string]$contract.endurancePostgreSqlImage
+        $scope = 'Core'
+    }
+    if ($contract.schemaVersion -ne 1 -or $contract.scope -cne $scope -or
         $contract.releaseVersion -cne $tracks.releaseVersion -or
         $image -cnotmatch '^postgres:(15|16|17|18)(?:\.\d+)?-alpine@sha256:[0-9a-f]{64}$')
     {

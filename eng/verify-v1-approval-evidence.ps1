@@ -15,8 +15,8 @@ param(
     [ValidateSet('Legacy', 'Core', 'CorePackages')]
     [string] $ReleaseTrack = 'Legacy',
 
-    [ValidatePattern('^1\.2\.0-rc\.[1-9][0-9]*$')]
-    [string] $PublishedPrereleaseVersion
+    [ValidatePattern('^[0-9a-f]{64}$')]
+    [string] $ExpectedPackageManifestSha256
 )
 
 Set-StrictMode -Version Latest
@@ -154,8 +154,8 @@ function ConvertTo-UtcDateTime
     return $parsed
 }
 
-if ($ReleaseTrack -eq 'CorePackages' -and [string]::IsNullOrWhiteSpace($PublishedPrereleaseVersion))
-{ throw 'The 1.2 Core package approval set requires its published prerelease version.' }
+if ($ReleaseTrack -eq 'CorePackages' -and [string]::IsNullOrWhiteSpace($ExpectedPackageManifestSha256))
+{ throw 'The 1.2 Core package approval set requires the candidate package manifest hash.' }
 $contractPath = Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json'
 $contract = Get-Content -LiteralPath $contractPath -Raw | ConvertFrom-Json
 if ([int]$contract.schemaVersion -ne 1 -or
@@ -170,6 +170,15 @@ if ($ReleaseTrack -in @('Core', 'CorePackages'))
     # operational, independence and publication requirement is retained.
     foreach ($definition in $contract.gates)
     {
+        if ($ReleaseTrack -eq 'CorePackages' -and $definition.id -eq 'maintainer-signoff')
+        {
+            $definition.details = @($definition.details | Where-Object { $_.name -cnotlike 'publishedPrerelease*' })
+            $definition.details += [pscustomobject]@{
+                name = 'candidatePackageManifestSha256'
+                type = 'string'
+                allowedValues = @($ExpectedPackageManifestSha256)
+            }
+        }
         foreach ($field in $definition.details)
         {
             if ($definition.id -eq 'independent-release-review' -and $field.name -eq 'packageFamiliesReviewed')
@@ -182,8 +191,6 @@ if ($ReleaseTrack -in @('Core', 'CorePackages'))
                 { $field.minimum = 8 }
                 if ($definition.id -in @('application-pilot-a', 'application-pilot-b') -and $field.name -eq 'postgresqlMajorVersion')
                 { $field.maximum = 18 }
-                if ($definition.id -eq 'maintainer-signoff' -and $field.name -eq 'publishedPrereleaseVersion')
-                { $field.allowedValues = @($PublishedPrereleaseVersion) }
             }
             if ($definition.id -eq 'maintainer-signoff')
             {

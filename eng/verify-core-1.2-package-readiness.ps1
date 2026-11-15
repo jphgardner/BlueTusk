@@ -54,6 +54,7 @@ function Receive-Evidence([string] $Key, [string] $Prefix, [string] $Directory)
 }
 
 $packageArtifact = Receive-Evidence build "v1.2-core-packages-$ExpectedCommit" packages
+$null = Receive-Evidence build "core-1.2-package-consumer-$ExpectedCommit" consumer
 $null = Receive-Evidence build "v1.2-core-test-evidence-$ExpectedCommit" tests
 $null = Receive-Evidence runtime "verified-runtime-matrix-$ExpectedCommit" runtime
 $null = Receive-Evidence performance "core-performance-evidence-qualification-$ExpectedCommit" performance
@@ -72,6 +73,20 @@ $manifest = Resolve-CoreEvidenceFile $root 'packages/package-manifest.json'
 $provenance = Resolve-CoreEvidenceFile $root 'packages/sbom/build-provenance.json'
 function Get-Hash([string] $Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
 $provenanceHash = Get-Hash $provenance
+
+$consumer = Read-CoreEvidenceJson (Resolve-CoreEvidenceFile $root 'consumer/candidate.json')
+$consumerReport = Read-CoreEvidenceJson (Resolve-CoreEvidenceFile $root 'consumer/report.json')
+$consumerTrx = Resolve-CoreEvidenceFile $root 'consumer/tests.trx'
+if ($consumer.schemaVersion -ne 1 -or $consumer.scope -cne 'CorePackages' -or
+    $consumer.releaseVersion -cne $contract.releaseVersion -or $consumer.sourceCommit -cne $ExpectedCommit -or
+    $consumer.packageManifestSha256 -cne (Get-Hash $manifest) -or
+    $consumerReport.schemaVersion -ne 1 -or $consumerReport.sourceCommit -cne $ExpectedCommit -or
+    $consumerReport.sourceClean -ne $true -or $consumerReport.releaseTrack -cne 'Core' -or
+    $consumerReport.image -cne $endurance.postgresqlImage -or
+    $consumerReport.trxSha256 -cne (Get-Hash $consumerTrx))
+{ throw 'The Orders consumer evidence must identify the exact Core packages and stable fixture.' }
+& (Join-Path $PSScriptRoot 'verify-application-postgresql-results.ps1') -TrxPath $consumerTrx -ReleaseTrack Core | Out-Null
+
 foreach ($family in @('streams', 'sync', 'live-control-plane'))
 {
     $bound = Resolve-CoreEvidenceFile $root "$family/candidate-sbom/build-provenance.json"
@@ -142,13 +157,12 @@ $disturbanceArguments = @{
 }
 & (Join-Path $PSScriptRoot 'verify-endurance-disturbance-evidence.ps1') @disturbanceArguments | Out-Null
 
-$signoff = Read-CoreEvidenceJson (Resolve-CoreEvidenceFile $protected 'approvals/maintainer-signoff.json')
 $records = @($workflowKeys | ForEach-Object { $runs[$_].Record })
 $lastCompleted = ($records | ForEach-Object { [DateTimeOffset]$_.completedUtc } | Sort-Object -Descending)[0]
 $approvalArguments = @{
     EvidenceDirectory = Join-Path $protected 'approvals'; ExpectedCommit = $ExpectedCommit
     ReleaseTrack = $contract.approvalTrack; NotBeforeUtc = $lastCompleted
-    PublishedPrereleaseVersion = $signoff.details.publishedPrereleaseVersion
+    ExpectedPackageManifestSha256 = Get-Hash $manifest
 }
 & (Join-Path $PSScriptRoot 'verify-v1-approval-evidence-set.ps1') @approvalArguments | Out-Null
 

@@ -3,7 +3,8 @@ param(
     [string] $PackageCache = 'artifacts/application-nuget-cache',
     [string] $CandidateFeed = 'artifacts/prerelease/feed',
     [string] $ExpectedCommit,
-    [string] $ExpectedVersion
+    [string] $ExpectedVersion,
+    [switch] $CorePackages
 )
 
 Set-StrictMode -Version Latest
@@ -47,11 +48,27 @@ if ([string]::IsNullOrWhiteSpace($ExpectedVersion))
         Get-Content -LiteralPath (Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
             ConvertFrom-Json).version
 }
-$assetFiles = @(Get-ChildItem -LiteralPath (
-        Join-Path $repositoryRoot 'applications') -Filter 'project.assets.json' -File -Recurse)
-if ($assetFiles.Count -ne 20)
+if ($CorePackages)
 {
-    throw "Expected restore evidence for 20 application projects; found $($assetFiles.Count)."
+    if ($ExpectedVersion -cne '1.2.0') { throw 'Core package consumers must use the stable 1.2.0 candidate.' }
+    $relativeProjects = @(
+        'src/OrderOperations/BlueTusk.OrderOperations.Api',
+        'src/OrderOperations/BlueTusk.OrderOperations.Worker',
+        'tests/BlueTusk.Applications.ArchitectureTests'
+    )
+    $assetFiles = @(foreach ($relativeProject in $relativeProjects)
+    {
+        Get-Item -LiteralPath (Join-Path $repositoryRoot "applications/$relativeProject/obj/project.assets.json")
+    })
+}
+else
+{
+    $assetFiles = @(Get-ChildItem -LiteralPath (
+            Join-Path $repositoryRoot 'applications') -Filter 'project.assets.json' -File -Recurse)
+    if ($assetFiles.Count -ne 20)
+    {
+        throw "Expected restore evidence for 20 application projects; found $($assetFiles.Count)."
+    }
 }
 
 $packages = [ordered]@{}
@@ -96,7 +113,16 @@ foreach ($assetFile in $assetFiles)
     }
 }
 
-if ($packages.Count -lt 20)
+if ($CorePackages)
+{
+    $required = @('BlueTusk.EntityFrameworkCore', 'BlueTusk.Streams', 'BlueTusk.Sync', 'BlueTusk.Live', 'BlueTusk.ControlPlane')
+    if (@($required | Where-Object { -not $packages.Contains($_.ToLowerInvariant()) }).Count -ne 0 -or
+        @($packages.Keys | Where-Object { $_ -clike 'bluetusk.continuousgraph*' }).Count -ne 0)
+    {
+        throw 'The Orders package closure must exercise all five Core families.'
+    }
+}
+elseif ($packages.Count -lt 20)
 {
     throw "Expected broad candidate package coverage; only $($packages.Count) unique packages resolved."
 }
@@ -119,6 +145,18 @@ foreach ($record in $packages.Values)
         throw (
             "'$($record.identity)/$($record.version)' was not content-hash verified " +
             "from the candidate feed '$feedRoot'.")
+    }
+
+    if ($CorePackages)
+    {
+        $packageName = "$($record.identity).$($record.version).nupkg"
+        $candidate = Join-Path $feedRoot $packageName
+        $restored = Join-Path (Split-Path $metadataPath -Parent) $packageName.ToLowerInvariant()
+        if ((Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash -cne
+            (Get-FileHash -LiteralPath $restored -Algorithm SHA256).Hash)
+        {
+            throw "The restored '$packageName' bytes differ from the canonical candidate."
+        }
     }
 
     $nuspecPath = Join-Path (Split-Path $metadataPath -Parent) (
