@@ -14,7 +14,7 @@ internal static class BrowserCheckpointFile
         catch (FileNotFoundException) { return null; }
         using (reader)
         {
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
             var text = await reader.ReadToEndAsync(token).ConfigureAwait(false);
 #else
             var text = await reader.ReadToEndAsync().WaitAsync(token).ConfigureAwait(false);
