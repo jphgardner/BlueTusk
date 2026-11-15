@@ -284,7 +284,7 @@ try
                 if ($suite -ceq 'BlueTusk.Edge.Tests')
                 {
                     # The pinned legacy .NET images have no Node.js executable.
-                    $node = (Get-Command node -CommandType Application -ErrorAction Stop).Source
+                    $node = (Get-Command node -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
                     $dockerArguments += @('--mount', "type=bind,source=$node,target=/usr/local/bin/node,readonly")
                     $edgeHost = $container.PSObject.Properties['edgeHost']
                     if ($null -ne $edgeHost)
