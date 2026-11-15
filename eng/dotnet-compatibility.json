@@ -147,29 +147,35 @@
     {
       "project": "identity/BlueTusk.Identity.Aws/BlueTusk.Identity.Aws.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Identity.CompatibilityTests/BlueTusk.Identity.CompatibilityTests.csproj"
+      ]
     },
     {
       "project": "identity/BlueTusk.Identity.Azure/BlueTusk.Identity.Azure.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Identity.CompatibilityTests/BlueTusk.Identity.CompatibilityTests.csproj"
+      ]
     },
     {
       "project": "identity/BlueTusk.Identity.GoogleCloud/BlueTusk.Identity.GoogleCloud.csproj",
       "kind": "runtime",
-      "status": "pending",
+      "status": "covered",
       "minimumFramework": "net5.0",
       "constraint": null,
       "constraintSource": null,
-      "testProjects": []
+      "testProjects": [
+        "tests/BlueTusk.Identity.CompatibilityTests/BlueTusk.Identity.CompatibilityTests.csproj"
+      ]
     },
     {
       "project": "src/BlueTusk.Client/BlueTusk.Client.csproj",
