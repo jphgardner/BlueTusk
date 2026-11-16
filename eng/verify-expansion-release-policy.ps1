@@ -105,11 +105,11 @@ foreach ($selectedFamily in $selectedFamilies)
     }
     else
     {
-        "$tagPrefix-release-capacity.yml"
+        'expansion-release-capacity.yml'
     }
     if ($capacityWorkflow -cne $expectedCapacityWorkflow -or
-        $failoverWorkflow -cne "$tagPrefix-release-failover.yml" -or
-        $upgradeWorkflow -cne "$tagPrefix-release-upgrade.yml")
+        $failoverWorkflow -cne 'expansion-release-failover.yml' -or
+        $upgradeWorkflow -cne 'expansion-release-upgrade.yml')
     {
         throw "Expansion family '$selectedFamily' must use its declared product-specific capacity, failover and upgrade workflows."
     }

@@ -4,7 +4,8 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$workflow = Get-Content (Join-Path $root '.github/workflows/jobs-release-capacity.yml') -Raw
+Import-Module (Join-Path $PSScriptRoot 'expansion-candidate-evidence.psm1') -Force
+$workflow = Get-ExpansionWorkflowSource -Path (Join-Path $root '.github/workflows/expansion-release-capacity.yml') -Family Jobs
 $combinedWorkflow = Get-Content (Join-Path $root '.github/workflows/ecosystem-performance.yml') -Raw
 $wrapper = Get-Content (Join-Path $PSScriptRoot 'verify-jobs-release-capacity.ps1') -Raw
 $verifier = Get-Content (Join-Path $PSScriptRoot 'verify-ecosystem-performance.ps1') -Raw

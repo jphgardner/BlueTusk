@@ -1,0 +1,1030 @@
+name: Expansion release upgrade
+
+on:
+  workflow_dispatch:
+    inputs:
+      family:
+        description: Product family to qualify
+        required: true
+        type: choice
+        options:
+          - Events
+          - Jobs
+          - Documents
+          - Schema
+          - Projections
+          - Search
+          - Sql
+          - Studio
+          - Edge
+          - Workflows
+      candidate_sha:
+        description: Exact full SHA of the dispatch ref
+        required: true
+        type: string
+      confirmation:
+        description: Type RUN-<FAMILY>-RELEASE-UPGRADE
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bluetusk-reference-host
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Check the selected family and exact candidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify dispatch inputs
+        shell: bash
+        env:
+          FAMILY: ${{ inputs.family }}
+          CANDIDATE: ${{ inputs.candidate_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          case "$FAMILY" in Events|Jobs|Documents|Schema|Projections|Search|Sql|Studio|Edge|Workflows) ;; *) exit 1 ;; esac
+          [[ "$CANDIDATE" =~ ^[0-9a-f]{40}$ && "$CANDIDATE" = "$GITHUB_SHA" ]]
+          [[ "$CONFIRMATION" = "RUN-${FAMILY^^}-RELEASE-UPGRADE" ]]
+
+  qualify-events:
+    needs: validate
+    if: inputs.family == 'Events'
+    name: Isolated Windows Events cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/events-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Events baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Events upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-EVENTS-RELEASE-UPGRADE') { throw 'Exact manual Events upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Events upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Events -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55436;Database=bluetusk_events_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-events-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Events upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=events-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55436:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_events_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Events upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_events_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Events upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Events -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Events -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Events upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-events-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: events-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Events fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-events-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Events upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'events-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Events fixture." }
+
+  qualify-jobs:
+    needs: validate
+    if: inputs.family == 'Jobs'
+    name: Isolated Windows Jobs cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/jobs-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Jobs baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Jobs upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-JOBS-RELEASE-UPGRADE') { throw 'Exact manual Jobs upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Jobs upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-jobs-release-upgrade.ps1 -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "JOBS_UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55417;Database=bluetusk_jobs_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL 15
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-jobs-release-upgrade-pg15'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Jobs upgrade fixture name is in use or Docker is unavailable.' }
+          $budgets = Get-Content eng/jobs-release-capacity-budgets.json -Raw | ConvertFrom-Json
+          docker run -d --name $name --label bluetusk.owner=jobs-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55417:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:JOBS_UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_jobs_upgrade $budgets.postgreSql15Image
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Jobs upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_jobs_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Jobs upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse old/new overlap and rollback
+        shell: pwsh
+        run: ./eng/verify-jobs-release-upgrade.ps1 -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-jobs-release-upgrade.ps1 -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Jobs upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-jobs-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: jobs-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Jobs fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-jobs-release-upgrade-pg15'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Jobs upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'jobs-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Jobs fixture.' }
+
+  qualify-documents:
+    needs: validate
+    if: inputs.family == 'Documents'
+    name: Isolated Windows Documents cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/documents-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Documents baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Documents upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-DOCUMENTS-RELEASE-UPGRADE') { throw 'Exact manual Documents upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Documents upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Documents -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55432;Database=bluetusk_documents_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-documents-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Documents upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=documents-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55432:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_documents_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Documents upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_documents_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Documents upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Documents -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Documents -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Documents upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-documents-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: documents-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Documents fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-documents-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Documents upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'documents-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Documents fixture." }
+
+  qualify-schema:
+    needs: validate
+    if: inputs.family == 'Schema'
+    name: Isolated Windows Schema cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/schema-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Schema baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Schema upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-SCHEMA-RELEASE-UPGRADE') { throw 'Exact manual Schema upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Schema upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Schema -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55437;Database=bluetusk_schema_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-schema-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Schema upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=schema-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55437:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_schema_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Schema upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_schema_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Schema upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Schema -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Schema -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Schema upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-schema-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: schema-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Schema fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-schema-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Schema upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'schema-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Schema fixture." }
+
+  qualify-projections:
+    needs: validate
+    if: inputs.family == 'Projections'
+    name: Isolated Windows Projections cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/projections-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Projections baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Projections upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-PROJECTIONS-RELEASE-UPGRADE') { throw 'Exact manual Projections upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Projections upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Projections -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55431;Database=bluetusk_projections_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-projections-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Projections upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=projections-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55431:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_projections_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Projections upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_projections_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Projections upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Projections -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Projections -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Projections upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-projections-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: projections-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Projections fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-projections-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Projections upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'projections-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Projections fixture." }
+
+  qualify-search:
+    needs: validate
+    if: inputs.family == 'Search'
+    name: Isolated Windows Search cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/search-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Search baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Search upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-SEARCH-RELEASE-UPGRADE') { throw 'Exact manual Search upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Search upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Search -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55434;Database=bluetusk_search_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-search-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Search upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=search-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55434:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_search_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Search upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_search_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Search upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Search -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Search -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Search upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-search-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: search-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Search fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-search-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Search upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'search-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Search fixture." }
+
+  qualify-sql:
+    needs: validate
+    if: inputs.family == 'Sql'
+    name: Isolated Windows Sql cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/sql-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Sql baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Sql upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-SQL-RELEASE-UPGRADE') { throw 'Exact manual Sql upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Sql upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Sql -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55438;Database=bluetusk_sql_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-sql-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Sql upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=sql-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55438:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_sql_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Sql upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_sql_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Sql upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Sql -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Sql -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Sql upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-sql-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sql-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Sql fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-sql-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Sql upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'sql-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Sql fixture." }
+
+  qualify-studio:
+    needs: validate
+    if: inputs.family == 'Studio'
+    name: Isolated Windows Studio cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/studio-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Studio baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Studio upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-STUDIO-RELEASE-UPGRADE') { throw 'Exact manual Studio upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Studio upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Studio -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55439;Database=bluetusk_studio_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-studio-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Studio upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=studio-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55439:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_studio_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Studio upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_studio_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Studio upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Studio -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Studio -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Studio upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-studio-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: studio-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Studio fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-studio-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Studio upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'studio-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Studio fixture." }
+
+  qualify-edge:
+    needs: validate
+    if: inputs.family == 'Edge'
+    name: Isolated Windows Edge cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/edge-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Edge baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Edge upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-EDGE-RELEASE-UPGRADE') { throw 'Exact manual Edge upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Edge upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Edge -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55435;Database=bluetusk_edge_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-edge-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Edge upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=edge-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55435:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_edge_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Edge upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_edge_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Edge upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Edge -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Edge -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Edge upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-edge-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: edge-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Edge fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-edge-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Edge upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'edge-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Edge fixture." }
+
+  qualify-workflows:
+    needs: validate
+    if: inputs.family == 'Workflows'
+    name: Isolated Windows Workflows cross-binary rehearsal
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ROOT: artifacts/workflows-release-upgrade/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean candidate, deterministic Workflows baseline and manual confirmation
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Workflows upgrade requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-WORKFLOWS-RELEASE-UPGRADE') { throw 'Exact manual Workflows upgrade confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) {
+            throw 'Workflows upgrade runs are bound by head_sha; dispatch from a ref whose head is the candidate.'
+          }
+          ./eng/verify-expansion-release-upgrade.ps1 -Family Workflows -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Create disposable fixture credential
+        shell: pwsh
+        run: |
+          $fixtureCredential = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+          Write-Output "::add-mask::$fixtureCredential"
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "UPGRADE_FIXTURE_PASSWORD=$fixtureCredential" -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "BLUETUSK_TEST_CONNECTION_STRING=Host=127.0.0.1;Port=55433;Database=bluetusk_workflows_upgrade;Username=postgres;Password=$fixtureCredential;Pooling=false;SSL Mode=Disable" -Encoding utf8
+
+      - name: Start owned digest-pinned PostgreSQL fixture
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-workflows-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Workflows upgrade fixture name is in use or Docker is unavailable.' }
+          $policy = Get-Content eng/expansion-upgrade-policy.json -Raw | ConvertFrom-Json
+          if ([string]$policy.postgreSqlImage -cnotmatch '@sha256:[0-9a-f]{64}$') { throw 'The upgrade fixture image is not digest-pinned.' }
+          docker run -d --name $name --label bluetusk.owner=workflows-release-upgrade --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55433:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$env:UPGRADE_FIXTURE_PASSWORD" -e POSTGRES_DB=bluetusk_workflows_upgrade $policy.postgreSqlImage
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Workflows upgrade fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_workflows_upgrade *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Workflows upgrade fixture did not become ready.' }
+
+      - name: Build both immutable binaries and rehearse baseline, candidate and rollback
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Workflows -Mode Produce -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived source, baseline resolution, packages, binaries and phase evidence
+        shell: pwsh
+        run: ./eng/verify-expansion-release-upgrade.ps1 -Family Workflows -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Workflows upgrade evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-workflows-upgrade-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: workflows-upgrade-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Workflows fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-workflows-release-upgrade'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Workflows upgrade fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'workflows-release-upgrade' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove this run's Workflows fixture." }

@@ -12,15 +12,15 @@ $tag = 'jobs-v1.0.0'
 $digest = 'sha256:' + ('a' * 64)
 $otherDigest = 'sha256:' + ('b' * 64)
 $runs = @(
-    [pscustomobject]@{ workflowFile = 'jobs-release-capacity.yml'; runId = 101; runAttempt = 1 },
-    [pscustomobject]@{ workflowFile = 'jobs-release-failover.yml'; runId = 102; runAttempt = 1 },
-    [pscustomobject]@{ workflowFile = 'jobs-release-upgrade.yml'; runId = 103; runAttempt = 1 },
+    [pscustomobject]@{ workflowFile = 'expansion-release-capacity.yml'; runId = 101; runAttempt = 1 },
+    [pscustomobject]@{ workflowFile = 'expansion-release-failover.yml'; runId = 102; runAttempt = 1 },
+    [pscustomobject]@{ workflowFile = 'expansion-release-upgrade.yml'; runId = 103; runAttempt = 1 },
     [pscustomobject]@{ workflowFile = 'expansion-candidate-readiness.yml'; runId = 104; runAttempt = 2 }
 )
 $entries = @(
-    [ordered]@{ role = 'capacity'; workflowFile = 'jobs-release-capacity.yml'; runId = 101; runAttempt = 1; artifactName = "expansion-jobs-capacity-$commit"; artifactDigest = $digest },
-    [ordered]@{ role = 'failover'; workflowFile = 'jobs-release-failover.yml'; runId = 102; runAttempt = 1; artifactName = "expansion-jobs-failover-$commit"; artifactDigest = $digest },
-    [ordered]@{ role = 'upgrade'; workflowFile = 'jobs-release-upgrade.yml'; runId = 103; runAttempt = 1; artifactName = "expansion-jobs-upgrade-$commit"; artifactDigest = $digest }
+    [ordered]@{ role = 'capacity'; workflowFile = 'expansion-release-capacity.yml'; runId = 101; runAttempt = 1; artifactName = "expansion-jobs-capacity-$commit"; artifactDigest = $digest },
+    [ordered]@{ role = 'failover'; workflowFile = 'expansion-release-failover.yml'; runId = 102; runAttempt = 1; artifactName = "expansion-jobs-failover-$commit"; artifactDigest = $digest },
+    [ordered]@{ role = 'upgrade'; workflowFile = 'expansion-release-upgrade.yml'; runId = 103; runAttempt = 1; artifactName = "expansion-jobs-upgrade-$commit"; artifactDigest = $digest }
 )
 $evidence = [ordered]@{
     schemaVersion = 1

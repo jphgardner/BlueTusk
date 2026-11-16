@@ -108,7 +108,7 @@ foreach ($family in Get-ExpansionCapacityFamilies)
 {
     $definition = Get-ExpansionCapacityDefinition -Family $family
     Require ([string]$policy.families.$family.capacityWorkflow -ceq $definition.WorkflowFile) "$family capacity must use the policy workflow name."
-    $workflow = Get-Content -LiteralPath (Join-Path $root ".github/workflows/$($definition.WorkflowFile)") -Raw
+    $workflow = Get-ExpansionWorkflowSource -Path (Join-Path $root ".github/workflows/$($definition.WorkflowFile)") -Family $family
     Require ($workflow -match '(?m)^  workflow_dispatch:\s*$' -and $workflow -notmatch '(?m)^  (?:push|pull_request|schedule):\s*$') "$family capacity must be manual-only."
     Require ($workflow.Contains('ref: ${{ inputs.candidate_sha }}') -and $workflow.Contains('runs-on: [self-hosted, windows, x64, bluetusk-benchmark]') -and
         $workflow.Contains('group: bluetusk-reference-host') -and $workflow.Contains("'$($definition.Confirmation)'") -and

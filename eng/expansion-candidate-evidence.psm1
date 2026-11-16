@@ -349,6 +349,21 @@ function New-ExpansionReadinessRecord
     }
 }
 
-Export-ModuleMember -Function Get-ExpansionReadinessContract, Get-ExpansionReleaseIdentity,
+function Get-ExpansionWorkflowSource
+{
+    param([Parameter(Mandatory)][string] $Path, [Parameter(Mandatory)][string] $Family)
+
+    $source = Get-Content -LiteralPath $Path -Raw
+    $jobs = [regex]::Match($source, '(?m)^jobs:\r?$')
+    $slug = [regex]::Escape($Family.ToLowerInvariant())
+    $job = [regex]::Match($source, "(?ms)^  qualify-${slug}:\r?\n.*?(?=^  [a-z0-9-]+:\r?$|\z)")
+    if (!$jobs.Success -or !$job.Success -or $job.Index -le $jobs.Index)
+    {
+        throw "Workflow '$Path' must contain an isolated job for '$Family'."
+    }
+    return $source.Substring(0, $jobs.Index) + $job.Value
+}
+
+Export-ModuleMember -Function Get-ExpansionWorkflowSource, Get-ExpansionReadinessContract, Get-ExpansionReleaseIdentity,
     ConvertTo-ExpansionRunSummary, Get-ExpansionWorkflowArtifactName, Select-ExpansionQualificationRun, ConvertTo-ExpansionGithubRunRecord,
     Get-ExpansionRoleVerifier, New-ExpansionReadinessRecord

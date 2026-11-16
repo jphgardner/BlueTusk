@@ -5,7 +5,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $verifier = Join-Path $PSScriptRoot 'verify-jobs-failover-report.ps1'
-$workflow = Get-Content (Join-Path $root '.github/workflows/jobs-release-failover.yml') -Raw
+Import-Module (Join-Path $PSScriptRoot 'expansion-candidate-evidence.psm1') -Force
+$workflow = Get-ExpansionWorkflowSource -Path (Join-Path $root '.github/workflows/expansion-release-failover.yml') -Family Jobs
 $archiveVerifier = Get-Content (Join-Path $PSScriptRoot 'verify-jobs-release-failover.ps1') -Raw
 $policy = Get-Content (Join-Path $PSScriptRoot 'jobs-release-failover-policy.json') -Raw | ConvertFrom-Json
 $sourcePath = Join-Path $root 'docs/jobs/performance-reports/optimized-physical-promotion-pg18.json'
