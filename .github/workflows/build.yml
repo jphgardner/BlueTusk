@@ -1,10 +1,10 @@
-name: Kubernetes runner smoke
+name: Windows benchmark runner smoke
 
 on:
   workflow_dispatch:
     inputs:
       runner_label:
-        description: Unique label for the smoke runner
+        description: Unique label for this Windows smoke job
         type: string
         required: true
 
@@ -12,18 +12,44 @@ permissions: {}
 
 jobs:
   smoke:
-    name: Run a Linux job on Kubernetes
-    runs-on: [self-hosted, linux, x64, '${{ inputs.runner_label }}']
-    timeout-minutes: 5
+    name: Verify Windows and Docker Compose
+    runs-on: [self-hosted, windows, x64, '${{ inputs.runner_label }}']
+    timeout-minutes: 10
     steps:
-      - name: Verify Kubernetes execution and workload isolation
-        shell: bash
+      - name: Verify toolchain and exercise a temporary PostgreSQL fixture
+        shell: pwsh
         run: |
-          set -euo pipefail
-          test "$RUNNER_OS" = Linux
-          test "$RUNNER_ARCH" = X64
-          test "$(id -u)" -ne 0
-          test -n "$KUBERNETES_SERVICE_HOST"
-          test ! -e /var/run/secrets/kubernetes.io/serviceaccount/token
-          test ! -S /var/run/docker.sock
-          printf 'BlueTusk runner smoke passed on %s\n' "$RUNNER_NAME"
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          if (-not $IsWindows -or $env:RUNNER_ARCH -cne 'X64') { throw 'Windows x64 is required.' }
+          if ((docker version --format '{{.Server.Os}}').Trim() -cne 'linux') { throw 'Linux container support is required.' }
+          docker compose version
+          if (-not (Test-Path -LiteralPath $env:BLUETUSK_EVIDENCE_STORE -PathType Container)) { throw 'Evidence store is missing.' }
+          $evidence = Join-Path $env:BLUETUSK_EVIDENCE_STORE "runner-smoke-$env:GITHUB_RUN_ID.txt"
+          $file = Join-Path $env:RUNNER_TEMP "runner-smoke-$env:GITHUB_RUN_ID.yml"
+          $compose = @('compose', '--project-name', "bt-runner-smoke-$env:GITHUB_RUN_ID", '-f', $file)
+          try {
+            @(
+              'services:',
+              '  postgres:',
+              '    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873',
+              '    environment: {POSTGRES_HOST_AUTH_METHOD: trust}',
+              '    ports: ["127.0.0.1::5432"]',
+              '    healthcheck:',
+              '      test: [CMD, pg_isready, -U, postgres]',
+              '      interval: 1s',
+              '      timeout: 2s',
+              '      retries: 20'
+            ) | Set-Content -LiteralPath $file
+            docker @compose up --quiet-pull -d --wait
+            if ((docker @compose exec -T postgres psql -X -U postgres -Atc 'SELECT 1').Trim() -cne '1') { throw 'PostgreSQL did not answer.' }
+            $endpoint = docker @compose port postgres 5432
+            $port = [int]($endpoint.Split(':')[-1])
+            $client = [System.Net.Sockets.TcpClient]::new()
+            try { $client.Connect('127.0.0.1', $port) } finally { $client.Dispose() }
+            Set-Content -LiteralPath $evidence 'Windows x64, Docker Compose, PostgreSQL and the evidence store passed.'
+            Get-Content -LiteralPath $evidence
+          }
+          finally {
+            if (Test-Path -LiteralPath $file) { docker @compose down --volumes }
+          }
