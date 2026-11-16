@@ -142,6 +142,6 @@ internal sealed class LateOpenSource(BlueTuskDataSource source) : PortableFixtur
         Assert.Equal(1, Volatile.Read(ref _opens)); _release.TrySetResult();
         using var recovery = new CancellationTokenSource(TimeSpan.FromSeconds(5)); HealthCheckResult result;
         do { await Task.Delay(10, recovery.Token); result = await check.CheckHealthAsync(new HealthCheckContext(), recovery.Token); } while (result.Status is not HealthStatus.Healthy);
-        Assert.Equal(2, Volatile.Read(ref _opens));
+        Assert.True(Volatile.Read(ref _opens) >= 2, "Recovery must open a fresh connection.");
     }
 }

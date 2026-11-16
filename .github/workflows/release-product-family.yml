@@ -150,7 +150,8 @@ jobs:
       - name: Verify formatting and documentation
         shell: pwsh
         run: |
-          dotnet format BlueTusk.slnx --no-restore --verify-no-changes
+          # The solution formatter loads one target framework, so it cannot determine if imports are unused across all targets.
+          dotnet format BlueTusk.slnx --no-restore --verify-no-changes --exclude-diagnostics IDE0005
           ./eng/verify-documentation.ps1
           ./eng/verify-supply-chain.ps1
 

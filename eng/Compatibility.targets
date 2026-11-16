@@ -19,11 +19,11 @@
           Condition="'$(TargetFramework)' != '' and ('$(BlueTuskRuntimeLibrary)' == 'true' or '$(BlueTuskRuntimeTests)' == 'true')">
     <MakeDir Directories="$(IntermediateOutputPath)Compatibility" />
     <WriteLinesToFile
-      File="$(IntermediateOutputPath)Compatibility/%(_BlueTuskCompatibilitySource.Filename).cs"
-      Lines="$([MSBuild]::Escape($([System.IO.File]::ReadAllText('%(_BlueTuskCompatibilitySource.FullPath)').Replace('namespace BlueTusk.Compatibility;', 'namespace $(RootNamespace).Compatibility;'))))"
+      File="$(IntermediateOutputPath)Compatibility/%(_BlueTuskCompatibilitySource.Filename).g.cs"
+      Lines="#nullable enable;$([MSBuild]::Escape($([System.IO.File]::ReadAllText('%(_BlueTuskCompatibilitySource.FullPath)').Replace('namespace BlueTusk.Compatibility;', 'namespace $(RootNamespace).Compatibility;'))))"
       Overwrite="true" WriteOnlyWhenDifferent="true" />
     <ItemGroup>
-      <Compile Include="@(_BlueTuskCompatibilitySource->'$(IntermediateOutputPath)Compatibility/%(Filename).cs')" />
+      <Compile Include="@(_BlueTuskCompatibilitySource->'$(IntermediateOutputPath)Compatibility/%(Filename).g.cs')" />
     </ItemGroup>
   </Target>
 </Project>
