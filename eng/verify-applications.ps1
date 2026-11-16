@@ -36,10 +36,24 @@ function Get-NpmIntegrity
 }
 [xml]$central = Get-Content -LiteralPath (
     Join-Path $applicationsRoot 'Directory.Packages.props') -Raw
+$applicationVersionDefaults = @($central.SelectNodes('/Project/PropertyGroup/BlueTuskApplicationPackageVersion'))
+if ($applicationVersionDefaults.Count -ne 1)
+{
+    throw 'Expected exactly one default BlueTuskApplicationPackageVersion in the central package file.'
+}
+$applicationVersion = $applicationVersionDefaults[0].InnerText.Trim()
 $centralVersions = @{}
 foreach ($node in @($central.SelectNodes('//PackageVersion')))
 {
-    $centralVersions[[string]$node.Include] = [string]$node.Version
+    $version = [string]$node.Version
+    $centralVersions[[string]$node.Include] = if ($version -ceq '$(BlueTuskApplicationPackageVersion)')
+    {
+        $applicationVersion
+    }
+    else
+    {
+        $version
+    }
 }
 
 $projects = @(Get-ChildItem -LiteralPath $applicationsRoot -Filter '*.csproj' -File -Recurse)

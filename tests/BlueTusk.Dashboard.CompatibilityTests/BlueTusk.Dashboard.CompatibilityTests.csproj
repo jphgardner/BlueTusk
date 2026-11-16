@@ -2,8 +2,10 @@
   <PropertyGroup>
     <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
     <BlueTuskRuntimeTests>true</BlueTuskRuntimeTests>
+    <BlueTuskProductFamily>ControlPlane</BlueTuskProductFamily>
     <UseAppHost Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</UseAppHost>
   </PropertyGroup>
+  <Import Project="..\..\eng\versions\ControlPlane.props" />
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

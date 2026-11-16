@@ -67,7 +67,9 @@ function Start-DotNetCompatibilityPostgreSql
             {
                 $env:POSTGRES_PASSWORD = $password
                 & docker run --detach --rm --name $fixture.container --publish '127.0.0.1::5432' `
-                    --env POSTGRES_PASSWORD --env "POSTGRES_DB=$database" $image postgres -c wal_level=logical | Out-Null
+                    --env POSTGRES_PASSWORD --env "POSTGRES_DB=$database" `
+                    --env 'POSTGRES_INITDB_ARGS=--auth-local=trust --auth-host=scram-sha-256' `
+                    $image postgres -c wal_level=logical | Out-Null
                 if ($LASTEXITCODE -ne 0) { throw 'Could not start the PostgreSQL compatibility container.' }
             }
             finally { $env:POSTGRES_PASSWORD = $previousPassword }

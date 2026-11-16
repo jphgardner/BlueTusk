@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.Data.Copy;
 using Xunit.Sdk;
 
 namespace BlueTusk.IntegrationTests;
@@ -95,8 +96,9 @@ public sealed class BlueTuskCancellationRecoveryIntegrationTests
             var backend = await identify.ExecuteScalarAsync<int>();
             await using (var transaction = insideTransaction ? await connection.BeginTransactionAsync() : null)
             {
-                const string sql = "COPY (SELECT CASE WHEN value=1 THEN repeat('x',131072) ELSE pg_sleep(10)::text END " +
-                    "FROM generate_series(1,2) AS value) TO STDOUT WITH (FORMAT BINARY)";
+                // Multiple large rows flush the first complete COPY frame before the server sleeps.
+                const string sql = "COPY (SELECT CASE WHEN value<4 THEN repeat('x',131072) ELSE pg_sleep(10)::text END " +
+                    "FROM generate_series(1,4) AS value) TO STDOUT WITH (FORMAT BINARY)";
                 if (asynchronous)
                 {
                     await using var exporter = await connection.BeginBinaryExportAsync(sql);
@@ -105,7 +107,7 @@ public sealed class BlueTuskCancellationRecoveryIntegrationTests
                     Assert.NotNull(first);
                     Assert.Equal(131072, first.Length);
                     using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => exporter.StartRowAsync(cancellation.Token).AsTask()
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => ReadRemainingRowsAsync(exporter, cancellation.Token)
                         .WaitAsync(TimeSpan.FromSeconds(8), TestContext.Current.CancellationToken));
                 }
                 else
@@ -122,6 +124,14 @@ public sealed class BlueTuskCancellationRecoveryIntegrationTests
         Assert.Equal(1, source.GetPoolStatistics().Opened);
         Assert.Equal(0, source.GetPoolStatistics().Discarded);
         Assert.Equal(1, source.GetPoolStatistics().Idle);
+    }
+
+    private static async Task ReadRemainingRowsAsync(BlueTuskBinaryExporter exporter, CancellationToken cancellationToken)
+    {
+        while (await exporter.StartRowAsync(cancellationToken) > 0)
+        {
+            _ = await exporter.ReadAsync<string>(cancellationToken: cancellationToken);
+        }
     }
 
     private sealed class CancelledDestination(CancellationTokenSource cancellation) : Stream

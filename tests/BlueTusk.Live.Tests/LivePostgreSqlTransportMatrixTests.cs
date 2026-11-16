@@ -172,7 +172,7 @@ public sealed class LivePostgreSqlTransportMatrixTests
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
         while (await reader.ReadLineAsync(cancellationToken) is { } line)
 #else
         while (await reader.ReadLineAsync().WaitAsync(cancellationToken) is { } line)
