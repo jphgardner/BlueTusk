@@ -15,6 +15,10 @@ on:
         description: Successful exact-candidate reference application image run
         type: string
         required: true
+      deploy_runner_label:
+        description: Unique label for the protected in-cluster deployment runner
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -39,9 +43,11 @@ jobs:
           CANDIDATE: ${{ inputs.candidate_sha }}
           READINESS: ${{ inputs.readiness_run_id }}
           APPLICATIONS: ${{ inputs.applications_run_id }}
-        run: >-
-          ./eng/verify-coordinated-deployment.ps1 -Candidate $env:CANDIDATE
-          -ReadinessRunId $env:READINESS -ApplicationsRunId $env:APPLICATIONS
+          DEPLOY_RUNNER_LABEL: ${{ inputs.deploy_runner_label }}
+        run: |
+          if ($env:DEPLOY_RUNNER_LABEL -cnotmatch '^bluetusk-deploy-[0-9a-f]{20}$') { throw 'Use a unique Kubernetes deployment runner label.' }
+          ./eng/verify-coordinated-deployment.ps1 -Candidate $env:CANDIDATE `
+            -ReadinessRunId $env:READINESS -ApplicationsRunId $env:APPLICATIONS
 
   publish-site-image:
     needs: verify
@@ -86,8 +92,9 @@ jobs:
 
   deploy:
     needs: publish-site-image
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, '${{ inputs.deploy_runner_label }}']
     environment: bluetusk-production
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -99,6 +106,12 @@ jobs:
           run-id: ${{ inputs.applications_run_id }}
           github-token: ${{ github.token }}
           path: artifacts/deployment-inputs
+      - uses: Azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
+        with:
+          version: v1.36.1
+      - uses: Azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+        with:
+          version: v3.19.0
       - name: Preflight and roll out verified application images
         shell: pwsh
         env:
@@ -115,6 +128,10 @@ jobs:
             Remove-Item Env:KUBECONFIG_BASE64
             chmod 600 $env:KUBECONFIG
             $context = (kubectl config current-context).Trim()
+            $server = (kubectl config view --minify -o 'jsonpath={.clusters[0].cluster.server}').Trim()
+            if ($server -cnotin @('https://kubernetes.default.svc', 'https://kubernetes.default.svc:443')) {
+              throw 'Configure the deployment kubeconfig to use the in-cluster Kubernetes API service.'
+            }
             $appEvidence = 'artifacts/deployment-inputs/application-images.json'
             ./eng/deploy-applications-rc.ps1 -ImageEvidencePath $appEvidence -KubernetesContext $context
             $previous = kubectl -n bluetusk get deployment bluetusk-site -o 'jsonpath={.spec.template.spec.containers[?(@.name=="site")].image}'
