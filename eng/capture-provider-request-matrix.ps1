@@ -132,7 +132,9 @@ $startedUtc = [DateTimeOffset]::UtcNow.ToString('o')
 function Test-Capture([string] $Path, [string] $Stem, [string] $Provider, [string] $Feature, [int] $Workers)
 {
     # Light identity checks without materializing millions of samples in PowerShell.
-    $document = [Text.Json.JsonDocument]::Parse([IO.File]::ReadAllBytes($Path))
+    $stream = [IO.File]::OpenRead($Path)
+    try { $document = [Text.Json.JsonDocument]::Parse($stream, [Text.Json.JsonDocumentOptions]::new()) }
+    finally { $stream.Dispose() }
     try
     {
         $capture = $document.RootElement
