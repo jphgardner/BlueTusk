@@ -3,6 +3,10 @@ name: ContinuousGraph 24-hour release endurance
 on:
   workflow_dispatch:
     inputs:
+      runner_label:
+        description: One-job Kubernetes runner label created by eng/runners/invoke-kubernetes-endurance.ps1
+        required: true
+        type: string
       confirmation:
         description: Type RUN-CONTINUOUS-GRAPH-24-HOUR-ENDURANCE to start the release gate
         required: true
@@ -18,8 +22,8 @@ concurrency:
 jobs:
   graph-endurance:
     name: Portable PostgreSQL ContinuousGraph endurance
-    if: inputs.confirmation == 'RUN-CONTINUOUS-GRAPH-24-HOUR-ENDURANCE'
-    runs-on: [self-hosted, linux, x64, bluetusk-endurance]
+    if: inputs.confirmation == 'RUN-CONTINUOUS-GRAPH-24-HOUR-ENDURANCE' && startsWith(inputs.runner_label, 'bluetusk-kube-')
+    runs-on: [self-hosted, linux, x64, '${{ inputs.runner_label }}']
     timeout-minutes: 1530
 
     steps:

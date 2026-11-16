@@ -104,6 +104,20 @@ Dispatch the evidence producers at the same candidate SHA.
    handoff. Use the V1_2_CORE_EVIDENCE_BASE64 secret for the 1.2 Core records.
    Run the Core 1.2 package readiness workflow with the eight producer run IDs.
 
+The endurance workflows use one-job Kubernetes runners. Apply
+[`kubernetes-endurance-namespace.yaml`](../../eng/runners/kubernetes-endurance-namespace.yaml)
+to the runner cluster before dispatching the first run. Run the launcher below once per Core track.
+The launcher checks the candidate and package build, dispatches the workflow, and registers a runner
+for its unique queued job. Keep the runner namespace on nodes that support pod user namespaces.
+
+```powershell
+./eng/runners/invoke-kubernetes-endurance.ps1 -Track Streams -Ref $ref -Candidate $sha `
+    -PackageRunId $buildRunId -KubernetesContext $context
+```
+
+The other Core tracks are `Sync` and `LiveControlPlane`. `ContinuousGraph` uses its own release track
+and does not take a Core package run ID.
+
 The release keeps both independent application pilots, independent review,
 security, backup and restore, rollback, the incident response exercise, SLO
 approval, and maintainer sign-off. These approvals bind the candidate and must

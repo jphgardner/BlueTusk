@@ -3,6 +3,10 @@ name: Sync 24-hour release endurance
 on:
   workflow_dispatch:
     inputs:
+      runner_label:
+        description: One-job Kubernetes runner label created by eng/runners/invoke-kubernetes-endurance.ps1
+        required: true
+        type: string
       package_run_id:
         description: Successful exact-candidate 1.2 Core package build run ID
         required: true
@@ -23,8 +27,8 @@ concurrency:
 jobs:
   connector-endurance:
     name: Seven-destination recovery endurance
-    if: inputs.confirmation == 'RUN-SYNC-24-HOUR-ENDURANCE'
-    runs-on: [self-hosted, linux, x64, bluetusk-endurance]
+    if: inputs.confirmation == 'RUN-SYNC-24-HOUR-ENDURANCE' && startsWith(inputs.runner_label, 'bluetusk-kube-')
+    runs-on: [self-hosted, linux, x64, '${{ inputs.runner_label }}']
     timeout-minutes: 1530
 
     steps:

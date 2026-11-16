@@ -3,6 +3,10 @@ name: Streams 72-hour release endurance
 on:
   workflow_dispatch:
     inputs:
+      runner_label:
+        description: One-job Kubernetes runner label created by eng/runners/invoke-kubernetes-endurance.ps1
+        required: true
+        type: string
       package_run_id:
         description: Successful exact-candidate 1.2 Core package build run ID
         required: true
@@ -23,8 +27,8 @@ concurrency:
 jobs:
   relay-endurance:
     name: Stable PostgreSQL core relay endurance
-    if: inputs.confirmation == 'RUN-STREAMS-72-HOUR-ENDURANCE'
-    runs-on: [self-hosted, linux, x64, bluetusk-endurance]
+    if: inputs.confirmation == 'RUN-STREAMS-72-HOUR-ENDURANCE' && startsWith(inputs.runner_label, 'bluetusk-kube-')
+    runs-on: [self-hosted, linux, x64, '${{ inputs.runner_label }}']
     timeout-minutes: 4500
 
     steps:
