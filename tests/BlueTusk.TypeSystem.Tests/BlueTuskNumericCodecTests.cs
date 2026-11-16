@@ -94,6 +94,15 @@ public sealed class BlueTuskNumericCodecTests
         Assert.Throws<InvalidOperationException>(() => ReadBinary(invalid));
     }
 
+    [Theory]
+    [InlineData("0000000000004000")]
+    [InlineData("000464000000FF000300000000000004")]
+    public void Binary_decoder_rejects_out_of_range_display_scale(string hex)
+    {
+        var payload = Convert.FromHexString(hex);
+        Assert.Throws<InvalidOperationException>(() => ReadBinary(payload));
+    }
+
     [Fact]
     public void Constructor_preserves_scale_and_unscaled_value()
     {
