@@ -118,6 +118,23 @@ for its unique queued job. Keep the runner namespace on nodes that support pod u
 The other Core tracks are `Sync` and `LiveControlPlane`. `ContinuousGraph` uses its own release track
 and does not take a Core package run ID.
 
+### Coordinated Kubernetes deployment
+
+After Core readiness passes, publish the five exact-candidate version tags through the existing
+protected product-family workflow. That workflow publishes the NuGet packages and the npm packages
+for families that ship browser clients. Build the reference application images at the same commit
+with `applications-images.yml`, then dispatch `deploy-bluetusk.yml` from `main` with the candidate,
+Core readiness run ID and application image run ID. The deploy workflow checks that the package
+publication jobs completed before it rolls out the website, documentation and reference applications.
+
+The `bluetusk-production` GitHub environment requires a dedicated Kubernetes deployment identity in
+`BLUETUSK_DEPLOY_KUBECONFIG_BASE64`. Limit that identity to the website Deployment and the reference
+application Helm namespaces and grant read access to the cluster health and operator metadata used
+by the preflight. Provision the PostgreSQL and identity operators and the documented reference
+application secrets before the first run. For clusters with several Linux workers, apply
+[`kubernetes-runner-cache.yaml`](../../eng/runners/kubernetes-runner-cache.yaml) to keep the runner
+tool images on each node. The endurance launcher registers one runner per queued release job.
+
 The release keeps both independent application pilots, independent review,
 security, backup and restore, rollback, the incident response exercise, SLO
 approval, and maintainer sign-off. These approvals bind the candidate and must

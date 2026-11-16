@@ -2,6 +2,7 @@
 param(
     [Parameter(Mandatory)]
     [string] $ImageEvidencePath,
+    [string] $KubernetesContext = 'proxmox-homelab',
     [switch] $Apply
 )
 
@@ -17,9 +18,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not resolve the checked-out commit.' }
 $evidence = Get-Content -LiteralPath $ImageEvidencePath -Raw | ConvertFrom-Json
 
 $context = (& kubectl config current-context).Trim()
-if ($LASTEXITCODE -ne 0 -or $context -ne 'proxmox-homelab')
+if ($LASTEXITCODE -ne 0 -or $context -cne $KubernetesContext)
 {
-    throw "RC deployment requires context 'proxmox-homelab'; found '$context'."
+    throw "RC deployment requires context '$KubernetesContext'; found '$context'."
 }
 $nodes = @(& kubectl get nodes -o json | ConvertFrom-Json).items
 $readyNodes = @($nodes | Where-Object {

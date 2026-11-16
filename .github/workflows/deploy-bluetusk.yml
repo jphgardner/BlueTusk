@@ -1,0 +1,138 @@
+name: Deploy BlueTusk website, docs and reference applications
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact verified Core 1.2.0 candidate on main
+        type: string
+        required: true
+      readiness_run_id:
+        description: Successful protected Core 1.2 readiness run
+        type: string
+        required: true
+      applications_run_id:
+        description: Successful exact-candidate reference application image run
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: bluetusk-production-deployment
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    if: github.repository == 'jphgardner/BlueTusk' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Verify readiness and completed NuGet and npm publication
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE: ${{ inputs.candidate_sha }}
+          READINESS: ${{ inputs.readiness_run_id }}
+          APPLICATIONS: ${{ inputs.applications_run_id }}
+        run: >-
+          ./eng/verify-coordinated-deployment.ps1 -Candidate $env:CANDIDATE
+          -ReadinessRunId $env:READINESS -ApplicationsRunId $env:APPLICATIONS
+
+  publish-site-image:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: bluetusk-production
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      site-image: ${{ steps.image.outputs.reference }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Verify documentation and build the site
+        working-directory: website
+        run: |
+          npm ci
+          npm run docs:check
+          npm run build
+      - name: Push exact-candidate site image
+        id: image
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE: ${{ inputs.candidate_sha }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/bluetusk-site"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker buildx build --platform linux/amd64 --build-arg BUILD_VERSION=1.2.0 \
+            --build-arg "BUILD_REVISION=$CANDIDATE" --tag "$image:$CANDIDATE" \
+            --metadata-file "$RUNNER_TEMP/site-image.json" --push website
+          digest="$(jq -er '."containerimage.digest" | select(test("^sha256:[0-9a-f]{64}$"))' "$RUNNER_TEMP/site-image.json")"
+          printf 'reference=%s@%s\n' "$image" "$digest" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: publish-site-image
+    runs-on: ubuntu-latest
+    environment: bluetusk-production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: application-image-evidence-${{ inputs.candidate_sha }}
+          run-id: ${{ inputs.applications_run_id }}
+          github-token: ${{ github.token }}
+          path: artifacts/deployment-inputs
+      - name: Preflight and roll out verified application images
+        shell: pwsh
+        env:
+          KUBECONFIG_BASE64: ${{ secrets.BLUETUSK_DEPLOY_KUBECONFIG_BASE64 }}
+          SITE_IMAGE: ${{ needs.publish-site-image.outputs.site-image }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          if ([string]::IsNullOrWhiteSpace($env:KUBECONFIG_BASE64)) { throw 'Configure the protected deployment kubeconfig.' }
+          if ($env:SITE_IMAGE -cnotmatch '^ghcr\.io/[^/]+/bluetusk-site@sha256:[0-9a-f]{64}$') { throw 'Expected a digest-pinned website image.' }
+          $env:KUBECONFIG = Join-Path $env:RUNNER_TEMP 'bluetusk-deploy-kubeconfig'
+          try {
+            [IO.File]::WriteAllBytes($env:KUBECONFIG, [Convert]::FromBase64String($env:KUBECONFIG_BASE64))
+            Remove-Item Env:KUBECONFIG_BASE64
+            chmod 600 $env:KUBECONFIG
+            $context = (kubectl config current-context).Trim()
+            $appEvidence = 'artifacts/deployment-inputs/application-images.json'
+            ./eng/deploy-applications-rc.ps1 -ImageEvidencePath $appEvidence -KubernetesContext $context
+            $previous = kubectl -n bluetusk get deployment bluetusk-site -o 'jsonpath={.spec.template.spec.containers[?(@.name=="site")].image}'
+            if ([string]::IsNullOrWhiteSpace($previous)) { throw 'The existing website deployment has no site container.' }
+            kubectl -n bluetusk set image deployment/bluetusk-site "site=$env:SITE_IMAGE" --dry-run=server
+            ./eng/deploy-applications-rc.ps1 -ImageEvidencePath $appEvidence -KubernetesContext $context -Apply
+            kubectl -n bluetusk set image deployment/bluetusk-site "site=$env:SITE_IMAGE"
+            try {
+              kubectl -n bluetusk rollout status deployment/bluetusk-site --timeout=5m
+              Invoke-WebRequest -Uri 'https://bluetusk.io/health/ready' -TimeoutSec 20 | Out-Null
+              Invoke-WebRequest -Uri 'https://bluetusk.io/docs' -TimeoutSec 20 | Out-Null
+            }
+            catch {
+              kubectl -n bluetusk set image deployment/bluetusk-site "site=$previous"
+              kubectl -n bluetusk rollout status deployment/bluetusk-site --timeout=5m
+              throw
+            }
+          }
+          finally {
+            if (Test-Path -LiteralPath $env:KUBECONFIG) { Remove-Item -LiteralPath $env:KUBECONFIG -Force }
+          }

@@ -4,7 +4,8 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$workflow = Get-Content (Join-Path $root '.github/workflows/jobs-release-upgrade.yml') -Raw
+Import-Module (Join-Path $PSScriptRoot 'expansion-candidate-evidence.psm1') -Force
+$workflow = Get-ExpansionWorkflowSource -Path (Join-Path $root '.github/workflows/expansion-release-upgrade.yml') -Family Jobs
 $verifier = Get-Content (Join-Path $PSScriptRoot 'verify-jobs-release-upgrade.ps1') -Raw
 $resolver = Join-Path $PSScriptRoot 'resolve-jobs-upgrade-baseline.ps1'
 $probe = Get-Content (Join-Path $PSScriptRoot 'JobsUpgradeProbe/Program.cs') -Raw
