@@ -63,19 +63,19 @@ function Invoke-Dotnet([string[]] $Arguments)
     return [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = ($output | Out-String) }
 }
 
-function New-Fixture([string] $Name, [string] $Outcome, [string] $Map, [string[]] $Oses = @('windows', 'linux'))
+function New-Fixture([string] $Name, [string] $Outcome, [string] $Map, [string] $Contract = $contractPath)
 {
     $performance = Join-Path $temporary "$Name/performance"
-    foreach ($os in $Oses)
+    foreach ($os in @('windows', 'linux'))
     {
         $osRoot = Join-Path $performance $os
-        $result = Invoke-Dotnet @($benchmark, '--performance-evidence-synthesize', $osRoot, $commit, $os, $Outcome, $contractPath, $Map)
+        $result = Invoke-Dotnet @($benchmark, '--performance-evidence-synthesize', $osRoot, $commit, $os, $Outcome, $Contract, $Map)
         if ($result.ExitCode -ne 0) { throw "Synthesis failed: $($result.Output)" }
-        $result = Invoke-Dotnet @($benchmark, '--performance-evidence-generate-synthetic', $osRoot, $commit, $os, $contractPath, $Map)
+        $result = Invoke-Dotnet @($benchmark, '--performance-evidence-generate-synthetic', $osRoot, $commit, $os, $Contract, $Map)
         if ($result.ExitCode -ne 0) { throw "Synthetic generation failed: $($result.Output)" }
         & (Join-Path $PSScriptRoot 'write-performance-environment-manifest.ps1') -OsRoot $osRoot -ExpectedCommit $commit -Os $os `
-            -Topology 'synthetic self-test fixture' -Synthetic | Out-Null
-        $result = Invoke-Dotnet @($checker, 'check', $osRoot, $commit, $os, $Map)
+            -Topology 'synthetic self-test fixture' -VariantMapPath $Map -Synthetic | Out-Null
+        $result = Invoke-Dotnet @($checker, 'check', $osRoot, $commit, $os, $Map, '--contract', $Contract)
         if ($result.ExitCode -ne 0) { throw "Independent check failed on a valid synthetic fixture: $($result.Output)" }
     }
     return $performance
@@ -123,6 +123,16 @@ function Remove-DiagnosticLabelsForShapeProbe([string] $Performance, [string] $S
         $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $Performance $probe) -Encoding utf8NoBOM
         $environment.environmentManifestPath = $probe
         $environment.environmentManifestSha256 = (Get-FileHash -LiteralPath (Join-Path $Performance $probe) -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($evidence.release -ceq '1.2.0')
+        {
+            $summary = Get-Content -LiteralPath (Join-Path $Performance $environment.summaryPath) -Raw | ConvertFrom-Json -AsHashtable
+            $summary.diagnostic = $false
+            $summary.synthetic = $false
+            $summaryProbe = "$($environment.os)/shape-probe-summary.json"
+            $summary | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $Performance $summaryProbe) -Encoding utf8NoBOM
+            $environment.summaryPath = $summaryProbe
+            $environment.summarySha256 = (Get-FileHash -LiteralPath (Join-Path $Performance $summaryProbe) -Algorithm SHA256).Hash.ToLowerInvariant()
+        }
     }
     $path = Join-Path $Performance 'shape-probe.json'
     $evidence | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $path -Encoding utf8NoBOM
@@ -288,22 +298,24 @@ try
     $active = & (Join-Path $PSScriptRoot 'resolve-core-performance-release.ps1') -ExpectedCommit $head
     if ($active.Release -ceq '1.2.0')
     {
-        # Reuse the synthetic raw inputs and preserve their diagnostic labels.
-        $activeRoot = Join-Path $temporary 'release-1.2'
+        $arguments = @{ ContractPath = $active.ContractPath; VariantMapPath = $active.VariantMapPath }
+        & (Join-Path $PSScriptRoot 'verify-performance-leadership-contract.ps1') @arguments | Out-Null
+        $activePlan = & (Join-Path $PSScriptRoot 'get-core-performance-capture-plan.ps1') @arguments -PlanPath $active.PlanPath | ConvertFrom-Json
+        $providerLegs = @($activePlan.capture.include | Where-Object kind -eq 'provider')
+        if ($providerLegs.Count -ne 21 -or @($providerLegs | Where-Object status -ne 'ready').Count -ne 0 -or
+            @($providerLegs | Where-Object { $_.os -ceq 'windows' -and $_.variant -ceq 'linux' -and $_.profile -ceq 'linux-container-client' }).Count -ne 3 -or
+            @($providerLegs | Where-Object { $_.os -ceq 'linux' -and $_.variant -ceq 'windows' }).Count -ne 0)
+        { throw 'The 1.2 plan must include both clients on the Windows host and the native client on Linux.' }
+
+        $activeRoot = New-Fixture 'release-1.2' 'win' $active.VariantMapPath $active.ContractPath
         $activeOs = Join-Path $activeRoot 'windows'
-        $null = New-Item -ItemType Directory -Path $activeOs
-        Copy-Item -LiteralPath (Join-Path $win 'windows/raw') -Destination $activeOs -Recurse
-        Copy-Item -LiteralPath (Join-Path $win 'windows/environment-manifest.json') -Destination $activeOs
-        $generation = Invoke-Dotnet @($benchmark, '--performance-evidence-generate-synthetic', $activeOs, $commit, 'windows', $active.ContractPath, $testMap)
-        if ($generation.ExitCode -ne 0) { throw "1.2 summary generation failed: $($generation.Output)" }
         Assert-Rejected '1.2-summary-with-historical-contract' {
-            Invoke-Dotnet @($checker, 'check', $activeOs, $commit, 'windows', $testMap)
+            Invoke-Dotnet @($checker, 'check', $activeOs, $commit, 'windows', $active.VariantMapPath,
+                (Join-Path $temporary 'historical-contract-check.json'))
         } 'Summary identity, release'
-        $check = Invoke-Dotnet @($checker, 'check', $activeOs, $commit, 'windows', $testMap, '--contract', $active.ContractPath)
-        if ($check.ExitCode -ne 0) { throw "1.2 independent check failed: $($check.Output)" }
         $assemblyArguments = @{
             EvidenceRoot = $activeRoot; ExpectedCommit = $commit; VerifierSelfTestLogPath = $log
-            ContractPath = $active.ContractPath; VariantMapPath = $testMap; Diagnostic = $true
+            ContractPath = $active.ContractPath; VariantMapPath = $active.VariantMapPath; Diagnostic = $true
         }
         & (Join-Path $PSScriptRoot 'assemble-performance-leadership-evidence.ps1') @assemblyArguments | Out-Null
         $activeEvidence = Join-Path $activeRoot 'diagnostic-performance-leadership-evidence.json'
@@ -313,6 +325,10 @@ try
         Assert-Rejected 'diagnostic-1.2' {
             & $verifier -EvidencePath $activeEvidence -ExpectedCommit $commit -ContractPath $active.ContractPath
         } 'never release evidence'
+        $activeProbe = Remove-DiagnosticLabelsForShapeProbe $activeRoot 'diagnostic-performance-leadership-evidence.json'
+        $activeVerdict = & $verifier -EvidencePath $activeProbe -ExpectedCommit $commit -ContractPath $active.ContractPath
+        if (-not ([string]$activeVerdict).Contains('488 declared BlueTusk 1.2.0 Core performance comparisons'))
+        { throw "The 1.2 comparison set does not match the approved topology: $activeVerdict" }
         Assert-Rejected 'historical-evidence-in-1.2' {
             & $verifier -EvidencePath $diagnosticEvidence -ExpectedCommit $commit -ContractPath $active.ContractPath
         } 'identity, release'

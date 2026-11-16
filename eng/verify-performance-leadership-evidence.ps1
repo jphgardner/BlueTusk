@@ -255,13 +255,15 @@ foreach ($environmentName in $environmentNames)
 }
 
 $expected = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
+Import-Module (Join-Path $PSScriptRoot 'performance-provider-contract.psm1')
 foreach ($os in $environmentNames)
 {
+    $variants = Get-PerformanceProviderVariants -Contract $contract -Os $os
     foreach ($feature in $contract.workloads.Provider.features)
     {
         foreach ($concurrency in $contract.workloads.Provider.concurrency)
         {
-            foreach ($variant in $contract.workloads.Provider.variants)
+            foreach ($variant in $variants)
             {
                 Add-Expected $expected "$os|Provider|$feature|c=$concurrency|variant=$variant" 'same-runtime'
             }

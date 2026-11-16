@@ -6,6 +6,7 @@ param(
     [Parameter(Mandatory)][ValidateSet('windows', 'linux')][string] $Os,
     # How the measured client reached the server, for example "linux runner container on the fixture Docker network".
     [Parameter(Mandatory)][string] $Topology,
+    [string] $VariantMapPath = (Join-Path $PSScriptRoot 'performance-variant-map.json'),
     # Self-test only: writes a manifest for synthetic fixtures without probing (or matching) this host.
     [switch] $Synthetic
 )
@@ -70,7 +71,7 @@ function Get-HostDescription
     }
 }
 
-$map = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-variant-map.json') -Raw | ConvertFrom-Json
+$map = Get-Content -LiteralPath $VariantMapPath -Raw | ConvertFrom-Json
 $manifest = [ordered]@{
     schemaVersion = 1
     evidenceKind = 'bluetusk-performance-environment'

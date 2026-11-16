@@ -294,9 +294,12 @@ internal static class PerformanceEvidenceGenerator
             family.GetProperty(name).EnumerateArray().Select(value => value.ValueKind == JsonValueKind.String
                 ? value.GetString()! : value.GetRawText());
         var provider = workloads.GetProperty("Provider");
+        var variants = contract.GetProperty("release").GetString() == "1.2.0"
+            ? Values(provider.GetProperty("variantsByEnvironment"), os).ToArray()
+            : Values(provider, "variants").ToArray();
         foreach (var feature in Values(provider, "features"))
             foreach (var concurrency in Values(provider, "concurrency"))
-                foreach (var variant in Values(provider, "variants"))
+                foreach (var variant in variants)
                     Add($"{os}|Provider|{feature}|c={concurrency}|variant={variant}", "same-runtime");
         var streams = workloads.GetProperty("Streams");
         foreach (var changes in Values(streams, "transactionChanges"))

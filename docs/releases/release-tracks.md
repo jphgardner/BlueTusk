@@ -97,7 +97,7 @@ to match every producer. Checks on the pull request give pre-merge feedback.
    to run in their ordinary build contexts.
 2. Run the runtime compatibility workflow with full coverage required. Run
    security, one-hour fuzzing, and the Core performance qualification workflow.
-   Use the qualification evidence class and the full reference topology.
+   Use the qualification evidence class and the [v1.2 Provider topology](../../eng/performance-cross-os-proposal.md).
 3. Give the successful package build run ID to the Streams, Sync, and Live /
    Control Plane endurance workflows. They verify the same package archive
    before the 72-hour, 24-hour, and 24-hour runs respectively.

@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [string] $ContractPath = (Join-Path $PSScriptRoot 'performance-leadership-contract.json')
+    [string] $ContractPath = (Join-Path $PSScriptRoot 'performance-leadership-contract.json'),
+    [string] $VariantMapPath
 )
 
 Set-StrictMode -Version Latest
@@ -73,6 +74,24 @@ if (@($provider.features).Count -ne $provider.featureCount -or
     @($provider.features | Select-Object -Unique).Count -ne $provider.featureCount)
 {
     throw 'The complete 16-feature Provider comparison matrix is not named explicitly.'
+}
+if ($contract.release -ceq '1.2.0')
+{
+    if ($provider.PSObject.Properties['variants'] -or
+        ($provider.variantsByEnvironment.PSObject.Properties.Name | Sort-Object) -join ',' -cne 'linux,windows' -or
+        $provider.variantsByEnvironment.windows -join ',' -cne 'windows,linux,tls,constrained-network' -or
+        $provider.variantsByEnvironment.linux -join ',' -cne 'linux,tls,constrained-network')
+    { throw 'The 1.2 Provider contract must declare the approved Windows and Linux client variants.' }
+
+    if ($VariantMapPath)
+    {
+        $map = Get-Content -LiteralPath $VariantMapPath -Raw | ConvertFrom-Json
+        $profile = $map.profiles.'linux-container-client'
+        if ($map.crossOsProfile -cne 'linux-container-client' -or $map.variants.windows.linux -cne 'crossOsProfile' -or
+            $map.variants.linux.PSObject.Properties['windows'] -or $profile.hostOs -join ',' -cne 'windows' -or
+            $profile.clientOs -cne 'linux')
+        { throw 'The 1.2 Provider map must run the cross-OS client in a Linux container on the Windows host.' }
+    }
 }
 
 $requiredMetrics = @(

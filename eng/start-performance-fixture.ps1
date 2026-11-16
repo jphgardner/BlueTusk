@@ -164,7 +164,7 @@ try
         networkProfile = $networkProfileId
         containerImageDigests = @($images | Sort-Object -Unique -CaseSensitive)
         containers = $containers.ToArray()
-        topology = $(if ($CaptureProfile -eq 'linux-container-client') { 'Linux .NET client container on the fixture Docker network (proposal)' }
+        topology = $(if ($CaptureProfile -eq 'linux-container-client') { 'Linux .NET client container on the Windows host fixture network' }
             elseif ($insideContainer) { 'Linux runner container attached to the fixture Docker network' }
             else { 'host client process through a 127.0.0.1 published Docker port' }) +
             $(if ($null -ne $networkProfileId) { ' via Toxiproxy' } else { '' })

@@ -13,7 +13,9 @@ if ($LASTEXITCODE -ne 0 -or $head -cne $ExpectedCommit)
 $paths = @(
     'eng/release-tracks.json',
     'eng/performance-leadership-contract.json',
-    'eng/performance-evidence-plan.json'
+    'eng/performance-evidence-plan.json',
+    'eng/performance-variant-map.json',
+    'eng/resolve-core-performance-release.ps1'
 )
 & git -C $root diff --quiet $ExpectedCommit -- @paths
 if ($LASTEXITCODE -ne 0) { throw 'The candidate release or performance contract has local changes.' }
@@ -29,8 +31,6 @@ $confirmation = switch ($release)
 $output = Join-Path $root "artifacts/core-performance-contract/$ExpectedCommit"
 $null = New-Item -ItemType Directory -Path $output -Force
 
-# Keep the approved workload and statistical definitions byte-identical. The
-# evidence version and dispatch token are the only release-specific fields.
 $historicalRelease = '"release": "1.1.0"'
 $historicalConfirmation = '"confirmationToken": "CAPTURE-1.1-PERFORMANCE-EVIDENCE"'
 $contract = Get-Content -LiteralPath (Join-Path $root $paths[1]) -Raw
@@ -45,8 +45,31 @@ $contract = $contract.Replace($historicalRelease, $releaseField)
 $plan = $plan.Replace($historicalRelease, $releaseField).Replace(
     $historicalConfirmation, ('"confirmationToken": "' + $confirmation + '"'))
 $utf8 = [Text.UTF8Encoding]::new($false)
+$mapPath = Join-Path $root $paths[3]
+if ($release -ceq '1.2.0')
+{
+    $contractDocument = $contract | ConvertFrom-Json -AsHashtable
+    $provider = $contractDocument.workloads.Provider
+    # The Windows host measures a native client and a Linux client in Docker.
+    $provider.variantsByEnvironment = [ordered]@{
+        windows = $provider.variants
+        linux = @('linux', 'tls', 'constrained-network')
+    }
+    $null = $provider.Remove('variants')
+    $contract = ($contractDocument | ConvertTo-Json -Depth 20).Replace("`r`n", "`n")
+
+    $map = Get-Content -LiteralPath $mapPath -Raw | ConvertFrom-Json -AsHashtable
+    $map.crossOsProfile = 'linux-container-client'
+    $null = $map.variants.linux.Remove('windows')
+    $map.profiles.'linux-container-client'.description = 'Linux .NET client on the Windows host using the pinned runtime image and fixture network.'
+    $mapPath = Join-Path $output 'performance-variant-map.json'
+    [IO.File]::WriteAllText($mapPath, ($map | ConvertTo-Json -Depth 20).Replace("`r`n", "`n"), $utf8)
+}
 $contractPath = Join-Path $output 'performance-leadership-contract.json'
 $planPath = Join-Path $output 'performance-evidence-plan.json'
 [IO.File]::WriteAllText($contractPath, $contract, $utf8)
 [IO.File]::WriteAllText($planPath, $plan, $utf8)
-[pscustomobject]@{ Release = $release; Confirmation = $confirmation; ContractPath = $contractPath; PlanPath = $planPath }
+[pscustomobject]@{
+    Release = $release; Confirmation = $confirmation; ContractPath = $contractPath
+    PlanPath = $planPath; VariantMapPath = $mapPath
+}

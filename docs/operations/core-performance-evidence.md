@@ -2,16 +2,14 @@
 
 This pipeline produces `performance/performance-leadership-evidence.json` (schema 3). Core
 readiness binds it as `performanceManifest`, from producer `core-performance-evidence.yml`. It
-measures the contract in
-[`eng/performance-leadership-contract.json`](../../eng/performance-leadership-contract.json) **as
-written**. The contract is not relaxed anywhere in the pipeline.
+resolves the contract for the candidate from
+[`eng/performance-leadership-contract.json`](../../eng/performance-leadership-contract.json).
+The v1.2 resolver also applies the approved Provider topology.
 
-**Status:** pipeline implemented; evidence not yet producible. Provider capture works for the
-same-OS, TLS and constrained-network variants. The cross-OS Provider variants are unresolved (see
-the [proposal](../../eng/performance-cross-os-proposal.md)). The Streams, Sync, Live,
-Control Plane and primary hot-path harnesses are planned legs that fail closed. Until all of these
-exist, a qualification run fails and the verifier reports the missing workloads. That is the
-intended outcome.
+**Status:** the v1.2 Provider matrix can be scheduled on the reference host.
+The Streams, Sync, Live, Control Plane and primary hot-path qualification
+harnesses are still pending. Qualification fails at planning until those
+producers can capture the required measurements.
 Qualification planning reports every missing producer and fails before starting measurement
 jobs. Provider jobs are split by concurrency level, each with a separate raw input directory;
 assembly still requires every original workload key exactly once.
@@ -129,10 +127,10 @@ quantity. It is never relabelled as these bounds.
   - identical raw content in two trials, which catches copied captures;
   - a raw capture whose client OS, TLS state or network profile differs from its variant profile;
   - an unbound file in a raw directory.
-- **Cross-OS variants.** These resolve only through
-  [`eng/performance-variant-map.json`](../../eng/performance-variant-map.json). While
-  `crossOsProfile` is `unresolved`, the legs fail closed and the assembler reports the keys as
-  missing.
+- **Provider topology.** For v1.2, the exact-candidate resolver generates the
+  [approved variant map](../../eng/performance-cross-os-proposal.md). Windows measures
+  Windows and Linux clients. Linux measures a native Linux client. The versioned
+  contract retains TLS and constrained-network variants on both environments.
 - **Qualification assembly.** It requires both OS directories, exact contract coverage, a
   consistent independent check, environment manifests bound to the raw samples and the measured
   images, and the committed variant map.
@@ -144,7 +142,7 @@ quantity. It is never relabelled as these bounds.
 | same OS (`windows` on Windows, `linux` on Linux) | `native` | PostgreSQL `postgres:18-alpine@sha256:77f5…` with `max_connections=600` and 1 GiB `/dev/shm` |
 | `tls` | `tls` | Same, with `ssl=on` and a disposable CA; the client uses `VerifyFull` |
 | `constrained-network` | `constrained-network` | Same, behind `ghcr.io/shopify/toxiproxy:2.12.0@sha256:9378…`, profile `toxiproxy-constrained-v1` |
-| cross-OS | `unresolved` | Fails closed; see the proposal |
+| `linux` on Windows (v1.2) | `linux-container-client` | The pinned Linux .NET runtime image on the Windows host connects to the same pinned PostgreSQL fixture over the Docker network |
 
 `eng/start-performance-fixture.ps1` creates containers labelled `bluetusk.owner=<owner>` and
 `bluetusk.run=<run>`. `eng/stop-performance-fixture.ps1` removes only containers with both labels.

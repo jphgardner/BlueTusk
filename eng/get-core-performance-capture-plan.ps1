@@ -10,6 +10,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'performance-provider-contract.psm1')
 # Emits the GitHub Actions matrix for core-performance-evidence.yml from the data-driven tables.
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
 $plan = Get-Content -LiteralPath $PlanPath -Raw | ConvertFrom-Json
@@ -30,7 +31,7 @@ foreach ($environment in @($contract.environments | Sort-Object { if ($_.os -eq 
     if ((($environment.runnerLabels | ConvertTo-Json -Compress)) -cne $runner) { throw "Runner labels for $os differ from the contract." }
     if ('Provider' -cin $selected)
     {
-        foreach ($variant in $contract.workloads.Provider.variants)
+        foreach ($variant in (Get-PerformanceProviderVariants -Contract $contract -Os $os))
         {
             $profileName = [string]$map.variants.$os.$variant
             if ($profileName -ceq 'crossOsProfile') { $profileName = [string]$map.crossOsProfile }
