@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: bluetusk-endurance
+  name: bluetusk-endurance-runners
   labels:
     pod-security.kubernetes.io/enforce: privileged
 ---
@@ -9,7 +9,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: runner-internet-only
-  namespace: bluetusk-endurance
+  namespace: bluetusk-endurance-runners
 spec:
   podSelector: {}
   policyTypes: [Ingress, Egress]
@@ -41,13 +41,13 @@ spec:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicy
 metadata:
-  name: bluetusk-endurance-pod-isolation
+  name: bluetusk-endurance-runner-isolation
 spec:
   failurePolicy: Fail
   matchConstraints:
     namespaceSelector:
       matchLabels:
-        kubernetes.io/metadata.name: bluetusk-endurance
+        kubernetes.io/metadata.name: bluetusk-endurance-runners
     resourceRules:
       - apiGroups: ['']
         apiVersions: [v1]
@@ -74,7 +74,7 @@ spec:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicyBinding
 metadata:
-  name: bluetusk-endurance-pod-isolation
+  name: bluetusk-endurance-runner-isolation
 spec:
-  policyName: bluetusk-endurance-pod-isolation
+  policyName: bluetusk-endurance-runner-isolation
   validationActions: [Deny]

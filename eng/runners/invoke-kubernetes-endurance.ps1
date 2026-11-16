@@ -14,7 +14,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$namespace = 'bluetusk-endurance'
+$namespace = 'bluetusk-endurance-runners'
 $api = "repos/$Repository"
 $trackSettings = switch ($Track) {
     'Streams' { @('streams-release-endurance.yml', 'RUN-STREAMS-72-HOUR-ENDURANCE', 277200) }

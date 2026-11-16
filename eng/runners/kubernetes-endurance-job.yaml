@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: __RUNNER_NAME__
-  namespace: bluetusk-endurance
+  namespace: bluetusk-endurance-runners
   labels:
     app.kubernetes.io/name: bluetusk-actions
 spec:
