@@ -85,7 +85,9 @@ The package track covers Provider, Streams, Sync, Live, and Control Plane on
 stable PostgreSQL 15–18. Continuous Graph qualifies through its own release
 track. Website deployment has its own scope.
 
-Dispatch the evidence producers at the same candidate SHA.
+Use the exact candidate SHA on `main` for final qualification. The protected
+candidate-readiness workflow accepts only `main` and requires the dispatch SHA
+to match every producer. Checks on the pull request give pre-merge feedback.
 
 1. Run the build with the Core packages-only option. It retains the five
    package families, their SBOMs and provenance, and the regression and stable

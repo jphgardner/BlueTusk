@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "majorVersion": 19,
   "officialDocumentationUrl": "https://www.postgresql.org/docs/19/",
-  "currentOfficialMilestone": "19beta4",
-  "currentDocumentationMarker": "PostgreSQL 19beta4 Documentation",
+  "currentOfficialMilestone": "19rc2",
+  "currentDocumentationMarker": "PostgreSQL 19rc2 Documentation",
   "lastVerifiedMilestone": "19beta3",
-  "targetGeneralAvailability": "October 2026",
+  "targetGeneralAvailability": "2026-11-19",
   "sqlPgqStatus": "removed-in-19beta4-future-version-unassigned",
   "milestones": [
     {
@@ -32,6 +32,24 @@
       "image": null,
       "evidence": null,
       "announcement": "https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/"
+    },
+    {
+      "version": "19rc1",
+      "channel": "rc",
+      "released": "2026-10-15",
+      "status": "pending",
+      "image": null,
+      "evidence": null,
+      "announcement": "https://www.postgresql.org/about/news/postgresql-19-rc-1-released-3409/"
+    },
+    {
+      "version": "19rc2",
+      "channel": "rc",
+      "released": "2026-11-12",
+      "status": "pending",
+      "image": null,
+      "evidence": null,
+      "announcement": "https://www.postgresql.org/about/news/postgresql-187-1712-1616-1520-1425-and-19-rc-2-released-3442/"
     }
   ],
   "requiredFutureCadence": [
