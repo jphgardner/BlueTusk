@@ -1,7 +1,7 @@
 # Jobs binary upgrade and rollback gate
 
-The manual [Jobs upgrade workflow](../../.github/workflows/jobs-release-upgrade.yml)
-requires two immutable full commit SHAs: an earlier Jobs preview source commit
+Select `Jobs` in the manual [Expansion release upgrade workflow](../../.github/workflows/expansion-release-upgrade.yml).
+The rehearsal uses two immutable full commit SHAs, an earlier Jobs preview source commit
 reachable from the candidate and the exact candidate commit. It builds and archives
 both Jobs packages and separate probe executables from those source trees. The
 executed `BlueTusk.Jobs.dll` must match its archived package and **differ** between

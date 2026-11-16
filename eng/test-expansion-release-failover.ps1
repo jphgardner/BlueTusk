@@ -9,6 +9,7 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $PSScriptRoot 'expansion-candidate-evidence.psm1') -Force
 $policyPath = Join-Path $PSScriptRoot 'expansion-failover-policy.json'
 $policy = Get-Content -LiteralPath $policyPath -Raw | ConvertFrom-Json -Depth 40
 $releasePolicy = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'expansion-release-policy.json') -Raw | ConvertFrom-Json
@@ -185,9 +186,9 @@ try
             }
         }
 
-        $workflowFile = ".github/workflows/$slug-release-failover.yml"
-        if ([string]$releasePolicy.families.$family.failoverWorkflow -cne "$slug-release-failover.yml") { Fail "$family release policy names another failover workflow." }
-        $workflow = Get-Content -LiteralPath (Join-Path $root $workflowFile) -Raw
+        $workflowFile = '.github/workflows/expansion-release-failover.yml'
+        if ([string]$releasePolicy.families.$family.failoverWorkflow -cne 'expansion-release-failover.yml') { Fail "$family release policy names another failover workflow." }
+        $workflow = Get-ExpansionWorkflowSource -Path (Join-Path $root $workflowFile) -Family $family
         if ($workflow -notmatch '(?m)^  workflow_dispatch:\s*$' -or
             $workflow -match '(?m)^  (?:push|pull_request|schedule|workflow_run|workflow_call):\s*$' -or
             $workflow -notmatch [regex]::Escape('runs-on: [self-hosted, windows, x64, bluetusk-benchmark]') -or

@@ -29,7 +29,7 @@ validate their own raw measurements before a successful run can count.
 Each family must have its own capacity, failover and durable-format upgrade
 qualification. The required workflow identities are fixed in
 `eng/expansion-release-policy.json`. Jobs needs a dedicated
-`jobs-release-capacity.yml` workflow; the combined `ecosystem-performance.yml`
+`expansion-release-capacity.yml` workflow; the combined `ecosystem-performance.yml`
 campaign cannot qualify it alone. The Jobs-only workflow is implemented but
 has no passing release evidence. Workflows, Projections and Documents share
 that exact-candidate capacity campaign because it measures each explicitly.
@@ -40,7 +40,7 @@ which requires two separate 1,800-second campaigns and retains an exact-candidat
 artifact only after its offline verifier passes. A prior local capacity pass
 does not qualify a later source commit or substitute for that workflow run.
 Events, Schema, Sql and Studio now have dedicated exact-candidate capacity
-workflows (`events-`, `schema-`, `sql-` and `studio-release-capacity.yml`). Each
+workflows (`events-`, `schema-`, `sql-` and `expansion-release-capacity.yml`). Each
 runs two 1,800-second campaigns of its family's harness against a fresh,
 digest-pinned PostgreSQL 18 fixture, records every operation as a raw sample,
 and passes `eng/verify-expansion-capacity.ps1` against the budgets and written

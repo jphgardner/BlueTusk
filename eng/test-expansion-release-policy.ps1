@@ -78,8 +78,8 @@ try
     }
     Assert-Rejected -ExpectedMessage "must require exact 'fuzzing.yml'" -Arguments $arguments
 
-    $workflows = @('fuzzing.yml', 'jobs-release-capacity.yml',
-        'jobs-release-failover.yml', 'jobs-release-upgrade.yml',
+    $workflows = @('fuzzing.yml', 'expansion-release-capacity.yml',
+        'expansion-release-failover.yml', 'expansion-release-upgrade.yml',
         'expansion-candidate-readiness.yml')
     foreach ($workflow in $workflows)
     {
@@ -90,17 +90,17 @@ try
     }
     $manifest | ConvertTo-Json -Depth 20 |
         Set-Content -LiteralPath $testManifest -Encoding utf8
-    foreach ($workflow in @($workflows | Where-Object { $_ -cne 'jobs-release-capacity.yml' }))
+    foreach ($workflow in @($workflows | Where-Object { $_ -cne 'expansion-release-capacity.yml' }))
     {
         Set-Content -LiteralPath (Join-Path $workflowDirectory $workflow) `
             -Value "name: fixture`non:`n  workflow_dispatch:`njobs:`n  fixture:`n    runs-on: ubuntu-latest`n    steps:`n      - run: true`n" `
             -Encoding utf8
     }
-    Assert-Rejected -ExpectedMessage "missing required workflow 'jobs-release-capacity.yml'" -Arguments $arguments
-    Set-Content -LiteralPath (Join-Path $workflowDirectory 'jobs-release-capacity.yml') `
+    Assert-Rejected -ExpectedMessage "missing required workflow 'expansion-release-capacity.yml'" -Arguments $arguments
+    Set-Content -LiteralPath (Join-Path $workflowDirectory 'expansion-release-capacity.yml') `
         -Value "name: fixture`non:`n  workflow_dispatch:`njobs:`n  fixture:`n    runs-on: ubuntu-latest`n    steps:`n      - run: true`n" `
         -Encoding utf8
-    $failoverPath = Join-Path $workflowDirectory 'jobs-release-failover.yml'
+    $failoverPath = Join-Path $workflowDirectory 'expansion-release-failover.yml'
     Set-Content -LiteralPath $failoverPath `
         -Value "name: fixture`non:`n  push:`n  workflow_dispatch:`njobs:`n  fixture:`n    runs-on: ubuntu-latest`n    steps:`n      - run: true`n" `
         -Encoding utf8

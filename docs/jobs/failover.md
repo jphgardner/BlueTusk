@@ -1,7 +1,7 @@
 # Jobs and Workflows physical promotion rehearsal
 
-The manual [Jobs release failover workflow](../../.github/workflows/jobs-release-failover.yml)
-wraps this rehearsal for one clean full candidate SHA. It requires three
+Select `Jobs` in the manual [Expansion release failover workflow](../../.github/workflows/expansion-release-failover.yml)
+to run this rehearsal for one clean full candidate SHA. It requires three
 fresh synchronous pairs, verifies the exact Jobs effects and stale-owner
 fences against retained raw reports and binary hashes, then uploads a
 product-specific artifact only after independent archive verification.
