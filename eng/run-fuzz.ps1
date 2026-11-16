@@ -129,7 +129,8 @@ try {
     $arguments = @(
         '-i', $corpusDirectory,
         '-o', $findingsDirectory,
-        '-t', "$ExecutionTimeoutMilliseconds+",
+        # Use the requested deadline; a trailing + lets AFL++ infer a much shorter timeout.
+        '-t', $ExecutionTimeoutMilliseconds,
         '-m', 'none',
         '-g', 1,
         '-G', $MaximumInputBytes,

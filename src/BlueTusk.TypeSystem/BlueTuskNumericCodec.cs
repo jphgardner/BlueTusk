@@ -8,7 +8,6 @@ public sealed class BlueTuskNumericCodec :
     BlueTuskCodec<BlueTuskNumeric>,
     IBlueTuskRangeCodecFactory
 {
-    private const ushort MaximumDisplayScale = 0x3FFF;
     private const ushort PositiveSign = 0x0000;
     private const ushort NegativeSign = 0x4000;
     private const ushort NaNSign = 0xC000;
@@ -66,7 +65,7 @@ public sealed class BlueTuskNumericCodec :
         var weight = reader.ReadInt16BigEndian();
         var sign = reader.ReadUInt16BigEndian();
         var displayScale = reader.ReadUInt16BigEndian();
-        if (displayScale > MaximumDisplayScale)
+        if (displayScale > BlueTuskNumeric.MaximumScale)
         {
             throw new InvalidOperationException("PostgreSQL numeric binary display scale exceeds 16383.");
         }
@@ -227,7 +226,7 @@ public sealed class BlueTuskNumericCodec :
         var weight = reader.ReadInt16BigEndian();
         var sign = reader.ReadUInt16BigEndian();
         var displayScale = reader.ReadUInt16BigEndian();
-        if (displayScale > MaximumDisplayScale)
+        if (displayScale > BlueTuskNumeric.MaximumScale)
         {
             throw new InvalidOperationException("PostgreSQL numeric binary display scale exceeds 16383.");
         }
@@ -327,11 +326,6 @@ public sealed class BlueTuskNumericCodec :
         }
 
         var scale = value.Scale;
-        if (scale > MaximumDisplayScale)
-        {
-            throw new OverflowException("PostgreSQL numeric binary display scale exceeds 16383.");
-        }
-
         var digits = BigInteger.Abs(value.UnscaledValue).ToString(CultureInfo.InvariantCulture);
         var integerLength = Math.Max(0, digits.Length - scale);
         var integerPart = integerLength == 0 ? string.Empty : digits[..integerLength];
