@@ -152,7 +152,7 @@ function Get-ExpansionCapacityDefinition
         Slug = $slug
         BudgetFile = "$slug-capacity-budgets.json"
         Qualification = "manual-exact-candidate-$slug-capacity"
-        WorkflowFile = "$slug-release-capacity.yml"
+        WorkflowFile = 'expansion-release-capacity.yml'
         Confirmation = $definition.Confirmation
         Harness = $definition.Harness
         HarnessProject = "benchmarks/$($definition.Harness)/$($definition.Harness).csproj"

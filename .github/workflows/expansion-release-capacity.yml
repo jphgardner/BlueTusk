@@ -1,0 +1,524 @@
+name: Expansion release capacity
+
+on:
+  workflow_dispatch:
+    inputs:
+      family:
+        description: Product family to qualify
+        required: true
+        type: choice
+        options:
+          - Events
+          - Jobs
+          - Schema
+          - Search
+          - Sql
+          - Studio
+          - Edge
+      candidate_sha:
+        description: Exact full SHA of the dispatch ref
+        required: true
+        type: string
+      confirmation:
+        description: Type RUN-<FAMILY>-RELEASE-CAPACITY
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bluetusk-reference-host
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Check the selected family and exact candidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify dispatch inputs
+        shell: bash
+        env:
+          FAMILY: ${{ inputs.family }}
+          CANDIDATE: ${{ inputs.candidate_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          case "$FAMILY" in Events|Jobs|Schema|Search|Sql|Studio|Edge) ;; *) exit 1 ;; esac
+          [[ "$CANDIDATE" =~ ^[0-9a-f]{40}$ && "$CANDIDATE" = "$GITHUB_SHA" ]]
+          [[ "$CONFIRMATION" = "RUN-${FAMILY^^}-RELEASE-CAPACITY" ]]
+
+  qualify-events:
+    needs: validate
+    if: inputs.family == 'Events'
+    name: Isolated Windows Events capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 180
+    env:
+      EVIDENCE_ROOT: artifacts/events-release-capacity/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify exact candidate, reference host and Events contract
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Events capacity requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-EVENTS-RELEASE-CAPACITY') { throw 'The exact manual Events confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) { throw 'Events capacity runs are bound by head_sha; dispatch from a ref whose head is the candidate.' }
+          python --version
+          if ($LASTEXITCODE -ne 0) { throw 'Python is required for exact source capture.' }
+          ./eng/verify-expansion-capacity.ps1 -Mode Preflight -Family Events -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Run two exact-candidate Events campaigns on owned digest-pinned PostgreSQL
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Run -Family Events -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Events evidence, raw samples and every SHA-256 binding
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Verify -Family Events -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Events capacity evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-events-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: events-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Events fixtures
+        if: always()
+        shell: pwsh
+        run: |
+          $filters = @('--filter', 'label=bluetusk.owner=events-release-capacity', '--filter', "label=bluetusk.run=$env:GITHUB_RUN_ID", '--filter', 'label=bluetusk.family=Events')
+          $containers = @(docker container ls -a -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Events fixtures.' }
+          if ($containers.Count -gt 0) { docker rm -f @containers; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Events fixture.' } }
+          $volumes = @(docker volume ls -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Events volumes.' }
+          if ($volumes.Count -gt 0) { docker volume rm @volumes; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Events volume.' } }
+
+  qualify-jobs:
+    needs: validate
+    if: inputs.family == 'Jobs'
+    name: Isolated Windows Jobs capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 180
+    env:
+      EVIDENCE_ROOT: artifacts/jobs-release-capacity/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify clean exact candidate and Jobs-only contract
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Jobs capacity requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-JOBS-RELEASE-CAPACITY') { throw 'The exact manual Jobs confirmation is required.' }
+          ./eng/verify-jobs-release-capacity.ps1 -Mode Preflight -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Start dedicated digest-pinned PostgreSQL 15
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-jobs-release-pg15'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0 -or $existing.Count -ne 0) { throw 'The dedicated Jobs fixture name is already in use or Docker is unavailable.' }
+          $budgets = Get-Content eng/jobs-release-capacity-budgets.json -Raw | ConvertFrom-Json
+          $fixturePassword = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24))
+          docker run -d --name $name --label bluetusk.owner=jobs-release-capacity --label "bluetusk.run=$env:GITHUB_RUN_ID" `
+            --cpus 4 --memory 2g -p 127.0.0.1:55416:5432 `
+            -e POSTGRES_USER=postgres -e "POSTGRES_PASSWORD=$fixturePassword" -e POSTGRES_DB=bluetusk_jobs_release $budgets.postgreSql15Image
+          if ($LASTEXITCODE -ne 0) { throw 'Dedicated Jobs fixture did not start.' }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 150; $attempt++) {
+            docker exec $name pg_isready -h 127.0.0.1 -U postgres -d bluetusk_jobs_release *> $null
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Milliseconds 200
+          }
+          if (-not $ready) { throw 'Dedicated Jobs fixture did not become ready.' }
+
+      - name: Run two 30-minute Jobs campaigns
+        shell: pwsh
+        run: ./eng/verify-jobs-release-capacity.ps1 -Mode Run -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Jobs evidence and SHA-256 bindings
+        shell: pwsh
+        run: ./eng/verify-jobs-release-capacity.ps1 -Mode Verify -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Jobs capacity evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-jobs-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: jobs-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Jobs fixture
+        if: always()
+        shell: pwsh
+        run: |
+          $name = 'bluetusk-jobs-release-pg15'
+          $existing = @(docker container ls -a --format '{{.Names}}' --filter "name=^/$name$")
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect dedicated Jobs fixture for cleanup.' }
+          if ($existing.Count -eq 0) { return }
+          $labels = docker inspect $name --format '{{json .Config.Labels}}' | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $labels.'bluetusk.owner' -ne 'jobs-release-capacity' -or $labels.'bluetusk.run' -ne $env:GITHUB_RUN_ID) {
+            throw 'Refusing to remove a fixture not owned by this workflow run.'
+          }
+          docker rm -f $name
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Jobs fixture.' }
+
+  qualify-schema:
+    needs: validate
+    if: inputs.family == 'Schema'
+    name: Isolated Windows Schema capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 180
+    env:
+      EVIDENCE_ROOT: artifacts/schema-release-capacity/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify exact candidate, reference host and Schema contract
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Schema capacity requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-SCHEMA-RELEASE-CAPACITY') { throw 'The exact manual Schema confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) { throw 'Schema capacity runs are bound by head_sha; dispatch from a ref whose head is the candidate.' }
+          python --version
+          if ($LASTEXITCODE -ne 0) { throw 'Python is required for exact source capture.' }
+          ./eng/verify-expansion-capacity.ps1 -Mode Preflight -Family Schema -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Run two exact-candidate Schema campaigns on owned digest-pinned PostgreSQL
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Run -Family Schema -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Schema evidence, raw samples and every SHA-256 binding
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Verify -Family Schema -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Schema capacity evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-schema-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: schema-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Schema fixtures
+        if: always()
+        shell: pwsh
+        run: |
+          $filters = @('--filter', 'label=bluetusk.owner=schema-release-capacity', '--filter', "label=bluetusk.run=$env:GITHUB_RUN_ID", '--filter', 'label=bluetusk.family=Schema')
+          $containers = @(docker container ls -a -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Schema fixtures.' }
+          if ($containers.Count -gt 0) { docker rm -f @containers; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Schema fixture.' } }
+          $volumes = @(docker volume ls -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Schema volumes.' }
+          if ($volumes.Count -gt 0) { docker volume rm @volumes; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Schema volume.' } }
+
+  qualify-search:
+    needs: validate
+    if: inputs.family == 'Search'
+    name: Isolated Windows Search capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 180
+    env:
+      EVIDENCE_ROOT: artifacts/search-release-capacity/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify exact candidate and reference host
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Search capacity requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-SEARCH-RELEASE-CAPACITY') { throw 'The exact manual Search confirmation is required.' }
+          $head = (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $head -cne $env:CANDIDATE_SHA) { throw 'Checkout differs from the requested candidate.' }
+          if (@(git status --porcelain --untracked-files=normal).Count -ne 0) { throw 'Search capacity requires a clean checkout.' }
+          $processor = (Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name)
+          if ($processor -notmatch 'AMD Ryzen 7 5800X') { throw "Unexpected Search reference processor: '$processor'." }
+          python --version
+          if ($LASTEXITCODE -ne 0) { throw 'Python is required for exact source capture.' }
+
+      - name: Run two exact-candidate Search campaigns
+        shell: pwsh
+        run: ./eng/run-search-capacity.ps1 -ExpectedCommit $env:CANDIDATE_SHA -OutputDirectory $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Search capacity evidence
+        shell: pwsh
+        run: ./eng/verify-search-capacity.ps1 -ExpectedCommit $env:CANDIDATE_SHA -EvidenceDirectory $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Search capacity evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-search-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: search-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+  qualify-sql:
+    needs: validate
+    if: inputs.family == 'Sql'
+    name: Isolated Windows Sql capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 180
+    env:
+      EVIDENCE_ROOT: artifacts/sql-release-capacity/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify exact candidate, reference host and Sql contract
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Sql capacity requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-SQL-RELEASE-CAPACITY') { throw 'The exact manual Sql confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) { throw 'Sql capacity runs are bound by head_sha; dispatch from a ref whose head is the candidate.' }
+          python --version
+          if ($LASTEXITCODE -ne 0) { throw 'Python is required for exact source capture.' }
+          ./eng/verify-expansion-capacity.ps1 -Mode Preflight -Family Sql -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Run two exact-candidate Sql campaigns on owned digest-pinned PostgreSQL
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Run -Family Sql -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Sql evidence, raw samples and every SHA-256 binding
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Verify -Family Sql -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Sql capacity evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-sql-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sql-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Sql fixtures
+        if: always()
+        shell: pwsh
+        run: |
+          $filters = @('--filter', 'label=bluetusk.owner=sql-release-capacity', '--filter', "label=bluetusk.run=$env:GITHUB_RUN_ID", '--filter', 'label=bluetusk.family=Sql')
+          $containers = @(docker container ls -a -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Sql fixtures.' }
+          if ($containers.Count -gt 0) { docker rm -f @containers; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Sql fixture.' } }
+          $volumes = @(docker volume ls -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Sql volumes.' }
+          if ($volumes.Count -gt 0) { docker volume rm @volumes; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Sql volume.' } }
+
+  qualify-studio:
+    needs: validate
+    if: inputs.family == 'Studio'
+    name: Isolated Windows Studio capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 180
+    env:
+      EVIDENCE_ROOT: artifacts/studio-release-capacity/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify exact candidate, reference host and Studio contract
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Studio capacity requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-STUDIO-RELEASE-CAPACITY') { throw 'The exact manual Studio confirmation is required.' }
+          if ($env:GITHUB_SHA -cne $env:CANDIDATE_SHA) { throw 'Studio capacity runs are bound by head_sha; dispatch from a ref whose head is the candidate.' }
+          python --version
+          if ($LASTEXITCODE -ne 0) { throw 'Python is required for exact source capture.' }
+          ./eng/verify-expansion-capacity.ps1 -Mode Preflight -Family Studio -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Run two exact-candidate Studio campaigns on owned digest-pinned PostgreSQL
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Run -Family Studio -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Studio evidence, raw samples and every SHA-256 binding
+        shell: pwsh
+        run: ./eng/verify-expansion-capacity.ps1 -Mode Verify -Family Studio -ExpectedCommit $env:CANDIDATE_SHA -EvidenceRoot $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Studio capacity evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-studio-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: studio-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove only this run's Studio fixtures
+        if: always()
+        shell: pwsh
+        run: |
+          $filters = @('--filter', 'label=bluetusk.owner=studio-release-capacity', '--filter', "label=bluetusk.run=$env:GITHUB_RUN_ID", '--filter', 'label=bluetusk.family=Studio')
+          $containers = @(docker container ls -a -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Studio fixtures.' }
+          if ($containers.Count -gt 0) { docker rm -f @containers; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Studio fixture.' } }
+          $volumes = @(docker volume ls -q @filters)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect this run’s Studio volumes.' }
+          if ($volumes.Count -gt 0) { docker volume rm @volumes; if ($LASTEXITCODE -ne 0) { throw 'Failed to remove this run’s Studio volume.' } }
+
+  qualify-edge:
+    needs: validate
+    if: inputs.family == 'Edge'
+    name: Isolated Windows Edge capacity campaign
+    runs-on: [self-hosted, windows, x64, bluetusk-benchmark]
+    timeout-minutes: 180
+    env:
+      EVIDENCE_ROOT: artifacts/edge-release-capacity/${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      BLUETUSK_EDGE_BROWSER_CHANNEL: msedge
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify exact candidate and reference host
+        shell: pwsh
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$') { throw 'Edge capacity requires a lowercase full candidate SHA.' }
+          if ($env:CONFIRMATION -cne 'RUN-EDGE-RELEASE-CAPACITY') { throw 'The exact manual Edge confirmation is required.' }
+          $head = (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $head -cne $env:CANDIDATE_SHA) { throw 'Checkout differs from the requested candidate.' }
+          if (@(git status --porcelain --untracked-files=normal).Count -ne 0) { throw 'Edge capacity requires a clean checkout.' }
+          $processor = (Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name)
+          if ($processor -notmatch 'AMD Ryzen 7 5800X') { throw "Unexpected Edge reference processor: '$processor'." }
+          python --version
+          if ($LASTEXITCODE -ne 0) { throw 'Python is required for exact source capture.' }
+
+      - name: Run two exact-candidate Edge campaigns
+        shell: pwsh
+        run: ./eng/run-edge-capacity.ps1 -ExpectedCommit $env:CANDIDATE_SHA -OutputDirectory $env:EVIDENCE_ROOT
+
+      - name: Recheck archived Edge capacity evidence
+        shell: pwsh
+        run: ./eng/verify-edge-capacity.ps1 -ExpectedCommit $env:CANDIDATE_SHA -EvidenceDirectory $env:EVIDENCE_ROOT
+
+      - name: Upload qualified Edge capacity evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: expansion-edge-capacity-${{ inputs.candidate_sha }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Retain partial diagnostics separately on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: edge-capacity-partial-${{ inputs.candidate_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: ignore
+          retention-days: 14

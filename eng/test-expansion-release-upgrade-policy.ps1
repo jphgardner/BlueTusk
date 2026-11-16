@@ -55,8 +55,8 @@ foreach ($family in $families)
 {
     $slug = $family.ToLowerInvariant()
     $file = [string]$release.families.$family.upgradeWorkflow
-    if ($file -cne "$slug-release-upgrade.yml") { throw "$family upgrade workflow name differs from the release policy." }
-    $workflow = Get-Content (Join-Path $root ".github/workflows/$file") -Raw
+    if ($file -cne 'expansion-release-upgrade.yml') { throw "$family upgrade workflow name differs from the release policy." }
+    $workflow = Get-ExpansionWorkflowSource -Path (Join-Path $root ".github/workflows/$file") -Family $family
     $required = @(
         '(?m)^  workflow_dispatch:\s*$',
         [regex]::Escape('runs-on: [self-hosted, windows, x64, bluetusk-benchmark]'),
