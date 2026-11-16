@@ -822,7 +822,9 @@ public sealed class ContinuousGraphEnduranceTests
         await File.WriteAllTextAsync(progressPath + ".tmp", JsonSerializer.Serialize(new
         {
             updatedAt = DateTimeOffset.UtcNow,
-            elapsed, evaluations, committed,
+            elapsed,
+            evaluations,
+            committed,
             authoritativeDeltas = deltas,
             authoritativeRepairs = repairs,
             scopedAuthorizations = authorizations,

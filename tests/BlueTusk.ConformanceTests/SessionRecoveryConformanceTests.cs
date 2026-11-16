@@ -239,7 +239,9 @@ public sealed class SessionRecoveryConformanceTests
         var dataFrame = Frame('d', [1, 2, 3]);
         var transport = new FaultTransport
         {
-            Input = Frame('W', [0, 0, 0]).Concat(dataFrame[..framePrefixLength]).ToArray(), HoldRead = true, HoldReadAtEnd = true,
+            Input = Frame('W', [0, 0, 0]).Concat(dataFrame[..framePrefixLength]).ToArray(),
+            HoldRead = true,
+            HoldReadAtEnd = true,
         };
         await using var session = CreateSession(transport, out _);
         await using var channel = await session.BeginCopyBothAsync("START_REPLICATION PHYSICAL 0/0");

@@ -27,7 +27,7 @@ public sealed class BlueTuskGraphIdentity
 
     internal static BlueTuskGraphIdentity Read(JsonElement value) =>
         new(value[0].GetString()!, value[1].EnumerateArray().Select(static key =>
-            key.ValueKind is JsonValueKind.String ? (object) key.GetGuid() : key.GetInt64()).ToArray());
+            key.ValueKind is JsonValueKind.String ? (object)key.GetGuid() : key.GetInt64()).ToArray());
 }
 
 /// <summary>Sets the work limits and direction of a registered graph traversal.</summary>

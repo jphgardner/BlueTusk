@@ -193,8 +193,8 @@ internal static class BlueTuskGraphTraversalExecutor
             else
             {
                 var function = filtered ? "shortest_path_on" : "shortest_path";
-                    call = $"{function}(@schema,@graph,@start_element,CAST(@start_key AS jsonb)," +
-                       $"@target_element,CAST(@target_key AS jsonb),{filterArgument}@depth,@direction,@frontier,@edges,@bytes)";
+                call = $"{function}(@schema,@graph,@start_element,CAST(@start_key AS jsonb)," +
+                   $"@target_element,CAST(@target_key AS jsonb),{filterArgument}@depth,@direction,@frontier,@edges,@bytes)";
                 arguments.Add(("target_element", target.Element));
                 arguments.Add(("target_key", target.EncodeKey()));
             }

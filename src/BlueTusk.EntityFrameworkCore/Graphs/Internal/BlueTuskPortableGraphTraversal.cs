@@ -101,7 +101,7 @@ internal sealed class BlueTuskPortableGraphTraversal(
                     return Exhausted("edges");
 
                 _edges++;
-                var ordinal = checked((int) reader.GetInt64(0)) - 1;
+                var ordinal = checked((int)reader.GetInt64(0)) - 1;
                 var edge = reader.GetString(1);
                 var key = reader.GetString(2);
                 if (!visited.Add(key))
@@ -145,7 +145,7 @@ internal sealed class BlueTuskPortableGraphTraversal(
                   $"WHERE {KeyMatch(vertex, "v", vertex.KeyColumns, "CAST(@key AS jsonb)")}";
         await using var command = BlueTuskGraphTraversalExecutor.CreateCommand(context, sql,
             ("key", identity.EncodeKey()));
-        return (string?) await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return (string?)await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private string? CreateStepSql()

@@ -4,8 +4,8 @@ using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
 using BlueTusk.Sync.PostgreSql;
 using BlueTusk.Sync.Testing;
-using BlueTusk.TypeSystem;
 using BlueTusk.Tests.Shared;
+using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Sync.Tests;
 

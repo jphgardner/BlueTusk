@@ -39,7 +39,8 @@ public sealed class ContinuousGraphScopedConnection
     public Func<BlueTuskConnection, LiveQueryExecutionContext, CancellationToken, ValueTask>? AuthorizeAsync { get; }
 
     internal Func<LiveQueryExecutionContext, CancellationToken, ValueTask<IContinuousGraphScopedConnectionLease>>?
-        AcquireAuthorizedLeaseAsync { get; }
+        AcquireAuthorizedLeaseAsync
+    { get; }
 }
 
 /// <summary>An exclusive lease for a subscriber-authorized graph read.</summary>

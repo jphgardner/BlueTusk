@@ -26,10 +26,10 @@ internal static partial class BlueTuskGraphSqlTranslator
         if (pattern is not
             [
                 BlueTuskGraphVertexPattern
-                {
-                    LabelExpression: null,
-                    Predicate.Body: BinaryExpression comparison,
-                } start,
+            {
+                LabelExpression: null,
+                Predicate.Body: BinaryExpression comparison,
+            } start,
                 BlueTuskGraphEdgePattern { LabelExpression: null, MinimumHops: 1, MaximumHops: 1 } edge,
                 BlueTuskGraphVertexPattern { LabelExpression: null, Predicate: null } end,
             ] ||

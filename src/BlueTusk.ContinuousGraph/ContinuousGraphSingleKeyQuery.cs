@@ -148,10 +148,10 @@ internal sealed class ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>(
         }
 
         return query is MethodCallExpression
-               {
-                   Method.Name: nameof(Queryable.Take),
-                   Arguments: [MethodCallExpression order, ConstantExpression { Value: int and > 1 }],
-               } take &&
+        {
+            Method.Name: nameof(Queryable.Take),
+            Arguments: [MethodCallExpression order, ConstantExpression { Value: int and > 1 }],
+        } take &&
                take.Method.DeclaringType == typeof(Queryable) &&
                order.Method.DeclaringType == typeof(Queryable) &&
                order.Method.Name is nameof(Queryable.OrderBy) or nameof(Queryable.OrderByDescending)

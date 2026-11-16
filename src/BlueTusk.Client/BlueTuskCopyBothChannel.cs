@@ -1,5 +1,5 @@
-using BlueTusk.Protocol;
 using System.Runtime.ExceptionServices;
+using BlueTusk.Protocol;
 
 namespace BlueTusk.Client;
 

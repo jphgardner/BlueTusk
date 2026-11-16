@@ -102,11 +102,19 @@ public sealed class ProviderCompatibilityTests
         var create = new CreateTableOperation { Name = "compatibility_created" };
         create.Columns.Add(new AddColumnOperation
         {
-            Name = "Id", Table = create.Name, ClrType = typeof(int), ColumnType = "integer", IsNullable = false,
+            Name = "Id",
+            Table = create.Name,
+            ClrType = typeof(int),
+            ColumnType = "integer",
+            IsNullable = false,
         });
         create.Columns.Add(new AddColumnOperation
         {
-            Name = "Name", Table = create.Name, ClrType = typeof(string), ColumnType = "text", IsNullable = false,
+            Name = "Name",
+            Table = create.Name,
+            ClrType = typeof(string),
+            ColumnType = "text",
+            IsNullable = false,
         });
         var commands = context.GetService<IMigrationsSqlGenerator>().Generate([create]);
 

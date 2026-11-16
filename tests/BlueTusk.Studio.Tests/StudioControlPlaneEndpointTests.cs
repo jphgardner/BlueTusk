@@ -173,7 +173,7 @@ public sealed class StudioControlPlaneEndpointTests
                 endpoints.MapBlueTuskStudioControlPlane();
             }, cancellationToken: TestContext.Current.CancellationToken);
             return new(app, new(new HttpClientHandler { CookieContainer = new CookieContainer() })
-                { BaseAddress = new(app.Address, "/bluetusk/studio/") }, state);
+            { BaseAddress = new(app.Address, "/bluetusk/studio/") }, state);
         }
         internal void User(string user) { Client.DefaultRequestHeaders.Remove("X-User"); Client.DefaultRequestHeaders.Add("X-User", user); }
         internal async Task TokenAsync()
