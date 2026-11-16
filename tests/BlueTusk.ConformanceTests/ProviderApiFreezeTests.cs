@@ -42,8 +42,10 @@ public sealed class ProviderApiFreezeTests
                 Path.Combine(repositoryRoot, rootDirectory),
                 "PublicAPI.Shipped.txt",
                 SearchOption.AllDirectories))
-            .Where(IsProviderApiBaseline)
             .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
+            .Where(path => !path.Contains("/obj/", StringComparison.OrdinalIgnoreCase) &&
+                !path.Contains("/bin/", StringComparison.OrdinalIgnoreCase))
+            .Where(path => IsProviderApiBaseline(Path.Combine(repositoryRoot, path)))
             .Order(StringComparer.Ordinal)
             .ToArray();
 

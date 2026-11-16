@@ -33,8 +33,10 @@ public sealed class ControlPlaneApiFreezeTests
                 Path.Combine(repositoryRoot, "src"),
                 "PublicAPI.*.txt",
                 SearchOption.AllDirectories)
-            .Where(IsControlPlaneApiBaseline)
             .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
+            .Where(path => !path.Contains("/obj/", StringComparison.OrdinalIgnoreCase) &&
+                !path.Contains("/bin/", StringComparison.OrdinalIgnoreCase))
+            .Where(path => IsControlPlaneApiBaseline(Path.Combine(repositoryRoot, path)))
             .OrderBy(static path => path, StringComparer.Ordinal)
             .ToArray();
 
