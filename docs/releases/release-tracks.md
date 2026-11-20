@@ -141,8 +141,9 @@ job reaches the queue, provision its one-job runner inside the cluster.
     -RunId $deployRunId -RunnerLabel $deployLabel
 ```
 
-The deploy workflow checks that the package
-publication jobs completed before it rolls out the website, documentation and reference applications.
+The deploy workflow checks that the package publication jobs completed and that the published
+candidate is included in the dispatch commit on `main`. It deploys the verified application
+images from the candidate and uses the dispatch commit for the website, docs and Helm charts.
 
 The `bluetusk-production` GitHub environment requires a dedicated Kubernetes deployment identity in
 `BLUETUSK_DEPLOY_KUBECONFIG_BASE64` with `https://kubernetes.default.svc` as the server. Limit that

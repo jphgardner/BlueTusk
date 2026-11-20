@@ -3,9 +3,11 @@ param(
     [Parameter(Mandatory)]
     [string] $ImageEvidencePath,
     [string] $KubernetesContext = 'proxmox-homelab',
+    [switch] $Apply,
     [ValidatePattern('^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$')]
     [string] $StorageClass = 'longhorn',
-    [switch] $Apply
+    [ValidatePattern('^[0-9a-f]{40}$')]
+    [string] $ExpectedImageCommit
 )
 
 Set-StrictMode -Version Latest
@@ -14,9 +16,10 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
 $commit = (& git -C $repositoryRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Could not resolve the checked-out commit.' }
+if (-not $ExpectedImageCommit) { $ExpectedImageCommit = $commit }
 & (Join-Path $PSScriptRoot 'verify-application-image-evidence.ps1') `
     -EvidencePath $ImageEvidencePath `
-    -ExpectedCommit $commit
+    -ExpectedCommit $ExpectedImageCommit
 $evidence = Get-Content -LiteralPath $ImageEvidencePath -Raw | ConvertFrom-Json
 
 $context = (& kubectl config current-context).Trim()
@@ -161,4 +164,4 @@ if ($Apply)
 }
 
 $mode = if ($Apply) { 'deployed' } else { 'validated without changing cluster state' }
-Write-Output "RC staging $mode for all three applications at commit $commit."
+Write-Output "RC staging $mode for all three applications with images from $ExpectedImageCommit and manifests from $commit."

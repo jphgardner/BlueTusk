@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory)] [ValidatePattern('^[0-9a-f]{40}$')] [string] $Candidate,
     [Parameter(Mandatory)] [ValidateRange(1, [long]::MaxValue)] [long] $ReadinessRunId,
     [Parameter(Mandatory)] [ValidateRange(1, [long]::MaxValue)] [long] $ApplicationsRunId,
-    [ValidatePattern('^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')] [string] $Repository = 'jphgardner/BlueTusk'
+    [ValidatePattern('^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')] [string] $Repository = 'jphgardner/BlueTusk',
+    [ValidatePattern('^[0-9a-f]{40}$')] [string] $DeploymentCommit = $Candidate
 )
 
 Set-StrictMode -Version Latest
@@ -25,10 +26,15 @@ Assert-Run $ReadinessRunId 'core-1.2-package-readiness.yml' 'workflow_dispatch'
 Assert-Run $ApplicationsRunId 'applications-images.yml' 'workflow_dispatch'
 $main = & gh api "$api/commits/main" --jq .sha
 if ($LASTEXITCODE -ne 0) { throw 'Could not resolve the reviewed main branch.' }
-$comparison = & gh api "$api/compare/$Candidate...$main" --jq .status
+$comparison = & gh api "$api/compare/$DeploymentCommit...$main" --jq .status
 if ($LASTEXITCODE -ne 0 -or $comparison -cnotin @('ahead', 'identical'))
 {
-    throw 'The candidate must be included in main.'
+    throw 'The deployment commit must be included in main.'
+}
+$comparison = & gh api "$api/compare/$Candidate...$DeploymentCommit" --jq .status
+if ($LASTEXITCODE -ne 0 -or $comparison -cnotin @('ahead', 'identical'))
+{
+    throw 'The package and application candidate must be included in the deployment commit.'
 }
 
 foreach ($prefix in 'provider', 'streams', 'sync', 'live', 'control-plane')
@@ -51,4 +57,4 @@ foreach ($prefix in 'provider', 'streams', 'sync', 'live', 'control-plane')
     }
 }
 
-Write-Output "Verified coordinated Core 1.2.0 publication and exact-candidate application images for $Candidate."
+Write-Output "Verified Core 1.2.0 publication and application images for $Candidate with deployment source $DeploymentCommit."

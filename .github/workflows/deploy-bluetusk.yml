@@ -46,7 +46,7 @@ jobs:
           DEPLOY_RUNNER_LABEL: ${{ inputs.deploy_runner_label }}
         run: |
           if ($env:DEPLOY_RUNNER_LABEL -cnotmatch '^bluetusk-deploy-[0-9a-f]{20}$') { throw 'Use a unique Kubernetes deployment runner label.' }
-          ./eng/verify-coordinated-deployment.ps1 -Candidate $env:CANDIDATE `
+          ./eng/verify-coordinated-deployment.ps1 -Candidate $env:CANDIDATE -DeploymentCommit $env:GITHUB_SHA `
             -ReadinessRunId $env:READINESS -ApplicationsRunId $env:APPLICATIONS
 
   publish-site-image:
@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.candidate_sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -74,18 +74,18 @@ jobs:
           npm ci
           npm run docs:check
           npm run build
-      - name: Push exact-candidate site image
+      - name: Push the verified deployment commit's site image
         id: image
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          CANDIDATE: ${{ inputs.candidate_sha }}
+          DEPLOYMENT_COMMIT: ${{ github.sha }}
         run: |
           set -euo pipefail
           image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/bluetusk-site"
           printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
           docker buildx build --platform linux/amd64 --build-arg BUILD_VERSION=1.2.0 \
-            --build-arg "BUILD_REVISION=$CANDIDATE" --tag "$image:$CANDIDATE" \
+            --build-arg "BUILD_REVISION=$DEPLOYMENT_COMMIT" --tag "$image:$DEPLOYMENT_COMMIT" \
             --metadata-file "$RUNNER_TEMP/site-image.json" --push website
           digest="$(jq -er '."containerimage.digest" | select(test("^sha256:[0-9a-f]{64}$"))' "$RUNNER_TEMP/site-image.json")"
           printf 'reference=%s@%s\n' "$image" "$digest" >> "$GITHUB_OUTPUT"
@@ -98,7 +98,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.candidate_sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -116,6 +116,7 @@ jobs:
         shell: pwsh
         env:
           KUBECONFIG_BASE64: ${{ secrets.BLUETUSK_DEPLOY_KUBECONFIG_BASE64 }}
+          CANDIDATE: ${{ inputs.candidate_sha }}
           STORAGE_CLASS: ${{ vars.BLUETUSK_APP_STORAGE_CLASS || 'longhorn' }}
           SITE_IMAGE: ${{ needs.publish-site-image.outputs.site-image }}
         run: |
@@ -134,11 +135,17 @@ jobs:
               throw 'Configure the deployment kubeconfig to use the in-cluster Kubernetes API service.'
             }
             $appEvidence = 'artifacts/deployment-inputs/application-images.json'
-            ./eng/deploy-applications-rc.ps1 -ImageEvidencePath $appEvidence -KubernetesContext $context -StorageClass $env:STORAGE_CLASS
+            $appOptions = @{
+              ImageEvidencePath = $appEvidence
+              ExpectedImageCommit = $env:CANDIDATE
+              KubernetesContext = $context
+              StorageClass = $env:STORAGE_CLASS
+            }
+            ./eng/deploy-applications-rc.ps1 @appOptions
             $previous = kubectl -n bluetusk get deployment bluetusk-site -o 'jsonpath={.spec.template.spec.containers[?(@.name=="site")].image}'
             if ([string]::IsNullOrWhiteSpace($previous)) { throw 'The existing website deployment has no site container.' }
             kubectl -n bluetusk set image deployment/bluetusk-site "site=$env:SITE_IMAGE" --dry-run=server
-            ./eng/deploy-applications-rc.ps1 -ImageEvidencePath $appEvidence -KubernetesContext $context -StorageClass $env:STORAGE_CLASS -Apply
+            ./eng/deploy-applications-rc.ps1 @appOptions -Apply
             kubectl -n bluetusk set image deployment/bluetusk-site "site=$env:SITE_IMAGE"
             try {
               kubectl -n bluetusk rollout status deployment/bluetusk-site --timeout=5m

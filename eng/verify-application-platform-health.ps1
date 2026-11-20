@@ -2,11 +2,11 @@
 param(
     [ValidateRange(1, 100)]
     [int] $MinimumReadyNodes = 2,
+    [switch] $RequireApplications,
     [ValidateNotNullOrEmpty()]
     [string] $KubernetesContext = 'proxmox-homelab',
     [ValidateNotNullOrEmpty()]
-    [string] $StorageClass = 'longhorn',
-    [switch] $RequireApplications
+    [string] $StorageClass = 'longhorn'
 )
 
 Set-StrictMode -Version Latest
