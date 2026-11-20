@@ -201,34 +201,41 @@ public static class LiveResultDiffer
         rowComparer ??= EqualityComparer<T>.Default;
         keyComparer ??= EqualityComparer<TKey>.Default;
 
-        var current = CreateSnapshot(currentRows, keySelector, keyComparer);
+        var current = CreateSnapshot(currentRows, keySelector, keyComparer, previous);
         var oldByKey = GetKeyIndexes(previous, keyComparer);
         var newByKey = current.KeyIndexes;
+        var sameKeyPositions = ReferenceEquals(oldByKey, newByKey);
         var events = new List<LiveResultEvent<T, TKey>>();
         var sequence = nextSequence;
 
-        for (var index = 0; index < previous.Keys.Count; index++)
+        if (!sameKeyPositions)
         {
-            var key = previous.Keys[index];
-            if (!newByKey.ContainsKey(key))
+            for (var index = 0; index < previous.Keys.Count; index++)
             {
-                events.Add(new LiveResultEvent<T, TKey>(
-                    sequence++,
-                    LiveEventKind.RowRemoved,
-                    key,
-                    default,
-                    index,
-                    null,
-                    null,
-                    null,
-                    null));
+                var key = previous.Keys[index];
+                if (!newByKey.ContainsKey(key))
+                {
+                    events.Add(new LiveResultEvent<T, TKey>(
+                        sequence++,
+                        LiveEventKind.RowRemoved,
+                        key,
+                        default,
+                        index,
+                        null,
+                        null,
+                        null,
+                        null));
+                }
             }
         }
 
+        var previousCommonIndex = -1;
+        var orderChanged = false;
         for (var index = 0; index < current.Keys.Count; index++)
         {
             var key = current.Keys[index];
-            if (!oldByKey.TryGetValue(key, out var oldIndex))
+            var oldIndex = index;
+            if (!sameKeyPositions && !oldByKey.TryGetValue(key, out oldIndex))
             {
                 events.Add(new LiveResultEvent<T, TKey>(
                     sequence++,
@@ -240,8 +247,13 @@ public static class LiveResultDiffer
                     null,
                     null,
                     null));
+                continue;
             }
-            else if (!rowComparer.Equals(previous.Rows[oldIndex], current.Rows[index]))
+
+            // The shared keys retain their order when their positions in the old result increase.
+            orderChanged |= oldIndex < previousCommonIndex;
+            previousCommonIndex = oldIndex;
+            if (!rowComparer.Equals(previous.Rows[oldIndex], current.Rows[index]))
             {
                 events.Add(new LiveResultEvent<T, TKey>(
                     sequence++,
@@ -256,7 +268,7 @@ public static class LiveResultDiffer
             }
         }
 
-        if (CommonOrderChanged(previous, current, oldByKey, newByKey, keyComparer))
+        if (orderChanged)
         {
             events.Add(new LiveResultEvent<T, TKey>(
                 sequence++,
@@ -374,18 +386,31 @@ public static class LiveResultDiffer
     private static LiveResultSnapshot<T, TKey> CreateSnapshot<T, TKey>(
         IReadOnlyList<T> rows,
         Func<T, TKey> keySelector,
-        IEqualityComparer<TKey> keyComparer)
+        IEqualityComparer<TKey> keyComparer,
+        LiveResultSnapshot<T, TKey>? previous = null)
         where TKey : notnull
     {
         var ownedRows = LiveSnapshotRows<T>.CreateBuilder(rows.Count);
         var keys = new TKey[rows.Count];
-        var keyIndexes = new Dictionary<TKey, int>(rows.Count, keyComparer);
+        // Reuse the index when each new key compares equal at its existing position. Keep the
+        // new keys themselves, since a comparer can treat distinct representations as equal.
+        var reusableKeys = previous is not null && previous.Keys.Count == rows.Count &&
+            ReferenceEquals(previous.KeyComparer, keyComparer) ? previous.OwnedKeys : null;
+        var keyIndexes = reusableKeys is null ? new Dictionary<TKey, int>(rows.Count, keyComparer) : null;
         for (var index = 0; index < rows.Count; index++)
         {
             var row = rows[index];
             var key = keySelector(row) ??
                 throw new InvalidOperationException("A live query key selector returned null.");
-            if (!keyIndexes.TryAdd(key, index))
+            if (keyIndexes is null && !keyComparer.Equals(reusableKeys![index], key))
+            {
+                keyIndexes = new Dictionary<TKey, int>(rows.Count, keyComparer);
+                for (var previousIndex = 0; previousIndex < index; previousIndex++)
+                {
+                    keyIndexes.Add(keys[previousIndex], previousIndex);
+                }
+            }
+            if (keyIndexes is not null && !keyIndexes.TryAdd(key, index))
             {
                 throw new InvalidOperationException($"A live query returned duplicate key '{key}'.");
             }
@@ -394,7 +419,7 @@ public static class LiveResultDiffer
             keys[index] = key;
         }
 
-        return LiveResultSnapshot<T, TKey>.CreateOwned(ownedRows.ToImmutable(), keys, keyIndexes);
+        return LiveResultSnapshot<T, TKey>.CreateOwned(ownedRows.ToImmutable(), keys, keyIndexes ?? previous!.KeyIndexes);
     }
 
     private static Dictionary<TKey, int> GetKeyIndexes<T, TKey>(
@@ -415,46 +440,5 @@ public static class LiveResultDiffer
         }
 
         return keyIndexes;
-    }
-
-    private static bool CommonOrderChanged<T, TKey>(
-        LiveResultSnapshot<T, TKey> previous,
-        LiveResultSnapshot<T, TKey> current,
-        Dictionary<TKey, int> oldByKey,
-        Dictionary<TKey, int> newByKey,
-        IEqualityComparer<TKey> keyComparer)
-        where TKey : notnull
-    {
-        var oldIndex = 0;
-        var newIndex = 0;
-        while (true)
-        {
-            while (oldIndex < previous.Keys.Count &&
-                   !newByKey.ContainsKey(previous.Keys[oldIndex]))
-            {
-                oldIndex++;
-            }
-
-            while (newIndex < current.Keys.Count &&
-                   !oldByKey.ContainsKey(current.Keys[newIndex]))
-            {
-                newIndex++;
-            }
-
-            var oldEnded = oldIndex == previous.Keys.Count;
-            var newEnded = newIndex == current.Keys.Count;
-            if (oldEnded || newEnded)
-            {
-                return oldEnded != newEnded;
-            }
-
-            if (!keyComparer.Equals(previous.Keys[oldIndex], current.Keys[newIndex]))
-            {
-                return true;
-            }
-
-            oldIndex++;
-            newIndex++;
-        }
     }
 }

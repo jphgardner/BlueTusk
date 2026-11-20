@@ -137,6 +137,42 @@ public sealed class LiveResultDifferTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void Stable_membership_keeps_the_latest_keys_and_rejects_duplicates()
+    {
+        var comparer = StringComparer.OrdinalIgnoreCase;
+        var initial = LiveResultDiffer.Initial<string, string>(["Alpha", "Bravo"], static key => key, comparer);
+        var refreshed = LiveResultDiffer.Diff(initial.Snapshot, ["alpha", "BRAVO"], static key => key,
+            rowComparer: comparer, keyComparer: comparer);
+
+        Assert.Empty(refreshed.Events);
+        Assert.Equal(["alpha", "BRAVO"], refreshed.Snapshot.Keys);
+        Assert.Equal(["alpha", "BRAVO"], refreshed.Snapshot.Rows);
+        Assert.Equal(["Alpha", "Bravo"], initial.Snapshot.Keys);
+        Assert.Throws<InvalidOperationException>(() => LiveResultDiffer.Diff(refreshed.Snapshot,
+            ["ALPHA", "alpha"], static key => key, keyComparer: comparer));
+
+        var reordered = LiveResultDiffer.Diff(refreshed.Snapshot, ["bravo", "alpha"], static key => key,
+            rowComparer: comparer, keyComparer: comparer);
+        var change = Assert.Single(reordered.Events);
+        Assert.Equal(LiveEventKind.ResultReordered, change.Kind);
+        Assert.Equal(["bravo", "alpha"], change.Order);
+    }
+
+    [Fact]
+    public void Inserts_and_removals_do_not_reorder_common_keys()
+    {
+        var initial = LiveResultDiffer.Initial<Row, int>(
+            [new Row(1, "one"), new Row(2, "two"), new Row(3, "three")], static row => row.Id);
+        var refreshed = LiveResultDiffer.Diff(initial.Snapshot,
+            [new Row(4, "four"), new Row(1, "one"), new Row(3, "updated")], static row => row.Id, nextSequence: 2);
+
+        Assert.Equal([LiveEventKind.RowRemoved, LiveEventKind.RowAdded, LiveEventKind.RowUpdated],
+            refreshed.Events.Select(static change => change.Kind));
+        Assert.Equal([2L, 3L, 4L], refreshed.Events.Select(static change => change.Sequence));
+        Assert.Equal([4, 1, 3], refreshed.Snapshot.Keys);
+    }
+
+    [Fact]
     public void Snapshot_defensively_copies_rows_and_remains_stable_for_later_diffs()
     {
         var rows = new[] { new Row(1, "one"), new Row(2, "two") };
