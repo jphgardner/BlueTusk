@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory)][string] $OutputPath,
     [Parameter(Mandatory)][ValidateSet(10, 1000, 100000)][int] $Results,
     [Parameter(Mandatory)][ValidateSet(1, 64, 1000, 10000)][int] $Subscribers,
+    [ValidateSet('affected-key-update', 'churn')][string] $Scenario = 'affected-key-update',
     [ValidateRange(3, 50)][int] $Trials = 3,
     [ValidateRange(1, 60)][int] $WarmupSeconds = 5,
     [ValidateRange(1, 60)][int] $MeasurementSeconds = 10,
@@ -38,7 +39,7 @@ $release = & (Join-Path $PSScriptRoot 'resolve-core-performance-release.ps1') -E
 $plan = Get-Content -LiteralPath $release.PlanPath -Raw | ConvertFrom-Json
 $contract = Get-Content -LiteralPath $release.ContractPath -Raw | ConvertFrom-Json
 if ($Results -notin $contract.workloads.Live.resultCounts -or $Subscribers -notin $contract.workloads.Live.subscriberCounts -or
-    'affected-key-update' -cnotin $contract.workloads.Live.scenarios)
+    $Scenario -cnotin $contract.workloads.Live.scenarios)
 { throw 'The requested Live SignalR workload is absent from the performance contract.' }
 
 $os = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { throw 'Use Windows or Linux.' }
@@ -59,7 +60,8 @@ $previousConnection = $env:BLUETUSK_BENCHMARK_CONNECTION_STRING
 $records = [Collections.Generic.List[object]]::new()
 $implementations = @{}
 $runtime = $null
-$workload = "$os|Live|results=$Results|subscribers=$Subscribers|scenario=affected-key-update"
+$workload = "$os|Live|results=$Results|subscribers=$Subscribers|scenario=$Scenario"
+$eventsPerTransaction = if ($Scenario -ceq 'churn') { 2 } else { 1 }
 $started = [DateTimeOffset]::UtcNow
 
 try
@@ -76,23 +78,25 @@ try
         {
             $name = "$role-$trial.json"
             $path = Join-Path $output $name
-            $probeArguments = @($path, $ExpectedCommit, $role, $trial, $Results, $Subscribers, $WarmupSeconds, $MeasurementSeconds)
+            $probeArguments = @($path, $ExpectedCommit, $role, $trial, $Results, $Subscribers, $Scenario, $WarmupSeconds, $MeasurementSeconds)
             if ($ProfileStages) { $probeArguments += (Join-Path $profiles $name) }
             & $dotnet $assembly @probeArguments
             if ($LASTEXITCODE) { throw "Live SignalR $role trial $trial failed." }
             $sample = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
             $runtime ??= $sample.environment.runtime
+            $expectedEvents = $sample.measurement.completedOperations * $eventsPerTransaction
             if ($sample.sourceCommit -cne $ExpectedCommit -or $sample.workloadKey -cne $workload -or $sample.trial -ne $trial -or
                 $sample.role -cne $role -or $sample.diagnostic -ne $true -or $sample.synthetic -ne $false -or
                 $sample.environment.runtime -cne $runtime -or $sample.environment.os -cne $os -or
                 $sample.environment.architecture -cne 'x64' -or $sample.environment.transport -cne 'signalr-json-websockets' -or
                 $sample.environment.source -cne 'postgresql-pgoutput' -or $sample.environment.stageProfiling -ne [bool]$ProfileStages -or
+                $sample.environment.scenario -cne $Scenario -or $sample.environment.eventsPerTransaction -ne $eventsPerTransaction -or
                 $sample.environment.resultCount -ne $Results -or
                 $sample.environment.subscriberCount -ne $Subscribers -or $sample.warmupSeconds -ne $WarmupSeconds -or
                 $sample.measurementSeconds -ne $MeasurementSeconds -or $sample.measurement.elapsedTicks -lt ($MeasurementSeconds * $sample.frequency) -or
                 $sample.measurement.completedOperations -lt 1 -or
-                $sample.verifiedDeliveries -ne ($Subscribers * $sample.measurement.completedOperations) -or
-                ($role -ceq 'candidate' -and ($sample.persistedUpdates -ne $sample.measurement.completedOperations -or
+                $sample.verifiedDeliveries -ne ($Subscribers * $expectedEvents) -or
+                ($role -ceq 'candidate' -and ($sample.persistedUpdates -ne $expectedEvents -or
                     -not $sample.implementation.EndsWith("+$ExpectedCommit", [StringComparison]::Ordinal))) -or
                 ($role -ceq 'reference' -and $sample.implementation -cnotmatch '^ASP\.NET Core SignalR 10\.'))
             { throw 'The capture does not identify the exact assemblies, matched workload, timing and delivery proof.' }

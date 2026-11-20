@@ -156,9 +156,13 @@ change feed, query the same ordered result set, and deliver the same changed row
 through SignalR's streaming JSON protocol. The candidate exercises BlueTusk's
 durable subscription and replay store. The reference reruns the ordered query,
 diffs it against the prior result, and streams the delta through a SignalR hub.
-The probe verifies the key, revision and sequence received by every subscriber.
-These captures cover the affected-key update scenario. Churn and slow-client
-capture are required separately for the full Live comparison.
+The probe verifies the sequence, key, rank and revision for every subscriber.
+Use the default scenario for an affected-key update. Use `-Scenario churn`
+to replace the final row in one PostgreSQL transaction while keeping the result
+size and all other ranks fixed. Each subscriber must receive the corresponding
+removal and addition in order. A timed operation is one committed transaction
+through receipt of all its events. Slow-client capture and the full timed
+matrix are still required for Live qualification.
 
 Use `-ProfileStages` to time the source commit, change feed, invalidation
 write, publication and subscriber receipts for each timed update. The

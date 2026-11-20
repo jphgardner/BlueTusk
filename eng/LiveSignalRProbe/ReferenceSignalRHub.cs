@@ -20,7 +20,8 @@ internal sealed class ReferenceSignalRHub(ReferenceResultPublisher publisher) : 
 internal sealed class ReferenceResultPublisher(
     LiveSubscriptionIdentity identity,
     LiveResumeTokenProtector tokenProtector,
-    IReadOnlyList<ResultRow> initialRows)
+    IReadOnlyList<ResultRow> initialRows,
+    bool churn)
 {
     private readonly ConcurrentDictionary<string, ChannelWriter<JsonElement>> _writers = new();
     private IReadOnlyList<ResultRow> _previous = initialRows;
@@ -40,7 +41,7 @@ internal sealed class ReferenceResultPublisher(
             throw new HubException("The reference stream requires the fixture's initial cursor.");
         }
 
-        var queue = Channel.CreateBounded<JsonElement>(new BoundedChannelOptions(1)
+        var queue = Channel.CreateBounded<JsonElement>(new BoundedChannelOptions(churn ? 2 : 1)
         {
             SingleReader = true,
             SingleWriter = true,
@@ -72,6 +73,32 @@ internal sealed class ReferenceResultPublisher(
             throw new InvalidDataException("The SignalR reference result count changed.");
         }
 
+        if (churn)
+        {
+            var last = current.Count - 1;
+            for (var index = 0; index < last; index++)
+            {
+                if (current[index] != _previous[index])
+                {
+                    throw new InvalidDataException("The SignalR churn workload changed a retained row.");
+                }
+            }
+            if (current[last].Id <= _previous[last].Id)
+            {
+                throw new InvalidDataException("The SignalR churn workload did not replace its final row.");
+            }
+
+            var removed = CreateEvent("RowRemoved", _previous[last].Id, null, last, null);
+            var added = CreateEvent("RowAdded", current[last].Id, current[last], null, last);
+            _previous = current;
+            foreach (var queue in _writers.Values)
+            {
+                Write(queue, removed);
+                Write(queue, added);
+            }
+            return;
+        }
+
         var changedIndex = -1;
         for (var index = 0; index < current.Count; index++)
         {
@@ -96,25 +123,33 @@ internal sealed class ReferenceResultPublisher(
         }
 
         var changed = current[changedIndex];
-        var update = JsonSerializer.SerializeToElement(new
+        var update = CreateEvent("RowUpdated", changed.Id, changed, changedIndex, changedIndex);
+        _previous = current;
+        foreach (var queue in _writers.Values)
+        {
+            Write(queue, update);
+        }
+    }
+
+    private JsonElement CreateEvent(string kind, int key, ResultRow? row, int? previousIndex, int? currentIndex) =>
+        JsonSerializer.SerializeToElement(new
         {
             sequence = ++_sequence,
-            kind = "RowUpdated",
-            key = changed.Id,
-            row = changed,
-            previousIndex = changedIndex,
-            currentIndex = changedIndex,
+            kind,
+            key,
+            row,
+            previousIndex,
+            currentIndex,
             rows = (object?)null,
             order = (object?)null,
             resetReason = (string?)null,
         });
-        _previous = current;
-        foreach (var queue in _writers.Values)
+
+    private static void Write(ChannelWriter<JsonElement> queue, JsonElement update)
+    {
+        if (!queue.TryWrite(update))
         {
-            if (!queue.TryWrite(update))
-            {
-                throw new InvalidDataException("A SignalR reference client fell behind the single-update capture.");
-            }
+            throw new InvalidDataException("A SignalR reference client fell behind the capture.");
         }
     }
 }

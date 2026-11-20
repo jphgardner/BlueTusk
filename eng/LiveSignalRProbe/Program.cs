@@ -28,15 +28,17 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-if (args.Length is not (8 or 9) ||
-    args is not [var outputPath, var commit, var role, var trial, var results, var subscribers, var warmup, var duration, ..] ||
-    role is not ("candidate" or "reference"))
+if (args.Length is not (9 or 10) ||
+    args is not [var outputPath, var commit, var role, var trial, var results, var subscribers, var scenario, var warmup, var duration, ..] ||
+    role is not ("candidate" or "reference") || scenario is not ("affected-key-update" or "churn"))
 {
-    throw new ArgumentException("Provide output, commit, role, trial, results, subscribers, warmup and measurement seconds, and optionally a stage profile path.");
+    throw new ArgumentException("Provide output, commit, role, trial, results, subscribers, scenario, warmup and measurement seconds, and optionally a stage profile path.");
 }
 
 const int maximumSamples = 262_144;
-var stageProfilePath = args.Length == 9 ? args[8] : null;
+var churn = scenario == "churn";
+var eventsPerTransaction = churn ? 2 : 1;
+var stageProfilePath = args.Length == 10 ? args[9] : null;
 StageSample[]? stageSamples = null;
 var stageSampleCount = 0;
 var queryTicks = 0L;
@@ -112,9 +114,9 @@ await using var query = candidate ? new LiveQuerySession<ResultRow, int>(plan, a
 await using var shared = query is null ? null : new LiveSharedSubscription<ResultRow, int>(query, store, new()
 {
     MaximumSubscribers = subscriberCount,
-    SubscriberBufferCapacity = 1,
+    SubscriberBufferCapacity = eventsPerTransaction,
 });
-var reference = candidate ? null : new ReferenceResultPublisher(identity, protector, await ReadResultAsync(token));
+var reference = candidate ? null : new ReferenceResultPublisher(identity, protector, await ReadResultAsync(token), churn);
 if (shared is not null)
 {
     await shared.StartAsync(token);
@@ -201,13 +203,14 @@ try
     var window = await ProviderRequestCapture.MeasureWindowAsync([UpdateAndDeliverAsync], measurementSeconds, maximumSamples, token);
     var after = shared?.Status;
     var verifiedDeliveries = observedDeliveries - deliveriesBefore;
-    if (verifiedDeliveries != checked(window.CompletedOperations * subscriberCount))
+    var expectedEvents = checked(window.CompletedOperations * eventsPerTransaction);
+    if (verifiedDeliveries != checked(expectedEvents * subscriberCount))
     {
         throw new InvalidDataException("The clients did not observe every timed delivery.");
     }
     if (before is not null && after is not null &&
         (after.SubscriberCount != subscriberCount || after.QuerySession.ResultCount != resultCount ||
-         after.PersistedSequence - before.PersistedSequence != window.CompletedOperations ||
+         after.PersistedSequence - before.PersistedSequence != expectedEvents ||
          after.FanOutDeliveries - before.FanOutDeliveries != verifiedDeliveries))
     {
         throw new InvalidDataException("The candidate did not persist and deliver every measured update.");
@@ -220,7 +223,7 @@ try
         SchemaVersion = 1,
         EvidenceKind = "bluetusk-performance-trial",
         Family = "Live",
-        WorkloadKey = $"{os}|Live|results={resultCount}|subscribers={subscriberCount}|scenario=affected-key-update",
+        WorkloadKey = $"{os}|Live|results={resultCount}|subscribers={subscriberCount}|scenario={scenario}",
         Role = role,
         Trial = trialIndex,
         SourceCommit = commit,
@@ -235,7 +238,8 @@ try
             Architecture = "x64",
             Runtime = RuntimeInformation.FrameworkDescription,
             Transport = "signalr-json-websockets",
-            Scenario = "affected-key-update",
+            Scenario = scenario,
+            EventsPerTransaction = eventsPerTransaction,
             ResultCount = resultCount,
             SubscriberCount = subscriberCount,
             Source = "postgresql-pgoutput",
@@ -282,16 +286,30 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
 {
     var began = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
     var expectedRevision = ++revision;
-    var expectedKey = (expectedRevision - 1) % resultCount + 1;
-    var expectedSequence = 1L + expectedRevision;
+    var expectedKey = churn ? resultCount + expectedRevision : (expectedRevision - 1) % resultCount + 1;
+    var expectedIndex = churn ? resultCount - 1 : expectedKey - 1;
+    var expectedSequence = 2L + (long)(expectedRevision - 1) * eventsPerTransaction;
     await using (var update = (BlueTuskCommand)writer.CreateCommand())
     {
-        update.CommandText = "UPDATE public.live_signalr_results SET revision = $1 WHERE id = $2";
         update.Parameters.Add(new BlueTuskParameter<int>(expectedRevision));
-        update.Parameters.Add(new BlueTuskParameter<int>(expectedKey));
+        if (churn)
+        {
+            // Replace the final row while keeping the result size and all other ranks fixed.
+            update.CommandText = """
+                WITH removed AS (DELETE FROM public.live_signalr_results WHERE id = $2 RETURNING id)
+                INSERT INTO public.live_signalr_results (id, revision) SELECT $3, $1 FROM removed
+                """;
+            update.Parameters.Add(new BlueTuskParameter<int>(expectedKey - 1));
+            update.Parameters.Add(new BlueTuskParameter<int>(expectedKey));
+        }
+        else
+        {
+            update.CommandText = "UPDATE public.live_signalr_results SET revision = $1 WHERE id = $2";
+            update.Parameters.Add(new BlueTuskParameter<int>(expectedKey));
+        }
         if (await update.ExecuteNonQueryAsync(stop) != 1)
         {
-            throw new InvalidDataException("The fixture did not commit one changed key.");
+            throw new InvalidDataException("The fixture did not commit the requested row change.");
         }
     }
 
@@ -304,17 +322,17 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
     var invalidated = received;
     queryTicks = 0;
     await using var delivery = deliveries.Current;
-    if (delivery.Transaction.Changes.Count != 1)
+    if (delivery.Transaction.Changes.Count != eventsPerTransaction)
     {
-        throw new InvalidDataException("The fixture expected one change per transaction.");
+        throw new InvalidDataException("The change feed did not return the requested transaction.");
     }
     if (invalidations is not null && shared is not null)
     {
         await invalidations.ConsumeTransactionAsync(delivery, stop);
         invalidated = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
-        if (await shared.RefreshAsync(stop) != 1)
+        if (await shared.RefreshAsync(stop) != eventsPerTransaction)
         {
-            throw new InvalidDataException("The candidate did not publish one Live event.");
+            throw new InvalidDataException("The candidate did not publish every event for the transaction.");
         }
     }
     else
@@ -326,22 +344,46 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
     var published = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
     foreach (var client in clients)
     {
-        var message = await client.ReadAsync(stop);
-        var change = message.GetProperty("event");
-        var row = change.GetProperty("row");
-        if (message.GetProperty("kind").GetString() != "Event" || message.GetProperty("sequence").GetInt64() != expectedSequence ||
-            change.GetProperty("kind").GetString() != "RowUpdated" || change.GetProperty("key").GetInt32() != expectedKey ||
-            row.GetProperty("Id").GetInt32() != expectedKey || row.GetProperty("Revision").GetInt32() != expectedRevision)
+        if (churn)
         {
-            throw new InvalidDataException("A SignalR client received a different sequence, key or revision.");
+            VerifyDelivery(await client.ReadAsync(stop), expectedSequence, "RowRemoved", expectedKey - 1,
+                expectedIndex, null, null);
+            VerifyDelivery(await client.ReadAsync(stop), expectedSequence + 1, "RowAdded", expectedKey,
+                null, expectedIndex, expectedRevision);
         }
-        observedDeliveries++;
+        else
+        {
+            VerifyDelivery(await client.ReadAsync(stop), expectedSequence, "RowUpdated", expectedKey,
+                expectedIndex, expectedIndex, expectedRevision);
+        }
+        observedDeliveries += eventsPerTransaction;
     }
     if (stageSamples is not null)
     {
         stageSamples[stageSampleCount++] = new StageSample(committed - began, received - committed,
             invalidated - received, published - invalidated, Stopwatch.GetTimestamp() - published, queryTicks);
     }
+}
+
+static void VerifyDelivery(JsonElement message, long sequence, string kind, int key,
+    int? previousIndex, int? currentIndex, int? revision)
+{
+    var change = message.GetProperty("event");
+    var row = change.GetProperty("row");
+    if (message.GetProperty("kind").GetString() != "Event" || message.GetProperty("sequence").GetInt64() != sequence ||
+        change.GetProperty("sequence").GetInt64() != sequence || change.GetProperty("kind").GetString() != kind ||
+        change.GetProperty("key").GetInt32() != key ||
+        !MatchesIndex(change.GetProperty("previousIndex"), previousIndex) ||
+        !MatchesIndex(change.GetProperty("currentIndex"), currentIndex) ||
+        (revision.HasValue
+            ? row.GetProperty("Id").GetInt32() != key || row.GetProperty("Revision").GetInt32() != revision.Value
+            : row.ValueKind != JsonValueKind.Null))
+    {
+        throw new InvalidDataException("A SignalR client received a different sequence, key, rank or revision.");
+    }
+
+    static bool MatchesIndex(JsonElement index, int? expected) =>
+        expected.HasValue ? index.GetInt32() == expected.Value : index.ValueKind == JsonValueKind.Null;
 }
 
 async ValueTask<IReadOnlyList<ResultRow>> ReadResultAsync(CancellationToken stop)
