@@ -125,9 +125,15 @@ reconciliation writes before advancing the external-version checkpoint. Both
 use request-synchronous translogs. The reference stages incomplete HTTP
 fragments durably before acknowledgement. After restarting the node without a
 normal shutdown, the verifier reads every recovered document, reconciliation
-record and the final checkpoint. These workloads use `evidence_class=diagnostic`
-and `families=Sync`. Sync qualification also requires Kafka, S3 and Webhooks
-measurements.
+record and the final checkpoint.
+
+The Kafka diagnostic pairs the production connector with the native Java
+producer. Both write a complete ordered envelope and its position checkpoint
+in a Kafka transaction. The reference persists split HTTP fragments in a
+separate topic before acknowledging them. After an abrupt broker restart, a
+committed-record consumer checks the source IDs, timestamps, ordered mutations,
+and every checkpoint. These workloads use `evidence_class=diagnostic` and
+`families=Sync`. Sync qualification also requires S3 and Webhooks measurements.
 
 ## Primary workloads for v1.2
 

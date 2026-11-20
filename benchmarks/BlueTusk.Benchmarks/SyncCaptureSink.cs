@@ -5,6 +5,7 @@ using System.Text;
 using BlueTusk.Data;
 using BlueTusk.Streams;
 using BlueTusk.Sync;
+using BlueTusk.Sync.Kafka;
 using BlueTusk.Sync.Nats;
 using BlueTusk.Sync.OpenSearch;
 using BlueTusk.Sync.PostgreSql;
@@ -21,16 +22,19 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
     internal const string RedisConnectionVariable = "BLUETUSK_BENCHMARK_REDIS_ENDPOINT";
     internal const string NatsConnectionVariable = "BLUETUSK_BENCHMARK_NATS_ENDPOINT";
     internal const string OpenSearchConnectionVariable = "BLUETUSK_BENCHMARK_OPENSEARCH_ENDPOINT";
+    internal const string KafkaConnectionVariable = "BLUETUSK_BENCHMARK_KAFKA_ENDPOINT";
     internal const string PipelineId = "sync_capture";
     internal const string Collection = "streams_capture";
     internal const string NatsStream = "SYNC_CAPTURE";
     internal const string NatsStageStream = "SYNC_CAPTURE_STAGE";
     internal const string NatsSubjectPrefix = "sync.capture";
     internal const string OpenSearchPrefix = "bluetusk-sync";
+    internal const string KafkaTopicPrefix = "sync.capture";
     private readonly BlueTuskDataSource? _dataSource;
     private readonly ConnectionMultiplexer? _redis;
     private readonly NatsClient? _nats;
     private readonly HttpClient? _http;
+    private readonly KafkaSyncDestination? _kafka;
     private readonly SyncPipeline _pipeline;
 
     private SyncCaptureSink(ISyncDestination destination, ChangeSourceIdentity source,
@@ -40,11 +44,22 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
         _redis = redis;
         _nats = nats;
         _http = http;
+        _kafka = destination as KafkaSyncDestination;
         _pipeline = new SyncPipeline(new() { PipelineId = PipelineId }, source, new CaptureTransform(), destination);
     }
 
     public static async ValueTask<SyncCaptureSink> CreateAsync(string sink, string sourceConnectionString, ChangeSourceIdentity source)
     {
+        if (sink == "kafka")
+        {
+            return new(new KafkaSyncDestination(new()
+            {
+                BootstrapServers = KafkaEndpoint(),
+                TopicPrefix = KafkaTopicPrefix,
+                TransactionalId = PipelineId,
+                ReplicationFactor = 1,
+            }), source);
+        }
         if (sink == "opensearch")
         {
             var client = CreateOpenSearchClient();
@@ -90,6 +105,9 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
         Timeout = TimeSpan.FromSeconds(30),
     };
 
+    internal static string KafkaEndpoint() => Environment.GetEnvironmentVariable(KafkaConnectionVariable) ??
+        throw new InvalidOperationException("The capture requires a dedicated Kafka fixture endpoint.");
+
     public ValueTask InitializeAsync(CancellationToken cancellationToken) => _pipeline.ProvisionAsync(cancellationToken);
 
     public async ValueTask ApplyAsync(ChangeTransactionDelivery delivery, CancellationToken cancellationToken)
@@ -117,6 +135,7 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
         if (_dataSource is not null) await _dataSource.DisposeAsync();
         _redis?.Dispose();
         if (_nats is not null) await _nats.DisposeAsync();
+        if (_kafka is not null) await _kafka.DisposeAsync();
         _http?.Dispose();
     }
 

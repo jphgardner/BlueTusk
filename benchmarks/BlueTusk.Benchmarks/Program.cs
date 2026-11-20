@@ -41,6 +41,12 @@ if (args is ["--sync-nats-verify", var natsChanges, var natsSourceTransactions, 
     return;
 }
 
+if (args is ["--sync-kafka-verify", var kafkaChanges, var kafkaSourceTransactions, var kafkaRole])
+{
+    KafkaSyncCaptureVerification.Run(int.Parse(kafkaChanges, System.Globalization.CultureInfo.InvariantCulture), kafkaSourceTransactions, kafkaRole);
+    return;
+}
+
 if (args is ["--sync-opensearch-verify", var searchChanges, var searchSourceTransactions, var searchRole])
 {
     await OpenSearchSyncCaptureVerification.RunAsync(int.Parse(searchChanges, System.Globalization.CultureInfo.InvariantCulture),

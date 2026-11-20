@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet('Streams','Sync')][string] $Family = 'Streams',
-    [ValidateSet('postgresql','redis','nats','opensearch')][string] $SyncDestination = 'postgresql',
+    [ValidateSet('postgresql','redis','nats','opensearch','kafka')][string] $SyncDestination = 'postgresql',
     [ValidateRange(3, 50)][int] $Trials = 10,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,32}$')][string] $RunId = ('streams-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
     [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'streams-benchmark'
@@ -62,7 +62,7 @@ else
 }
 
 $workloadNumber = 0
-$proofNames = @{ redis = 'recoveredFromAppendOnlyFile'; nats = 'recoveredFromJetStream'; opensearch = 'recoveredFromOpenSearch' }
+$proofNames = @{ redis = 'recoveredFromAppendOnlyFile'; nats = 'recoveredFromJetStream'; opensearch = 'recoveredFromOpenSearch'; kafka = 'recoveredFromKafka' }
 foreach ($workload in $workloads)
 {
     $workloadNumber++
