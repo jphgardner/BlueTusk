@@ -306,6 +306,15 @@ try
             @($providerLegs | Where-Object { $_.os -ceq 'windows' -and $_.variant -ceq 'linux' -and $_.profile -ceq 'linux-container-client' }).Count -ne 3 -or
             @($providerLegs | Where-Object { $_.os -ceq 'linux' -and $_.variant -ceq 'windows' }).Count -ne 0)
         { throw 'The 1.2 plan must include both clients on the Windows host and the native client on Linux.' }
+        $inventoryLegs = @($activePlan.capture.include | Where-Object family -ceq 'ControlPlane')
+        if ($inventoryLegs.Count -ne 2 -or @($inventoryLegs | Where-Object status -cne 'implemented').Count -ne 0)
+        { throw 'The 1.2 plan must include a Control Plane capture on both operating systems.' }
+        $shortInventory = Join-Path $temporary 'short-inventory'
+        Assert-Rejected 'short-inventory-qualification' {
+            & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family ControlPlane -ExpectedCommit $head `
+                -OutputPath $shortInventory -Trials 3
+        } 'committed minimum trial count and timing'
+        if (Test-Path -LiteralPath $shortInventory) { throw 'The rejected Control Plane capture wrote evidence.' }
 
         $activeRoot = New-Fixture 'release-1.2' 'win' $active.VariantMapPath $active.ContractPath
         $activeOs = Join-Path $activeRoot 'windows'

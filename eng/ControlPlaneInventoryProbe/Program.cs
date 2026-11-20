@@ -38,9 +38,10 @@ if (args is ["seed", var seedCount])
     return;
 }
 
-if (args is not [var outputPath, var role, var commit, var trialNumber, var warmup, var duration, var sources, var clients])
+if (args is not [var outputPath, var role, var commit, var trialNumber, var warmup, var duration, var sources, var clients, .. var flags] ||
+    flags is not ([] or ["qualification"]))
 {
-    throw new ArgumentException("Specify seed and source count, or an output path, role, commit, trial number, warmup seconds, measurement seconds, source count and client count.");
+    throw new ArgumentException("Specify seed and source count, or an output path, role, commit, trial number, warmup seconds, measurement seconds, source count, client count, and optional qualification flag.");
 }
 
 var sourceCount = ParseCount(sources);
@@ -97,9 +98,11 @@ var result = new
     Role = role,
     SourceCommit = commit,
     Trial = int.Parse(trialNumber, CultureInfo.InvariantCulture),
-    Diagnostic = true,
+    Diagnostic = flags.Length == 0,
     Synthetic = false,
     Implementation = implementation,
+    WarmupSeconds = warmupSeconds,
+    MeasurementSeconds = measurementSeconds,
     Environment = new
     {
         Os = os,

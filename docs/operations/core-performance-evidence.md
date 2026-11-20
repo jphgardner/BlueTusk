@@ -6,10 +6,10 @@ resolves the contract for the candidate from
 [`eng/performance-leadership-contract.json`](../../eng/performance-leadership-contract.json).
 The v1.2 resolver also applies the approved Provider topology.
 
-**Status:** the v1.2 Provider matrix can be scheduled on the reference host.
-The Streams, Sync, Live, Control Plane and primary hot-path qualification
-harnesses are still pending. Qualification fails at planning until those
-producers can capture the required measurements.
+**Status:** the reference host can run the v1.2 Provider and Control Plane
+matrices. Streams, Sync, Live and primary hot-path qualification harnesses are
+pending. Qualification fails at planning until all producers can capture the
+required measurements.
 Qualification planning reports every missing producer and fails before starting measurement
 jobs. Provider jobs are split by concurrency level, each with a separate raw input directory;
 assembly still requires every original workload key exactly once.
@@ -66,6 +66,15 @@ Each raw trial file repeats that identity. It adds `implementation` and `environ
 For a JVM or other non-.NET reference, the harness must say in `environment` how it measured
 allocation, CPU and GC. One trial is one independently restarted process. Within a workload,
 candidate and reference processes alternate order and never overlap.
+
+The Control Plane adapter exercises the Dashboard inventory endpoint against the
+same seeded PostgreSQL fixture for both implementations. Each process hosts the
+HTTP server and its clients, so allocation, CPU, memory and GC measurements
+include both. The producer measures every contract combination of inventory size
+and client count. It binds each trial to the candidate commit, the published
+1.0.0 reference, and the configured PostgreSQL image. Standalone capture defaults
+to diagnostics. The qualification workflow requires a clean checkout and the
+committed minimum trial count and measurement windows.
 
 ## Statistics
 
