@@ -4,7 +4,8 @@ This pipeline produces `performance/performance-leadership-evidence.json` (schem
 readiness binds it as `performanceManifest`, from producer `core-performance-evidence.yml`. It
 resolves the contract for the candidate from
 [`eng/performance-leadership-contract.json`](../../eng/performance-leadership-contract.json).
-The v1.2 resolver also applies the approved Provider topology.
+The v1.2 resolver applies the approved Provider topology and binds the five
+approved primary workloads to the published [BlueTusk 1.0.0 release](https://github.com/jphgardner/BlueTusk/releases/tag/v1.0.0).
 
 **Status:** the reference host can run the v1.2 Provider and Control Plane
 matrices. Streams, Sync, Live and primary hot-path qualification harnesses are
@@ -127,6 +128,23 @@ normal shutdown, the verifier reads every recovered document, reconciliation
 record and the final checkpoint. These workloads use `evidence_class=diagnostic`
 and `families=Sync`. Sync qualification also requires Kafka, S3 and Webhooks
 measurements.
+
+## Primary workloads for v1.2
+
+Each comparison uses the same host and runtime for the candidate and BlueTusk
+1.0.0. Each workload is required on Windows and Linux.
+
+| Family | Workload |
+|---|---|
+| Provider | Parameterized scalar query with 64 clients using the native client |
+| Streams | Commit-to-delivery for transactions with one change |
+| Sync | One mutation per transaction to PostgreSQL |
+| Live | Affected-key update with 1,000 results and 64 subscribers |
+| Control Plane | Inventory read with 100 sources and 32 API clients |
+
+The planner requires the primary capture on both operating systems and blocks
+qualification until the producer is implemented. The existing 20% improvement
+thresholds for P95 latency and allocation apply to each comparison.
 
 ## Statistics
 

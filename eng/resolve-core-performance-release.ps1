@@ -74,7 +74,23 @@ if ($release -ceq '1.2.0')
         linux = @('linux', 'tls', 'constrained-network')
     }
     $null = $provider.Remove('variants')
+    $contractDocument.primaryHotPaths = [ordered]@{
+        referenceVersion = '1.0.0'
+        referenceSourceCommit = '7380d7b028c72b2aae348b778711d104d022a3f8'
+        workloads = [ordered]@{
+            Provider = [ordered]@{ feature = 'parameterized-scalar'; concurrency = 64; variant = 'native' }
+            Streams = [ordered]@{ scenario = 'commit-to-delivery'; transactionChanges = 1 }
+            Sync = [ordered]@{ destination = 'postgresql'; mutations = 1 }
+            Live = [ordered]@{ scenario = 'affected-key-update'; results = 1000; subscribers = 64 }
+            ControlPlane = [ordered]@{ operation = 'inventory-read'; sources = 100; clients = 32 }
+        }
+    }
     $contract = ($contractDocument | ConvertTo-Json -Depth 20).Replace("`r`n", "`n")
+
+    $planDocument = $plan | ConvertFrom-Json -AsHashtable
+    $planDocument.primaryHotPaths.definitionStatus = 'owner-approved'
+    $planDocument.primaryHotPaths.status = 'stub-fails-closed'
+    $plan = ($planDocument | ConvertTo-Json -Depth 20).Replace("`r`n", "`n")
 
     $map = Get-Content -LiteralPath $mapPath -Raw | ConvertFrom-Json -AsHashtable
     $map.crossOsProfile = 'linux-container-client'

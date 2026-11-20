@@ -18,6 +18,11 @@ $ErrorActionPreference = 'Stop'
 # Family adapters emit performance-trial-index/1. An unavailable adapter stops the capture.
 $plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-plan.json') -Raw | ConvertFrom-Json
 $contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw | ConvertFrom-Json
+if ($Family -ceq 'primary-hot-path')
+{
+    $active = & (Join-Path $PSScriptRoot 'resolve-core-performance-release.ps1') -ExpectedCommit $ExpectedCommit
+    $plan = Get-Content -LiteralPath $active.PlanPath -Raw | ConvertFrom-Json
+}
 $specification = switch ($Family)
 {
     'Streams' { [ordered]@{
@@ -39,7 +44,8 @@ $specification = switch ($Family)
     'primary-hot-path' { [ordered]@{
         reference = $plan.primaryHotPaths.reference; referenceImage = $null; mode = 'unique-primary'
         workloads = ($plan.primaryHotPaths.definitions.PSObject.Properties | ForEach-Object { "$($_.Name): $($_.Value)" }) -join '; '
-        harness = "Definitions are $($plan.primaryHotPaths.status). Each family's hot path runs against BlueTusk 1.0.0 in the same runtime." } }
+        definitionStatus = if ($plan.release -ceq '1.2.0') { $plan.primaryHotPaths.definitionStatus } else { $plan.primaryHotPaths.status }
+        harness = "Each family's hot path runs against BlueTusk 1.0.0 in the same runtime. Producer status: $($plan.primaryHotPaths.status)." } }
 }
 $specification.format = 'performance-trial-index/1 (see docs/operations/core-performance-evidence.md)'
 if ($Describe)

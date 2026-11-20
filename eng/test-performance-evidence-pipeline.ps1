@@ -309,6 +309,19 @@ try
         $inventoryLegs = @($activePlan.capture.include | Where-Object family -ceq 'ControlPlane')
         if ($inventoryLegs.Count -ne 2 -or @($inventoryLegs | Where-Object status -cne 'implemented').Count -ne 0)
         { throw 'The 1.2 plan must include a Control Plane capture on both operating systems.' }
+        $primaryLegs = @($activePlan.capture.include | Where-Object family -ceq 'primary-hot-path')
+        $primaryDescription = & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family primary-hot-path `
+            -ExpectedCommit $head -OutputPath (Join-Path $temporary 'primary') -Describe | ConvertFrom-Json
+        if ($primaryDescription.definitionStatus -cne 'owner-approved' -or $primaryLegs.Count -ne 2 -or
+            @($primaryLegs | Where-Object status -cne 'stub-fails-closed').Count -ne 0)
+        { throw 'The approved 1.2 primary workloads must stay required on both operating systems while their producer is pending.' }
+        $alteredContract = Join-Path $temporary 'changed-primary-contract.json'
+        $contractDocument = Get-Content -LiteralPath $active.ContractPath -Raw | ConvertFrom-Json -AsHashtable
+        $contractDocument.primaryHotPaths.workloads.Live.subscribers = 63
+        $contractDocument | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $alteredContract -Encoding utf8NoBOM
+        Assert-Rejected 'changed-primary-workload' {
+            & (Join-Path $PSScriptRoot 'verify-performance-leadership-contract.ps1') -ContractPath $alteredContract
+        } 'five approved primary workloads'
         $shortInventory = Join-Path $temporary 'short-inventory'
         Assert-Rejected 'short-inventory-qualification' {
             & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family ControlPlane -ExpectedCommit $head `

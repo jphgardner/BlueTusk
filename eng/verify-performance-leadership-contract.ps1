@@ -18,6 +18,20 @@ if ($contract.release -ceq '1.2.0')
     $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
     if ($tracks.releaseVersion -cne $contract.release)
     { throw 'The 1.2 performance contract must match the active release track.' }
+
+    $primary = $contract.primaryHotPaths
+    $workloads = $primary.workloads
+    if ($primary.referenceVersion -cne '1.0.0' -or
+        $primary.referenceSourceCommit -cne '7380d7b028c72b2aae348b778711d104d022a3f8' -or
+        ($workloads.PSObject.Properties.Name | Sort-Object) -join ',' -cne 'ControlPlane,Live,Provider,Streams,Sync' -or
+        $workloads.Provider.feature -cne 'parameterized-scalar' -or $workloads.Provider.concurrency -ne 64 -or
+        $workloads.Provider.variant -cne 'native' -or $workloads.Streams.scenario -cne 'commit-to-delivery' -or
+        $workloads.Streams.transactionChanges -ne 1 -or $workloads.Sync.destination -cne 'postgresql' -or
+        $workloads.Sync.mutations -ne 1 -or $workloads.Live.scenario -cne 'affected-key-update' -or
+        $workloads.Live.results -ne 1000 -or $workloads.Live.subscribers -ne 64 -or
+        $workloads.ControlPlane.operation -cne 'inventory-read' -or
+        $workloads.ControlPlane.sources -ne 100 -or $workloads.ControlPlane.clients -ne 32)
+    { throw 'The 1.2 performance contract must use the five approved primary workloads against the published 1.0.0 baseline.' }
 }
 & (Join-Path $PSScriptRoot 'verify-release-track.ps1')
 
