@@ -75,6 +75,51 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
         }
     }
 
+    [PostgreSqlFact]
+    public async Task Query_refresh_advances_between_only_relevant_invalidation_windows()
+    {
+        var schema = "bluetusk_live_window_" + Guid.NewGuid().ToString("N");
+        var token = TestContext.Current.CancellationToken;
+        await using var dataSource = BlueTuskDataSource.Create(PostgreSqlFixture.GetConnectionString());
+        var store = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions
+        {
+            ControlDataSource = dataSource,
+            ControlSchema = schema,
+        });
+        var revision = 0;
+        var plan = new LiveQueryPlan<(int Id, int Revision), int>(
+            "orders", "primary", new string('c', 64), LiveQueryCapabilities.SingleTable,
+            [new LiveTableDependency("sales", "orders")], [], 1,
+            (_, _) => ValueTask.FromResult<IReadOnlyList<(int, int)>>([(1, revision)]), static row => row.Id);
+        await using var session = new LiveQuerySession<(int Id, int Revision), int>(
+            plan, plan.Bind(new Dictionary<string, object?>()), new LiveSecurityScope("tenant", "policy:v1"), store);
+        try
+        {
+            _ = await session.StartAsync(token);
+            await using var unrelated = Delivery(Table("sales", "customers"), transactionId: 44, position: 200);
+            var afterUnrelated = await store.AppendAsync("primary", unrelated.Transaction, token);
+
+            Assert.Null(await session.RefreshToCurrentAsync(token));
+            Assert.Equal(afterUnrelated, session.Status.Cursor);
+            Assert.Equal(1, session.Status.AuthoritativeQueryCount);
+
+            revision = 1;
+            await using var related = Delivery(Table("sales", "orders"), transactionId: 45, position: 300);
+            var afterRelated = await store.AppendAsync("primary", related.Transaction, token);
+            var batch = await session.RefreshToCurrentAsync(token);
+            Assert.NotNull(batch);
+            Assert.Equal(LiveEventKind.RowUpdated, Assert.Single(batch.Events).Kind);
+            Assert.Equal((1, 1), Assert.Single(batch.Snapshot.Rows));
+            Assert.Equal(afterRelated, session.Status.Cursor);
+            Assert.Null(await session.RefreshToCurrentAsync(token));
+            Assert.Equal(2, session.Status.AuthoritativeQueryCount);
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
     [Fact]
     public async Task Consumer_persists_before_acknowledging_and_nacks_failures()
     {

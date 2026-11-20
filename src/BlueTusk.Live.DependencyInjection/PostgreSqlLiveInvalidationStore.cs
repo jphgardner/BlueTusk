@@ -50,6 +50,7 @@ public sealed class PostgreSqlLiveStoreOptions
 
 public sealed class PostgreSqlLiveInvalidationStore :
     ILiveInvalidationLog,
+    ILiveInvalidationWindowLog,
     ILiveInvalidationSink,
     ILiveReplayStore
 {
@@ -202,19 +203,7 @@ public sealed class PostgreSqlLiveInvalidationStore :
         CancellationToken cancellationToken = default)
     {
         BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
-        BlueTuskGuard.NotNull(dependencies);
-        if (dependencies.Count == 0)
-        {
-            throw new ArgumentException("At least one Live table dependency is required.", nameof(dependencies));
-        }
-
-        if (dependencies.Count > _options.MaximumDependenciesPerQuery)
-        {
-            throw new ArgumentException(
-                $"A Live invalidation query cannot exceed {_options.MaximumDependenciesPerQuery} dependencies.",
-                nameof(dependencies));
-        }
-
+        ValidateQueryDependencies(dependencies);
         if (afterExclusive.Value < 0 || throughInclusive.Value < afterExclusive.Value)
         {
             throw new ArgumentOutOfRangeException(
@@ -223,13 +212,9 @@ public sealed class PostgreSqlLiveInvalidationStore :
         }
 
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
-        var dependencyArray = dependencies.Distinct().ToArray();
-        var predicates = string.Join(
-            " OR ",
-            dependencyArray.Select((_, index) =>
-                $"(d.schema_name = @schema{index} AND d.table_name = @table{index})"));
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
+        var predicates = BindDependencyPredicates(command, dependencies);
         command.CommandText = $"""
             SELECT EXISTS (
                 SELECT 1
@@ -243,14 +228,81 @@ public sealed class PostgreSqlLiveInvalidationStore :
         AddParameter(command, "database", databaseIdentity);
         AddParameter(command, "after", afterExclusive.Value);
         AddParameter(command, "through", throughInclusive.Value);
-        for (var index = 0; index < dependencyArray.Length; index++)
-        {
-            AddParameter(command, $"schema{index}", dependencyArray[index].Schema);
-            AddParameter(command, $"table{index}", dependencyArray[index].Table);
-        }
-
         var value = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         return Convert.ToBoolean(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    async ValueTask<LiveInvalidationWindow> ILiveInvalidationWindowLog.ReadWindowAsync(
+        string databaseIdentity,
+        IReadOnlyCollection<LiveTableDependency> dependencies,
+        LiveInvalidationCursor afterExclusive,
+        CancellationToken cancellationToken)
+    {
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        ValidateQueryDependencies(dependencies);
+        BlueTuskGuard.NotNegative(afterExclusive.Value);
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        var predicates = BindDependencyPredicates(command, dependencies);
+        // Compute the fence and matching invalidations from the same database snapshot.
+        command.CommandText = $"""
+            WITH boundary AS (
+                SELECT COALESCE(max(cursor), 0) AS cursor
+                FROM {_invalidationsTable}
+                WHERE database_identity = @database)
+            SELECT b.cursor,
+                   CASE WHEN b.cursor <= @after THEN false ELSE EXISTS (
+                       SELECT 1
+                       FROM {_invalidationsTable} i
+                       JOIN {_dependenciesTable} d ON d.invalidation_cursor = i.cursor
+                       WHERE i.database_identity = @database
+                         AND i.cursor > @after
+                         AND i.cursor <= b.cursor
+                         AND ({predicates}))
+                   END
+            FROM boundary b
+            """;
+        AddParameter(command, "database", databaseIdentity);
+        AddParameter(command, "after", afterExclusive.Value);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            throw new PostgreSqlLiveStoreException("Could not read the Live invalidation boundary.");
+        }
+
+        return new LiveInvalidationWindow(new LiveInvalidationCursor(reader.GetInt64(0)), reader.GetBoolean(1));
+    }
+
+    private void ValidateQueryDependencies(IReadOnlyCollection<LiveTableDependency> dependencies)
+    {
+        BlueTuskGuard.NotNull(dependencies);
+        if (dependencies.Count == 0)
+        {
+            throw new ArgumentException("At least one Live table dependency is required.", nameof(dependencies));
+        }
+
+        if (dependencies.Count > _options.MaximumDependenciesPerQuery)
+        {
+            throw new ArgumentException(
+                $"A Live invalidation query cannot exceed {_options.MaximumDependenciesPerQuery} dependencies.",
+                nameof(dependencies));
+        }
+    }
+
+    private static string BindDependencyPredicates(
+        DbCommand command, IReadOnlyCollection<LiveTableDependency> dependencies)
+    {
+        var unique = dependencies.Distinct().ToArray();
+        var predicates = new string[unique.Length];
+        for (var index = 0; index < unique.Length; index++)
+        {
+            predicates[index] = $"(d.schema_name = @schema{index} AND d.table_name = @table{index})";
+            AddParameter(command, $"schema{index}", unique[index].Schema);
+            AddParameter(command, $"table{index}", unique[index].Table);
+        }
+
+        return string.Join(" OR ", predicates);
     }
 
     public async ValueTask<LiveReplayAppendResult> AppendReplayAsync(

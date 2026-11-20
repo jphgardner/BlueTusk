@@ -31,6 +31,17 @@ public interface ILiveInvalidationLog
         CancellationToken cancellationToken = default);
 }
 
+internal readonly record struct LiveInvalidationWindow(LiveInvalidationCursor Through, bool HasChanges);
+
+internal interface ILiveInvalidationWindowLog
+{
+    ValueTask<LiveInvalidationWindow> ReadWindowAsync(
+        string databaseIdentity,
+        IReadOnlyCollection<LiveTableDependency> dependencies,
+        LiveInvalidationCursor afterExclusive,
+        CancellationToken cancellationToken);
+}
+
 public interface ILiveInvalidationSink
 {
     ValueTask<LiveInvalidationCursor> AppendAsync(
@@ -216,9 +227,8 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         {
             EnsureStarted();
             EnsureNoPendingChange();
-            var through = await _invalidationLog.GetCurrentCursorAsync(
-                _plan.DatabaseIdentity,
-                cancellationToken).ConfigureAwait(false);
+            var window = await ReadInvalidationWindowAsync(cancellationToken).ConfigureAwait(false);
+            var through = window.Through;
             if (through < _cursor)
             {
                 throw new LiveInvalidationCursorException(
@@ -230,13 +240,7 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
                 return null;
             }
 
-            var affected = await _invalidationLog.HasChangesAsync(
-                _plan.DatabaseIdentity,
-                _plan.Dependencies,
-                _cursor,
-                through,
-                cancellationToken).ConfigureAwait(false);
-            if (!affected)
+            if (!window.HasChanges)
             {
                 _cursor = through;
                 return null;
@@ -286,6 +290,21 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
                 _gate.Release();
             }
         }
+    }
+
+    private async ValueTask<LiveInvalidationWindow> ReadInvalidationWindowAsync(CancellationToken cancellationToken)
+    {
+        if (_invalidationLog is ILiveInvalidationWindowLog windowLog)
+        {
+            return await windowLog.ReadWindowAsync(
+                _plan.DatabaseIdentity, _plan.Dependencies, _cursor, cancellationToken).ConfigureAwait(false);
+        }
+
+        var through = await _invalidationLog.GetCurrentCursorAsync(
+            _plan.DatabaseIdentity, cancellationToken).ConfigureAwait(false);
+        var hasChanges = through > _cursor && await _invalidationLog.HasChangesAsync(
+            _plan.DatabaseIdentity, _plan.Dependencies, _cursor, through, cancellationToken).ConfigureAwait(false);
+        return new LiveInvalidationWindow(through, hasChanges);
     }
 
     public ValueTask<LiveDiffBatch<T, TKey>> ResetAsync(
