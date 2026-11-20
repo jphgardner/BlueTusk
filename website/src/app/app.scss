@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgb(255 255 255 / 0.96);
+  background: color-mix(in srgb, var(--bt-deep) 96%, transparent);
   border-bottom: 1px solid var(--border);
 }
 .header-row {
@@ -54,7 +54,7 @@
 .site-footer {
   padding: 2.3rem 0;
   border-top: 1px solid var(--border);
-  background: #eff3f8;
+  background: var(--bt-deep);
 }
 .header-actions {
   gap: 0.65rem;
@@ -76,7 +76,7 @@
   z-index: 20;
   padding: 0.7rem;
   border-radius: 8px;
-  background: white;
+  background: var(--bt-panel);
   transform: translateY(-150%);
 }
 .skip-link:focus {
@@ -90,16 +90,17 @@
   justify-items: center;
   align-items: start;
   padding: min(12vh, 7rem) 1rem 1rem;
-  background: #081629a8;
+  background: rgb(0 0 0 / 0.72);
 }
 .overlay-panel {
   width: min(100%, 39rem);
   max-height: 82dvh;
   overflow: auto;
-  background: white;
+  background: var(--bt-panel);
   border-radius: var(--radius);
   padding: 1rem;
-  box-shadow: 0 18px 65px #06122948;
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 65px rgb(0 0 0 / 0.45);
 }
 .overlay-header {
   display: flex;
@@ -145,7 +146,7 @@
 .search-results a:hover,
 .search-suggestions a:hover,
 .mobile-links a:hover {
-  background: #eef4ff;
+  background: var(--bt-highlight);
 }
 .search-results a {
   display: grid;

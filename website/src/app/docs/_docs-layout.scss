@@ -57,7 +57,7 @@
 .docs-nav-current {
   margin-block: 0.15rem;
   border-radius: 7px;
-  background: #eff4fb;
+  background: var(--bt-panel);
 }
 .docs-nav-guide[aria-current] {
   color: var(--accent);
@@ -66,7 +66,7 @@
 .docs-nav-home:hover,
 .docs-nav-topic:hover,
 .docs-nav-guide:hover {
-  background: #e7effc;
+  background: var(--bt-highlight);
 }
 .docs-intro h1,
 .article-header h1 {
@@ -95,7 +95,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.95rem;
-  background: white;
+  background: var(--bt-panel);
 }
 .docs-topic-grid > a:hover {
   border-color: var(--accent);
@@ -130,7 +130,7 @@
   padding: 0.8rem 0.45rem;
 }
 .guide-list > a:hover {
-  background: #edf4ff;
+  background: var(--bt-highlight);
 }
 .guide-list > a mat-icon {
   color: var(--accent);
@@ -149,7 +149,7 @@
   max-width: 54rem;
 }
 .guide-prose {
-  color: #293a53;
+  color: var(--muted);
   font-size: 0.975rem;
   line-height: 1.74;
   overflow-wrap: anywhere;
@@ -196,8 +196,8 @@
   text-underline-offset: 0.17em;
 }
 .guide-prose :not(pre) > code {
-  background: #eaf0fa;
-  color: #17376a;
+  background: var(--bt-raised);
+  color: var(--bt-blue);
   border-radius: 4px;
   font-size: 0.88em;
   padding: 0.08rem 0.22rem;
@@ -219,14 +219,14 @@
   vertical-align: top;
 }
 .guide-prose th {
-  background: #edf3fb;
+  background: var(--bt-raised);
   text-align: left;
 }
 .guide-prose blockquote {
   margin: 0.9rem 0;
   padding: 0.1rem 1rem;
-  background: #ebf4ff;
-  border-left: 3px solid #4b85df;
+  background: var(--bt-highlight);
+  border-left: 3px solid var(--accent);
 }
 .guide-prose img {
   max-width: 100%;
@@ -262,7 +262,7 @@
 .mobile-docs-nav,
 .mobile-toc {
   display: none;
-  background: white;
+  background: var(--bt-panel);
   border: 1px solid var(--border);
   border-radius: 7px;
   margin-bottom: 1rem;

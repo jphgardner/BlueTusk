@@ -2,8 +2,8 @@
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  color: #f5f8ff;
-  background: radial-gradient(ellipse at 72% 36%, #0b2247, #07101f 60%);
+  color: var(--text);
+  background: radial-gradient(ellipse at 72% 36%, var(--bt-highlight), var(--bt-deep) 60%);
 }
 
 .hero-grid {
@@ -29,14 +29,14 @@
 }
 
 .hero-content h1 em {
-  color: #80d9ff;
+  color: var(--bt-blue);
   font-style: normal;
 }
 
 .hero-content p {
   max-width: 37ch;
   margin: 1.6rem 0 1.85rem;
-  color: #bccce5;
+  color: var(--muted);
   font-size: clamp(1rem, 1.75vw, 1.25rem);
   line-height: 1.65;
 }
@@ -54,12 +54,12 @@
 }
 
 .hero-primary {
-  --mat-button-filled-container-color: #b6e6ff;
-  --mat-button-filled-label-text-color: #072447;
+  --mat-button-filled-container-color: var(--bt-action);
+  --mat-button-filled-label-text-color: var(--bt-on-action);
 }
 .hero-secondary {
-  --mat-button-outlined-label-text-color: #e1eeff;
-  --mat-button-outlined-outline-color: #6a80a0;
+  --mat-button-outlined-label-text-color: var(--text);
+  --mat-button-outlined-outline-color: var(--bt-muted);
 }
 
 .product-tile {
@@ -69,11 +69,11 @@
   padding: 1.25rem 1.5rem 1.5rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--bt-panel);
 }
 .product-tile:hover {
   border-color: var(--accent);
-  background: #f6f9ff;
+  background: var(--bt-raised);
 }
 .product-tile p {
   margin: 0.4rem 0 0;
@@ -92,7 +92,7 @@
   font-size: 1.15rem;
 }
 .quick-example {
-  background: #eff4fa;
+  background: var(--bt-deep);
   border-block: 1px solid var(--border);
 }
 .quick-example p,
@@ -139,7 +139,7 @@
   align-items: center;
   gap: 0.4rem;
   margin-bottom: 1.1rem;
-  color: #b3dfff;
+  color: var(--bt-blue);
   font-size: 0.9rem;
   font-weight: 650;
 }
@@ -155,12 +155,12 @@
 }
 
 .flow-band {
-  background: #0e1d35;
-  color: #f4f8ff;
+  background: var(--bt-deep);
+  color: var(--text);
 }
 
 .flow-band .text-link {
-  color: #99d7ff;
+  color: var(--accent);
 }
 
 .home-flow {
@@ -176,17 +176,17 @@
   display: block;
   height: 100%;
   padding: 1rem;
-  border: 1px solid #3b557b;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #172a48;
+  background: var(--bt-panel);
 }
 
 .home-flow a:hover {
-  border-color: #91caff;
+  border-color: var(--accent);
 }
 
 .home-flow .mat-icon {
-  color: #9bd6ff;
+  color: var(--accent);
 }
 
 .home-flow h3 {
@@ -194,7 +194,7 @@
 }
 
 .home-flow p {
-  color: #c3d1e4;
+  color: var(--muted);
   font-size: 0.92rem;
   line-height: 1.55;
 }

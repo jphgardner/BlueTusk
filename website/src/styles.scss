@@ -1,13 +1,14 @@
 @use '@angular/material' as mat;
 @use './app/docs/docs-layout';
 @use './site-sections';
+@use '../../src/BlueTusk.Dashboard/Assets/brand.css';
 
 :root {
-  --background: #f8fafc;
-  --text: #10203a;
-  --muted: #485b72;
-  --accent: #174db0;
-  --border: #d9e2ee;
+  --background: var(--bt-canvas);
+  --text: var(--bt-ink);
+  --muted: var(--bt-secondary);
+  --accent: var(--bt-accent);
+  --border: var(--bt-line);
   --radius: 12px;
   --header-height: 64px;
   --font-sans: 'Inter', system-ui, sans-serif;
@@ -16,11 +17,11 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
   @include mat.theme(
     (
       color: (
-        theme-type: light,
+        theme-type: dark,
         primary: mat.$azure-palette,
       ),
       typography: Inter,
@@ -107,29 +108,34 @@ pre {
   height: 1.05rem;
   width: 1.05rem;
 }
+.mat-mdc-unelevated-button:not(:disabled) {
+  --mat-button-filled-container-color: var(--bt-action);
+  --mat-button-filled-label-text-color: var(--bt-on-action);
+}
+
 .product-icon {
   display: grid !important;
   place-items: center;
   width: 38px !important;
   height: 38px !important;
   border-radius: 8px;
-  background: #e6eeff;
+  background: var(--bt-highlight);
   color: var(--accent);
   font-size: 20px;
 }
 .package-label {
   font-size: 0.9rem;
-  border: 1px solid #ccd9eb;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.5rem 0.7rem;
-  background: #fff;
+  background: var(--bt-panel);
   max-width: 100%;
   overflow-wrap: anywhere;
 }
 .product-hero {
   padding-block: clamp(2.9rem, 6vw, 5.1rem);
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(108deg, #edf4ff, #f8fafc 75%);
+  background: linear-gradient(108deg, var(--bt-highlight), var(--background) 75%);
 }
 .product-hero h1 {
   max-width: 18ch;
@@ -153,7 +159,7 @@ pre {
 .breadcrumb > * + *::before {
   content: '/';
   margin-right: 0.5rem;
-  color: #6c7f98;
+  color: var(--bt-muted);
 }
 .breadcrumb a {
   color: var(--accent);
@@ -172,7 +178,7 @@ pre {
   padding: 1rem 1.15rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: white;
+  background: var(--bt-panel);
 }
 .task-list > a:hover,
 .feature-tile:hover {
@@ -189,7 +195,7 @@ pre {
   color: var(--accent);
 }
 .feature-tile {
-  background: white;
+  background: var(--bt-panel);
   border-radius: var(--radius);
   border: 1px solid var(--border);
   padding: 1.35rem;
@@ -208,7 +214,7 @@ pre {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.65rem 0.8rem;
-  background: white;
+  background: var(--bt-panel);
 }
 .search-field:focus-within {
   outline: 2px solid var(--accent);
@@ -228,21 +234,21 @@ pre {
 .example-panel {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #263954;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  color: #e4edff;
-  background: #0e1a30;
+  color: var(--text);
+  background: var(--bt-deep);
 }
 .example-panel .mat-mdc-tab-group {
-  --mat-tab-header-inactive-label-text-color: #b4c7e5;
-  --mat-tab-header-active-label-text-color: #e7f2ff;
-  --mat-tab-header-active-focus-label-text-color: #e7f2ff;
-  --mat-tab-header-active-hover-label-text-color: #e7f2ff;
-  --mat-tab-header-inactive-hover-label-text-color: #e7f2ff;
-  --mat-tab-header-active-indicator-color: #7ad3ff;
+  --mat-tab-header-inactive-label-text-color: var(--bt-secondary);
+  --mat-tab-header-active-label-text-color: var(--text);
+  --mat-tab-header-active-focus-label-text-color: var(--text);
+  --mat-tab-header-active-hover-label-text-color: var(--text);
+  --mat-tab-header-inactive-hover-label-text-color: var(--text);
+  --mat-tab-header-active-indicator-color: var(--accent);
 }
 .example-panel .mat-mdc-button {
-  --mat-button-text-label-text-color: #c3dbff;
+  --mat-button-text-label-text-color: var(--bt-blue);
 }
 .code-toolbar {
   display: flex;
@@ -251,8 +257,8 @@ pre {
   gap: 0.8rem;
   min-height: 42px;
   padding-inline: 0.95rem;
-  border-bottom: 1px solid #2b3e58;
-  color: #b4c7e5;
+  border-bottom: 1px solid var(--border);
+  color: var(--bt-secondary);
   font: 0.82rem var(--font-mono);
 }
 .example-panel pre {
@@ -266,25 +272,25 @@ pre {
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-built_in {
-  color: #a2c6ff;
+  color: var(--bt-blue);
 }
 .hljs-string,
 .hljs-attr,
 .hljs-addition {
-  color: #a6e6c3;
+  color: var(--bt-green);
 }
 .hljs-number,
 .hljs-literal,
 .hljs-symbol {
-  color: #ffc889;
+  color: var(--bt-amber);
 }
 .hljs-title,
 .hljs-type {
-  color: #9de1fc;
+  color: var(--bt-accent);
 }
 .hljs-comment,
 .hljs-quote {
-  color: #a1b3cc;
+  color: var(--bt-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
