@@ -43,6 +43,57 @@ public sealed class LiveAspNetCoreTransportTests
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Tokenless_transport_starts_at_current_rows_and_preserves_resume_history(bool updateWhileObserved)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var current = new Row(1, "confirmed");
+        var invalidations = new TestInvalidationLog();
+        var (shared, resolver) = await CreateAsync(readCurrent: () => current, invalidations: invalidations);
+        await using var subscription = shared;
+        var protector = Protector();
+        using var parameters = JsonDocument.Parse("{}");
+        var request = new LiveSubscriptionRequest { Query = "orders", Parameters = parameters.RootElement };
+
+        await using var original = await LiveTransportSession.OpenAsync(
+            request, Principal(), resolver, protector, cancellationToken: cancellationToken);
+        var initial = Assert.Single(original.Replay);
+        Assert.Equal("confirmed", initial.Event!.Value.GetProperty("rows")[0].GetProperty("Value").GetString());
+        if (!updateWhileObserved)
+        {
+            await original.DisposeAsync();
+        }
+
+        current = new Row(1, "completed");
+        if (updateWhileObserved)
+        {
+            invalidations.Cursor = 1;
+            Assert.Equal(1, await shared.RefreshAsync(cancellationToken));
+        }
+
+        await using var fresh = await LiveTransportSession.OpenAsync(
+            request, Principal(), resolver, protector, cancellationToken: cancellationToken);
+        var snapshot = Assert.Single(fresh.Replay);
+        Assert.Equal(2, snapshot.Sequence);
+        Assert.Equal("InitialResult", snapshot.Event!.Value.GetProperty("kind").GetString());
+        Assert.Equal("completed", snapshot.Event.Value.GetProperty("rows")[0].GetProperty("Value").GetString());
+        Assert.Equal(2, shared.Status.PublishedEvents);
+        Assert.Equal(2, shared.Status.QuerySession.AuthoritativeQueryCount);
+
+        await using var resumed = await LiveTransportSession.OpenAsync(
+            request with { ResumeToken = initial.ResumeToken }, Principal(), resolver, protector, cancellationToken: cancellationToken);
+        var update = Assert.Single(resumed.Replay);
+        Assert.Equal(snapshot.Sequence, update.Sequence);
+        Assert.Equal("RowUpdated", update.Event!.Value.GetProperty("kind").GetString());
+        Assert.Equal("completed", update.Event.Value.GetProperty("row").GetProperty("Value").GetString());
+
+        await using var atCurrent = await LiveTransportSession.OpenAsync(
+            request with { ResumeToken = snapshot.ResumeToken }, Principal(), resolver, protector, cancellationToken: cancellationToken);
+        Assert.Empty(atCurrent.Replay);
+    }
+
     [Fact]
     public async Task Transport_rejects_anonymous_or_cross_scope_resume_requests()
     {
@@ -192,9 +243,10 @@ public sealed class LiveAspNetCoreTransportTests
         Assert.Same(options, provider.GetRequiredService<LiveAspNetCoreOptions>());
     }
 
-    private static async ValueTask<(LiveSharedSubscription<Row, int> Shared, Resolver Resolver)> CreateAsync(char replica = 'a')
+    private static async ValueTask<(LiveSharedSubscription<Row, int> Shared, Resolver Resolver)> CreateAsync(
+        char replica = 'a', Func<Row>? readCurrent = null, TestInvalidationLog? invalidations = null)
     {
-        var invalidations = new NoChangesLog();
+        invalidations ??= new TestInvalidationLog();
         var plan = new LiveQueryPlan<Row, int>(
             "orders",
             "database",
@@ -206,7 +258,7 @@ public sealed class LiveAspNetCoreTransportTests
             [new LiveTableDependency("sales", "orders")],
             [],
             10,
-            (_, _) => ValueTask.FromResult<IReadOnlyList<Row>>([new Row(1, "one")]),
+            (_, _) => ValueTask.FromResult<IReadOnlyList<Row>>([readCurrent?.Invoke() ?? new Row(1, "one")]),
             static row => row.Id);
         var session = new LiveQuerySession<Row, int>(
             plan,
@@ -245,12 +297,14 @@ public sealed class LiveAspNetCoreTransportTests
             ValueTask.FromResult(subscription);
     }
 
-    private sealed class NoChangesLog : ILiveInvalidationLog
+    private sealed class TestInvalidationLog : ILiveInvalidationLog
     {
+        public long Cursor { get; set; }
+
         public ValueTask<LiveInvalidationCursor> GetCurrentCursorAsync(
             string databaseIdentity,
             CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(new LiveInvalidationCursor(0));
+            ValueTask.FromResult(new LiveInvalidationCursor(Cursor));
 
         public ValueTask<bool> HasChangesAsync(
             string databaseIdentity,
@@ -258,7 +312,7 @@ public sealed class LiveAspNetCoreTransportTests
             LiveInvalidationCursor afterExclusive,
             LiveInvalidationCursor throughInclusive,
             CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(false);
+            ValueTask.FromResult(throughInclusive > afterExclusive);
     }
 
     private sealed class ReplayStore : ILiveReplayStore
