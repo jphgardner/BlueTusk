@@ -169,8 +169,8 @@ internal static class PerformanceEvidenceGenerator
             var metrics = new Dictionary<string, object>(StringComparer.Ordinal);
             foreach (var metric in MetricNames)
             {
-                var c = PerformanceEvidenceStatistics.Estimate(candidate.Select(trial => trial.Values[metric]).ToArray(), plan);
-                var r = PerformanceEvidenceStatistics.Estimate(reference.Select(trial => trial.Values[metric]).ToArray(), plan);
+                var c = EstimateMetric(candidate, metric, plan);
+                var r = EstimateMetric(reference, metric, plan);
                 metrics[metric] = new Dictionary<string, double>(StringComparer.Ordinal)
                 {
                     ["candidate"] = c.Point,
@@ -281,6 +281,21 @@ internal static class PerformanceEvidenceGenerator
         return new(comparisons.Count, trials.Count, diagnostic, synthetic);
 
         static object TrialView(TrialValues trial) => new { trial.Trial, trial.Path, trial.Sha256, trial.Values };
+    }
+
+    private static PerformanceEvidenceStatistics.Interval EstimateMetric(TrialValues[] trials, string metric, int[] plan)
+    {
+        try
+        {
+            return PerformanceEvidenceStatistics.Estimate(trials.Select(trial => trial.Values[metric]).ToArray(), plan);
+        }
+        catch (InvalidDataException error)
+        {
+            var trial = trials[0];
+            throw new InvalidDataException(
+                $"Could not estimate the {trial.Role} '{metric}' metric for workload '{trial.WorkloadKey}' " +
+                $"with {trials.Length} trials. {error.Message}", error);
+        }
     }
 
     internal static Dictionary<string, string> ExpectedCoreWorkloads(JsonElement contract, string os)
