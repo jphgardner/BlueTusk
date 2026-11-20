@@ -89,10 +89,23 @@ jobs:
             --no-http-cache
           if ($LASTEXITCODE -ne 0) { throw 'The application candidate restore failed.' }
           ./eng/verify-application-candidate-restore.ps1
-      - name: Submit the resolved NuGet snapshot
-        uses: advanced-security/component-detection-dependency-submission-action@a02aeda7a175ad4dd38a13c4d3ff2df9da8f2cf0 # v0.2.0
+      - name: Verify the resolved NuGet graph
+        run: |
+          python3 eng/build-nuget-dependency-snapshot.py \
+            --commit "$GITHUB_SHA" --ref "$GITHUB_REF" --run "$GITHUB_RUN_ID" \
+            --repository-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --output artifacts/nuget-dependency-snapshot.json
+
+      - name: Archive the resolved NuGet graph
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          detectorsCategories: NuGet
-          directoryExclusionList: artifacts
-          fail-on-empty: true
-          correlator: bluetusk-nuget
+          name: nuget-dependency-snapshot
+          path: artifacts/nuget-dependency-snapshot.json
+          if-no-files-found: error
+
+      - name: Submit the resolved NuGet snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/dependency-graph/snapshots" \
+            --input artifacts/nuget-dependency-snapshot.json
