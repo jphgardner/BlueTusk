@@ -137,6 +137,7 @@ var report = new
         Architecture = "x64",
         Runtime = RuntimeInformation.FrameworkDescription,
         Scenario = sync is null ? "commit-to-delivery" : "durable-mutation",
+        LatencyClock = sync is null ? "monotonic-postgresql" : "monotonic",
         ChangesPerTransaction = 1,
         Destination = sync is null ? null : "postgresql",
         MutationsPerTransaction = sync is null ? (int?)null : 1,
@@ -151,7 +152,7 @@ var report = new
     ClockAfter = clockAfter,
     SourceClockUpperOffsetTicks = offsetUpperBound,
     SourceClockAppliedOffsetTicks = appliedOffset,
-    RawWallTicksByTransaction = sync is null ? operationTicks.AsSpan(0, sampleCount).ToArray() : null,
+    RawUncorrectedTicksByTransaction = sync is null ? operationTicks.AsSpan(0, sampleCount).ToArray() : null,
     Frequency = sync is null ? TimeSpan.TicksPerSecond : Stopwatch.Frequency,
     Measurement = measurement with
     {
@@ -173,7 +174,7 @@ async Task ReadOneChangeAsync(CancellationToken cancellationToken)
         {
             throw new EndOfStreamException("The replication stream ended before delivering its committed change.");
         }
-        var observedUtc = sync is null ? DateTimeOffset.UtcNow : default;
+        var observed = sync is null ? ReadMonotonicTicks() : 0L;
         var mutationTicks = 0L;
         await using var delivery = transactions.Current;
         var transaction = delivery.Transaction;
@@ -215,7 +216,7 @@ async Task ReadOneChangeAsync(CancellationToken cancellationToken)
         {
             throw new InvalidOperationException("Raw sample capacity exhausted. No truncated capture is accepted.");
         }
-        operationTicks[sampleCount++] = sync is null ? (observedUtc - transaction.CommitTimestamp).Ticks : mutationTicks;
+        operationTicks[sampleCount++] = sync is null ? checked(observed - (transaction.CommitTimestamp.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks)) : mutationTicks;
     }
     catch
     {
@@ -233,10 +234,10 @@ async Task<ClockOffset> SampleClockAsync()
     ClockOffset? narrowest = null;
     for (var sample = 0; sample < 12; sample++)
     {
-        var before = DateTimeOffset.UtcNow.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks;
+        var before = ReadMonotonicTicks();
         var server = (long)(await command.ExecuteScalarAsync(token))!;
-        var after = DateTimeOffset.UtcNow.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks;
-        if (after < before) throw new InvalidDataException("The wall clock moved backwards during calibration.");
+        var after = ReadMonotonicTicks();
+        if (after < before) throw new InvalidDataException("The monotonic timer moved backwards during calibration.");
         var interval = new ClockOffset(server - after, server - before);
         if (narrowest is null || after - before < narrowest.LatestOffsetTicks - narrowest.EarliestOffsetTicks)
         {
@@ -245,5 +246,9 @@ async Task<ClockOffset> SampleClockAsync()
     }
     return narrowest!;
 }
+
+// Align the receiver's monotonic clock to PostgreSQL at the endpoints of the window.
+// The client wall clock can jump while Docker Desktop and Windows resynchronize.
+static long ReadMonotonicTicks() => Stopwatch.GetElapsedTime(0, Stopwatch.GetTimestamp()).Ticks;
 
 internal sealed record ClockOffset(long EarliestOffsetTicks, long LatestOffsetTicks);

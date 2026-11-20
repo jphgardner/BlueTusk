@@ -151,9 +151,11 @@ try
                     $sample.environment.sourceWriterImplementation -cne $referenceVersion)
                 { throw "The $Family trial did not use the approved PostgreSQL source and fixed writer." }
                 if ($Family -ceq 'Streams' -and ($sample.environment.scenario -cne $approved.scenario -or
-                    $sample.rawWallTicksByTransaction.Count -ne $sample.measurement.completedOperations))
+                    $sample.environment.latencyClock -cne 'monotonic-postgresql' -or
+                    $sample.rawUncorrectedTicksByTransaction.Count -ne $sample.measurement.completedOperations))
                 { throw 'The Streams trial did not measure each approved commit-to-delivery operation.' }
                 if ($Family -ceq 'Sync' -and ($sample.environment.scenario -cne 'durable-mutation' -or
+                    $sample.environment.latencyClock -cne 'monotonic' -or
                     $sample.environment.destination -cne $approved.destination -or
                     $sample.environment.mutationsPerTransaction -ne $approved.mutations -or
                     $sample.verifiedPersistedMutations -ne $sample.measurement.completedOperations -or

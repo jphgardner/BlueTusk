@@ -7,7 +7,7 @@ resolves the contract for the candidate from
 The v1.2 resolver applies the approved Provider topology and binds the five
 approved primary workloads to the published [BlueTusk 1.0.0 release](https://github.com/jphgardner/BlueTusk/releases/tag/v1.0.0).
 
-**Status:** the reference host can capture the v1.2 Provider and Control Plane
+The reference host can capture the v1.2 Provider and Control Plane
 matrices and all five primary workloads. Qualification remains gated on the
 full external-reference matrices for Streams, Sync, and Live and on the
 performance thresholds.
@@ -174,7 +174,7 @@ delivery count each time. Capture this comparison with
 `capture-core-primary.ps1 -Family Live -ExpectedCommit <sha>`.
 The Streams probe measures WAL commit to delivery using the same separate
 PostgreSQL writer for both roles. It validates every committed change and
-retains the raw timing and clock-offset observations. Capture it with
+retains the monotonic timing and PostgreSQL clock calibration. Capture it with
 `capture-core-primary.ps1 -Family Streams -ExpectedCommit <sha>`.
 The PostgreSQL Sync probe uses the same source writer and CDC path as Streams.
 It measures from handing a decoded change to the Sync pipeline through its

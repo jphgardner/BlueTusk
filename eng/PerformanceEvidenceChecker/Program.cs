@@ -428,17 +428,19 @@ internal static class Checker
                         scan.Long("environment.changesPerTransaction") == Int(workload, "transactionChanges") &&
                         scan.Text("environment.source") == "postgresql-pgoutput" &&
                         scan.Text("environment.sourceWriterImplementation") == reference &&
+                        scan.Text("environment.latencyClock") == "monotonic-postgresql" &&
                         frequency == TimeSpan.TicksPerSecond && scan.Workers.Count == 1 &&
                         beforeLower <= beforeUpper &&
                         afterLower <= afterUpper &&
                         scan.Long("sourceClockUpperOffsetTicks") == upper && scan.Long("sourceClockAppliedOffsetTicks") == applied &&
-                        scan.WallClockTicks is { } wallTicks && wallTicks.Length == scan.Workers[0].Length &&
-                        wallTicks.Zip(scan.Workers[0]).All(sample => checked(sample.First + applied) == sample.Second),
+                        scan.UncorrectedTicks is { } uncorrected && uncorrected.Length == scan.Workers[0].Length &&
+                        uncorrected.Zip(scan.Workers[0]).All(sample => checked(sample.First + applied) == sample.Second),
                         $"{family} trial '{path}' did not bind each delivery sample to the approved workload and clock observations.");
                 }
                 if (family == "Sync")
                 {
                     Require(scan.Text("environment.scenario") == "durable-mutation" &&
+                        scan.Text("environment.latencyClock") == "monotonic" &&
                         scan.Text("environment.source") == "postgresql-pgoutput" &&
                         scan.Text("environment.sourceWriterImplementation") == reference &&
                         scan.Long("environment.changesPerTransaction") == 1 && scan.Workers.Count == 1 &&
@@ -691,7 +693,7 @@ internal static class Checker
     {
         public Dictionary<string, string> Scalars { get; } = new(StringComparer.Ordinal);
         public List<long[]> Workers { get; } = [];
-        public long[]? WallClockTicks { get; set; }
+        public long[]? UncorrectedTicks { get; set; }
         public string Text(string path) => Scalars.TryGetValue(path, out var value) ? value : throw new CheckFailedException($"Raw capture is missing '{path}'.");
         public string? TryText(string path) => Scalars.TryGetValue(path, out var value) ? value : null;
         public long Long(string path) => long.Parse(Text(path), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
@@ -742,7 +744,7 @@ internal static class Checker
                     {
                         var path = Child();
                         if (reader.TokenType == JsonTokenType.StartArray &&
-                            (path == "rawWallTicksByTransaction" || Regex.IsMatch(path, "^measurement\\.workers\\[\\d+\\]\\.requestTicks$")))
+                            (path == "rawUncorrectedTicksByTransaction" || Regex.IsMatch(path, "^measurement\\.workers\\[\\d+\\]\\.requestTicks$")))
                         {
                             var buffer = new List<long>();
                             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
@@ -751,9 +753,9 @@ internal static class Checker
                                 Require(reader.TokenType == JsonTokenType.Number && reader.TryGetInt64(out ticks), "Request ticks must be integers.");
                                 buffer.Add(ticks);
                             }
-                            if (path == "rawWallTicksByTransaction")
+                            if (path == "rawUncorrectedTicksByTransaction")
                             {
-                                scan.WallClockTicks = buffer.ToArray();
+                                scan.UncorrectedTicks = buffer.ToArray();
                             }
                             else
                             {
