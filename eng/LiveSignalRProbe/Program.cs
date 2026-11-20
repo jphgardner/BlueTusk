@@ -184,6 +184,7 @@ try
         await Task.Delay(10, token);
     }
 
+    deadline.CancelAfter(TimeSpan.FromSeconds(warmupSeconds + measurementSeconds + 45));
     _ = await ProviderRequestCapture.MeasureWindowAsync([UpdateAndDeliverAsync], warmupSeconds, 0, token);
     var before = shared?.Status;
     var deliveriesBefore = observedDeliveries;
@@ -269,20 +270,14 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
     {
         throw new EndOfStreamException("The committed change did not reach the PostgreSQL change feed.");
     }
-    await using (var delivery = deliveries.Current)
+    await using var delivery = deliveries.Current;
+    if (delivery.Transaction.Changes.Count != 1)
     {
-        if (delivery.Transaction.Changes.Count != 1)
-        {
-            throw new InvalidDataException("The fixture expected one change per transaction.");
-        }
-        if (invalidations is not null)
-        {
-            await invalidations.ConsumeTransactionAsync(delivery, stop);
-        }
+        throw new InvalidDataException("The fixture expected one change per transaction.");
     }
-
-    if (shared is not null)
+    if (invalidations is not null && shared is not null)
     {
+        await invalidations.ConsumeTransactionAsync(delivery, stop);
         if (await shared.RefreshAsync(stop) != 1)
         {
             throw new InvalidDataException("The candidate did not publish one Live event.");
@@ -291,6 +286,7 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
     else
     {
         reference!.Publish(await ReadResultAsync(stop));
+        await delivery.AcknowledgeAsync(stop);
     }
 
     foreach (var client in clients)
