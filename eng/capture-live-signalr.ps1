@@ -9,7 +9,8 @@ param(
     [ValidateRange(1, 60)][int] $MeasurementSeconds = 10,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,32}$')][string] $RunId = ('live-signalr-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
     [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'live-signalr-probe',
-    [string] $DotNetPath = 'dotnet'
+    [string] $DotNetPath = 'dotnet',
+    [switch] $ProfileStages
 )
 
 Set-StrictMode -Version Latest
@@ -45,6 +46,8 @@ $dotnet = (Get-Command $DotNetPath -CommandType Application -TotalCount 1).Sourc
 $work = Join-Path $artifacts "live-signalr/$RunId"
 if (Test-Path -LiteralPath $work) { throw 'Use a distinct Live SignalR run ID.' }
 $null = New-Item -ItemType Directory -Path $work, $output
+$profiles = Join-Path $work 'stage-profiles'
+if ($ProfileStages) { $null = New-Item -ItemType Directory -Path $profiles }
 $build = Join-Path $work 'build'
 $project = Join-Path $PSScriptRoot 'LiveSignalRProbe/LiveSignalRProbe.csproj'
 $buildLog = Join-Path $work 'build.log'
@@ -73,7 +76,9 @@ try
         {
             $name = "$role-$trial.json"
             $path = Join-Path $output $name
-            & $dotnet $assembly $path $ExpectedCommit $role $trial $Results $Subscribers $WarmupSeconds $MeasurementSeconds
+            $probeArguments = @($path, $ExpectedCommit, $role, $trial, $Results, $Subscribers, $WarmupSeconds, $MeasurementSeconds)
+            if ($ProfileStages) { $probeArguments += (Join-Path $profiles $name) }
+            & $dotnet $assembly @probeArguments
             if ($LASTEXITCODE) { throw "Live SignalR $role trial $trial failed." }
             $sample = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
             $runtime ??= $sample.environment.runtime
@@ -81,7 +86,8 @@ try
                 $sample.role -cne $role -or $sample.diagnostic -ne $true -or $sample.synthetic -ne $false -or
                 $sample.environment.runtime -cne $runtime -or $sample.environment.os -cne $os -or
                 $sample.environment.architecture -cne 'x64' -or $sample.environment.transport -cne 'signalr-json-websockets' -or
-                $sample.environment.source -cne 'postgresql-pgoutput' -or $sample.environment.resultCount -ne $Results -or
+                $sample.environment.source -cne 'postgresql-pgoutput' -or $sample.environment.stageProfiling -ne [bool]$ProfileStages -or
+                $sample.environment.resultCount -ne $Results -or
                 $sample.environment.subscriberCount -ne $Subscribers -or $sample.warmupSeconds -ne $WarmupSeconds -or
                 $sample.measurementSeconds -ne $MeasurementSeconds -or $sample.measurement.elapsedTicks -lt ($MeasurementSeconds * $sample.frequency) -or
                 $sample.measurement.completedOperations -lt 1 -or
@@ -111,6 +117,7 @@ try
         candidateImplementation = $implementations.candidate; referenceImplementation = $implementations.reference
         containerImageDigests = @($manifest.containerImageDigests); records = @($records)
     } | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath (Join-Path $output 'trial-index.json') -Encoding utf8NoBOM
+    if ($ProfileStages) { Write-Output "Live stage profiles: $profiles" }
 }
 finally
 {

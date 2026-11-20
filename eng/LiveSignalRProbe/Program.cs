@@ -28,12 +28,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-if (args is not [var outputPath, var commit, var role, var trial, var results, var subscribers, var warmup, var duration] ||
+if (args.Length is not (8 or 9) ||
+    args is not [var outputPath, var commit, var role, var trial, var results, var subscribers, var warmup, var duration, ..] ||
     role is not ("candidate" or "reference"))
 {
-    throw new ArgumentException("Provide output, commit, role, trial, results, subscribers, warmup and measurement seconds.");
+    throw new ArgumentException("Provide output, commit, role, trial, results, subscribers, warmup and measurement seconds, and optionally a stage profile path.");
 }
 
+const int maximumSamples = 262_144;
+var stageProfilePath = args.Length == 9 ? args[8] : null;
+StageSample[]? stageSamples = null;
+var stageSampleCount = 0;
+var queryTicks = 0L;
 var candidate = role == "candidate";
 var resultCount = int.Parse(results, CultureInfo.InvariantCulture);
 var subscriberCount = int.Parse(subscribers, CultureInfo.InvariantCulture);
@@ -188,7 +194,11 @@ try
     _ = await ProviderRequestCapture.MeasureWindowAsync([UpdateAndDeliverAsync], warmupSeconds, 0, token);
     var before = shared?.Status;
     var deliveriesBefore = observedDeliveries;
-    var window = await ProviderRequestCapture.MeasureWindowAsync([UpdateAndDeliverAsync], measurementSeconds, 262_144, token);
+    if (stageProfilePath is not null)
+    {
+        stageSamples = new StageSample[maximumSamples];
+    }
+    var window = await ProviderRequestCapture.MeasureWindowAsync([UpdateAndDeliverAsync], measurementSeconds, maximumSamples, token);
     var after = shared?.Status;
     var verifiedDeliveries = observedDeliveries - deliveriesBefore;
     if (verifiedDeliveries != checked(window.CompletedOperations * subscriberCount))
@@ -230,6 +240,7 @@ try
             SubscriberCount = subscriberCount,
             Source = "postgresql-pgoutput",
             ServerVersion = reader.ServerVersion,
+            StageProfiling = stageSamples is not null,
         },
         VerifiedDeliveries = verifiedDeliveries,
         PersistedUpdates = before is not null && after is not null ? after.PersistedSequence - before.PersistedSequence : (long?)null,
@@ -242,6 +253,23 @@ try
     };
     await using var output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
     await JsonSerializer.SerializeAsync(output, report, new JsonSerializerOptions(JsonSerializerDefaults.Web), token);
+    if (stageSamples is not null)
+    {
+        if (stageSampleCount != window.CompletedOperations)
+        {
+            throw new InvalidDataException("The Live stage profile did not capture every timed operation.");
+        }
+        await using var profile = new FileStream(stageProfilePath!, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        await JsonSerializer.SerializeAsync(profile, new
+        {
+            report.SourceCommit,
+            report.WorkloadKey,
+            report.Role,
+            report.Trial,
+            Stopwatch.Frequency,
+            Samples = stageSamples.AsMemory(0, stageSampleCount),
+        }, new JsonSerializerOptions(JsonSerializerDefaults.Web), token);
+    }
 }
 finally
 {
@@ -252,6 +280,7 @@ finally
 
 async Task UpdateAndDeliverAsync(CancellationToken stop)
 {
+    var began = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
     var expectedRevision = ++revision;
     var expectedKey = (expectedRevision - 1) % resultCount + 1;
     var expectedSequence = 1L + expectedRevision;
@@ -266,10 +295,14 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
         }
     }
 
+    var committed = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
     if (!await deliveries.MoveNextAsync())
     {
         throw new EndOfStreamException("The committed change did not reach the PostgreSQL change feed.");
     }
+    var received = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
+    var invalidated = received;
+    queryTicks = 0;
     await using var delivery = deliveries.Current;
     if (delivery.Transaction.Changes.Count != 1)
     {
@@ -278,6 +311,7 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
     if (invalidations is not null && shared is not null)
     {
         await invalidations.ConsumeTransactionAsync(delivery, stop);
+        invalidated = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
         if (await shared.RefreshAsync(stop) != 1)
         {
             throw new InvalidDataException("The candidate did not publish one Live event.");
@@ -289,6 +323,7 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
         await delivery.AcknowledgeAsync(stop);
     }
 
+    var published = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
     foreach (var client in clients)
     {
         var message = await client.ReadAsync(stop);
@@ -302,10 +337,16 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
         }
         observedDeliveries++;
     }
+    if (stageSamples is not null)
+    {
+        stageSamples[stageSampleCount++] = new StageSample(committed - began, received - committed,
+            invalidated - received, published - invalidated, Stopwatch.GetTimestamp() - published, queryTicks);
+    }
 }
 
 async ValueTask<IReadOnlyList<ResultRow>> ReadResultAsync(CancellationToken stop)
 {
+    var began = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
     await using var command = (BlueTuskCommand)reader.CreateCommand();
     command.CommandText = "SELECT id, revision FROM public.live_signalr_results WHERE id >= $1 ORDER BY id LIMIT $2";
     command.Parameters.Add(new BlueTuskParameter<int>(1));
@@ -320,8 +361,14 @@ async ValueTask<IReadOnlyList<ResultRow>> ReadResultAsync(CancellationToken stop
     {
         throw new InvalidDataException("The shared PostgreSQL query returned the wrong number of rows.");
     }
+    if (stageSamples is not null)
+    {
+        queryTicks += Stopwatch.GetTimestamp() - began;
+    }
     return rows;
 }
+
+internal readonly record struct StageSample(long Commit, long ChangeFeed, long Invalidation, long Publish, long ClientReceipt, long Query);
 
 internal static class SignalRCapture
 {
