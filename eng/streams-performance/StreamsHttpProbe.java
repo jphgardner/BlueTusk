@@ -153,6 +153,9 @@ public final class StreamsHttpProbe {
             } else {
                 recordEvent(body, received, receivedAt);
             }
+            if (postgres != null) {
+                postgres.beforeAcknowledge();
+            }
             if (delivered == warmupRows + measuredRows) {
                 writeResult();
                 complete = true;
@@ -322,6 +325,7 @@ public final class StreamsHttpProbe {
         }
         if (postgres != null) {
             environmentNode.put("sink", "postgresql");
+            environmentNode.put("durableHttpFragments", postgres.durableFragments());
             environmentNode.put("latency", "WAL commit to durable mutations and checkpoint in the PostgreSQL JDBC sink");
         }
         capture.set("environment", environmentNode);

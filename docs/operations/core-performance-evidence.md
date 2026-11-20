@@ -100,7 +100,10 @@ destination. Debezium uses an in-process native JDBC sink. Both write documents
 and a checkpoint in a single transaction to a separate database on the pinned
 PostgreSQL fixture. The capture checks that every destination batch persisted
 its exact row range and that the final checkpoint shares the final batch's
-database transaction. Choose `evidence_class=diagnostic` and `families=Sync` for
+database transaction. If an HTTP batch ends mid-transaction, the reference
+stages that fragment in PostgreSQL before responding. It publishes the staged
+rows together with the final fragment and checkpoint. Choose
+`evidence_class=diagnostic` and `families=Sync` for
 these runs. Sync qualification also requires NATS, Redis, OpenSearch, Kafka,
 S3 and Webhooks measurements.
 

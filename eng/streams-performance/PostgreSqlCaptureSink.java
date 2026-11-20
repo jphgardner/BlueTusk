@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Properties;
 
 /** Native PostgreSQL baseline living in the same JVM as the Debezium Server HTTP client. */
@@ -14,6 +15,14 @@ final class PostgreSqlCaptureSink {
     private final Connection connection;
     private final PreparedStatement write;
     private final PreparedStatement checkpoint;
+    private final PreparedStatement stage;
+    private final PreparedStatement publishStaged;
+    private final PreparedStatement clearStaged;
+    private final ArrayList<Row> pending = new ArrayList<>();
+    private int stagedRows;
+    private int durableFragments;
+
+    private record Row(long key, long transactionId, long lsn) { }
 
     PostgreSqlCaptureSink() throws IOException, SQLException {
         var properties = new Properties();
@@ -40,32 +49,87 @@ final class PostgreSqlCaptureSink {
             UPDATE bluetusk_sync.pipelines SET checkpoint_position = ?, checkpoint_transaction_id = ?, updated_at = clock_timestamp()
             WHERE pipeline_id = 'sync_capture' AND (checkpoint_position IS NULL OR checkpoint_position < ?)
             """);
+        stage = connection.prepareStatement("INSERT INTO bluetusk_sync.staged_rows (source_transaction_id, document_id, lsn) VALUES (?, ?, ?)");
+        publishStaged = connection.prepareStatement("""
+            INSERT INTO bluetusk_sync.documents (pipeline_id, collection_name, document_key, content_type, content, source_change_id)
+            SELECT 'sync_capture', 'streams_capture', document_id::text, 'application/json',
+                   convert_to('{"id":' || document_id::text || '}', 'UTF8'), source_transaction_id::text || ':' || lsn::text || ':' || document_id::text
+            FROM bluetusk_sync.staged_rows WHERE source_transaction_id = ? ORDER BY document_id
+            ON CONFLICT (pipeline_id, collection_name, document_key) DO UPDATE
+            SET content = EXCLUDED.content, source_change_id = EXCLUDED.source_change_id, updated_at = clock_timestamp()
+            """);
+        clearStaged = connection.prepareStatement("DELETE FROM bluetusk_sync.staged_rows WHERE source_transaction_id = ?");
     }
 
     void deliver(long key, long transactionId, long lsn, boolean last) throws SQLException {
+        pending.add(new Row(key, transactionId, lsn));
+        if (!last) {
+            return;
+        }
         try {
-            write.setString(1, Long.toString(key));
-            write.setBytes(2, ("{\"id\":" + key + "}").getBytes(StandardCharsets.UTF_8));
-            write.setString(3, transactionId + ":" + lsn + ":" + key);
-            write.addBatch();
-            if (last) {
-                write.executeBatch();
-                var position = BigDecimal.valueOf(lsn);
-                checkpoint.setBigDecimal(1, position);
-                checkpoint.setLong(2, transactionId);
-                checkpoint.setBigDecimal(3, position);
-                if (checkpoint.executeUpdate() != 1) {
-                    throw new SQLException("The native PostgreSQL sink did not advance the checkpoint.");
+            if (stagedRows > 0) {
+                publishStaged.setLong(1, transactionId);
+                clearStaged.setLong(1, transactionId);
+                if (publishStaged.executeUpdate() != stagedRows || clearStaged.executeUpdate() != stagedRows) {
+                    throw new SQLException("The native PostgreSQL sink lost part of the staged transaction.");
                 }
-                connection.commit();
             }
+            for (var row : pending) {
+                write.setString(1, Long.toString(row.key()));
+                write.setBytes(2, ("{\"id\":" + row.key() + "}").getBytes(StandardCharsets.UTF_8));
+                write.setString(3, row.transactionId() + ":" + row.lsn() + ":" + row.key());
+                write.addBatch();
+            }
+            write.executeBatch();
+            var position = BigDecimal.valueOf(lsn);
+            checkpoint.setBigDecimal(1, position);
+            checkpoint.setLong(2, transactionId);
+            checkpoint.setBigDecimal(3, position);
+            if (checkpoint.executeUpdate() != 1) {
+                throw new SQLException("The native PostgreSQL sink did not advance the checkpoint.");
+            }
+            connection.commit();
+            pending.clear();
+            stagedRows = 0;
         } catch (SQLException failure) {
-            try {
-                connection.rollback();
-            } catch (SQLException rollback) {
-                failure.addSuppressed(rollback);
-            }
+            rollback(failure);
             throw failure;
+        }
+    }
+
+    void beforeAcknowledge() throws SQLException {
+        if (pending.isEmpty()) {
+            return;
+        }
+        // An HTTP batch can stop mid-transaction. Retain those rows durably before
+        // the HTTP response can advance Debezium's offsets. Publish them at commit.
+        try {
+            for (var row : pending) {
+                stage.setLong(1, row.transactionId());
+                stage.setLong(2, row.key());
+                stage.setLong(3, row.lsn());
+                stage.addBatch();
+            }
+            stage.executeBatch();
+            connection.commit();
+            stagedRows += pending.size();
+            pending.clear();
+            durableFragments++;
+        } catch (SQLException failure) {
+            rollback(failure);
+            throw failure;
+        }
+    }
+
+    int durableFragments() {
+        return durableFragments;
+    }
+
+    private void rollback(SQLException failure) {
+        try {
+            connection.rollback();
+        } catch (SQLException rollback) {
+            failure.addSuppressed(rollback);
         }
     }
 }

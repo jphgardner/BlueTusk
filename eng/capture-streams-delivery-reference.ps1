@@ -5,6 +5,7 @@ param(
     [ValidateSet(1, 100, 1000)][int] $Changes = 1,
     [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
     [ValidateSet('count', 'postgresql')][string] $Sink = 'count',
+    [ValidateRange(1, 1000)][int] $MaxHttpBatchRows = 1000,
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
@@ -88,7 +89,7 @@ try
     $connection = [Data.Common.DbConnectionStringBuilder]::new()
     $connection.set_ConnectionString([IO.File]::ReadAllText((Join-Path $fixtureDirectory 'container-connection.secret')))
     $snapshotMode = if ($snapshot) { 'initial' } else { 'no_data' }
-    $httpBatchSize = if ($spill) { $Changes } else { 1000 }
+    $httpBatchSize = if ($spill) { [Math]::Min($Changes, $MaxHttpBatchRows) } else { $MaxHttpBatchRows }
     $properties = @"
 debezium.sink.type=http
 debezium.sink.http.url=http://127.0.0.1:8081/events
@@ -179,7 +180,7 @@ debezium.source.offset.flush.interval.ms=1000
     if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'The benchmark tracked worktree changed during capture.' }
     if ($sync)
     {
-        $destinationProof = Assert-SyncPostgreSqlDelivery $postgres $Changes ($WarmupTransactions + $MeasurementTransactions)
+        $destinationProof = Assert-SyncPostgreSqlDelivery $postgres $Changes ($WarmupTransactions + $MeasurementTransactions) -Reference
         $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
         $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
     }

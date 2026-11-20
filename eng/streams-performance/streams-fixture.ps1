@@ -79,12 +79,16 @@ CREATE TABLE bluetusk_sync.documents (
     snapshot_epoch uuid, updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
     PRIMARY KEY (pipeline_id, collection_name, document_key)
 );
+CREATE TABLE bluetusk_sync.staged_rows (
+    source_transaction_id bigint NOT NULL, document_id bigint NOT NULL, lsn bigint NOT NULL,
+    PRIMARY KEY (source_transaction_id, document_id)
+);
 '@
     & docker exec $Container psql -Xq -v ON_ERROR_STOP=1 -U postgres -d bluetusk_sync_sink -c $schema
     if ($LASTEXITCODE) { throw 'Creating the native PostgreSQL reference destination failed.' }
 }
 
-function Assert-SyncPostgreSqlDelivery([string] $Container, [int] $Changes, [int] $Transactions)
+function Assert-SyncPostgreSqlDelivery([string] $Container, [int] $Changes, [int] $Transactions, [switch] $Reference)
 {
     $rows = $Changes * [long]$Transactions
     $sourceXid = & docker exec $Container psql -XqAt -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
@@ -112,5 +116,11 @@ FROM batches b CROSS JOIN bluetusk_sync.pipelines p WHERE p.pipeline_id = 'sync_
     $delivery = & docker exec $Container psql -XqAt -v ON_ERROR_STOP=1 -U postgres -d bluetusk_sync_sink -c $query
     if ($LASTEXITCODE -or $delivery -cne "$Transactions|$rows|$Transactions|1|on")
     { throw 'The destination did not persist every expected transaction and its final checkpoint atomically.' }
+    if ($Reference)
+    {
+        $remaining = & docker exec $Container psql -XqAt -v ON_ERROR_STOP=1 -U postgres -d bluetusk_sync_sink `
+            -c 'SELECT count(*) FROM bluetusk_sync.staged_rows'
+        if ($LASTEXITCODE -or $remaining -cne '0') { throw 'The reference sink retained acknowledged fragments after committing.' }
+    }
     [ordered]@{ transactions = $Transactions; documents = $rows; finalSourceTransactionId = [long]$sourceXid; finalCheckpointSharedTransaction = $true; synchronousCommit = 'on' }
 }
