@@ -200,12 +200,14 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
 
     internal ValueTask<LiveDiffBatch<T, TKey>?> RefreshPersistedAsync(
         Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask> persist,
-        CancellationToken cancellationToken) =>
-        RefreshCoreAsync(persist, cancellationToken);
+        CancellationToken cancellationToken,
+        bool forceQuery = false) =>
+        RefreshCoreAsync(persist, cancellationToken, forceQuery);
 
     private async ValueTask<LiveDiffBatch<T, TKey>?> RefreshCoreAsync(
         Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask>? persist,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool forceQuery = false)
     {
         BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         var telemetryStarted = LiveDiagnostics.GetTimestamp();
@@ -225,24 +227,27 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
                     $"The invalidation cursor moved backward from {_cursor.Value} to {through.Value}.");
             }
 
-            if (through == _cursor)
+            if (through == _cursor && !forceQuery)
             {
                 return null;
             }
 
-            var affected = await _invalidationLog.HasChangesAsync(
+            var affected = through != _cursor && await _invalidationLog.HasChangesAsync(
                 _plan.DatabaseIdentity,
                 _plan.Dependencies,
                 _cursor,
                 through,
                 cancellationToken).ConfigureAwait(false);
-            if (!affected)
+            if (!affected && !forceQuery)
             {
                 _cursor = through;
                 return null;
             }
 
-            Interlocked.Increment(ref _coalescedInvalidationCount);
+            if (affected)
+            {
+                Interlocked.Increment(ref _coalescedInvalidationCount);
+            }
             var rows = await ExecuteAuthoritativeQueryAsync(cancellationToken).ConfigureAwait(false);
             var nextSequence = checked(Interlocked.Read(ref _lastSequence) + 1);
             var batch = LiveResultDiffer.Diff(
@@ -285,6 +290,30 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
             {
                 _gate.Release();
             }
+        }
+    }
+
+    internal async ValueTask<LiveResultEvent<T, TKey>> CreateInitialResultAsync(
+        long persistedSequence,
+        CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            EnsureStarted();
+            EnsureNoPendingChange();
+            if (_lastSequence != persistedSequence)
+            {
+                throw new InvalidOperationException("The Live result does not match the persisted sequence.");
+            }
+
+            var snapshot = _snapshot!;
+            return new LiveResultEvent<T, TKey>(persistedSequence, LiveEventKind.InitialResult,
+                default, default, null, null, snapshot.Rows, snapshot.Keys, null);
+        }
+        finally
+        {
+            _gate.Release();
         }
     }
 

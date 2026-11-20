@@ -172,7 +172,12 @@ public interface ILiveSharedSubscription : IAsyncDisposable
         CancellationToken cancellationToken = default);
 }
 
-public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
+internal interface ILiveInitialSnapshotSubscription
+{
+    ValueTask<LiveSubscriptionConnectResult> ConnectFreshAsync(CancellationToken cancellationToken);
+}
+
+public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription, ILiveInitialSnapshotSubscription
     where TKey : notnull
 {
     private static readonly LiveSubscriberMessage ResetRequiredMessage =
@@ -188,6 +193,8 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     private LiveDiffBatch<T, TKey>? _pendingReplayBatch;
     private LiveReplayEvent[]? _pendingReplayEvents;
     private LiveReplayEvent[]? _readyReplayEvents;
+    private LiveReplayEvent? _connectionSnapshot;
+    private bool _hasConnected;
     private long _persistedSequence;
     private long _publishedEvents;
     private long _fanOutDeliveries;
@@ -334,9 +341,18 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         }
     }
 
-    public async ValueTask<LiveSubscriptionConnectResult> ConnectAsync(
+    public ValueTask<LiveSubscriptionConnectResult> ConnectAsync(
         long afterSequence,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        ConnectCoreAsync(afterSequence, fresh: false, cancellationToken);
+
+    ValueTask<LiveSubscriptionConnectResult> ILiveInitialSnapshotSubscription.ConnectFreshAsync(
+        CancellationToken cancellationToken) => ConnectCoreAsync(0, fresh: true, cancellationToken);
+
+    private async ValueTask<LiveSubscriptionConnectResult> ConnectCoreAsync(
+        long afterSequence,
+        bool fresh,
+        CancellationToken cancellationToken)
     {
         BlueTuskGuard.NotNegative(afterSequence);
         ThrowIfDisposed();
@@ -362,41 +378,50 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 }
             }
 
-            var replay = await _replayStore.ReadAsync(
-                Identity,
-                afterSequence,
-                checked(_options.MaximumReplayEventsPerConnect + 1),
-                cancellationToken).ConfigureAwait(false);
-            if (replay.Status is LiveReplayReadStatus.Expired or LiveReplayReadStatus.NotFound)
+            IReadOnlyList<LiveReplayEvent> connectionEvents;
+            if (fresh)
             {
-                if (afterSequence != 0)
+                connectionEvents = [await GetConnectionSnapshotAsync(cancellationToken).ConfigureAwait(false)];
+            }
+            else
+            {
+                var replay = await _replayStore.ReadAsync(
+                    Identity,
+                    afterSequence,
+                    checked(_options.MaximumReplayEventsPerConnect + 1),
+                    cancellationToken).ConfigureAwait(false);
+                if (replay.Status is LiveReplayReadStatus.Expired or LiveReplayReadStatus.NotFound)
                 {
-                    Interlocked.Increment(ref _replayRejections);
-                    LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.ReplayUnavailable);
-                    return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayUnavailable, null);
+                    if (afterSequence != 0)
+                    {
+                        Interlocked.Increment(ref _replayRejections);
+                        LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.ReplayUnavailable);
+                        return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayUnavailable, null);
+                    }
+
+                    _ = await _session.ResetPersistedAsync(
+                        LiveResetReason.ReplayExpired,
+                        PersistAsync,
+                        cancellationToken).ConfigureAwait(false);
+                    var resetEvents = AcceptPersistedEvents();
+                    Publish(resetEvents);
+                    replay = LiveReplayReadResult.CreateOwned(
+                        LiveReplayReadStatus.Available,
+                        resetEvents[0].Sequence,
+                        resetEvents[^1].Sequence,
+                        resetEvents);
                 }
 
-                _ = await _session.ResetPersistedAsync(
-                    LiveResetReason.ReplayExpired,
-                    PersistAsync,
-                    cancellationToken).ConfigureAwait(false);
-                var resetEvents = AcceptPersistedEvents();
-                Publish(resetEvents);
-                replay = LiveReplayReadResult.CreateOwned(
-                    LiveReplayReadStatus.Available,
-                    resetEvents[0].Sequence,
-                    resetEvents[^1].Sequence,
-                    resetEvents);
-            }
-
-            if (replay.Events.Count > _options.MaximumReplayEventsPerConnect ||
-                (replay.Status is LiveReplayReadStatus.Available &&
-                 replay.Events.Count != 0 &&
-                 replay.Events[^1].Sequence < replay.LastSequence))
-            {
-                Interlocked.Increment(ref _replayRejections);
-                LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.ReplayLimitExceeded);
-                return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayLimitExceeded, null);
+                if (replay.Events.Count > _options.MaximumReplayEventsPerConnect ||
+                    (replay.Status is LiveReplayReadStatus.Available &&
+                     replay.Events.Count != 0 &&
+                     replay.Events[^1].Sequence < replay.LastSequence))
+                {
+                    Interlocked.Increment(ref _replayRejections);
+                    LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.ReplayLimitExceeded);
+                    return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayLimitExceeded, null);
+                }
+                connectionEvents = replay.Events;
             }
 
             var id = Guid.NewGuid();
@@ -412,16 +437,17 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
 
             var connection = new LiveSubscriptionConnection(
                 id,
-                replay.Events,
+                connectionEvents,
                 channel.Reader,
                 RemoveSubscriber);
+            _hasConnected = true;
             Interlocked.Increment(ref _connectedClients);
-            Interlocked.Add(ref _replayedEvents, replay.Events.Count);
+            Interlocked.Add(ref _replayedEvents, connectionEvents.Count);
             LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.Connected);
             LiveDiagnostics.RecordActiveClientDelta(1);
             LiveDiagnostics.RecordReplay(
-                replay.Events.Count,
-                GetReplayBytes(replay.Events),
+                connectionEvents.Count,
+                GetReplayBytes(connectionEvents),
                 operation: "read");
             return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.Connected, connection);
         }
@@ -494,6 +520,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
             _pendingReplayBatch = null;
             _pendingReplayEvents = null;
             _readyReplayEvents = null;
+            _connectionSnapshot = null;
         }
         finally
         {
@@ -524,19 +551,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
             var serialized = new LiveReplayEvent[batch.Events.Count];
             for (var index = 0; index < serialized.Length; index++)
             {
-                if (_eventTypeInfo is not null)
-                {
-                    serialized[index] = new LiveReplayEvent(batch.Events[index].Sequence, batch.Events[index].Kind,
-                        LiveReplayJsonSerializer.ContentType, JsonSerializer.SerializeToUtf8Bytes(batch.Events[index], _eventTypeInfo));
-                }
-                else if (RuntimeFeature.IsDynamicCodeSupported)
-                {
-                    serialized[index] = LiveReplayJsonSerializer.Serialize(batch.Events[index]);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Native AOT Live subscriptions require source-generated replay JSON metadata.");
-                }
+                serialized[index] = SerializeEvent(batch.Events[index]);
             }
 
             _pendingReplayBatch = batch;
@@ -566,12 +581,55 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         _pendingReplayEvents = null;
     }
 
+    private async ValueTask<LiveReplayEvent> GetConnectionSnapshotAsync(CancellationToken cancellationToken)
+    {
+        if (_hasConnected && SubscriberCount == 0)
+        {
+            // Reconcile a reactivated query even if its idle period produced no invalidations.
+            var batch = await _session.RefreshPersistedAsync(
+                PersistAsync, cancellationToken, forceQuery: true).ConfigureAwait(false);
+            if (batch is { Events.Count: > 0 })
+            {
+                Publish(AcceptPersistedEvents());
+            }
+        }
+
+        var cached = _connectionSnapshot;
+        if (cached is not null && cached.Sequence == _persistedSequence)
+        {
+            return cached;
+        }
+
+        // The initial result is private to this connection. Its token resumes the shared log.
+        var snapshot = await _session.CreateInitialResultAsync(
+            _persistedSequence, cancellationToken).ConfigureAwait(false);
+        var serialized = SerializeEvent(snapshot);
+        _connectionSnapshot = serialized;
+        return serialized;
+    }
+
+    private LiveReplayEvent SerializeEvent(LiveResultEvent<T, TKey> item)
+    {
+        if (_eventTypeInfo is not null)
+        {
+            return new LiveReplayEvent(item.Sequence, item.Kind, LiveReplayJsonSerializer.ContentType,
+                JsonSerializer.SerializeToUtf8Bytes(item, _eventTypeInfo));
+        }
+        if (RuntimeFeature.IsDynamicCodeSupported)
+        {
+            return LiveReplayJsonSerializer.Serialize(item);
+        }
+
+        throw new InvalidOperationException("Native AOT Live subscriptions require source-generated replay JSON metadata.");
+    }
+
     private LiveReplayEvent[] AcceptPersistedEvents()
     {
         var replayEvents = _readyReplayEvents ??
             throw new InvalidOperationException("The Live session committed without its persisted replay events.");
         _readyReplayEvents = null;
         Interlocked.Exchange(ref _persistedSequence, replayEvents[^1].Sequence);
+        _connectionSnapshot = null;
         Interlocked.Add(ref _publishedEvents, replayEvents.Length);
         var replayBytes = GetReplayBytes(replayEvents);
         Interlocked.Add(ref _replayBytesAppended, replayBytes);

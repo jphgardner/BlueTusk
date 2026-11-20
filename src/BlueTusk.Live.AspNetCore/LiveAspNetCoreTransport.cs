@@ -181,12 +181,20 @@ public static class LiveTransportSession
             principal,
             cancellationToken).ConfigureAwait(false);
         BlueTuskGuard.NotNull(subscription);
-        var result = string.IsNullOrWhiteSpace(request.ResumeToken)
-            ? await subscription.ConnectAsync(0, cancellationToken).ConfigureAwait(false)
-            : await subscription.ConnectWithTokenAsync(
-                request.ResumeToken,
-                tokenProtector,
-                cancellationToken).ConfigureAwait(false);
+        LiveSubscriptionConnectResult result;
+        if (!string.IsNullOrWhiteSpace(request.ResumeToken))
+        {
+            result = await subscription.ConnectWithTokenAsync(
+                request.ResumeToken, tokenProtector, cancellationToken).ConfigureAwait(false);
+        }
+        else if (subscription is ILiveInitialSnapshotSubscription source)
+        {
+            result = await source.ConnectFreshAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            result = await subscription.ConnectAsync(0, cancellationToken).ConfigureAwait(false);
+        }
         if (result.Status is not LiveSubscriptionConnectStatus.Connected || result.Connection is null)
         {
             throw new LiveTransportConnectException(result.Status, result.TokenStatus);
