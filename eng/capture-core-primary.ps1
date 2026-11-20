@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][ValidateSet('Provider','Live','Streams',IgnoreCase=$false)][string] $Family,
+    [Parameter(Mandatory)][ValidateSet('Provider','Live','Streams','Sync',IgnoreCase=$false)][string] $Family,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [string] $DotNetPath = 'dotnet',
     [string] $OutputPath,
@@ -36,12 +36,17 @@ elseif ($Family -ceq 'Live')
     if ($approved.scenario -cne 'affected-key-update' -or $approved.results -ne 1000 -or $approved.subscribers -ne 64)
     { throw 'The probe must measure a committed affected-key update across 1,000 Live results and 64 subscribers.' }
 }
-elseif ($approved.scenario -cne 'commit-to-delivery' -or $approved.transactionChanges -ne 1)
+elseif ($Family -ceq 'Streams')
 {
-    throw 'The Streams probe must measure WAL commit to delivery for one change per transaction.'
+    if ($approved.scenario -cne 'commit-to-delivery' -or $approved.transactionChanges -ne 1)
+    { throw 'The Streams probe must measure WAL commit to delivery for one change per transaction.' }
+}
+elseif ($approved.destination -cne 'postgresql' -or $approved.mutations -ne 1)
+{
+    throw 'The Sync probe must measure one durable mutation per transaction to PostgreSQL.'
 }
 $sampleCapacity = [int][Math]::Floor($plan.timing.maximumTotalSamples / $workers)
-# Live and Streams produce one sample per operation. Keep their reserved buffer small.
+# The single-worker probes produce one sample per operation. Keep their reserved buffers small.
 if ($Family -cne 'Provider') { $sampleCapacity = [Math]::Min($sampleCapacity, 262144) }
 $evidenceClass = if ($Qualification) { 'qualification' } else { 'diagnostic' }
 
@@ -70,7 +75,7 @@ if ((-not $raw.StartsWith("$artifacts$separator", $pathComparison) -and
 { throw "$Family primary capture requires new directories inside artifacts or the configured evidence store." }
 
 $null = New-Item -ItemType Directory -Path $raw, $work -Force
-$probe = "${Family}PrimaryProbe"
+$probe = if ($Family -ceq 'Sync') { 'StreamsPrimaryProbe' } else { "${Family}PrimaryProbe" }
 $project = Join-Path $PSScriptRoot "$probe/$probe.csproj"
 $baselineProperty = if ($Family -ceq 'Provider') { 'UsePublishedProvider' } else { 'UsePublishedPrimaryBaseline' }
 $assemblies = @{}
@@ -91,6 +96,7 @@ $runtime = $null
 $fixture = Join-Path $work 'fixture'
 $previousConnection = $env:BLUETUSK_BENCHMARK_CONNECTION_STRING
 $previousWriter = $env:BLUETUSK_BENCHMARK_WRITER_ASSEMBLY
+$previousChangeFamily = $env:BLUETUSK_BENCHMARK_CHANGE_FAMILY
 $started = [DateTimeOffset]::UtcNow
 try
 {
@@ -99,7 +105,11 @@ try
     $manifest = Get-Content -LiteralPath (Join-Path $fixture 'fixture.json') -Raw | ConvertFrom-Json
     if ($manifest.postgreSqlImage -cne $plan.fixture.postgreSqlImage) { throw "The $Family probe did not start the contracted PostgreSQL image." }
     $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = Get-Content -LiteralPath (Join-Path $fixture 'connection.secret') -Raw
-    if ($Family -ceq 'Streams') { $env:BLUETUSK_BENCHMARK_WRITER_ASSEMBLY = $assemblies.reference }
+    if ($Family -cin 'Streams', 'Sync')
+    {
+        $env:BLUETUSK_BENCHMARK_WRITER_ASSEMBLY = $assemblies.reference
+        $env:BLUETUSK_BENCHMARK_CHANGE_FAMILY = $Family
+    }
     for ($trial = 0; $trial -lt $Trials; $trial++)
     {
         $order = if ($trial % 2 -eq 0) { @('candidate','reference') } else { @('reference','candidate') }
@@ -136,12 +146,17 @@ try
             }
             else
             {
-                if ($sample.environment.scenario -cne $approved.scenario -or
-                    $sample.environment.changesPerTransaction -ne $approved.transactionChanges -or
+                if ($sample.environment.scenario -cne 'commit-to-delivery' -or
+                    $sample.environment.changesPerTransaction -ne 1 -or
                     $sample.environment.source -cne 'postgresql-pgoutput' -or
                     $sample.environment.sourceWriterImplementation -cne $referenceVersion -or
                     $sample.rawWallTicksByTransaction.Count -ne $sample.measurement.completedOperations)
-                { throw 'The Streams trial did not measure each approved commit-to-delivery operation.' }
+                { throw "The $Family trial did not measure each approved commit-to-delivery operation." }
+                if ($Family -ceq 'Sync' -and ($sample.environment.destination -cne $approved.destination -or
+                    $sample.environment.mutationsPerTransaction -ne $approved.mutations -or
+                    $sample.verifiedPersistedMutations -ne $sample.measurement.completedOperations -or
+                    $sample.destinationCheckpoint -cnotmatch '^[1-9][0-9]*$' -or $sample.destinationCheckpointTransaction -le 0))
+                { throw 'The Sync trial did not persist each approved PostgreSQL mutation and its checkpoint.' }
             }
             if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $sample.implementation)
             { throw "The $role assembly changed during the $Family comparison." }
@@ -167,6 +182,7 @@ finally
 {
     $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = $previousConnection
     $env:BLUETUSK_BENCHMARK_WRITER_ASSEMBLY = $previousWriter
+    $env:BLUETUSK_BENCHMARK_CHANGE_FAMILY = $previousChangeFamily
     try { & (Join-Path $PSScriptRoot 'stop-performance-fixture.ps1') -RunId $RunId -Owner $Owner }
     finally
     {

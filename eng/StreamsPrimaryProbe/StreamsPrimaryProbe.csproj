@@ -11,9 +11,11 @@
   <ItemGroup Condition="'$(UsePublishedPrimaryBaseline)' == 'true'">
     <PackageReference Include="BlueTusk.Data" Version="[1.0.0]" />
     <PackageReference Include="BlueTusk.Streams" Version="[1.0.0]" />
+    <PackageReference Include="BlueTusk.Sync.PostgreSql" Version="[1.0.0]" />
   </ItemGroup>
   <ItemGroup Condition="'$(UsePublishedPrimaryBaseline)' != 'true'">
     <ProjectReference Include="../../src/BlueTusk.Data/BlueTusk.Data.csproj" />
     <ProjectReference Include="../../src/BlueTusk.Streams/BlueTusk.Streams.csproj" />
+    <ProjectReference Include="../../src/BlueTusk.Sync.PostgreSql/BlueTusk.Sync.PostgreSql.csproj" />
   </ItemGroup>
 </Project>

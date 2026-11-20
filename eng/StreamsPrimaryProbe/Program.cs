@@ -1,4 +1,3 @@
-using System.Buffers.Text;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
@@ -10,6 +9,7 @@ using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
 using BlueTusk.Streams;
 using BlueTusk.TypeSystem;
+using BlueTusk.Sync.PostgreSql;
 
 const string publication = "streams_primary_benchmark";
 const string slot = "streams_primary_benchmark";
@@ -35,6 +35,8 @@ if (RuntimeInformation.ProcessArchitecture != Architecture.X64)
     throw new PlatformNotSupportedException("The Streams primary comparison requires x64.");
 }
 
+var family = Environment.GetEnvironmentVariable("BLUETUSK_BENCHMARK_CHANGE_FAMILY") ?? "Streams";
+if (family is not ("Streams" or "Sync")) throw new ArgumentException("Select the Streams or PostgreSQL Sync workload.");
 var writerAssembly = Environment.GetEnvironmentVariable("BLUETUSK_BENCHMARK_WRITER_ASSEMBLY");
 ArgumentException.ThrowIfNullOrWhiteSpace(writerAssembly);
 var warmupSeconds = int.Parse(warmup, CultureInfo.InvariantCulture);
@@ -68,6 +70,7 @@ var envelopes = replication.StartReplicationAsync(new BlueTuskPgOutputReplicatio
 }, token).DecodePgOutputAsync(cancellationToken: token);
 var stream = new PgOutputChangeStream(envelopes, source);
 await using var transactions = stream.ReadTransactionsAsync(token).GetAsyncEnumerator(token);
+await using var sync = family == "Sync" ? await PrimaryPostgreSqlSync.OpenAsync(control, connectionString, source, token) : null;
 await using var writer = new StreamsPrimaryWriter(writerAssembly);
 if (await writer.ReadAsync(token) != baseline)
 {
@@ -76,6 +79,7 @@ if (await writer.ReadAsync(token) != baseline)
 
 var nextKey = 0L;
 BlueTuskLogSequenceNumber? previousPosition = null;
+uint lastTransactionId = 0;
 long[] wallTicks = [];
 var sampleCount = 0;
 _ = await ProviderRequestCapture.MeasureWindowAsync([ReadOneChangeAsync], warmupSeconds, 0, token);
@@ -83,6 +87,10 @@ var clockBefore = await SampleClockAsync();
 wallTicks = new long[sampleCapacity];
 var measurement = await ProviderRequestCapture.MeasureWindowAsync([ReadOneChangeAsync], measurementSeconds, 0, token);
 var clockAfter = await SampleClockAsync();
+if (sync is not null)
+{
+    await sync.VerifyAsync(nextKey, previousPosition!.Value, lastTransactionId, token);
+}
 if (sampleCount != measurement.CompletedOperations)
 {
     throw new InvalidDataException("Every completed Streams transaction must retain a raw delivery sample.");
@@ -102,14 +110,15 @@ for (var index = 0; index < requestTicks.Length; index++)
         throw new InvalidDataException("The Streams commit-to-delivery latency could not be resolved.");
     }
 }
-var implementation = typeof(PgOutputChangeStream).Assembly
+var implementationType = sync is null ? typeof(PgOutputChangeStream) : typeof(PostgreSqlSyncDestination);
+var implementation = implementationType.Assembly
     .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
 var report = new
 {
     SchemaVersion = 1,
     EvidenceKind = "bluetusk-performance-trial",
-    Family = "Streams",
-    WorkloadKey = $"{os}|Streams|primary-hot-path",
+    Family = family,
+    WorkloadKey = $"{os}|{family}|primary-hot-path",
     Role = role,
     Trial = int.Parse(trial, CultureInfo.InvariantCulture),
     SourceCommit = commit,
@@ -125,10 +134,15 @@ var report = new
         Runtime = RuntimeInformation.FrameworkDescription,
         Scenario = "commit-to-delivery",
         ChangesPerTransaction = 1,
+        Destination = sync is null ? null : "postgresql",
+        MutationsPerTransaction = sync is null ? (int?)null : 1,
         SourceWriterImplementation = baseline,
         Source = "postgresql-pgoutput",
         ServerVersion = control.ServerVersion,
     },
+    VerifiedPersistedMutations = sync is null ? (int?)null : sampleCount,
+    DestinationCheckpoint = sync is null ? null : previousPosition!.Value.Value.ToString(CultureInfo.InvariantCulture),
+    DestinationCheckpointTransaction = sync is null ? (uint?)null : lastTransactionId,
     ClockBefore = clockBefore,
     ClockAfter = clockAfter,
     SourceClockUpperOffsetTicks = offsetUpperBound,
@@ -163,25 +177,33 @@ async Task ReadOneChangeAsync(CancellationToken cancellationToken)
         {
             throw new InvalidDataException("The Streams probe received an unexpected or out-of-order transaction.");
         }
-        var checkedChange = false;
-        await foreach (var change in transaction.Changes.WithCancellation(cancellationToken))
+        if (await writer.ReadAsync(cancellationToken) != key.ToString(CultureInfo.InvariantCulture))
         {
-            if (checkedChange || change is not InsertChange { NewRow: var row } ||
-                row.Table is not { Schema: "public", Name: "streams_primary_source" } ||
-                row["id"] is not { State: ChangeColumnState.Value, Encoding: ChangeValueEncoding.Text } column ||
-                !Utf8Parser.TryParse(column.Data.Span, out long deliveredKey, out var consumed) ||
-                consumed != column.Data.Length || deliveredKey != key)
+            throw new InvalidDataException("The source did not confirm the committed change.");
+        }
+
+        if (sync is null)
+        {
+            var checkedChange = false;
+            await foreach (var change in transaction.Changes.WithCancellation(cancellationToken))
             {
-                throw new InvalidDataException("The delivered Streams key does not match the committed write.");
+                if (checkedChange || !StreamsPrimaryChange.IsExpectedInsert(change, key))
+                {
+                    throw new InvalidDataException("The delivered Streams key does not match the committed write.");
+                }
+                checkedChange = true;
             }
-            checkedChange = true;
+            if (!checkedChange) throw new InvalidDataException("Streams delivered an empty transaction.");
+            await delivery.AcknowledgeAsync(cancellationToken);
         }
-        if (!checkedChange || await writer.ReadAsync(cancellationToken) != key.ToString(CultureInfo.InvariantCulture))
+        else
         {
-            throw new InvalidDataException("The Streams writer and consumer did not confirm the same committed change.");
+            await sync.ApplyAsync(delivery, key, cancellationToken);
+            observedUtc = DateTimeOffset.UtcNow;
         }
-        await delivery.AcknowledgeAsync(cancellationToken);
+
         previousPosition = transaction.CommitEndPosition;
+        lastTransactionId = transaction.TransactionId;
         if (wallTicks.Length == 0) return;
         if (sampleCount == wallTicks.Length)
         {
